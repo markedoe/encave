@@ -48,6 +48,7 @@ class SwiftSyncInteropTest {
         assertEquals(InstantSerializer.fromReferenceSeconds(782_000_000.25), bottle.addedAt)
         assertEquals(Instant.parse("2025-10-12T22:13:20.250Z"), bottle.addedAt)
         assertArrayEquals(ByteArray(32) { -1 }, members.members[iphone]?.publicKey)
+        assertEquals("i2a17946aea22c15127c53bac03a59f8a", members.members[iphone]?.inbox)
         assertEquals(UUID.fromString("c0ffee00-0000-4000-8000-0000000000aa"), members.cellarId)
     }
 

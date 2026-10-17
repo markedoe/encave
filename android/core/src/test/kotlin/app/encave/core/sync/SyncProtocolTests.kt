@@ -139,6 +139,28 @@ class SyncProtocolTests {
     }
 
     @Test
+    fun aJoinerCannotTakeTheIdOfAMemberWithAnotherKey() = runBlocking {
+        val (hostEnd, joinerEnd) = Pipe.pair()
+        val hostId = identity()
+        val joinerId = identity()
+        // The cellar already has a device with the joiner's ID, but another key.
+        val (membership, _) = Membership().adding(Member(joinerId.id, "Other", identity().publicKey, "ios"), 3, hostId.id)
+        val host = PairingHost(hostId, "A", "ios")
+        val joiner = PairingJoiner(joinerId, "B", "android")
+        coroutineScope {
+            val hk = async { host.exchangeKeys(hostEnd) }
+            val jk = async { joiner.exchangeKeys(joinerEnd) }
+            val hostKeys = hk.await()
+            val joinerKeys = jk.await()
+            val joinerDone = async { runCatching { joiner.finish(joinerEnd, joinerKeys, true) } }
+            val hostError = syncErrorOf { host.finish(hostEnd, hostKeys, true, membership) }
+            assertTrue(hostError is SyncError.ProtocolViolation)
+            joinerDone.await()
+            Unit
+        }
+    }
+
+    @Test
     fun aScannedQrCodeDetectsAnotherDevice() = runBlocking {
         val (hostEnd, joinerEnd) = Pipe.pair()
         val real = PairingHost(identity(), "Real", "ios")
