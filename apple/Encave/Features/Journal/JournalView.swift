@@ -6,12 +6,21 @@ struct JournalView: View {
     enum Page: Hashable { case tastings, discoveries }
 
     @Environment(CellarModel.self) private var model
+    /// On the Mac the window shows Insights in its own column, and provides the navigation.
+    var embedded = false
     @State private var query = ""
 
     var body: some View {
+        if embedded {
+            journal
+        } else {
+            NavigationStack { journal }
+        }
+    }
+
+    private var journal: some View {
         @Bindable var model = model
-        NavigationStack {
-            List {
+        return List {
                 Section {
                     Picker("Show", selection: $model.journalPage.animation()) {
                         Text("Tastings").tag(Page.tastings)
@@ -24,7 +33,7 @@ struct JournalView: View {
                 .listRowBackground(Color.clear)
 
                 switch model.journalPage {
-                case .tastings: TastingSections(query: query)
+                case .tastings: TastingSections(query: query, showsInsights: !embedded)
                 case .discoveries: DiscoverySections(query: query)
                 }
             }
@@ -41,7 +50,6 @@ struct JournalView: View {
                     .help(Text("Remember a wine tasted or seen elsewhere"))
                 }
             }
-        }
     }
 }
 
@@ -49,6 +57,7 @@ struct JournalView: View {
 private struct TastingSections: View {
     @Environment(CellarModel.self) private var model
     let query: String
+    var showsInsights = true
 
     var body: some View {
         let bottles = model.cellar.consumedBottles.filter { bottle in
@@ -59,6 +68,7 @@ private struct TastingSections: View {
         let months = Dictionary(grouping: bottles) { bottle in
             Calendar.current.dateInterval(of: .month, for: bottle.tasting?.date ?? bottle.addedAt)?.start ?? .distantPast
         }
+        if showsInsights {
         Section {
             NavigationLink {
                 InsightsView()
@@ -72,6 +82,7 @@ private struct TastingSections: View {
                     Image(systemName: "chart.pie").foregroundStyle(Color.accentColor)
                 }
             }
+        }
         }
         if bottles.isEmpty {
             ContentUnavailableView(

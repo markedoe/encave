@@ -2,68 +2,90 @@ import CaveKit
 import SwiftUI
 
 /// What to open: a suggestion for tonight, food pairing, then bottles by maturity.
+/// On iPhone and iPad it pushes the wine; on the Mac it sets `selection`, shown in the next column.
 struct TonightView: View {
     @Environment(CellarModel.self) private var model
+    var selection: Binding<UUID?>?
     @State private var pickIndex = 0
 
     var body: some View {
-        NavigationStack {
-            let sections = model.cellar.groupsByMaturity(year: model.currentYear)
-            let candidates = sections.filter { $0.maturity == .drinkSoon || $0.maturity == .ready }.flatMap(\.groups)
-            Group {
-                if sections.isEmpty {
-                    ContentUnavailableView(
-                        "Nothing to suggest yet",
-                        systemImage: "moon.stars",
-                        description: Text("Add bottles with a drinking window to see what is ready tonight.")
-                    )
-                } else {
-                    List {
-                        if !candidates.isEmpty {
-                            Section {
-                                TonightPick(group: candidates[pickIndex % candidates.count]) {
-                                    withAnimation(.snappy) { pickIndex += 1 }
-                                }
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                            }
+        if let selection {
+            list(selection: selection)
+                .navigationTitle("Tonight")
+                .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
+        } else {
+            NavigationStack {
+                list(selection: nil)
+                    .navigationTitle("Tonight")
+                    .navigationDestination(for: UUID.self) { WineDetailView(wineID: $0) }
+                    .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func list(selection: Binding<UUID?>?) -> some View {
+        let sections = model.cellar.groupsByMaturity(year: model.currentYear)
+        let candidates = sections.filter { $0.maturity == .drinkSoon || $0.maturity == .ready }.flatMap(\.groups)
+        if sections.isEmpty {
+            ContentUnavailableView(
+                "Nothing to suggest yet",
+                systemImage: "moon.stars",
+                description: Text("Add bottles with a drinking window to see what is ready tonight.")
+            )
+        } else if let selection {
+            List(selection: selection) { rows(sections: sections, candidates: candidates, linking: false) }
+        } else {
+            List { rows(sections: sections, candidates: candidates, linking: true) }
+        }
+    }
+
+    @ViewBuilder
+    private func rows(sections: [MaturitySection], candidates: [WineGroup], linking: Bool) -> some View {
+                if !candidates.isEmpty {
+                    Section {
+                        TonightPick(group: candidates[pickIndex % candidates.count]) {
+                            withAnimation(.snappy) { pickIndex += 1 }
                         }
-                        Section {
-                            NavigationLink {
-                                FoodPairingView()
-                            } label: {
-                                Label {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Food pairing").font(.headline)
-                                        Text("Find the right bottle for your dish").font(.subheadline).foregroundStyle(.secondary)
-                                    }
-                                } icon: {
-                                    Image(systemName: "fork.knife").foregroundStyle(Color.accentColor)
-                                }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                    }
+                }
+                Section {
+                    NavigationLink(value: FoodPairingRoute()) {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Food pairing").font(.headline)
+                                Text("Find the right bottle for your dish").font(.subheadline).foregroundStyle(.secondary)
                             }
-                        }
-                        ForEach(sections) { section in
-                            Section {
-                                ForEach(section.groups) { group in
-                                    NavigationLink(value: group.wine.id) {
-                                        WineRow(group: group)
-                                    }
-                                    .contextMenu { WineContextMenu(group: group) }
-                                }
-                            } header: {
-                                MaturityLabel(maturity: section.maturity)
-                                    .font(.subheadline.weight(.semibold))
-                                    .textCase(nil)
-                            }
+                        } icon: {
+                            Image(systemName: "fork.knife").foregroundStyle(Color.accentColor)
                         }
                     }
                 }
-            }
-            .navigationTitle("Tonight")
-            .navigationDestination(for: UUID.self) { WineDetailView(wineID: $0) }
-        }
+                ForEach(sections) { section in
+                    Section {
+                        ForEach(section.groups) { group in
+                            Group {
+                                if linking {
+                                    NavigationLink(value: group.wine.id) { WineRow(group: group) }
+                                } else {
+                                    WineRow(group: group).tag(group.wine.id)
+                                }
+                            }
+                            .contextMenu { WineContextMenu(group: group) }
+                        }
+                    } header: {
+                        MaturityLabel(maturity: section.maturity)
+                            .font(.subheadline.weight(.semibold))
+                            .textCase(nil)
+                    }
+                }
     }
 }
+
+/// Navigation value for the food pairing page.
+struct FoodPairingRoute: Hashable {}
 
 /// Hero card with tonight's suggestion.
 private struct TonightPick: View {
@@ -119,7 +141,7 @@ private struct TonightPick: View {
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)
         )
         .padding(.vertical, 4)
-        .id(group.id)
+        .id("pick-\(group.id)")
         .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
     }
 }

@@ -1241,6 +1241,16 @@
         }
       }
     },
+    "Click a place in the rack to add a bottle there.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez sur un emplacement du casier pour y ajouter une bouteille."
+          }
+        }
+      }
+    },
     "Color, intensity, clarity.": {
       "localizations": {
         "fr": {
@@ -2721,6 +2731,16 @@
         }
       }
     },
+    "Library": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèque"
+          }
+        }
+      }
+    },
     "Liked a bottle at friends’ or in a restaurant? Scan it to remember it, add notes and tags, and put it on your shopping list.": {
       "localizations": {
         "fr": {
@@ -4067,6 +4087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rechercher dans vos vins"
+          }
+        }
+      }
+    },
+    "Select a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un casier"
           }
         }
       }

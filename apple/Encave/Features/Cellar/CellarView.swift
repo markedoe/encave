@@ -1,54 +1,50 @@
 import CaveKit
 import SwiftUI
 
+/// iPhone and iPad: the list, and the selected wine beside it (or pushed on iPhone).
+/// On the Mac, the window's own columns show `CellarList` and `WinePane` directly.
 struct CellarView: View {
-    @Environment(CellarModel.self) private var model
-    @State private var filter = CellarFilter()
-    @State private var sort: CellarSort = .name
     @State private var selection: UUID?
     /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
     @State private var columns: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        #if os(macOS)
-        // The window already has a sidebar: the list and the wine sit side by side.
-        HSplitView {
-            NavigationStack {
-                list
-            }
-            .frame(minWidth: 280, idealWidth: 380, maxWidth: 560)
-            NavigationStack { detail }
-                .frame(minWidth: 360, maxWidth: .infinity)
-        }
-        #else
         NavigationSplitView(columnVisibility: $columns) {
-            list
+            CellarList(selection: $selection)
         } detail: {
-            detail
+            NavigationStack { WinePane(wineID: selection) }
         }
         .navigationSplitViewStyle(.balanced)
-        #endif
     }
+}
 
-    private var list: some View {
-        content
-            .navigationTitle("Cellar")
-            .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
-            .toolbar { toolbar }
-    }
+/// The selected wine, or a hint when none is selected.
+struct WinePane: View {
+    @Environment(CellarModel.self) private var model
+    let wineID: UUID?
 
-    @ViewBuilder
-    private var detail: some View {
-        if let selection, model.cellar.wines[selection] != nil {
-            #if os(macOS)
-            WineDetailView(wineID: selection)
-            #else
-            NavigationStack { WineDetailView(wineID: selection) }
-            #endif
+    var body: some View {
+        if let wineID, model.cellar.wines[wineID] != nil {
+            WineDetailView(wineID: wineID)
         } else {
             ContentUnavailableView("Select a wine", systemImage: "wineglass",
                                    description: Text("Its bottles, drinking window and tastings appear here."))
         }
+    }
+}
+
+/// Bottles grouped by wine, with search, filters and sorting.
+struct CellarList: View {
+    @Environment(CellarModel.self) private var model
+    @Binding var selection: UUID?
+    @State private var filter = CellarFilter()
+    @State private var sort: CellarSort = .name
+
+    var body: some View {
+        content
+            .navigationTitle("Cellar")
+            .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
+            .toolbar { toolbar }
     }
 
     @ViewBuilder

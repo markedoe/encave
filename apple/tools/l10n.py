@@ -500,6 +500,9 @@ FR = {
     "Optional. Reads labels from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
     "%lld models": "%lld modèles",
     # Racks
+    "Click a place in the rack to add a bottle there.": "Cliquez sur un emplacement du casier pour y ajouter une bouteille.",
+    "Library": "Bibliothèque",
+    "Select a rack": "Choisissez un casier",
     "Double-depth rack": "Casier double profondeur",
     "Under the stairs": "Sous l’escalier",
     "5 rows of 8": "5 rangées de 8",

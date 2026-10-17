@@ -9,7 +9,15 @@ struct EncaveApp: App {
             RootView()
                 .environment(model)
         }
-        .defaultSize(width: 1100, height: 720)
+        #if os(macOS)
+        // Sized to the screen: a fixed size larger than a small display put the window off screen.
+        .defaultWindowPlacement { _, context in
+            let screen = context.defaultDisplay.visibleRect.size
+            return WindowPlacement(size: CGSize(width: min(1180, screen.width * 0.9),
+                                                height: min(780, screen.height * 0.9)))
+        }
+        .windowToolbarStyle(.unified)
+        #endif
         .commands {
             CellarCommands(model: model)
         }

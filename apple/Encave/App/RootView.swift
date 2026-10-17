@@ -28,7 +28,7 @@ struct RootView: View {
     @ViewBuilder
     private var sections: some View {
         #if os(macOS)
-        MacSidebarRoot()
+        MacRoot()
         #else
         @Bindable var model = model
         TabView(selection: $model.selectedTab) {
@@ -42,49 +42,6 @@ struct RootView: View {
     }
 }
 
-#if os(macOS)
-/// The Mac window: one sidebar with the four sections, the section on the right.
-private struct MacSidebarRoot: View {
-    @Environment(CellarModel.self) private var model
-
-    var body: some View {
-        let selection = Binding<AppTab?>(
-            get: { model.selectedTab },
-            set: { if let tab = $0 { model.selectedTab = tab } }
-        )
-        NavigationSplitView {
-            List(selection: selection) {
-                Section {
-                    Label("Cellar", systemImage: "wineglass")
-                        .badge(model.cellar.bottlesInCellar.count)
-                        .tag(AppTab.cellar)
-                        .accessibilityIdentifier("section.cellar")
-                    Label("Racks", systemImage: "square.grid.3x3")
-                        .badge(model.cellar.racks.count)
-                        .tag(AppTab.racks)
-                        .accessibilityIdentifier("section.racks")
-                    Label("Tonight", systemImage: "moon.stars")
-                        .badge(model.cellar.statistics(year: model.currentYear).byMaturity[.drinkSoon, default: 0])
-                        .tag(AppTab.tonight)
-                        .accessibilityIdentifier("section.tonight")
-                    Label("Journal", systemImage: "book.closed")
-                        .badge(model.cellar.shoppingListCount)
-                        .tag(AppTab.journal)
-                        .accessibilityIdentifier("section.journal")
-                }
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
-        } detail: {
-            switch model.selectedTab {
-            case .cellar: CellarView()
-            case .racks: RacksView()
-            case .tonight: TonightView()
-            case .journal: JournalView()
-            }
-        }
-    }
-}
-#endif
 
 private struct SheetContent: View {
     let sheet: AppSheet
