@@ -14,6 +14,7 @@ struct PhotoSection: View {
     private var hasPhoto: Bool { newPhoto != nil || (PhotoStore.exists(photoID) && !removed) }
 
     var body: some View {
+        let hasPhoto = hasPhoto
         Section("Photo") {
             if hasPhoto {
                 WinePhoto(photoID: removed ? nil : photoID, data: newPhoto)

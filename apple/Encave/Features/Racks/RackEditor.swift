@@ -11,19 +11,22 @@ struct RackPreset: Identifiable {
     var binCapacity = 10
     var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)" }
 
-    static let all: [RackPreset] = [
-        RackPreset(title: "6 rows of 8", kind: .grid, rows: 6, columns: 8),
-        RackPreset(title: "Double depth, 6 × 8", kind: .grid, rows: 6, columns: 8, depth: 2),
-        RackPreset(title: "Large, 10 × 12", kind: .grid, rows: 10, columns: 12),
-        RackPreset(title: "5 rows of 8", kind: .staggered, rows: 5, columns: 8),
-        RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
-        RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
-        RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
-        RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
-        RackPreset(title: "Diamond bins, 2 × 3 of 10", kind: .bins, rows: 2, columns: 3, binCapacity: 10),
-        RackPreset(title: "Crates of 6, 3 × 4", kind: .bins, rows: 3, columns: 4, binCapacity: 6),
-        RackPreset(title: "Crates of 12, 2 × 4", kind: .bins, rows: 2, columns: 4, binCapacity: 12),
-    ]
+    // Computed: LocalizedStringKey is not Sendable, so it cannot be a stored static.
+    static var all: [RackPreset] {
+        [
+            RackPreset(title: "6 rows of 8", kind: .grid, rows: 6, columns: 8),
+            RackPreset(title: "Double depth, 6 × 8", kind: .grid, rows: 6, columns: 8, depth: 2),
+            RackPreset(title: "Large, 10 × 12", kind: .grid, rows: 10, columns: 12),
+            RackPreset(title: "5 rows of 8", kind: .staggered, rows: 5, columns: 8),
+            RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
+            RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
+            RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
+            RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
+            RackPreset(title: "Diamond bins, 2 × 3 of 10", kind: .bins, rows: 2, columns: 3, binCapacity: 10),
+            RackPreset(title: "Crates of 6, 3 × 4", kind: .bins, rows: 3, columns: 4, binCapacity: 6),
+            RackPreset(title: "Crates of 12, 2 × 4", kind: .bins, rows: 2, columns: 4, binCapacity: 12),
+        ]
+    }
 }
 
 /// Create or edit a rack: choose the kind of storage, its size, and see it live.

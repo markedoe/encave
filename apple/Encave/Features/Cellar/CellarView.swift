@@ -14,9 +14,9 @@ struct CellarView: View {
             NavigationStack {
                 list
             }
-            .frame(minWidth: 320, idealWidth: 400, maxWidth: 560)
+            .frame(minWidth: 280, idealWidth: 380, maxWidth: 560)
             NavigationStack { detail }
-                .frame(minWidth: 440, maxWidth: .infinity)
+                .frame(minWidth: 360, maxWidth: .infinity)
         }
         #else
         NavigationSplitView {
