@@ -27,6 +27,7 @@ struct SettingsView: View {
                 } label: {
                     Label("Help", systemImage: "questionmark.circle")
                 }
+                .accessibilityIdentifier("settings.help")
             }
 
             Section {
@@ -91,6 +92,7 @@ struct SettingsView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") { dismiss() }
+                        .accessibilityIdentifier("sheet.done")
             }
         }
         #endif

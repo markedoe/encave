@@ -111,6 +111,98 @@ jobs:
           done
           exit $status
 
+  screens:
+    name: Screen tour (iPhone, iPad, Mac)
+    needs: [cavekit, l10n]
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apple
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        working-directory: .
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+
+      - name: Generate project
+        run: |
+          brew install xcodegen xcbeautify
+          xcodegen generate
+
+      - name: iPhone and iPad
+        run: |
+          set -o pipefail
+          # Newest available iPhone and iPad simulators.
+          pick() {
+            xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          prefix = sys.argv[1]
+          found = []
+          for runtime, devices in json.load(sys.stdin)['devices'].items():
+              if 'iOS' not in runtime:
+                  continue
+              for d in devices:
+                  if d['name'].startswith(prefix) and 'mini' not in d['name']:
+                      found.append((runtime, d['name'], d['udid']))
+          found.sort()
+          print(found[-1][2])
+          " "$1"
+          }
+          status=0
+          for device in iPhone iPad; do
+            udid=$(pick "$device")
+            echo "Using $device simulator $udid"
+            xcodebuild test -project Encave.xcodeproj -scheme Encave -destination "id=$udid" \
+              -resultBundlePath "$RUNNER_TEMP/$device.xcresult" CODE_SIGNING_ALLOWED=NO \
+              | xcbeautify --renderer github-actions || status=1
+          done
+          exit $status
+
+      - name: Mac
+        if: always()
+        run: |
+          set -o pipefail
+          xcodebuild test -project Encave.xcodeproj -scheme EncaveMac -destination 'platform=macOS' \
+            -resultBundlePath "$RUNNER_TEMP/Mac.xcresult" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            | xcbeautify --renderer github-actions
+
+      - name: Export screenshots
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/screens"
+          for result in "$RUNNER_TEMP"/*.xcresult; do
+            [ -e "$result" ] || continue
+            name=$(basename "$result" .xcresult)
+            out="$RUNNER_TEMP/export-$name"
+            xcrun xcresulttool export attachments --path "$result" --output-path "$out" || continue
+            # Name each file after its attachment: iPhone/en-03-wine.png
+            python3 - "$out" "$RUNNER_TEMP/screens/$name" <<'PY'
+          import json, os, shutil, sys
+          src, dst = sys.argv[1], sys.argv[2]
+          os.makedirs(dst, exist_ok=True)
+          for test in json.load(open(os.path.join(src, "manifest.json"))):
+              for item in test.get("attachments", []):
+                  human = item.get("suggestedHumanReadableName") or item["exportedFileName"]
+                  base = human.split("_")[0] if human.count("_") > 1 else os.path.splitext(human)[0]
+                  ext = os.path.splitext(item["exportedFileName"])[1] or ".png"
+                  shutil.copy(os.path.join(src, item["exportedFileName"]), os.path.join(dst, base + ext))
+          PY
+          done
+          find "$RUNNER_TEMP/screens" -type f | sort
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: ${{ runner.temp }}/screens
+          retention-days: 7
+
   apps:
     name: Build${{ github.event_name != 'pull_request' && ' and upload to TestFlight' || '' }}
     needs: [cavekit, l10n]

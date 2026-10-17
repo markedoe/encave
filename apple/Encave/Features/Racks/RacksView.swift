@@ -25,10 +25,11 @@ struct RacksView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 16)], spacing: 16) {
-                            ForEach(model.cellar.racks) { rack in
+                            ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
                                 NavigationLink(value: rack.id) {
                                     RackCard(rack: rack)
                                 }
+                                .accessibilityIdentifier("rack.card.\(index)")
                                 .buttonStyle(.plain)
                                 .contextMenu {
                                     Button("Edit Rack", systemImage: "pencil") { model.sheet = .editRack(rackID: rack.id) }
@@ -51,6 +52,7 @@ struct RacksView: View {
                     } label: {
                         Label("Add Rack", systemImage: "plus")
                     }
+                    .accessibilityIdentifier("racks.add")
                 }
             }
             .onChange(of: model.highlightedSlot, initial: true) { _, slot in

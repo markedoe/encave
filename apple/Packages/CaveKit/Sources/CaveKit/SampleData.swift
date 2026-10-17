@@ -8,6 +8,9 @@ public enum SampleData {
         public var mainRack = "Main rack"
         public var wineFridge = "Wine fridge"
         public var bins = "Diamond bins"
+        public var deepRack = "Double-depth rack"
+        public var honeycomb = "Honeycomb rack"
+        public var stairs = "Under the stairs"
         public var tastingNote = "Silky, red fruit, long finish."
         public var kitchen = "Kitchen"
         public var occasion = "Dinner with friends"
@@ -31,9 +34,11 @@ public enum SampleData {
         let main = Rack(name: labels.mainRack, rows: 6, columns: 8)
         let small = Rack(name: labels.wineFridge, kind: .shelves, rows: 4, columns: 6, depth: 2)
         let bins = Rack(name: labels.bins, kind: .bins, rows: 2, columns: 3, binCapacity: 10)
-        cellar.addRack(main)
-        cellar.addRack(small)
-        cellar.addRack(bins)
+        // One rack of every kind, so the sample shows them all.
+        let deep = Rack(name: labels.deepRack, rows: 4, columns: 6, depth: 2)
+        let honeycomb = Rack(name: labels.honeycomb, kind: .staggered, rows: 5, columns: 8)
+        let stairs = Rack(name: labels.stairs, rows: 5, columns: 6, rowColumns: [2, 3, 4, 5, 6])
+        for rack in [main, small, bins, deep, honeycomb, stairs] { cellar.addRack(rack) }
 
         let entries: [(Wine, Int, Rack?)] = [
             (Wine(name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 9, color: .red,
@@ -56,10 +61,22 @@ public enum SampleData {
             (Wine(name: "Vendanges Tardives", producer: "Domaine Weber", vintage: year - 12, color: .dessert,
                   region: "Alsace", country: "France", grapes: ["Gewurztraminer"],
                   drinkFrom: year - 6, drinkUntil: year + 15), 1, main),
+            (Wine(name: "Riserva Vigna Alta", producer: "Cascina Ferri", vintage: year - 10, color: .red,
+                  region: "Piedmont", country: "Italy", appellation: "Barolo", grapes: ["Nebbiolo"],
+                  drinkFrom: year - 2, drinkUntil: year + 12), 8, deep),
+            (Wine(name: "Savagnin Ouillé", producer: "Domaine des Granges", vintage: year - 5, color: .white,
+                  region: "Jura", country: "France", appellation: "Arbois", grapes: ["Savagnin"],
+                  drinkFrom: year - 2, drinkUntil: year + 6), 5, honeycomb),
+            (Wine(name: "Qvevri Amber", producer: "Marani Tsiskari", vintage: year - 3, color: .orange,
+                  region: "Kakheti", country: "Georgia", grapes: ["Rkatsiteli"],
+                  drinkFrom: year - 1, drinkUntil: year + 4), 3, honeycomb),
+            (Wine(name: "Vintage Port", producer: "Quinta da Serra", vintage: year - 15, color: .fortified,
+                  region: "Douro", country: "Portugal", appellation: "Porto", grapes: ["Touriga Nacional"],
+                  drinkFrom: year - 5, drinkUntil: year + 25), 4, stairs),
         ]
 
         let day: TimeInterval = 86_400
-        let prices: [Decimal] = [38, 54, 16, 24, 14, 36, 29]
+        let prices: [Decimal] = [38, 54, 16, 24, 14, 36, 29, 62, 27, 22, 48]
         for (index, (wine, quantity, rack)) in entries.enumerated() {
             let slots = rack.map { Array(cellar.freeSlots(in: $0).prefix(quantity)) } ?? []
             let purchase = PurchaseInfo(

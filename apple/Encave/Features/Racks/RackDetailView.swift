@@ -38,6 +38,7 @@ struct RackDetailView: View {
                             .lineLimit(2)
                         Spacer()
                         Button("Cancel") { self.moving = nil }
+                        .accessibilityIdentifier("sheet.cancel")
                     }
                     .padding()
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -186,6 +187,7 @@ private struct CellSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .accessibilityIdentifier("sheet.done")
                 }
             }
         }

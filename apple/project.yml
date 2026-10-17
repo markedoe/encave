@@ -100,16 +100,50 @@ targets:
           NSAllowsLocalNetworking: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
 
+  # Screen tour with screenshots and layout checks (see EncaveUITests).
+  EncaveUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: EncaveUITests
+    dependencies:
+      - target: Encave
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: app.encave.uitests
+        TARGETED_DEVICE_FAMILY: "1,2"
+        TEST_TARGET_NAME: Encave
+
+  EncaveMacUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: EncaveUITests
+    dependencies:
+      - target: EncaveMac
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: app.encave.macuitests
+        TEST_TARGET_NAME: EncaveMac
+
 schemes:
   Encave:
     build:
       targets:
         Encave: all
+    test:
+      targets:
+        - EncaveUITests
     archive:
       config: Release
   EncaveMac:
     build:
       targets:
         EncaveMac: all
+    test:
+      targets:
+        - EncaveMacUITests
     archive:
       config: Release

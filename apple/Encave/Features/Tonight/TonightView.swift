@@ -103,10 +103,12 @@ private struct TonightPick: View {
                     Label("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("action.tonight.drink")
                 Button(action: next) {
                     Label("Another idea", systemImage: "shuffle").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .accessibilityIdentifier("action.tonight.next")
             }
             .controlSize(.large)
         }

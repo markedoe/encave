@@ -37,6 +37,7 @@ struct JournalView: View {
                     } label: {
                         Label("Remember a Wine", systemImage: "plus")
                     }
+                    .accessibilityIdentifier("journal.add")
                     .help(Text("Remember a wine tasted or seen elsewhere"))
                 }
             }

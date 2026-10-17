@@ -162,6 +162,7 @@ struct RackEditor: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
@@ -313,6 +314,7 @@ struct SlotPickerView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .accessibilityIdentifier("sheet.done")
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Clear") { selection = [] }
@@ -410,6 +412,7 @@ struct MoveBottleView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("sheet.cancel")
                 }
             }
         }

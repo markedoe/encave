@@ -45,6 +45,18 @@ import Testing
         #expect(cellar.freeSlot(in: RackCell(rackID: rack.id, row: 0, column: 1))?.depth == 1)
     }
 
+    @Test func sampleCellarShowsEveryKindOfRack() {
+        let cellar = SampleData.cellar(year: 2026)
+        let racks = cellar.racks
+        #expect(Set(racks.map(\.kind)) == Set(RackKind.allCases))
+        #expect(racks.contains { $0.depth == 2 && $0.kind == .grid })
+        #expect(racks.contains { $0.rowColumns != nil })
+        for rack in racks {
+            #expect(cellar.occupancy(of: rack) > 0, "\(rack.name) has bottles")
+        }
+        #expect(cellar.bottlesInCellar.contains { ($0.slot?.depth ?? 0) > 0 }, "a bottle sits behind another")
+    }
+
     @Test func frontIsFilledBeforeBack() {
         let rack = Rack(name: "F", kind: .shelves, rows: 1, columns: 3, depth: 2)
         #expect(rack.allSlots.prefix(3).allSatisfy { $0.depth == 0 })

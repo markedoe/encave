@@ -25,6 +25,7 @@ struct WineDetailView: View {
                             Label("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("action.wine.drink")
                         .disabled(bottles.isEmpty)
                         Button {
                             model.sheet = .addBottle(AddBottleContext(wine: wine))
@@ -32,6 +33,7 @@ struct WineDetailView: View {
                             Label("Add", systemImage: "plus").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityIdentifier("action.wine.add")
                     }
                     .controlSize(.large)
                     .listRowInsets(EdgeInsets())

@@ -70,6 +70,7 @@ struct CellarView: View {
                     }
                     ForEach(groups) { group in
                         WineRow(group: group)
+                            .accessibilityIdentifier("wine.row")
                             .tag(group.wine.id)
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 if let bottle = group.bottles.first {
@@ -128,6 +129,7 @@ struct CellarView: View {
             } primaryAction: {
                 model.sheet = .addBottle(AddBottleContext())
             }
+            .accessibilityIdentifier("cellar.add")
         }
         #if os(iOS)
         ToolbarItem(placement: .topBarLeading) {
@@ -136,6 +138,7 @@ struct CellarView: View {
             } label: {
                 Label("Settings", systemImage: "gearshape")
             }
+            .accessibilityIdentifier("cellar.settings")
         }
         #endif
     }

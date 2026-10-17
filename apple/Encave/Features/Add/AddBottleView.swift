@@ -162,6 +162,7 @@ struct AddBottleView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") { save() }

@@ -107,6 +107,7 @@ struct HelpButton: View {
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Done") { showing = false }
+                        .accessibilityIdentifier("sheet.done")
                         }
                     }
             }
@@ -133,6 +134,7 @@ struct HelpLink: View {
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Done") { showing = false }
+                        .accessibilityIdentifier("sheet.done")
                         }
                     }
             }

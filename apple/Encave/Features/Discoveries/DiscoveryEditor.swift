@@ -95,6 +95,7 @@ struct DiscoveryEditor: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)

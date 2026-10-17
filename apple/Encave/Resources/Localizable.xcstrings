@@ -1661,6 +1661,16 @@
         }
       }
     },
+    "Double-depth rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier double profondeur"
+          }
+        }
+      }
+    },
     "Drink": {
       "localizations": {
         "fr": {
@@ -4867,6 +4877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà."
+          }
+        }
+      }
+    },
+    "Under the stairs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous l’escalier"
           }
         }
       }

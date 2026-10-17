@@ -47,6 +47,7 @@ struct LabelScanner: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .primaryAction) {
                     PhotosPicker(selection: $photo, matching: .images) {
