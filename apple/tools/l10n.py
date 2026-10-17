@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    "Shows your cellar in figures.": "Affiche votre cave en chiffres.",
+    "Shows all your wines.": "Affiche tous vos vins.",
+    "Shows only the wines to drink soon.": "N’affiche que les vins à boire bientôt.",
     "Finding a bottle": "Trouver une bouteille",
     "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.":
         "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher.",

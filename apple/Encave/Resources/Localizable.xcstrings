@@ -4371,12 +4371,42 @@
         }
       }
     },
+    "Shows all your wines.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche tous vos vins."
+          }
+        }
+      }
+    },
+    "Shows only the wines to drink soon.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N’affiche que les vins à boire bientôt."
+          }
+        }
+      }
+    },
     "Shows where its bottles are in the rack.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Montre où sont ses bouteilles dans le casier."
+          }
+        }
+      }
+    },
+    "Shows your cellar in figures.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche votre cave en chiffres."
           }
         }
       }

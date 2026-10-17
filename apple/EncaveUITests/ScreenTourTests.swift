@@ -49,6 +49,7 @@ final class ScreenTourTests: XCTestCase {
         // Cellar, a wine, its drink sheet, adding bottles.
         openSection(0, "cellar")
         snapshot("cellar")
+        checkCellarFigures()
         #if os(iOS)
         // The swipe actions on a wine ("Drink" on the leading edge). iPhone only: on iPad
         // the revealed action can cover the narrow list column.
@@ -146,6 +147,34 @@ final class ScreenTourTests: XCTestCase {
             closeSheet()
         }
         #endif
+    }
+
+    // MARK: Cellar
+
+    /// The figures at the top of the cellar: "to drink soon" filters, "bottles" opens insights.
+    private func checkCellarFigures() {
+        let rows = app.descendants(matching: .any).matching(identifier: "wine.row")
+        let soon = element("cellar.stat.soon")
+        guard soon.waitForExistence(timeout: 5), soon.isHittable else {
+            XCTFail("cellar: no \"to drink soon\" figure")
+            return
+        }
+        let all = rows.count
+        soon.press()
+        sleep(1)
+        XCTAssertLessThan(rows.count, all, "cellar: \"to drink soon\" did not filter the list")
+        snapshot("cellar-drink-soon")
+        soon.press()
+        sleep(1)
+        XCTAssertEqual(rows.count, all, "cellar: tapping \"to drink soon\" again did not show all wines")
+
+        let bottles = element("cellar.stat.bottles")
+        if bottles.isHittable {
+            bottles.press()
+            XCTAssertTrue(element("sheet.done").waitForExistence(timeout: 3), "cellar: \"bottles\" did not open insights")
+            snapshot("cellar-insights")
+            closeSheet()
+        }
     }
 
     // MARK: Racks

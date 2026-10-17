@@ -39,12 +39,26 @@ struct CellarList: View {
     @Binding var selection: UUID?
     @State private var filter = CellarFilter()
     @State private var sort: CellarSort = .name
+    @State private var showsInsights = false
 
     var body: some View {
         content
             .navigationTitle("Cellar")
             .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
             .toolbar { toolbar }
+            .sheet(isPresented: $showsInsights) {
+                NavigationStack {
+                    InsightsView()
+                        .inlineTitle()
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") { showsInsights = false }
+                                    .accessibilityIdentifier("sheet.done")
+                            }
+                        }
+                }
+                .macSheetFrame(width: 640, height: 720)
+            }
     }
 
     @ViewBuilder
@@ -53,10 +67,18 @@ struct CellarList: View {
         if model.cellar.bottlesInCellar.isEmpty {
             EmptyCellarView()
         } else {
+            ScrollViewReader { proxy in
             List(selection: $selection) {
                 if filter.query.isEmpty {
                     Section {
-                        CellarSummary(filter: $filter)
+                        CellarSummary(filter: $filter, onBottles: { showsInsights = true }, onWines: {
+                            withAnimation(.snappy) {
+                                filter = CellarFilter()
+                                if let first = model.cellar.groups(filter: CellarFilter(), sort: sort, year: model.currentYear).first {
+                                    proxy.scrollTo(first.id, anchor: .top)
+                                }
+                            }
+                        })
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                             .listRowBackground(Color.clear)
                     }
@@ -97,6 +119,7 @@ struct CellarList: View {
                 }
             }
             .animation(.default, value: groups.map(\.id))
+            }
         }
     }
 
@@ -146,15 +169,38 @@ struct CellarList: View {
 private struct CellarSummary: View {
     @Environment(CellarModel.self) private var model
     @Binding var filter: CellarFilter
+    /// Bottles: the cellar in figures.
+    var onBottles: () -> Void
+    /// Wines: the whole list, without filters.
+    var onWines: () -> Void
 
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
+        let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                StatTile(value: "\(stats.bottleCount)", caption: "bottles", systemImage: "wineglass")
-                StatTile(value: "\(stats.wineCount)", caption: "wines", systemImage: "list.bullet")
-                StatTile(value: "\(stats.byMaturity[.drinkSoon, default: 0])", caption: "to drink soon", systemImage: "hourglass")
+                Button(action: onBottles) {
+                    StatTile(value: "\(stats.bottleCount)", caption: "bottles", systemImage: "wineglass", opens: true)
+                }
+                .accessibilityHint(Text("Shows your cellar in figures."))
+                .accessibilityIdentifier("cellar.stat.bottles")
+                Button(action: onWines) {
+                    StatTile(value: "\(stats.wineCount)", caption: "wines", systemImage: "list.bullet")
+                }
+                .accessibilityHint(Text("Shows all your wines."))
+                .accessibilityIdentifier("cellar.stat.wines")
+                Button {
+                    withAnimation(.snappy) {
+                        filter = soonOnly ? CellarFilter(query: filter.query) : CellarFilter(query: filter.query, maturities: [.drinkSoon])
+                    }
+                } label: {
+                    StatTile(value: "\(stats.byMaturity[.drinkSoon, default: 0])", caption: "to drink soon",
+                             systemImage: "hourglass", isSelected: soonOnly)
+                }
+                .accessibilityHint(Text("Shows only the wines to drink soon."))
+                .accessibilityIdentifier("cellar.stat.soon")
             }
+            .buttonStyle(.plain)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(WineColor.allCases, id: \.self) { color in
