@@ -1,0 +1,144 @@
+package app.encave.core.sync
+
+import app.encave.core.InstantSerializer
+import app.encave.core.ReferenceDates
+import app.encave.core.UuidSerializer
+import java.time.Instant
+import java.util.UUID
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+/** A device of the cellar. */
+@Serializable
+data class Member(
+    @Serializable(with = UuidSerializer::class) val id: UUID,
+    val name: String,
+    /** X25519 public key, 32 bytes. */
+    @Serializable(with = Base64Serializer::class) val publicKey: ByteArray,
+    /** "ios", "ipados", "macos" or "android". */
+    val platform: String,
+    @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
+) {
+    override fun equals(other: Any?): Boolean = other is Member && id == other.id && name == other.name &&
+        publicKey.contentEquals(other.publicKey) && platform == other.platform && addedAt == other.addedAt
+
+    override fun hashCode(): Int = listOf(id, name, publicKey.contentHashCode(), platform, addedAt).hashCode()
+}
+
+/**
+ * The devices of a cellar, synced like the cellar itself: each change is stamped,
+ * and removing a device leaves a stamp so it is not added back by an older copy.
+ */
+@Serializable(with = MembershipSerializer::class)
+data class Membership(
+    /** Shared by all devices of the cellar; set by the first device. */
+    val cellarId: UUID = UUID.randomUUID(),
+    val members: Map<UUID, Member> = emptyMap(),
+    val stamps: Map<UUID, Stamp> = emptyMap(),
+) {
+    /** Advertised on the local network so devices of the same cellar find each other without showing the cellar ID. */
+    val networkTag: String get() = KeySchedule.hash("encave-cellar-tag-v1", listOf(cellarId.lower.toByteArray())).copyOf(6).hex()
+
+    /** Devices that may sync, oldest first. */
+    val active: List<Member> get() = members.values.sortedBy { it.addedAt }
+
+    /** Adds (or updates) a member. Returns the new list and the advanced clock. */
+    fun adding(member: Member, clock: Long, by: UUID): Pair<Membership, Long> {
+        val next = clock + 1
+        return copy(members = members + (member.id to member), stamps = stamps + (member.id to Stamp(next, by))) to next
+    }
+
+    /** Removes a member, leaving a deletion stamp. Returns the new list and the advanced clock. */
+    fun removing(id: UUID, clock: Long, by: UUID): Pair<Membership, Long> {
+        val next = clock + 1
+        return copy(members = members - id, stamps = stamps + (id to Stamp(next, by, deleted = true))) to next
+    }
+
+    /** Combines two lists of the same cellar; each device as of its latest change. */
+    fun merged(other: Membership): Membership {
+        val resultMembers = LinkedHashMap<UUID, Member>()
+        val resultStamps = LinkedHashMap<UUID, Stamp>()
+        for (id in stamps.keys + other.stamps.keys + members.keys + other.members.keys) {
+            val a = this.stamps[id] ?: if (this.members[id] != null) Stamp.ZERO else null
+            val b = other.stamps[id] ?: if (other.members[id] != null) Stamp.ZERO else null
+            val useOther = when {
+                a == null -> true
+                b == null -> false
+                else -> b > a
+            }
+            val stamp = if (useOther) b else a
+            if (stamp != null) resultStamps[id] = stamp
+            if (stamp?.deleted == true) continue
+            val member = if (useOther) other.members[id] ?: members[id] else members[id] ?: other.members[id]
+            if (member != null) resultMembers[id] = member
+        }
+        return Membership(cellarId, resultMembers, resultStamps)
+    }
+}
+
+/** `{cellarID, members: [id, member, …], stamps: [id, stamp, …]}`, as Swift encodes `[UUID: …]`. */
+object MembershipSerializer : KSerializer<Membership> {
+    override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
+
+    override fun serialize(encoder: Encoder, value: Membership) {
+        val output = encoder as? JsonEncoder ?: throw SerializationException("Membership is JSON only")
+        val json = output.json
+        output.encodeJsonElement(
+            buildJsonObject {
+                put("cellarID", JsonPrimitive(value.cellarId.upper))
+                put("members", buildJsonArray {
+                    value.members.forEach { (id, member) ->
+                        add(JsonPrimitive(id.upper))
+                        add(json.encodeToJsonElement(Member.serializer(), member))
+                    }
+                })
+                put("stamps", buildJsonArray {
+                    value.stamps.forEach { (id, stamp) ->
+                        add(JsonPrimitive(id.upper))
+                        add(json.encodeToJsonElement(Stamp.serializer(), stamp))
+                    }
+                })
+            },
+        )
+    }
+
+    override fun deserialize(decoder: Decoder): Membership {
+        val input = decoder as? JsonDecoder ?: throw SerializationException("Membership is JSON only")
+        val json = input.json
+        val root = input.decodeJsonElement() as? JsonObject ?: throw SerializationException("Membership must be an object")
+        val cellar = root["cellarID"]?.jsonPrimitive?.content ?: throw SerializationException("Missing cellarID")
+        return Membership(
+            cellarId = UUID.fromString(cellar),
+            members = pairs(root["members"]) { json.decodeFromJsonElement(Member.serializer(), it) },
+            stamps = pairs(root["stamps"]) { json.decodeFromJsonElement(Stamp.serializer(), it) },
+        )
+    }
+
+    private fun <T> pairs(element: kotlinx.serialization.json.JsonElement?, decode: (kotlinx.serialization.json.JsonElement) -> T): Map<UUID, T> {
+        val result = LinkedHashMap<UUID, T>()
+        when (element) {
+            null -> Unit
+            is JsonArray -> {
+                if (element.size % 2 != 0) throw SerializationException("Odd dictionary array")
+                for (index in element.indices step 2) {
+                    result[UUID.fromString(element[index].jsonPrimitive.content)] = decode(element[index + 1])
+                }
+            }
+            is JsonObject -> element.forEach { (key, value) -> result[UUID.fromString(key)] = decode(value) }
+            else -> throw SerializationException("Unexpected dictionary encoding")
+        }
+        return result
+    }
+}

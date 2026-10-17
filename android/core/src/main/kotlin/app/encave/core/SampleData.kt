@@ -32,7 +32,7 @@ object SampleData {
         val tagGift: String = "Gift idea",
     )
 
-    fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = Instant.now()): Cellar {
+    fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = ReferenceDates.now()): Cellar {
         val cellar = Cellar()
         val main = Rack(name = labels.mainRack, rows = 6, columns = 8)
         val small = Rack(name = labels.wineFridge, kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)

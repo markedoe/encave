@@ -145,6 +145,16 @@ class Cellar(
     }
 
     /** Existing wines matching a query, for "add another bottle of...". */
+    /** The wine a barcode was seen on, preferring one with bottles in the cellar. */
+    fun wine(barcode: String): Wine? {
+        val code = Wine.normalizedBarcode(barcode)
+        if (code.isEmpty()) return null
+        val inCellar = bottlesInCellar.map { it.wineId }.toSet()
+        return wineMap.values.filter { code in it.barcodes.orEmpty() }
+            .sortedWith(compareBy<Wine>({ if (it.id in inCellar) 0 else 1 }, { it.displayName }))
+            .firstOrNull()
+    }
+
     fun wineSuggestions(query: String, limit: Int = 8): List<Wine> {
         val needle = query.trim()
         if (needle.isEmpty()) return emptyList()
@@ -173,7 +183,7 @@ class Cellar(
         quantity: Int = 1,
         slots: List<Slot> = emptyList(),
         purchase: PurchaseInfo = PurchaseInfo(),
-        addedAt: Instant = Instant.now(),
+        addedAt: Instant = ReferenceDates.now(),
     ): List<Bottle> {
         if (quantity <= 0) return emptyList()
         slots.forEach { validateFree(it) }

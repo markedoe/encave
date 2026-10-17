@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
 data class Discovery(
     @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     @SerialName("wineID") @Serializable(with = UuidSerializer::class) val wineId: UUID,
-    @Serializable(with = InstantSerializer::class) val date: Instant = Instant.now(),
+    @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
     val setting: Setting? = null,
     /** Free text: restaurant, city, friend's name. */
     val place: String? = null,
@@ -125,7 +125,7 @@ fun Cellar.deleteDiscovery(id: UUID) {
 }
 
 /** Takes the wine off the shopping list once a bottle was bought. */
-fun Cellar.markBought(id: UUID, date: Instant = Instant.now()) {
+fun Cellar.markBought(id: UUID, date: Instant = ReferenceDates.now()) {
     val discovery = discoveries[id] ?: throw CellarException(CellarError.UnknownDiscovery)
     putDiscovery(discovery.copy(wantsToBuy = false, boughtAt = date))
 }

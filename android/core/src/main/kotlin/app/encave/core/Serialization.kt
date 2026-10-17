@@ -50,14 +50,34 @@ object InstantSerializer : KSerializer<Instant> {
 
     override val descriptor = PrimitiveSerialDescriptor("app.encave.Instant", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeString(format(value))
+    override fun serialize(encoder: Encoder, value: Instant) {
+        // The sync payload and the on-device file write numbers, like Swift's `.deferredToDate`.
+        if (encoder is JsonEncoder && encoder.serializersModule.getContextual(ReferenceDates::class) != null) {
+            encoder.encodeJsonElement(JsonUnquotedLiteral(referenceSeconds(value)))
+        } else {
+            encoder.encodeString(format(value))
+        }
+    }
+
+    /** Seconds since 2001-01-01 as a plain decimal number ("782003123.5"), the exact value Swift stores. */
+    fun referenceSeconds(value: Instant): String =
+        BigDecimal(referenceDouble(value).toString()).stripTrailingZeros().toPlainString()
+
+    fun referenceDouble(value: Instant): Double = (value.epochSecond - APPLE_REFERENCE_EPOCH).toDouble() + value.nano / 1e9
+
+    /** The instant of a Swift `Date` (a Double of seconds since 2001-01-01). */
+    fun fromReferenceSeconds(seconds: Double): Instant {
+        val whole = Math.floor(seconds)
+        val nanos = Math.round((seconds - whole) * 1e9)
+        return Instant.ofEpochSecond(APPLE_REFERENCE_EPOCH + whole.toLong(), nanos)
+    }
 
     override fun deserialize(decoder: Decoder): Instant {
         if (decoder is JsonDecoder) {
             val element = decoder.decodeJsonElement().jsonPrimitive
             if (!element.isString) {
                 val seconds = element.doubleOrNull ?: throw SerializationException("Invalid date: $element")
-                return Instant.ofEpochSecond(APPLE_REFERENCE_EPOCH).plusNanos((seconds * 1e9).toLong())
+                return fromReferenceSeconds(seconds)
             }
             return parse(element.content)
         }
@@ -71,6 +91,28 @@ object InstantSerializer : KSerializer<Instant> {
     } catch (_: Exception) {
         OffsetDateTime.parse(text).toInstant()
     }
+}
+
+/**
+ * Marker: a [Json] whose serializers module has a contextual serializer for this class
+ * writes dates as numbers of seconds since 2001-01-01 instead of ISO-8601 strings.
+ */
+object ReferenceDates {
+    internal object Marker : KSerializer<ReferenceDates> {
+        override val descriptor = PrimitiveSerialDescriptor("app.encave.ReferenceDates", PrimitiveKind.STRING)
+        override fun serialize(encoder: Encoder, value: ReferenceDates) = encoder.encodeString("")
+        override fun deserialize(decoder: Decoder): ReferenceDates = ReferenceDates
+    }
+
+    val module = kotlinx.serialization.modules.SerializersModule { contextual(ReferenceDates::class, Marker) }
+
+    /**
+     * Now, as an instant that a Swift `Date` (a Double of seconds) holds exactly, so it
+     * reads back the same after a sync. Use it for every date the app records.
+     */
+    fun now(): Instant = canonical(Instant.now())
+
+    fun canonical(value: Instant): Instant = InstantSerializer.fromReferenceSeconds(InstantSerializer.referenceDouble(value))
 }
 
 /** `BigDecimal` as a bare JSON number ("12.5", "24"), like Swift's `Decimal`. */
@@ -176,7 +218,11 @@ object CellarJson {
         prettyPrintIndent = "  "
     }
 
-    fun encode(cellar: Cellar): String = json.encodeToString(CellarSerializer, cellar)
+    /** Like [json], with dates as Swift writes them in its cellar file: exact numbers, so they round-trip. */
+    val referenceJson = Json(json) { serializersModule = ReferenceDates.module }
+
+    /** The on-device file and the sync payload: dates as numbers (backups keep ISO-8601). */
+    fun encode(cellar: Cellar): String = referenceJson.encodeToString(CellarSerializer, cellar)
 
     fun decode(text: String): Cellar = json.decodeFromString(CellarSerializer, text)
 

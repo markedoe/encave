@@ -3,9 +3,9 @@ name: Android app
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["android/**", "design/tokens.json", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "relay/**", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", "design/tokens.json", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "relay/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Core model tests
-        run: ./gradlew :core:test --stacktrace
+        # A local relay (relay/server.mjs) for the remote sync integration test.
+        run: |
+          mkdir -p "$RUNNER_TEMP/relay"
+          (cd .. && PORT=8787 DATA_DIR="$RUNNER_TEMP/relay" node relay/server.mjs &)
+          for i in $(seq 1 50); do curl -fs http://localhost:8787/v1/health && break; sleep 0.2; done
+          ENCAVE_RELAY_URL=http://localhost:8787 ./gradlew :core:test --stacktrace
 
       - name: App unit tests
         run: ./gradlew :app:testDebugUnitTest --stacktrace

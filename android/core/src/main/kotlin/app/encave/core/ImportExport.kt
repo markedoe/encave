@@ -18,7 +18,7 @@ object CellarExport {
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
-        "rating", "tasted_on", "note",
+        "rating", "tasted_on", "note", "expected_on",
     )
 
     /** Pretty-printed JSON backup, readable by the Apple app. */
@@ -26,11 +26,11 @@ object CellarExport {
 
     fun backupFromJson(text: String): CellarBackup = CellarJson.backupFrom(text)
 
-    /** One row per bottle. Includes consumed bottles when [includeHistory] is true. */
+    /** One row per bottle. Includes consumed and gone bottles when [includeHistory] is true; ordered ones always. */
     fun csv(cellar: Cellar, includeHistory: Boolean = true): String {
         val collator = Cellar.collator()
         val bottles = cellar.bottles.values
-            .filter { includeHistory || it.status == Bottle.Status.InCellar }
+            .filter { includeHistory || it.status == Bottle.Status.InCellar || it.status == Bottle.Status.Ordered }
             .sortedWith { a, b ->
                 val wa = cellar.wines[a.wineId]
                 val wb = cellar.wines[b.wineId]
@@ -48,7 +48,7 @@ object CellarExport {
                 bottle.purchaseDate?.let(::day), bottle.purchasePrice?.let(DecimalSerializer::plain), bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, bottle.sizeML.toString(),
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
-                bottle.tasting?.note,
+                bottle.tasting?.note, bottle.expectedAt?.let(::day),
             )
             lines += fields.joinToString(",") { escape(it ?: "") }
         }
@@ -99,7 +99,7 @@ fun Cellar.merge(other: Cellar): ImportSummary {
  * Imports a CSV in the export format (column order may vary; only "name" is required).
  * A "quantity" column, if present, creates that many bottles per row.
  */
-fun Cellar.importCsv(text: String, now: Instant = Instant.now()): ImportSummary {
+fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportSummary {
     val rows = CsvParser.parse(text)
     val header = rows.firstOrNull() ?: throw ImportException(ImportError.EmptyFile)
     val columns = header.map { it.trim().lowercase(Locale.ROOT).replace(" ", "_") }
@@ -163,6 +163,10 @@ fun Cellar.importCsv(text: String, now: Instant = Instant.now()): ImportSummary 
                     ).normalized(),
                 )
                 status == Bottle.Status.Gone -> bottle.copy(status = Bottle.Status.Gone)
+                // An ordered bottle has no place yet.
+                status == Bottle.Status.Ordered -> bottle.copy(
+                    status = Bottle.Status.Ordered, expectedAt = value("expected_on")?.let(CellarExport::parseDay),
+                )
                 slot != null -> bottle.copy(slot = slot)
                 rackName != null -> bottle.copy(
                     storageNote = bottle.storageNote ?: listOfNotNull(rackName, label).joinToString(" · "),
