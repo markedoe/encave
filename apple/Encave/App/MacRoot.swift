@@ -27,6 +27,12 @@ struct MacRoot: View {
         } detail: {
             NavigationStack { detail }
         }
+        // Like Mail: open on the first wine rather than an empty page.
+        .onAppear {
+            if wine == nil {
+                wine = model.cellar.groups(filter: CellarFilter(), sort: .name, year: model.currentYear).first?.wine.id
+            }
+        }
         // Menu commands and "Show in Rack" set the selected tab: follow them.
         .onChange(of: model.selectedTab, initial: true) { _, tab in follow(tab) }
         .onChange(of: model.highlightedSlot) { _, slot in
@@ -190,15 +196,6 @@ struct RackBottleList: View {
                 }
             }
             .navigationTitle(rack.name)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        model.sheet = .editRack(rackID: rackID)
-                    } label: {
-                        Label("Edit Rack", systemImage: "slider.horizontal.3")
-                    }
-                }
-            }
             .onChange(of: selection) { _, id in
                 if let id, let slot = model.cellar.bottles[id]?.slot { model.highlightedSlot = slot }
             }
