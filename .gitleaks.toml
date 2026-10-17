@@ -36,6 +36,9 @@ regexes = [
   '''(?i)(change[-_]?(this|me)|your[_-]|example|placeholder|dummy|sk-ant-\.\.\.|<[^>]+>|\$\{)''',
   '''[A-Za-z0-9_-]{8,}\.\.\.''',  # truncated examples in docs
   '''TestPassword123!''',
+  # Remote sync test vectors in docs/SYNC.md §10 (derived from fixed, public inputs).
+  '''zyJIksEyVCrPawgL8q0UGr5GMi1KewaCGSzwHGOLFno''',
+  '''K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8''',
   # Type names in code, not keys.
   '''Curve25519\.(KeyAgreement|Signing)\.PrivateKey''',
 ]
