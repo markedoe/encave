@@ -905,6 +905,10 @@ S = [
  ("help_racks_drag", "On tablets, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).",
   "Sur tablette, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement)."),
 
+ ("help_start_shortcuts_title", "Shortcuts", "Raccourcis"),
+ ("help_start_shortcuts", "Touch and hold the Encave icon to **Scan a bottle** or see **What to open tonight** right away. A delivery reminder opens the wine on order.",
+  "Maintenez l’icône d’Encave appuyée pour **Scanner une bouteille** ou voir **Que boire ce soir** tout de suite. Un rappel de livraison ouvre le vin en commande."),
+
 ]
 
 P = [

@@ -54,6 +54,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
                     HelpSection(R.string.help_start_journal, R.string.nav_journal, Icons.Outlined.AutoStories),
                     HelpSection(R.string.help_start_table, R.string.help_start_table_title, Icons.Outlined.TableChart),
+                    HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
                     HelpSection(R.string.help_start_try, R.string.help_start_try_title),
                 ),
             ),

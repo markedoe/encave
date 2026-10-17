@@ -354,6 +354,14 @@ class ScreenTourTest(private val device: String, private val language: String) {
     }
 
     @Test
+    fun wineTags() {
+        tap("wine.row")
+        tap("action.edit_wine")
+        scrollTo("field.tags")
+        capture("40-wine-tags")
+    }
+
+    @Test
     fun addBottle() {
         tap("action.fab_add")
         capture("04-add-bottle")

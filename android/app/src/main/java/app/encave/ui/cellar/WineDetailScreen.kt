@@ -137,7 +137,7 @@ fun WineDetailScreen(
                 },
                 actions = {
                     if (wine != null) {
-                        IconButton(onClick = { navigator.open(EditWineRoute(wineId)) }) {
+                        IconButton(onClick = { navigator.open(EditWineRoute(wineId)) }, modifier = Modifier.testTag("action.edit_wine")) {
                             Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.action_edit))
                         }
                         Box {

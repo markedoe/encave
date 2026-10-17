@@ -817,6 +817,8 @@
     <string name="help_start_table">Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.</string>
     <string name="help_racks_drag_title">Glisser-déposer</string>
     <string name="help_racks_drag">Sur tablette, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement).</string>
+    <string name="help_start_shortcuts_title">Raccourcis</string>
+    <string name="help_start_shortcuts">Maintenez l’icône d’Encave appuyée pour **Scanner une bouteille** ou voir **Que boire ce soir** tout de suite. Un rappel de livraison ouvre le vin en commande.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

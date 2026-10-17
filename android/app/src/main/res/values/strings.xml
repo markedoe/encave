@@ -818,6 +818,8 @@
     <string name="help_start_table">On tablets and large screens, the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.</string>
     <string name="help_racks_drag_title">Drag and drop</string>
     <string name="help_racks_drag">On tablets, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).</string>
+    <string name="help_start_shortcuts_title">Shortcuts</string>
+    <string name="help_start_shortcuts">Touch and hold the Encave icon to **Scan a bottle** or see **What to open tonight** right away. A delivery reminder opens the wine on order.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
