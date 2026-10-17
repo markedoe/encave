@@ -74,21 +74,26 @@ struct WineFormSections: View {
         Section {
             TextField("Name", text: $draft.name, prompt: Text("Château, cuvée…"))
                 .font(.headline)
+                .fieldHelp("The name on the label, without the vintage. Required.")
                 .focused($nameFocused)
                 .submitLabel(.next)
             TextField("Producer", text: $draft.producer)
+                .fieldHelp("The estate, domaine or house that made the wine.")
             Picker("Vintage", selection: $draft.vintage) {
                 Text("Non-vintage").tag(Int?.none)
                 ForEach((1950...(currentYear + 1)).reversed(), id: \.self) { year in
                     Text(verbatim: "\(year)").tag(Int?.some(year))
                 }
             }
+            .fieldHelp("The harvest year on the label. Non-vintage for wines without a year.")
         } header: {
             Text("Wine")
+        } footer: {
+            Text("Only the name is required. Producer and vintage tell apart wines with the same name.")
         }
         .onAppear { if focusName { nameFocused = true } }
 
-        Section("Style") {
+        Section {
             FlowLayout(spacing: 8) {
                 ForEach(WineColor.allCases, id: \.self) { color in
                     ChoiceChip(title: color.title, isSelected: draft.color == color) {
@@ -99,13 +104,24 @@ struct WineFormSections: View {
                 }
             }
             .padding(.vertical, 4)
+        } header: {
+            Text("Style")
+        } footer: {
+            Text("Used for colors, serving temperature, the estimated drinking window and food pairing.")
         }
 
-        Section("Origin") {
+        Section {
             TextField("Appellation", text: $draft.appellation)
+                .fieldHelp("The protected name of origin, such as Pauillac or Chablis.")
             TextField("Region", text: $draft.region)
+                .fieldHelp("The wine region, such as Bordeaux or Tuscany.")
             TextField("Country", text: $draft.country)
             TextField("Grapes", text: $draft.grapes, prompt: Text("Pinot Noir, Gamay"))
+                .fieldHelp("Grape varieties, separated by commas.")
+        } header: {
+            Text("Origin")
+        } footer: {
+            Text("Optional. Makes search and food pairing better. Separate grapes with commas.")
         }
 
         if showsCellarDetails {
@@ -117,6 +133,7 @@ struct WineFormSections: View {
     private var cellarDetails: some View {
         Section {
             Toggle("Estimate automatically", isOn: $draft.windowIsAutomatic.animation())
+                .fieldHelp("Works out the window from the style and the vintage. Turn off to enter the years yourself.")
             if draft.windowIsAutomatic {
                 if let window = draft.estimatedWindow {
                     LabeledContent("Suggested") {
@@ -137,12 +154,16 @@ struct WineFormSections: View {
         } header: {
             Text("Drinking window")
         } footer: {
-            Text("Used by Tonight to suggest what to open. You can adjust it anytime.")
+            Text("The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.")
         }
 
-        Section("Notes") {
+        Section {
             TextField("Notes about this wine", text: $draft.notes, axis: .vertical)
                 .lineLimit(2...6)
+        } header: {
+            Text("Notes")
+        } footer: {
+            Text("About the wine itself. Notes on a bottle you opened go in its tasting.")
         }
     }
 

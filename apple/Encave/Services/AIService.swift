@@ -61,17 +61,23 @@ enum AIProvider: String, CaseIterable, Sendable {
         }
     }
 
-    /// Where to create a key, for the providers whose page is stable.
+    /// Where to create a key (for a local server: where to get one).
     var keyPage: URL? {
         switch self {
+        case .off: nil
         case .openAI: URL(string: "https://platform.openai.com/api-keys")
         case .anthropic: URL(string: "https://console.anthropic.com/settings/keys")
         case .google: URL(string: "https://aistudio.google.com/apikey")
         case .xai: URL(string: "https://console.x.ai")
         case .mistral: URL(string: "https://console.mistral.ai/api-keys")
         case .deepseek: URL(string: "https://platform.deepseek.com/api_keys")
+        // Alibaba Cloud's guide: the key is created in the Model Studio console, region Singapore.
+        case .qwen: URL(string: "https://help.aliyun.com/en/model-studio/get-api-key")
+        case .kimi: URL(string: "https://platform.moonshot.ai/console/api-keys")
+        case .zhipu: URL(string: "https://z.ai/manage-apikey/apikey-list")
+        case .minimax: URL(string: "https://platform.minimax.io/user-center/basic-information/interface-key")
         case .openRouter: URL(string: "https://openrouter.ai/keys")
-        default: nil
+        case .local: URL(string: "https://ollama.com/download")
         }
     }
 

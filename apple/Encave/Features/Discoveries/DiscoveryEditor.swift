@@ -34,7 +34,7 @@ struct DiscoveryEditor: View {
                 }
                 WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false)
 
-                Section("Where") {
+                Section {
                     FlowLayout(spacing: 8) {
                         ForEach(Discovery.Setting.allCases, id: \.self) { option in
                             ChoiceChip(title: option.title, isSelected: setting == option) {
@@ -46,7 +46,12 @@ struct DiscoveryEditor: View {
                     }
                     .padding(.vertical, 4)
                     TextField("Place", text: $place, prompt: Text("Restaurant, city, friends’ names…"))
+                        .fieldHelp("Where you had it, to find the wine again later.")
                     DatePicker("Date", selection: $date, in: ...Date.now, displayedComponents: .date)
+                } header: {
+                    Text("Where")
+                } footer: {
+                    Text("Search in the Journal also looks in the place, notes and tags.")
                 }
 
                 Section("Your impression") {
@@ -55,8 +60,12 @@ struct DiscoveryEditor: View {
                         .lineLimit(3...8)
                 }
 
-                Section("Tags") {
+                Section {
                     TagEditor(tags: $tags, suggestions: model.cellar.discoveryTags, newTag: $pendingTag)
+                } header: {
+                    Text("Tags")
+                } footer: {
+                    Text("Your own groups, such as gift ideas or for summer. Tap a tag to select it, or type a new one and press Return. Filter by tag in the Journal.")
                 }
 
                 Section {
@@ -65,6 +74,7 @@ struct DiscoveryEditor: View {
                     }
                     TextField("Price seen", value: $price, format: .currency(code: model.cellar.settings.currency))
                         .numericKeyboard()
+                        .fieldHelp("The price on the wine list or in the shop, to compare when you buy it.")
                 } footer: {
                     Text("Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.")
                 }
@@ -74,6 +84,9 @@ struct DiscoveryEditor: View {
                     Section {
                         Button("Delete Discovery", role: .destructive) { confirmingDelete = true }
                     }
+                }
+                Section {
+                    HelpLink(topic: .discoveries, title: "Help with discoveries")
                 }
             }
             .formStyle(.grouped)

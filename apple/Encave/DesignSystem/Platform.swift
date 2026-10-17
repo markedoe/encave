@@ -45,4 +45,9 @@ extension View {
         return plainInput()
         #endif
     }
+
+    /// Explains a field: a tooltip on the Mac, a hint for VoiceOver everywhere.
+    func fieldHelp(_ text: LocalizedStringKey) -> some View {
+        help(Text(text))
+    }
 }

@@ -29,11 +29,13 @@ struct AISettingsSection: View {
                     Text("Local server (Ollama, LM Studio…)").tag(AIProvider.local)
                 }
             }
+            .fieldHelp("The AI service that reads label photos. You need an account and an API key with it.")
 
             if settings.isEnabled {
                 TextField("Server URL", text: $settings.baseURL,
                           prompt: Text(verbatim: settings.provider.defaultBaseURL))
                     .urlField()
+                    .fieldHelp("Leave empty for the provider's usual address. For a local server, its address on your network.")
                 Group {
                     if settings.provider.requiresKey {
                         SecureField("API key", text: $apiKey)
@@ -43,6 +45,7 @@ struct AISettingsSection: View {
                 }
                 .plainInput()
                 .onSubmit(checkKey)
+                .fieldHelp("Created on the provider's website. Stored in the Keychain on this device.")
                 HStack {
                     Button(action: checkKey) {
                         Label("Check Key and Load Models", systemImage: "checkmark.shield")
@@ -53,9 +56,15 @@ struct AISettingsSection: View {
                 }
                 if let page = settings.provider.keyPage {
                     Link(destination: page) {
-                        Label("Get an API key", systemImage: "arrow.up.right.square")
+                        if settings.provider == .local {
+                            Label("Install a local server (Ollama)", systemImage: "arrow.up.right.square")
+                        } else {
+                            let providerName = settings.provider.name
+                            Label("Create an API key at \(providerName)", systemImage: "arrow.up.right.square")
+                        }
                     }
                 }
+                HelpLink(topic: .ai, title: "How to set up AI")
                 modelPicker
             }
         } header: {
@@ -95,6 +104,7 @@ struct AISettingsSection: View {
                 }
                 ForEach(models, id: \.self) { Text(verbatim: $0).tag($0) }
             }
+            .fieldHelp("Choose a model that reads images. Larger models are more accurate but slower and cost more.")
             Button("Enter a model name") { customModel = true }
                 .font(.footnote)
         } else {

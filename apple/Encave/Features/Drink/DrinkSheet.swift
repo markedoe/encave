@@ -28,6 +28,9 @@ struct DrinkSheet: View {
                             .listRowBackground(Color.clear)
                         }
                         TastingFormSections(draft: $draft)
+                        Section {
+                            HelpLink(topic: .drinking, title: "Help with tasting notes")
+                        }
                     }
                     .formStyle(.grouped)
                 } else {
@@ -155,8 +158,12 @@ struct TastingFormSections: View {
         Section {
             RatingPicker(rating: $draft.rating)
                 .frame(maxWidth: .infinity)
+                .fieldHelp("From one star (disappointing) to five (exceptional). Tap the same star again to clear it.")
             TextField("How was it?", text: $draft.note, axis: .vertical)
                 .lineLimit(2...6)
+                .fieldHelp("A few words to remember the bottle.")
+        } footer: {
+            Text("Everything is optional and can be changed later from the Journal.")
         }
 
         Section("Occasion") {
@@ -175,11 +182,18 @@ struct TastingFormSections: View {
         Section {
             DisclosureGroup("Full tasting note", isExpanded: $showsDetails) {
                 TextField("Appearance", text: $draft.appearance, axis: .vertical)
+                    .fieldHelp("Color, intensity, clarity.")
                 TextField("Nose", text: $draft.nose, axis: .vertical)
+                    .fieldHelp("Aromas: fruit, flowers, spices, wood…")
                 TextField("Palate", text: $draft.palate, axis: .vertical)
+                    .fieldHelp("Taste and structure: sweetness, acidity, tannins, body.")
                 TextField("Finish", text: $draft.finish, axis: .vertical)
+                    .fieldHelp("How long the flavors last after swallowing.")
                 TextField("Food served", text: $draft.foodPairing, axis: .vertical)
+                    .fieldHelp("What you ate with it, to remember good pairings.")
             }
+        } footer: {
+            Text("A structured note: appearance, nose, palate, finish and the food you had with it.")
         }
         .onAppear { if startsExpanded { showsDetails = true } }
     }

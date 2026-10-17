@@ -231,6 +231,26 @@
         }
       }
     },
+    "**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Sauvegarder (JSON)** enregistre tout : vins, bouteilles, casiers, dégustations et découvertes. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve déjà n’est remplacé."
+          }
+        }
+      }
+    },
+    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app."
+          }
+        }
+      }
+    },
     "5 rows of 8": {
       "localizations": {
         "fr": {
@@ -267,6 +287,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une sauvegarde contient tout et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel."
+          }
+        }
+      }
+    },
+    "A diamond bin of about 30 cm holds around 10 standard bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un losange d’environ 30 cm contient une dizaine de bouteilles standard."
+          }
+        }
+      }
+    },
+    "A few words to remember the bottle.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quelques mots pour vous souvenir de la bouteille."
+          }
+        }
+      }
+    },
+    "A name you will recognize: cellar left wall, kitchen fridge…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un nom que vous reconnaîtrez : mur gauche de la cave, cave de la cuisine…"
+          }
+        }
+      }
+    },
+    "A new scan or the AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un nouveau scan ou l’IA ne remplacent que les champs vides ou remplis automatiquement. Tout ce que vous avez saisi vous-même est conservé."
+          }
+        }
+      }
+    },
+    "A new wine, or more bottles of one you already have.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un nouveau vin, ou d’autres bouteilles d’un vin que vous avez déjà."
+          }
+        }
+      }
+    },
+    "A structured note: appearance, nose, palate, finish and the food you had with it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."
           }
         }
       }
@@ -317,6 +397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À propos"
+          }
+        }
+      }
+    },
+    "About the wine itself. Notes on a bottle you opened go in its tasting.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le vin lui-même. Les notes sur une bouteille ouverte vont dans sa dégustation."
           }
         }
       }
@@ -411,6 +501,26 @@
         }
       }
     },
+    "Add a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un casier"
+          }
+        }
+      }
+    },
+    "Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez une note, quelques mots et l’occasion, ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal."
+          }
+        }
+      }
+    },
     "Add a tag": {
       "localizations": {
         "fr": {
@@ -421,12 +531,32 @@
         }
       }
     },
+    "Add bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
     "Add bottles with a drinking window to see what is ready tonight.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez des bouteilles avec une fenêtre de dégustation pour voir ce qui est prêt ce soir."
+          }
+        }
+      }
+    },
+    "Add several bottles at once. Choose a rack to place them: the first free places are used unless you pick them. Without a rack, write where they are (kitchen, box in the garage).": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez plusieurs bouteilles d’un coup. Choisissez un casier pour les ranger : les premiers emplacements libres sont utilisés, sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage)."
           }
         }
       }
@@ -491,6 +621,16 @@
         }
       }
     },
+    "Adding bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
     "All data erased": {
       "localizations": {
         "fr": {
@@ -551,6 +691,16 @@
         }
       }
     },
+    "Aromas: fruit, flowers, spices, wood…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arômes : fruits, fleurs, épices, bois…"
+          }
+        }
+      }
+    },
     "At Julie and Marc's": {
       "localizations": {
         "fr": {
@@ -571,6 +721,16 @@
         }
       }
     },
+    "At friends', in a restaurant or on a trip, tap **+** in the Journal and scan the bottle. Add where you were, a rating, notes and tags.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chez des amis, au restaurant ou en voyage, touchez **+** dans le Journal et scannez la bouteille. Ajoutez le lieu, une note, du texte et des tags."
+          }
+        }
+      }
+    },
     "Automatic": {
       "localizations": {
         "fr": {
@@ -587,6 +747,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sauvegarder (JSON)"
+          }
+        }
+      }
+    },
+    "Back up": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarder"
+          }
+        }
+      }
+    },
+    "Backup, export and import": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde, export et import"
           }
         }
       }
@@ -841,6 +1021,16 @@
         }
       }
     },
+    "Cellar, Racks, Tonight, Journal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave, Casiers, Ce soir, Journal"
+          }
+        }
+      }
+    },
     "Change": {
       "localizations": {
         "fr": {
@@ -857,6 +1047,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier la clé et charger les modèles"
+          }
+        }
+      }
+    },
+    "Check the key": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier la clé"
           }
         }
       }
@@ -901,12 +1101,42 @@
         }
       }
     },
+    "Choose a model that reads images. Larger models are more accurate but slower and cost more.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un modèle qui lit les images. Les grands modèles sont plus précis mais plus lents et plus chers."
+          }
+        }
+      }
+    },
     "Choose a photo of the label": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez une photo de l’étiquette"
+          }
+        }
+      }
+    },
+    "Choose a provider": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir un fournisseur"
+          }
+        }
+      }
+    },
+    "Choose a rack to see exactly where the bottles are, or note where they are kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un casier pour savoir exactement où sont les bouteilles, ou indiquez où elles sont rangées."
           }
         }
       }
@@ -937,6 +1167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisir dans la liste"
+          }
+        }
+      }
+    },
+    "Choose it to add bottles without typing the wine again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez-le pour ajouter des bouteilles sans ressaisir le vin."
           }
         }
       }
@@ -981,6 +1221,16 @@
         }
       }
     },
+    "Color, intensity, clarity.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur, intensité, limpidité."
+          }
+        }
+      }
+    },
     "Columns": {
       "localizations": {
         "fr": {
@@ -997,6 +1247,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compléter avec l’IA"
+          }
+        }
+      }
+    },
+    "Counted from the left. Places are numbered 1, 2, 3…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comptées depuis la gauche. Les emplacements sont numérotés 1, 2, 3…"
+          }
+        }
+      }
+    },
+    "Counted from the top. Rows are lettered A, B, C…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comptées depuis le haut. Les rangées sont nommées A, B, C…"
           }
         }
       }
@@ -1031,6 +1301,46 @@
         }
       }
     },
+    "Create a key": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une clé"
+          }
+        }
+      }
+    },
+    "Create an API key": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une clé d’API"
+          }
+        }
+      }
+    },
+    "Create an API key at %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une clé d’API chez %@"
+          }
+        }
+      }
+    },
+    "Created on the provider's website. Stored in the Keychain on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée sur le site du fournisseur. Conservée dans le trousseau de cet appareil."
+          }
+        }
+      }
+    },
     "Currency": {
       "localizations": {
         "fr": {
@@ -1057,6 +1367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Carafage"
+          }
+        }
+      }
+    },
+    "Deep racks hold a second bottle behind the first one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les casiers profonds accueillent une deuxième bouteille derrière la première."
           }
         }
       }
@@ -1131,12 +1451,32 @@
         }
       }
     },
+    "Describe each place where you keep bottles: a rack, a wine fridge, a set of bins.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin, des casiers en losange."
+          }
+        }
+      }
+    },
     "Describe your racks to see exactly where each bottle is.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Décrivez vos casiers pour voir exactement où se trouve chaque bouteille."
+          }
+        }
+      }
+    },
+    "Describe your storage so every bottle has a place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décrivez vos rangements pour que chaque bouteille ait sa place."
           }
         }
       }
@@ -1177,6 +1517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casiers en losange"
+          }
+        }
+      }
+    },
+    "Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez un casier pour voir son contenu."
           }
         }
       }
@@ -1237,6 +1587,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Découvertes"
+          }
+        }
+      }
+    },
+    "Discoveries and shopping list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvertes et liste d’achats"
+          }
+        }
+      }
+    },
+    "Discoveries are not counted as bottles in your cellar and do not appear in racks or Tonight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les découvertes ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans les casiers ni dans Ce soir."
           }
         }
       }
@@ -1321,6 +1691,16 @@
         }
       }
     },
+    "Drinking a bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boire une bouteille"
+          }
+        }
+      }
+    },
     "Drinking window": {
       "localizations": {
         "fr": {
@@ -1337,6 +1717,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fenêtre de dégustation de %1$lld à %2$lld"
+          }
+        }
+      }
+    },
+    "Each bottle is tracked on its own, so you can drink or move them one by one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque bouteille est suivie séparément : vous pouvez les boire ou les déplacer une par une."
+          }
+        }
+      }
+    },
+    "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque vin est **trop jeune**, **prêt**, **à boire bientôt** (dernière année de sa fenêtre) ou **sur le déclin**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur."
+          }
+        }
+      }
+    },
+    "Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fiche de chaque vin propose une température de service et, pour les rouges jeunes et corsés, une durée de carafage."
           }
         }
       }
@@ -1391,6 +1801,36 @@
         }
       }
     },
+    "Encave Help": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide Encave"
+          }
+        }
+      }
+    },
+    "Encave is open source. Questions and ideas are welcome on the project page.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est open source. Questions et idées sont les bienvenues sur la page du projet."
+          }
+        }
+      }
+    },
+    "Encave is open source: anyone can check what the app does.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est open source : chacun peut vérifier ce que fait l’app."
+          }
+        }
+      }
+    },
     "Enjoy your %@": {
       "localizations": {
         "fr": {
@@ -1441,12 +1881,52 @@
         }
       }
     },
+    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type ou par moment où les boire."
+          }
+        }
+      }
+    },
+    "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large."
+          }
+        }
+      }
+    },
+    "Everything is optional and can be changed later from the Journal.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout est facultatif et modifiable plus tard depuis le Journal."
+          }
+        }
+      }
+    },
     "Export Spreadsheet (CSV)": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Exporter en tableur (CSV)"
+          }
+        }
+      }
+    },
+    "Fill in a wine from a photo of its label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplir un vin à partir d’une photo de son étiquette."
           }
         }
       }
@@ -1521,6 +2001,16 @@
         }
       }
     },
+    "For bottles that are not in a rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour les bouteilles qui ne sont pas dans un casier."
+          }
+        }
+      }
+    },
     "For summer": {
       "localizations": {
         "fr": {
@@ -1567,6 +2057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "De"
+          }
+        }
+      }
+    },
+    "From one star (disappointing) to five (exceptional). Tap the same star again to clear it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’une étoile (décevant) à cinq (exceptionnel). Touchez à nouveau la même étoile pour l’effacer."
           }
         }
       }
@@ -1621,6 +2121,16 @@
         }
       }
     },
+    "Getting started": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prise en main"
+          }
+        }
+      }
+    },
     "Gift from": {
       "localizations": {
         "fr": {
@@ -1657,6 +2167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Donnée ou cassée"
+          }
+        }
+      }
+    },
+    "Grape varieties, separated by commas.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cépages, séparés par des virgules."
           }
         }
       }
@@ -1701,12 +2221,82 @@
         }
       }
     },
+    "Half bottle 37.5 cl, bottle 75 cl, magnum 1.5 l, double magnum 3 l.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demi-bouteille 37,5 cl, bouteille 75 cl, magnum 1,5 l, double magnum 3 l."
+          }
+        }
+      }
+    },
+    "Help": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide"
+          }
+        }
+      }
+    },
+    "Help with adding bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide pour ajouter des bouteilles"
+          }
+        }
+      }
+    },
+    "Help with discoveries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide sur les découvertes"
+          }
+        }
+      }
+    },
+    "Help with racks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide sur les casiers"
+          }
+        }
+      }
+    },
+    "Help with tasting notes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide sur les notes de dégustation"
+          }
+        }
+      }
+    },
     "Holds %lld bottles.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Contient %lld bouteilles."
+          }
+        }
+      }
+    },
+    "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
           }
         }
       }
@@ -1721,12 +2311,62 @@
         }
       }
     },
+    "How long the flavors last after swallowing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Combien de temps les saveurs persistent après avoir avalé."
+          }
+        }
+      }
+    },
+    "How many bottles fit one behind the other on a shelf.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Combien de bouteilles tiennent l’une derrière l’autre sur une clayette."
+          }
+        }
+      }
+    },
+    "How many identical bottles you add.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Combien de bouteilles identiques vous ajoutez."
+          }
+        }
+      }
+    },
+    "How to set up AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment configurer l’IA"
+          }
+        }
+      }
+    },
     "How was it?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "C’était comment ?"
+          }
+        }
+      }
+    },
+    "If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour compléter le type, la région, les cépages et la fenêtre de dégustation. Seule cette photo est envoyée, jamais votre cave."
           }
         }
       }
@@ -1761,12 +2401,52 @@
         }
       }
     },
+    "In **Settings → AI**, choose a provider. You need an account with it and an API key; the provider bills you directly for what you use, usually a fraction of a cent per label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans **Réglages → IA**, choisissez un fournisseur. Il vous faut un compte chez lui et une clé d’API ; le fournisseur vous facture directement ce que vous utilisez, en général une fraction de centime par étiquette."
+          }
+        }
+      }
+    },
+    "In **Settings**, load the sample cellar to explore every screen, then erase it when you are ready to add your own bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans les **Réglages**, chargez la cave d’exemple pour découvrir chaque écran, puis effacez-la quand vous êtes prêt à ajouter vos bouteilles."
+          }
+        }
+      }
+    },
     "Insights": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Statistiques"
+          }
+        }
+      }
+    },
+    "Install a local server (Ollama)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer un serveur local (Ollama)"
+          }
+        }
+      }
+    },
+    "Irregular racks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casiers irréguliers"
           }
         }
       }
@@ -1801,12 +2481,42 @@
         }
       }
     },
+    "Keep a copy and move your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardez une copie et transférez votre cave."
+          }
+        }
+      }
+    },
     "Keep for later": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "À garder"
+          }
+        }
+      }
+    },
+    "Keep track of what you opened and what you thought.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardez la trace de ce que vous avez ouvert et de ce que vous en avez pensé."
+          }
+        }
+      }
+    },
+    "Keyboard shortcuts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis clavier"
           }
         }
       }
@@ -1861,6 +2571,16 @@
         }
       }
     },
+    "Label photos stay on the device and are not included in backups yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos d’étiquettes restent sur l’appareil et ne sont pas encore incluses dans les sauvegardes."
+          }
+        }
+      }
+    },
     "Large cellar, 120": {
       "localizations": {
         "fr": {
@@ -1887,6 +2607,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Disposition"
+          }
+        }
+      }
+    },
+    "Leave empty for the provider's usual address. For a local server, its address on your network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez vide pour l’adresse habituelle du fournisseur. Pour un serveur local, son adresse sur votre réseau."
+          }
+        }
+      }
+    },
+    "Leave it empty to use the provider's usual address. Change it only if the provider gives you another one, for example for its China region.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine."
           }
         }
       }
@@ -1921,12 +2661,32 @@
         }
       }
     },
+    "Local server": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveur local"
+          }
+        }
+      }
+    },
     "Local server (Ollama, LM Studio…)": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Serveur local (Ollama, LM Studio…)"
+          }
+        }
+      }
+    },
+    "Local server: install Ollama": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveur local : installer Ollama"
           }
         }
       }
@@ -1957,6 +2717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casier principal"
+          }
+        }
+      }
+    },
+    "Maturity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maturité"
           }
         }
       }
@@ -2027,6 +2797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déplacer…"
+          }
+        }
+      }
+    },
+    "Moving bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacer des bouteilles"
           }
         }
       }
@@ -2171,6 +2951,16 @@
         }
       }
     },
+    "Not in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors de la cave"
+          }
+        }
+      }
+    },
     "Not needed": {
       "localizations": {
         "fr": {
@@ -2271,12 +3061,42 @@
         }
       }
     },
+    "On the Mac, and on iPad with a keyboard.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur Mac, et sur iPad avec un clavier."
+          }
+        }
+      }
+    },
+    "On this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur cet appareil"
+          }
+        }
+      }
+    },
     "One": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Une"
+          }
+        }
+      }
+    },
+    "One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille par case, en rangées et colonnes. Choisissez **deux bouteilles par case** pour les casiers assez profonds pour en mettre une derrière l’autre."
           }
         }
       }
@@ -2301,6 +3121,16 @@
         }
       }
     },
+    "Only the **name** is required. The producer and the vintage help tell wines apart; leave the vintage on **Non-vintage** for champagnes and blends without a year.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul le **nom** est obligatoire. Le producteur et le millésime aident à distinguer les vins ; laissez le millésime sur **Non millésimé** pour les champagnes et assemblages sans année."
+          }
+        }
+      }
+    },
     "Only the label photo is sent, directly to this service, when you scan a label or tap “Complete with AI”. Your cellar is never sent. The key is stored in the Keychain on this device.": {
       "localizations": {
         "fr": {
@@ -2311,12 +3141,62 @@
         }
       }
     },
+    "Only the label photo, when you scan a label or tap **Complete with AI**. Your cellar, notes and prices are never sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement la photo de l’étiquette, quand vous scannez une étiquette ou touchez **Compléter avec l’IA**. Votre cave, vos notes et vos prix ne sont jamais envoyés."
+          }
+        }
+      }
+    },
+    "Only the name is required. Producer and vintage tell apart wines with the same name.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul le nom est obligatoire. Le producteur et le millésime distinguent les vins du même nom."
+          }
+        }
+      }
+    },
+    "Open the provider's page with the link below the key field, create a key and paste it. The key is stored in the Keychain on this device and sent only to that provider.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez la page du fournisseur avec le lien sous le champ de la clé, créez une clé et collez-la. La clé est conservée dans le trousseau de cet appareil et n’est envoyée qu’à ce fournisseur."
+          }
+        }
+      }
+    },
     "OpenAI-compatible": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Compatible OpenAI"
+          }
+        }
+      }
+    },
+    "Optional. Helps you remember where to buy a wine again and what your cellar is worth.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Pour retrouver où racheter un vin et connaître la valeur de votre cave."
+          }
+        }
+      }
+    },
+    "Optional. Makes search and food pairing better. Separate grapes with commas.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Améliore la recherche et les accords mets-vins. Séparez les cépages par des virgules."
           }
         }
       }
@@ -2337,6 +3217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Facultatif. Lit l’étiquette sur une photo avec le service d’IA de votre choix et votre propre clé d’API."
+          }
+        }
+      }
+    },
+    "Optional: price per bottle, date, shop or the person who gave it to you. Prices are used for the value of your cellar in Insights.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif : prix par bouteille, date, caviste ou personne qui vous l’a offerte. Les prix servent à la valeur de votre cave dans les Statistiques."
           }
         }
       }
@@ -2411,6 +3301,16 @@
         }
       }
     },
+    "Photos": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos"
+          }
+        }
+      }
+    },
     "Pinot Noir, Gamay": {
       "localizations": {
         "fr": {
@@ -2431,12 +3331,32 @@
         }
       }
     },
+    "Places": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emplacements"
+          }
+        }
+      }
+    },
     "Point the camera at the label": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Visez l’étiquette avec l’appareil photo"
+          }
+        }
+      }
+    },
+    "Point the camera at the label and tap **Use This Label**, or choose a photo. The text is read on the device and fills in the name, producer, vintage and appellation. Nothing is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visez l’étiquette avec l’appareil photo et touchez **Utiliser cette étiquette**, ou choisissez une photo. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation. Rien n’est envoyé."
           }
         }
       }
@@ -2531,6 +3451,16 @@
         }
       }
     },
+    "Project page": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page du projet"
+          }
+        }
+      }
+    },
     "Provider": {
       "localizations": {
         "fr": {
@@ -2577,6 +3507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quantité"
+          }
+        }
+      }
+    },
+    "Quantity, size and location": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quantité, format et emplacement"
           }
         }
       }
@@ -2761,6 +3701,16 @@
         }
       }
     },
+    "Remember a wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin"
+          }
+        }
+      }
+    },
     "Remember a wine tasted elsewhere": {
       "localizations": {
         "fr": {
@@ -2777,6 +3727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noter un vin goûté ou vu ailleurs"
+          }
+        }
+      }
+    },
+    "Remember wines you tasted elsewhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Souvenez-vous des vins goûtés ailleurs."
           }
         }
       }
@@ -2881,6 +3841,16 @@
         }
       }
     },
+    "Rows are lettered from the top and cells numbered from the left: **B3** is the second row, third cell. When a cell holds several bottles, **B3-2** is the second one (behind, or in the pile).": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les rangées sont nommées par lettre depuis le haut et les cases numérotées depuis la gauche : **B3** est la deuxième rangée, troisième case. Quand une case contient plusieurs bouteilles, **B3-2** est la deuxième (derrière, ou dans la pile)."
+          }
+        }
+      }
+    },
     "Rows deep": {
       "localizations": {
         "fr": {
@@ -2971,6 +3941,26 @@
         }
       }
     },
+    "Scanning a label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner une étiquette"
+          }
+        }
+      }
+    },
+    "Search in the Journal also looks in the place, notes and tags.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La recherche du Journal cherche aussi dans le lieu, les notes et les tags."
+          }
+        }
+      }
+    },
     "Search your wines": {
       "localizations": {
         "fr": {
@@ -3017,6 +4007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Définir une fenêtre de dégustation"
+          }
+        }
+      }
+    },
+    "Setting up AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurer l’IA"
           }
         }
       }
@@ -3071,12 +4071,32 @@
         }
       }
     },
+    "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des clayettes d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière."
+          }
+        }
+      }
+    },
     "Shop": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Caviste"
+          }
+        }
+      }
+    },
+    "Shop, estate or website.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caviste, domaine ou site web."
           }
         }
       }
@@ -3191,12 +4211,42 @@
         }
       }
     },
+    "Spreadsheet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tableur"
+          }
+        }
+      }
+    },
+    "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencez à taper le nom : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont."
+          }
+        }
+      }
+    },
     "Style": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Style"
+          }
+        }
+      }
+    },
+    "Style and origin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type et origine"
           }
         }
       }
@@ -3211,6 +4261,26 @@
         }
       }
     },
+    "Suggestions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggestions"
+          }
+        }
+      }
+    },
+    "Swipe a wine to the right, or use **Drink** on its page. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balayez un vin vers la droite, ou utilisez **Boire** sur sa fiche. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
+          }
+        }
+      }
+    },
     "Sync between your devices and with the people you share a cellar with will be end-to-end encrypted.": {
       "localizations": {
         "fr": {
@@ -3221,12 +4291,52 @@
         }
       }
     },
+    "Sync between your devices and with the people you share a cellar with will be end-to-end encrypted: the server that relays changes will never be able to read them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation entre vos appareils et avec les personnes qui partagent votre cave sera chiffrée de bout en bout : le serveur qui relaie les changements ne pourra jamais les lire."
+          }
+        }
+      }
+    },
     "Tags": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Tags"
+          }
+        }
+      }
+    },
+    "Tags group discoveries your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tags regroupent vos découvertes à votre façon : idées cadeaux, pour l’été, à regoûter. Touchez un tag pour le choisir ou tapez-en un nouveau ; ceux déjà utilisés sont proposés."
+          }
+        }
+      }
+    },
+    "Tap **Check Key and Load Models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez **Vérifier la clé et charger les modèles** : l’app demande au fournisseur les modèles accessibles avec votre clé et remplit le menu. Choisissez un modèle qui lit les images."
+          }
+        }
+      }
+    },
+    "Tap a bottle, then **Move**, then the new place. Tapping another bottle swaps them; a bin takes the bottle if it has room.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
           }
         }
       }
@@ -3267,6 +4377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez où mettre %@"
+          }
+        }
+      }
+    },
+    "Taste and structure: sweetness, acidity, tannins, body.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goût et structure : sucrosité, acidité, tanins, corps."
           }
         }
       }
@@ -3361,6 +4481,16 @@
         }
       }
     },
+    "The AI service that reads label photos. You need an account and an API key with it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le service d’IA qui lit les photos d’étiquettes. Il vous faut un compte et une clé d’API chez lui."
+          }
+        }
+      }
+    },
     "The answer from the AI service could not be read.": {
       "localizations": {
         "fr": {
@@ -3371,12 +4501,32 @@
         }
       }
     },
+    "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles ouvertes avec vos notes, les vins découverts ailleurs, votre liste d’achats et vos statistiques."
+          }
+        }
+      }
+    },
     "The change could not be saved.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La modification n’a pas pu être enregistrée."
+          }
+        }
+      }
+    },
+    "The estate, domaine or house that made the wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le château, le domaine ou la maison qui a produit le vin."
           }
         }
       }
@@ -3401,6 +4551,46 @@
         }
       }
     },
+    "The first free positions are used unless you choose them. Tap Positions to pick them on the rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez. Touchez Emplacements pour les choisir sur le casier."
+          }
+        }
+      }
+    },
+    "The four sections and how they work together.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les quatre sections et comment elles fonctionnent ensemble."
+          }
+        }
+      }
+    },
+    "The harvest year on the label. Non-vintage for wines without a year.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’année de récolte sur l’étiquette. Non millésimé pour les vins sans année."
+          }
+        }
+      }
+    },
+    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin."
+          }
+        }
+      }
+    },
     "The model declined to read this photo.": {
       "localizations": {
         "fr": {
@@ -3411,12 +4601,102 @@
         }
       }
     },
+    "The name on the label, without the vintage. Required.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nom sur l’étiquette, sans le millésime. Obligatoire."
+          }
+        }
+      }
+    },
+    "The only data that can leave the device is the label photo, and only if you set up an AI service yourself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La seule donnée qui peut quitter l’appareil est la photo de l’étiquette, et seulement si vous configurez vous-même un service d’IA."
+          }
+        }
+      }
+    },
+    "The photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La photo"
+          }
+        }
+      }
+    },
+    "The price on the wine list or in the shop, to compare when you buy it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le prix sur la carte ou chez le caviste, pour comparer au moment de l’acheter."
+          }
+        }
+      }
+    },
+    "The protected name of origin, such as Pauillac or Chablis.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’appellation d’origine, comme Pauillac ou Chablis."
+          }
+        }
+      }
+    },
+    "The style (red, white, sparkling…) is used for colors, serving temperature and food pairing. The appellation, region, country and grapes make search and pairing better.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le type (rouge, blanc, effervescent…) sert aux couleurs, à la température de service et aux accords. L’appellation, la région, le pays et les cépages améliorent la recherche et les accords."
+          }
+        }
+      }
+    },
     "The text is read on this device to fill in the name, producer and vintage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Le texte est lu sur cet appareil pour remplir le nom, le producteur et le millésime."
+          }
+        }
+      }
+    },
+    "The wine region, such as Bordeaux or Tuscany.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La région viticole, comme Bordeaux ou la Toscane."
+          }
+        }
+      }
+    },
+    "The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les années où le vin est à son meilleur, d’après le producteur ou un guide. Utilisé par Ce soir pour suggérer quoi ouvrir."
+          }
+        }
+      }
+    },
+    "The years when the wine is at its best. With **Estimate automatically**, it is worked out from the style and the vintage; turn it off to enter the years from the producer or a guide.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les années où le vin est à son meilleur. Avec **Estimer automatiquement**, elles sont déduites du type et du millésime ; désactivez-le pour saisir les années du producteur ou d’un guide."
           }
         }
       }
@@ -3501,6 +4781,26 @@
         }
       }
     },
+    "Tonight and drinking windows": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce soir et fenêtres de dégustation"
+          }
+        }
+      }
+    },
+    "Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce soir montre d’abord les bouteilles à boire bientôt. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi."
+          }
+        }
+      }
+    },
     "Tonight, open…": {
       "localizations": {
         "fr": {
@@ -3521,12 +4821,52 @@
         }
       }
     },
+    "Try it": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayer"
+          }
+        }
+      }
+    },
+    "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez **Rangées de longueurs différentes** pour un casier sous pente ou sous un escalier, et réglez la longueur de chaque rangée."
+          }
+        }
+      }
+    },
+    "Turn on **To buy** to add the wine to your shopping list, with the price you saw. When you buy it, swipe it and choose **Add to Cellar**: it leaves the list once the bottles are added.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu. Quand vous l’achetez, balayez-le et choisissez **Ajouter à la cave** : il quitte la liste une fois les bouteilles ajoutées."
+          }
+        }
+      }
+    },
     "Two, one behind the other": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Deux, l’une derrière l’autre"
+          }
+        }
+      }
+    },
+    "Type a few letters of the name to add bottles of a wine you already have.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà."
           }
         }
       }
@@ -3571,6 +4911,16 @@
         }
       }
     },
+    "Use **Given away or broken** for a bottle that left the cellar without being drunk by you.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez **Donnée ou cassée** pour une bouteille sortie de la cave sans que vous l’ayez bue."
+          }
+        }
+      }
+    },
     "Use This Label": {
       "localizations": {
         "fr": {
@@ -3591,6 +4941,16 @@
         }
       }
     },
+    "Use your own AI service for label recognition.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez votre propre service d’IA pour reconnaître les étiquettes."
+          }
+        }
+      }
+    },
     "Used by Tonight to suggest what to open. You can adjust it anytime.": {
       "localizations": {
         "fr": {
@@ -3601,12 +4961,32 @@
         }
       }
     },
+    "Used for colors, serving temperature, the estimated drinking window and food pairing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sert aux couleurs, à la température de service, à la fenêtre de dégustation estimée et aux accords."
+          }
+        }
+      }
+    },
     "Used for new purchases. Prices already entered keep their currency.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Utilisée pour les nouveaux achats. Les prix déjà saisis gardent leur devise."
+          }
+        }
+      }
+    },
+    "Used for the value of your cellar in Insights. The currency is set in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sert à la valeur de votre cave dans les Statistiques. La devise se règle dans les réglages."
           }
         }
       }
@@ -3651,12 +5031,62 @@
         }
       }
     },
+    "What is sent": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qui est envoyé"
+          }
+        }
+      }
+    },
+    "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat."
+          }
+        }
+      }
+    },
+    "What you ate with it, to remember good pairings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que vous avez mangé avec, pour retenir les bons accords."
+          }
+        }
+      }
+    },
     "What you liked, the dish, the moment…": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ce qui vous a plu, le plat, le moment…"
+          }
+        }
+      }
+    },
+    "What you typed stays": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que vous avez saisi reste"
+          }
+        }
+      }
+    },
+    "When each wine is at its best.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand chaque vin est à son meilleur."
           }
         }
       }
@@ -3681,12 +5111,32 @@
         }
       }
     },
+    "Where you had it, to find the wine again later.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où vous l’avez bu, pour retrouver le vin plus tard."
+          }
+        }
+      }
+    },
     "White": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Blanc"
+          }
+        }
+      }
+    },
+    "Who gave you the bottle.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qui vous a offert la bouteille."
           }
         }
       }
@@ -3781,12 +5231,42 @@
         }
       }
     },
+    "With AI (optional)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec l’IA (facultatif)"
+          }
+        }
+      }
+    },
+    "With Ollama or LM Studio on your computer, choose **Local server** and enter its address, such as `http://localhost:11434/v1` on the Mac. On iPhone and iPad, use the computer's name or address on your network instead of localhost.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec Ollama ou LM Studio sur votre ordinateur, choisissez **Serveur local** et saisissez son adresse, comme `http://localhost:11434/v1` sur le Mac. Sur iPhone et iPad, utilisez le nom ou l’adresse de l’ordinateur sur votre réseau au lieu de localhost."
+          }
+        }
+      }
+    },
     "With friends": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Entre amis"
+          }
+        }
+      }
+    },
+    "Works out the window from the style and the vintage. Turn off to enter the years yourself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déduit la fenêtre du type et du millésime. Désactivez pour saisir les années vous-même."
           }
         }
       }
@@ -3831,6 +5311,26 @@
         }
       }
     },
+    "Your cellar is stored only on your devices. There is no account, no tracking and no advertising.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité."
+          }
+        }
+      }
+    },
+    "Your cellar stays yours.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave reste la vôtre."
+          }
+        }
+      }
+    },
     "Your data": {
       "localizations": {
         "fr": {
@@ -3851,6 +5351,36 @@
         }
       }
     },
+    "Your note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre note"
+          }
+        }
+      }
+    },
+    "Your own groups, such as gift ideas or for summer. Tap a tag to select it, or type a new one and press Return. Filter by tag in the Journal.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal."
+          }
+        }
+      }
+    },
+    "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos casiers, caves à vin et losanges dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille."
+          }
+        }
+      }
+    },
     "Zoom In": {
       "localizations": {
         "fr": {
@@ -3867,6 +5397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réduire"
+          }
+        }
+      }
+    },
+    "Zoom a rack in and out": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoomer sur un casier"
           }
         }
       }
@@ -4017,6 +5557,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "vins"
+          }
+        }
+      }
+    },
+    "⇧⌘N": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⇧⌘N"
+          }
+        }
+      }
+    },
+    "⌘+ / ⌘–": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘+ / ⌘–"
+          }
+        }
+      }
+    },
+    "⌘1 – ⌘4": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘1 – ⌘4"
+          }
+        }
+      }
+    },
+    "⌘N": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘N"
+          }
+        }
+      }
+    },
+    "⌥⌘N": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌥⌘N"
           }
         }
       }

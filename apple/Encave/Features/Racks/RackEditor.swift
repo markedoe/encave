@@ -51,6 +51,9 @@ struct RackEditor: View {
                 Section {
                     TextField("Name", text: $name, prompt: Text("Main rack"))
                         .font(.headline)
+                        .fieldHelp("A name you will recognize: cellar left wall, kitchen fridge…")
+                } footer: {
+                    Text("Describe each place where you keep bottles: a rack, a wine fridge, a set of bins.")
                 }
 
                 Section("Kind of storage") {
@@ -66,10 +69,12 @@ struct RackEditor: View {
                     Stepper(value: $rows, in: 1...40) {
                         LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
                     }
+                    .fieldHelp("Counted from the top. Rows are lettered A, B, C…")
                     if !customRows {
                         Stepper(value: $columns, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(columns)").monospacedDigit() } label: { Text(kind.columnTitle) }
                         }
+                        .fieldHelp("Counted from the left. Places are numbered 1, 2, 3…")
                     }
                     switch kind {
                     case .grid:
@@ -77,6 +82,7 @@ struct RackEditor: View {
                             Text("One").tag(1)
                             Text("Two, one behind the other").tag(2)
                         }
+                        .fieldHelp("Deep racks hold a second bottle behind the first one.")
                     case .shelves:
                         Picker("Rows deep", selection: $depth) {
                             Text(verbatim: "1").tag(1)
@@ -84,17 +90,19 @@ struct RackEditor: View {
                             Text(verbatim: "3").tag(3)
                         }
                         .pickerStyle(.segmented)
+                        .fieldHelp("How many bottles fit one behind the other on a shelf.")
                     case .bins:
                         Stepper(value: $binCapacity, in: 2...40) {
                             LabeledContent("Bottles per bin") { Text(verbatim: "\(binCapacity)").monospacedDigit() }
                         }
+                        .fieldHelp("A diamond bin of about 30 cm holds around 10 standard bottles.")
                     case .staggered:
                         EmptyView()
                     }
                 } header: {
                     Text("Size")
                 } footer: {
-                    Text("Holds \(preview.capacity) bottles.")
+                    Text("Holds \(preview.capacity) bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.")
                 }
 
                 if kind != .staggered {
@@ -143,6 +151,9 @@ struct RackEditor: View {
                     } footer: {
                         Text("Bottles in this rack stay in your cellar without a position.")
                     }
+                }
+                Section {
+                    HelpLink(topic: .racks, title: "Help with racks")
                 }
             }
             .formStyle(.grouped)

@@ -14,6 +14,11 @@ struct EncaveApp: App {
             CellarCommands(model: model)
         }
         #if os(macOS)
+        Window("Encave Help", id: "help") {
+            NavigationStack { HelpView() }
+                .frame(minWidth: 520, minHeight: 560)
+        }
+        .defaultSize(width: 620, height: 720)
         Settings {
             NavigationStack {
                 SettingsView()
@@ -38,6 +43,11 @@ struct CellarCommands: Commands {
             Button("Remember a Wine…") { model.sheet = .discovery(discoveryID: nil) }
                 .keyboardShortcut("n", modifiers: [.command, .option])
         }
+        #if os(macOS)
+        CommandGroup(replacing: .help) {
+            HelpMenuButton()
+        }
+        #endif
         CommandMenu("Cellar") {
             Button("Cellar") { model.selectedTab = .cellar }.keyboardShortcut("1")
             Button("Racks") { model.selectedTab = .racks }.keyboardShortcut("2")
@@ -46,3 +56,15 @@ struct CellarCommands: Commands {
         }
     }
 }
+
+#if os(macOS)
+/// Help → Encave Help: opens the help in its own window.
+private struct HelpMenuButton: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button("Encave Help") { openWindow(id: "help") }
+            .keyboardShortcut("?")
+    }
+}
+#endif

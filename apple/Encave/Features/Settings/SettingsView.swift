@@ -22,6 +22,14 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
+                NavigationLink {
+                    HelpView()
+                } label: {
+                    Label("Help", systemImage: "questionmark.circle")
+                }
+            }
+
+            Section {
                 Picker("Currency", selection: currencyBinding) {
                     ForEach(Self.currencies, id: \.self) { code in
                         Text(Locale.current.localizedString(forCurrencyCode: code).map { "\($0) (\(code))" } ?? code).tag(code)

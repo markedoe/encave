@@ -14,3 +14,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   your own key, stored in the Keychain; only the label photo is sent
 - Discoveries: remember wines tasted elsewhere with place, rating, notes and
   tags, and a shopping list that adds bottles to the cellar once bought
+- In-app help with topics, help on form fields (tooltips on the Mac), and a
+  link to create an API key for every AI provider
