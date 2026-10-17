@@ -1,0 +1,41 @@
+# Environment files: never commit real values.
+.env
+.env.*
+*.env
+
+# Keys, certificates and signing material
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.provisionprofile
+google-services.json
+GoogleService-Info.plist
+
+# Build output and caches
+.build/
+build/
+DerivedData/
+*.xcarchive
+*.ipa
+*.pkg
+*.apk
+*.aab
+xcuserdata/
+.swiftpm/
+__pycache__/
+
+# Test reports (can embed request data)
+test-results/
+*.xcresult
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

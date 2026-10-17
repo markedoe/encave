@@ -1,0 +1,35 @@
+# Local guardrails. Install once:
+#   pip install pre-commit && pre-commit install --hook-type pre-commit --hook-type commit-msg
+# The same checks run in CI, so skipping them locally only delays the failure.
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+      - id: check-yaml
+        args: ["--allow-multiple-documents"]
+
+  - repo: local
+    hooks:
+      - id: public-safety
+        name: public-safety (forbidden files, infra details)
+        entry: scripts/check-public-safety.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+
+      - id: commit-message
+        name: commit message (short, no prompt text)
+        entry: scripts/check-commit-message.sh
+        language: script
+        stages: [commit-msg]

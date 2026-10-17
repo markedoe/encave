@@ -1,0 +1,37 @@
+# Gitleaks configuration: default ruleset plus project-specific rules.
+# Runs in pre-commit and in CI (.github/workflows/ci.yml).
+title = "Encave gitleaks config"
+
+[extend]
+useDefault = true
+
+# Hardcoded passwords in tests, scripts and configs.
+[[rules]]
+id = "hardcoded-password-literal"
+description = "Hardcoded password literal"
+regex = '''(?i)(?:password|passwd|pwd)["']?\s*[:=]\s*["']([^"'\s]{12,})["']'''
+secretGroup = 1
+entropy = 4.0
+keywords = ["password", "passwd", "pwd"]
+
+# Values assigned in env-style files (KEY=value) for secret-looking keys.
+[[rules]]
+id = "env-secret-assignment"
+description = "Secret value in env-style assignment"
+regex = '''(?m)^\s*(?:export\s+)?[A-Z0-9_]*(?:SECRET|PASSWORD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*\s*[=:]\s*["']?([^\s#"']{8,})'''
+path = '''(?i)(\.env[^/]*|\.ya?ml|\.sh|\.md|\.conf|\.toml|\.ini|Dockerfile[^/]*)$'''
+secretGroup = 1
+entropy = 3.5
+keywords = ["secret", "password", "token", "api_key", "private_key"]
+
+[allowlist]
+description = "Templates and obvious placeholders"
+paths = [
+  '''(^|/)\.env(\.[a-z]+)*\.example$''',
+  '''(^|/)package-lock\.json$''',
+]
+regexes = [
+  '''(?i)(change[-_]?(this|me)|your[_-]|example|placeholder|dummy|sk-ant-\.\.\.|<[^>]+>|\$\{)''',
+  '''[A-Za-z0-9_-]{8,}\.\.\.''',  # truncated examples in docs
+  '''TestPassword123!''',
+]

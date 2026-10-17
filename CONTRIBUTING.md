@@ -1,0 +1,48 @@
+# Contributing
+
+Thanks for helping. Small, focused pull requests are the easiest to review.
+
+## Before you start
+
+- For anything larger than a bug fix, open an issue first to agree on the approach.
+- Security problems: do not open an issue, see [SECURITY.md](SECURITY.md).
+
+## Setup
+
+See [docs/development.md](docs/development.md). Then install the git hooks once:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hooks run the same checks as CI: secret scanning (gitleaks), a
+public-safety check (no `.env` files, keys, test reports or server details)
+and a commit message check.
+
+## Guidelines
+
+- **Native first.** Follow Apple's Human Interface Guidelines and Material 3.
+  Prefer system components (lists, forms, sheets, swipe actions) over custom UI.
+- **Accessible.** Support Dynamic Type, VoiceOver, light and dark mode, and
+  never rely on color alone.
+- **Both languages.** Add every user-facing string in English and French.
+- **Private.** User data stays on device or is end-to-end encrypted. No
+  analytics or third-party SDKs that receive user data.
+- **Tests.** Add tests for model changes in `apple/Packages/CaveKit`.
+- **No real data.** Never commit credentials, signing files, personal data or
+  screenshots of real cellars.
+
+## Commit messages
+
+- Subject: imperative mood, at most 72 characters ("Fix rack drag on iPad").
+- Body (optional): what changed and why, at most 12 lines.
+- Do not paste conversations, prompts or issue threads into commit messages.
+
+## Code style
+
+- Swift 6 with strict concurrency, SwiftUI, Swift Testing.
+- Keep business logic in `CaveKit`; views stay thin.
+
+By contributing you agree that your contribution is licensed under the
+[AGPL-3.0](LICENSE).

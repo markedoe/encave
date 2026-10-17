@@ -1,0 +1,108 @@
+# Xcode project definition. Generate the project with:  cd apple && xcodegen generate
+# The .xcodeproj is not committed. The Team ID is passed at build time (DEVELOPMENT_TEAM).
+name: Encave
+options:
+  deploymentTarget:
+    iOS: "18.0"
+    macOS: "15.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    GENERATE_INFOPLIST_FILE: NO
+
+packages:
+  CaveKit:
+    path: Packages/CaveKit
+
+targetTemplates:
+  App:
+    type: application
+    sources:
+      - path: Encave
+    dependencies:
+      - package: CaveKit
+    settings:
+      base:
+        # One bundle ID for iPhone, iPad and Mac (universal purchase).
+        PRODUCT_BUNDLE_IDENTIFIER: app.encave
+        PRODUCT_NAME: Encave
+
+targets:
+  Encave:
+    templates: [App]
+    platform: iOS
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+    info:
+      path: Generated/Info-iOS.plist
+      properties:
+        CFBundleDisplayName: Encave
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, fr]
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  EncaveMac:
+    templates: [App]
+    platform: macOS
+    entitlements:
+      path: Generated/EncaveMac.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-only: true
+    settings:
+      base:
+        ENABLE_HARDENED_RUNTIME: YES
+    info:
+      path: Generated/Info-macOS.plist
+      properties:
+        CFBundleDisplayName: Encave
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, fr]
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.lifestyle
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+
+schemes:
+  Encave:
+    build:
+      targets:
+        Encave: all
+    archive:
+      config: Release
+  EncaveMac:
+    build:
+      targets:
+        EncaveMac: all
+    archive:
+      config: Release

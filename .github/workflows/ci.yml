@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITLEAKS_VERSION: "8.28.0"
+
+jobs:
+  # Blocks any secret, forbidden file or infra detail from reaching the repo.
+  secrets:
+    name: Secrets & public-safety
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+
+      - name: Compute commit range
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "range=${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            echo "range=${{ github.event.before }}..${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "range=${{ github.sha }}^!" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gitleaks (new commits)
+        run: gitleaks git . --config .gitleaks.toml --redact --no-banner --log-opts="${{ steps.range.outputs.range }}"
+
+      - name: Gitleaks (current tree)
+        run: gitleaks dir . --config .gitleaks.toml --redact --no-banner
+
+      - name: Commit messages (short, no prompt text)
+        run: scripts/check-commit-message.sh --range "${{ steps.range.outputs.range }}"
+
+      - name: Pull request title and body (no prompt text)
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" > "$RUNNER_TEMP/pr.txt"
+          scripts/check-commit-message.sh --text-only "$RUNNER_TEMP/pr.txt"
+
+      - name: Public-safety check
+        env:
+          CHECK_COMMIT_RANGE: ${{ steps.range.outputs.range }}
+        run: scripts/check-public-safety.sh

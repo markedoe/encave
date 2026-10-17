@@ -1,0 +1,11 @@
+# Changelog
+
+All notable changes to Encave are documented here.
+The format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [Unreleased]
+
+### Added
+- SwiftUI app for iPhone, iPad and Mac: Cellar, Racks, Tonight and Journal
+- Local storage of the cellar, sample cellar, French and English
+- Design tokens shared across platforms
