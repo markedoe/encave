@@ -51,6 +51,7 @@ final class ScreenTourTests: XCTestCase {
         snapshot("cellar")
         checkCellarFigures()
         checkSelection()
+        checkTable()
         #if os(iOS)
         // The swipe actions on a wine ("Drink" on the leading edge). iPhone only: on iPad
         // the revealed action can cover the narrow list column.
@@ -149,6 +150,24 @@ final class ScreenTourTests: XCTestCase {
             closeSheet()
         }
         #endif
+    }
+
+    // MARK: The cellar as a table (iPad and Mac)
+
+    private func checkTable() {
+        let layout = element("cellar.layout")
+        guard layout.waitForExistence(timeout: 3), layout.buttons.count > 1 else { return }
+        layout.buttons.element(boundBy: 1).press()
+        sleep(1)
+        snapshot("cellar-table")
+        // Back to the list, which the rest of the tour expects.
+        let back = element("cellar.layout")
+        if back.waitForExistence(timeout: 3), back.buttons.count > 1 {
+            back.buttons.element(boundBy: 0).press()
+        } else {
+            XCTFail("cellar table: the List/Table switch is missing in the table")
+        }
+        sleep(1)
     }
 
     // MARK: Selecting several wines
