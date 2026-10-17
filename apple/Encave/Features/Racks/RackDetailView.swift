@@ -282,10 +282,8 @@ private struct RackKey: View {
     }
 
     var body: some View {
-        let bottles = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
-        let counts = Dictionary(grouping: bottles, by: \.wineID).mapValues(\.count)
-        let entries = counts.compactMap { id, count in model.cellar.wines[id].map { Entry(wine: $0, count: count) } }
-            .sorted { ($0.count, $1.wine.displayName) > ($1.count, $0.wine.displayName) }
+        let bottles: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        let entries = entries(for: bottles)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 Label {
@@ -304,6 +302,19 @@ private struct RackKey: View {
         }
         .background(.bar)
         .accessibilityIdentifier("rack.key")
+    }
+
+    /// One entry per wine, most bottles first, then by name.
+    private func entries(for bottles: [Bottle]) -> [Entry] {
+        var counts: [UUID: Int] = [:]
+        for bottle in bottles { counts[bottle.wineID, default: 0] += 1 }
+        var result: [Entry] = []
+        for (id, count) in counts {
+            if let wine = model.cellar.wines[id] { result.append(Entry(wine: wine, count: count)) }
+        }
+        return result.sorted { a, b in
+            a.count != b.count ? a.count > b.count : a.wine.displayName < b.wine.displayName
+        }
     }
 
     private func chip(_ entry: Entry) -> some View {

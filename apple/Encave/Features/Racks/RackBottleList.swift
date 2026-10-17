@@ -11,11 +11,8 @@ struct RackBottleList: View {
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
-            let bottles = model.cellar.bottlesInCellar
-                .filter { $0.slot?.rackID == rackID }
-                .sorted { ($0.slot?.row ?? 0, $0.slot?.column ?? 0, $0.slot?.depth ?? 0)
-                    < ($1.slot?.row ?? 0, $1.slot?.column ?? 0, $1.slot?.depth ?? 0) }
-            let rows = Dictionary(grouping: bottles) { $0.slot?.row ?? 0 }
+            let bottles = placed(in: rackID)
+            let rows: [Int: [Bottle]] = Dictionary(grouping: bottles) { $0.slot?.row ?? 0 }
             List(selection: $selection) {
                 Section {
                     LabeledContent {
@@ -69,6 +66,17 @@ struct RackBottleList: View {
 }
 
 extension RackBottleList {
+    /// The rack's bottles in place order: row, then column, then front to back.
+    private func placed(in rackID: UUID) -> [Bottle] {
+        let inRack: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rackID }
+        return inRack.sorted { a, b in
+            guard let x = a.slot, let y = b.slot else { return false }
+            if x.row != y.row { return x.row < y.row }
+            if x.column != y.column { return x.column < y.column }
+            return x.depth < y.depth
+        }
+    }
+
     /// iPhone and iPad: rows are buttons, as list selection needs edit mode there.
     @ViewBuilder
     private func row(_ rack: Rack, _ bottle: Bottle) -> some View {
