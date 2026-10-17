@@ -934,6 +934,15 @@ S = [
  ("help_start_saved", "Search or choose filters, then **Save this search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.",
   "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."),
 
+ # More photos of a wine
+ ("more_photos", "More photos", "Autres photos"),
+ ("more_photos_footer", "The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.", "La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées."),
+ ("action_add_photo", "Add a photo", "Ajouter une photo"),
+ ("action_remove_photo", "Remove photo", "Retirer la photo"),
+ ("photo_adding", "Adding…", "Ajout…"),
+ ("photo_item", "Photo %1$d of %2$d", "Photo %1$d sur %2$d"),
+ ("photo_show_large", "Show large", "Afficher en grand"),
+
 ]
 
 P = [

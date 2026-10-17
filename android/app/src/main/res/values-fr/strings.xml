@@ -837,6 +837,13 @@
     <string name="saved_search_hint">Applique cette recherche enregistrée.</string>
     <string name="help_start_saved_title">Recherches enregistrées</string>
     <string name="help_start_saved">Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils.</string>
+    <string name="more_photos">Autres photos</string>
+    <string name="more_photos_footer">La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées.</string>
+    <string name="action_add_photo">Ajouter une photo</string>
+    <string name="action_remove_photo">Retirer la photo</string>
+    <string name="photo_adding">Ajout…</string>
+    <string name="photo_item">Photo %1$d sur %2$d</string>
+    <string name="photo_show_large">Afficher en grand</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

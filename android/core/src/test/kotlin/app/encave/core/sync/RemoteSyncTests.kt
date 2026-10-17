@@ -58,6 +58,20 @@ private suspend fun grantAll(devices: List<RemoteDevice>, store: MailboxStore, s
 
 class RemoteSyncTests {
     @Test
+    fun extraPhotosTravelToo() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household(2)
+        grantAll(devices, store, null)
+        val back = "back label".toByteArray()
+        val id = PhotoId.make(back)
+        devices[0].photos.save(id, back)
+        devices[0].edit { it.addBottles(Wine(name = "With a back label", extraPhotoIds = listOf(id)), 1) }
+        devices[0].sync(store)
+        devices[1].sync(store)
+        assertArrayEquals(back, devices[1].photos.stored[id])
+    }
+
+    @Test
     fun aChangeFromTheLocalNetworkIsUploadedEvenIfTheClockDidNotMove() = runBlocking {
         val store = MemoryMailboxStore()
         val devices = household(2)

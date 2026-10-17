@@ -268,6 +268,7 @@ fun WineDetailScreen(
                 }
             }
             item { Details(wine) }
+            item { MorePhotosSection(viewModel, wine) }
             if (tastings.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.detail_tastings)) }
                 items(tastings, key = { "t" + it.id }) { bottle ->

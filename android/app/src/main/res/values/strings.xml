@@ -838,6 +838,13 @@
     <string name="saved_search_hint">Applies this saved search.</string>
     <string name="help_start_saved_title">Saved searches</string>
     <string name="help_start_saved">Search or choose filters, then **Save this search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.</string>
+    <string name="more_photos">More photos</string>
+    <string name="more_photos_footer">The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.</string>
+    <string name="action_add_photo">Add a photo</string>
+    <string name="action_remove_photo">Remove photo</string>
+    <string name="photo_adding">Adding…</string>
+    <string name="photo_item">Photo %1$d of %2$d</string>
+    <string name="photo_show_large">Show large</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>

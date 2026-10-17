@@ -57,6 +57,9 @@ class Cellar(
     val bottlesInCellar: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.InCellar }
 
     /** Bottles bought but not delivered yet. */
+    /** Every photo the cellar refers to: each wine's label photo and its other photos. */
+    val photoIds: Set<String> get() = wineMap.values.flatMap { it.allPhotoIds }.toSet()
+
     val bottlesOnOrder: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.Ordered }
 
     /** Wines with bottles on order, the soonest expected first (unknown dates last). */

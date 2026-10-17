@@ -286,7 +286,7 @@ object RemoteSync {
         val uploaded = current.uploadedPhotos.toMutableSet()
 
         // 3. Missing photos.
-        val referenced = merged.cellar.wines.values.mapNotNull { it.photoId }.toSortedSet()
+        val referenced = merged.cellar.photoIds.toSortedSet()
         for (id in referenced) {
             if (!PhotoId.isValid(id) || photos.data(id) != null) continue
             val path = photoPath(id)

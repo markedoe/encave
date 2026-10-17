@@ -50,7 +50,12 @@ data class Wine(
     val barcodes: List<String>? = null,
     /** The user's own labels ("gift", "for summer"), normalized; null rather than empty. */
     val tags: List<String>? = null,
+    /** More photos (back label, receipt…), synced like the label photo; null rather than empty. */
+    @SerialName("extraPhotoIDs") val extraPhotoIds: List<String>? = null,
 ) {
+    /** The label photo, then the others. */
+    val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty()
+
     /** "Château X 2015" or "Château X" for non-vintage wines. */
     val displayName: String get() = if (vintage != null) "$name $vintage" else name
 
@@ -74,7 +79,9 @@ data class Wine(
     fun normalized(): Wine {
         val cleanTags = normalizedTags(tags)
         val cleanBarcodes = barcodes?.ifEmpty { null }
-        return if (cleanTags == tags && cleanBarcodes == barcodes) this else copy(tags = cleanTags, barcodes = cleanBarcodes)
+        val cleanExtras = extraPhotoIds?.ifEmpty { null }
+        return if (cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds) this
+        else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras)
     }
 
     /** Where the window comes from, to explain it. */
