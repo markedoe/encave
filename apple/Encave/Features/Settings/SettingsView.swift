@@ -76,8 +76,6 @@ struct SettingsView: View {
                     Label("Reminders", systemImage: "bell.badge")
                 }
                 .accessibilityIdentifier("settings.reminders")
-            } header: {
-                Text("Reminders")
             } footer: {
                 if remindersRefused {
                     Text("Notifications are off for Encave. Turn them on in the system settings.")

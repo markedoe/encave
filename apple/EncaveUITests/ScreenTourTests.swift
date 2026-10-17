@@ -120,6 +120,7 @@ final class ScreenTourTests: XCTestCase {
         openSection(2, "tonight")
         snapshot("tonight")
         checkPair("action.tonight.drink", "action.tonight.next")
+        askTheCellar()
 
         // Journal: tastings, discoveries, remembering a wine.
         openSection(3, "journal")
@@ -150,6 +151,29 @@ final class ScreenTourTests: XCTestCase {
             closeSheet()
         }
         #endif
+    }
+
+    // MARK: Ask your cellar (devices with the on-device model only)
+
+    private func askTheCellar() {
+        let ask = element("tonight.ask")
+        scrollIntoView(ask)
+        guard ask.exists, ask.isHittable else { return }
+        ask.press()
+        let field = element("ask.question")
+        guard field.waitForExistence(timeout: 5) else { goBack(); return }
+        field.press()
+        field.typeText(language == "fr" ? "Quelque chose de léger pour une ratatouille\n" : "Something light for a ratatouille\n")
+        // The model answers on the device; it can take a while the first time.
+        let answer = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", language == "fr" ? "Réponse" : "Answer")).firstMatch
+        if answer.waitForExistence(timeout: 60) {
+            sleep(1)
+            snapshot("ask-answer")
+        } else {
+            print("ask your cellar: no answer within 60 s")
+            snapshot("ask-waiting")
+        }
+        goBack()
     }
 
     // MARK: The cellar as a table (iPad and Mac)
