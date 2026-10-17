@@ -23,6 +23,8 @@ struct InsightsView: View {
                     }
                 }
 
+                DrinkDownCard()
+
                 if !stats.byColor.isEmpty {
                     ChartCard(title: "By style") {
                         Chart(stats.byColor) { slice in
@@ -117,6 +119,50 @@ private struct ChartCard<Content: View>: View {
         }
         .padding(16)
         .background(Color.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
+/// How many bottles a month to open so none passes its window, and when windows end.
+private struct DrinkDownCard: View {
+    @Environment(CellarModel.self) private var model
+
+    var body: some View {
+        let month = Calendar.current.component(.month, from: .now)
+        let plan = model.cellar.drinkDownPlan(year: model.currentYear, month: month)
+        if !plan.isEmpty {
+            ChartCard(title: "Drink-down plan") {
+                let paceLabel = plan.bottlesPerMonth.formatted(.number.precision(.fractionLength(plan.bottlesPerMonth < 10 ? 1 : 0)))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("About \(paceLabel) bottles a month")
+                        .font(.title3.weight(.semibold))
+                    Text("to open every bottle before the end of its drinking window.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
+                if plan.pastPeak > 0 {
+                    Label("Past their peak: \(plan.pastPeak)", systemImage: Maturity.pastPeak.systemImage)
+                        .font(.subheadline)
+                        .foregroundStyle(Maturity.pastPeak.tint)
+                }
+                if plan.years.count > 1 || plan.years.first?.leaving ?? 0 > 0 {
+                    Text("Windows ending each year")
+                        .font(.subheadline.weight(.medium))
+                    Chart(plan.years) { item in
+                        BarMark(x: .value("Year", String(item.year)), y: .value("Bottles", item.leaving))
+                            .foregroundStyle(Color.accentColor.gradient)
+                            .cornerRadius(3)
+                    }
+                    .frame(height: 160)
+                    .accessibilityIdentifier("insights.drinkdown")
+                }
+                if plan.withoutWindow > 0 {
+                    Text("Bottles without a drinking window are left out: \(plan.withoutWindow)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }
 

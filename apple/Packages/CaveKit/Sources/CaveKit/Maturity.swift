@@ -92,3 +92,53 @@ public extension Cellar {
         return digest
     }
 }
+
+/// How fast to drink the cellar so that bottles are opened before their window
+/// ends, from the drinking windows alone.
+public struct DrinkDownPlan: Equatable, Sendable {
+    public struct Year: Identifiable, Equatable, Sendable {
+        public var year: Int
+        /// Bottles whose window ends that year.
+        public var leaving: Int
+        public var id: Int { year }
+    }
+
+    /// From the current year, up to the last year a window ends (at most 15 years).
+    public var years: [Year]
+    /// Bottles already past their window.
+    public var pastPeak: Int
+    /// Bottles without a drinking window, left out of the pace.
+    public var withoutWindow: Int
+    /// Bottles a month to open everything with a window before it ends (0 if none).
+    public var bottlesPerMonth: Double
+
+    public var isEmpty: Bool { years.allSatisfy { $0.leaving == 0 } && pastPeak == 0 }
+}
+
+public extension Cellar {
+    /// The pace that keeps up with every window: for each year Y, the bottles
+    /// whose window ends by Y (past-peak ones count now) over the months left
+    /// until the end of Y; the plan takes the largest.
+    func drinkDownPlan(year: Int, month: Int, horizon: Int = 15) -> DrinkDownPlan {
+        var leaving: [Int: Int] = [:]
+        var pastPeak = 0, withoutWindow = 0
+        for bottle in bottlesInCellar {
+            guard let wine = wines[bottle.wineID], let until = wine.drinkUntil else {
+                withoutWindow += 1
+                continue
+            }
+            if until < year { pastPeak += 1 } else { leaving[until, default: 0] += 1 }
+        }
+        let last = min(year + horizon - 1, leaving.keys.max() ?? year)
+        let years = (year...max(year, last)).map { DrinkDownPlan.Year(year: $0, leaving: leaving[$0] ?? 0) }
+        var cumulative = pastPeak
+        var pace = 0.0
+        for item in years {
+            cumulative += item.leaving
+            // Months left, counting the current one: 13 - month this year, then 12 a year.
+            let months = Double(13 - month + 12 * (item.year - year))
+            if cumulative > 0 { pace = max(pace, Double(cumulative) / months) }
+        }
+        return DrinkDownPlan(years: years, pastPeak: pastPeak, withoutWindow: withoutWindow, bottlesPerMonth: pace)
+    }
+}

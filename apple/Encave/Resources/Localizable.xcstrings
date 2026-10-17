@@ -511,6 +511,16 @@
         }
       }
     },
+    "About %@ bottles a month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environ %@ bouteilles par mois"
+          }
+        }
+      }
+    },
     "About the wine itself. Notes on a bottle you opened go in its tasting.": {
       "localizations": {
         "fr": {
@@ -1267,6 +1277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles à boire cette année : %lld."
+          }
+        }
+      }
+    },
+    "Bottles without a drinking window are left out: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles sans fenêtre de dégustation non comptées : %lld"
           }
         }
       }
@@ -2377,6 +2397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À boire bientôt"
+          }
+        }
+      }
+    },
+    "Drink-down plan": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rythme de dégustation"
           }
         }
       }
@@ -7521,6 +7551,16 @@
         }
       }
     },
+    "Windows ending each year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fins de fenêtre par année"
+          }
+        }
+      }
+    },
     "Wine": {
       "localizations": {
         "fr": {
@@ -8087,6 +8127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "à boire bientôt"
+          }
+        }
+      }
+    },
+    "to open every bottle before the end of its drinking window.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation."
           }
         }
       }

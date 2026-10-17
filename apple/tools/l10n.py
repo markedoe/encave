@@ -15,6 +15,11 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'About %@ bottles a month': 'Environ %@ bouteilles par mois',
+    'Bottles without a drinking window are left out: %lld': 'Bouteilles sans fenêtre de dégustation non comptées : %lld',
+    'Drink-down plan': 'Rythme de dégustation',
+    'Windows ending each year': 'Fins de fenêtre par année',
+    'to open every bottle before the end of its drinking window.': 'pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation.',
     'List or table': 'Liste ou tableau',
     'On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.': 'Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.',
     'List': 'Liste',

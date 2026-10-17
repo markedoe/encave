@@ -370,3 +370,24 @@ import Testing
         #expect(decoded.bottlesOnOrder.first?.expectedAt == expected)
     }
 }
+
+@Suite struct DrinkDownPlanTests {
+    @Test func paceKeepsUpWithTheEarliestWindows() throws {
+        var cellar = Cellar()
+        // 6 bottles end this year, 12 next year, 2 have no window, 1 is past.
+        try cellar.addBottles(of: Wine(name: "Now", drinkFrom: 2020, drinkUntil: 2026), quantity: 6)
+        try cellar.addBottles(of: Wine(name: "Next", drinkFrom: 2020, drinkUntil: 2027), quantity: 12)
+        try cellar.addBottles(of: Wine(name: "Unknown"), quantity: 2)
+        try cellar.addBottles(of: Wine(name: "Past", drinkFrom: 2010, drinkUntil: 2020))
+        try cellar.addBottles(of: Wine(name: "Ordered", drinkUntil: 2026), purchase: PurchaseInfo(isOrdered: true))
+        let plan = cellar.drinkDownPlan(year: 2026, month: 10)
+        #expect(plan.years.map(\.leaving) == [6, 12])
+        #expect(plan.pastPeak == 1)
+        #expect(plan.withoutWindow == 2)
+        // This year: (1 + 6) / 3 months. By next year: 19 / 15 months. The larger wins.
+        #expect(abs(plan.bottlesPerMonth - 7.0 / 3.0) < 0.0001)
+        #expect(!plan.isEmpty)
+        #expect(Cellar().drinkDownPlan(year: 2026, month: 1).isEmpty)
+        #expect(Cellar().drinkDownPlan(year: 2026, month: 1).bottlesPerMonth == 0)
+    }
+}
