@@ -1,0 +1,229 @@
+package app.encave.data.ai
+
+import android.util.Base64
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
+
+/** What the model read on the label. Empty strings and zeros mean "unknown". */
+@Serializable
+data class LabelAnalysis(
+    val name: String = "",
+    val producer: String = "",
+    val vintage: Int = 0,
+    val color: String = "",
+    val appellation: String = "",
+    val region: String = "",
+    val country: String = "",
+    val grapes: List<String> = emptyList(),
+    val drinkFrom: Int = 0,
+    val drinkUntil: Int = 0,
+) {
+    companion object {
+        private val colors = listOf("red", "white", "rose", "sparkling", "dessert", "fortified", "orange")
+
+        val schema: JsonObject = buildJsonObject {
+            put("type", "object")
+            put("additionalProperties", false)
+            putJsonArray("required") {
+                listOf("name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil")
+                    .forEach { add(JsonPrimitive(it)) }
+            }
+            putJsonObject("properties") {
+                listOf("name", "producer").forEach { putJsonObject(it) { put("type", "string") } }
+                putJsonObject("vintage") { put("type", "integer") }
+                putJsonObject("color") {
+                    put("type", "string")
+                    putJsonArray("enum") { (listOf("") + colors).forEach { add(JsonPrimitive(it)) } }
+                }
+                listOf("appellation", "region", "country").forEach { putJsonObject(it) { put("type", "string") } }
+                putJsonObject("grapes") {
+                    put("type", "array")
+                    putJsonObject("items") { put("type", "string") }
+                }
+                putJsonObject("drinkFrom") { put("type", "integer") }
+                putJsonObject("drinkUntil") { put("type", "integer") }
+            }
+        }
+
+        val prompt = """
+            This is a photo of a wine label. Read it and return the wine's details.
+            - name: the wine or cuvée name as printed (for example the château or domaine and cuvée), without the vintage.
+            - producer: the estate, domaine or house, if different from the name; otherwise "".
+            - vintage: the year on the label, or 0 for a non-vintage wine.
+            - color: one of red, white, rose, sparkling, dessert, fortified, orange; "" if you cannot tell.
+            - appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.
+            - grapes: the grape varieties if printed or typical of the appellation; [] if unsure.
+            - drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.
+            Use "" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.
+        """.trimIndent()
+    }
+}
+
+sealed class AiError : Exception() {
+    data object NotConfigured : AiError()
+    data object MissingKey : AiError()
+    data object Refused : AiError()
+    data class Server(val status: Int, override val message: String) : AiError()
+    data object InvalidResponse : AiError()
+}
+
+/** Sends the label photo (a resized JPEG), and nothing else, to the configured provider. */
+object AiService {
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+
+    suspend fun analyzeLabel(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis = when (settings.provider) {
+        AiSettings.Provider.Off -> throw AiError.NotConfigured
+        AiSettings.Provider.Claude -> {
+            if (apiKey.isNullOrEmpty()) throw AiError.MissingKey
+            claude(jpeg, settings.effectiveModel, apiKey)
+        }
+        AiSettings.Provider.OpenAiCompatible -> {
+            if (settings.effectiveModel.isEmpty()) throw AiError.NotConfigured
+            openAiCompatible(jpeg, settings, apiKey)
+        }
+    }
+
+    private fun base64(jpeg: ByteArray) = Base64.encodeToString(jpeg, Base64.NO_WRAP)
+
+    /** Claude (Anthropic Messages API). */
+    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String): LabelAnalysis {
+        val body = buildJsonObject {
+            put("model", model)
+            put("max_tokens", 8000)
+            put("fallbacks", "default")
+            putJsonObject("output_config") {
+                put("effort", "low")
+                putJsonObject("format") {
+                    put("type", "json_schema")
+                    put("schema", LabelAnalysis.schema)
+                }
+            }
+            putJsonArray("messages") {
+                add(buildJsonObject {
+                    put("role", "user")
+                    putJsonArray("content") {
+                        add(buildJsonObject {
+                            put("type", "image")
+                            putJsonObject("source") {
+                                put("type", "base64")
+                                put("media_type", "image/jpeg")
+                                put("data", base64(jpeg))
+                            }
+                        })
+                        add(buildJsonObject {
+                            put("type", "text")
+                            put("text", LabelAnalysis.prompt)
+                        })
+                    }
+                })
+            }
+        }
+        val headers = mapOf(
+            "x-api-key" to apiKey,
+            "anthropic-version" to "2023-06-01",
+            // Re-runs a declined request on another model instead of returning a refusal.
+            "anthropic-beta" to "server-side-fallback-2026-07-01",
+            "content-type" to "application/json",
+        )
+        val response = send(URL("https://api.anthropic.com/v1/messages"), headers, body)
+        if (response["stop_reason"]?.jsonPrimitive?.contentOrNull == "refusal") throw AiError.Refused
+        val text = (response["content"] as? JsonArray).orEmpty()
+            .map { it.jsonObject }
+            .firstOrNull { it["type"]?.jsonPrimitive?.contentOrNull == "text" }
+            ?.get("text")?.jsonPrimitive?.contentOrNull ?: throw AiError.InvalidResponse
+        return decode(text)
+    }
+
+    /** OpenAI-compatible (Chat Completions). */
+    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis {
+        val base = settings.effectiveBaseUrl.removeSuffix("/")
+        val url = runCatching { URL("$base/chat/completions") }.getOrNull()
+        if (url == null || (url.protocol != "https" && url.protocol != "http")) throw AiError.NotConfigured
+        val body = buildJsonObject {
+            put("model", settings.effectiveModel)
+            putJsonObject("response_format") {
+                put("type", "json_schema")
+                putJsonObject("json_schema") {
+                    put("name", "wine_label")
+                    put("strict", true)
+                    put("schema", LabelAnalysis.schema)
+                }
+            }
+            putJsonArray("messages") {
+                add(buildJsonObject {
+                    put("role", "user")
+                    putJsonArray("content") {
+                        add(buildJsonObject {
+                            put("type", "text")
+                            put("text", LabelAnalysis.prompt)
+                        })
+                        add(buildJsonObject {
+                            put("type", "image_url")
+                            putJsonObject("image_url") { put("url", "data:image/jpeg;base64,${base64(jpeg)}") }
+                        })
+                    }
+                })
+            }
+        }
+        val headers = buildMap {
+            put("Content-Type", "application/json")
+            if (!apiKey.isNullOrEmpty()) put("Authorization", "Bearer $apiKey")
+        }
+        val response = send(url, headers, body)
+        val message = (response["choices"] as? JsonArray)?.firstOrNull()?.jsonObject?.get("message") as? JsonObject
+        val refusal = message?.get("refusal")?.let { (it as? JsonPrimitive)?.contentOrNull }
+        if (!refusal.isNullOrEmpty()) throw AiError.Refused
+        val text = (message?.get("content") as? JsonPrimitive)?.contentOrNull ?: throw AiError.InvalidResponse
+        return decode(text)
+    }
+
+    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject): JsonObject = withContext(Dispatchers.IO) {
+        val connection = url.openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = "POST"
+            connection.connectTimeout = 30_000
+            connection.readTimeout = 120_000
+            connection.doOutput = true
+            headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
+            connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+            val status = connection.responseCode
+            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+            val text = stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
+            val parsed = runCatching { json.parseToJsonElement(text) as? JsonObject }.getOrNull()
+            if (status !in 200..299) {
+                val message = (parsed?.get("error") as? JsonObject)?.get("message")?.let { (it as? JsonPrimitive)?.contentOrNull }
+                throw AiError.Server(status, message.orEmpty())
+            }
+            parsed ?: throw AiError.InvalidResponse
+        } catch (error: IOException) {
+            throw AiError.Server(0, error.localizedMessage.orEmpty())
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    /** Parses the JSON answer, tolerating a Markdown code fence from servers without strict schemas. */
+    fun decode(text: String): LabelAnalysis {
+        var trimmed = text.trim()
+        val start = trimmed.indexOf('{')
+        val end = trimmed.lastIndexOf('}')
+        if (start >= 0 && end > start) trimmed = trimmed.substring(start, end + 1)
+        return runCatching { json.decodeFromString(LabelAnalysis.serializer(), trimmed) }.getOrElse { throw AiError.InvalidResponse }
+    }
+}
