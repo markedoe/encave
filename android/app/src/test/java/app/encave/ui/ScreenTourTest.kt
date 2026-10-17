@@ -10,10 +10,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -230,6 +232,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.onNodeWithTag("rack.selection").assertDoesNotExist()
         // A wine in the key lights up its bottles.
         tap("rack.key.wine")
+        val chip = if (language == "fr") "Clos des Tilleuls 2017, 3 bouteilles" else "Clos des Tilleuls 2017, 3 bottles"
+        compose.onNodeWithContentDescription(chip).assertIsSelected()
         capture("16-rack-key")
         tap("rack.key.wine")
         // Pinch: the rack is drawn again with bigger cells.
