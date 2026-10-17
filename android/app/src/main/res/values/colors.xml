@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors design/tokens.json (color.accent); checked by DesignTokensTest. -->
+    <color name="ic_launcher_background">#8E1E3A</color>
+    <color name="window_background">@android:color/white</color>
+</resources>

@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Encave"
-include(":core")
+include(":core", ":app")
