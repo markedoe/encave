@@ -14,12 +14,14 @@ struct CellarTable: View {
     @State private var query = ""
     @State private var sortOrder = [KeyPathComparator(\CellarTableRow.name)]
     @State private var showsInspector = true
+    /// Columns shown, their order and widths, remembered per window.
+    @SceneStorage("cellar.table.columns") private var columns = TableColumnCustomization<CellarTableRow>()
 
     var body: some View {
         let rows = model.cellar.groups(filter: CellarFilter(query: query), sort: .name, year: model.currentYear)
             .map { CellarTableRow(group: $0, model: model) }
             .sorted(using: sortOrder)
-        Table(rows, selection: $selection, sortOrder: $sortOrder) {
+        Table(rows, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columns) {
             TableColumn("Wine", value: \.name) { row in
                 HStack(spacing: 8) {
                     BottleEnd(color: row.wine.color, size: 18)
@@ -28,6 +30,8 @@ struct CellarTable: View {
                 .accessibilityElement(children: .combine)
             }
             .width(min: 160, ideal: 220)
+            .customizationID("wine")
+            .disabledCustomizationBehavior(.visibility)
             TableColumn("Vintage", value: \.vintage) { row in
                 if let vintage = row.wine.vintage {
                     Text(verbatim: "\(vintage)").monospacedDigit()
@@ -36,26 +40,46 @@ struct CellarTable: View {
                 }
             }
             .width(min: 60, ideal: 80)
+            .customizationID("vintage")
             TableColumn("Producer", value: \.producer)
                 .width(min: 100, ideal: 160)
+                .customizationID("producer")
             TableColumn("Style", value: \.styleOrder) { row in
                 if let color = row.wine.color { Text(color.title) }
             }
             .width(min: 60, ideal: 90)
+            .customizationID("style")
             TableColumn("Region", value: \.region)
                 .width(min: 90, ideal: 140)
+                .customizationID("region")
             TableColumn("When to drink", value: \.maturity) { row in
                 if row.maturity != .unknown { MaturityLabel(maturity: row.maturity) }
             }
             .width(min: 110, ideal: 130)
+            .customizationID("maturity")
             TableColumn("Bottles", value: \.count) { row in
                 Text(verbatim: "\(row.count)").monospacedDigit()
             }
             .width(min: 50, ideal: 60)
+            .customizationID("bottles")
             TableColumn("Location", value: \.location) { row in
                 Text(row.location).foregroundStyle(.secondary)
             }
             .width(min: 120, ideal: 200)
+            .customizationID("location")
+            // Hidden at first; shown from the column header's menu.
+            TableColumn("Tags", value: \.tags) { row in
+                Text(verbatim: row.tags).foregroundStyle(.secondary)
+            }
+            .width(min: 80, ideal: 120)
+            .customizationID("tags")
+            .defaultVisibility(.hidden)
+            TableColumn("Purchase value", value: \.value) { row in
+                Text(verbatim: row.valueText).monospacedDigit()
+            }
+            .width(min: 70, ideal: 90)
+            .customizationID("value")
+            .defaultVisibility(.hidden)
         }
         .contextMenu(forSelectionType: UUID.self) { ids in
             if let id = ids.first, let group = rows.first(where: { $0.id == id }).map(\.group) {
@@ -112,6 +136,10 @@ struct CellarTableRow: Identifiable, Sendable {
     let maturity: Maturity
     let count: Int
     let location: String
+    let tags: String
+    /// Sum of purchase prices, for sorting; `valueText` shows it per currency.
+    let value: Decimal
+    let valueText: String
 
     var id: UUID { group.wine.id }
     var wine: Wine { group.wine }
@@ -128,6 +156,16 @@ struct CellarTableRow: Identifiable, Sendable {
         region = [wine.appellation ?? wine.region, wine.country].compactMap { $0 }.joined(separator: ", ")
         maturity = Maturity.of(wine, year: model.currentYear)
         count = group.count
+        tags = (wine.tags ?? []).joined(separator: ", ")
+        var totals: [String: Decimal] = [:]
+        for bottle in group.bottles {
+            guard let price = bottle.purchasePrice else { continue }
+            totals[bottle.currency ?? model.cellar.settings.currency, default: 0] += price
+        }
+        value = totals.values.reduce(0, +)
+        valueText = totals.keys.sorted().map { code in
+            (totals[code] ?? 0).formatted(.currency(code: code).precision(.fractionLength(0)))
+        }.joined(separator: " + ")
         let labels = group.bottles.compactMap { model.locationLabel(for: $0) }
         if let first = labels.first {
             location = labels.count > 1 ? String(localized: "\(first) and \(labels.count - 1) more") : first
