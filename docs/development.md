@@ -75,6 +75,13 @@ cd android
   run `python3 android/tools/strings.py` to write both `strings.xml` files.
 - AI label recognition works as on Apple; the key is encrypted with the
   Android Keystore and excluded from backups.
+- Sync (docs/SYNC.md) is ported in `android/core/.../core/sync` (merge, pairing,
+  sessions, remote rounds, relay client; Bouncy Castle for X25519 and
+  ChaCha20-Poly1305) and wired up in `android/app/.../sync` (NSD discovery, TCP
+  framing, Keystore-encrypted identity, WorkManager relay rounds).
+  `ProtocolVectorTests` must reproduce the published vectors. With a relay
+  running (`PORT=8787 node relay/server.mjs`), `ENCAVE_RELAY_URL=http://localhost:8787
+  ./gradlew :core:test` also syncs two devices through it, as CI does.
 - `ScreenTourTest` opens every main screen with the sample cellar on a phone
   and a tablet, in English and French, saves screenshots to
   `android/app/build/screens` (never commit them) and checks the layout:

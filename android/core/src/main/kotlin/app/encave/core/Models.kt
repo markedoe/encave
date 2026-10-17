@@ -43,6 +43,13 @@ data class Wine(
     val notes: String? = null,
     /** Identifier of a photo (label or bottle) stored by the app next to the cellar. */
     @SerialName("photoID") val photoId: String? = null,
+    /**
+     * Barcodes (EAN, UPC) seen on its bottles, digits only, to recognize it at the next
+     * scan. Null rather than empty, so files of wines without barcodes stay as they were.
+     */
+    val barcodes: List<String>? = null,
+    /** The user's own labels ("gift", "for summer"), normalized; null rather than empty. */
+    val tags: List<String>? = null,
 ) {
     /** "Château X 2015" or "Château X" for non-vintage wines. */
     val displayName: String get() = if (vintage != null) "$name $vintage" else name
@@ -55,8 +62,16 @@ data class Wine(
     /** Case- and accent-insensitive search over the label fields and grapes. */
     fun matches(needle: String): Boolean {
         val folded = fold(needle)
-        val fields = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes
+        val fields = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
+            barcodes.orEmpty() + tags.orEmpty()
         return fields.any { fold(it).contains(folded) }
+    }
+
+    /** Adds a barcode if it is new (at least 6 digits). The wine is unchanged otherwise. */
+    fun addingBarcode(code: String): Wine {
+        val normalized = normalizedBarcode(code)
+        if (normalized.length < 6 || barcodes.orEmpty().contains(normalized)) return this
+        return copy(barcodes = barcodes.orEmpty() + normalized)
     }
 
     /** Rough drinking window when none is entered, from color and vintage. */
@@ -75,9 +90,19 @@ data class Wine(
         return (vintage + start)..(vintage + start + length)
     }
 
-    internal companion object {
+    companion object {
+        /** Digits only: "3 760 1234 5678 9" and "3760123456789" are the same barcode. */
+        fun normalizedBarcode(code: String): String = code.filter { it in '0'..'9' }.take(20)
+
+        /** Trimmed, without empty ones or case-insensitive duplicates (the first spelling is kept); null if none. */
+        fun normalizedTags(tags: List<String>?): List<String>? {
+            val seen = HashSet<String>()
+            return tags.orEmpty().map { it.trim() }.filter { it.isNotEmpty() && seen.add(it.lowercase(Locale.ROOT)) }
+                .ifEmpty { null }
+        }
+
         private val marks = Regex("\\p{Mn}+")
-        fun fold(text: String): String =
+        internal fun fold(text: String): String =
             marks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)
     }
 }
@@ -239,7 +264,7 @@ data class Rack(
 /** A record of drinking a bottle, from a quick rating to a full tasting note. */
 @Serializable
 data class Tasting(
-    @Serializable(with = InstantSerializer::class) val date: Instant = Instant.now(),
+    @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
     /** 1 to 5, optional. Clamped when stored in a cellar. */
     val rating: Int? = null,
     val note: String? = null,
@@ -272,7 +297,7 @@ data class Bottle(
     val slot: Slot? = null,
     /** Where the bottle is when it is not in a rack ("Kitchen", "Box in garage"). */
     val storageNote: String? = null,
-    @Serializable(with = InstantSerializer::class) val addedAt: Instant = Instant.now(),
+    @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
     @Serializable(with = InstantSerializer::class) val purchaseDate: Instant? = null,
     @Serializable(with = DecimalSerializer::class) val purchasePrice: BigDecimal? = null,
     val currency: String? = null,
@@ -281,10 +306,15 @@ data class Bottle(
     /** Bottle size in millilitres (750 standard, 1500 magnum...). */
     val sizeML: Int = 750,
     val tasting: Tasting? = null,
+    /** For an ordered bottle: when it should arrive. */
+    @Serializable(with = InstantSerializer::class) val expectedAt: Instant? = null,
 ) {
     @Serializable
     enum class Status(val raw: String) {
         @SerialName("inCellar") InCellar("inCellar"),
+
+        /** Bought, not delivered yet: never has a place, not counted in the cellar. */
+        @SerialName("ordered") Ordered("ordered"),
         @SerialName("consumed") Consumed("consumed"),
 
         /** Given away, sold or broken: no longer in the cellar, not drunk by you. */

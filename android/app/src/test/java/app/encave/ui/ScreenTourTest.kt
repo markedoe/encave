@@ -83,7 +83,12 @@ class ScreenTourTest(private val device: String, private val language: String) {
         val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
         // The Encave colors, not the test device's wallpaper colors.
         app.preferences.setDynamicColor(false)
-        runBlocking { app.repository.replace(SampleData.cellar(labels = sampleLabels(app.resources))) }
+        runBlocking {
+            app.repository.replace(SampleData.cellar(labels = sampleLabels(app.resources)))
+            // Devices: shown with a second device, without touching the network.
+            app.sync.awaitStarted()
+            app.sync.showDemo()
+        }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.waitForIdle()
     }
@@ -299,6 +304,23 @@ class ScreenTourTest(private val device: String, private val language: String) {
         capture("11-discoveries")
         tap("action.remember")
         capture("12-remember-a-wine")
+    }
+
+    @Test
+    fun devicesAddAndJoin() {
+        tap("action.settings")
+        scrollTo("settings.devices")
+        tap("settings.devices")
+        compose.onNodeWithTag("devices.add").assertExists()
+        capture("22-devices")
+        tap("devices.add")
+        compose.onNodeWithTag("devices.code").assertExists()
+        compose.onNodeWithTag("devices.qr").assertExists()
+        capture("23-add-device")
+        tap("sheet.cancel")
+        tap("devices.join")
+        compose.onNodeWithTag("devices.codeField").assertExists()
+        capture("24-join-device")
     }
 
     @Test

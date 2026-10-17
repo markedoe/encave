@@ -6,6 +6,7 @@ import app.encave.data.CellarRepository
 import app.encave.data.PhotoStore
 import app.encave.data.Preferences
 import app.encave.data.ai.AiPreferences
+import app.encave.sync.SyncManager
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +27,12 @@ class EncaveApplication : Application() {
     val photos: PhotoStore by lazy { PhotoStore(this) }
     val ai: AiPreferences by lazy { AiPreferences(this) }
 
+    /** Pairing and sync with the user's other devices (off until a device is added). */
+    val sync: SyncManager by lazy { SyncManager(this, repository, photos, scope) }
+
     override fun onCreate() {
         super.onCreate()
+        sync.start()
         // Photos no wine refers to any more (deleted or replaced) are removed at launch.
         scope.launch(Dispatchers.IO) {
             repository.loaded.first { it }

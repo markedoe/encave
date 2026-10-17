@@ -22,10 +22,12 @@ class Cellar(
     var schemaVersion: Int = CURRENT_SCHEMA_VERSION
         internal set
 
-    private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { put(it.id, it) } }
-    private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { put(it.id, it) } }
-    private val rackList = racks.map { it.normalized() }.toMutableList()
-    private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { put(it.id, it.normalized()) } }
+    // The first object of each ID, as Swift's initializer keeps: data from another device
+    // or a backup must not break the assumptions of the merge and the UI.
+    private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { putIfAbsent(it.id, it) } }
+    private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { putIfAbsent(it.id, it) } }
+    private val rackList = racks.distinctBy { it.id }.map { it.normalized() }.toMutableList()
+    private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { putIfAbsent(it.id, it.normalized()) } }
 
     val wines: Map<UUID, Wine> get() = wineMap
     val bottles: Map<UUID, Bottle> get() = bottleMap
@@ -145,6 +147,16 @@ class Cellar(
     }
 
     /** Existing wines matching a query, for "add another bottle of...". */
+    /** The wine a barcode was seen on, preferring one with bottles in the cellar. */
+    fun wine(barcode: String): Wine? {
+        val code = Wine.normalizedBarcode(barcode)
+        if (code.isEmpty()) return null
+        val inCellar = bottlesInCellar.map { it.wineId }.toSet()
+        return wineMap.values.filter { code in it.barcodes.orEmpty() }
+            .sortedWith(compareBy<Wine>({ if (it.id in inCellar) 0 else 1 }, { it.displayName }))
+            .firstOrNull()
+    }
+
     fun wineSuggestions(query: String, limit: Int = 8): List<Wine> {
         val needle = query.trim()
         if (needle.isEmpty()) return emptyList()
@@ -173,7 +185,7 @@ class Cellar(
         quantity: Int = 1,
         slots: List<Slot> = emptyList(),
         purchase: PurchaseInfo = PurchaseInfo(),
-        addedAt: Instant = Instant.now(),
+        addedAt: Instant = ReferenceDates.now(),
     ): List<Bottle> {
         if (quantity <= 0) return emptyList()
         slots.forEach { validateFree(it) }

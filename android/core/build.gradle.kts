@@ -21,6 +21,11 @@ kotlin {
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
+    // Sync protocol: suspend functions over a transport.
+    api(libs.kotlinx.coroutines.core)
+    // X25519 and ChaCha20-Poly1305 on every Android version (the platform has them
+    // only from API 33 and 28). Lightweight API only; no provider is registered.
+    implementation(libs.bouncycastle)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -28,4 +33,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // The relay integration test runs when CI starts relay/server.mjs.
+    System.getenv("ENCAVE_RELAY_URL")?.let { environment("ENCAVE_RELAY_URL", it) }
 }

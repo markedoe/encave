@@ -50,14 +50,34 @@ object InstantSerializer : KSerializer<Instant> {
 
     override val descriptor = PrimitiveSerialDescriptor("app.encave.Instant", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeString(format(value))
+    override fun serialize(encoder: Encoder, value: Instant) {
+        // The sync payload and the on-device file write numbers, like Swift's `.deferredToDate`.
+        if (encoder is JsonEncoder && encoder.serializersModule.getContextual(ReferenceDates::class) != null) {
+            encoder.encodeJsonElement(JsonUnquotedLiteral(referenceSeconds(value)))
+        } else {
+            encoder.encodeString(format(value))
+        }
+    }
+
+    /** Seconds since 2001-01-01 as a plain decimal number ("782003123.5"), the exact value Swift stores. */
+    fun referenceSeconds(value: Instant): String =
+        BigDecimal(referenceDouble(value).toString()).stripTrailingZeros().toPlainString()
+
+    fun referenceDouble(value: Instant): Double = (value.epochSecond - APPLE_REFERENCE_EPOCH).toDouble() + value.nano / 1e9
+
+    /** The instant of a Swift `Date` (a Double of seconds since 2001-01-01). */
+    fun fromReferenceSeconds(seconds: Double): Instant {
+        val whole = Math.floor(seconds)
+        val nanos = Math.round((seconds - whole) * 1e9)
+        return Instant.ofEpochSecond(APPLE_REFERENCE_EPOCH + whole.toLong(), nanos)
+    }
 
     override fun deserialize(decoder: Decoder): Instant {
         if (decoder is JsonDecoder) {
             val element = decoder.decodeJsonElement().jsonPrimitive
             if (!element.isString) {
                 val seconds = element.doubleOrNull ?: throw SerializationException("Invalid date: $element")
-                return Instant.ofEpochSecond(APPLE_REFERENCE_EPOCH).plusNanos((seconds * 1e9).toLong())
+                return fromReferenceSeconds(seconds)
             }
             return parse(element.content)
         }
@@ -71,6 +91,28 @@ object InstantSerializer : KSerializer<Instant> {
     } catch (_: Exception) {
         OffsetDateTime.parse(text).toInstant()
     }
+}
+
+/**
+ * Marker: a [Json] whose serializers module has a contextual serializer for this class
+ * writes dates as numbers of seconds since 2001-01-01 instead of ISO-8601 strings.
+ */
+object ReferenceDates {
+    internal object Marker : KSerializer<ReferenceDates> {
+        override val descriptor = PrimitiveSerialDescriptor("app.encave.ReferenceDates", PrimitiveKind.STRING)
+        override fun serialize(encoder: Encoder, value: ReferenceDates) = encoder.encodeString("")
+        override fun deserialize(decoder: Decoder): ReferenceDates = ReferenceDates
+    }
+
+    val module = kotlinx.serialization.modules.SerializersModule { contextual(ReferenceDates::class, Marker) }
+
+    /**
+     * Now, as an instant that a Swift `Date` (a Double of seconds) holds exactly, so it
+     * reads back the same after a sync. Use it for every date the app records.
+     */
+    fun now(): Instant = canonical(Instant.now())
+
+    fun canonical(value: Instant): Instant = InstantSerializer.fromReferenceSeconds(InstantSerializer.referenceDouble(value))
 }
 
 /** `BigDecimal` as a bare JSON number ("12.5", "24"), like Swift's `Decimal`. */
@@ -118,7 +160,7 @@ object CellarSerializer : KSerializer<Cellar> {
                 put("wines", buildJsonArray {
                     value.wines.forEach { (id, wine) ->
                         add(JsonPrimitive(id.toString().uppercase(Locale.ROOT)))
-                        add(json.encodeToJsonElement(Wine.serializer(), wine))
+                        add(encodeWine(json, wine))
                     }
                 })
             },
@@ -129,6 +171,8 @@ object CellarSerializer : KSerializer<Cellar> {
         val input = decoder as? JsonDecoder ?: throw SerializationException("Cellar can only be decoded from JSON")
         val json = input.json
         val root = input.decodeJsonElement() as? JsonObject ?: throw SerializationException("Cellar must be an object")
+        // Keyed by each object's own ID, whatever the file says: for an ID given twice, the
+        // entry with the smallest key wins (as CaveKit re-keys), and racks keep the first.
         val wines = entries(root["wines"]).map { json.decodeFromJsonElement(Wine.serializer(), it) }
         val bottles = entries(root["bottles"]).map { json.decodeFromJsonElement(Bottle.serializer(), it) }
         val racks = (root["racks"] as? JsonArray).orEmpty().map { json.decodeFromJsonElement(Rack.serializer(), it) }
@@ -138,12 +182,28 @@ object CellarSerializer : KSerializer<Cellar> {
         return Cellar(wines, bottles, racks, settings, discoveries)
     }
 
-    /** Values of a Swift dictionary: `[key, value, key, value]`, or a keyed object. */
-    private fun entries(element: JsonElement?): List<JsonElement> = when (element) {
-        null -> emptyList()
-        is JsonArray -> element.filterIndexed { index, _ -> index % 2 == 1 }
-        is JsonObject -> element.values.toList()
-        else -> throw SerializationException("Unexpected dictionary encoding")
+    /** A wine as Swift writes it: optional lists ("barcodes", "tags") are left out when empty. */
+    internal fun encodeWine(json: Json, wine: Wine): JsonElement {
+        val element = json.encodeToJsonElement(Wine.serializer(), wine) as JsonObject
+        val empty = listOf("barcodes", "tags").filter { (element[it] as? JsonArray)?.isEmpty() == true }
+        return if (empty.isEmpty()) element else JsonObject(element - empty.toSet())
+    }
+
+    /**
+     * Values of a Swift dictionary (`[key, value, key, value]`, or a keyed object), in file
+     * order. Objects are keyed by their own "id" later; for an ID given twice, the entry
+     * with the smallest key (as an uppercase string) comes first, so it is the one kept.
+     */
+    private fun entries(element: JsonElement?): List<JsonElement> {
+        val pairs = when (element) {
+            null -> emptyList()
+            is JsonArray -> element.chunked(2).filter { it.size == 2 }.map { (key, value) -> key.jsonPrimitive.content to value }
+            is JsonObject -> element.entries.map { it.key to it.value }
+            else -> throw SerializationException("Unexpected dictionary encoding")
+        }
+        val ownId = { value: JsonElement -> ((value as? JsonObject)?.get("id") as? JsonPrimitive)?.content?.uppercase(Locale.ROOT) }
+        val winners = pairs.groupBy { ownId(it.second) }.mapValues { (_, same) -> same.minBy { it.first.uppercase(Locale.ROOT) } }
+        return pairs.filter { pair -> ownId(pair.second).let { it == null || winners[it] === pair } }.map { it.second }
     }
 }
 
@@ -176,7 +236,11 @@ object CellarJson {
         prettyPrintIndent = "  "
     }
 
-    fun encode(cellar: Cellar): String = json.encodeToString(CellarSerializer, cellar)
+    /** Like [json], with dates as Swift writes them in its cellar file: exact numbers, so they round-trip. */
+    val referenceJson = Json(json) { serializersModule = ReferenceDates.module }
+
+    /** The on-device file and the sync payload: dates as numbers (backups keep ISO-8601). */
+    fun encode(cellar: Cellar): String = referenceJson.encodeToString(CellarSerializer, cellar)
 
     fun decode(text: String): Cellar = json.decodeFromString(CellarSerializer, text)
 

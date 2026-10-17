@@ -58,6 +58,8 @@ import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.navigation.HelpRoute
+import app.encave.ui.navigation.DevicesRoute
+import androidx.compose.material.icons.outlined.Devices
 import app.encave.ui.components.commonCurrencies
 import app.encave.ui.components.sampleLabels
 import java.time.LocalDate
@@ -105,6 +107,14 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 headlineContent = { Text(stringResource(R.string.settings_privacy_stored)) },
                 supportingContent = { Text(stringResource(R.string.settings_privacy_body)) },
+            )
+
+            SectionHeader(stringResource(R.string.settings_devices))
+            ListItem(
+                modifier = Modifier.testTag("settings.devices").clickable { navigator.open(DevicesRoute) },
+                leadingContent = { Icon(Icons.Outlined.Devices, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.devices_title)) },
+                supportingContent = { Text(stringResource(R.string.settings_devices_summary)) },
             )
 
             SectionHeader(stringResource(R.string.settings_cellar))

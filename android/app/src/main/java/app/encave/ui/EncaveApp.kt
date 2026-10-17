@@ -45,6 +45,14 @@ import app.encave.ui.navigation.CellarRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
 import app.encave.ui.navigation.EditWineRoute
 import app.encave.ui.navigation.HelpRoute
+import app.encave.ui.navigation.DevicesRoute
+import app.encave.ui.navigation.RemoteSyncRoute
+import app.encave.ui.navigation.InviteDeviceRoute
+import app.encave.ui.navigation.JoinDeviceRoute
+import app.encave.ui.devices.DevicesScreen
+import app.encave.ui.devices.RemoteSyncScreen
+import app.encave.ui.devices.InviteDeviceScreen
+import app.encave.ui.devices.JoinDeviceScreen
 import app.encave.ui.help.HelpScreen
 import app.encave.ui.discoveries.DiscoveryEditorScreen
 import app.encave.ui.navigation.InsightsRoute
@@ -151,6 +159,10 @@ fun EncaveApp(viewModel: AppViewModel) {
                 composable<InsightsRoute> { InsightsScreen(viewModel, navigator) }
                 composable<SettingsRoute> { SettingsScreen(viewModel, navigator) }
                 composable<HelpRoute> { HelpScreen(navigator, it.toRoute<HelpRoute>().topic) }
+                composable<DevicesRoute> { DevicesScreen(navigator) }
+                composable<RemoteSyncRoute> { RemoteSyncScreen(navigator) }
+                composable<InviteDeviceRoute> { InviteDeviceScreen(navigator) }
+                composable<JoinDeviceRoute> { JoinDeviceScreen(viewModel, navigator) }
                 composable<DiscoveryEditorRoute> {
                     DiscoveryEditorScreen(viewModel, navigator, it.toRoute<DiscoveryEditorRoute>().discoveryId)
                 }

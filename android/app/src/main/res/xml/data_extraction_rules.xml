@@ -11,6 +11,8 @@
     </cloud-backup>
     <device-transfer>
         <include domain="file" path="." />
+        <!-- Sync state belongs to this device (its identity key stays here). -->
+        <exclude domain="file" path="sync/" />
         <include domain="sharedpref" path="preferences.xml" />
         <include domain="sharedpref" path="ai.xml" />
         <!-- secrets.xml is encrypted with a Keystore key that stays on this device. -->

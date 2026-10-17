@@ -91,7 +91,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
     val known = remember(cellar) { cellar.knownValues() }
     var setting by rememberSaveable { mutableStateOf(existing?.setting) }
     var place by rememberSaveable { mutableStateOf(existing?.place.orEmpty()) }
-    var date by remember { mutableStateOf(existing?.date ?: Instant.now()) }
+    var date by remember { mutableStateOf(existing?.date ?: app.encave.core.ReferenceDates.now()) }
     var pickingDate by remember { mutableStateOf(false) }
     var rating by rememberSaveable { mutableStateOf(existing?.rating) }
     var note by rememberSaveable { mutableStateOf(existing?.note.orEmpty()) }
