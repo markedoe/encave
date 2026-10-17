@@ -605,6 +605,7 @@
     <string name="devices_status_never">Pas encore synchronisé</string>
     <string name="devices_local_network">Encave a besoin d’accéder au réseau local pour trouver vos autres appareils.</string>
     <string name="sync_problem_removed">Cet appareil a été retiré de la cave depuis un autre appareil.</string>
+    <string name="sync_problem_says_removed">Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.</string>
     <string name="sync_problem_not_verified">Un appareil n’a pas pu prouver qu’il fait partie de cette cave. Rien n’a été échangé.</string>
     <string name="sync_problem_version">Un autre appareil utilise une version différente d’Encave. Mettez les deux à jour.</string>
     <string name="sync_problem_unfinished">La dernière synchronisation n’a pas abouti. Elle sera retentée.</string>
@@ -627,6 +628,7 @@
     <string name="remote_problem_refused">Le relais a refusé cet appareil. Vérifiez l’adresse du relais.</string>
     <string name="remote_problem_full">Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais.</string>
     <string name="remote_problem_unreachable">Le stockage est injoignable. La synchronisation reprendra dès que possible.</string>
+    <string name="remote_problem_unreadable">Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.</string>
     <string name="remote_problem_removal">L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.</string>
     <string name="invite_title">Ajouter un appareil</string>
     <string name="invite_instructions">Sur l’autre appareil, ouvrez Réglages › Appareils › Rejoindre la cave d’un autre appareil, puis scannez ce code ou saisissez les chiffres.</string>

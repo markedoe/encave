@@ -55,6 +55,7 @@ class SocketTransportTest {
         ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { server ->
             val received = async(Dispatchers.IO) {
                 val transport = SocketTransport(server.accept())
+                transport.allowLargeFrames()
                 List(3) { transport.receive() }.also { transport.close() }
             }
             val transport = SocketTransport.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), server.localPort))
@@ -63,6 +64,21 @@ class SocketTransportTest {
             val got = received.await()
             transport.close()
             frames.zip(got).forEach { (sent, read) -> assertArrayEquals(sent, read) }
+        }
+    }
+
+    @Test
+    fun aLargeFrameBeforeAuthenticationIsRefused() = runBlocking {
+        ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { server ->
+            val received = async(Dispatchers.IO) {
+                val transport = SocketTransport(server.accept())
+                runCatching { transport.receive() }.also { transport.close() }
+            }
+            val transport = SocketTransport.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), server.localPort))
+            withContext(Dispatchers.IO) { runCatching { transport.send(ByteArray(SocketTransport.UNAUTHENTICATED_LIMIT + 1)) } }
+            val result = received.await()
+            transport.close()
+            assertEquals(app.encave.core.sync.SyncError.FrameTooLarge, (result.exceptionOrNull() as? app.encave.core.sync.SyncException)?.error)
         }
     }
 }

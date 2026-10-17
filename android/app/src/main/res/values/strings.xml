@@ -606,6 +606,7 @@
     <string name="devices_status_never">Not synced yet</string>
     <string name="devices_local_network">Encave needs access to the local network to find your other devices.</string>
     <string name="sync_problem_removed">This device was removed from the cellar on another device.</string>
+    <string name="sync_problem_says_removed">Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.</string>
     <string name="sync_problem_not_verified">A device could not prove it belongs to this cellar. Nothing was exchanged.</string>
     <string name="sync_problem_version">Another device runs a different version of Encave. Update both devices.</string>
     <string name="sync_problem_unfinished">The last sync did not finish. It will try again.</string>
@@ -628,6 +629,7 @@
     <string name="remote_problem_refused">The relay refused this device. Check the relay address.</string>
     <string name="remote_problem_full">The relay is full. Remove old photos or use another relay.</string>
     <string name="remote_problem_unreachable">The storage cannot be reached. Syncing will resume when it can.</string>
+    <string name="remote_problem_unreadable">Changes from another device could not be read. Update Encave on all your devices.</string>
     <string name="remote_problem_removal">The removed device could not be shut out of syncing away from home yet. It will be tried again.</string>
     <string name="invite_title">Add a device</string>
     <string name="invite_instructions">On the other device, open Settings › Devices › Join another device’s cellar, then scan this code or type the numbers.</string>

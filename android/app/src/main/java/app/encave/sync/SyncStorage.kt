@@ -76,10 +76,15 @@ class SyncStorage(private val context: Context) {
         get() = prefs.getString(KEY_STORAGE, null)
         set(value) = prefs.edit { if (value == null) remove(KEY_STORAGE) else putString(KEY_STORAGE, value) }
 
-    /** A removal is waiting for the remote key to be changed (the relay could not be reached). */
-    var rotationPending: Boolean
-        get() = prefs.getBoolean(KEY_ROTATION, false)
-        set(value) = prefs.edit { putBoolean(KEY_ROTATION, value) }
+    /**
+     * The next cellar key, made when a device is removed and kept until the rotation is
+     * done, so a retry after a failure uses the same key (grants already left stay valid).
+     */
+    var pendingKey: CellarKey?
+        get() = runCatching { secrets.get(KEY_PENDING_KEY)?.let { SyncJson.decode(CellarKey.serializer(), it.toByteArray()) } }.getOrNull()
+        set(value) {
+            runCatching { secrets.set(KEY_PENDING_KEY, value?.let { SyncJson.encode(CellarKey.serializer(), it).decodeToString() }) }
+        }
 
     var remoteKey: CellarKey?
         get() = runCatching { secrets.get(KEY_CELLAR_KEY)?.let { SyncJson.decode(CellarKey.serializer(), it.toByteArray()) } }.getOrNull()
@@ -95,6 +100,14 @@ class SyncStorage(private val context: Context) {
         val id = prefs.getString(KEY_DEVICE, null)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
         val key = runCatching { secrets.get(KEY_IDENTITY)?.let { Base64.decode(it, Base64.NO_WRAP) } }.getOrNull()
         if (id != null && key != null && key.size == 32) return DeviceIdentity(id, key)
+        return newIdentity()
+    }
+
+    /**
+     * A new device ID and key, saved in place of the old ones. Used after leaving a cellar:
+     * a removal is final for an ID, so joining again needs a new one.
+     */
+    fun newIdentity(): DeviceIdentity {
         val (identity, privateKey) = DeviceIdentity.generate()
         val stored = runCatching { secrets.set(KEY_IDENTITY, Base64.encodeToString(privateKey, Base64.NO_WRAP)) }.isSuccess
         if (stored) {
@@ -109,12 +122,25 @@ class SyncStorage(private val context: Context) {
     fun deleteAll() {
         folder.deleteRecursively()
         remoteStorage = null
-        rotationPending = false
-        remoteKey = null
+        resetRemote()
     }
+
+    /** Forgets the remote key, the pending one and the progress (leaving, or joining another cellar). */
+    fun resetRemote() {
+        remoteKey = null
+        pendingKey = null
+        file(REMOTE).delete()
+        prefs.edit { remove(KEY_ROTATION) }
+    }
+
+    /** Builds before the pending key kept only a flag. */
+    val hadRotationFlag: Boolean get() = prefs.getBoolean(KEY_ROTATION, false)
+
+    fun clearRotationFlag() = prefs.edit { remove(KEY_ROTATION) }
 
     companion object {
         private const val PREFS = "sync"
+        private const val KEY_PENDING_KEY = "sync.pendingCellarKey"
         private const val STATE = "sync.json"
         private const val DEVICES = "devices.json"
         private const val LAST_SYNC = "last-sync.json"

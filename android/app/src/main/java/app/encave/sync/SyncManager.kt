@@ -76,8 +76,8 @@ class SyncManager(
         val remoteProblem: RemoteProblem? = null,
     )
 
-    enum class Problem { Removed, NotVerified, OtherVersion, Unfinished, CannotListen }
-    enum class RemoteProblem { Refused, Full, Unreachable, RemovalPending }
+    enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen }
+    enum class RemoteProblem { Refused, Full, Unreachable, RemovalPending, Unreadable }
 
     val storage = SyncStorage(context)
     internal val appContext: Context get() = context
@@ -89,7 +89,19 @@ class SyncManager(
     /** Screen tour and tests: shows the screens, never touches the network. */
     @Volatile var isDemo = false
 
-    val identity: DeviceIdentity by lazy { storage.loadIdentity() }
+    /**
+     * This device's ID and key. Replaced when it leaves a cellar: a removal is final for an
+     * ID, so joining again needs a new one.
+     */
+    val identity: DeviceIdentity
+        get() = synchronized(this) { currentIdentity ?: storage.loadIdentity().also { currentIdentity = it } }
+    private var currentIdentity: DeviceIdentity? = null
+
+    /** Changes when the device leaves or joins another cellar, so a round running then stores nothing. */
+    @Volatile private var generation = 0
+
+    /** Sessions opened by other devices right now; a few at most. */
+    private val inboundSessions = java.util.concurrent.atomic.AtomicInteger(0)
 
     private val status = MutableStateFlow(Status())
     val state: StateFlow<Status> = status.asStateFlow()
@@ -110,7 +122,7 @@ class SyncManager(
     private var started = false
 
     val isSetUp: Boolean get() = status.value.membership != null
-    val me: Member get() = Member(identity.id, deviceName, identity.publicKey, platform)
+    val me: Member get() = Member(identity.id, deviceName, identity.publicKey, platform, inbox = identity.inboxId)
     val otherDevices: List<Member> get() = status.value.membership?.active.orEmpty().filter { it.id != identity.id }
 
     private val ready = MutableStateFlow(false)
@@ -131,6 +143,8 @@ class SyncManager(
             val membership = storage.loadMembership()?.takeIf { it.members.containsKey(identity.id) || it.stamps.containsKey(identity.id) }
             var loaded = storage.loadState()?.takeIf { it.device == identity.id }
             if (membership != null && loaded == null) loaded = repository.read { SyncState.starting(it, identity.id) }
+            // A key of another cellar (left from before joining this one) is never used.
+            if (storage.remoteKey?.let { it.cellarId != membership?.cellarId } == true) storage.resetRemote()
             synchronized(this@SyncManager) {
                 syncState = if (membership != null) loaded else null
                 progress = storage.loadRemoteProgress()
@@ -145,6 +159,7 @@ class SyncManager(
                 )
             }
             repository.onLocalChange = { old, new -> record(old, new) }
+            publishInbox()
             ready.value = true
             if (status.value.remoteStorage != null) RemoteSyncWorker.schedule(context)
         }
@@ -201,6 +216,18 @@ class SyncManager(
         save()
     }
 
+    /** Makes sure this device's record names its relay inbox, so others can leave it keys. */
+    private fun publishInbox() {
+        val membership = synchronized(this) {
+            val state = syncState ?: return
+            val (members, clock) = status.value.membership?.publishingInbox(identity, state.clock) ?: return
+            syncState = state.copy(clock = clock)
+            members
+        }
+        status.update { it.copy(membership = membership) }
+        save()
+    }
+
     /** Removes another device: it can no longer sync with any device of the cellar. */
     fun remove(device: UUID) {
         val membership = synchronized(this) {
@@ -213,20 +240,29 @@ class SyncManager(
         status.update { it.copy(membership = membership, lastSync = it.lastSync - device) }
         save()
         syncNow()
-        // Away from home: a new key, so the removed device cannot read anything new.
-        // Remembered until done, in case the relay cannot be reached now.
-        if (storage.remoteKey != null) {
-            storage.rotationPending = true
+        // Away from home: a new key, so the removed device cannot read anything new. It is
+        // kept until the rotation is done, in case the storage cannot be reached now: a retry
+        // uses the same key, so grants already left stay valid.
+        val key = storage.remoteKey
+        if (key != null) {
+            if (storage.pendingKey.let { it == null || it.epoch <= key.epoch }) {
+                storage.pendingKey = CellarKey.random(key.cellarId, key.epoch + 1)
+            }
             scope.launch { remoteRound() }
         }
     }
 
-    /** Stops syncing on this device. The cellar stays here as it is. */
+    /**
+     * Stops syncing on this device. The cellar stays here as it is. The device gets a new ID
+     * and key, so it can join a cellar again later.
+     */
     fun leave() {
         pause()
+        generation++
         synchronized(this) {
             syncState = null
             progress = RemoteProgress()
+            if (!isDemo) currentIdentity = storage.newIdentity()
         }
         storage.deleteAll()
         RemoteSyncWorker.cancel(context)
@@ -238,6 +274,14 @@ class SyncManager(
      * [replace]: start from that cellar instead of combining it with this one.
      */
     suspend fun adoptCellar(received: Membership, replace: Boolean) {
+        // Another cellar: nothing of the old one's remote sync applies.
+        if (status.value.membership?.cellarId != received.cellarId) {
+            generation++
+            storage.resetRemote()
+            storage.remoteStorage = null
+            synchronized(this) { progress = RemoteProgress() }
+            status.update { it.copy(remoteStorage = null, hasRemoteKey = false, remoteProblem = null, lastRemoteSync = null) }
+        }
         if (replace) {
             repository.applySynced { Cellar(settings = it.settings) }
         }
@@ -319,6 +363,7 @@ class SyncManager(
             }
         }
         val members = membership ?: return
+        // Learned from an authenticated list of devices: this device was removed.
         val removed = !members.members.containsKey(identity.id)
         status.update {
             it.copy(
@@ -351,13 +396,20 @@ class SyncManager(
         if (!markSyncing(device)) return
         scope.launch {
             var transport: SocketTransport? = null
+            var deadline: Job? = null
             try {
                 transport = SocketTransport.connect(address)
+                // A session never hangs: the whole exchange gets a few minutes at most.
+                deadline = transport.closing(scope, SESSION_DEADLINE_MS)
+                val handshake = transport.closing(scope, HANDSHAKE_DEADLINE_MS)
                 val (channel, peer) = SyncHandshake.initiate(transport, identity, membership)
+                handshake.cancel()
+                transport.allowLargeFrames()
                 exchange(channel, true, peer.id)
             } catch (error: Exception) {
                 report(error)
             } finally {
+                deadline?.cancel()
                 transport?.close()
                 status.update { it.copy(syncing = it.syncing - device) }
             }
@@ -381,15 +433,20 @@ class SyncManager(
 
     private fun respond(socket: Socket) {
         val membership = status.value.membership
-        if (membership == null || status.value.wasRemoved) {
+        if (membership == null || status.value.wasRemoved || inboundSessions.get() >= MAX_INBOUND_SESSIONS) {
             runCatching { socket.close() }
             return
         }
+        inboundSessions.incrementAndGet()
         scope.launch {
             val transport = SocketTransport(socket)
+            val deadline = transport.closing(scope, SESSION_DEADLINE_MS)
             var peer: UUID? = null
             try {
+                val handshake = transport.closing(scope, HANDSHAKE_DEADLINE_MS)
                 val (channel, member) = SyncHandshake.respond(transport, identity, membership)
+                handshake.cancel()
+                transport.allowLargeFrames()
                 peer = member.id
                 if (!markSyncing(member.id)) return@launch
                 exchange(channel, false, member.id)
@@ -398,16 +455,22 @@ class SyncManager(
                 val code = (error as? SyncException)?.error
                 if (code != SyncError.UnknownDevice && code != SyncError.RemovedDevice) report(error)
             } finally {
+                deadline.cancel()
                 transport.close()
+                inboundSessions.decrementAndGet()
                 peer?.let { id -> status.update { it.copy(syncing = it.syncing - id) } }
             }
         }
     }
 
-    /** Shows what went wrong. Only "removed-device" means this device was removed. */
+    /**
+     * Shows what went wrong. Error frames arrive before authentication, so anyone on the
+     * network could send one: a "removed-device" refusal is only a hint, never a reason to
+     * stop. Removal is learned from an authenticated list of devices ([apply]).
+     */
     fun report(error: Exception) {
         val problem = when ((error as? SyncException)?.error) {
-            SyncError.RemovedDevice -> Problem.Removed
+            SyncError.RemovedDevice -> Problem.SaysRemoved
             // The other device has not heard of this one yet: it will after syncing with the
             // device that added this one. Nothing to show.
             SyncError.UnknownDevice -> return
@@ -415,8 +478,7 @@ class SyncManager(
             is SyncError.UnsupportedVersion -> Problem.OtherVersion
             else -> Problem.Unfinished
         }
-        status.update { it.copy(problem = problem, wasRemoved = it.wasRemoved || problem == Problem.Removed) }
-        if (problem == Problem.Removed) pause()
+        status.update { if (it.wasRemoved) it else it.copy(problem = problem) }
     }
 
     private fun startListener() {
@@ -495,7 +557,7 @@ class SyncManager(
         val membership = status.value.membership
         if (storage.remoteKey == null && membership != null) {
             // Maybe another device already turned it on and left a key for this one.
-            val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, 0) }.getOrNull()
+            val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, null) }.getOrNull()
             if (grant != null) {
                 storeRemoteKey(grant.cellarKey)
             } else {
@@ -513,7 +575,7 @@ class SyncManager(
     fun adoptRemote(info: RemoteInfo?) {
         val membership = status.value.membership ?: return
         if (info == null || info.key.cellarId != membership.cellarId) return
-        if (info.key.epoch > (storage.remoteKey?.epoch ?: 0)) storeRemoteKey(info.key)
+        if (info.key.supersedes(storage.remoteKey)) storeRemoteKey(info.key)
         // Only a storage this device can use: an HTTPS relay. iCloud ("icloud") is Apple-only.
         val offered = info.storage
         if (storage.remoteStorage == null && offered != null && offered.lowercase(Locale.ROOT).startsWith("https://") &&
@@ -552,32 +614,42 @@ class SyncManager(
         val url = storage.remoteStorage ?: return
         if (status.value.wasRemoved || isDemo || !remoteMutex.tryLock()) return
         status.update { it.copy(syncingRemotely = true) }
+        val round = generation
         try {
             val local = snapshot() ?: return
             val store = RelayMailboxStore(url)
             var key = storage.remoteKey
             if (key == null) {
-                key = RemoteSync.receiveGrant(store, identity, local.membership, 0)?.cellarKey
+                key = RemoteSync.receiveGrant(store, identity, local.membership, null)?.cellarKey
+                if (round != generation) return
                 key?.let(::storeRemoteKey)
             }
-            if (key == null) return
-            if (storage.rotationPending) {
-                try {
-                    key = RemoteSync.rotate(store, identity, key, local, url)
-                    storeRemoteKey(key)
-                    storage.rotationPending = false
-                } catch (_: Exception) {
-                    status.update { it.copy(remoteProblem = RemoteProblem.RemovalPending) }
-                    return
-                }
+            if (key == null || key.cellarId != local.membership.cellarId) return
+            key = try {
+                rotateIfNeeded(store, key, local, url)
+            } catch (_: Exception) {
+                status.update { it.copy(remoteProblem = RemoteProblem.RemovalPending) }
+                return
             }
             val current = synchronized(this) { progress }
             val result = RemoteSync.run(store, identity, key, local, current, photos.syncAccess)
+            // The device left or joined another cellar meanwhile: drop the result.
+            if (round != generation) return
             result.newKey?.let(::storeRemoteKey)
+            // The device that gave the new key moved the files: follow it (an HTTPS relay only).
+            val moved = result.storage
+            if (result.newKey != null && moved != null && moved != url && moved.lowercase(Locale.ROOT).startsWith("https://") &&
+                RelayMailboxStore.isAllowed(moved)
+            ) {
+                storage.remoteStorage = moved
+                status.update { it.copy(remoteStorage = moved) }
+            }
             synchronized(this) { progress = result.progress }
             withContext(Dispatchers.IO) { storage.saveRemoteProgress(result.progress) }
             result.snapshot?.let { apply(it, null) }
-            status.update { it.copy(lastRemoteSync = Instant.now(), remoteProblem = null) }
+            status.update {
+                it.copy(lastRemoteSync = Instant.now(), remoteProblem = if (result.unreadable.isEmpty()) null else RemoteProblem.Unreadable)
+            }
         } catch (error: RemoteSyncException) {
             val problem = when (error.error) {
                 RemoteSyncError.Unauthorized -> RemoteProblem.Refused
@@ -593,7 +665,31 @@ class SyncManager(
         }
     }
 
+    /** Rotates the remote key if a removal is waiting for it, and returns the key to use. */
+    private suspend fun rotateIfNeeded(store: RelayMailboxStore, key: CellarKey, local: SyncSnapshot, url: String): CellarKey {
+        // Builds before this one kept only a flag.
+        if (storage.hadRotationFlag) {
+            storage.clearRotationFlag()
+            if (storage.pendingKey == null) storage.pendingKey = CellarKey.random(key.cellarId, key.epoch + 1)
+        }
+        var next = storage.pendingKey?.takeIf { it.cellarId == key.cellarId } ?: return key
+        // Another device moved on meanwhile: rotate from where the cellar is now.
+        if (next.epoch <= key.epoch) {
+            next = CellarKey.random(key.cellarId, key.epoch + 1)
+            storage.pendingKey = next
+        }
+        RemoteSync.rotate(store, identity, key, next, local, url)
+        storeRemoteKey(next)
+        storage.pendingKey = null
+        return next
+    }
+
     private fun storeRemoteKey(key: CellarKey?) {
+        // Progress belongs to a mailbox: a different key starts afresh.
+        if (key != storage.remoteKey) {
+            synchronized(this) { progress = RemoteProgress() }
+            runCatching { storage.saveRemoteProgress(RemoteProgress()) }
+        }
         storage.remoteKey = key
         status.update { it.copy(hasRemoteKey = key != null) }
     }
@@ -602,6 +698,9 @@ class SyncManager(
 
     companion object {
         const val LOCAL_DELAY_MS = 2_000L
+        private const val HANDSHAKE_DEADLINE_MS = 10_000L
+        private const val SESSION_DEADLINE_MS = 300_000L
+        private const val MAX_INBOUND_SESSIONS = 4
         const val REMOTE_DELAY_MS = 3_000L
         const val REMOTE_INTERVAL_MS = 60_000L
     }

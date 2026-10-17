@@ -86,12 +86,22 @@ class PairingSession private constructor(
             timer?.cancel()
             stopListening()
             val transport = SocketTransport(accepted, SocketTransport.PAIRING_TIMEOUT_MS).also { this@PairingSession.transport = it }
+            // Set once the device is added: from then on, a failed first sync is not a failed
+            // pairing (the next sync completes it).
+            var added: String? = null
             try {
+                // A device that connects and stays silent must not hold the code.
+                val keyDeadline = transport.closing(scope, KEY_DEADLINE_MS)
                 val keys = host.exchangeKeys(transport)
+                keyDeadline.cancel()
                 val ok = ask(keys.confirmationCode, keys.peer.name)
+                val answerDeadline = transport.closing(scope, LIFETIME_SECONDS * 1000)
                 val membership = sync.state.value.membership ?: throw SyncException(SyncError.Closed)
                 val (channel, member) = host.finish(transport, keys, ok, membership)
+                answerDeadline.cancel()
+                transport.allowLargeFrames()
                 sync.addMember(member)
+                added = member.name
                 phaseFlow.value = Phase.Syncing
                 val local = sync.snapshot() ?: throw SyncException(SyncError.Closed)
                 val (result, remote) = SyncExchange.exchange(channel, true, local, syncPhotos(), sync.remoteInfo())
@@ -100,7 +110,7 @@ class PairingSession private constructor(
                 sync.resume()
                 phaseFlow.value = Phase.Done(member.name)
             } catch (error: Exception) {
-                fail(error)
+                added?.let(::finishWithoutSync) ?: fail(error)
             } finally {
                 transport.close()
             }
@@ -144,13 +154,20 @@ class PairingSession private constructor(
                 browsing = null
                 val joiner = PairingJoiner(sync.identity, sync.deviceName, sync.platform, commitment)
                 var transport: SocketTransport? = null
+                var added: String? = null
                 try {
                     transport = SocketTransport.connect(service.address, SocketTransport.PAIRING_TIMEOUT_MS)
                     this@PairingSession.transport = transport
+                    val keyDeadline = transport.closing(scope, KEY_DEADLINE_MS)
                     val keys = joiner.exchangeKeys(transport)
+                    keyDeadline.cancel()
                     val ok = ask(keys.confirmationCode, keys.peer.name)
+                    val answerDeadline = transport.closing(scope, LIFETIME_SECONDS * 1000)
                     val (channel, received) = joiner.finish(transport, keys, ok)
+                    answerDeadline.cancel()
+                    transport.allowLargeFrames()
                     sync.adoptCellar(received, replace)
+                    added = keys.peer.name
                     phaseFlow.value = Phase.Syncing
                     val local = sync.snapshot() ?: throw SyncException(SyncError.Closed)
                     val (result, remote) = SyncExchange.exchange(channel, false, local, syncPhotos(), sync.remoteInfo())
@@ -159,7 +176,7 @@ class PairingSession private constructor(
                     sync.resume()
                     phaseFlow.value = Phase.Done(keys.peer.name)
                 } catch (error: Exception) {
-                    fail(error)
+                    added?.let(::finishWithoutSync) ?: fail(error)
                 } finally {
                     transport?.close()
                 }
@@ -206,6 +223,13 @@ class PairingSession private constructor(
         transport?.close()
     }
 
+    /** Paired, but the first sync did not finish: the devices complete it the next time they meet. */
+    private fun finishWithoutSync(device: String) {
+        stop()
+        sync.resume()
+        phaseFlow.value = Phase.Done(device)
+    }
+
     private fun fail(error: Exception) {
         stop()
         if (phaseFlow.value is Phase.Done) return
@@ -232,6 +256,7 @@ class PairingSession private constructor(
         /** A code works for 2 minutes. */
         const val LIFETIME_SECONDS = 120L
         private const val FIND_TIMEOUT_MS = 30_000L
+        private const val KEY_DEADLINE_MS = 20_000L
 
         /** Shows a new code and waits for a device to join with it. */
         suspend fun invite(sync: SyncManager, scope: CoroutineScope): PairingSession {

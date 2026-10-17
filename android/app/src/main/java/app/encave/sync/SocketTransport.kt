@@ -12,6 +12,8 @@ import java.net.Socket
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -22,6 +24,27 @@ class SocketTransport(private val socket: Socket, timeoutMs: Int = READ_TIMEOUT_
     private val input = DataInputStream(socket.getInputStream().buffered())
     private val output = DataOutputStream(socket.getOutputStream().buffered())
     private val sending = Mutex()
+
+    /**
+     * Frames from a device not authenticated yet are small (hellos, pairing messages):
+     * anything larger is refused, so a stranger cannot make this device buffer megabytes.
+     * Raised with [allowLargeFrames] after the handshake.
+     */
+    @Volatile private var maxIncoming = UNAUTHENTICATED_LIMIT
+
+    /** The other device is authenticated: frames up to the protocol limit. */
+    fun allowLargeFrames() {
+        maxIncoming = SyncProtocol.MAX_FRAME_SIZE
+    }
+
+    /**
+     * Closes the connection after [delayMs] unless the returned job is cancelled first:
+     * a deadline for steps where the other side could stay silent.
+     */
+    fun closing(scope: kotlinx.coroutines.CoroutineScope, delayMs: Long): kotlinx.coroutines.Job = scope.launch {
+        delay(delayMs)
+        close()
+    }
 
     init {
         // A session that stalls (the other device went to sleep) ends instead of hanging.
@@ -47,7 +70,7 @@ class SocketTransport(private val socket: Socket, timeoutMs: Int = READ_TIMEOUT_
     override suspend fun receive(): ByteArray = withContext(Dispatchers.IO) {
         try {
             val length = input.readInt()
-            if (length < 0 || length > SyncProtocol.MAX_FRAME_SIZE) throw SyncException(SyncError.FrameTooLarge)
+            if (length < 0 || length > maxIncoming) throw SyncException(SyncError.FrameTooLarge)
             ByteArray(length).also { input.readFully(it) }
         } catch (_: IOException) {
             throw SyncException(SyncError.Closed)
@@ -60,6 +83,9 @@ class SocketTransport(private val socket: Socket, timeoutMs: Int = READ_TIMEOUT_
 
     companion object {
         const val READ_TIMEOUT_MS = 60_000
+
+        /** Largest frame before authentication (SYNC.md §5). */
+        const val UNAUTHENTICATED_LIMIT = 64 * 1024
 
         /** Pairing waits for people to compare codes. */
         const val PAIRING_TIMEOUT_MS = 300_000

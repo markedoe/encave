@@ -127,6 +127,7 @@ private const val LOCAL_NETWORK_SDK = 37
 internal val SyncManager.Problem.text: Int
     get() = when (this) {
         SyncManager.Problem.Removed -> R.string.sync_problem_removed
+        SyncManager.Problem.SaysRemoved -> R.string.sync_problem_says_removed
         SyncManager.Problem.NotVerified -> R.string.sync_problem_not_verified
         SyncManager.Problem.OtherVersion -> R.string.sync_problem_version
         SyncManager.Problem.Unfinished -> R.string.sync_problem_unfinished
@@ -139,6 +140,7 @@ private val SyncManager.RemoteProblem.text: Int
         SyncManager.RemoteProblem.Full -> R.string.remote_problem_full
         SyncManager.RemoteProblem.Unreachable -> R.string.remote_problem_unreachable
         SyncManager.RemoteProblem.RemovalPending -> R.string.remote_problem_removal
+        SyncManager.RemoteProblem.Unreadable -> R.string.remote_problem_unreadable
     }
 
 /** "2 minutes ago", lowercase to go inside "Synced …" (French writes "Il y a…"). */
@@ -182,7 +184,7 @@ fun DevicesScreen(navigator: AppNavigator) {
                 ListItem(
                     leadingContent = { Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                     headlineContent = { Text(stringResource(problem.text)) },
-                    supportingContent = if (status.wasRemoved) {
+                    supportingContent = if (status.wasRemoved || problem == SyncManager.Problem.SaysRemoved) {
                         { TextButton(onClick = { sync.leave() }) { Text(stringResource(R.string.devices_leave)) } }
                     } else {
                         null
