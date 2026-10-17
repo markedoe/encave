@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Diamond
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Hive
@@ -26,7 +27,7 @@ import app.encave.R
  * Topics of the in-app help, the same as on Apple. The keyboard-shortcuts topic is
  * left out: the Android app has no keyboard shortcuts.
  */
-enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Ai, Data, Privacy }
+enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Devices, Ai, Data, Privacy }
 
 /** A paragraph of help with an optional heading. Text can use **bold** and `code`. */
 data class HelpSection(@StringRes val body: Int, @StringRes val title: Int? = null, val icon: ImageVector? = null)
@@ -107,6 +108,18 @@ data class HelpArticle(
                     HelpSection(R.string.help_discoveries_tags, R.string.discovery_tags),
                     HelpSection(R.string.help_discoveries_list, R.string.discovery_shopping_list),
                     HelpSection(R.string.help_discoveries_not_cellar, R.string.help_discoveries_not_cellar_title),
+                ),
+            ),
+            HelpArticle(
+                HelpTopic.Devices, R.string.help_devices_title, R.string.help_devices_summary, Icons.Outlined.Devices,
+                listOf(
+                    HelpSection(R.string.help_devices_add, R.string.help_devices_add_title),
+                    HelpSection(R.string.help_devices_compare, R.string.help_devices_compare_title),
+                    HelpSection(R.string.help_devices_sync, R.string.help_devices_sync_title),
+                    HelpSection(R.string.help_devices_bottles, R.string.help_devices_bottles_title),
+                    HelpSection(R.string.help_devices_remove, R.string.help_devices_remove_title),
+                    HelpSection(R.string.help_devices_away, R.string.help_devices_away_title),
+                    HelpSection(R.string.help_devices_privacy, R.string.help_devices_privacy_title),
                 ),
             ),
             HelpArticle(

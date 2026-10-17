@@ -46,6 +46,10 @@ data class AddBottleRoute(
 @Serializable data object InsightsRoute
 @Serializable data object SettingsRoute
 @Serializable data class HelpRoute(val topic: String? = null)
+@Serializable data object DevicesRoute
+@Serializable data object RemoteSyncRoute
+@Serializable data object InviteDeviceRoute
+@Serializable data object JoinDeviceRoute
 
 /** The four sections, in navigation order. */
 enum class TopLevel(
