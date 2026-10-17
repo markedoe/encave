@@ -61,8 +61,22 @@ data class CellarKey(
 ) {
     internal fun derive(info: String, count: Int = 32): ByteArray = KeySchedule.derive(key, ByteArray(0), info, count)
 
-    /** Where this epoch's files are. Reveals nothing about the key, and changes with it. */
-    val mailboxId: String get() = "c" + derive("encave/v1/mailbox", 16).hex()
+    /**
+     * Where this epoch's files are: "c" and the start of the token's SHA-256, so a relay can
+     * check the token without storing anything. Changes with the key.
+     */
+    val mailboxId: String get() = RelayAuth.mailboxId("c", token)
+
+    /**
+     * Whether this key replaces [other]: a later epoch, or on the same epoch (two devices
+     * turned remote sync on, or rotated, at the same time) the key whose SHA-256 is smaller,
+     * so every device settles on the same one.
+     */
+    fun supersedes(other: CellarKey?): Boolean {
+        if (other == null || other.cellarId != cellarId) return other == null
+        if (epoch != other.epoch) return epoch > other.epoch
+        return java.util.Arrays.compareUnsigned(KeySchedule.sha256(key), KeySchedule.sha256(other.key)) < 0
+    }
 
     /** Proves to a relay the right to use the mailbox. */
     val token: String get() = derive("encave/v1/relay-auth").base64Url()
@@ -81,6 +95,12 @@ data class CellarKey(
 
 // endregion
 
+/** How mailbox IDs follow from their tokens (the relay applies the same rule). */
+object RelayAuth {
+    /** [kind] ("c" or "i") followed by the first 32 hex characters of SHA-256 of the UTF-8 token. */
+    fun mailboxId(kind: String, token: String): String = kind + KeySchedule.sha256(token.toByteArray(Charsets.UTF_8)).copyOf(16).hex()
+}
+
 // region File envelope
 
 /**
@@ -94,9 +114,9 @@ object Envelope {
 
     private fun header(kind: Kind) = magic + byteArrayOf(1, kind.raw)
 
-    fun seal(plaintext: ByteArray, kind: Kind, path: String, key: ByteArray): ByteArray {
+    /** [nonce] is random unless given (test vectors only). */
+    fun seal(plaintext: ByteArray, kind: Kind, path: String, key: ByteArray, nonce: ByteArray = ChaChaPoly.randomNonce()): ByteArray {
         val header = header(kind)
-        val nonce = ChaChaPoly.randomNonce()
         return header + nonce + ChaChaPoly.seal(plaintext, key, nonce, header + path.toByteArray(Charsets.UTF_8))
     }
 
@@ -188,6 +208,8 @@ object RemoteSync {
         /** A newer cellar key received from another device. */
         val newKey: CellarKey?,
         val storage: String?,
+        /** Devices whose newest snapshot could not be read (damaged, from a newer version, out of bounds). Skipped. */
+        val unreadable: List<UUID> = emptyList(),
     )
 
     /**
@@ -204,13 +226,15 @@ object RemoteSync {
         var storage: String? = null
         var newKey: CellarKey? = null
 
-        // 1. Key grants: a newer epoch (a device was removed).
-        receiveGrant(store, identity, local.membership, newerThan = currentKey.epoch)?.let { grant ->
+        val unreadable = mutableListOf<UUID>()
+
+        // 1. Key grants: a key that supersedes this one (a device was removed, or two turned it on).
+        receiveGrant(store, identity, local.membership, current = currentKey)?.let { grant ->
             currentKey = grant.cellarKey
             newKey = currentKey
             storage = grant.storage
         }
-        if (current.epoch != currentKey.epoch) current = RemoteProgress(epoch = currentKey.epoch)
+        if (current.epoch != currentKey.epoch || newKey != null) current = RemoteProgress(epoch = currentKey.epoch)
 
         // 2. Other devices' newest snapshots.
         val mailbox = store.mailbox(currentKey.mailboxId, currentKey.token)
@@ -220,21 +244,28 @@ object RemoteSync {
         val snapshots = mailbox.list("snap/").mapNotNull { SnapshotPath.parse(it) }
         for ((device, paths) in snapshots.groupBy { it.device }) {
             if (device == identity.id) continue
-            // Only current members are read: a removed device's files are ignored.
-            if (merged.membership.members[device] == null && merged.membership.stamps[device] != null) continue
+            // Only current members are read: files of removed or unknown devices are ignored
+            // (a device added elsewhere is read once its record arrives).
+            if (merged.membership.members[device] == null) continue
             val newest = paths.maxBy { it.clock }
             if (newest.clock <= (seen[device.lower] ?: 0)) continue
             val file = mailbox.get(newest.string) ?: continue
-            val remote = decodeSnapshot(Envelope.open(file, Envelope.Kind.Snapshot, newest.string, currentKey.dataKey))
-            if (remote.state.device != device || remote.membership.cellarId != merged.membership.cellarId) {
-                throw RemoteSyncException(RemoteSyncError.Corrupted(newest.string))
+            // One unreadable file must not stop the round for the other devices.
+            val remote = try {
+                decodeSnapshot(Envelope.open(file, Envelope.Kind.Snapshot, newest.string, currentKey.dataKey)).also {
+                    if (it.state.device != device || it.membership.cellarId != merged.membership.cellarId) {
+                        throw RemoteSyncException(RemoteSyncError.Corrupted(newest.string))
+                    }
+                    SyncState.check(it.state, it.membership)
+                }
+            } catch (_: Exception) {
+                unreadable += device
+                continue
             }
             val merge = CellarMerge.merge(merged.cellar, merged.state, remote.cellar, remote.state)
-            merged = SyncSnapshot(
-                merge.cellar,
-                merged.state.copy(stamps = merge.stamps, clock = maxOf(merged.state.clock, merge.clock)),
-                merged.membership.merged(remote.membership),
-            )
+            val membership = merged.membership.merged(remote.membership)
+            val clock = maxOf(merged.state.clock, merge.clock, membership.stamps.values.maxOfOrNull { it.counter } ?: 0)
+            merged = SyncSnapshot(merge.cellar, merged.state.copy(stamps = merge.stamps, clock = clock), membership)
             seen[device.lower] = newest.clock
             received = true
         }
@@ -243,9 +274,9 @@ object RemoteSync {
         // 3. Missing photos.
         val referenced = merged.cellar.wines.values.mapNotNull { it.photoId }.toSortedSet()
         for (id in referenced) {
-            if (photos.data(id) != null) continue
+            if (!PhotoId.isValid(id) || photos.data(id) != null) continue
             val path = photoPath(id)
-            val file = mailbox.get(path) ?: continue
+            val file = runCatching { mailbox.get(path) }.getOrNull() ?: continue
             val data = runCatching { Envelope.open(file, Envelope.Kind.Photo, path, currentKey.dataKey) }.getOrNull() ?: continue
             if (!PhotoId.matches(id, data)) continue
             photos.save(id, data)
@@ -256,7 +287,7 @@ object RemoteSync {
         var uploadedClock = current.uploadedClock
         if (uploadedClock != merged.state.clock || newKey != null) {
             for (id in referenced) {
-                if (id in uploaded) continue
+                if (!PhotoId.isValid(id) || id in uploaded) continue
                 val data = photos.data(id) ?: continue
                 val path = photoPath(id)
                 mailbox.create(path, Envelope.seal(data, Envelope.Kind.Photo, path, currentKey.dataKey))
@@ -270,14 +301,16 @@ object RemoteSync {
             current.copy(seen = seen, uploadedClock = uploadedClock, uploadedPhotos = uploaded),
             newKey,
             storage,
+            unreadable,
         )
     }
 
     /**
-     * The newest key left in this device's inbox by a current member, if newer than
-     * [newerThan] (0: any). Grants that are older or no longer useful are deleted.
+     * The key left in this device's inbox by a current member that supersedes [current]
+     * (null: any), if any. Grants that are older or no longer useful are deleted.
      */
-    suspend fun receiveGrant(store: MailboxStore, identity: DeviceIdentity, membership: Membership, newerThan: Long): KeyGrant? {
+    suspend fun receiveGrant(store: MailboxStore, identity: DeviceIdentity, membership: Membership, current: CellarKey?): KeyGrant? {
+        val newerThan = current?.epoch ?: 0
         val inbox = store.inbox(identity.inboxId, identity.inboxToken)
         val ownPrefix = "grant/${membership.cellarId.lower}-"
         var best: KeyGrant? = null
@@ -287,7 +320,7 @@ object RemoteSync {
                 KeyGrant.open(data, path, identity, membership)
             } catch (error: SyncException) {
                 // From a device of this cellar this one has not heard of yet: kept for later.
-                if (error.error == SyncError.UnknownDevice && path.startsWith(ownPrefix)) continue
+                if (error.error == SyncError.UnknownDevice && path.startsWith(ownPrefix) && !isFromRemovedDevice(path, membership)) continue
                 runCatching { inbox.delete(path) }
                 continue
             } catch (_: Exception) {
@@ -295,7 +328,7 @@ object RemoteSync {
                 runCatching { inbox.delete(path) }
                 continue
             }
-            if (grant.cellarKey.epoch > maxOf(newerThan, best?.cellarKey?.epoch ?: 0)) best = grant
+            if (grant.cellarKey.supersedes(best?.cellarKey ?: current)) best = grant
         }
         // Grants up to the one kept are done with.
         val kept = best?.cellarKey?.epoch ?: newerThan.takeIf { it > 0 }
@@ -308,29 +341,41 @@ object RemoteSync {
         return best
     }
 
+    /** A grant path ends with the sender's ID; true if that device was removed (or the path is unreadable). */
+    internal fun isFromRemovedDevice(path: String, membership: Membership): Boolean {
+        val sender = runCatching { UUID.fromString(path.takeLast(36)) }.getOrNull() ?: return true
+        return membership.stamps[sender]?.deleted == true
+    }
+
     /**
      * After removing devices: a new key for the remaining ones. The new key is left in
      * each remaining device's inbox, the updated list of devices is written to the
      * old mailbox too (for devices that have not switched yet), and the cellar to the
      * new mailbox. The removed devices cannot find or read the new mailbox.
+     *
+     * [newKey] is made once by the caller and kept until the rotation succeeds, so a retry
+     * after a failure gives the same key: grants already left stay valid.
      */
-    suspend fun rotate(store: MailboxStore, identity: DeviceIdentity, oldKey: CellarKey, local: SyncSnapshot, storage: String?): CellarKey {
-        val newKey = CellarKey.random(oldKey.cellarId, oldKey.epoch + 1)
+    suspend fun rotate(store: MailboxStore, identity: DeviceIdentity, oldKey: CellarKey, newKey: CellarKey, local: SyncSnapshot, storage: String?) {
         grant(newKey, local.membership.active, store, identity, storage)
-        write(local, store.mailbox(oldKey.mailboxId, oldKey.token), oldKey, identity.id)
+        // The removed device can still read the old mailbox: only the devices and the clock go there.
+        val notice = local.copy(cellar = app.encave.core.Cellar(), state = local.state.copy(stamps = emptyMap()))
+        write(notice, store.mailbox(oldKey.mailboxId, oldKey.token), oldKey, identity.id)
         write(local, store.mailbox(newKey.mailboxId, newKey.token), newKey, identity.id)
-        return newKey
     }
 
     /**
      * Gives the current key to devices that may not have it (a device that joined
-     * while remote sync was already on, met only on the network).
+     * while remote sync was already on, met only on the network). Devices whose record
+     * has no inbox yet are skipped: they get the key on the local network.
      */
     suspend fun grant(key: CellarKey, members: List<Member>, store: MailboxStore, identity: DeviceIdentity, storage: String?) {
         for (member in members) {
             if (member.id == identity.id) continue
+            // Devices whose record has no inbox yet get the key on the local network.
+            val inbox = member.inbox?.takeIf { RelayPath.isValidMailbox(it) && it.startsWith("i") } ?: continue
             val (path, data) = KeyGrant(key, identity.id, storage).sealed(identity, member.publicKey)
-            store.inbox(DeviceIdentity.inboxId(member.publicKey), "").create(path, data)
+            store.inbox(inbox, "").create(path, data)
         }
     }
 
@@ -459,6 +504,10 @@ class FolderMailboxStore(val root: File) : MailboxStore {
  */
 object RelayPath {
     private val part = Regex("^[a-z0-9_-]+$")
+    private val mailbox = Regex("^[ci][0-9a-f]{32}$")
+
+    /** "c" or "i" followed by 32 lowercase hex characters. */
+    fun isValidMailbox(id: String): Boolean = mailbox.matches(id)
 
     fun isValid(path: String): Boolean {
         if (path.isEmpty() || path.length > 200 || path.startsWith("/") || path.endsWith("/")) return false

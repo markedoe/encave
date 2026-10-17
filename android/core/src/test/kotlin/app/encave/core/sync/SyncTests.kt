@@ -242,3 +242,115 @@ class SyncTests {
         assertEquals(Bottle.Status.InCellar, Bottle(wineId = UUID.randomUUID()).status)
     }
 }
+
+/** Mirrors CaveKit's SyncHardeningTests (SYNC.md §1–2 after the security review). */
+class SyncHardeningTests {
+    @Test
+    fun aRemovalCannotBeUndoneByANewerRecord() {
+        val device = UUID.randomUUID()
+        val other = UUID.randomUUID()
+        val record = Member(device, "R", ByteArray(32), "ios")
+        val (added, clock) = Membership().adding(record, 0, other)
+        val (removed, _) = added.removing(device, clock, other)
+        val (forged, _) = added.adding(record, 1_000, device)
+        assertNull(removed.merged(forged).members[device])
+        assertNull(forged.merged(removed).members[device])
+    }
+
+    @Test
+    fun clocksOutOfBoundsAreRefused() {
+        val state = SyncState(clock = 5).let { it.copy(stamps = mapOf("settings" to Stamp(9, it.device))) }
+        assertTrue(syncErrorOfBlocking { SyncState.check(state) } is SyncError.ProtocolViolation)
+        assertTrue(syncErrorOfBlocking { SyncState.check(SyncState(clock = -1)) } is SyncError.ProtocolViolation)
+        assertTrue(syncErrorOfBlocking { SyncState.check(SyncState(clock = SyncState.MAX_COUNTER + 1)) } is SyncError.ProtocolViolation)
+        val (members, _) = Membership().adding(Member(UUID.randomUUID(), "M", ByteArray(32), "ios"), SyncState.MAX_COUNTER, UUID.randomUUID())
+        assertTrue(syncErrorOfBlocking { SyncState.check(SyncState(clock = 7), members) } is SyncError.ProtocolViolation)
+        SyncState.check(SyncState(clock = 7))
+    }
+
+    @Test
+    fun theMergedClockCoversEveryStamp() {
+        val remote = SyncState(clock = 3).let { it.copy(stamps = mapOf("settings" to Stamp(3, it.device))) }
+        val local = SyncState(clock = 1).let { it.copy(stamps = mapOf("rack-order" to Stamp(2, it.device))) }
+        assertTrue(CellarMerge.merge(Cellar(), local, Cellar(), remote).clock >= 3)
+    }
+
+    @Test
+    fun duplicateRacksInAFileAreDropped() {
+        val rack = Rack(name = "Twice", rows = 1, columns = 1)
+        val json = SyncJson.encodeCellar(Cellar(racks = listOf(rack))).decodeToString()
+        val twice = json.replace(Regex("\"racks\":\\[(\\{.*?\\})\\]")) { "\"racks\":[${it.groupValues[1]},${it.groupValues[1]}]" }
+        assertEquals(1, SyncJson.decodeCellar(twice.toByteArray()).racks.size)
+        assertEquals(1, Cellar(racks = listOf(rack, rack)).racks.size)
+    }
+
+    @Test
+    fun aDictionaryKeyedByTheWrongIdIsReKeyed() {
+        val wine = Wine(name = "Mine")
+        val json = SyncJson.encodeCellar(Cellar(wines = listOf(wine))).decodeToString()
+            .replace("\"wines\":[\"${wine.id.upper}\"", "\"wines\":[\"${UUID.randomUUID().upper}\"")
+        assertEquals(setOf(wine.id), SyncJson.decodeCellar(json.toByteArray()).wines.keys)
+    }
+
+    @Test
+    fun rackOrderConvergesOnEqualStamps() {
+        val r0 = Rack(name = "R0", rows = 1, columns = 1)
+        val a = Rack(name = "a", rows = 1, columns = 1)
+        val b = Rack(name = "b", rows = 1, columns = 1)
+        val device = UUID.randomUUID()
+        val stamps = mapOf("rack-order" to Stamp(10, device)) + listOf(r0, a, b).associate { SyncKey.of(SyncKey.Kind.Rack, it.id) to Stamp(1, device) }
+        val state = SyncState(device = device, clock = 10, stamps = stamps)
+        val stateY = state.copy(device = UUID.randomUUID())
+        val x = Cellar(racks = listOf(r0, a, b))
+        val y = Cellar(racks = listOf(r0, b, a))
+        val one = CellarMerge.merge(x, state, y, stateY).cellar.racks.map { it.id }
+        val two = CellarMerge.merge(y, stateY, x, state).cellar.racks.map { it.id }
+        assertEquals(one, two)
+    }
+
+    @Test
+    fun aBottleAddedWhileItsWineWasDeletedBringsTheWineBack() {
+        val wine = Wine(name = "Shared")
+        val cellar = Cellar().apply { addBottles(wine, 1) }
+        val deviceA = UUID.randomUUID()
+        var stateA = SyncState.starting(cellar, deviceA)
+        var stateB = stateA.copy(device = UUID.randomUUID())
+        // A deletes the wine; B, later in Lamport order, adds a bottle of it.
+        val cellarA = cellar.copy()
+        val cellarB = cellar.copy()
+        val beforeA = cellarA.copy()
+        cellarA.deleteWine(wine.id)
+        stateA = stateA.recording(beforeA, cellarA)
+        stateB = stateB.copy(clock = stateB.clock + 5)
+        val beforeB = cellarB.copy()
+        cellarB.addBottles(wine, 1)
+        stateB = stateB.recording(beforeB, cellarB)
+        val onA = CellarMerge.merge(cellarA, stateA, cellarB, stateB)
+        val onB = CellarMerge.merge(cellarB, stateB, cellarA, stateA)
+        assertEquals(onA.cellar, onB.cellar)
+        assertEquals(onA.stamps, onB.stamps)
+        assertTrue(onA.cellar.wines[wine.id] != null)
+        assertEquals(1, onA.cellar.bottles.size)
+    }
+
+    @Test
+    fun equalStampsKeepTheBottleWithoutAPlace() {
+        val rack = Rack(name = "R", rows = 1, columns = 1)
+        val cellar = Cellar(racks = listOf(rack)).apply { addBottles(Wine(name = "W"), 1, listOf(Slot(rack.id, 0, 0))) }
+        val state = SyncState.starting(cellar, UUID.randomUUID())
+        val bottle = cellar.bottles.values.single()
+        // Repair took the place on one side without a stamp.
+        val unplaced = Cellar(cellar.wines.values, listOf(bottle.copy(slot = null)), cellar.racks)
+        val one = CellarMerge.merge(cellar, state, unplaced, state.copy(device = UUID.randomUUID()))
+        val two = CellarMerge.merge(unplaced, state, cellar, state)
+        assertNull(one.cellar.bottles.values.single().slot)
+        assertNull(two.cellar.bottles.values.single().slot)
+    }
+}
+
+private fun syncErrorOfBlocking(block: () -> Unit): SyncError? = try {
+    block()
+    null
+} catch (error: SyncException) {
+    error.error
+}

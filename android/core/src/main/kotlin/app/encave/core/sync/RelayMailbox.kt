@@ -88,6 +88,7 @@ internal fun http(url: String, method: String, token: String, body: ByteArray? =
 
 private class RelayMailbox(val base: String, val id: String, val token: String) : Mailbox {
     private fun url(path: String?): String {
+        if (!RelayPath.isValidMailbox(id)) throw RemoteSyncException(RemoteSyncError.Corrupted(id))
         if (path == null) return "$base/v1/m/$id"
         if (!RelayPath.isValid(path)) throw RemoteSyncException(RemoteSyncError.Corrupted(path))
         return "$base/v1/m/$id/$path"
@@ -118,8 +119,12 @@ private class RelayMailbox(val base: String, val id: String, val token: String) 
             val page = runCatching { lenient.decodeFromString(Page.serializer(), data.toString(Charsets.UTF_8)) }.getOrNull()
             if (status != 200 || page == null) throw RemoteSyncException(RemoteSyncError.Unavailable("bad list response"))
             files += page.files.filter { it.startsWith(prefix) && RelayPath.isValid(it) }
-            after = page.next
-        } while (after != null)
+            // A page must move forward, and a mailbox holds at most a few thousand files:
+            // a relay that says otherwise is not followed for ever.
+            val next = page.next ?: break
+            if (next <= (after ?: "") || files.size > 10_000) throw RemoteSyncException(RemoteSyncError.Unavailable("bad list paging"))
+            after = next
+        } while (true)
         return files
     }
 

@@ -30,11 +30,17 @@ data class Member(
     /** "ios", "ipados", "macos" or "android". */
     val platform: String,
     @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
+    /**
+     * The device's inbox on a relay, where others leave it new cellar keys
+     * ([DeviceIdentity.inboxId]). Set by the device itself; null for records from before
+     * remote sync, which then get keys only on the local network.
+     */
+    val inbox: String? = null,
 ) {
     override fun equals(other: Any?): Boolean = other is Member && id == other.id && name == other.name &&
-        publicKey.contentEquals(other.publicKey) && platform == other.platform && addedAt == other.addedAt
+        publicKey.contentEquals(other.publicKey) && platform == other.platform && addedAt == other.addedAt && inbox == other.inbox
 
-    override fun hashCode(): Int = listOf(id, name, publicKey.contentHashCode(), platform, addedAt).hashCode()
+    override fun hashCode(): Int = listOf(id, name, publicKey.contentHashCode(), platform, addedAt, inbox).hashCode()
 }
 
 /**
@@ -60,13 +66,28 @@ data class Membership(
         return copy(members = members + (member.id to member), stamps = stamps + (member.id to Stamp(next, by))) to next
     }
 
+    /**
+     * Makes sure this device's own record names its inbox. Returns the new list and clock,
+     * or null if nothing changed (the change is stamped, so it reaches the other devices).
+     * A removed device stays removed.
+     */
+    fun publishingInbox(identity: DeviceIdentity, clock: Long): Pair<Membership, Long>? {
+        val me = members[identity.id] ?: return null
+        if (me.inbox == identity.inboxId) return null
+        return adding(me.copy(inbox = identity.inboxId), clock, identity.id)
+    }
+
     /** Removes a member, leaving a deletion stamp. Returns the new list and the advanced clock. */
     fun removing(id: UUID, clock: Long, by: UUID): Pair<Membership, Long> {
         val next = clock + 1
         return copy(members = members - id, stamps = stamps + (id to Stamp(next, by, deleted = true))) to next
     }
 
-    /** Combines two lists of the same cellar; each device as of its latest change. */
+    /**
+     * Combines two lists of the same cellar; each device as of its latest change. A removal
+     * is final: it wins over any later stamp, so a removed device cannot add itself back by
+     * sending a newer record. Pairing again gives a new device ID.
+     */
     fun merged(other: Membership): Membership {
         val resultMembers = LinkedHashMap<UUID, Member>()
         val resultStamps = LinkedHashMap<UUID, Stamp>()
@@ -76,6 +97,7 @@ data class Membership(
             val useOther = when {
                 a == null -> true
                 b == null -> false
+                a.deleted != b.deleted -> b.deleted
                 else -> b > a
             }
             val stamp = if (useOther) b else a

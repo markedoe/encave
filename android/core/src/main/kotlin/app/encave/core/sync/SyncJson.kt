@@ -1,13 +1,8 @@
 package app.encave.core.sync
 
-import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.CellarJson
 import app.encave.core.CellarSerializer
-import app.encave.core.CellarSettings
-import app.encave.core.Discovery
-import app.encave.core.Rack
-import app.encave.core.Wine
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -80,26 +75,4 @@ object SyncJson {
         }
         out.append('"')
     }
-}
-
-/**
- * Sorted-keys JSON written the way Foundation's `JSONEncoder` writes it, for the
- * merge's tie-break between two versions with the same stamp (SYNC.md §1).
- */
-internal object SwiftJson {
-    private fun <T> bytes(serializer: KSerializer<T>, value: T): ByteArray {
-        val out = StringBuilder()
-        SyncJson.write(SyncJson.json.encodeToJsonElement(serializer, value), out, swiftEscapes = true)
-        return out.toString().toByteArray(Charsets.UTF_8)
-    }
-
-    fun wine(value: Wine): ByteArray {
-        val out = StringBuilder()
-        SyncJson.write(app.encave.core.CellarSerializer.encodeWine(SyncJson.json, value), out, swiftEscapes = true)
-        return out.toString().toByteArray(Charsets.UTF_8)
-    }
-    fun bottle(value: Bottle) = bytes(Bottle.serializer(), value)
-    fun discovery(value: Discovery) = bytes(Discovery.serializer(), value)
-    fun rack(value: Rack) = bytes(Rack.serializer(), value)
-    fun settings(value: CellarSettings) = bytes(CellarSettings.serializer(), value)
 }

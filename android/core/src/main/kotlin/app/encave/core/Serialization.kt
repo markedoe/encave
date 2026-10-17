@@ -171,6 +171,8 @@ object CellarSerializer : KSerializer<Cellar> {
         val input = decoder as? JsonDecoder ?: throw SerializationException("Cellar can only be decoded from JSON")
         val json = input.json
         val root = input.decodeJsonElement() as? JsonObject ?: throw SerializationException("Cellar must be an object")
+        // Keyed by each object's own ID, whatever the file says: for an ID given twice, the
+        // entry with the smallest key wins (as CaveKit re-keys), and racks keep the first.
         val wines = entries(root["wines"]).map { json.decodeFromJsonElement(Wine.serializer(), it) }
         val bottles = entries(root["bottles"]).map { json.decodeFromJsonElement(Bottle.serializer(), it) }
         val racks = (root["racks"] as? JsonArray).orEmpty().map { json.decodeFromJsonElement(Rack.serializer(), it) }
@@ -187,12 +189,21 @@ object CellarSerializer : KSerializer<Cellar> {
         return if (empty.isEmpty()) element else JsonObject(element - empty.toSet())
     }
 
-    /** Values of a Swift dictionary: `[key, value, key, value]`, or a keyed object. */
-    private fun entries(element: JsonElement?): List<JsonElement> = when (element) {
-        null -> emptyList()
-        is JsonArray -> element.filterIndexed { index, _ -> index % 2 == 1 }
-        is JsonObject -> element.values.toList()
-        else -> throw SerializationException("Unexpected dictionary encoding")
+    /**
+     * Values of a Swift dictionary (`[key, value, key, value]`, or a keyed object), in file
+     * order. Objects are keyed by their own "id" later; for an ID given twice, the entry
+     * with the smallest key (as an uppercase string) comes first, so it is the one kept.
+     */
+    private fun entries(element: JsonElement?): List<JsonElement> {
+        val pairs = when (element) {
+            null -> emptyList()
+            is JsonArray -> element.chunked(2).filter { it.size == 2 }.map { (key, value) -> key.jsonPrimitive.content to value }
+            is JsonObject -> element.entries.map { it.key to it.value }
+            else -> throw SerializationException("Unexpected dictionary encoding")
+        }
+        val ownId = { value: JsonElement -> ((value as? JsonObject)?.get("id") as? JsonPrimitive)?.content?.uppercase(Locale.ROOT) }
+        val winners = pairs.groupBy { ownId(it.second) }.mapValues { (_, same) -> same.minBy { it.first.uppercase(Locale.ROOT) } }
+        return pairs.filter { pair -> ownId(pair.second).let { it == null || winners[it] === pair } }.map { it.second }
     }
 }
 

@@ -54,8 +54,8 @@ class DeviceIdentity(val id: UUID, privateKeyData: ByteArray) {
     val privateKey = X25519Key(privateKeyData)
     val publicKey: ByteArray get() = privateKey.publicKey
 
-    /** The device's inbox, where other devices leave key grants for it. */
-    val inboxId: String get() = inboxId(publicKey)
+    /** The device's inbox, where other devices leave key grants for it. Published in its member record. */
+    val inboxId: String get() = RelayAuth.mailboxId("i", inboxToken)
 
     /** Proves to a relay the right to read this inbox. */
     val inboxToken: String
@@ -66,9 +66,6 @@ class DeviceIdentity(val id: UUID, privateKeyData: ByteArray) {
             val key = X25519Key.generate().rawRepresentation
             return DeviceIdentity(id, key) to key
         }
-
-        fun inboxId(publicKey: ByteArray): String =
-            "i" + KeySchedule.hash("encave-inbox-v1", listOf(publicKey)).copyOf(16).hex()
     }
 }
 
@@ -100,6 +97,8 @@ data class WireMessage(
     @kotlinx.serialization.SerialName("photoID") val photoId: String? = null,
     @Serializable(with = Base64Serializer::class) val photoData: ByteArray? = null,
     val reason: String? = null,
+    /** The sender's relay inbox, sent once, encrypted, in pairing. */
+    val inbox: String? = null,
 ) {
     fun encoded(): ByteArray = SyncJson.encode(serializer(), this)
 
@@ -302,9 +301,16 @@ class PairingHost(
     suspend fun finish(transport: FrameTransport, keys: PairingKeys, accepted: Boolean, membership: Membership): Pair<SecureChannel, Member> {
         val channel = SecureChannel(transport, keys.hostToJoiner, keys.joinerToHost)
         channel.send(WireMessage("pair-confirm", accepted = accepted))
+        // A "no" here ends the pairing at once, without waiting for the other answer.
+        if (!accepted) throw SyncException(SyncError.Rejected)
         val answer = channel.receive().require("pair-confirm")
-        if (!accepted || answer.accepted != true) throw SyncException(SyncError.Rejected)
-        val me = Member(info.device, info.name, identity.publicKey, info.platform)
+        if (answer.accepted != true) throw SyncException(SyncError.Rejected)
+        // A joiner may not take the ID of this device, or of a removed device (a removal is final).
+        val claimed = keys.peer.device
+        if (claimed == info.device || membership.stamps[claimed]?.deleted == true) {
+            throw SyncException(SyncError.ProtocolViolation("device ID in use"))
+        }
+        val me = Member(info.device, info.name, identity.publicKey, info.platform, inbox = identity.inboxId)
         val members = if (membership.members.containsKey(me.id)) membership else membership.copy(members = membership.members + (me.id to me))
         channel.send(
             WireMessage(
@@ -315,7 +321,15 @@ class PairingHost(
         val reply = channel.receive().require("pair-member")
         val identityKey = reply.identityKey
         if (identityKey == null || identityKey.size != 32) throw SyncException(SyncError.ProtocolViolation("missing identity key"))
-        return channel to Member(keys.peer.device, keys.peer.name, identityKey, keys.peer.platform)
+        // Nor the ID of a device of the cellar that has another key.
+        membership.members[claimed]?.let { existing ->
+            if (!existing.publicKey.contentEquals(identityKey)) throw SyncException(SyncError.ProtocolViolation("device ID in use"))
+        }
+        // Name and platform as sent over the encrypted channel.
+        return channel to Member(
+            claimed, reply.name ?: keys.peer.name, identityKey, reply.platform ?: keys.peer.platform,
+            inbox = reply.inbox?.takeIf { RelayPath.isValidMailbox(it) && it.startsWith("i") },
+        )
     }
 }
 
@@ -363,8 +377,10 @@ class PairingJoiner(
     suspend fun finish(transport: FrameTransport, keys: PairingKeys, accepted: Boolean): Pair<SecureChannel, Membership> {
         val channel = SecureChannel(transport, keys.joinerToHost, keys.hostToJoiner)
         channel.send(WireMessage("pair-confirm", accepted = accepted))
+        // A "no" here ends the pairing at once, without waiting for the other answer.
+        if (!accepted) throw SyncException(SyncError.Rejected)
         val answer = channel.receive().require("pair-confirm")
-        if (!accepted || answer.accepted != true) throw SyncException(SyncError.Rejected)
+        if (answer.accepted != true) throw SyncException(SyncError.Rejected)
         val welcome = channel.receive().require("pair-welcome")
         val data = welcome.membersData
         val hostKey = welcome.identityKey
@@ -374,7 +390,9 @@ class PairingJoiner(
         membership.members[keys.peer.device]?.let { host ->
             membership = membership!!.copy(members = membership!!.members + (host.id to host.copy(publicKey = hostKey)))
         }
-        channel.send(WireMessage("pair-member", identityKey = identity.publicKey))
+        channel.send(
+            WireMessage("pair-member", identityKey = identity.publicKey, name = info.name, platform = info.platform, inbox = identity.inboxId),
+        )
         return channel to membership!!
     }
 }
@@ -563,20 +581,19 @@ object SyncExchange {
             )
         }.getOrElse { throw SyncException(SyncError.ProtocolViolation("unreadable sync-state")) }
         if (remote.membership.cellarId != local.membership.cellarId) throw SyncException(SyncError.OtherCellar)
+        SyncState.check(remote.state, remote.membership)
 
         val merge = CellarMerge.merge(local.cellar, local.state, remote.cellar, remote.state)
-        val result = SyncSnapshot(
-            merge.cellar,
-            local.state.copy(stamps = merge.stamps, clock = merge.clock),
-            local.membership.merged(remote.membership),
-        )
+        val membership = local.membership.merged(remote.membership)
+        val clock = maxOf(merge.clock, membership.stamps.values.maxOfOrNull { it.counter } ?: 0)
+        val result = SyncSnapshot(merge.cellar, local.state.copy(stamps = merge.stamps, clock = clock), membership)
 
-        // Photos: each side asks for the ones it is missing.
+        // Photos: each side asks for the ones it is missing (valid IDs only).
         val known = merge.cellar.wines.values.mapNotNull { it.photoId }.toSet()
-        val wanted = known.filter { photos.data(it) == null }.sorted()
+        val wanted = known.filter { PhotoId.isValid(it) && photos.data(it) == null }.sorted()
         val request = swap(channel, isInitiator, WireMessage("photos-want", photos = wanted), "photos-want")
         // Only photos of the merged cellar are sent, whatever is asked.
-        val toSend = request.photos.orEmpty().filter { it in known }
+        val toSend = request.photos.orEmpty().filter { it in known && PhotoId.isValid(it) }
 
         suspend fun sendPhotos() {
             for (id in toSend) {

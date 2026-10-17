@@ -70,7 +70,7 @@ data class SyncState(
         compare(SyncKey.Kind.Wine, old.wines, new.wines)
         compare(SyncKey.Kind.Bottle, old.bottles, new.bottles)
         compare(SyncKey.Kind.Discovery, old.discoveries, new.discoveries)
-        compare(SyncKey.Kind.Rack, old.racks.associateBy { it.id }, new.racks.associateBy { it.id })
+        compare(SyncKey.Kind.Rack, CellarMerge.byId(old.racks), CellarMerge.byId(new.racks))
         if (old.settings != new.settings) stamp(SyncKey.SETTINGS, false)
         if (old.racks.map { it.id } != new.racks.map { it.id }) stamp(SyncKey.RACK_ORDER, false)
         return copy(clock = clock, stamps = stamps)
@@ -81,6 +81,25 @@ data class SyncState(
 
     companion object {
         const val FORMAT_VERSION = 1
+
+        /**
+         * The largest counter a sender may use: far below the overflow of a UInt64, so a
+         * device can never be pushed to the point where its next change overflows, and
+         * exact in JSON readers that use doubles.
+         */
+        const val MAX_COUNTER: Long = 1L shl 53
+
+        /**
+         * Refuses a state from another device whose counters are out of bounds (SYNC.md §1,
+         * step 0): a clock over [MAX_COUNTER], a stamp over the sender's own clock, or a
+         * membership counter over [MAX_COUNTER].
+         */
+        fun check(state: SyncState, membership: Membership? = null) {
+            val ok = state.clock in 0..MAX_COUNTER &&
+                state.stamps.values.all { it.counter in 0..state.clock } &&
+                membership?.stamps?.values.orEmpty().all { it.counter in 0..MAX_COUNTER }
+            if (!ok) throw SyncException(SyncError.ProtocolViolation("clock out of bounds"))
+        }
 
         /** Sync turned on for a cellar that already has data: every object gets a first stamp. */
         fun starting(cellar: Cellar, device: UUID = UUID.randomUUID()): SyncState =
@@ -105,11 +124,14 @@ object SyncKey {
 object CellarMerge {
     data class Result(val cellar: Cellar, val stamps: Map<String, Stamp>, val clock: Long)
 
+    /** Racks by ID, the first of each ID. */
+    internal fun byId(racks: List<Rack>): Map<UUID, Rack> = LinkedHashMap<UUID, Rack>().apply { racks.forEach { putIfAbsent(it.id, it) } }
+
     /** Merges a remote copy into a local one. The local device stays the device. */
     fun merge(local: Cellar, localState: SyncState, remote: Cellar, remoteState: SyncState): Result {
         val stamps = mutableMapOf<String, Stamp>()
 
-        fun <T : Any> pick(kind: SyncKey.Kind, a: Map<UUID, T>, b: Map<UUID, T>, encode: (T) -> ByteArray): Map<UUID, T> {
+        fun <T : Any> pick(kind: SyncKey.Kind, a: Map<UUID, T>, b: Map<UUID, T>, prefer: (T, T) -> T): MutableMap<UUID, T> {
             val result = LinkedHashMap<UUID, T>()
             val ids = LinkedHashSet<UUID>(a.keys + b.keys)
             val prefix = kind.raw + ":"
@@ -120,51 +142,99 @@ object CellarMerge {
                 val key = SyncKey.of(kind, id)
                 val sa = localState.stampFor(key, a[id] != null)
                 val sb = remoteState.stampFor(key, b[id] != null)
-                val (winner, stamp) = choose(a[id], sa, b[id], sb, encode)
+                val (winner, stamp) = choose(a[id], sa, b[id], sb, prefer)
                 if (stamp != null) stamps[key] = stamp
                 if (winner != null) result[id] = winner
             }
             return result
         }
 
-        val wines = pick(SyncKey.Kind.Wine, local.wines, remote.wines, SwiftJson::wine)
-        val bottles = pick(SyncKey.Kind.Bottle, local.bottles, remote.bottles, SwiftJson::bottle).toMutableMap()
-        val discoveries = pick(SyncKey.Kind.Discovery, local.discoveries, remote.discoveries, SwiftJson::discovery)
-        val racks = pick(SyncKey.Kind.Rack, local.racks.associateBy { it.id }, remote.racks.associateBy { it.id }, SwiftJson::rack)
+        val keepLocal: (Any, Any) -> Any = { first, _ -> first }
+        @Suppress("UNCHECKED_CAST")
+        fun <T> local() = keepLocal as (T, T) -> T
+
+        val wines = pick(SyncKey.Kind.Wine, local.wines, remote.wines, local())
+        val bottles = pick(SyncKey.Kind.Bottle, local.bottles, remote.bottles, ::preferBottle)
+        val discoveries = pick(SyncKey.Kind.Discovery, local.discoveries, remote.discoveries, local())
+        val racks = pick(SyncKey.Kind.Rack, byId(local.racks), byId(remote.racks), local())
+        revive(wines, bottles, discoveries, stamps, local, remote)
 
         // Settings: one object.
         val (chosenSettings, settingsStamp) = choose(
             local.settings, localState.stamps[SyncKey.SETTINGS] ?: Stamp.ZERO,
-            remote.settings, remoteState.stamps[SyncKey.SETTINGS] ?: Stamp.ZERO, SwiftJson::settings,
+            remote.settings, remoteState.stamps[SyncKey.SETTINGS] ?: Stamp.ZERO, local(),
         )
         val settings = chosenSettings ?: local.settings
         if (settingsStamp != null) stamps[SyncKey.SETTINGS] = settingsStamp
 
-        // Rack order: the order of the copy that reordered last, then any other racks.
+        // Rack order: the order of the copy that reordered last (on equal stamps, the list
+        // that is smaller compared as lowercase IDs), then the other racks by lowercase ID.
         val orderA = localState.stamps[SyncKey.RACK_ORDER] ?: Stamp.ZERO
         val orderB = remoteState.stamps[SyncKey.RACK_ORDER] ?: Stamp.ZERO
-        val order = if (orderB > orderA) remote.racks.map { it.id } + local.racks.map { it.id }
-        else local.racks.map { it.id } + remote.racks.map { it.id }
+        val idsA = local.racks.map { it.id.lower }
+        val idsB = remote.racks.map { it.id.lower }
+        val remoteFirst = if (orderA == orderB) lexicographicallyPrecedes(idsB, idsA) else orderB > orderA
+        val base = if (remoteFirst) remote.racks else local.racks
         if (orderA != Stamp.ZERO || orderB != Stamp.ZERO) stamps[SyncKey.RACK_ORDER] = maxOf(orderA, orderB)
         val seen = HashSet<UUID>()
         val ordered = mutableListOf<Rack>()
-        for (id in order) if (seen.add(id)) racks[id]?.let { ordered += it }
-        // Racks in neither order (should not happen): by ID.
-        for (rack in racks.values.sortedBy { it.id.upper }) if (rack.id !in seen) ordered += rack
+        for (rack in base) if (seen.add(rack.id)) racks[rack.id]?.let { ordered += it }
+        for (rack in racks.values.sortedBy { it.id.lower }) if (rack.id !in seen) ordered += rack
 
         val merged = repair(wines, bottles, ordered, settings, discoveries, stamps)
-        return Result(merged, stamps, maxOf(localState.clock, remoteState.clock))
+        // At least every counter seen, so the next local change is newer than all of them.
+        val clock = (listOf(localState.clock, remoteState.clock) + stamps.values.map { it.counter }).max()
+        return Result(merged, stamps, clock)
+    }
+
+    /** Swift's `lexicographicallyPrecedes` on arrays of strings. */
+    private fun lexicographicallyPrecedes(a: List<String>, b: List<String>): Boolean {
+        for (index in 0 until minOf(a.size, b.size)) {
+            val order = a[index].compareTo(b[index])
+            if (order != 0) return order < 0
+        }
+        return a.size < b.size
     }
 
     /**
-     * The version that changed last, and its stamp. Equal stamps with different
-     * content (two devices that never synced, same object) fall back to the content.
+     * A bottle or discovery changed after its wine was deleted on another device (someone
+     * added a bottle while someone else deleted the wine): the wine comes back, with the
+     * newest stamp of what refers to it, so nothing added is lost.
      */
-    private fun <T : Any> choose(a: T?, sa: Stamp?, b: T?, sb: Stamp?, encode: (T) -> ByteArray): Pair<T?, Stamp?> = when {
+    private fun revive(
+        wines: MutableMap<UUID, app.encave.core.Wine>,
+        bottles: Map<UUID, app.encave.core.Bottle>,
+        discoveries: Map<UUID, app.encave.core.Discovery>,
+        stamps: MutableMap<String, Stamp>,
+        local: Cellar,
+        remote: Cellar,
+    ) {
+        val newest = HashMap<UUID, Stamp>()
+        val references = bottles.values.map { SyncKey.of(SyncKey.Kind.Bottle, it.id) to it.wineId } +
+            discoveries.values.map { SyncKey.of(SyncKey.Kind.Discovery, it.id) to it.wineId }
+        for ((key, wineId) in references) {
+            if (wines[wineId] != null) continue
+            val stamp = stamps[key] ?: continue
+            val deletion = stamps[SyncKey.of(SyncKey.Kind.Wine, wineId)] ?: continue
+            if (!deletion.deleted || stamp <= deletion) continue
+            newest[wineId] = newest[wineId]?.let { maxOf(it, stamp) } ?: stamp
+        }
+        for ((wineId, stamp) in newest) {
+            val wine = local.wines[wineId] ?: remote.wines[wineId] ?: continue
+            wines[wineId] = wine
+            stamps[SyncKey.of(SyncKey.Kind.Wine, wineId)] = Stamp(stamp.counter, stamp.device)
+        }
+    }
+
+    /**
+     * The version that changed last, and its stamp. If the winning side lacks the object
+     * (repair removed it without a stamp), the other side's is kept under the winning stamp.
+     */
+    private fun <T : Any> choose(a: T?, sa: Stamp?, b: T?, sb: Stamp?, prefer: (T, T) -> T): Pair<T?, Stamp?> = when {
         sa == null && sb == null -> null to null
         sb == null -> (if (sa!!.deleted) null else a ?: b) to sa
         sa == null -> (if (sb.deleted) null else b ?: a) to sb
-        sa == sb -> (if (sa.deleted) null else preferred(a, b, encode)) to sa
+        sa == sb -> (if (sa.deleted) null else if (a != null && b != null) prefer(a, b) else a ?: b) to sa
         else -> {
             val (winner, other, stamp) = if (sa > sb) Triple(a, b, sa) else Triple(b, a, sb)
             (if (stamp.deleted) null else winner ?: other) to stamp
@@ -172,14 +242,12 @@ object CellarMerge {
     }
 
     /**
-     * A choice between two versions that does not depend on which device merges: the
-     * one whose sorted-keys JSON is lexicographically greater, as the Swift code does.
+     * Two versions of a bottle with the same stamp come from the same change and differ
+     * only where repair changed one without a stamp: the version without a place wins.
+     * Otherwise the local version is kept.
      */
-    private fun <T : Any> preferred(a: T?, b: T?, encode: (T) -> ByteArray): T? {
-        if (a == null || b == null) return a ?: b
-        if (a == b) return a
-        return if (java.util.Arrays.compareUnsigned(encode(a), encode(b)) < 0) b else a
-    }
+    private fun preferBottle(a: app.encave.core.Bottle, b: app.encave.core.Bottle): app.encave.core.Bottle =
+        if ((a.slot == null) != (b.slot == null)) (if (a.slot == null) a else b) else a
 
     /**
      * Fixes what a merge can leave inconsistent, the same way on every device:
@@ -196,7 +264,7 @@ object CellarMerge {
     ): Cellar {
         bottles.entries.removeAll { wines[it.value.wineId] == null }
         val keptDiscoveries = discoveries.filterValues { wines[it.wineId] != null }
-        val byId = racks.associateBy { it.id }
+        val byId = byId(racks)
         for ((id, bottle) in bottles.toList()) {
             val slot = bottle.slot ?: continue
             if (bottle.status != app.encave.core.Bottle.Status.InCellar || byId[slot.rackId]?.contains(slot) != true) {
@@ -209,7 +277,7 @@ object CellarMerge {
             val ranked = together.sortedWith { x, y ->
                 val sx = stamps[SyncKey.of(SyncKey.Kind.Bottle, x.id)] ?: Stamp.ZERO
                 val sy = stamps[SyncKey.of(SyncKey.Kind.Bottle, y.id)] ?: Stamp.ZERO
-                if (sx != sy) sy.compareTo(sx) else x.id.upper.compareTo(y.id.upper)
+                if (sx != sy) sy.compareTo(sx) else x.id.lower.compareTo(y.id.lower)
             }
             for (loser in ranked.drop(1)) bottles[loser.id] = loser.copy(slot = null)
         }

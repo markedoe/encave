@@ -22,10 +22,12 @@ class Cellar(
     var schemaVersion: Int = CURRENT_SCHEMA_VERSION
         internal set
 
-    private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { put(it.id, it) } }
-    private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { put(it.id, it) } }
-    private val rackList = racks.map { it.normalized() }.toMutableList()
-    private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { put(it.id, it.normalized()) } }
+    // The first object of each ID, as Swift's initializer keeps: data from another device
+    // or a backup must not break the assumptions of the merge and the UI.
+    private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { putIfAbsent(it.id, it) } }
+    private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { putIfAbsent(it.id, it) } }
+    private val rackList = racks.distinctBy { it.id }.map { it.normalized() }.toMutableList()
+    private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { putIfAbsent(it.id, it.normalized()) } }
 
     val wines: Map<UUID, Wine> get() = wineMap
     val bottles: Map<UUID, Bottle> get() = bottleMap

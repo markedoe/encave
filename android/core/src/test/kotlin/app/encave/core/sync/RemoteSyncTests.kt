@@ -26,7 +26,7 @@ private class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnaps
     }
 
     suspend fun sync(store: MailboxStore) {
-        if (key == null) key = RemoteSync.receiveGrant(store, identity, snapshot.membership, 0)?.cellarKey
+        if (key == null) key = RemoteSync.receiveGrant(store, identity, snapshot.membership, null)?.cellarKey
         val key = key ?: return
         val result = RemoteSync.run(store, identity, key, snapshot, progress, photos)
         result.snapshot?.let { snapshot = it }
@@ -41,7 +41,7 @@ private fun household(count: Int = 3): List<RemoteDevice> {
     var membership = Membership()
     var clock = 0L
     identities.forEachIndexed { index, identity ->
-        val (m, c) = membership.adding(Member(identity.id, "Device $index", identity.publicKey, "android"), clock, identities[0].id)
+        val (m, c) = membership.adding(Member(identity.id, "Device $index", identity.publicKey, "android", inbox = identity.inboxId), clock, identities[0].id)
         membership = m
         clock = c
     }
@@ -114,7 +114,9 @@ class RemoteSyncTests {
         val a = devices[0]
         val (membership, clock) = a.snapshot.membership.removing(devices[2].identity.id, a.snapshot.state.clock, a.identity.id)
         a.snapshot = a.snapshot.copy(membership = membership, state = a.snapshot.state.copy(clock = clock))
-        a.key = RemoteSync.rotate(store, a.identity, oldKey, a.snapshot, null)
+        val newKey = CellarKey.random(oldKey.cellarId, oldKey.epoch + 1)
+        RemoteSync.rotate(store, a.identity, oldKey, newKey, a.snapshot, null)
+        a.key = newKey
         a.edit { it.addBottles(Wine(name = "After removal"), 1) }
         a.sync(store)
 
@@ -131,13 +133,85 @@ class RemoteSyncTests {
     }
 
     @Test
+    fun theRemovedDeviceDoesNotGetWhatChangedBeforeTheRotation() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household()
+        grantAll(devices, store, null)
+        devices.forEach { it.sync(store) }
+        val oldKey = devices[0].key!!
+        // A adds a bottle while C is away, then removes C without syncing first.
+        val a = devices[0]
+        a.edit { it.addBottles(Wine(name = "Before removal"), 1) }
+        val (membership, clock) = a.snapshot.membership.removing(devices[2].identity.id, a.snapshot.state.clock, a.identity.id)
+        a.snapshot = a.snapshot.copy(membership = membership, state = a.snapshot.state.copy(clock = clock))
+        RemoteSync.rotate(store, a.identity, oldKey, CellarKey.random(oldKey.cellarId, 2), a.snapshot, null)
+        devices[2].sync(store)
+        assertNull(devices[2].snapshot.membership.members[devices[2].identity.id])
+        assertFalse(devices[2].snapshot.cellar.wines.values.any { it.name == "Before removal" })
+    }
+
+    @Test
+    fun aRotationRetriedAfterAFailureKeepsOneKey() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household()
+        grantAll(devices, store, null)
+        devices.forEach { it.sync(store) }
+        val oldKey = devices[0].key!!
+        val pending = CellarKey.random(oldKey.cellarId, 2)
+        // The same pending key is used for the first try and the retry.
+        RemoteSync.rotate(store, devices[0].identity, oldKey, pending, devices[0].snapshot, null)
+        RemoteSync.rotate(store, devices[0].identity, oldKey, pending, devices[0].snapshot, null)
+        devices[0].key = pending
+        devices[1].sync(store)
+        devices[2].sync(store)
+        assertEquals(pending, devices[1].key)
+        assertEquals(pending, devices[2].key)
+    }
+
+    @Test
+    fun twoKeysOfTheSameEpochSettleOnOne() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household(2)
+        val cellarId = devices[0].snapshot.membership.cellarId
+        // Both devices turn remote sync on at once.
+        val keyA = CellarKey.random(cellarId)
+        val keyB = CellarKey.random(cellarId)
+        devices[0].key = keyA
+        devices[1].key = keyB
+        RemoteSync.grant(keyA, devices[0].snapshot.membership.active, store, devices[0].identity, null)
+        RemoteSync.grant(keyB, devices[1].snapshot.membership.active, store, devices[1].identity, null)
+        devices[0].edit { it.addBottles(Wine(name = "From A"), 1) }
+        devices[1].edit { it.addBottles(Wine(name = "From B"), 1) }
+        repeat(2) { devices.forEach { it.sync(store) } }
+        assertEquals(devices[0].key, devices[1].key)
+        assertEquals(devices[0].snapshot.cellar, devices[1].snapshot.cellar)
+        assertEquals(2, devices[0].snapshot.cellar.wines.size)
+    }
+
+    @Test
+    fun anUnreadableSnapshotDoesNotStopTheRound() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household()
+        grantAll(devices, store, null)
+        devices.forEach { it.sync(store) }
+        val key = devices[0].key!!
+        // C's newest snapshot is garbage; B's is fine.
+        store.mailbox(key.mailboxId, key.token).create(SnapshotPath(devices[2].identity.id, 999).string, "junk".toByteArray())
+        devices[1].edit { it.addBottles(Wine(name = "From B"), 1) }
+        devices[1].sync(store)
+        val result = RemoteSync.run(store, devices[0].identity, key, devices[0].snapshot, devices[0].progress, devices[0].photos)
+        assertEquals(listOf(devices[2].identity.id), result.unreadable)
+        assertTrue(result.snapshot?.cellar?.wines?.values.orEmpty().any { it.name == "From B" })
+    }
+
+    @Test
     fun grantsFromStrangersAreIgnored() = runBlocking {
         val store = MemoryMailboxStore()
         val devices = household(2)
         val stranger = identity()
         val fake = CellarKey.random(devices[1].snapshot.membership.cellarId, 9)
         RemoteSync.grant(fake, listOf(devices[1].snapshot.membership.members.getValue(devices[1].identity.id)), store, stranger, "https://evil.example")
-        assertNull(RemoteSync.receiveGrant(store, devices[1].identity, devices[1].snapshot.membership, 0))
+        assertNull(RemoteSync.receiveGrant(store, devices[1].identity, devices[1].snapshot.membership, null))
     }
 
     @Test

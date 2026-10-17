@@ -91,6 +91,9 @@ class SyncProtocolTests {
             val (_, newMember) = hostDone.await()
             val (_, received) = joinerDone.await()
             assertArrayEquals(joinerId.publicKey, newMember.publicKey)
+            assertEquals(joinerId.inboxId, newMember.inbox)
+            assertEquals("Pixel", newMember.name)
+            assertEquals(hostId.inboxId, received.members[hostId.id]?.inbox)
             assertEquals(membership.cellarId, received.cellarId)
             assertArrayEquals(hostId.publicKey, received.members[hostId.id]?.publicKey)
         }
@@ -110,6 +113,28 @@ class SyncProtocolTests {
             val joinerDone = async { syncErrorOf { joiner.finish(joinerEnd, joinerKeys, false) } }
             assertEquals(SyncError.Rejected, hostDone.await())
             assertEquals(SyncError.Rejected, joinerDone.await())
+        }
+    }
+
+    @Test
+    fun aRemovedDeviceCannotPairAgainWithTheSameId() = runBlocking {
+        val (hostEnd, joinerEnd) = Pipe.pair()
+        val hostId = identity()
+        val joinerId = identity()
+        // The joiner's ID was removed from the cellar earlier.
+        val (membership, _) = Membership().removing(joinerId.id, 3, hostId.id)
+        val host = PairingHost(hostId, "A", "ios")
+        val joiner = PairingJoiner(joinerId, "B", "android")
+        coroutineScope {
+            val hk = async { host.exchangeKeys(hostEnd) }
+            val jk = async { joiner.exchangeKeys(joinerEnd) }
+            val hostKeys = hk.await()
+            val joinerKeys = jk.await()
+            val joinerDone = async { syncErrorOf { joiner.finish(joinerEnd, joinerKeys, true) } }
+            val hostError = syncErrorOf { host.finish(hostEnd, hostKeys, true, membership) }
+            assertTrue(hostError is SyncError.ProtocolViolation)
+            hostEnd.close()
+            assertTrue(joinerDone.await() != null)
         }
     }
 
