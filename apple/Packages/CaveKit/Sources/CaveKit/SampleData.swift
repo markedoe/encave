@@ -8,6 +8,11 @@ public enum SampleData {
         public var mainRack = "Main rack"
         public var wineFridge = "Wine fridge"
         public var tastingNote = "Silky, red fruit, long finish."
+        public var kitchen = "Kitchen"
+        public var occasion = "Dinner with friends"
+        public var nose = "Cherry, violet, a touch of undergrowth"
+        public var palate = "Fine tannins, fresh acidity"
+        public var pairing = "Roast duck"
         public init() {}
     }
 
@@ -17,7 +22,7 @@ public enum SampleData {
     ) -> Cellar {
         var cellar = Cellar()
         let main = Rack(name: labels.mainRack, rows: 6, columns: 8)
-        let small = Rack(name: labels.wineFridge, rows: 4, columns: 6)
+        let small = Rack(name: labels.wineFridge, rows: 4, columns: 6, layout: .diamond)
         cellar.addRack(main)
         cellar.addRack(small)
 
@@ -44,9 +49,16 @@ public enum SampleData {
                   drinkFrom: year - 6, drinkUntil: year + 15), 1, main),
         ]
 
-        for (wine, quantity, rack) in entries {
+        let day: TimeInterval = 86_400
+        let prices: [Decimal] = [38, 54, 16, 24, 14, 36, 29]
+        for (index, (wine, quantity, rack)) in entries.enumerated() {
             let slots = rack.map { Array(cellar.freeSlots(in: $0).prefix(quantity)) } ?? []
-            _ = try? cellar.addBottles(of: wine, quantity: quantity, slots: slots)
+            let purchase = PurchaseInfo(
+                date: .now - Double(30 * (index + 1)) * day, price: prices[index % prices.count],
+                currency: cellar.settings.currency, storageNote: rack == nil ? labels.kitchen : nil
+            )
+            _ = try? cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase,
+                                       addedAt: .now - Double(30 * (index + 1)) * day)
         }
 
         // A few past tastings for the journal.
@@ -54,9 +66,9 @@ public enum SampleData {
                           region: "Bourgogne", country: "France", appellation: "Gevrey-Chambertin", grapes: ["Pinot Noir"],
                           drinkFrom: year - 3, drinkUntil: year + 4)
         if let bottles = try? cellar.addBottles(of: tasted, quantity: 2) {
-            let day: TimeInterval = 86_400
             try? cellar.drink(bottles[0].id, tasting: Tasting(date: .now - 12 * day, rating: 5,
-                note: labels.tastingNote))
+                note: labels.tastingNote, occasion: labels.occasion, nose: labels.nose,
+                palate: labels.palate, foodPairing: labels.pairing))
             try? cellar.drink(bottles[1].id, tasting: Tasting(date: .now - 40 * day, rating: 4))
         }
         return cellar

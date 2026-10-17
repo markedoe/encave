@@ -1,20 +1,31 @@
 import Foundation
 
-/// The whole cellar: wines, bottles and racks. A value type, so the UI layer
-/// can observe it and a sync engine can later replace how it is stored.
+/// The whole cellar: wines, bottles, racks and settings. A value type, so the UI
+/// layer can observe it and a sync engine can later replace how it is stored.
 public struct Cellar: Codable, Equatable, Sendable {
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 2
 
     public var schemaVersion: Int
     public var wines: [UUID: Wine]
     public var bottles: [UUID: Bottle]
     public var racks: [Rack]
+    public var settings: CellarSettings
 
-    public init(wines: [Wine] = [], bottles: [Bottle] = [], racks: [Rack] = []) {
+    public init(wines: [Wine] = [], bottles: [Bottle] = [], racks: [Rack] = [], settings: CellarSettings = CellarSettings()) {
         schemaVersion = Cellar.currentSchemaVersion
         self.wines = Dictionary(uniqueKeysWithValues: wines.map { ($0.id, $0) })
         self.bottles = Dictionary(uniqueKeysWithValues: bottles.map { ($0.id, $0) })
         self.racks = racks
+        self.settings = settings
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        wines = try c.decodeIfPresent([UUID: Wine].self, forKey: .wines) ?? [:]
+        bottles = try c.decodeIfPresent([UUID: Bottle].self, forKey: .bottles) ?? [:]
+        racks = try c.decodeIfPresent([Rack].self, forKey: .racks) ?? []
+        settings = try c.decodeIfPresent(CellarSettings.self, forKey: .settings) ?? CellarSettings()
+        schemaVersion = Cellar.currentSchemaVersion
     }
 
     public var isEmpty: Bool { wines.isEmpty && bottles.isEmpty && racks.isEmpty }
@@ -36,6 +47,25 @@ public struct MaturitySection: Identifiable, Hashable, Sendable {
     public var id: Maturity { maturity }
 }
 
+/// How the cellar list is sorted.
+public enum CellarSort: String, CaseIterable, Sendable {
+    case name, vintage, recentlyAdded, readiness, region
+}
+
+/// Filters for the cellar list. Empty sets mean "all".
+public struct CellarFilter: Equatable, Sendable {
+    public var query: String
+    public var colors: Set<WineColor>
+    public var maturities: Set<Maturity>
+    public var rackID: UUID?
+
+    public init(query: String = "", colors: Set<WineColor> = [], maturities: Set<Maturity> = [], rackID: UUID? = nil) {
+        self.query = query; self.colors = colors; self.maturities = maturities; self.rackID = rackID
+    }
+
+    public var isActive: Bool { !colors.isEmpty || !maturities.isEmpty || rackID != nil }
+}
+
 public extension Cellar {
     var bottlesInCellar: [Bottle] { bottles.values.filter { $0.status == .inCellar } }
 
@@ -47,17 +77,47 @@ public extension Cellar {
 
     /// Wines that still have bottles in the cellar, sorted by name then vintage.
     func groups(matching query: String = "") -> [WineGroup] {
+        groups(filter: CellarFilter(query: query), sort: .name, year: Calendar.current.component(.year, from: .now))
+    }
+
+    func groups(filter: CellarFilter, sort: CellarSort, year: Int) -> [WineGroup] {
         let byWine = Dictionary(grouping: bottlesInCellar, by: \.wineID)
-        let needle = query.trimmingCharacters(in: .whitespaces)
-        return byWine.compactMap { wineID, bottles -> WineGroup? in
+        let needle = filter.query.trimmingCharacters(in: .whitespaces)
+        let result = byWine.compactMap { wineID, bottles -> WineGroup? in
             guard let wine = wines[wineID] else { return nil }
-            guard needle.isEmpty || wine.matches(needle) else { return nil }
-            return WineGroup(wine: wine, bottles: bottles.sorted { $0.addedAt < $1.addedAt })
+            if !needle.isEmpty, !wine.matches(needle) { return nil }
+            if !filter.colors.isEmpty {
+                guard let color = wine.color, filter.colors.contains(color) else { return nil }
+            }
+            if !filter.maturities.isEmpty, !filter.maturities.contains(Maturity.of(wine, year: year)) { return nil }
+            var kept = bottles
+            if let rackID = filter.rackID {
+                kept = bottles.filter { $0.slot?.rackID == rackID }
+                if kept.isEmpty { return nil }
+            }
+            return WineGroup(wine: wine, bottles: kept.sorted { $0.addedAt < $1.addedAt })
         }
-        .sorted {
-            let order = $0.wine.name.localizedCaseInsensitiveCompare($1.wine.name)
-            if order != .orderedSame { return order == .orderedAscending }
-            return ($0.wine.vintage ?? 0) < ($1.wine.vintage ?? 0)
+        return result.sorted { a, b in
+            switch sort {
+            case .name:
+                return Cellar.nameOrder(a.wine, b.wine)
+            case .vintage:
+                if a.wine.vintage != b.wine.vintage { return (a.wine.vintage ?? .max) < (b.wine.vintage ?? .max) }
+                return Cellar.nameOrder(a.wine, b.wine)
+            case .recentlyAdded:
+                let da = a.bottles.map(\.addedAt).max() ?? .distantPast
+                let db = b.bottles.map(\.addedAt).max() ?? .distantPast
+                return da != db ? da > db : Cellar.nameOrder(a.wine, b.wine)
+            case .readiness:
+                let ma = Maturity.of(a.wine, year: year), mb = Maturity.of(b.wine, year: year)
+                if ma != mb { return ma < mb }
+                return (a.wine.drinkUntil ?? .max) < (b.wine.drinkUntil ?? .max)
+            case .region:
+                let ra = [a.wine.country ?? "", a.wine.region ?? ""].joined(separator: "/")
+                let rb = [b.wine.country ?? "", b.wine.region ?? ""].joined(separator: "/")
+                let order = ra.localizedCaseInsensitiveCompare(rb)
+                return order != .orderedSame ? order == .orderedAscending : Cellar.nameOrder(a.wine, b.wine)
+            }
         }
     }
 
@@ -66,6 +126,16 @@ public extension Cellar {
         Dictionary(grouping: groups()) { Maturity.of($0.wine, year: year) }
             .sorted { $0.key < $1.key }
             .map { MaturitySection(maturity: $0.key, groups: $0.value) }
+    }
+
+    /// Bottles of a wine still in the cellar.
+    func bottles(of wineID: UUID) -> [Bottle] {
+        bottlesInCellar.filter { $0.wineID == wineID }.sorted { $0.addedAt < $1.addedAt }
+    }
+
+    /// Past tastings of a wine, most recent first.
+    func tastings(of wineID: UUID) -> [Bottle] {
+        consumedBottles.filter { $0.wineID == wineID }
     }
 
     func bottle(at slot: Slot) -> Bottle? {
@@ -84,30 +154,86 @@ public extension Cellar {
         return result
     }
 
-    /// "Cellar A · B3", or nil when the bottle has no slot.
+    func occupancy(of rack: Rack) -> Int {
+        bottlesInCellar.filter { $0.slot?.rackID == rack.id }.count
+    }
+
+    func rack(_ id: UUID) -> Rack? { racks.first { $0.id == id } }
+
+    /// "Cellar A · B3", the storage note, or nil when the bottle has no location.
     func locationLabel(for bottle: Bottle) -> String? {
-        guard let slot = bottle.slot, let rack = racks.first(where: { $0.id == slot.rackID }) else { return nil }
-        return "\(rack.name) · \(rack.label(row: slot.row, column: slot.column))"
+        if let slot = bottle.slot, let rack = rack(slot.rackID) {
+            return "\(rack.name) · \(rack.label(for: slot))"
+        }
+        if let note = bottle.storageNote, !note.isEmpty { return note }
+        return nil
+    }
+
+    /// Existing wines matching a query, for "add another bottle of...".
+    func wineSuggestions(matching query: String, limit: Int = 8) -> [Wine] {
+        let needle = query.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty else { return [] }
+        return wines.values.filter { $0.matches(needle) }
+            .sorted { Cellar.nameOrder($0, $1) }
+            .prefix(limit).map { $0 }
+    }
+
+    /// Distinct values already used, for autocompletion.
+    func knownValues(_ keyPath: KeyPath<Wine, String?>) -> [String] {
+        Array(Set(wines.values.compactMap { $0[keyPath: keyPath] }.filter { !$0.isEmpty }))
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    static func nameOrder(_ a: Wine, _ b: Wine) -> Bool {
+        let order = a.name.localizedCaseInsensitiveCompare(b.name)
+        if order != .orderedSame { return order == .orderedAscending }
+        return (a.vintage ?? 0) < (b.vintage ?? 0)
     }
 }
 
 // MARK: - Commands
 
 public enum CellarError: Error, Equatable {
-    case unknownWine, unknownBottle, unknownRack, slotTaken, slotOutOfRange, alreadyConsumed
+    case unknownWine, unknownBottle, unknownRack, slotTaken, slotOutOfRange, alreadyConsumed, rackNotEmpty
+}
+
+/// Purchase details applied to every bottle added in one go.
+public struct PurchaseInfo: Equatable, Sendable {
+    public var date: Date?
+    public var price: Decimal?
+    public var currency: String?
+    public var place: String?
+    public var receivedFrom: String?
+    public var storageNote: String?
+    public var sizeML: Int
+
+    public init(date: Date? = nil, price: Decimal? = nil, currency: String? = nil, place: String? = nil,
+                receivedFrom: String? = nil, storageNote: String? = nil, sizeML: Int = 750) {
+        self.date = date; self.price = price; self.currency = currency; self.place = place
+        self.receivedFrom = receivedFrom; self.storageNote = storageNote; self.sizeML = sizeML
+    }
 }
 
 public extension Cellar {
     /// Adds `quantity` bottles of a wine, placing them in the given slots (in order) when provided.
+    /// If the wine already exists (same id), its record is updated.
     @discardableResult
-    mutating func addBottles(of wine: Wine, quantity: Int = 1, slots: [Slot] = [], addedAt: Date = .now) throws -> [Bottle] {
+    mutating func addBottles(
+        of wine: Wine, quantity: Int = 1, slots: [Slot] = [], purchase: PurchaseInfo = PurchaseInfo(),
+        addedAt: Date = .now
+    ) throws -> [Bottle] {
         guard quantity > 0 else { return [] }
         for slot in slots { try validateFree(slot) }
         guard Set(slots).count == slots.count else { throw CellarError.slotTaken }
         wines[wine.id] = wine
         var added: [Bottle] = []
         for index in 0..<quantity {
-            let bottle = Bottle(wineID: wine.id, slot: index < slots.count ? slots[index] : nil, addedAt: addedAt)
+            let bottle = Bottle(
+                wineID: wine.id, slot: index < slots.count ? slots[index] : nil,
+                storageNote: purchase.storageNote, addedAt: addedAt, purchaseDate: purchase.date,
+                purchasePrice: purchase.price, currency: purchase.currency ?? settings.currency,
+                purchasePlace: purchase.place, receivedFrom: purchase.receivedFrom, sizeML: purchase.sizeML
+            )
             bottles[bottle.id] = bottle
             added.append(bottle)
         }
@@ -123,13 +249,43 @@ public extension Cellar {
         bottles[bottleID] = bottle
     }
 
+    /// Updates the tasting of a bottle already drunk (adding a full note later).
+    mutating func updateTasting(_ bottleID: UUID, tasting: Tasting) throws {
+        guard var bottle = bottles[bottleID], bottle.status == .consumed else { throw CellarError.unknownBottle }
+        bottle.tasting = tasting
+        bottles[bottleID] = bottle
+    }
+
     /// Reverts a drink, putting the bottle back in its previous slot if still free.
     mutating func undoDrink(_ bottleID: UUID, previousSlot: Slot?) {
-        guard var bottle = bottles[bottleID], bottle.status == .consumed else { return }
+        guard var bottle = bottles[bottleID], bottle.status != .inCellar else { return }
         bottle.status = .inCellar
         bottle.tasting = nil
         if let previousSlot, self.bottle(at: previousSlot) == nil { bottle.slot = previousSlot }
         bottles[bottleID] = bottle
+    }
+
+    /// Marks a bottle as given away, sold or broken.
+    mutating func markGone(_ bottleID: UUID) throws {
+        guard var bottle = bottles[bottleID] else { throw CellarError.unknownBottle }
+        bottle.status = .gone
+        bottle.slot = nil
+        bottles[bottleID] = bottle
+    }
+
+    /// Deletes a bottle record entirely (entered by mistake).
+    mutating func deleteBottle(_ bottleID: UUID) {
+        bottles[bottleID] = nil
+        removeOrphanWines()
+    }
+
+    mutating func updateBottle(_ bottle: Bottle) throws {
+        guard bottles[bottle.id] != nil else { throw CellarError.unknownBottle }
+        if let slot = bottle.slot {
+            try validateInRange(slot)
+            if let occupant = self.bottle(at: slot), occupant.id != bottle.id { throw CellarError.slotTaken }
+        }
+        bottles[bottle.id] = bottle
     }
 
     mutating func move(_ bottleID: UUID, to slot: Slot?) throws {
@@ -142,12 +298,45 @@ public extension Cellar {
         bottles[bottleID] = bottle
     }
 
+    /// Swaps the contents of two slots (either may be empty).
+    mutating func swap(_ a: Slot, _ b: Slot) throws {
+        try validateInRange(a)
+        try validateInRange(b)
+        let first = bottle(at: a), second = bottle(at: b)
+        if let first { bottles[first.id]?.slot = b }
+        if let second { bottles[second.id]?.slot = a }
+    }
+
     mutating func updateWine(_ wine: Wine) throws {
         guard wines[wine.id] != nil else { throw CellarError.unknownWine }
         wines[wine.id] = wine
     }
 
+    /// Deletes a wine and every bottle of it.
+    mutating func deleteWine(_ wineID: UUID) {
+        wines[wineID] = nil
+        for (id, bottle) in bottles where bottle.wineID == wineID { bottles[id] = nil }
+    }
+
     mutating func addRack(_ rack: Rack) { racks.append(rack) }
+
+    /// Updates name, layout or size. Shrinking is refused if it would drop bottles.
+    mutating func updateRack(_ rack: Rack) throws {
+        guard let index = racks.firstIndex(where: { $0.id == rack.id }) else { throw CellarError.unknownRack }
+        let outside = bottlesInCellar.contains {
+            guard let slot = $0.slot, slot.rackID == rack.id else { return false }
+            return slot.row >= rack.rows || slot.column >= rack.columns
+        }
+        if outside { throw CellarError.rackNotEmpty }
+        racks[index] = rack
+    }
+
+    mutating func moveRacks(fromOffsets source: IndexSet, toOffset destination: Int) {
+        let moving = source.sorted().map { racks[$0] }
+        for index in source.sorted(by: >) { racks.remove(at: index) }
+        let adjusted = destination - source.filter { $0 < destination }.count
+        racks.insert(contentsOf: moving, at: min(max(0, adjusted), racks.count))
+    }
 
     /// Removes a rack; its bottles stay in the cellar without a slot.
     mutating func removeRack(_ rackID: UUID) {
@@ -155,6 +344,11 @@ public extension Cellar {
         for (id, bottle) in bottles where bottle.slot?.rackID == rackID {
             bottles[id]?.slot = nil
         }
+    }
+
+    private mutating func removeOrphanWines() {
+        let used = Set(bottles.values.map(\.wineID))
+        for id in wines.keys where !used.contains(id) { wines[id] = nil }
     }
 
     private func validateInRange(_ slot: Slot) throws {
@@ -173,6 +367,8 @@ public extension Cellar {
 extension Wine {
     func matches(_ needle: String) -> Bool {
         let fields = [name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
-        return fields.compactMap { $0 }.contains { $0.localizedCaseInsensitiveContains(needle) }
+        return fields.compactMap { $0 }.contains {
+            $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        }
     }
 }
