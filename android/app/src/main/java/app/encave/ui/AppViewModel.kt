@@ -308,18 +308,22 @@ class AppViewModel(
     /** Sends only the label photo to the provider set in Settings. */
     suspend fun analyzeLabel(jpeg: ByteArray): Result<LabelAnalysis> {
         val settings = ai.settings.value
-        val key = withContext(Dispatchers.IO) { ai.apiKey }
+        val key = withContext(Dispatchers.IO) { ai.apiKey(settings.provider) }
         return runCatching { AiService.analyzeLabel(jpeg, settings, key) }
     }
 
     fun aiErrorText(error: Throwable): UiText = when (error) {
         AiError.NotConfigured -> UiText.Res(R.string.ai_err_not_configured)
         AiError.MissingKey -> UiText.Res(R.string.ai_err_missing_key)
+        AiError.NoModel -> UiText.Res(R.string.ai_err_no_model)
         AiError.Refused -> UiText.Res(R.string.ai_err_refused)
         AiError.InvalidResponse -> UiText.Res(R.string.ai_err_invalid)
         is AiError.Server -> if (error.status == 0) UiText.Res(R.string.ai_err_network) else UiText.Res(R.string.ai_err_server, listOf(error.status))
         else -> UiText.Res(R.string.err_generic)
     }
+
+    /** Checks the key of the current provider and lists its chat models. */
+    suspend fun loadModels(key: String?): Result<List<String>> = runCatching { AiService.models(ai.settings.value, key) }
 
     fun showMessage(text: UiText) = post(text)
 

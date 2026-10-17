@@ -1,15 +1,28 @@
 package app.encave.ui.settings
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -23,87 +36,113 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
-import app.encave.data.ai.AiSettings
+import app.encave.data.ai.AiError
+import app.encave.data.ai.AiProvider
 import app.encave.ui.AppViewModel
-import app.encave.ui.components.RadioRow
 import app.encave.ui.components.SectionHeader
+import app.encave.ui.components.resolve
 import app.encave.ui.theme.Dimens
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Optional AI label recognition: provider, server, model and API key (Keystore-encrypted). */
+private sealed interface KeyCheck {
+    data object Idle : KeyCheck
+    data object Checking : KeyCheck
+    data class Valid(val count: Int) : KeyCheck
+    data class Failed(val message: String) : KeyCheck
+}
+
+@Composable
+private fun AiProvider.title(): String = when (this) {
+    AiProvider.Off -> stringResource(R.string.ai_off)
+    AiProvider.Local -> stringResource(R.string.ai_local)
+    else -> brand.orEmpty()
+}
+
+/**
+ * Optional AI features: provider, key (checked live, one per provider, Keystore-encrypted)
+ * and model (from the provider's list, or typed).
+ */
 @Composable
 fun AiSettingsSection(viewModel: AppViewModel) {
     val settings by viewModel.ai.settings.collectAsStateWithLifecycle()
-    var keyStored by remember { mutableStateOf(false) }
-    var keyInput by remember { mutableStateOf("") }
+    val provider = settings.provider
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val scope = rememberCoroutineScope()
+    var apiKey by remember(provider) { mutableStateOf("") }
     var showKey by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { keyStored = withContext(Dispatchers.IO) { !viewModel.ai.apiKey.isNullOrEmpty() } }
+    var models by remember(provider) { mutableStateOf<List<String>>(emptyList()) }
+    var check by remember(provider) { mutableStateOf<KeyCheck>(KeyCheck.Idle) }
+    var customModel by remember(provider) { mutableStateOf(true) }
+    LaunchedEffect(provider) { apiKey = withContext(Dispatchers.IO) { viewModel.ai.apiKey(provider).orEmpty() } }
+
+    fun checkKey() {
+        check = KeyCheck.Checking
+        val key = apiKey
+        scope.launch {
+            viewModel.loadModels(key)
+                .onSuccess { list ->
+                    models = list
+                    check = KeyCheck.Valid(list.size)
+                    val current = viewModel.ai.settings.value
+                    if (current.model.isEmpty() || current.model !in list) {
+                        val suggested = provider.suggestedModel
+                        if (suggested in list) viewModel.ai.update(current.copy(model = suggested))
+                    }
+                    customModel = list.isEmpty()
+                }
+                .onFailure { error ->
+                    val message = (error as? AiError.Server)?.message?.takeIf { it.isNotBlank() }
+                        ?: viewModel.aiErrorText(error).resolve(resources)
+                    check = KeyCheck.Failed(message)
+                }
+        }
+    }
 
     SectionHeader(stringResource(R.string.settings_ai))
-    ListItem(
-        leadingContent = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
-        headlineContent = { Text(stringResource(R.string.ai_provider)) },
-        supportingContent = {
-            Text(stringResource(if (settings.isEnabled) R.string.settings_ai_on_body else R.string.settings_ai_off_body))
-        },
-    )
-    listOf(
-        AiSettings.Provider.Off to stringResource(R.string.ai_off),
-        AiSettings.Provider.Claude to "Claude (Anthropic)",
-        AiSettings.Provider.OpenAiCompatible to stringResource(R.string.ai_openai),
-    ).forEach { (provider, label) ->
-        RadioRow(provider, settings.provider == provider, label) { viewModel.ai.update(settings.copy(provider = it)) }
-    }
-    if (!settings.isEnabled) return
+    ProviderField(provider) { viewModel.ai.select(it) }
     Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
-        if (settings.provider == AiSettings.Provider.OpenAiCompatible) {
-            OutlinedTextField(
-                value = settings.baseUrl,
-                onValueChange = { viewModel.ai.update(settings.copy(baseUrl = it)) },
-                label = { Text(stringResource(R.string.ai_url)) },
-                placeholder = { Text(AiSettings.DEFAULT_OPENAI_BASE_URL) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
-            )
-        }
-        OutlinedTextField(
-            value = settings.model,
-            onValueChange = { viewModel.ai.update(settings.copy(model = it)) },
-            label = { Text(stringResource(R.string.ai_model)) },
-            placeholder = {
-                Text(if (settings.provider == AiSettings.Provider.Claude) AiSettings.DEFAULT_CLAUDE_MODEL else AiSettings.OPENAI_MODEL_HINT)
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
-        )
-        if (keyStored) {
-            Row {
-                Text(
-                    stringResource(R.string.ai_key_saved), Modifier.weight(1f).padding(top = Dimens.m),
-                    style = MaterialTheme.typography.bodyMedium,
+        if (provider.isEnabledProvider()) {
+            if (provider == AiProvider.Local) {
+                OutlinedTextField(
+                    value = settings.baseUrl,
+                    onValueChange = { viewModel.ai.update(settings.copy(baseUrl = it)) },
+                    label = { Text(stringResource(R.string.ai_server_url)) },
+                    placeholder = { Text(AiProvider.Local.defaultBaseUrl) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false),
                 )
-                TextButton(onClick = {
-                    viewModel.ai.apiKey = null
-                    keyStored = false
-                }) { Text(stringResource(R.string.ai_key_remove), color = MaterialTheme.colorScheme.error) }
             }
-        } else {
             OutlinedTextField(
-                value = keyInput,
-                onValueChange = { keyInput = it },
-                label = { Text(stringResource(R.string.ai_key)) },
+                value = apiKey,
+                onValueChange = { key ->
+                    apiKey = key
+                    if (check != KeyCheck.Checking) check = KeyCheck.Idle
+                    scope.launch(Dispatchers.IO) { viewModel.ai.setApiKey(provider, key) }
+                },
+                label = { Text(stringResource(if (provider.requiresKey) R.string.ai_key else R.string.ai_key_optional)) },
                 singleLine = true,
                 visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -115,16 +154,115 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { checkKey() }),
             )
-            OutlinedButton(
-                onClick = {
-                    viewModel.ai.apiKey = keyInput
-                    keyInput = ""
-                    keyStored = true
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                OutlinedButton(
+                    onClick = ::checkKey,
+                    enabled = check != KeyCheck.Checking && (!provider.requiresKey || apiKey.isNotEmpty()),
+                ) {
+                    Icon(Icons.Outlined.VerifiedUser, contentDescription = null)
+                    Text(stringResource(R.string.ai_check), Modifier.padding(start = Dimens.s))
+                }
+                Row(Modifier.semantics { liveRegion = LiveRegionMode.Polite }, verticalAlignment = Alignment.CenterVertically) {
+                    when (val state = check) {
+                        KeyCheck.Checking -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        is KeyCheck.Valid -> {
+                            Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.ai_models_count, state.count), Modifier.padding(start = Dimens.xs))
+                        }
+                        is KeyCheck.Failed -> {
+                            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.ai_not_valid), Modifier.padding(start = Dimens.xs), color = MaterialTheme.colorScheme.error)
+                        }
+                        KeyCheck.Idle -> Unit
+                    }
+                }
+            }
+            (check as? KeyCheck.Failed)?.let { Text(it.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            provider.keyPage?.let { page ->
+                TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page.toUri())) } }) {
+                    Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null)
+                    Text(stringResource(R.string.ai_get_key), Modifier.padding(start = Dimens.s))
+                }
+            }
+            if (models.isNotEmpty() && !customModel) {
+                ModelMenu(settings.model, models) { viewModel.ai.update(settings.copy(model = it)) }
+                TextButton(onClick = { customModel = true }) { Text(stringResource(R.string.ai_enter_model)) }
+            } else {
+                OutlinedTextField(
+                    value = settings.model,
+                    onValueChange = { viewModel.ai.update(settings.copy(model = it)) },
+                    label = { Text(stringResource(R.string.ai_model)) },
+                    placeholder = { Text(provider.suggestedModel.ifEmpty { "model-name" }) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+                )
+                if (models.isNotEmpty()) TextButton(onClick = { customModel = false }) { Text(stringResource(R.string.ai_choose_from_list)) }
+            }
+        }
+        Text(
+            stringResource(
+                when {
+                    !settings.isEnabled -> R.string.settings_ai_off_body
+                    provider == AiProvider.Local -> R.string.ai_local_body
+                    else -> R.string.settings_ai_on_body
                 },
-                enabled = keyInput.isNotBlank(),
-            ) { Text(stringResource(R.string.ai_key_save)) }
+            ),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+private fun AiProvider.isEnabledProvider() = this != AiProvider.Off
+
+/** Provider menu: Off, then global services, Chinese services, OpenRouter and a local server. */
+@Composable
+private fun ProviderField(selected: AiProvider, onSelect: (AiProvider) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    ListItem(
+        leadingContent = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
+        headlineContent = {
+            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+                OutlinedTextField(
+                    value = selected.title(),
+                    onValueChange = {},
+                    readOnly = true,
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.ai_provider)) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                )
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    listOf(listOf(AiProvider.Off), AiProvider.global, AiProvider.chinese, AiProvider.others).forEachIndexed { index, group ->
+                        if (index > 0) HorizontalDivider()
+                        group.forEach { option ->
+                            DropdownMenuItem(text = { Text(option.title()) }, onClick = { onSelect(option); expanded = false })
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun ModelMenu(model: String, models: List<String>, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = model.takeIf { it in models } ?: stringResource(R.string.ai_choose_model),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(stringResource(R.string.ai_model)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            models.forEach { option -> DropdownMenuItem(text = { Text(option) }, onClick = { onSelect(option); expanded = false }) }
         }
     }
 }

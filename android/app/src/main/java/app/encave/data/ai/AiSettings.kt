@@ -7,37 +7,69 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Optional label recognition by an AI model the user chooses and pays for.
- * Off by default. When on, only the label photo is sent, never the cellar.
+ * AI services the user can connect with their own key, plus a server of their own.
+ * Most speak the OpenAI chat format; Claude has its own API.
  */
-data class AiSettings(
-    val provider: Provider = Provider.Off,
-    val model: String = "",
-    val baseUrl: String = "",
+enum class AiProvider(
+    val raw: String,
+    /** Brand names are not translated; null for "Off" and the local server (localized in the UI). */
+    val brand: String?,
+    val defaultBaseUrl: String,
+    val keyPage: String? = null,
 ) {
-    enum class Provider(val raw: String) {
-        Off("off"),
-        Claude("claude"),
+    Off("off", null, ""),
+    OpenAi("openAI", "ChatGPT (OpenAI)", "https://api.openai.com/v1", "https://platform.openai.com/api-keys"),
+    Anthropic("anthropic", "Claude (Anthropic)", "https://api.anthropic.com/v1", "https://console.anthropic.com/settings/keys"),
+    Google("google", "Gemini (Google)", "https://generativelanguage.googleapis.com/v1beta/openai", "https://aistudio.google.com/apikey"),
+    Xai("xai", "Grok (xAI)", "https://api.x.ai/v1", "https://console.x.ai"),
+    Mistral("mistral", "Mistral AI", "https://api.mistral.ai/v1", "https://console.mistral.ai/api-keys"),
+    DeepSeek("deepseek", "DeepSeek", "https://api.deepseek.com/v1", "https://platform.deepseek.com/api_keys"),
+    Qwen("qwen", "Qwen (Alibaba Cloud)", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+    Kimi("kimi", "Kimi (Moonshot AI)", "https://api.moonshot.ai/v1"),
+    Zhipu("zhipu", "GLM (Z.ai)", "https://api.z.ai/api/paas/v4"),
+    MiniMax("minimax", "MiniMax", "https://api.minimax.io/v1"),
+    OpenRouter("openRouter", "OpenRouter", "https://openrouter.ai/api/v1", "https://openrouter.ai/keys"),
 
-        /** OpenAI, a local OpenWebUI or Ollama server, or any compatible API. */
-        OpenAiCompatible("openAICompatible"),
-    }
+    /** Ollama, LM Studio, OpenWebUI or any OpenAI-compatible server. */
+    Local("local", null, "http://localhost:11434/v1");
 
-    val isEnabled: Boolean get() = provider != Provider.Off
+    val usesAnthropicApi: Boolean get() = this == Anthropic
 
-    val effectiveModel: String
-        get() = model.trim().ifEmpty { if (provider == Provider.Claude) DEFAULT_CLAUDE_MODEL else "" }
+    /** A key is optional only for a server of your own. */
+    val requiresKey: Boolean get() = this != Local && this != Off
 
-    val effectiveBaseUrl: String get() = baseUrl.trim().ifEmpty { DEFAULT_OPENAI_BASE_URL }
+    /** Model used until the list is loaded, when one is known to read images. */
+    val suggestedModel: String get() = if (this == Anthropic) "claude-opus-5-5" else ""
 
     companion object {
-        const val DEFAULT_CLAUDE_MODEL = "claude-opus-5-5"
-        const val DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
-        const val OPENAI_MODEL_HINT = "gpt-4o"
+        val global = listOf(OpenAi, Anthropic, Google, Xai, Mistral)
+        val chinese = listOf(DeepSeek, Qwen, Kimi, Zhipu, MiniMax)
+        val others = listOf(OpenRouter, Local)
+
+        fun fromRaw(raw: String?): AiProvider? = entries.firstOrNull { it.raw == raw }
     }
 }
 
-/** AI settings in preferences; the API key in [SecretStore]. */
+/** Optional AI features with a model and key the user chooses. Off by default. */
+data class AiSettings(
+    val provider: AiProvider = AiProvider.Off,
+    val model: String = "",
+    /** Only for a local server. */
+    val baseUrl: String = "",
+) {
+    val isEnabled: Boolean get() = provider != AiProvider.Off
+
+    val effectiveModel: String get() = model.trim().ifEmpty { provider.suggestedModel }
+
+    val effectiveBaseUrl: String
+        get() {
+            val trimmed = baseUrl.trim()
+            val base = if (trimmed.isEmpty() || provider != AiProvider.Local) provider.defaultBaseUrl else trimmed
+            return base.removeSuffix("/")
+        }
+}
+
+/** AI settings in preferences (one saved model per provider); keys in [SecretStore], one per provider. */
 class AiPreferences(context: Context) {
     private val prefs = context.getSharedPreferences("ai", Context.MODE_PRIVATE)
     private val secrets = SecretStore(context)
@@ -45,26 +77,34 @@ class AiPreferences(context: Context) {
 
     val settings: StateFlow<AiSettings> = state.asStateFlow()
 
-    private fun read() = AiSettings(
-        provider = AiSettings.Provider.entries.firstOrNull { it.raw == prefs.getString("provider", null) } ?: AiSettings.Provider.Off,
-        model = prefs.getString("model", "").orEmpty(),
-        baseUrl = prefs.getString("baseURL", "").orEmpty(),
-    )
+    private fun read(): AiSettings {
+        val raw = prefs.getString("provider", "off")
+        val baseUrl = prefs.getString("baseURL", "").orEmpty()
+        val provider = when (raw) {
+            // Names used by the first test builds.
+            "claude" -> AiProvider.Anthropic
+            "openAICompatible" -> if (baseUrl.isEmpty() || baseUrl.contains("api.openai.com")) AiProvider.OpenAi else AiProvider.Local
+            else -> AiProvider.fromRaw(raw) ?: AiProvider.Off
+        }
+        val model = prefs.getString("model.${provider.raw}", null) ?: prefs.getString("model", "").orEmpty()
+        return AiSettings(provider, model, baseUrl)
+    }
 
     fun update(settings: AiSettings) {
         prefs.edit {
             putString("provider", settings.provider.raw)
-            putString("model", settings.model)
+            putString("model.${settings.provider.raw}", settings.model)
             putString("baseURL", settings.baseUrl)
         }
         state.value = settings
     }
 
-    var apiKey: String?
-        get() = secrets.get(KEY_NAME)
-        set(value) = secrets.set(KEY_NAME, value?.trim())
+    /** Switching back to a provider keeps the model chosen for it. */
+    fun select(provider: AiProvider) =
+        update(state.value.copy(provider = provider, model = prefs.getString("model.${provider.raw}", "").orEmpty()))
 
-    private companion object {
-        const val KEY_NAME = "ai.apiKey"
-    }
+    fun apiKey(provider: AiProvider): String? =
+        secrets.get("ai.apiKey.${provider.raw}") ?: if (provider == AiProvider.Anthropic) secrets.get("ai.apiKey") else null
+
+    fun setApiKey(provider: AiProvider, key: String?) = secrets.set("ai.apiKey.${provider.raw}", key?.trim())
 }

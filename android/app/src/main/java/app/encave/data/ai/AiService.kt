@@ -78,6 +78,7 @@ data class LabelAnalysis(
 sealed class AiError : Exception() {
     data object NotConfigured : AiError()
     data object MissingKey : AiError()
+    data object NoModel : AiError()
     data object Refused : AiError()
     data class Server(val status: Int, override val message: String) : AiError()
     data object InvalidResponse : AiError()
@@ -87,16 +88,47 @@ sealed class AiError : Exception() {
 object AiService {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
-    suspend fun analyzeLabel(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis = when (settings.provider) {
-        AiSettings.Provider.Off -> throw AiError.NotConfigured
-        AiSettings.Provider.Claude -> {
-            if (apiKey.isNullOrEmpty()) throw AiError.MissingKey
-            claude(jpeg, settings.effectiveModel, apiKey)
-        }
-        AiSettings.Provider.OpenAiCompatible -> {
-            if (settings.effectiveModel.isEmpty()) throw AiError.NotConfigured
+    suspend fun analyzeLabel(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis {
+        if (!settings.isEnabled) throw AiError.NotConfigured
+        if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
+        if (settings.effectiveModel.isEmpty()) throw AiError.NoModel
+        return if (settings.provider.usesAnthropicApi) {
+            claude(jpeg, settings.effectiveModel, apiKey.orEmpty())
+        } else {
             openAiCompatible(jpeg, settings, apiKey)
         }
+    }
+
+    /** Models that cannot chat: embeddings, speech, image generation, moderation. */
+    private val excludedModels = listOf(
+        "embed", "tts", "whisper", "dall-e", "audio", "realtime", "moderation", "transcribe",
+        "gpt-image", "imagen", "rerank", "speech", "sora", "veo",
+    )
+
+    /** Checks the key by listing the models it can use; returns their identifiers. */
+    suspend fun models(settings: AiSettings, apiKey: String?): List<String> {
+        if (!settings.isEnabled) throw AiError.NotConfigured
+        if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
+        val url = runCatching {
+            URL(settings.effectiveBaseUrl + "/models" + if (settings.provider.usesAnthropicApi) "?limit=100" else "")
+        }.getOrElse { throw AiError.NotConfigured }
+        val headers = buildMap {
+            if (settings.provider.usesAnthropicApi) {
+                put("x-api-key", apiKey.orEmpty())
+                put("anthropic-version", "2023-06-01")
+            } else if (!apiKey.isNullOrEmpty()) {
+                put("Authorization", "Bearer $apiKey")
+            }
+        }
+        val json = send(url, headers, body = null)
+        val items = (json["data"] as? JsonArray) ?: (json["models"] as? JsonArray) ?: JsonArray(emptyList())
+        // Gemini lists "models/gemini-…"; chat requests take the bare name.
+        val ids = items.mapNotNull { item ->
+            val obj = item as? JsonObject ?: return@mapNotNull null
+            ((obj["id"] ?: obj["name"]) as? JsonPrimitive)?.contentOrNull?.replace("models/", "")
+        }
+        val collator = java.text.Collator.getInstance().apply { strength = java.text.Collator.SECONDARY }
+        return ids.filter { id -> excludedModels.none { id.lowercase().contains(it) } }.distinct().sortedWith(collator).reversed()
     }
 
     private fun base64(jpeg: ByteArray) = Base64.encodeToString(jpeg, Base64.NO_WRAP)
@@ -150,21 +182,38 @@ object AiService {
         return decode(text)
     }
 
-    /** OpenAI-compatible (Chat Completions). */
+    /** OpenAI-compatible (Chat Completions). Not every service supports a JSON schema: falls back to plain JSON, then to no format. */
     private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis {
-        val base = settings.effectiveBaseUrl.removeSuffix("/")
-        val url = runCatching { URL("$base/chat/completions") }.getOrNull()
-        if (url == null || (url.protocol != "https" && url.protocol != "http")) throw AiError.NotConfigured
-        val body = buildJsonObject {
-            put("model", settings.effectiveModel)
-            putJsonObject("response_format") {
+        val formats: List<JsonObject?> = listOf(
+            buildJsonObject {
                 put("type", "json_schema")
                 putJsonObject("json_schema") {
                     put("name", "wine_label")
                     put("strict", true)
                     put("schema", LabelAnalysis.schema)
                 }
+            },
+            buildJsonObject { put("type", "json_object") },
+            null,
+        )
+        var lastError: AiError = AiError.InvalidResponse
+        for (format in formats) {
+            try {
+                return openAiCompatible(jpeg, settings, apiKey, format)
+            } catch (error: AiError.Server) {
+                if (error.status != 400 && error.status != 422) throw error
+                lastError = error
             }
+        }
+        throw lastError
+    }
+
+    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, format: JsonObject?): LabelAnalysis {
+        val url = runCatching { URL(settings.effectiveBaseUrl + "/chat/completions") }.getOrNull()
+        if (url == null || (url.protocol != "https" && url.protocol != "http")) throw AiError.NotConfigured
+        val body = buildJsonObject {
+            put("model", settings.effectiveModel)
+            if (format != null) put("response_format", format)
             putJsonArray("messages") {
                 add(buildJsonObject {
                     put("role", "user")
@@ -193,15 +242,18 @@ object AiService {
         return decode(text)
     }
 
-    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject): JsonObject = withContext(Dispatchers.IO) {
+    /** POST when [body] is set, GET otherwise. */
+    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?): JsonObject = withContext(Dispatchers.IO) {
         val connection = url.openConnection() as HttpURLConnection
         try {
-            connection.requestMethod = "POST"
+            connection.requestMethod = if (body != null) "POST" else "GET"
             connection.connectTimeout = 30_000
-            connection.readTimeout = 120_000
-            connection.doOutput = true
+            connection.readTimeout = if (body != null) 120_000 else 30_000
             headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
-            connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+            if (body != null) {
+                connection.doOutput = true
+                connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+            }
             val status = connection.responseCode
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
