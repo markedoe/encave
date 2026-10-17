@@ -367,6 +367,17 @@ class ScreenTourTest(private val device: String, private val language: String) {
     }
 
     @Test
+    fun occasion() {
+        compose.onAllNodesWithTag("filter.reservation").onFirst().performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals("$device-$language: one wine kept for the occasion", 1, wineRows())
+        capture("41-cellar-occasion")
+        tap("wine.row")
+        scrollIn("wine.detail", "bottle.reserved")
+        capture("42-wine-occasion")
+    }
+
+    @Test
     fun addBottle() {
         tap("action.fab_add")
         capture("04-add-bottle")

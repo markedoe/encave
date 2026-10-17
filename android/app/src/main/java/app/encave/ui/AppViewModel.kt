@@ -214,6 +214,17 @@ class AppViewModel(
         }
     }
 
+    /** Keeps bottles for an occasion, or frees them (null or blank), with Undo. */
+    fun reserve(bottleIds: List<UUID>, occasion: String?) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        if (before.isEmpty()) return
+        val name = occasion?.trim().orEmpty()
+        change<Unit>({
+            val text = if (name.isEmpty()) UiText.Res(R.string.msg_reservation_removed) else UiText.Res(R.string.reserved_for, listOf(name))
+            post(text) { change<Unit> { c -> before.forEach { b -> c.bottles[b.id]?.let { c.updateBottle(it.copy(reservedFor = b.reservedFor)) } } } }
+        }) { it.reserve(before.map(Bottle::id), occasion) }
+    }
+
     // region Several wines or bottles at once (one Undo for all)
 
     private fun bottlesOfWines(wineIds: Set<UUID>) = cellar.value.bottles.values.filter { it.wineId in wineIds }

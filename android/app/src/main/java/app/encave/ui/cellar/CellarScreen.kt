@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Tag
+import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.Outbox
@@ -203,6 +204,7 @@ private fun CellarList(
     val orders = remember(cellar) { cellar.orderGroups() }
     val showOrders = orders.isNotEmpty() && !filter.isActive && filter.query.isEmpty()
     val wineTags = remember(cellar) { cellar.wineTags }
+    val reservations = remember(cellar) { cellar.reservations }
     // Choosing several wines: a contextual top bar acts on all of them, with one Undo.
     var selecting by rememberSaveable { mutableStateOf(false) }
     var picked by remember { mutableStateOf(setOf<java.util.UUID>()) }
@@ -284,6 +286,11 @@ private fun CellarList(
                     maturities = filter.maturities,
                     tags = wineTags,
                     tag = filter.tag,
+                    reservations = reservations,
+                    reservation = filter.reservation,
+                    onToggleReservation = { r ->
+                        viewModel.filter.value = filter.copy(reservation = if (filter.reservation.equals(r, ignoreCase = true)) null else r)
+                    },
                     sort = sort,
                     onToggleColor = { c ->
                         viewModel.filter.value = filter.copy(colors = if (c in filter.colors) filter.colors - c else filter.colors + c)
@@ -526,6 +533,9 @@ private fun FilterBar(
     maturities: Set<Maturity>,
     tags: List<String>,
     tag: String?,
+    reservations: List<String>,
+    reservation: String?,
+    onToggleReservation: (String) -> Unit,
     sort: CellarSort,
     onToggleColor: (WineColor) -> Unit,
     onToggleMaturity: (Maturity) -> Unit,
@@ -588,6 +598,15 @@ private fun FilterBar(
                 label = { Text(option) },
                 leadingIcon = { Icon(Icons.Outlined.Tag, contentDescription = null, modifier = Modifier.size(18.dp)) },
                 modifier = Modifier.testTag("filter.tag"),
+            )
+        }
+        (reservations + listOfNotNull(reservation?.takeIf { r -> reservations.none { it.equals(r, ignoreCase = true) } })).forEach { option ->
+            FilterChip(
+                selected = reservation.equals(option, ignoreCase = true),
+                onClick = { onToggleReservation(option) },
+                label = { Text(option) },
+                leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.testTag("filter.reservation"),
             )
         }
     }
@@ -781,7 +800,8 @@ private fun CellarSummary(
     onSoon: (app.encave.core.CellarFilter) -> Unit,
 ) {
     val stats = remember(cellar, year) { cellar.statistics(year) }
-    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null
+    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null &&
+        filter.reservation == null
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
         horizontalArrangement = Arrangement.spacedBy(Dimens.s),

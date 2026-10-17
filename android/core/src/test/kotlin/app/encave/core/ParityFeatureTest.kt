@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -256,5 +257,45 @@ class OtherAppsImportTest {
         cellar.importCsv("Nom;Millésime;Couleur;Quantité\nMorgon;2020;Rouge;3")
         assertEquals(3, cellar.bottles.size)
         assertEquals(WineColor.Red, cellar.wines.values.first().color)
+    }
+}
+
+class ReservationTest {
+    @Test
+    fun reservedBottlesAreKeptForTheirOccasion() {
+        val cellar = Cellar()
+        val wine = Wine(name = "Party", vintage = 2018, drinkFrom = 2020, drinkUntil = 2030)
+        val bottles = cellar.addBottles(wine, quantity = 3)
+        cellar.reserve(listOf(bottles[0].id, bottles[1].id), "  Paul's 40th ")
+        assertEquals(listOf("Paul's 40th"), cellar.reservations)
+        // Tonight offers only the free bottle.
+        assertEquals(listOf(1), cellar.groupsByMaturity(2026).flatMap { it.groups }.map { it.count })
+        assertEquals(listOf(2), cellar.groups(CellarFilter(reservation = "paul's 40th"), CellarSort.Name, 2026).map { it.count })
+        cellar.reserve(listOf(bottles[0].id), " ")
+        assertNull(cellar.bottles[bottles[0].id]?.reservedFor)
+        // All reserved: the wine is not suggested at all.
+        cellar.reserve(bottles.map { it.id }, "Wedding")
+        assertTrue(cellar.groupsByMaturity(2026).isEmpty())
+        val copy = Cellar()
+        copy.importCsv(CellarExport.csv(cellar))
+        assertEquals(listOf("Wedding"), copy.reservations)
+    }
+
+    @Test
+    fun onlyBottlesInTheCellarCanBeReserved() {
+        val cellar = Cellar()
+        val bottle = cellar.addBottles(Wine(name = "W"), purchase = PurchaseInfo(isOrdered = true)).single()
+        assertThrows(CellarException::class.java) { cellar.reserve(listOf(bottle.id), "Party") }
+        assertNull(cellar.bottles[bottle.id]?.reservedFor)
+    }
+
+    @Test
+    fun reservationRoundTripsAndIsLeftOutWhenNil() {
+        val cellar = Cellar()
+        val bottles = cellar.addBottles(Wine(name = "W"), quantity = 2)
+        cellar.reserve(listOf(bottles[0].id), "Party")
+        val json = CellarJson.encode(cellar)
+        assertEquals(1, Regex("\"reservedFor\"").findAll(json).count())
+        assertEquals("Party", CellarJson.decode(json).bottles[bottles[0].id]?.reservedFor)
     }
 }

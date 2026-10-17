@@ -366,6 +366,7 @@
     <string name="sample_tag_gift">Idée cadeau</string>
     <string name="sample_merchant">Caviste</string>
     <string name="sample_tag_birth_year">Année de naissance</string>
+    <string name="sample_occasion2">Dîner de Noël</string>
     <string name="kind_title">Type de rangement</string>
     <string name="kind_grid">Casier classique</string>
     <string name="kind_staggered">Casier nid d’abeille</string>
@@ -819,6 +820,15 @@
     <string name="help_racks_drag">Sur tablette, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement).</string>
     <string name="help_start_shortcuts_title">Raccourcis</string>
     <string name="help_start_shortcuts">Maintenez l’icône d’Encave appuyée pour **Scanner une bouteille** ou voir **Que boire ce soir** tout de suite. Un rappel de livraison ouvre le vin en commande.</string>
+    <string name="action_keep_for_occasion">Garder pour une occasion…</string>
+    <string name="reserve_title">Garder pour une occasion</string>
+    <string name="reserve_body">La bouteille reste à sa place mais n’est plus proposée pour ce soir.</string>
+    <string name="action_keep_bottle">Garder la bouteille</string>
+    <string name="action_free_bottle">Libérer cette bouteille</string>
+    <string name="reserved_for">Gardée pour %1$s</string>
+    <string name="msg_reservation_removed">Réservation retirée</string>
+    <string name="help_tonight_occasion_title">Garder des bouteilles pour une occasion</string>
+    <string name="help_tonight_occasion">Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

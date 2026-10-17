@@ -73,6 +73,18 @@ class Cellar(
         }
     }
 
+    /** Occasions bottles in the cellar are reserved for, by name (case-insensitive). */
+    val reservations: List<String>
+        get() {
+            val names = LinkedHashMap<String, String>()
+            for (bottle in bottlesInCellar) {
+                val name = bottle.reservedFor ?: continue
+                names.putIfAbsent(name.lowercase(java.util.Locale.ROOT), name)
+            }
+            val collator = collator()
+            return names.values.sortedWith(collator::compare)
+        }
+
     /** Tags of wines with bottles in the cellar, most used first. */
     val wineTags: List<String>
         get() {
@@ -109,7 +121,11 @@ class Cellar(
             if (filter.tag != null && !wine.hasTag(filter.tag)) return@mapNotNull null
             var kept = bottles
             if (filter.rackId != null) {
-                kept = bottles.filter { it.slot?.rackId == filter.rackId }
+                kept = kept.filter { it.slot?.rackId == filter.rackId }
+                if (kept.isEmpty()) return@mapNotNull null
+            }
+            if (filter.reservation != null) {
+                kept = kept.filter { it.reservedFor?.equals(filter.reservation, ignoreCase = true) == true }
                 if (kept.isEmpty()) return@mapNotNull null
             }
             WineGroup(wine, kept.sortedBy { it.addedAt })
@@ -133,7 +149,10 @@ class Cellar(
 
     /** Groups bucketed by maturity for "Tonight", most urgent first. */
     fun groupsByMaturity(year: Int): List<MaturitySection> =
-        groups().groupBy { Maturity.of(it.wine, year) }
+        // Bottles reserved for an occasion are left out: they are not for tonight.
+        groups().mapNotNull { group ->
+            group.bottles.filter { it.reservedFor == null }.takeIf { it.isNotEmpty() }?.let { WineGroup(group.wine, it) }
+        }.groupBy { Maturity.of(it.wine, year) }
             .toSortedMap()
             .map { (maturity, groups) -> MaturitySection(maturity, groups) }
 
@@ -281,6 +300,13 @@ class Cellar(
             }
         }
         return count
+    }
+
+    /** Reserves bottles in the cellar for an occasion, or frees them (null or blank). */
+    fun reserve(bottleIds: List<UUID>, occasion: String?) {
+        val name = occasion?.trim()?.ifEmpty { null }
+        if (bottleIds.any { bottleMap[it]?.status != Bottle.Status.InCellar }) throw CellarException(CellarError.UnknownBottle)
+        bottleIds.forEach { id -> bottleMap[id] = bottleMap.getValue(id).copy(reservedFor = name) }
     }
 
     fun drink(bottleId: UUID, tasting: Tasting) {
@@ -470,8 +496,11 @@ data class CellarFilter(
     val rackId: UUID? = null,
     /** Only wines with this tag (ignoring case). */
     val tag: String? = null,
+    /** Only bottles reserved for this occasion (ignoring case). */
+    val reservation: String? = null,
 ) {
-    val isActive: Boolean get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null || tag != null
+    val isActive: Boolean
+        get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null || tag != null || reservation != null
 }
 
 enum class CellarError {

@@ -32,6 +32,7 @@ object SampleData {
         val tagGift: String = "Gift idea",
         val merchant: String = "Wine merchant",
         val tagBirthYear: String = "Birth year",
+        val occasion2: String = "Christmas dinner",
     )
 
     fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = ReferenceDates.now()): Cellar {
@@ -122,6 +123,11 @@ object SampleData {
                 currency = cellar.settings.currency, storageNote = if (rack == null) labels.kitchen else null,
             )
             runCatching { cellar.addBottles(wine, quantity, slots, purchase, addedAt = date) }
+        }
+
+        // Two bottles kept for an occasion.
+        cellar.wines.values.firstOrNull { it.name == "Riserva Vigna Alta" }?.let { barolo ->
+            runCatching { cellar.reserve(cellar.bottlesOf(barolo.id).take(2).map { it.id }, labels.occasion2) }
         }
 
         // Last year's vintage bought en primeur, not delivered yet.

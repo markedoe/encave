@@ -342,6 +342,8 @@ data class Bottle(
     val tasting: Tasting? = null,
     /** For an ordered bottle: when it should arrive. */
     @Serializable(with = InstantSerializer::class) val expectedAt: Instant? = null,
+    /** Kept for an occasion ("Paul's 40th"): not suggested for tonight. */
+    val reservedFor: String? = null,
 ) {
     @Serializable
     enum class Status(val raw: String) {

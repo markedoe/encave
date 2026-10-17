@@ -19,7 +19,7 @@ object CellarExport {
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
-        "rating", "tasted_on", "note", "expected_on", "tags",
+        "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
     )
 
     /** Pretty-printed JSON backup, readable by the Apple app. */
@@ -50,6 +50,7 @@ object CellarExport {
                 bottle.purchasePlace, bottle.receivedFrom, bottle.sizeML.toString(),
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
                 bottle.tasting?.note, bottle.expectedAt?.let(::day), wine.tags.orEmpty().joinToString("; "),
+                bottle.reservedFor,
             )
             lines += fields.joinToString(",") { escape(it ?: "") }
         }
@@ -144,6 +145,7 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
                 purchasePrice = value("price")?.replace(",", ".")?.toBigDecimalOrNull(),
                 currency = value("currency") ?: settings.currency, purchasePlace = value("purchase_place"),
                 receivedFrom = value("received_from"), sizeML = value("size_ml")?.toIntOrNull() ?: 750,
+                reservedFor = value("reserved_for"),
             )
             val status = value("status")?.let { Bottle.Status.fromRaw(it) } ?: Bottle.Status.InCellar
             val rackName = value("rack")
@@ -230,7 +232,7 @@ internal object CsvColumns {
         "receivedfrom" to "received_from", "sizeml" to "size_ml", "tastedon" to "tasted_on",
         "rating" to "rating", "yourrating" to "rating", "note" to "note", "notes" to "note", "yourreview" to "note",
         "personalnote" to "note", "commentaire" to "note",
-        "tags" to "tags", "tag" to "tags",
+        "tags" to "tags", "tag" to "tags", "reservedfor" to "reserved_for", "reserved" to "reserved_for",
         "expectedon" to "expected_on", "deliverydate" to "expected_on", "livraison" to "expected_on",
         "scandate" to "scan_date", "scanreviewlocation" to "place", "place" to "place", "lieu" to "place",
     )

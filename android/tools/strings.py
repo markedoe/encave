@@ -397,6 +397,7 @@ S = [
  ("sample_tag_gift", "Gift idea", "Idée cadeau"),
  ("sample_merchant", "Wine merchant", "Caviste"),
  ("sample_tag_birth_year", "Birth year", "Année de naissance"),
+ ("sample_occasion2", "Christmas dinner", "Dîner de Noël"),
 
  ("kind_title", "Kind of storage", "Type de rangement"),
  ("kind_grid", "Grid rack", "Casier classique"),
@@ -908,6 +909,18 @@ S = [
  ("help_start_shortcuts_title", "Shortcuts", "Raccourcis"),
  ("help_start_shortcuts", "Touch and hold the Encave icon to **Scan a bottle** or see **What to open tonight** right away. A delivery reminder opens the wine on order.",
   "Maintenez l’icône d’Encave appuyée pour **Scanner une bouteille** ou voir **Que boire ce soir** tout de suite. Un rappel de livraison ouvre le vin en commande."),
+
+ # Bottles kept for an occasion
+ ("action_keep_for_occasion", "Keep for an occasion…", "Garder pour une occasion…"),
+ ("reserve_title", "Keep for an occasion", "Garder pour une occasion"),
+ ("reserve_body", "The bottle stays in its place but is no longer suggested for tonight.", "La bouteille reste à sa place mais n’est plus proposée pour ce soir."),
+ ("action_keep_bottle", "Keep bottle", "Garder la bouteille"),
+ ("action_free_bottle", "Free this bottle", "Libérer cette bouteille"),
+ ("reserved_for", "Kept for %1$s", "Gardée pour %1$s"),
+ ("msg_reservation_removed", "Reservation removed", "Réservation retirée"),
+ ("help_tonight_occasion_title", "Keeping bottles for an occasion", "Garder des bouteilles pour une occasion"),
+ ("help_tonight_occasion", "On a bottle in a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back.",
+  "Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible."),
 
 ]
 
