@@ -35,8 +35,23 @@ Never hardcode colors in Swift; use the asset catalog names.
 
 ### Localization
 
-Every user-facing string goes in `apple/Encave/Resources/Localizable.xcstrings`
-with English and French.
+English is the source language; French translations live in
+`apple/tools/l10n.py`, which writes the String Catalogs:
+
+```bash
+python3 apple/tools/l10n.py           # regenerate Localizable and InfoPlist catalogs
+python3 apple/tools/l10n.py --check   # fails if a string has no French (run in CI)
+```
+
+Avoid building strings with `? "a" : "b"` inside `Text`: write two `Text`
+views so both strings are extracted and translated.
+
+### AI label recognition (optional)
+
+Off by default. In Settings, choose Claude (Anthropic API key) or an
+OpenAI-compatible server (OpenAI, or OpenWebUI/Ollama on your network) with a
+model that accepts images. The key is stored in the Keychain; only the label
+photo is sent. Never put a key in the code, the scheme or a test.
 
 ## Continuous integration
 
