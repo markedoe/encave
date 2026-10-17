@@ -100,3 +100,65 @@ public extension Cellar {
         )
     }
 }
+
+/// "Your year in wine": what was opened in a year, from the journal.
+public struct YearInWine: Sendable, Equatable {
+    public var year: Int
+    public var bottlesOpened: Int
+    public var differentWines: Int
+    /// Best rated bottle of the year (highest rating, then the latest).
+    public var favorite: (name: String, rating: Int)?
+    public var topRegion: String?
+    public var topColor: WineColor?
+    public var topOccasion: String?
+    /// Bottles discovered elsewhere that year.
+    public var discoveries: Int
+    /// Month with the most bottles opened (1–12).
+    public var busiestMonth: Int?
+
+    public var isEmpty: Bool { bottlesOpened == 0 && discoveries == 0 }
+
+    public static func == (a: YearInWine, b: YearInWine) -> Bool {
+        a.year == b.year && a.bottlesOpened == b.bottlesOpened && a.differentWines == b.differentWines
+            && a.favorite?.name == b.favorite?.name && a.favorite?.rating == b.favorite?.rating
+            && a.topRegion == b.topRegion && a.topColor == b.topColor && a.topOccasion == b.topOccasion
+            && a.discoveries == b.discoveries && a.busiestMonth == b.busiestMonth
+    }
+}
+
+public extension Cellar {
+    func yearInWine(_ year: Int, calendar: Calendar = .current) -> YearInWine {
+        let opened = consumedBottles.filter { bottle in
+            guard let date = bottle.tasting?.date else { return false }
+            return calendar.component(.year, from: date) == year
+        }
+        let openedWines = opened.compactMap { wines[$0.wineID] }
+
+        func top<T: Hashable>(_ values: [T]) -> T? {
+            Dictionary(grouping: values, by: { $0 }).max { a, b in
+                a.value.count != b.value.count ? a.value.count < b.value.count : "\(a.key)" > "\(b.key)"
+            }?.key
+        }
+
+        let favorite = opened
+            .compactMap { bottle -> (Bottle, Int)? in bottle.tasting?.rating.map { (bottle, $0) } }
+            .max { a, b in
+                a.1 != b.1 ? a.1 < b.1 : (a.0.tasting?.date ?? .distantPast) < (b.0.tasting?.date ?? .distantPast)
+            }
+            .flatMap { pair in wines[pair.0.wineID].map { (name: $0.displayName, rating: pair.1) } }
+        let months = opened.compactMap { $0.tasting?.date }.map { calendar.component(.month, from: $0) }
+        let found = discoveries.values.filter { calendar.component(.year, from: $0.date) == year }
+
+        return YearInWine(
+            year: year,
+            bottlesOpened: opened.count,
+            differentWines: Set(opened.map(\.wineID)).count,
+            favorite: favorite,
+            topRegion: top(openedWines.compactMap { $0.region ?? $0.country }),
+            topColor: top(openedWines.compactMap(\.color)),
+            topOccasion: top(opened.compactMap { $0.tasting?.occasion }.filter { !$0.isEmpty }),
+            discoveries: found.count,
+            busiestMonth: top(months)
+        )
+    }
+}

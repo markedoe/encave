@@ -245,3 +245,72 @@ import Testing
         #expect(cellar.bottles(of: a.id).allSatisfy { $0.slot == nil })
     }
 }
+
+@Suite struct YearInWineTests {
+    @Test func summarizesTheBottlesOpenedThatYear() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        func date(_ year: Int, _ month: Int) -> Date { calendar.date(from: DateComponents(year: year, month: month, day: 10))! }
+        var cellar = Cellar()
+        let burgundy = Wine(name: "Volnay", vintage: 2018, color: .red, region: "Burgundy")
+        let loire = Wine(name: "Vouvray", vintage: 2020, color: .white, region: "Loire")
+        let bottles = try cellar.addBottles(of: burgundy, quantity: 3) + cellar.addBottles(of: loire, quantity: 1)
+        try cellar.drink(bottles[0].id, tasting: Tasting(date: date(2026, 3), rating: 4, occasion: "Dinner with friends"))
+        try cellar.drink(bottles[1].id, tasting: Tasting(date: date(2026, 3), rating: 5, occasion: "Dinner with friends"))
+        try cellar.drink(bottles[3].id, tasting: Tasting(date: date(2026, 6), rating: 3, occasion: "Aperitif"))
+        try cellar.drink(bottles[2].id, tasting: Tasting(date: date(2025, 12), rating: 5))
+        let year = cellar.yearInWine(2026, calendar: calendar)
+        #expect(year.bottlesOpened == 3)
+        #expect(year.differentWines == 2)
+        #expect(year.favorite?.name == "Volnay 2018" && year.favorite?.rating == 5)
+        #expect(year.topRegion == "Burgundy")
+        #expect(year.topColor == .red)
+        #expect(year.topOccasion == "Dinner with friends")
+        #expect(year.busiestMonth == 3)
+        #expect(cellar.yearInWine(2024, calendar: calendar).isEmpty)
+    }
+}
+
+@Suite struct OtherAppsImportTests {
+    @Test func importsACellarTrackerExport() throws {
+        let csv = """
+        iWine,Type,Color,Quantity,Vintage,Wine,Producer,Varietal,Country,Region,Appellation,Location,Bin,Price,Currency,BeginConsume,EndConsume
+        123,Red,Red,2,2016,Château Test Pauillac,Château Test,Cabernet Sauvignon,France,Bordeaux,Pauillac,Cave,A3,45.00,EUR,2024,2036
+        124,White - Sparkling,White,1,1001,Brut Réserve,Maison X,Chardonnay,France,Champagne,Champagne,,,30,EUR,,
+        """
+        var cellar = Cellar()
+        let summary = try cellar.importCSV(csv)
+        #expect(summary.winesAdded == 2)
+        #expect(summary.bottlesAdded == 3)
+        let pauillac = try #require(cellar.wines.values.first { $0.name == "Château Test Pauillac" })
+        #expect(pauillac.vintage == 2016 && pauillac.color == .red && pauillac.appellation == "Pauillac")
+        #expect(pauillac.drinkFrom == 2024 && pauillac.drinkUntil == 2036)
+        #expect(pauillac.grapes == ["Cabernet Sauvignon"])
+        let brut = try #require(cellar.wines.values.first { $0.name == "Brut Réserve" })
+        #expect(brut.vintage == nil, "1001 means non-vintage")
+        #expect(brut.color == .sparkling)
+    }
+
+    @Test func aVivinoHistoryBecomesDiscoveries() throws {
+        let csv = """
+        Winery,Wine name,Vintage,Region,Country,Regional wine style,Average rating,Scan date,Scan/Review Location,Your rating,Your review,Wine type,Drinking Window,Wine price
+        Domaine Y,Morgon Côte du Py,2020,Beaujolais,France,,3.9,2026-05-02 20:15:00,Lyon,4.0,Lovely with charcuterie,Red wine,2022 - 2030,24.5
+        """
+        var cellar = Cellar()
+        let summary = try cellar.importCSV(csv)
+        #expect(summary.bottlesAdded == 0)
+        let discovery = try #require(cellar.discoveries.values.first)
+        let wine = try #require(cellar.wines[discovery.wineID])
+        #expect(wine.name == "Morgon Côte du Py" && wine.producer == "Domaine Y" && wine.color == .red)
+        #expect(wine.drinkFrom == 2022 && wine.drinkUntil == 2030)
+        #expect(discovery.rating == 4 && discovery.place == "Lyon" && discovery.note == "Lovely with charcuterie")
+        #expect(discovery.price == 24.5)
+    }
+
+    @Test func frenchHeadersAreRecognized() throws {
+        var cellar = Cellar()
+        _ = try cellar.importCSV("Nom;Millésime;Couleur;Quantité\nMorgon;2020;Rouge;3")
+        #expect(cellar.bottles.count == 3)
+        #expect(cellar.wines.values.first?.color == .red)
+    }
+}

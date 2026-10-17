@@ -122,14 +122,20 @@ public extension Cellar {
         return ImportSummary(winesAdded: wineCount, bottlesAdded: bottleCount, rowsSkipped: 0)
     }
 
-    /// Imports a CSV in the export format (column order may vary; only "name" is required).
-    /// A "quantity" column, if present, creates that many bottles per row.
+    /// Imports a CSV: Encave's own export, or a spreadsheet or another app's export
+    /// (CellarTracker, Vivino…). Columns are recognized by name in English or French,
+    /// in any order; only a wine name is required. A quantity column creates that
+    /// many bottles per row. A Vivino scan history (a "scan date" column and no
+    /// quantity) becomes discoveries rather than bottles.
     @discardableResult
     mutating func importCSV(_ text: String, now: Date = .now) throws -> ImportSummary {
         let rows = CSVParser.parse(text)
         guard let header = rows.first else { throw ImportError.emptyFile }
-        let columns = header.map { $0.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: " ", with: "_") }
+        let columns = header.map(CSVColumns.canonical)
         guard let nameIndex = columns.firstIndex(of: "name") else { throw ImportError.missingNameColumn }
+        if columns.contains("scan_date"), !columns.contains("quantity") {
+            return importDiscoveries(rows: rows, columns: columns, nameIndex: nameIndex, now: now)
+        }
         let day = CellarExport.dayFormatter()
         var winesByKey = Dictionary(wines.values.map { ($0.identityKey, $0) }, uniquingKeysWith: { a, _ in a })
         var summary = ImportSummary(winesAdded: 0, bottlesAdded: 0, rowsSkipped: 0)
@@ -144,13 +150,7 @@ public extension Cellar {
                 if row.contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) { summary.rowsSkipped += 1 }
                 continue
             }
-            var wine = Wine(
-                name: name, producer: value("producer"), vintage: value("vintage").flatMap { Int($0) },
-                color: value("color").flatMap { WineColor(rawValue: $0.lowercased()) }, region: value("region"),
-                country: value("country"), appellation: value("appellation"),
-                grapes: (value("grapes") ?? "").split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
-                drinkFrom: value("drink_from").flatMap { Int($0) }, drinkUntil: value("drink_until").flatMap { Int($0) }
-            )
+            var wine = CSVColumns.wine(name: name, value: value)
             if let existing = winesByKey[wine.identityKey] {
                 wine = existing
             } else {
@@ -159,7 +159,7 @@ public extension Cellar {
                 summary.winesAdded += 1
             }
 
-            let quantity = max(1, value("quantity").flatMap { Int($0) } ?? 1)
+            let quantity = max(1, value("quantity").flatMap(CSVColumns.number).map { Int($0) } ?? 1)
             for _ in 0..<quantity {
                 var bottle = Bottle(
                     wineID: wine.id, storageNote: value("storage"), addedAt: now,
@@ -172,7 +172,7 @@ public extension Cellar {
                 if status == .consumed {
                     bottle.status = .consumed
                     bottle.tasting = Tasting(date: value("tasted_on").flatMap(day.date(from:)) ?? now,
-                                             rating: value("rating").flatMap { Int($0) }, note: value("note"))
+                                             rating: value("rating").flatMap(CSVColumns.rating), note: value("note"))
                 } else if status == .gone {
                     bottle.status = .gone
                 } else if let rackName = value("rack"), let label = value("slot"),
@@ -189,6 +189,121 @@ public extension Cellar {
             }
         }
         return summary
+    }
+}
+
+extension Cellar {
+    /// Rows of a tasting history: each becomes a discovery of the wine.
+    mutating func importDiscoveries(rows: [[String]], columns: [String], nameIndex: Int, now: Date) -> ImportSummary {
+        var summary = ImportSummary(winesAdded: 0, bottlesAdded: 0, rowsSkipped: 0)
+        for row in rows.dropFirst() {
+            func value(_ column: String) -> String? {
+                guard let index = columns.firstIndex(of: column), index < row.count else { return nil }
+                let trimmed = row[index].trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? nil : trimmed
+            }
+            guard nameIndex < row.count, let name = value("name") else {
+                if row.contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) { summary.rowsSkipped += 1 }
+                continue
+            }
+            let wine = CSVColumns.wine(name: name, value: value)
+            let known = wines.values.contains { $0.identityKey == wine.identityKey }
+            let discovery = Discovery(
+                wineID: wine.id, date: value("scan_date").flatMap(CSVColumns.date) ?? now, place: value("place"),
+                rating: value("rating").flatMap(CSVColumns.rating), note: value("note"),
+                price: value("price").flatMap(CSVColumns.number).map { Decimal($0) },
+                currency: value("currency") ?? settings.currency
+            )
+            addDiscovery(discovery, wine: wine)
+            if !known { summary.winesAdded += 1 }
+        }
+        return summary
+    }
+}
+
+/// Column names and values of other apps' and spreadsheets' exports.
+enum CSVColumns {
+    /// Header → the name used by Encave's own export.
+    static let synonyms: [String: String] = [
+        "name": "name", "wine": "name", "winename": "name", "nom": "name", "vin": "name", "cuvee": "name",
+        "producer": "producer", "winery": "producer", "domaine": "producer", "producteur": "producer", "estate": "producer",
+        "vintage": "vintage", "millesime": "vintage", "year": "vintage", "annee": "vintage",
+        "color": "color", "colour": "color", "couleur": "color", "type": "color", "winetype": "color",
+        "region": "region", "country": "country", "pays": "country", "appellation": "appellation",
+        "grapes": "grapes", "varietal": "grapes", "grape": "grapes", "cepage": "grapes", "cepages": "grapes",
+        "drinkfrom": "drink_from", "beginconsume": "drink_from", "boirea": "drink_from",
+        "drinkuntil": "drink_until", "endconsume": "drink_until", "boirejusqua": "drink_until",
+        "drinkingwindow": "drinking_window",
+        "quantity": "quantity", "qty": "quantity", "quantite": "quantity", "totalquantity": "quantity", "bottles": "quantity",
+        "price": "price", "prix": "price", "wineprice": "price", "purchaseprice": "price",
+        "currency": "currency", "devise": "currency",
+        "rack": "rack", "location": "rack", "casier": "rack", "slot": "slot", "bin": "slot", "case": "slot",
+        "storage": "storage", "status": "status", "purchasedate": "purchase_date", "purchaseplace": "purchase_place",
+        "receivedfrom": "received_from", "sizeml": "size_ml", "tastedon": "tasted_on",
+        "rating": "rating", "yourrating": "rating", "note": "note", "notes": "note", "yourreview": "note",
+        "personalnote": "note", "commentaire": "note",
+        "scandate": "scan_date", "scanreviewlocation": "place", "place": "place", "lieu": "place",
+    ]
+
+    /// "Wine Name", "wine_name" and "Millésime" become "name" and "vintage".
+    static func canonical(_ header: String) -> String {
+        let folded = header.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en"))
+            .lowercased().filter { $0.isLetter || $0.isNumber }
+        return synonyms[folded] ?? header.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: " ", with: "_")
+    }
+
+    static func wine(name: String, value: (String) -> String?) -> Wine {
+        var from = value("drink_from").flatMap(year), until = value("drink_until").flatMap(year)
+        if from == nil, until == nil, let window = value("drinking_window") {
+            let years = window.split { !$0.isNumber }.compactMap { Int($0) }.filter { (1900...2200).contains($0) }
+            from = years.first; until = years.count > 1 ? years[1] : nil
+        }
+        return Wine(
+            name: name, producer: value("producer"), vintage: value("vintage").flatMap(year),
+            color: value("color").flatMap(color), region: value("region"),
+            country: value("country"), appellation: value("appellation"),
+            grapes: (value("grapes") ?? "").split(whereSeparator: { $0 == ";" || $0 == "," })
+                .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
+            drinkFrom: from, drinkUntil: until
+        )
+    }
+
+    /// "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage).
+    static func year(_ text: String) -> Int? {
+        guard let value = number(text).map({ Int($0) }), (1800...2200).contains(value) else { return nil }
+        return value
+    }
+
+    static func number(_ text: String) -> Double? {
+        Double(text.replacingOccurrences(of: ",", with: ".").filter { $0.isNumber || $0 == "." || $0 == "-" })
+    }
+
+    /// 1 to 5 (decimals rounded); 100-point scores are converted.
+    static func rating(_ text: String) -> Int? {
+        guard let value = number(text), value > 0 else { return nil }
+        let five = value > 5 ? value / 20 : value
+        return min(5, max(1, Int(five.rounded())))
+    }
+
+    static func color(_ text: String) -> WineColor? {
+        let folded = text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en")).lowercased()
+        let table: [(String, WineColor)] = [
+            ("sparkling", .sparkling), ("effervescent", .sparkling), ("champagne", .sparkling), ("petillant", .sparkling),
+            ("rose", .rose), ("dessert", .dessert), ("sweet", .dessert), ("liquoreux", .dessert), ("moelleux", .dessert),
+            ("fortified", .fortified), ("port", .fortified), ("porto", .fortified), ("fortifie", .fortified),
+            ("orange", .orange), ("red", .red), ("rouge", .red), ("white", .white), ("blanc", .white),
+        ]
+        return table.first { folded.contains($0.0) }?.1
+    }
+
+    static func date(_ text: String) -> Date? {
+        for format in ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy"] {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = format
+            if let date = formatter.date(from: text) { return date }
+        }
+        return nil
     }
 }
 
