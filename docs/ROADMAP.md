@@ -65,7 +65,7 @@ it with.
   exchange keys with X25519. Keys are kept in the Keychain or the
   Android Keystore.
 
-### Pairing and sharing (QR code)
+### Pairing and sharing (QR code or 6-digit code)
 
 1. Device A shows a QR code containing an ephemeral public key, the cellar ID
    and the relay address.
@@ -77,6 +77,23 @@ it with.
 
 The same flow adds your own Mac or iPad ("Add a device") or a household
 member ("Share cellar", with *can edit* or *view only*).
+
+**Without a camera (a Mac, or a phone far away): a 6-digit code.**
+
+1. Device A (for example the iPhone) shows a 6-digit code, valid for two
+   minutes and for one pairing only. The first digits pick a rendezvous on
+   the relay; the whole code is the password of a PAKE (CPace or SPAKE2,
+   as in Magic Wormhole).
+2. Device B (the Mac) types the code. The PAKE gives both devices the same
+   strong key only if the codes match: someone watching the relay cannot
+   guess the code offline, and gets a single online try before the code is
+   burned. The relay also limits attempts per rendezvous.
+3. Both devices show the same confirmation words (derived from the key) and
+   ask "Do they match?", then the cellar key is sent as with the QR code.
+
+On the same Wi-Fi, devices find each other directly (Bonjour / mDNS) and
+the relay is only a fallback. The QR code stays the fastest way between
+two phones; the code is offered next to it ("Can't scan? Enter a code").
 
 **Removing someone** rotates the cellar key: remaining devices receive the
 new key and re-encrypt; the removed device keeps what it already had but

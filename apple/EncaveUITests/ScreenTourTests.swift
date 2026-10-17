@@ -40,7 +40,10 @@ final class ScreenTourTests: XCTestCase {
         app.activate()
         sleep(3)
         snapshot("launch")
-        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 20), "The main window opens")
+        if !app.windows.firstMatch.waitForExistence(timeout: 20) {
+            XCTFail("The main window opens")
+            print(app.debugDescription)
+        }
         #endif
 
         // Cellar, a wine, its drink sheet, adding bottles.

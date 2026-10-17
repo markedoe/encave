@@ -6,6 +6,8 @@ struct CellarView: View {
     @State private var filter = CellarFilter()
     @State private var sort: CellarSort = .name
     @State private var selection: UUID?
+    /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
+    @State private var columns: NavigationSplitViewVisibility = .all
 
     var body: some View {
         #if os(macOS)
@@ -19,7 +21,7 @@ struct CellarView: View {
                 .frame(minWidth: 360, maxWidth: .infinity)
         }
         #else
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             list
         } detail: {
             detail
