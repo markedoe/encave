@@ -198,4 +198,19 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         file.delete()
         #expect(try file.load() == nil)
     }
+
+    @Test func aLocalChangeAfterASyncIsNewerThanEverythingReceived() throws {
+        let (cellar, wine, _) = try sample()
+        var (a, b) = pair(cellar)
+        // B made many changes: its clock is far ahead.
+        for index in 0..<20 {
+            try b.edit { var w = $0.wines[wine.id]!; w.notes = "B \(index)"; try $0.updateWine(w) }
+        }
+        a.sync(with: b)
+        try a.edit { var w = $0.wines[wine.id]!; w.notes = "A after sync"; try $0.updateWine(w) }
+        let key = SyncKey(.wine, wine.id).string
+        #expect(a.state.stamps[key]!.counter > b.state.clock)
+        syncBoth(&a, &b)
+        #expect(b.cellar.wines[wine.id]?.notes == "A after sync")
+    }
 }

@@ -1,0 +1,39 @@
+name: Relay
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["relay/**", "apple/Packages/CaveKit/**", ".github/workflows/relay.yml"]
+  pull_request:
+    paths: ["relay/**", "apple/Packages/CaveKit/**", ".github/workflows/relay.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: relay-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  relay:
+    name: Relay and remote sync
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    env:
+      NODE_VERSION: "22.11.0"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Install Node
+        run: |
+          curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz" \
+            | tar -xz -C /opt
+          echo "/opt/node-v${NODE_VERSION}-linux-x64/bin" >> "$GITHUB_PATH"
+      - name: Relay tests
+        run: node --test relay/test/relay.test.mjs
+      - name: Remote sync through the relay
+        run: |
+          mkdir -p "$RUNNER_TEMP/relay"
+          PORT=8787 DATA_DIR="$RUNNER_TEMP/relay" node relay/server.mjs &
+          for i in $(seq 1 50); do curl -fs http://localhost:8787/v1/health && break; sleep 0.2; done
+          ENCAVE_RELAY_URL=http://localhost:8787 swift test --package-path apple/Packages/CaveKit --filter RemoteSyncTests

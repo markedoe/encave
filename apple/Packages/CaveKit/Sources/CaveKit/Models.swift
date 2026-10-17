@@ -23,18 +23,22 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var notes: String?
     /// Identifier of a photo (label or bottle) stored by the app next to the cellar.
     public var photoID: String?
+    /// Barcodes (EAN, UPC) seen on its bottles, to recognize it at the next scan.
+    /// Nil rather than empty, so files of wines without barcodes stay as they were.
+    public var barcodes: [String]?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
         color: WineColor? = nil, region: String? = nil, country: String? = nil,
         appellation: String? = nil, grapes: [String] = [], drinkFrom: Int? = nil, drinkUntil: Int? = nil,
-        notes: String? = nil, photoID: String? = nil
+        notes: String? = nil, photoID: String? = nil, barcodes: [String]? = nil
     ) {
         self.id = id; self.name = name; self.producer = producer; self.vintage = vintage
         self.color = color; self.region = region; self.country = country
         self.appellation = appellation; self.grapes = grapes
         self.drinkFrom = drinkFrom; self.drinkUntil = drinkUntil; self.notes = notes
         self.photoID = photoID
+        self.barcodes = barcodes?.isEmpty == true ? nil : barcodes
     }
 
     public init(from decoder: Decoder) throws {
@@ -52,6 +56,21 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         drinkUntil = try c.decodeIfPresent(Int.self, forKey: .drinkUntil)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         photoID = try c.decodeIfPresent(String.self, forKey: .photoID)
+        barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes)
+    }
+
+    /// Digits only: "3 760 1234 5678 9" and "3760123456789" are the same barcode.
+    public static func normalizedBarcode(_ code: String) -> String {
+        String(code.filter(\.isNumber).prefix(20))
+    }
+
+    /// Adds a barcode if it is new. Returns false if it was already known.
+    @discardableResult
+    public mutating func addBarcode(_ code: String) -> Bool {
+        let normalized = Self.normalizedBarcode(code)
+        guard normalized.count >= 6, !(barcodes ?? []).contains(normalized) else { return false }
+        barcodes = (barcodes ?? []) + [normalized]
+        return true
     }
 
     /// "Château X 2015" or "Château X" for non-vintage wines.

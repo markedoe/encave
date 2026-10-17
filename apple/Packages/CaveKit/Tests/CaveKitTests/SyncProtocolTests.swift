@@ -160,6 +160,23 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         #expect(resultA.state.device == a.id && resultB.state.device == b.id)
     }
 
+    @Test func theRemoteKeyIsPassedOnDuringASync() async throws {
+        let (a, b, membership) = members()
+        let snapshotA = SyncSnapshot(cellar: Cellar(), state: SyncState(device: a.id), membership: membership)
+        let snapshotB = SyncSnapshot(cellar: Cellar(), state: SyncState(device: b.id), membership: membership)
+        let info = RemoteInfo(key: .random(cellarID: membership.cellarID), storage: "https://relay.example")
+        let (endA, endB) = Pipe.pair()
+        let sideA = Task {
+            let (channel, _) = try await SyncHandshake.initiate(over: endA, identity: a, membership: membership)
+            return try await SyncExchange.exchange(over: channel, isInitiator: true, local: snapshotA, photos: .none, remote: info)
+        }
+        let (channel, _) = try await SyncHandshake.respond(over: endB, identity: b, membership: membership)
+        let resultB = try await SyncExchange.exchange(over: channel, isInitiator: false, local: snapshotB, photos: .none, remote: nil)
+        let resultA = try await sideA.value
+        #expect(resultB.remote == info)
+        #expect(resultA.remote == nil)
+    }
+
     @Test func aRemovedDeviceCannotConnect() async throws {
         let (a, b, original) = members()
         var membership = original
@@ -167,10 +184,25 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         membership.remove(b.id, clock: &clock, by: a.id)
         let (endB, endA) = Pipe.pair()
         let attempt = Task { _ = try await SyncHandshake.initiate(over: endB, identity: b, membership: original) }
-        await #expect(throws: SyncError.unknownDevice) {
+        await #expect(throws: SyncError.removedDevice) {
             _ = try await SyncHandshake.respond(over: endA, identity: a, membership: membership)
         }
         // The removed device is told why.
+        await #expect(throws: SyncError.removedDevice) { try await attempt.value }
+    }
+
+    @Test func aDeviceNotKnownYetIsNotToldItWasRemoved() async throws {
+        let (a, b, membership) = members()
+        // C was added on A, but B has not heard of it yet.
+        let c = identity()
+        var newer = membership
+        var clock: UInt64 = 10
+        newer.add(Member(id: c.id, name: "C", publicKey: c.publicKey, platform: "ios"), clock: &clock, by: a.id)
+        let (endC, endB) = Pipe.pair()
+        let attempt = Task { _ = try await SyncHandshake.initiate(over: endC, identity: c, membership: newer) }
+        await #expect(throws: SyncError.unknownDevice) {
+            _ = try await SyncHandshake.respond(over: endB, identity: b, membership: membership)
+        }
         await #expect(throws: SyncError.unknownDevice) { try await attempt.value }
     }
 
@@ -198,6 +230,50 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         endA.tamper = { frame in var copy = frame; copy[copy.startIndex] ^= 1; return copy }
         try await channelA.send(WireMessage(type: "photos-end"))
         await #expect(throws: SyncError.authenticationFailed) { _ = try await channelB.receive() }
+    }
+
+    @Test func afterPairingAndTheFirstSyncBothDevicesListTheSameDevices() async throws {
+        let (hostEnd, joinerEnd) = Pipe.pair()
+        let hostID = identity(), joinerID = identity()
+        let host = PairingHost(identity: hostID, name: "iPhone", platform: "ios")
+        let joiner = PairingJoiner(identity: joinerID, name: "Mac", platform: "macos")
+        // The host's cellar already lists the host, as SyncService.setUpIfNeeded does.
+        var hostMembers = Membership()
+        var hostState = SyncState(device: hostID.id)
+        hostMembers.add(Member(id: hostID.id, name: "iPhone", publicKey: hostID.publicKey, platform: "ios"),
+                        clock: &hostState.clock, by: hostID.id)
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "Shared"), quantity: 1)
+        hostState.record(from: Cellar(), to: cellar)
+
+        async let hk = host.exchangeKeys(over: hostEnd)
+        async let jk = joiner.exchangeKeys(over: joinerEnd)
+        let (hostKeys, joinerKeys) = try await (hk, jk)
+        let snapshotHost = hostMembers
+        let stateHost = hostState
+        let hostSide = Task { () -> SyncSnapshot in
+            let (channel, member) = try await host.finish(over: hostEnd, keys: hostKeys, accepted: true, membership: snapshotHost)
+            var members = snapshotHost
+            var state = stateHost
+            members.add(member, clock: &state.clock, by: hostID.id)
+            return try await SyncExchange.run(over: channel, isInitiator: true,
+                                              local: SyncSnapshot(cellar: cellar, state: state, membership: members), photos: .none)
+        }
+        let joinerSide = Task { () -> SyncSnapshot in
+            let (channel, received) = try await joiner.finish(over: joinerEnd, keys: joinerKeys, accepted: true)
+            var members = received
+            var state = SyncState(device: joinerID.id)
+            state.clock = received.stamps.values.map(\.counter).max() ?? 0
+            members.add(Member(id: joinerID.id, name: "Mac", publicKey: joinerID.publicKey, platform: "macos"),
+                        clock: &state.clock, by: joinerID.id)
+            return try await SyncExchange.run(over: channel, isInitiator: false,
+                                              local: SyncSnapshot(cellar: Cellar(), state: state, membership: members), photos: .none)
+        }
+        let (resultHost, resultJoiner) = try await (hostSide.value, joinerSide.value)
+        #expect(resultHost.membership == resultJoiner.membership)
+        #expect(Set(resultHost.membership.members.keys) == [hostID.id, joinerID.id])
+        #expect(resultHost.membership.members[joinerID.id]?.publicKey == joinerID.publicKey)
+        #expect(resultHost.cellar == resultJoiner.cellar)
     }
 
     @Test func membershipMergeKeepsRemovals() {

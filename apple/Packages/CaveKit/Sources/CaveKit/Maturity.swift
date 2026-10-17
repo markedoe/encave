@@ -53,3 +53,42 @@ public extension Wine {
         return (vintage + start, vintage + start + length)
     }
 }
+
+/// What a monthly reminder says about the bottles in the cellar.
+public struct DrinkingDigest: Equatable, Sendable {
+    /// Bottles in the last year of their window.
+    public var drinkSoon: Int
+    /// Bottles whose window opens this year.
+    public var newlyReady: Int
+    /// Bottles past their window.
+    public var pastPeak: Int
+    /// The most urgent wine, to name in the reminder.
+    public var firstWine: String?
+
+    public var isEmpty: Bool { drinkSoon == 0 && newlyReady == 0 && pastPeak == 0 }
+}
+
+public extension Cellar {
+    /// Counts for a reminder in `year`, computed on the device.
+    func drinkingDigest(year: Int) -> DrinkingDigest {
+        var digest = DrinkingDigest(drinkSoon: 0, newlyReady: 0, pastPeak: 0, firstWine: nil)
+        var urgent: [(Maturity, String)] = []
+        for bottle in bottlesInCellar {
+            guard let wine = wines[bottle.wineID] else { continue }
+            switch Maturity.of(wine, year: year) {
+            case .drinkSoon:
+                digest.drinkSoon += 1
+                urgent.append((.drinkSoon, wine.displayName))
+            case .pastPeak:
+                digest.pastPeak += 1
+                urgent.append((.pastPeak, wine.displayName))
+            case .ready where wine.drinkFrom == year:
+                digest.newlyReady += 1
+            default:
+                break
+            }
+        }
+        digest.firstWine = urgent.sorted { ($0.0, $0.1) < ($1.0, $1.1) }.first?.1
+        return digest
+    }
+}

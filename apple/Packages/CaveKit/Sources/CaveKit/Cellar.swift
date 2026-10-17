@@ -192,6 +192,16 @@ public extension Cellar {
         return nil
     }
 
+    /// The wine a barcode was seen on, preferring one with bottles in the cellar.
+    func wine(barcode: String) -> Wine? {
+        let code = Wine.normalizedBarcode(barcode)
+        guard !code.isEmpty else { return nil }
+        let matching = wines.values.filter { ($0.barcodes ?? []).contains(code) }
+        let inCellar = Set(bottlesInCellar.map(\.wineID))
+        return matching.sorted { (inCellar.contains($0.id) ? 0 : 1, $0.displayName) < (inCellar.contains($1.id) ? 0 : 1, $1.displayName) }
+            .first
+    }
+
     /// Existing wines matching a query, for "add another bottle of...".
     func wineSuggestions(matching query: String, limit: Int = 8) -> [Wine] {
         let needle = query.trimmingCharacters(in: .whitespaces)
@@ -362,6 +372,38 @@ public extension Cellar {
         racks.insert(contentsOf: moving, at: min(max(0, adjusted), racks.count))
     }
 
+    /// Puts the bottles of these wines that have no place into the free places of a
+    /// rack, in order. Returns how many were placed.
+    @discardableResult
+    mutating func place(wines wineIDs: Set<UUID>, in rackID: UUID) throws -> Int {
+        guard let rack = rack(rackID) else { throw CellarError.unknownRack }
+        let waiting = bottlesInCellar
+            .filter { wineIDs.contains($0.wineID) && $0.slot == nil }
+            .sorted { a, b in
+                let wa = wines[a.wineID], wb = wines[b.wineID]
+                if a.wineID != b.wineID, let wa, let wb { return Cellar.nameOrder(wa, wb) }
+                return a.addedAt < b.addedAt
+            }
+        let free = freeSlots(in: rack)
+        for (bottle, slot) in zip(waiting, free) {
+            bottles[bottle.id]?.slot = slot
+            bottles[bottle.id]?.storageNote = nil
+        }
+        return min(waiting.count, free.count)
+    }
+
+    /// Takes the bottles of these wines out of their places (they stay in the cellar).
+    /// Returns how many moved.
+    @discardableResult
+    mutating func unplace(wines wineIDs: Set<UUID>) -> Int {
+        var count = 0
+        for (id, bottle) in bottles where wineIDs.contains(bottle.wineID) && bottle.status == .inCellar && bottle.slot != nil {
+            bottles[id]?.slot = nil
+            count += 1
+        }
+        return count
+    }
+
     /// Removes a rack; its bottles stay in the cellar without a slot.
     mutating func removeRack(_ rackID: UUID) {
         racks.removeAll { $0.id == rackID }
@@ -389,6 +431,7 @@ public extension Cellar {
 extension Wine {
     func matches(_ needle: String) -> Bool {
         let fields = [name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
+            + (barcodes ?? []).map(Optional.some)
         return fields.compactMap { $0 }.contains {
             $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
         }

@@ -21,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: swift test --package-path apple/Packages/CaveKit
 
   l10n:
     name: French translations
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: python3 apple/tools/l10n.py --check
 
   mac-launch:
@@ -40,7 +40,7 @@ jobs:
       run:
         working-directory: apple
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Select newest Xcode
         working-directory: .
@@ -117,7 +117,7 @@ jobs:
 
       - name: Upload Mac screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mac-screens
           path: ${{ runner.temp }}/mac-screens
@@ -133,7 +133,7 @@ jobs:
       run:
         working-directory: apple
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Select newest Xcode
         working-directory: .
@@ -221,7 +221,7 @@ jobs:
 
       - name: Upload screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: screens
           path: ${{ runner.temp }}/screens
@@ -242,7 +242,7 @@ jobs:
       # Uploads on push or manual run, only when the secrets are available (never on forks).
       UPLOAD: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Select newest Xcode
         working-directory: .

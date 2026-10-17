@@ -23,8 +23,11 @@ public enum SyncError: Error, Equatable, Sendable {
     /// The other device revealed a key that does not match its commitment, or proved
     /// nothing: someone may be in the middle.
     case authenticationFailed
-    /// The other device is not (or no longer) one of this cellar's devices.
+    /// The other device does not know this one (yet): it may not have heard of a
+    /// device added recently on another device.
     case unknownDevice
+    /// This device was removed from the cellar.
+    case removedDevice
     /// The other device belongs to another cellar.
     case otherCellar
     /// The user said the codes do not match, or cancelled.
@@ -177,6 +180,7 @@ public struct WireMessage: Codable, Sendable, Equatable {
         if self.type == "error" {
             switch reason {
             case "unknown-device": throw SyncError.unknownDevice
+            case "removed-device": throw SyncError.removedDevice
             case "other-cellar": throw SyncError.otherCellar
             case "rejected": throw SyncError.rejected
             default: throw SyncError.protocolViolation(reason ?? "the other device stopped")
@@ -532,6 +536,7 @@ public enum SyncHandshake {
         guard let device = hello.device, let otherKey = hello.key, let otherNonce = hello.nonce, otherNonce.count == 32
         else { throw SyncError.protocolViolation("incomplete sync-hello") }
         guard let peer = membership.members[device], device != identity.id else {
+            if membership.stamps[device]?.deleted == true { throw await refuse("removed-device", .removedDevice) }
             throw await refuse("unknown-device", .unknownDevice)
         }
         let ephemeral = Curve25519.KeyAgreement.PrivateKey()
@@ -599,12 +604,48 @@ public struct PhotoAccess: Sendable {
     public static let none = PhotoAccess(data: { _ in nil }, save: { _, _ in })
 }
 
+/// Remote sync settings shared between devices that meet on the network: the
+/// cellar key and where the files are. Sent only over the encrypted channel,
+/// never stored in a snapshot.
+public struct RemoteInfo: Codable, Equatable, Sendable {
+    public var key: CellarKey
+    /// For example the relay URL.
+    public var storage: String?
+
+    public init(key: CellarKey, storage: String?) { self.key = key; self.storage = storage }
+}
+
 public enum SyncExchange {
     /// Sends this device's copy, receives the other's, and returns the merge (the
     /// same on both sides), then swaps the photos each side is missing. The
     /// initiator sends first at every step, so neither side waits on a full buffer.
     public static func run(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
                            photos: PhotoAccess) async throws -> SyncSnapshot {
+        try await exchange(over: channel, isInitiator: isInitiator, local: local, photos: photos, remote: nil).snapshot
+    }
+
+    /// `run`, then a last step where each side sends its remote sync key and storage
+    /// (or nothing), so a device that turned remote sync on passes it to the others.
+    public static func exchange(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
+                                photos: PhotoAccess,
+                                remote: RemoteInfo?) async throws -> (snapshot: SyncSnapshot, remote: RemoteInfo?) {
+        let snapshot = try await mergeAndSwapPhotos(over: channel, isInitiator: isInitiator, local: local, photos: photos)
+        let mine = WireMessage.make("sync-keys") { $0.syncData = remote.flatMap { try? JSONEncoder.sync.encode($0) } }
+        let theirs: WireMessage
+        if isInitiator {
+            try await channel.send(mine)
+            theirs = try await channel.receive().require("sync-keys")
+        } else {
+            theirs = try await channel.receive().require("sync-keys")
+            try await channel.send(mine)
+        }
+        let received = theirs.syncData.flatMap { try? JSONDecoder.sync.decode(RemoteInfo.self, from: $0) }
+        // A key for another cellar is not this cellar's.
+        return (snapshot, received?.key.cellarID == snapshot.membership.cellarID ? received : nil)
+    }
+
+    static func mergeAndSwapPhotos(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
+                                   photos: PhotoAccess) async throws -> SyncSnapshot {
         let mine = WireMessage.make("sync-state") {
             $0.cellarData = try? JSONFileCellarStore.makeEncoder().encode(local.cellar)
             $0.syncData = try? JSONEncoder.sync.encode(local.state)

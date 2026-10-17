@@ -17,9 +17,13 @@ public struct LabelScanResult: Sendable, Equatable {
     public var producer: String?
     public var vintage: Int?
     public var appellation: String?
+    /// The bottle's barcode, if the camera saw one.
+    public var barcode: String?
 
-    public init(name: String? = nil, producer: String? = nil, vintage: Int? = nil, appellation: String? = nil) {
+    public init(name: String? = nil, producer: String? = nil, vintage: Int? = nil, appellation: String? = nil,
+                barcode: String? = nil) {
         self.name = name; self.producer = producer; self.vintage = vintage; self.appellation = appellation
+        self.barcode = barcode
     }
 
     public var isEmpty: Bool { name == nil && producer == nil && vintage == nil }

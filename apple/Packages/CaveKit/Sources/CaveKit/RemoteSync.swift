@@ -1,0 +1,489 @@
+import Crypto
+import Foundation
+
+// Remote sync: devices that are apart exchange encrypted files through storage
+// that only ever holds ciphertext (iCloud, a relay, a folder). Specified in
+// docs/SYNC.md, section 8; the choice of storage is explained in docs/REMOTE_SYNC.md.
+//
+// Every file is written once by one device, so any storage that can list, read,
+// create and delete files works, without locks or server logic.
+
+// MARK: - Storage
+
+/// A namespace of files on some storage. Paths use "/" and never start with it.
+public protocol Mailbox: Sendable {
+    /// Paths starting with `prefix`.
+    func list(prefix: String) async throws -> [String]
+    /// Nil if there is no such file.
+    func get(_ path: String) async throws -> Data?
+    /// Creates a file. Returns false (and changes nothing) if it already exists.
+    @discardableResult
+    func create(_ path: String, data: Data) async throws -> Bool
+    func delete(_ path: String) async throws
+}
+
+/// Opens mailboxes on one storage (one relay, one iCloud account…).
+public protocol MailboxStore: Sendable {
+    /// `token` proves the right to read and write (the relay stores only its hash).
+    func mailbox(id: String, token: String) -> Mailbox
+    /// A device's inbox: anyone may drop a key grant in it, only its owner reads it.
+    func inbox(id: String, token: String) -> Mailbox
+}
+
+public enum RemoteSyncError: Error, Equatable, Sendable {
+    case unauthorized
+    case quotaExceeded
+    case unavailable(String)
+    case corrupted(String)
+}
+
+// MARK: - Keys
+
+/// The key shared by the devices of a cellar for remote sync. Changes ("epoch")
+/// when a device is removed, so the removed device cannot read anything new.
+public struct CellarKey: Codable, Equatable, Sendable {
+    public var cellarID: UUID
+    public var epoch: UInt32
+    public var key: Data
+
+    public init(cellarID: UUID, epoch: UInt32, key: Data) {
+        self.cellarID = cellarID; self.epoch = epoch; self.key = key
+    }
+
+    public static func random(cellarID: UUID, epoch: UInt32 = 1) -> CellarKey {
+        CellarKey(cellarID: cellarID, epoch: epoch, key: KeySchedule.randomNonce())
+    }
+
+    func derive(_ info: String, count: Int = 32) -> Data {
+        KeySchedule.bytes(KeySchedule.derive(key, salt: Data(), info: info, count: count))
+    }
+
+    /// Where this epoch's files are. Reveals nothing about the key, and changes with it.
+    public var mailboxID: String { "c" + derive("encave/v1/mailbox", count: 16).hexString }
+    /// Proves to a relay the right to use the mailbox.
+    public var token: String { derive("encave/v1/relay-auth").base64URLEncoded }
+    var dataKey: SymmetricKey { SymmetricKey(data: derive("encave/v1/data")) }
+}
+
+public extension DeviceIdentity {
+    /// The device's inbox, where other devices leave key grants for it.
+    var inboxID: String { Self.inboxID(for: publicKey) }
+    /// Proves to a relay the right to read this inbox.
+    var inboxToken: String {
+        KeySchedule.bytes(KeySchedule.derive(privateKey.rawRepresentation, salt: Data(), info: "encave/v1/inbox-auth"))
+            .base64URLEncoded
+    }
+
+    static func inboxID(for publicKey: Data) -> String {
+        "i" + KeySchedule.hash("encave-inbox-v1", [publicKey]).prefix(16).hexString
+    }
+}
+
+// MARK: - File envelope
+
+/// `"ENCV" ‖ version ‖ kind ‖ nonce (12) ‖ ciphertext ‖ tag`, ChaCha20-Poly1305 with
+/// the path as additional data, so storage cannot move a file to another name.
+enum Envelope {
+    enum Kind: UInt8 { case snapshot = 1, photo = 2, grant = 3 }
+    static let magic = Data("ENCV".utf8)
+
+    static func header(_ kind: Kind) -> Data { magic + [1, kind.rawValue] }
+
+    static func seal(_ plaintext: Data, kind: Kind, path: String, key: SymmetricKey) throws -> Data {
+        let header = header(kind)
+        let box = try ChaChaPoly.seal(plaintext, using: key, authenticating: header + Data(path.utf8))
+        return header + box.combined
+    }
+
+    static func open(_ file: Data, kind: Kind, path: String, key: SymmetricKey) throws -> Data {
+        let header = header(kind)
+        guard file.count > header.count + 28, file.prefix(header.count) == header else {
+            throw RemoteSyncError.corrupted(path)
+        }
+        do {
+            let box = try ChaChaPoly.SealedBox(combined: file.dropFirst(header.count))
+            return try ChaChaPoly.open(box, using: key, authenticating: header + Data(path.utf8))
+        } catch {
+            throw RemoteSyncError.corrupted(path)
+        }
+    }
+}
+
+// MARK: - Key grants
+
+/// A cellar key given by one device to another, left in the recipient's inbox.
+/// Sealed with both an ephemeral key and the sender's identity key: only the
+/// recipient can open it, and only a current member can have sent it.
+public struct KeyGrant: Codable, Equatable, Sendable {
+    public var cellarKey: CellarKey
+    public var from: UUID
+    /// Where the files are (for example a relay URL), so the recipient can follow.
+    public var storage: String?
+
+    public init(cellarKey: CellarKey, from: UUID, storage: String?) {
+        self.cellarKey = cellarKey; self.from = from; self.storage = storage
+    }
+
+    static func path(_ grant: KeyGrant) -> String {
+        "grant/\(grant.cellarKey.cellarID.lowercased)-\(String(format: "%08u", grant.cellarKey.epoch))-\(grant.from.lowercased)"
+    }
+
+    /// Seals for `recipient` (its identity public key).
+    public func sealed(by sender: DeviceIdentity, for recipient: Data) throws -> (path: String, data: Data) {
+        let path = Self.path(self)
+        let ephemeral = Curve25519.KeyAgreement.PrivateKey()
+        let key = try Self.key(path: path, ephemeralPublic: ephemeral.publicKey.rawRepresentation, recipient: recipient,
+                               ee: KeySchedule.dh(ephemeral, recipient), se: KeySchedule.dh(sender.privateKey, recipient))
+        let body = try Envelope.seal(JSONEncoder.sync.encode(self), kind: .grant, path: path, key: key)
+        return (path, ephemeral.publicKey.rawRepresentation + body)
+    }
+
+    /// Opens a grant found in this device's inbox. `members` gives the senders' keys.
+    public static func open(_ data: Data, path: String, recipient: DeviceIdentity,
+                            members: Membership) throws -> KeyGrant {
+        guard data.count > 32 else { throw RemoteSyncError.corrupted(path) }
+        let ephemeralPublic = data.prefix(32)
+        // The sender's ID is in the path; it must be a current member.
+        guard let senderID = path.split(separator: "-").suffix(5).joined(separator: "-").uuidValue,
+              let sender = members.members[senderID] else { throw SyncError.unknownDevice }
+        let key = try Self.key(path: path, ephemeralPublic: ephemeralPublic, recipient: recipient.publicKey,
+                               ee: KeySchedule.dh(recipient.privateKey, ephemeralPublic),
+                               se: KeySchedule.dh(recipient.privateKey, sender.publicKey))
+        let grant = try JSONDecoder.sync.decode(KeyGrant.self, from: Envelope.open(data.dropFirst(32), kind: .grant,
+                                                                                    path: path, key: key))
+        guard grant.from == senderID, grant.cellarKey.cellarID == members.cellarID, path == Self.path(grant) else {
+            throw RemoteSyncError.corrupted(path)
+        }
+        return grant
+    }
+
+    static func key(path: String, ephemeralPublic: Data, recipient: Data, ee: Data, se: Data) throws -> SymmetricKey {
+        KeySchedule.derive(ee + se, salt: KeySchedule.hash("encave-grant-v1", [ephemeralPublic, recipient, Data(path.utf8)]),
+                           info: "encave grant")
+    }
+}
+
+// MARK: - Sync
+
+/// What a device remembers between remote syncs.
+public struct RemoteProgress: Codable, Equatable, Sendable {
+    /// Newest snapshot read from each device (its clock).
+    public var seen: [UUID: UInt64] = [:]
+    /// Clock of the last snapshot this device wrote, in the current epoch.
+    public var uploadedClock: UInt64?
+    /// Photos already uploaded in the current epoch.
+    public var uploadedPhotos: Set<String> = []
+    /// Epoch the progress refers to; a new epoch starts afresh.
+    public var epoch: UInt32 = 0
+
+    public init() {}
+}
+
+public enum RemoteSync {
+    /// Snapshots kept per device: the newest two (a reader may be fetching the previous one).
+    static let keptSnapshots = 2
+
+    public struct Result: Sendable {
+        /// The merged copy, or nil if nothing came in.
+        public var snapshot: SyncSnapshot?
+        public var progress: RemoteProgress
+        /// A newer cellar key received from another device.
+        public var newKey: CellarKey?
+        public var storage: String?
+    }
+
+    /// One round: picks up key grants, reads the other devices' newest snapshots,
+    /// merges them, fetches missing photos, then writes this device's snapshot and
+    /// photos if anything changed.
+    public static func run(store: MailboxStore, identity: DeviceIdentity, key currentKey: CellarKey,
+                           local: SyncSnapshot, progress currentProgress: RemoteProgress,
+                           photos: PhotoAccess) async throws -> Result {
+        var key = currentKey
+        var progress = currentProgress
+        var storage: String?
+        var newKey: CellarKey?
+
+        // 1. Key grants: a newer epoch (a device was removed).
+        if let grant = try await receiveGrant(store: store, identity: identity, membership: local.membership,
+                                              newerThan: key.epoch) {
+            key = grant.cellarKey
+            newKey = key
+            storage = grant.storage
+        }
+        if progress.epoch != key.epoch {
+            progress = RemoteProgress()
+            progress.epoch = key.epoch
+        }
+
+        // 2. Other devices' newest snapshots.
+        let mailbox = store.mailbox(id: key.mailboxID, token: key.token)
+        var merged = local
+        var received = false
+        let snapshots = try await mailbox.list(prefix: "snap/").compactMap(SnapshotPath.init)
+        for (device, paths) in Dictionary(grouping: snapshots, by: \.device) where device != identity.id {
+            // Only current members are read: a removed device's files are ignored.
+            guard merged.membership.members[device] != nil || merged.membership.stamps[device] == nil,
+                  let newest = paths.max(by: { $0.clock < $1.clock }),
+                  newest.clock > progress.seen[device] ?? 0,
+                  let file = try await mailbox.get(newest.string) else { continue }
+            let remote = try decodeSnapshot(Envelope.open(file, kind: .snapshot, path: newest.string, key: key.dataKey))
+            guard remote.state.device == device, remote.membership.cellarID == merged.membership.cellarID else {
+                throw RemoteSyncError.corrupted(newest.string)
+            }
+            let merge = CellarMerge.merge(local: merged.cellar, merged.state, remote: remote.cellar, remote.state)
+            merged.cellar = merge.cellar
+            merged.state.stamps = merge.stamps
+            merged.state.clock = max(merged.state.clock, merge.clock)
+            merged.membership = merged.membership.merged(with: remote.membership)
+            progress.seen[device] = newest.clock
+            received = true
+        }
+
+        // 3. Missing photos.
+        let referenced = Set(merged.cellar.wines.values.compactMap(\.photoID))
+        for id in referenced.sorted() where photos.data(id) == nil {
+            let path = photoPath(id)
+            guard let file = try await mailbox.get(path),
+                  let data = try? Envelope.open(file, kind: .photo, path: path, key: key.dataKey),
+                  PhotoID.matches(id, data) else { continue }
+            photos.save(id, data)
+            progress.uploadedPhotos.insert(id)
+        }
+
+        // 4. This device's snapshot and photos, if something changed since the last upload.
+        if progress.uploadedClock != merged.state.clock || newKey != nil {
+            for id in referenced.sorted() where !progress.uploadedPhotos.contains(id) {
+                guard let data = photos.data(id) else { continue }
+                let path = photoPath(id)
+                try await mailbox.create(path, data: Envelope.seal(data, kind: .photo, path: path, key: key.dataKey))
+                progress.uploadedPhotos.insert(id)
+            }
+            try await write(merged, to: mailbox, key: key, device: identity.id)
+            progress.uploadedClock = merged.state.clock
+        }
+        return Result(snapshot: received ? merged : nil, progress: progress, newKey: newKey, storage: storage)
+    }
+
+    /// The newest key left in this device's inbox by a current member, if newer than
+    /// `epoch` (0: any). Grants that are older or no longer useful are deleted.
+    public static func receiveGrant(store: MailboxStore, identity: DeviceIdentity, membership: Membership,
+                                    newerThan epoch: UInt32) async throws -> KeyGrant? {
+        let inbox = store.inbox(id: identity.inboxID, token: identity.inboxToken)
+        var best: KeyGrant?
+        for path in try await inbox.list(prefix: "grant/") {
+            guard let data = try await inbox.get(path) else { continue }
+            let grant: KeyGrant
+            do {
+                grant = try KeyGrant.open(data, path: path, recipient: identity, members: membership)
+            } catch SyncError.unknownDevice where path.hasPrefix("grant/\(membership.cellarID.lowercased)-") {
+                // From a device of this cellar this one has not heard of yet: keep it for later.
+                continue
+            } catch {
+                // Forged, damaged or for another cellar: never usable, and it takes room.
+                try? await inbox.delete(path)
+                continue
+            }
+            if grant.cellarKey.epoch > max(epoch, best?.cellarKey.epoch ?? 0) { best = grant }
+        }
+        // Grants up to the one kept are done with.
+        if let kept = best?.cellarKey.epoch ?? (epoch > 0 ? epoch : nil) {
+            for path in try await inbox.list(prefix: "grant/\(membership.cellarID.lowercased)-") {
+                if let epochPart = path.split(separator: "-").dropFirst(5).first, let value = UInt32(epochPart), value < kept {
+                    try? await inbox.delete(path)
+                }
+            }
+        }
+        return best
+    }
+
+    /// After removing devices: a new key for the remaining ones. The new key is left in
+    /// each remaining device's inbox, the updated list of devices is written to the
+    /// old mailbox too (for devices that have not switched yet), and the cellar to
+    /// the new mailbox. The removed devices cannot find or read the new mailbox.
+    public static func rotate(store: MailboxStore, identity: DeviceIdentity, from oldKey: CellarKey,
+                              local: SyncSnapshot, storage: String?) async throws -> CellarKey {
+        let newKey = CellarKey.random(cellarID: oldKey.cellarID, epoch: oldKey.epoch + 1)
+        for member in local.membership.active where member.id != identity.id {
+            let grant = KeyGrant(cellarKey: newKey, from: identity.id, storage: storage)
+            let sealed = try grant.sealed(by: identity, for: member.publicKey)
+            try await store.inbox(id: DeviceIdentity.inboxID(for: member.publicKey), token: "")
+                .create(sealed.path, data: sealed.data)
+        }
+        try await write(local, to: store.mailbox(id: oldKey.mailboxID, token: oldKey.token), key: oldKey, device: identity.id)
+        try await write(local, to: store.mailbox(id: newKey.mailboxID, token: newKey.token), key: newKey, device: identity.id)
+        return newKey
+    }
+
+    /// Gives the current key to devices that may not have it (a device that joined
+    /// while remote sync was already on, met only on the network).
+    public static func grant(_ key: CellarKey, to members: [Member], store: MailboxStore,
+                             identity: DeviceIdentity, storage: String?) async throws {
+        for member in members where member.id != identity.id {
+            let sealed = try KeyGrant(cellarKey: key, from: identity.id, storage: storage)
+                .sealed(by: identity, for: member.publicKey)
+            try await store.inbox(id: DeviceIdentity.inboxID(for: member.publicKey), token: "")
+                .create(sealed.path, data: sealed.data)
+        }
+    }
+
+    /// Photo IDs from before sync are UUIDs in uppercase; paths are lowercase.
+    static func photoPath(_ id: String) -> String { "photo/\(id.lowercased())" }
+
+    static func write(_ snapshot: SyncSnapshot, to mailbox: Mailbox, key: CellarKey, device: UUID) async throws {
+        let path = SnapshotPath(device: device, clock: snapshot.state.clock).string
+        let data = try Envelope.seal(encodeSnapshot(snapshot), kind: .snapshot, path: path, key: key.dataKey)
+        try await mailbox.create(path, data: data)
+        // Older snapshots of this device: keep the newest few.
+        let mine = try await mailbox.list(prefix: "snap/\(device.lowercased)/").compactMap(SnapshotPath.init)
+            .sorted { $0.clock > $1.clock }
+        for old in mine.dropFirst(keptSnapshots) { try? await mailbox.delete(old.string) }
+    }
+
+    static func encodeSnapshot(_ snapshot: SyncSnapshot) throws -> Data {
+        var message = WireMessage(type: "snapshot")
+        message.cellarData = try JSONFileCellarStore.makeEncoder().encode(snapshot.cellar)
+        message.syncData = try JSONEncoder.sync.encode(snapshot.state)
+        message.membersData = try JSONEncoder.sync.encode(snapshot.membership)
+        return try message.encoded()
+    }
+
+    static func decodeSnapshot(_ data: Data) throws -> SyncSnapshot {
+        let message = try WireMessage.decode(data).require("snapshot")
+        guard let cellarData = message.cellarData, let syncData = message.syncData, let membersData = message.membersData
+        else { throw RemoteSyncError.corrupted("snapshot") }
+        return SyncSnapshot(cellar: try JSONFileCellarStore.makeDecoder().decode(Cellar.self, from: cellarData),
+                            state: try JSONDecoder.sync.decode(SyncState.self, from: syncData),
+                            membership: try JSONDecoder.sync.decode(Membership.self, from: membersData))
+    }
+}
+
+/// `snap/<device>/<clock, 16 digits>-<8 random hex>`: the random part keeps two
+/// snapshots with the same clock (after a new epoch, say) from colliding.
+struct SnapshotPath {
+    let device: UUID
+    let clock: UInt64
+    let suffix: String
+
+    init(device: UUID, clock: UInt64) {
+        self.device = device; self.clock = clock
+        suffix = Data((0..<4).map { _ in UInt8.random(in: .min ... .max) }).hexString
+    }
+
+    init?(_ string: String) {
+        let parts = string.split(separator: "/")
+        guard parts.count == 3, parts[0] == "snap", let device = UUID(uuidString: String(parts[1])) else { return nil }
+        let name = parts[2].split(separator: "-")
+        guard name.count == 2, name[0].count == 16, let clock = UInt64(name[0]) else { return nil }
+        self.device = device; self.clock = clock; suffix = String(name[1])
+    }
+
+    var string: String { "snap/\(device.lowercased)/\(String(format: "%016llu", clock))-\(suffix)" }
+}
+
+// MARK: - Simple storages
+
+/// Files in memory. For tests and previews.
+public final class MemoryMailboxStore: MailboxStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var files: [String: [String: Data]] = [:]
+
+    public init() {}
+
+    public func mailbox(id: String, token: String) -> Mailbox { Box(store: self, id: id) }
+    public func inbox(id: String, token: String) -> Mailbox { Box(store: self, id: id) }
+
+    /// Every file, for tests that look at what the storage holds.
+    public var allFiles: [String: [String: Data]] { lock.withLock { files } }
+
+    struct Box: Mailbox {
+        let store: MemoryMailboxStore
+        let id: String
+
+        func list(prefix: String) async throws -> [String] {
+            store.lock.withLock { (store.files[id] ?? [:]).keys.filter { $0.hasPrefix(prefix) }.sorted() }
+        }
+        func get(_ path: String) async throws -> Data? { store.lock.withLock { store.files[id]?[path] } }
+        func create(_ path: String, data: Data) async throws -> Bool {
+            store.lock.withLock {
+                guard store.files[id]?[path] == nil else { return false }
+                store.files[id, default: [:]][path] = data
+                return true
+            }
+        }
+        func delete(_ path: String) async throws { _ = store.lock.withLock { store.files[id]?.removeValue(forKey: path) } }
+    }
+}
+
+/// Files in a folder: one subfolder per mailbox. For tests and for any synced folder.
+public struct FolderMailboxStore: MailboxStore {
+    public let root: URL
+
+    public init(root: URL) { self.root = root }
+
+    public func mailbox(id: String, token: String) -> Mailbox { Folder(url: root.appendingPathComponent(id, isDirectory: true)) }
+    public func inbox(id: String, token: String) -> Mailbox { Folder(url: root.appendingPathComponent(id, isDirectory: true)) }
+
+    struct Folder: Mailbox {
+        let url: URL
+
+        private func file(_ path: String) throws -> URL {
+            guard RelayPath.isValid(path) else { throw RemoteSyncError.corrupted(path) }
+            return url.appendingPathComponent(path)
+        }
+
+        func list(prefix: String) async throws -> [String] {
+            guard let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: nil) else { return [] }
+            let base = url.standardizedFileURL.path + "/"
+            return enumerator.compactMap { ($0 as? URL)?.standardizedFileURL.path }
+                .filter { $0.hasPrefix(base) }
+                .map { String($0.dropFirst(base.count)) }
+                .filter { $0.hasPrefix(prefix) && !$0.hasSuffix("/") && RelayPath.isValid($0) }
+                .filter { path in (try? file(path)).map { !FileManager.default.directoryExists(at: $0) } ?? false }
+                .sorted()
+        }
+
+        func get(_ path: String) async throws -> Data? { try? Data(contentsOf: file(path)) }
+
+        func create(_ path: String, data: Data) async throws -> Bool {
+            let target = try file(path)
+            guard !FileManager.default.fileExists(atPath: target.path) else { return false }
+            try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try data.write(to: target, options: [.withoutOverwriting])
+            return true
+        }
+
+        func delete(_ path: String) async throws { try? FileManager.default.removeItem(at: file(path)) }
+    }
+}
+
+/// Rules for paths, shared with the relay: lowercase letters, digits, "-", "_"
+/// and "/" between parts, no empty or dot parts, at most 200 characters.
+public enum RelayPath {
+    public static func isValid(_ path: String) -> Bool {
+        guard !path.isEmpty, path.count <= 200, !path.hasPrefix("/"), !path.hasSuffix("/") else { return false }
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false)
+        return parts.allSatisfy { part in
+            !part.isEmpty && part != "." && part != ".."
+                && part.allSatisfy { $0.isASCII && ($0.isLowercase || $0.isNumber || $0 == "-" || $0 == "_") }
+        }
+    }
+}
+
+extension FileManager {
+    func directoryExists(at url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        return fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
+    }
+}
+
+extension UUID {
+    var lowercased: String { uuidString.lowercased() }
+}
+
+extension String {
+    var uuidValue: UUID? { UUID(uuidString: self) }
+}
+
+extension Data {
+    var hexString: String { map { String(format: "%02x", $0) }.joined() }
+}

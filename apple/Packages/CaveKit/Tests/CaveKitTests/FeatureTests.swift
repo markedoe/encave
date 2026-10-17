@@ -189,3 +189,59 @@ import Testing
         #expect(cellar.settings.currency == "EUR")
     }
 }
+
+@Suite struct DrinkingDigestTests {
+    @Test func countsBottlesByWhatToDoThisYear() throws {
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "Soon", vintage: 2015, drinkFrom: 2020, drinkUntil: 2026), quantity: 2)
+        try cellar.addBottles(of: Wine(name: "Opening", vintage: 2020, drinkFrom: 2026, drinkUntil: 2032), quantity: 1)
+        try cellar.addBottles(of: Wine(name: "Old", vintage: 2005, drinkFrom: 2008, drinkUntil: 2015), quantity: 3)
+        try cellar.addBottles(of: Wine(name: "Young", vintage: 2024, drinkFrom: 2030, drinkUntil: 2040), quantity: 1)
+        let digest = cellar.drinkingDigest(year: 2026)
+        #expect(digest.drinkSoon == 2)
+        #expect(digest.newlyReady == 1)
+        #expect(digest.pastPeak == 3)
+        #expect(digest.firstWine == "Soon 2015")
+        #expect(Cellar().drinkingDigest(year: 2026).isEmpty)
+    }
+}
+
+@Suite struct BarcodeTests {
+    @Test func aScannedBarcodeFindsItsWine() throws {
+        var cellar = Cellar()
+        var wine = Wine(name: "Chablis", vintage: 2022)
+        let first = wine.addBarcode("3 760123 456789")
+        let again = wine.addBarcode("3760123456789")
+        let short = wine.addBarcode("12")
+        #expect(first)
+        #expect(!again, "the same code with spaces is not added twice")
+        #expect(!short, "too short to be a barcode")
+        try cellar.addBottles(of: wine, quantity: 1)
+        #expect(cellar.wine(barcode: "3760123456789")?.id == wine.id)
+        #expect(cellar.wine(barcode: "0000000000000") == nil)
+        #expect(cellar.groups(matching: "3760123456789").count == 1)
+    }
+
+    @Test func wineFilesWithoutBarcodesAreUnchanged() throws {
+        let data = try JSONEncoder().encode(Wine(name: "Plain"))
+        #expect(String(decoding: data, as: UTF8.self).contains("barcodes") == false)
+        let decoded = try JSONDecoder().decode(Wine.self, from: #"{"id":"3D759362-EEC4-4657-8014-4757C8FB5FF3","name":"X","barcodes":["123456"]}"#.data(using: .utf8)!)
+        #expect(decoded.barcodes == ["123456"])
+    }
+}
+
+@Suite struct BulkActionTests {
+    @Test func placingSeveralWinesFillsFreePlacesInOrder() throws {
+        var cellar = Cellar()
+        let rack = Rack(name: "Small", rows: 1, columns: 3)
+        cellar.addRack(rack)
+        let a = Wine(name: "A"), b = Wine(name: "B")
+        try cellar.addBottles(of: a, quantity: 2, slots: [Slot(rackID: rack.id, row: 0, column: 0)])
+        try cellar.addBottles(of: b, quantity: 2)
+        let placed = try cellar.place(wines: [a.id, b.id], in: rack.id)
+        #expect(placed == 2, "two free places for three waiting bottles")
+        #expect(cellar.bottlesInCellar.filter { $0.slot == nil }.count == 1)
+        #expect(cellar.unplace(wines: [a.id]) == 2)
+        #expect(cellar.bottles(of: a.id).allSatisfy { $0.slot == nil })
+    }
+}
