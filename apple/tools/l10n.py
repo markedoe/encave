@@ -30,7 +30,7 @@ FR = {
     'Ideas': 'Idées',
     'No answer this time. Try again.': 'Pas de réponse cette fois. Réessayez.',
     'Something light for a ratatouille': 'Quelque chose de léger pour une ratatouille',
-    'The question is too long. Try a shorter one.': 'La question est trop longue. Essayez plus court.',
+    'Your cellar or the question is too large for the model on this device. Try a shorter question.': 'Votre cave ou la question est trop grande pour le modèle de cet appareil. Essayez une question plus courte.',
     'Thinking…': 'Réflexion…',
     'This question cannot be answered. Try asking about a dish or an occasion.': 'Cette question ne peut pas recevoir de réponse. Essayez avec un plat ou une occasion.',
     'What goes with roast chicken tonight?': 'Qu’est-ce qui va avec un poulet rôti ce soir ?',

@@ -14,7 +14,7 @@ struct EncaveApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             RootView()
                 .environment(model)
                 .onAppear { notifications.model = model }

@@ -8,7 +8,11 @@ import SwiftUI
 @MainActor
 enum InventoryPDF {
     static let pageSize = CGSize(width: 595, height: 842)
-    static let rowsPerPage = 26
+    /// Rows of 34 pt (two lines of name and producer) that fit under the header:
+    /// fewer on the first page, which also has the title.
+    static let rowsOnFirstPage = 18
+    static let rowsPerPage = 20
+    static let rowHeight: CGFloat = 34
 
     struct Row: Identifiable {
         let id: UUID
@@ -45,8 +49,11 @@ enum InventoryPDF {
         let total = stats.valueByCurrency.keys.sorted().map { code in
             (stats.valueByCurrency[code] ?? 0).formatted(.currency(code: code).precision(.fractionLength(0)))
         }.joined(separator: " + ")
-        let pages = stride(from: 0, to: max(rows.count, 1), by: rowsPerPage).map {
-            Array(rows[min($0, rows.count)..<min($0 + rowsPerPage, rows.count)])
+        var pages: [[Row]] = [Array(rows.prefix(rowsOnFirstPage))]
+        var start = rowsOnFirstPage
+        while start < rows.count {
+            pages.append(Array(rows[start..<min(start + rowsPerPage, rows.count)]))
+            start += rowsPerPage
         }
         let data = NSMutableData()
         var box = CGRect(origin: .zero, size: pageSize)
@@ -99,9 +106,9 @@ private struct InventoryPage: View {
             ForEach(rows) { row in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(verbatim: row.wine).font(.system(size: 9.5, weight: .semibold))
+                        Text(verbatim: row.wine).font(.system(size: 9.5, weight: .semibold)).lineLimit(1)
                         if !row.producer.isEmpty {
-                            Text(verbatim: row.producer).font(.system(size: 8)).foregroundStyle(.secondary)
+                            Text(verbatim: row.producer).font(.system(size: 8)).foregroundStyle(.secondary).lineLimit(1)
                         }
                     }
                     .frame(width: 170, alignment: .leading)
@@ -112,7 +119,7 @@ private struct InventoryPage: View {
                 }
                 .font(.system(size: 8.5))
                 .lineLimit(2)
-                .frame(height: 26)
+                .frame(height: InventoryPDF.rowHeight)
                 Divider()
             }
             Spacer(minLength: 0)

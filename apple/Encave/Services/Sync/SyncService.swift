@@ -161,7 +161,7 @@ final class SyncService {
     }
 
     /// Rotates the remote key if a removal is waiting for it, and returns the key to use.
-    private func rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot) async throws -> CellarKey {
+    private func rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot, round: Int) async throws -> CellarKey {
         // Builds before this one kept only a flag.
         if UserDefaults.standard.bool(forKey: Self.rotationKey) {
             UserDefaults.standard.removeObject(forKey: Self.rotationKey)
@@ -175,6 +175,7 @@ final class SyncService {
         }
         try await RemoteSync.rotate(store: store, identity: identity, from: key, to: next, local: local,
                                     storage: remoteStorage?.string)
+        guard round == generation else { return key }
         storeRemoteKey(next)
         pendingKey = nil
         return next
@@ -239,7 +240,9 @@ final class SyncService {
     /// Takes in the result of a session. The cellar may have changed during it, so the
     /// result is merged again with what is here now: no local edit is lost.
     func apply(_ result: SyncSnapshot, from peer: UUID?) {
-        guard let model, let state, let membership else { return }
+        // A session that started before this device left or joined another cellar
+        // brings nothing into the cellar it has now.
+        guard let model, let state, let membership, result.membership.cellarID == membership.cellarID else { return }
         let merge = CellarMerge.merge(local: model.cellar, state, remote: result.cellar, result.state)
         var newState = state
         newState.stamps = merge.stamps
@@ -435,7 +438,7 @@ final class SyncService {
             }
             guard var key, key.cellarID == local.membership.cellarID else { return }
             do {
-                key = try await rotateIfNeeded(store: store, key: key, local: local)
+                key = try await rotateIfNeeded(store: store, key: key, local: local, round: round)
             } catch {
                 remoteProblem = String(localized: "The removed device could not be shut out of syncing away from home yet. It will be tried again.")
                 return

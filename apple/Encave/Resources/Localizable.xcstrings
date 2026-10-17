@@ -7121,16 +7121,6 @@
         }
       }
     },
-    "The question is too long. Try a shorter one.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La question est trop longue. Essayez plus court."
-          }
-        }
-      }
-    },
     "The relay cannot be reached. Syncing will resume when it can.": {
       "localizations": {
         "fr": {
@@ -8307,6 +8297,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité."
+          }
+        }
+      }
+    },
+    "Your cellar or the question is too large for the model on this device. Try a shorter question.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave ou la question est trop grande pour le modèle de cet appareil. Essayez une question plus courte."
           }
         }
       }

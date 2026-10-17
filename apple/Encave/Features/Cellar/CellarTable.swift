@@ -121,6 +121,16 @@ struct CellarTable: View {
                 }
                 .help(Text("Show or hide the selected wine"))
             }
+            #if os(iOS)
+            // iPad: Settings is reached from the Cellar, list or table.
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    model.sheet = .settings
+                } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+            }
+            #endif
         }
     }
 }

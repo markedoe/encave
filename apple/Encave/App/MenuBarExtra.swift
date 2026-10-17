@@ -7,6 +7,7 @@ import SwiftUI
 /// Shown unless turned off in Settings.
 struct CellarMenuBarContent: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         let candidates = model.cellar.groupsByMaturity(year: model.currentYear)
@@ -64,9 +65,16 @@ struct CellarMenuBarContent: View {
         activate()
     }
 
+    /// Brings the cellar window forward, or opens one if it was closed.
     private func activate() {
         NSApplication.shared.activate()
-        NSApplication.shared.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)
+        if let window = NSApplication.shared.windows.first(where: {
+            $0.isVisible && $0.canBecomeMain && ($0.identifier?.rawValue.hasPrefix("main") ?? false)
+        }) {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            openWindow(id: "main")
+        }
     }
 }
 #endif

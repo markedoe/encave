@@ -413,6 +413,8 @@ struct OrdersSection: View {
                 ForEach(orders) { group in
                     WineRow(group: group)
                         .tag(group.wine.id)
+                        // Its own scroll identity: the same wine may also have a row below.
+                        .id("order-\(group.wine.id)")
                         .accessibilityIdentifier("order.row")
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
