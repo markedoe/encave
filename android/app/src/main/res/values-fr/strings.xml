@@ -272,7 +272,16 @@
     <string name="settings_ai_off_body">Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.</string>
     <string name="settings_ai_on_body">Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil.</string>
     <string name="ai_provider">Fournisseur</string>
-    <string name="ai_local">Serveur local (Ollama, LM Studio…)</string>
+    <string name="ai_local">Autre serveur (compatible OpenAI)</string>
+    <string name="ai_connect">Se connecter et charger les modèles</string>
+    <string name="ai_install_ollama">Installer Ollama</string>
+    <string name="ai_vllm_start">Démarrer avec vLLM</string>
+    <string name="ai_download_lmstudio">Télécharger LM Studio</string>
+    <string name="ai_tip_ollama">Installez un modèle qui lit les images, par exemple : ollama pull gemma3. Pour l’utiliser depuis ce téléphone, lancez Ollama avec OLLAMA_HOST=0.0.0.0 sur l’ordinateur.</string>
+    <string name="ai_tip_vllm">Lancez un modèle de vision avec : vllm serve &lt;modèle&gt; --host 0.0.0.0. Si vous utilisez --api-key, saisissez la même clé ici.</string>
+    <string name="ai_tip_lmstudio">Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis ce téléphone.</string>
+    <string name="ai_tip_other">Tout serveur avec une API /chat/completions compatible OpenAI et un modèle qui lit les images.</string>
+    <string name="ai_local_sent">Seule la photo de l’étiquette est envoyée, à votre propre serveur. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple http://192.0.2.10:11434) au lieu de localhost.</string>
     <string name="ai_server_url">Adresse du serveur</string>
     <string name="ai_key_optional">Clé d’API (facultative)</string>
     <string name="ai_check">Vérifier la clé et charger les modèles</string>
@@ -281,7 +290,6 @@
     <string name="ai_choose_model">Choisir…</string>
     <string name="ai_enter_model">Saisir un nom de modèle</string>
     <string name="ai_choose_from_list">Choisir dans la liste</string>
-    <string name="ai_local_body">Sur un téléphone ou une tablette, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes.</string>
     <string name="ai_off">Désactivée</string>
     <string name="ai_model">Modèle</string>
     <string name="ai_key">Clé d’API</string>
@@ -401,6 +409,9 @@
     <string name="rack_cell_full">Cet emplacement est plein.</string>
     <string name="rack_add_here">Ajouter une bouteille ici</string>
     <string name="sample_bins">Casiers en losange</string>
+    <string name="sample_deep_rack">Casier double profondeur</string>
+    <string name="sample_honeycomb">Casier nid d’abeille</string>
+    <string name="sample_stairs">Sous l’escalier</string>
     <string name="help_field_search">Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà.</string>
     <string name="help_field_existing">Choisissez-le pour ajouter des bouteilles sans ressaisir le vin.</string>
     <string name="help_field_quantity">Combien de bouteilles identiques vous ajoutez.</string>
@@ -448,7 +459,6 @@
     <string name="help_field_ai_key">Créée sur le site du fournisseur. Chiffrée avec le Keystore Android de cet appareil.</string>
     <string name="help_field_ai_model">Choisissez un modèle qui lit les images. Les grands modèles sont plus précis mais plus lents et plus chers.</string>
     <string name="ai_create_key_at">Créer une clé d’API chez %1$s</string>
-    <string name="ai_install_local">Installer un serveur local (Ollama)</string>
     <string name="help_title">Aide</string>
     <string name="help_encave">Aide Encave</string>
     <string name="help_open_source">Encave est open source. Questions et idées sont les bienvenues sur la page du projet.</string>
@@ -459,7 +469,6 @@
     <string name="help_link_tasting">Aide sur les notes de dégustation</string>
     <string name="help_link_ai">Comment configurer l’IA</string>
     <string name="help_create_key">Créer une clé d’API</string>
-    <string name="help_local_install">Serveur local : installer Ollama</string>
     <string name="help_start_title">Prise en main</string>
     <string name="help_start_summary">Les quatre sections et comment elles fonctionnent ensemble.</string>
     <string name="help_start_cellar">Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type ou par moment où les boire.</string>
@@ -532,7 +541,7 @@
     <string name="help_ai_check_title">Vérifier la clé</string>
     <string name="help_ai_check">Touchez **Vérifier la clé et charger les modèles** : l’app demande au fournisseur les modèles accessibles avec votre clé et remplit le menu. Choisissez un modèle qui lit les images.</string>
     <string name="help_ai_local_title">Serveur local</string>
-    <string name="help_ai_local">Avec Ollama ou LM Studio sur votre ordinateur, choisissez **Serveur local** et saisissez son adresse, comme `http://192.0.2.10:11434/v1` : sur un téléphone ou une tablette, utilisez le nom ou l’adresse de l’ordinateur sur votre réseau au lieu de localhost.</string>
+    <string name="help_ai_local">Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple `http://192.0.2.10:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.</string>
     <string name="help_ai_url_title">Adresse du serveur</string>
     <string name="help_ai_url">Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine.</string>
     <string name="help_ai_sent_title">Ce qui est envoyé</string>

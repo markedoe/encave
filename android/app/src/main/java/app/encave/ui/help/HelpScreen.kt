@@ -49,6 +49,7 @@ import androidx.core.net.toUri
 import app.encave.R
 import app.encave.data.ai.AiProvider
 import app.encave.ui.AppNavigator
+import app.encave.ui.settings.keyLinkLabel
 import app.encave.ui.theme.Dimens
 
 /** Renders the small markdown used in help: **bold** and `code`. */
@@ -104,7 +105,10 @@ fun HelpArticleContent(article: HelpArticle, modifier: Modifier = Modifier) {
                     val page = provider.keyPage ?: return@forEach
                     LinkRow(provider.brand.orEmpty()) { openLink(context, page) }
                 }
-                AiProvider.Local.keyPage?.let { page -> LinkRow(stringResource(R.string.help_local_install)) { openLink(context, page) } }
+                listOf(AiProvider.Ollama, AiProvider.Vllm, AiProvider.LmStudio).forEach { provider ->
+                    val page = provider.keyPage ?: return@forEach
+                    LinkRow(keyLinkLabel(provider)) { openLink(context, page) }
+                }
             }
         }
     }

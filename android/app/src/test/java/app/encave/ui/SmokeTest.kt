@@ -131,7 +131,7 @@ class SmokeTest {
         compose.waitForIdle()
         compose.onNodeWithText("Setting up AI").performClick()
         compose.waitForIdle()
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Install a local server", substring = true).or(hasText("Local server: install Ollama")))
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download LM Studio"))
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onAllNodesWithText("Describe your storage so every bottle has a place.").onFirst().assertExists()
     }

@@ -3,6 +3,7 @@ package app.encave.data.ai
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -32,6 +33,33 @@ class AiSettingsTest {
     }
 
     @Test
+    fun theFirstLocalOptionMovesToOllama() {
+        context.getSharedPreferences("ai", Context.MODE_PRIVATE).edit()
+            .putString("provider", "local").putString("baseURL.local", "http://example.test:11434/v1").commit()
+        val settings = AiPreferences(context).settings.value
+        assertEquals(AiProvider.Ollama, settings.provider)
+        assertEquals("http://example.test:11434", settings.baseUrl)
+    }
+
+    @Test
+    fun anotherLocalServerStaysOpenAiCompatible() {
+        context.getSharedPreferences("ai", Context.MODE_PRIVATE).edit()
+            .putString("provider", "local").putString("baseURL.local", "http://example.test:8080/v1").commit()
+        assertEquals(AiProvider.Local, AiPreferences(context).settings.value.provider)
+        assertTrue(AiProvider.Ollama.isLocal && !AiProvider.Ollama.requiresKey && AiProvider.Mistral.requiresKey)
+    }
+
+    @Test
+    fun errorsAndThinkingAreRead() {
+        val parse = { text: String -> kotlinx.serialization.json.Json.parseToJsonElement(text) as kotlinx.serialization.json.JsonObject }
+        assertEquals("a", AiService.errorMessage(parse("""{"error":{"message":"a"}}""")))
+        assertEquals("b", AiService.errorMessage(parse("""{"error":"b"}""")))
+        assertEquals("c", AiService.errorMessage(parse("""{"detail":"c"}""")))
+        assertEquals("d", AiService.errorMessage(parse("""{"message":"d"}""")))
+        assertEquals("W", AiService.decode("<think>{\"name\":\"no\"}</think>{\"name\":\"W\"}").name)
+    }
+
+    @Test
     fun eachProviderKeepsItsOwnModelAndAddress() {
         val prefs = AiPreferences(context)
         prefs.update(AiSettings(AiProvider.OpenAi, model = "gpt-x", baseUrl = "https://example.test/v1"))
@@ -41,7 +69,7 @@ class AiSettingsTest {
         prefs.select(AiProvider.OpenAi)
         assertEquals("gpt-x", prefs.settings.value.model)
         assertEquals("https://example.test/v1", prefs.settings.value.baseUrl)
-        assertEquals(AiProvider.entries.filter { it != AiProvider.Off }, AiProvider.entries.filter { it.keyPage != null })
+        assertEquals(AiProvider.entries.filter { it != AiProvider.Off && it != AiProvider.Local }, AiProvider.entries.filter { it.keyPage != null })
     }
 
     @Test

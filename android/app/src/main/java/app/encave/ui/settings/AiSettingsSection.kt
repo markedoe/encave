@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -164,8 +165,8 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                     onClick = ::checkKey,
                     enabled = check != KeyCheck.Checking && (!provider.requiresKey || apiKey.isNotEmpty()),
                 ) {
-                    Icon(Icons.Outlined.VerifiedUser, contentDescription = null)
-                    Text(stringResource(R.string.ai_check), Modifier.padding(start = Dimens.s))
+                    Icon(if (provider.isLocal) Icons.Outlined.Lan else Icons.Outlined.VerifiedUser, contentDescription = null)
+                    Text(stringResource(if (provider.isLocal) R.string.ai_connect else R.string.ai_check), Modifier.padding(start = Dimens.s))
                 }
                 Row(Modifier.semantics { liveRegion = LiveRegionMode.Polite }, verticalAlignment = Alignment.CenterVertically) {
                     when (val state = check) {
@@ -186,11 +187,7 @@ fun AiSettingsSection(viewModel: AppViewModel) {
             provider.keyPage?.let { page ->
                 TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page.toUri())) } }) {
                     Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null)
-                    Text(
-                        if (provider == AiProvider.Local) stringResource(R.string.ai_install_local)
-                        else stringResource(R.string.ai_create_key_at, provider.brand.orEmpty()),
-                        Modifier.padding(start = Dimens.s),
-                    )
+                    Text(keyLinkLabel(provider), Modifier.padding(start = Dimens.s))
                 }
             }
             if (models.isNotEmpty() && !customModel) {
@@ -211,21 +208,29 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                 if (models.isNotEmpty()) TextButton(onClick = { customModel = false }) { Text(stringResource(R.string.ai_choose_from_list)) }
             }
         }
-        Text(
-            stringResource(
-                when {
-                    !settings.isEnabled -> R.string.settings_ai_off_body
-                    provider == AiProvider.Local -> R.string.ai_local_body
-                    else -> R.string.settings_ai_on_body
-                },
-            ),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        val footer = when {
+            !settings.isEnabled -> listOf(R.string.settings_ai_off_body)
+            provider == AiProvider.Ollama -> listOf(R.string.ai_tip_ollama, R.string.ai_local_sent)
+            provider == AiProvider.Vllm -> listOf(R.string.ai_tip_vllm, R.string.ai_local_sent)
+            provider == AiProvider.LmStudio -> listOf(R.string.ai_tip_lmstudio, R.string.ai_local_sent)
+            provider == AiProvider.Local -> listOf(R.string.ai_tip_other, R.string.ai_local_sent)
+            else -> listOf(R.string.settings_ai_on_body)
+        }
+        footer.forEach { Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
     HelpLink(HelpTopic.Ai, R.string.help_link_ai)
 }
 
 private fun AiProvider.isEnabledProvider() = this != AiProvider.Off
+
+/** "Create an API key at …", or how to get a local server. */
+@Composable
+fun keyLinkLabel(provider: AiProvider): String = when (provider) {
+    AiProvider.Ollama -> stringResource(R.string.ai_install_ollama)
+    AiProvider.Vllm -> stringResource(R.string.ai_vllm_start)
+    AiProvider.LmStudio -> stringResource(R.string.ai_download_lmstudio)
+    else -> stringResource(R.string.ai_create_key_at, provider.brand.orEmpty())
+}
 
 /** Provider menu: Off, then global services, Chinese services, OpenRouter and a local server. */
 @Composable
@@ -246,7 +251,7 @@ private fun ProviderField(selected: AiProvider, onSelect: (AiProvider) -> Unit) 
                     modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 )
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    listOf(listOf(AiProvider.Off), AiProvider.global, AiProvider.chinese, AiProvider.others).forEachIndexed { index, group ->
+                    listOf(listOf(AiProvider.Off), AiProvider.global, AiProvider.chinese, AiProvider.others, AiProvider.localServers).forEachIndexed { index, group ->
                         if (index > 0) HorizontalDivider()
                         group.forEach { option ->
                             DropdownMenuItem(text = { Text(option.title()) }, onClick = { onSelect(option); expanded = false })
