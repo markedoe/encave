@@ -407,6 +407,7 @@ public extension Cellar {
     mutating func move(_ bottleID: UUID, to slot: Slot?) throws {
         guard var bottle = bottles[bottleID] else { throw CellarError.unknownBottle }
         if let slot {
+            guard bottle.status != .ordered else { throw CellarError.notReceived }
             if let occupant = self.bottle(at: slot), occupant.id != bottleID { throw CellarError.slotTaken }
             try validateInRange(slot)
         }
