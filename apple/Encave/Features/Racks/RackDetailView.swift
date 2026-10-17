@@ -283,7 +283,7 @@ private struct RackKey: View {
 
     var body: some View {
         let bottles: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
-        let entries = entries(for: bottles)
+        let wines = entries(for: bottles)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 Label {
@@ -293,7 +293,7 @@ private struct RackKey: View {
                 }
                 .font(.subheadline.weight(.semibold).monospacedDigit())
                 .padding(.trailing, 6)
-                ForEach(entries) { entry in
+                ForEach(wines) { entry in
                     chip(entry)
                 }
             }

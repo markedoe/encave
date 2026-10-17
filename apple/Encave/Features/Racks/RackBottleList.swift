@@ -35,23 +35,10 @@ struct RackBottleList: View {
                 ForEach(rows.keys.sorted(), id: \.self) { row in
                     Section {
                         ForEach(rows[row] ?? []) { bottle in
-                            row(rack, bottle)
-                                .tag(bottle.id)
-                                .contextMenu {
-                                    Button("Drink", systemImage: "wineglass") { open(.drink(bottleID: bottle.id)) }
-                                    Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
-                                        open(.moveBottle(bottleID: bottle.id))
-                                    }
-                                    Divider()
-                                    Button("Given away or broken", systemImage: "minus.circle", role: .destructive) {
-                                        model.markGone(bottle.id)
-                                    }
-                                }
+                            listRow(rack, bottle)
                         }
                     } header: {
-                        Text(verbatim: rack.kind == .shelves
-                             ? rack.displayLabel(for: RackCell(rackID: rack.id, row: row, column: 0)).components(separatedBy: ",").first ?? ""
-                             : Rack.rowLetters(row))
+                        Text(verbatim: header(rack, row: row))
                     }
                 }
             }
@@ -77,9 +64,31 @@ extension RackBottleList {
         }
     }
 
+    /// Shelves are named ("Shelf 2"), other rows lettered.
+    private func header(_ rack: Rack, row: Int) -> String {
+        guard rack.kind == .shelves else { return Rack.rowLetters(row) }
+        let label = rack.displayLabel(for: RackCell(rackID: rack.id, row: row, column: 0))
+        return label.components(separatedBy: ",").first ?? ""
+    }
+
+    private func listRow(_ rack: Rack, _ bottle: Bottle) -> some View {
+        tappable(rack, bottle)
+            .tag(bottle.id)
+            .contextMenu {
+                Button("Drink", systemImage: "wineglass") { open(.drink(bottleID: bottle.id)) }
+                Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
+                    open(.moveBottle(bottleID: bottle.id))
+                }
+                Divider()
+                Button("Given away or broken", systemImage: "minus.circle", role: .destructive) {
+                    model.markGone(bottle.id)
+                }
+            }
+    }
+
     /// iPhone and iPad: rows are buttons, as list selection needs edit mode there.
     @ViewBuilder
-    private func row(_ rack: Rack, _ bottle: Bottle) -> some View {
+    private func tappable(_ rack: Rack, _ bottle: Bottle) -> some View {
         #if os(iOS)
         Button { selection = bottle.id } label: {
             RackBottleRow(rack: rack, bottle: bottle).contentShape(Rectangle())
