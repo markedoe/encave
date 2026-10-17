@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The only network use is the optional AI label recognition. Plain HTTP is allowed
+     so a self-hosted OpenAI-compatible server on the local network (Ollama,
+     OpenWebUI) can be used; the default providers are HTTPS. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

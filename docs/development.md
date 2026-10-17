@@ -53,12 +53,36 @@ OpenAI-compatible server (OpenAI, or OpenWebUI/Ollama on your network) with a
 model that accepts images. The key is stored in the Keychain; only the label
 photo is sent. Never put a key in the code, the scheme or a test.
 
+## Android app (phones, tablets, foldables)
+
+Requirements: JDK 17 or newer and the Android SDK (Android Studio, or the
+command-line tools with `platforms;android-37.0`). Point Gradle at the SDK
+with `ANDROID_HOME` or an untracked `android/local.properties`.
+
+```bash
+cd android
+./gradlew :core:test                 # cellar model (pure Kotlin, JDK only)
+./gradlew :app:testDebugUnitTest     # tokens, repository and Robolectric smoke tests
+./gradlew :app:lintDebug :app:assembleDebug
+```
+
+- `android/core` is the Kotlin port of CaveKit. Keep both in step: the JSON
+  backup is shared, and `InteropTest` reads fixtures exported by CaveKit
+  (`android/core/src/test/resources`).
+- Colors: `ui/theme/DesignTokens.kt` mirrors `design/tokens.json`;
+  `DesignTokensTest` fails if they differ. Never hardcode colors elsewhere.
+- Strings: edit the English/French table in `android/tools/strings.py`, then
+  run `python3 android/tools/strings.py` to write both `strings.xml` files.
+- AI label recognition works as on Apple; the key is encrypted with the
+  Android Keystore and excluded from backups.
+
 ## Continuous integration
 
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks |
 | `apple.yml` | Model tests on Linux and macOS, builds both apps; on push, uploads to TestFlight |
+| `android.yml` | Core and app unit tests, lint, debug APK (artifact `encave-debug-apk`) |
 | `security.yml` | Weekly full-history secret scan |
 
 TestFlight uploads need these repository secrets: `APPLE_TEAM_ID`,
