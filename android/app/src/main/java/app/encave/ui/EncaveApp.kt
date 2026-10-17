@@ -10,6 +10,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -104,8 +105,14 @@ fun EncaveApp(viewModel: AppViewModel) {
         d.hasRoute(AddBottleRoute::class) || d.hasRoute(EditWineRoute::class) || d.hasRoute(RackEditorRoute::class) ||
             d.hasRoute(DiscoveryEditorRoute::class)
     } ?: false
-    val layoutType = if (fullScreen) NavigationSuiteType.None
-    else NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
+    // Bar on phones, rail on tablets and foldables, drawer on large screens.
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val layoutType = when {
+        fullScreen -> NavigationSuiteType.None
+        adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND) ->
+            NavigationSuiteType.NavigationDrawer
+        else -> NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
+    }
 
     CompositionLocalProvider(LocalSnackbarHostState provides snackbar) {
         NavigationSuiteScaffold(
