@@ -5,6 +5,13 @@ name = "encave-relay"
 main = "worker.mjs"
 compatibility_date = "2026-09-01"
 
+# Once a day, delete mailboxes not written to for TTL_DAYS.
+[triggers]
+crons = ["17 3 * * *"]
+
+[vars]
+TTL_DAYS = "365"
+
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "encave-relay"

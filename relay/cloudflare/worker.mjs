@@ -1,8 +1,10 @@
 // Encave relay on Cloudflare Workers, with files in an R2 bucket. Deploy with
 // Wrangler (see relay/README.md). Same API as the Node server: relay/protocol.mjs.
 //
-// Mailboxes not written to for a year should expire: add an R2 lifecycle rule
-// (Object lifecycle rules → delete after 365 days) on the bucket.
+// Mailboxes not written to for TTL_DAYS (default 365) are deleted by a daily
+// scheduled run (the cron trigger in wrangler.toml), like the Node server does.
+// Do not use an R2 lifecycle rule: it deletes each file a year after it was
+// written, including photos that are written once and still in use.
 
 import { handle } from "../protocol.mjs";
 
@@ -32,7 +34,33 @@ class R2Storage {
     // header also makes R2 refuse to replace an existing object.
     if (await this.bucket.head(key)) return false;
     const stored = await this.bucket.put(key, bytes, { onlyIf: new Headers({ "If-None-Match": "*" }) });
-    return stored !== null;
+    if (stored === null) return false;
+    // When the mailbox was last written to, for the daily clean-up.
+    await this.bucket.put(`${mailbox}/touched`, String(Date.now()));
+    return true;
+  }
+
+  /// Deletes every mailbox not written to for `ttlDays`.
+  async sweep(ttlDays) {
+    const limit = Date.now() - ttlDays * 86400_000;
+    let cursor;
+    do {
+      const listed = await this.bucket.list({ delimiter: "/", cursor, limit: 1000 });
+      for (const prefix of listed.delimitedPrefixes) {
+        const mailbox = prefix.slice(0, -1);
+        const touched = await this.bucket.get(`${mailbox}/touched`);
+        // Mailboxes from before this marker existed get one now, and a year from now.
+        if (!touched) { await this.bucket.put(`${mailbox}/touched`, String(Date.now())); continue; }
+        if (Number(await touched.text()) >= limit) continue;
+        let inner;
+        do {
+          const files = await this.bucket.list({ prefix, cursor: inner, limit: 1000 });
+          if (files.objects.length) await this.bucket.delete(files.objects.map((object) => object.key));
+          inner = files.truncated ? files.cursor : undefined;
+        } while (inner);
+      }
+      cursor = listed.truncated ? listed.cursor : undefined;
+    } while (cursor);
   }
 
   async delete(mailbox, path) {
@@ -63,5 +91,9 @@ export default {
     } catch {
       return new Response(null, { status: 500 });
     }
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(new R2Storage(env.FILES).sweep(Number(env.TTL_DAYS || 365)));
   },
 };
