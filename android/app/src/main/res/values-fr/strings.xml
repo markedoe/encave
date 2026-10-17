@@ -218,6 +218,12 @@
     <string name="tasting_title">Dégustation</string>
     <string name="tasting_not_found">Dégustation introuvable</string>
     <string name="insights_bottles">Bouteilles</string>
+    <string name="cellar_stat_bottles">bouteilles</string>
+    <string name="cellar_stat_wines">vins</string>
+    <string name="cellar_stat_soon">à boire bientôt</string>
+    <string name="cellar_stat_bottles_hint">Affiche votre cave en chiffres.</string>
+    <string name="cellar_stat_wines_hint">Affiche tous vos vins.</string>
+    <string name="cellar_stat_soon_hint">N’affiche que les vins à boire bientôt.</string>
     <string name="insights_wines">Vins</string>
     <string name="insights_opened">Ouvertes</string>
     <string name="insights_avg_rating">Note moyenne</string>

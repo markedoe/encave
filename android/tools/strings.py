@@ -241,6 +241,12 @@ S = [
  ("tasting_not_found", "Tasting not found", "Dégustation introuvable"),
 
  ("insights_bottles", "Bottles", "Bouteilles"),
+ ("cellar_stat_bottles", "bottles", "bouteilles"),
+ ("cellar_stat_wines", "wines", "vins"),
+ ("cellar_stat_soon", "to drink soon", "à boire bientôt"),
+ ("cellar_stat_bottles_hint", "Shows your cellar in figures.", "Affiche votre cave en chiffres."),
+ ("cellar_stat_wines_hint", "Shows all your wines.", "Affiche tous vos vins."),
+ ("cellar_stat_soon_hint", "Shows only the wines to drink soon.", "N’affiche que les vins à boire bientôt."),
  ("insights_wines", "Wines", "Vins"),
  ("insights_opened", "Opened", "Ouvertes"),
  ("insights_avg_rating", "Average rating", "Note moyenne"),

@@ -10,10 +10,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,6 +33,7 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -182,6 +185,27 @@ class ScreenTourTest(private val device: String, private val language: String) {
         capture("02-wine-detail")
         tap("action.drink")
         capture("03-drink-sheet")
+    }
+
+    private fun wineRows() = compose.onAllNodesWithTag("wine.row").fetchSemanticsNodes().size
+
+    @Test
+    fun cellarFigures() {
+        val all = wineRows()
+        // "To drink soon" filters the list; a second tap shows all again.
+        tap("cellar.stat.soon")
+        compose.onNodeWithTag("cellar.stat.soon").assertIsSelected()
+        val soon = wineRows()
+        assertTrue("$device-$language: the list did not get shorter ($all to $soon)", soon in 1 until all)
+        capture("20-cellar-drink-soon")
+        tap("cellar.stat.soon")
+        compose.onNodeWithTag("cellar.stat.soon").assertIsNotSelected()
+        assertEquals("$device-$language: the list is not back to its full length", all, wineRows())
+        // Bottles opens the cellar in figures.
+        tap("cellar.stat.bottles")
+        val insights = RuntimeEnvironment.getApplication().getString(app.encave.R.string.action_insights)
+        compose.onAllNodesWithText(insights).onFirst().assertExists()
+        capture("21-insights")
     }
 
     @Test

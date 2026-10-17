@@ -1,5 +1,19 @@
 package app.encave.ui.cellar
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.text.font.FontWeight
+import app.encave.ui.navigation.InsightsRoute
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.background
@@ -85,6 +99,7 @@ import app.encave.R
 import app.encave.core.Cellar
 import app.encave.core.CellarSort
 import app.encave.core.Maturity
+import app.encave.core.statistics
 import app.encave.core.WineColor
 import app.encave.core.WineGroup
 import app.encave.ui.AppNavigator
@@ -246,11 +261,29 @@ private fun CellarList(
                         }
                     }
                 } else {
+                    val scope = rememberCoroutineScope()
+                    val showsSummary = filter.query.isEmpty()
                     LazyColumn(
                         state = listState,
                         contentPadding = PaddingValues(bottom = 88.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
+                        if (showsSummary) {
+                            item(key = "summary") {
+                                CellarSummary(
+                                    cellar = cellar,
+                                    year = viewModel.year,
+                                    filter = filter,
+                                    onBottles = { navigator.open(InsightsRoute) },
+                                    onWines = {
+                                        viewModel.filter.value = app.encave.core.CellarFilter()
+                                        // The first wine, just under the figures.
+                                        scope.launch { listState.animateScrollToItem(1) }
+                                    },
+                                    onSoon = { viewModel.filter.value = it },
+                                )
+                            }
+                        }
                         items(groups, key = { it.id.toString() }) { group ->
                             CellarRow(
                                 group = group,
@@ -517,6 +550,95 @@ private fun CellarRow(
                 text = { Text(deleteLabel, color = MaterialTheme.colorScheme.error) }, onClick = { menu = false; onDelete() },
                 leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
             )
+        }
+    }
+}
+
+/**
+ * The three figures at the top of the cellar, each a shortcut: bottles opens the cellar
+ * in figures, wines shows the whole list, and "to drink soon" filters the list (tap again
+ * to show all).
+ */
+@Composable
+private fun CellarSummary(
+    cellar: Cellar,
+    year: Int,
+    filter: app.encave.core.CellarFilter,
+    onBottles: () -> Unit,
+    onWines: () -> Unit,
+    onSoon: (app.encave.core.CellarFilter) -> Unit,
+) {
+    val stats = remember(cellar, year) { cellar.statistics(year) }
+    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null
+    Row(
+        Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+    ) {
+        StatTile(
+            value = stats.bottleCount, caption = stringResource(R.string.cellar_stat_bottles), icon = Icons.Outlined.WineBar,
+            hint = stringResource(R.string.cellar_stat_bottles_hint), opens = true, onClick = onBottles,
+            modifier = Modifier.weight(1f).testTag("cellar.stat.bottles"),
+        )
+        StatTile(
+            value = stats.wineCount, caption = stringResource(R.string.cellar_stat_wines), icon = Icons.AutoMirrored.Outlined.List,
+            hint = stringResource(R.string.cellar_stat_wines_hint), onClick = onWines,
+            modifier = Modifier.weight(1f).testTag("cellar.stat.wines"),
+        )
+        StatTile(
+            value = stats.byMaturity[Maturity.DrinkSoon] ?: 0, caption = stringResource(R.string.cellar_stat_soon),
+            icon = Maturity.DrinkSoon.icon, hint = stringResource(R.string.cellar_stat_soon_hint), isSelected = soonOnly,
+            onClick = {
+                onSoon(
+                    if (soonOnly) app.encave.core.CellarFilter(query = filter.query)
+                    else app.encave.core.CellarFilter(query = filter.query, maturities = setOf(Maturity.DrinkSoon)),
+                )
+            },
+            modifier = Modifier.weight(1f).testTag("cellar.stat.soon"),
+        )
+    }
+}
+
+/** A figure with its caption. A tile that opens a screen has a chevron; a filter tile is outlined while on. */
+@Composable
+private fun StatTile(
+    value: Int,
+    caption: String,
+    icon: ImageVector,
+    hint: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    opens: Boolean = false,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(Dimens.radiusCard)
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight().clearAndSetSemantics {
+            contentDescription = "$value $caption. $hint"
+            selected = isSelected
+            role = Role.Button
+        },
+        shape = shape,
+        color = if (isSelected) scheme.primaryContainer else scheme.surfaceContainerHigh,
+        border = if (isSelected) BorderStroke(1.5.dp, scheme.primary) else null,
+    ) {
+        Box(Modifier.padding(Dimens.m)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Icon(icon, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(18.dp))
+                Text(
+                    value.toString(),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+                    maxLines = 1,
+                )
+                Text(caption, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 2)
+            }
+            if (opens) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = scheme.outline,
+                    modifier = Modifier.align(Alignment.TopEnd).size(18.dp),
+                )
+            }
         }
     }
 }
