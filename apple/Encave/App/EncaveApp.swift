@@ -5,6 +5,9 @@ import UserNotifications
 struct EncaveApp: App {
     @State private var model = CellarModel.live()
     private let notifications = NotificationRouter()
+    #if os(macOS)
+    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
+    #endif
 
     init() {
         UNUserNotificationCenter.current().delegate = notifications
@@ -41,6 +44,13 @@ struct EncaveApp: App {
             .environment(model)
             .frame(minWidth: 480, minHeight: 520)
         }
+        MenuBarExtra(isInserted: $showsMenuBarExtra) {
+            CellarMenuBarContent()
+                .environment(model)
+        } label: {
+            Label("Encave", systemImage: "wineglass")
+        }
+        .menuBarExtraStyle(.window)
         #endif
     }
 }
@@ -83,3 +93,8 @@ private struct HelpMenuButton: View {
     }
 }
 #endif
+
+/// Mac: whether Encave shows "Tonight" in the menu bar.
+enum MenuBarSetting {
+    static let key = "menuBar.enabled"
+}

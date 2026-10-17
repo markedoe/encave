@@ -441,6 +441,16 @@
         }
       }
     },
+    "A glass in the menu bar lists the bottles to open now; click one to open it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un verre dans la barre des menus liste les bouteilles à ouvrir maintenant ; cliquez sur l’une d’elles pour l’ouvrir."
+          }
+        }
+      }
+    },
     "A name you will recognize: cellar left wall, kitchen fridge…": {
       "localizations": {
         "fr": {
@@ -2621,6 +2631,16 @@
         }
       }
     },
+    "Encave": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave"
+          }
+        }
+      }
+    },
     "Encave Help": {
       "localizations": {
         "fr": {
@@ -4701,6 +4721,16 @@
         }
       }
     },
+    "Open Encave": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir Encave"
+          }
+        }
+      }
+    },
     "Open Wine": {
       "localizations": {
         "fr": {
@@ -4737,6 +4767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre Encave pour ajouter des bouteilles, en scannant l’étiquette ou en saisissant."
+          }
+        }
+      }
+    },
+    "Opens the wine in Encave.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre le vin dans Encave."
           }
         }
       }
@@ -5967,6 +6007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher"
+          }
+        }
+      }
+    },
+    "Show Tonight in the Menu Bar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher Ce soir dans la barre des menus"
           }
         }
       }

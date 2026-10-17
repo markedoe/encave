@@ -15,6 +15,11 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'A glass in the menu bar lists the bottles to open now; click one to open it.': 'Un verre dans la barre des menus liste les bouteilles à ouvrir maintenant ; cliquez sur l’une d’elles pour l’ouvrir.',
+    'Encave': 'Encave',
+    'Open Encave': 'Ouvrir Encave',
+    'Opens the wine in Encave.': 'Ouvre le vin dans Encave.',
+    'Show Tonight in the Menu Bar': 'Afficher Ce soir dans la barre des menus',
     'Printed inventory': 'Inventaire imprimé',
     '**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.': '**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché.',
     'A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.': 'Une sauvegarde contient tout et s’importe sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement.',

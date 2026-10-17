@@ -1,0 +1,72 @@
+#if os(macOS)
+import AppKit
+import CaveKit
+import SwiftUI
+
+/// The Mac menu bar: what to open tonight at a glance, without opening the window.
+/// Shown unless turned off in Settings.
+struct CellarMenuBarContent: View {
+    @Environment(CellarModel.self) private var model
+
+    var body: some View {
+        let candidates = model.cellar.groupsByMaturity(year: model.currentYear)
+            .filter { $0.maturity == .drinkSoon || $0.maturity == .ready }
+            .flatMap(\.groups)
+            .prefix(6)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Tonight")
+                .font(.headline)
+            if candidates.isEmpty {
+                Text("Nothing to suggest yet")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(Array(candidates)) { group in
+                    Button {
+                        open(group.wine.id)
+                    } label: {
+                        HStack(spacing: 10) {
+                            BottleEnd(color: group.wine.color, size: 22)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(verbatim: group.wine.displayName)
+                                    .fontWeight(.medium)
+                                    .lineLimit(1)
+                                HStack(spacing: 6) {
+                                    let maturity = Maturity.of(group.wine, year: model.currentYear)
+                                    Label(maturity.shortTitle, systemImage: maturity.systemImage)
+                                        .foregroundStyle(maturity.tint)
+                                    if let place = group.bottles.first.flatMap({ model.locationLabel(for: $0) }) {
+                                        Text(verbatim: place).foregroundStyle(.secondary).lineLimit(1)
+                                    }
+                                }
+                                .font(.caption)
+                                .labelStyle(CompactLabelStyle())
+                            }
+                            Spacer(minLength: 4)
+                            CountBadge(count: group.count)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityHint(Text("Opens the wine in Encave."))
+                }
+            }
+            Divider()
+            Button("Open Encave") { activate() }
+                .buttonStyle(.borderless)
+        }
+        .padding(14)
+        .frame(width: 320)
+    }
+
+    private func open(_ wineID: UUID) {
+        model.open(wine: wineID)
+        activate()
+    }
+
+    private func activate() {
+        NSApplication.shared.activate()
+        NSApplication.shared.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)
+    }
+}
+#endif

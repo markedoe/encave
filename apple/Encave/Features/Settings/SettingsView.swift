@@ -10,6 +10,9 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var importMessage: String?
     @State private var remindersOn = Reminders.isEnabled
+    #if os(macOS)
+    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
+    #endif
     @State private var remindersRefused = false
 
     private static let currencies = ["EUR", "CHF", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK"]
@@ -82,6 +85,16 @@ struct SettingsView: View {
                     Text("On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak, and on the day bottles on order are expected. Worked out on this device.")
                 }
             }
+
+            #if os(macOS)
+            Section {
+                Toggle(isOn: $showsMenuBarExtra) {
+                    Label("Show Tonight in the Menu Bar", systemImage: "menubar.arrow.up.rectangle")
+                }
+            } footer: {
+                Text("A glass in the menu bar lists the bottles to open now; click one to open it.")
+            }
+            #endif
 
             Section {
                 Picker("Currency", selection: currencyBinding) {
