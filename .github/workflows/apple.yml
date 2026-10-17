@@ -72,7 +72,28 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
           key="$RUNNER_TEMP/AuthKey.p8"
-          printf '%s\n' "$ASC_PRIVATE_KEY" > "$key"
+          # Rebuild a clean PEM whatever the paste looks like: lost line breaks,
+          # CRLF, literal "\n", quotes, missing BEGIN/END lines, or base64 of the file.
+          python3 - "$key" <<'PY'
+          import base64, os, re, sys
+          raw = os.environ["ASC_PRIVATE_KEY"].replace("\r", "").strip().strip('"').strip("'")
+          if "BEGIN" not in raw:
+              try:
+                  decoded = base64.b64decode(re.sub(r"\s", "", raw), validate=True).decode()
+                  if "BEGIN" in decoded:
+                      raw = decoded
+              except Exception:
+                  pass
+          body = re.sub(r"-----(BEGIN|END)[A-Z ]*-----", "", raw.replace("\\n", "\n"))
+          body = re.sub(r"\s", "", body)
+          try:
+              base64.b64decode(body, validate=True)
+          except Exception:
+              sys.exit("ASC_PRIVATE_KEY is not a valid .p8 key: paste the full content of AuthKey_XXXX.p8")
+          lines = [body[i:i + 64] for i in range(0, len(body), 64)]
+          with open(sys.argv[1], "w") as f:
+              f.write("-----BEGIN PRIVATE KEY-----\n" + "\n".join(lines) + "\n-----END PRIVATE KEY-----\n")
+          PY
           chmod 600 "$key"
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
           cp ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
