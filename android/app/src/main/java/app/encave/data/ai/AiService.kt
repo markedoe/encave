@@ -5,10 +5,14 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
@@ -92,10 +96,10 @@ object AiService {
         if (!settings.isEnabled) throw AiError.NotConfigured
         if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
         if (settings.effectiveModel.isEmpty()) throw AiError.NoModel
-        return if (settings.provider.usesAnthropicApi) {
-            claude(jpeg, settings.effectiveModel, apiKey.orEmpty(), settings.effectiveBaseUrl)
-        } else {
-            openAiCompatible(jpeg, settings, apiKey)
+        return when {
+            settings.provider.usesAnthropicApi -> claude(jpeg, settings.effectiveModel, apiKey.orEmpty(), settings.effectiveBaseUrl)
+            settings.provider.usesOllamaApi -> ollama(jpeg, settings)
+            else -> openAiCompatible(jpeg, settings, apiKey)
         }
     }
 
@@ -109,6 +113,7 @@ object AiService {
     suspend fun models(settings: AiSettings, apiKey: String?): List<String> {
         if (!settings.isEnabled) throw AiError.NotConfigured
         if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
+        if (settings.provider.usesOllamaApi) return ollamaModels(settings)
         val url = runCatching {
             URL(settings.effectiveBaseUrl + "/models" + if (settings.provider.usesAnthropicApi) "?limit=100" else "")
         }.getOrElse { throw AiError.NotConfigured }
@@ -120,7 +125,7 @@ object AiService {
                 put("Authorization", "Bearer $apiKey")
             }
         }
-        val json = send(url, headers, body = null)
+        val json = send(url, headers, body = null, timeout = LIST_TIMEOUT)
         val items = (json["data"] as? JsonArray) ?: (json["models"] as? JsonArray) ?: JsonArray(emptyList())
         // Gemini lists "models/gemini-…"; chat requests take the bare name.
         val ids = items.mapNotNull { item ->
@@ -173,7 +178,7 @@ object AiService {
             "anthropic-beta" to "server-side-fallback-2026-07-01",
             "content-type" to "application/json",
         )
-        val response = send(URL("$baseUrl/messages"), headers, body)
+        val response = send(URL("$baseUrl/messages"), headers, body, timeout = REQUEST_TIMEOUT)
         if (response["stop_reason"]?.jsonPrimitive?.contentOrNull == "refusal") throw AiError.Refused
         val text = (response["content"] as? JsonArray).orEmpty()
             .map { it.jsonObject }
@@ -234,7 +239,7 @@ object AiService {
             put("Content-Type", "application/json")
             if (!apiKey.isNullOrEmpty()) put("Authorization", "Bearer $apiKey")
         }
-        val response = send(url, headers, body)
+        val response = send(url, headers, body, timeout(settings))
         val message = (response["choices"] as? JsonArray)?.firstOrNull()?.jsonObject?.get("message") as? JsonObject
         val refusal = message?.get("refusal")?.let { (it as? JsonPrimitive)?.contentOrNull }
         if (!refusal.isNullOrEmpty()) throw AiError.Refused
@@ -242,13 +247,79 @@ object AiService {
         return decode(text)
     }
 
+    private const val REQUEST_TIMEOUT = 120_000
+    private const val LOCAL_TIMEOUT = 300_000
+    private const val LIST_TIMEOUT = 30_000
+
+    /** Local models can take a while, especially the first time they load. */
+    private fun timeout(settings: AiSettings) = if (settings.provider.isLocal) LOCAL_TIMEOUT else REQUEST_TIMEOUT
+
+    /** "http://host:11434", whether the user typed it with "/v1" or "/api" or not. */
+    private fun ollamaBase(settings: AiSettings): String {
+        var base = settings.effectiveBaseUrl
+        for (suffix in listOf("/v1", "/api")) base = base.removeSuffix(suffix)
+        return base
+    }
+
+    /** Ollama's native API: structured output with the label schema, and the photo in "images". */
+    private suspend fun ollama(jpeg: ByteArray, settings: AiSettings): LabelAnalysis {
+        val url = runCatching { URL(ollamaBase(settings) + "/api/chat") }.getOrElse { throw AiError.NotConfigured }
+        val body = buildJsonObject {
+            put("model", settings.effectiveModel)
+            put("stream", false)
+            put("format", LabelAnalysis.schema)
+            // A photo needs more room than Ollama's default context.
+            putJsonObject("options") {
+                put("temperature", 0)
+                put("num_ctx", 8192)
+            }
+            putJsonArray("messages") {
+                add(buildJsonObject {
+                    put("role", "user")
+                    put("content", LabelAnalysis.prompt)
+                    putJsonArray("images") { add(JsonPrimitive(base64(jpeg))) }
+                })
+            }
+        }
+        val response = send(url, mapOf("Content-Type" to "application/json"), body, timeout(settings))
+        val text = ((response["message"] as? JsonObject)?.get("content") as? JsonPrimitive)?.contentOrNull
+            ?: throw AiError.InvalidResponse
+        return decode(text)
+    }
+
+    /** Installed models that read images (Ollama reports "vision"); all of them if none reports capabilities. */
+    private suspend fun ollamaModels(settings: AiSettings): List<String> = coroutineScope {
+        val base = ollamaBase(settings)
+        val tags = send(runCatching { URL("$base/api/tags") }.getOrElse { throw AiError.NotConfigured }, emptyMap(), null, LIST_TIMEOUT)
+        val names = (tags["models"] as? JsonArray).orEmpty().mapNotNull { item ->
+            val obj = item as? JsonObject ?: return@mapNotNull null
+            ((obj["name"] ?: obj["model"]) as? JsonPrimitive)?.contentOrNull
+        }
+        val capabilities = names.map { name ->
+            async {
+                name to runCatching {
+                    val show = send(
+                        URL("$base/api/show"), mapOf("Content-Type" to "application/json"),
+                        buildJsonObject { put("model", name) }, LIST_TIMEOUT,
+                    )
+                    (show["capabilities"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+                }.getOrNull()
+            }
+        }.awaitAll().toMap()
+        val collator = java.text.Collator.getInstance().apply { strength = java.text.Collator.SECONDARY }
+        val sorted = names.sortedWith(collator)
+        val vision = sorted.filter { capabilities[it]?.contains("vision") == true }
+        // Older Ollama versions do not report capabilities: then every model is offered.
+        vision.ifEmpty { sorted }
+    }
+
     /** POST when [body] is set, GET otherwise. */
-    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?): JsonObject = withContext(Dispatchers.IO) {
+    private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
         val connection = url.openConnection() as HttpURLConnection
         try {
             connection.requestMethod = if (body != null) "POST" else "GET"
             connection.connectTimeout = 30_000
-            connection.readTimeout = if (body != null) 120_000 else 30_000
+            connection.readTimeout = timeout
             headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
             if (body != null) {
                 connection.doOutput = true
@@ -258,10 +329,7 @@ object AiService {
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
             val parsed = runCatching { json.parseToJsonElement(text) as? JsonObject }.getOrNull()
-            if (status !in 200..299) {
-                val message = (parsed?.get("error") as? JsonObject)?.get("message")?.let { (it as? JsonPrimitive)?.contentOrNull }
-                throw AiError.Server(status, message.orEmpty())
-            }
+            if (status !in 200..299) throw AiError.Server(status, errorMessage(parsed))
             parsed ?: throw AiError.InvalidResponse
         } catch (error: IOException) {
             throw AiError.Server(0, error.localizedMessage.orEmpty())
@@ -270,9 +338,16 @@ object AiService {
         }
     }
 
-    /** Parses the JSON answer, tolerating a Markdown code fence from servers without strict schemas. */
+    /** {"error":{"message":…}} (OpenAI, Anthropic), {"error":"…"} (Ollama), {"detail":…} (vLLM) or {"message":…}. */
+    internal fun errorMessage(json: JsonObject?): String {
+        fun JsonElement?.text() = (this as? JsonPrimitive)?.takeIf { it.isString }?.content
+        val error = json?.get("error")
+        return (error as? JsonObject)?.get("message").text() ?: error.text() ?: json?.get("detail").text() ?: json?.get("message").text() ?: ""
+    }
+
+    /** Parses the JSON answer, tolerating a Markdown code fence and a reasoning model's "<think>…</think>". */
     fun decode(text: String): LabelAnalysis {
-        var trimmed = text.trim()
+        var trimmed = text.substringAfter("</think>").trim()
         val start = trimmed.indexOf('{')
         val end = trimmed.lastIndexOf('}')
         if (start >= 0 && end > start) trimmed = trimmed.substring(start, end + 1)

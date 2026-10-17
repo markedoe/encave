@@ -30,13 +30,24 @@ enum class AiProvider(
     MiniMax("minimax", "MiniMax", "https://api.minimax.io/v1", "https://platform.minimax.io/user-center/basic-information/interface-key"),
     OpenRouter("openRouter", "OpenRouter", "https://openrouter.ai/api/v1", "https://openrouter.ai/keys"),
 
-    /** Ollama, LM Studio, OpenWebUI or any OpenAI-compatible server. */
-    Local("local", null, "http://localhost:11434/v1", "https://ollama.com/download");
+    /** Servers on the user's own computer or network. */
+    Ollama("ollama", "Ollama", "http://localhost:11434", "https://ollama.com/download"),
+    Vllm("vllm", "vLLM", "http://localhost:8000/v1", "https://docs.vllm.ai/en/latest/getting_started/quickstart.html"),
+    LmStudio("lmStudio", "LM Studio", "http://localhost:1234/v1", "https://lmstudio.ai/download"),
+
+    /** Any other OpenAI-compatible server (OpenWebUI, llama.cpp…). */
+    Local("local", null, "http://localhost:8080/v1");
 
     val usesAnthropicApi: Boolean get() = this == Anthropic
 
+    /** Ollama has its own API (structured outputs, list of models that read images). */
+    val usesOllamaApi: Boolean get() = this == Ollama
+
+    /** Runs on the user's computer or network: no key needed, slower answers allowed. */
+    val isLocal: Boolean get() = this in localServers
+
     /** A key is optional only for a server of your own. */
-    val requiresKey: Boolean get() = this != Local && this != Off
+    val requiresKey: Boolean get() = !isLocal && this != Off
 
     /** Model used until the list is loaded, when one is known to read images. */
     val suggestedModel: String get() = if (this == Anthropic) "claude-opus-5-5" else ""
@@ -44,7 +55,8 @@ enum class AiProvider(
     companion object {
         val global = listOf(OpenAi, Anthropic, Google, Xai, Mistral)
         val chinese = listOf(DeepSeek, Qwen, Kimi, Zhipu, MiniMax)
-        val others = listOf(OpenRouter, Local)
+        val others = listOf(OpenRouter)
+        val localServers = listOf(Ollama, Vllm, LmStudio, Local)
 
         fun fromRaw(raw: String?): AiProvider? = entries.firstOrNull { it.raw == raw }
     }
@@ -89,9 +101,18 @@ class AiPreferences(context: Context) {
             "claude" -> AiProvider.Anthropic
             "openAICompatible" -> if (legacyUrl.isEmpty() || legacyUrl.contains("api.openai.com")) AiProvider.OpenAi else AiProvider.Local
             else -> AiProvider.fromRaw(raw) ?: AiProvider.Off
+        }.let { chosen ->
+            // The first "local" option pointed at Ollama by default.
+            val localUrl = prefs.getString("baseURL.local", null) ?: legacyUrl
+            if (raw == "local" && (localUrl.isEmpty() || localUrl.contains(":11434"))) AiProvider.Ollama else chosen
         }
         val model = prefs.getString("model.${provider.raw}", null) ?: prefs.getString("model", "").orEmpty()
-        val baseUrl = prefs.getString("baseURL.${provider.raw}", null) ?: if (provider == AiProvider.Local) legacyUrl else ""
+        var baseUrl = prefs.getString("baseURL.${provider.raw}", null) ?: if (provider == AiProvider.Local) legacyUrl else ""
+        if (raw == "local" && provider == AiProvider.Ollama && baseUrl.isEmpty()) {
+            // Keep the address of a server set up with the first builds, without the "/v1".
+            val old = (prefs.getString("baseURL.local", null) ?: legacyUrl).removeSuffix("/v1")
+            baseUrl = if (old == AiProvider.Ollama.defaultBaseUrl) "" else old
+        }
         return AiSettings(provider, model, baseUrl)
     }
 

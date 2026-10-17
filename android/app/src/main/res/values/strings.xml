@@ -273,7 +273,16 @@
     <string name="settings_ai_off_body">Optional. Reads labels from a photo with the AI service you choose, using your own API key.</string>
     <string name="settings_ai_on_body">Only the label photo is sent, directly to this service, when you add a label photo or tap “Complete with AI”. Your cellar is never sent. The key is encrypted with the Android Keystore on this device.</string>
     <string name="ai_provider">Provider</string>
-    <string name="ai_local">Local server (Ollama, LM Studio…)</string>
+    <string name="ai_local">Other server (OpenAI-compatible)</string>
+    <string name="ai_connect">Connect and load models</string>
+    <string name="ai_install_ollama">Install Ollama</string>
+    <string name="ai_vllm_start">vLLM quick start</string>
+    <string name="ai_download_lmstudio">Download LM Studio</string>
+    <string name="ai_tip_ollama">Install a model that reads images, for example: ollama pull gemma3. To use it from this phone, start Ollama with OLLAMA_HOST=0.0.0.0 on the computer.</string>
+    <string name="ai_tip_vllm">Start a vision model with: vllm serve &lt;model&gt; --host 0.0.0.0. If you set --api-key, enter the same key here.</string>
+    <string name="ai_tip_lmstudio">In LM Studio, load a vision model and start the server; turn on “Serve on Local Network” to use it from this phone.</string>
+    <string name="ai_tip_other">Any server with an OpenAI-compatible /chat/completions API and a model that reads images.</string>
+    <string name="ai_local_sent">Only the label photo is sent, to your own server. On a phone or tablet, enter the computer’s IP address on your network (for example http://192.0.2.10:11434) instead of localhost.</string>
     <string name="ai_server_url">Server URL</string>
     <string name="ai_key_optional">API key (optional)</string>
     <string name="ai_check">Check key and load models</string>
@@ -282,7 +291,6 @@
     <string name="ai_choose_model">Choose…</string>
     <string name="ai_enter_model">Enter a model name</string>
     <string name="ai_choose_from_list">Choose from the list</string>
-    <string name="ai_local_body">On a phone or tablet, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.</string>
     <string name="ai_off">Off</string>
     <string name="ai_model">Model</string>
     <string name="ai_key">API key</string>
@@ -402,6 +410,9 @@
     <string name="rack_cell_full">This place is full.</string>
     <string name="rack_add_here">Add a bottle here</string>
     <string name="sample_bins">Diamond bins</string>
+    <string name="sample_deep_rack">Double-depth rack</string>
+    <string name="sample_honeycomb">Honeycomb rack</string>
+    <string name="sample_stairs">Under the stairs</string>
     <string name="help_field_search">Type a few letters of the name to add bottles of a wine you already have.</string>
     <string name="help_field_existing">Choose it to add bottles without typing the wine again.</string>
     <string name="help_field_quantity">How many identical bottles you add.</string>
@@ -449,7 +460,6 @@
     <string name="help_field_ai_key">Created on the provider’s website. Encrypted with the Android Keystore on this device.</string>
     <string name="help_field_ai_model">Choose a model that reads images. Larger models are more accurate but slower and cost more.</string>
     <string name="ai_create_key_at">Create an API key at %1$s</string>
-    <string name="ai_install_local">Install a local server (Ollama)</string>
     <string name="help_title">Help</string>
     <string name="help_encave">Encave Help</string>
     <string name="help_open_source">Encave is open source. Questions and ideas are welcome on the project page.</string>
@@ -460,7 +470,6 @@
     <string name="help_link_tasting">Help with tasting notes</string>
     <string name="help_link_ai">How to set up AI</string>
     <string name="help_create_key">Create an API key</string>
-    <string name="help_local_install">Local server: install Ollama</string>
     <string name="help_start_title">Getting started</string>
     <string name="help_start_summary">The four sections and how they work together.</string>
     <string name="help_start_cellar">Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.</string>
@@ -533,7 +542,7 @@
     <string name="help_ai_check_title">Check the key</string>
     <string name="help_ai_check">Tap **Check key and load models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.</string>
     <string name="help_ai_local_title">Local server</string>
-    <string name="help_ai_local">With Ollama or LM Studio on your computer, choose **Local server** and enter its address, such as `http://192.0.2.10:11434/v1`: on a phone or tablet, use the computer’s name or address on your network instead of localhost.</string>
+    <string name="help_ai_local">Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, then tap **Connect and load models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On a phone or tablet, enter the computer’s IP address on your network (for example `http://192.0.2.10:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.</string>
     <string name="help_ai_url_title">Server URL</string>
     <string name="help_ai_url">Leave it empty to use the provider’s usual address. Change it only if the provider gives you another one, for example for its China region.</string>
     <string name="help_ai_sent_title">What is sent</string>
