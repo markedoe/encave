@@ -34,7 +34,12 @@ final class CellarModel {
 
     static func live() -> CellarModel {
         if let store = try? JSONFileCellarStore.defaultStore() {
-            return CellarModel(store: store)
+            let model = CellarModel(store: store)
+            // Photos of deleted wines are kept until the next launch so deleting can be undone.
+            if model.errorMessage == nil {
+                PhotoStore.removeOrphans(keeping: Set(model.cellar.wines.values.compactMap(\.photoID)))
+            }
+            return model
         }
         return CellarModel(store: InMemoryCellarStore())
     }

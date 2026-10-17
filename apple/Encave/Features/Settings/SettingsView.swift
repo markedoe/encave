@@ -55,6 +55,8 @@ struct SettingsView: View {
                 Text("A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.")
             }
 
+            AISettingsSection()
+
             Section {
                 Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
             } header: {

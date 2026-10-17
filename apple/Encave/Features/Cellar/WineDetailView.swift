@@ -49,6 +49,25 @@ struct WineDetailView: View {
                     }
                 }
 
+                if let advice = ServingAdvice.advice(for: wine, year: model.currentYear) {
+                    Section("Serving") {
+                        LabeledContent {
+                            Text(verbatim: temperatureRange(advice)).monospacedDigit()
+                        } label: {
+                            Label("Temperature", systemImage: "thermometer.medium")
+                        }
+                        LabeledContent {
+                            if let minutes = advice.decantMinutes {
+                                Text("\(minutes) min")
+                            } else {
+                                Text("Not needed")
+                            }
+                        } label: {
+                            Label("Decanting", systemImage: "drop")
+                        }
+                    }
+                }
+
                 Section("Details") {
                     if let color = wine.color {
                         LabeledContent("Style") {
@@ -114,6 +133,16 @@ struct WineDetailView: View {
         }
     }
 
+    /// "16 – 18 °C", or Fahrenheit where the locale uses it.
+    private func temperatureRange(_ advice: ServingAdvice) -> String {
+        let style = Measurement<UnitTemperature>.FormatStyle(
+            width: .narrow, usage: .weather, numberFormatStyle: .number.precision(.fractionLength(0))
+        )
+        let low = Measurement(value: Double(advice.minTemperature), unit: UnitTemperature.celsius)
+        let high = Measurement(value: Double(advice.maxTemperature), unit: UnitTemperature.celsius)
+        return "\(low.formatted(style)) – \(high.formatted(style))"
+    }
+
     @ViewBuilder
     private func optionalRow(_ title: LocalizedStringKey, _ value: String?) -> some View {
         if let value, !value.isEmpty {
@@ -129,8 +158,17 @@ private struct WineHeader: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            BottleEnd(color: wine.color, size: 72)
-                .padding(.top, 8)
+            if PhotoStore.exists(wine.photoID) {
+                WinePhoto(photoID: wine.photoID)
+                    .frame(maxWidth: 360)
+                    .frame(height: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .padding(.top, 4)
+                    .accessibilityHidden(true)
+            } else {
+                BottleEnd(color: wine.color, size: 72)
+                    .padding(.top, 8)
+            }
             Text(wine.name)
                 .font(.largeTitle.weight(.semibold))
                 .fontDesign(.serif)

@@ -27,6 +27,9 @@ sync between devices and users (see `docs/ROADMAP.md`):
 
 - User data stays on device; anything sent over the network is end-to-end
   encrypted. The relay must never see plaintext.
+- Exception: the optional AI label recognition, off by default, which sends
+  only the label photo directly to the provider the user sets up with their
+  own key. Never send the cellar or anything else to it.
 - No analytics or third-party SDKs that receive user data.
 - No integrations with commercial wine platforms.
 

@@ -6,6 +6,13 @@ Please **do not open a public issue** for security problems.
 Use GitHub's private reporting instead: *Security → Report a vulnerability*
 on this repository. You should get an answer within 7 days.
 
+## Data that leaves the device
+
+Your cellar stays on your devices. Sync, when available, is end-to-end encrypted.
+The only exception is the optional AI label recognition, off by default: when
+you enable it with your own API key, the label photo (and nothing else) is sent
+directly to the provider you chose. The key is kept in the Keychain on the device.
+
 ## Keeping the repo clean
 
 This repository is public. A few rules keep secrets and internal details out of it:

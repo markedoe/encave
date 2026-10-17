@@ -21,17 +21,20 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var drinkUntil: Int?
     /// Free-form notes about the wine itself (not a tasting).
     public var notes: String?
+    /// Identifier of a photo (label or bottle) stored by the app next to the cellar.
+    public var photoID: String?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
         color: WineColor? = nil, region: String? = nil, country: String? = nil,
         appellation: String? = nil, grapes: [String] = [], drinkFrom: Int? = nil, drinkUntil: Int? = nil,
-        notes: String? = nil
+        notes: String? = nil, photoID: String? = nil
     ) {
         self.id = id; self.name = name; self.producer = producer; self.vintage = vintage
         self.color = color; self.region = region; self.country = country
         self.appellation = appellation; self.grapes = grapes
         self.drinkFrom = drinkFrom; self.drinkUntil = drinkUntil; self.notes = notes
+        self.photoID = photoID
     }
 
     public init(from decoder: Decoder) throws {
@@ -48,6 +51,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         drinkFrom = try c.decodeIfPresent(Int.self, forKey: .drinkFrom)
         drinkUntil = try c.decodeIfPresent(Int.self, forKey: .drinkUntil)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
+        photoID = try c.decodeIfPresent(String.self, forKey: .photoID)
     }
 
     /// "Château X 2015" or "Château X" for non-vintage wines.

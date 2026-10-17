@@ -9,3 +9,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - SwiftUI app for iPhone, iPad and Mac: Cellar, Racks, Tonight and Journal
 - Local storage of the cellar, sample cellar, French and English
 - Design tokens shared across platforms
+- Label scanning on the device, wine photos, serving temperature and decanting
+- Optional AI label recognition (Claude or an OpenAI-compatible server) with
+  your own key, stored in the Keychain; only the label photo is sent

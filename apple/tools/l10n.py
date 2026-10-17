@@ -284,6 +284,36 @@ FR = {
     "suited grape": "cépage adapté",
     "to drink soon": "à boire bientôt",
     "wines": "vins",
+    # AI label recognition, photos and serving
+    "AI label recognition": "Reconnaissance des étiquettes par IA",
+    "API key": "Clé d’API",
+    "Add a Photo": "Ajouter une photo",
+    "Add your API key in Settings.": "Ajoutez votre clé d’API dans les réglages.",
+    "Choose an AI provider in Settings.": "Choisissez un service d’IA dans les réglages.",
+    "Complete with AI": "Compléter avec l’IA",
+    "Decanting": "Carafage",
+    "Label photo": "Photo de l’étiquette",
+    "Model": "Modèle",
+    "Not needed": "Inutile",
+    "Off": "Désactivée",
+    "Only the label photo is sent, directly to this service, when you scan a label or tap “Complete with AI”. Your cellar is never sent. The key is stored in the Keychain on this device.": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil.",
+    "OpenAI-compatible": "Compatible OpenAI",
+    "Optional. Reads the label from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit l’étiquette sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
+    "Photo": "Photo",
+    "Provider": "Fournisseur",
+    "Reading the label…": "Lecture de l’étiquette…",
+    "Reads the label on this device, then completes the details with the AI service set in Settings.": "Lit l’étiquette sur cet appareil, puis complète les informations avec le service d’IA choisi dans les réglages.",
+    "Remove Photo": "Supprimer la photo",
+    "Replace Photo": "Remplacer la photo",
+    "Saved with the wine": "Enregistrée avec le vin",
+    "Scan Again": "Scanner à nouveau",
+    "Server URL": "Adresse du serveur",
+    "Serving": "Service",
+    "Temperature": "Température",
+    "The AI service returned error %lld.": "Le service d’IA a renvoyé l’erreur %lld.",
+    "The answer from the AI service could not be read.": "La réponse du service d’IA est illisible.",
+    "The model declined to read this photo.": "Le modèle a refusé de lire cette photo.",
+    "%lld min": "%lld min",
 }
 
 # Keys with plural forms: English one/other and French one/other.
@@ -298,6 +328,10 @@ INFO_PLIST = {
     "NSCameraUsageDescription": (
         "Encave uses the camera to read wine labels. Images stay on this device.",
         "Encave utilise l’appareil photo pour lire les étiquettes. Les images restent sur cet appareil.",
+    ),
+    "NSLocalNetworkUsageDescription": (
+        "Encave connects to the AI server on your network that you set in Settings.",
+        "Encave se connecte au serveur d’IA de votre réseau choisi dans les réglages.",
     ),
 }
 

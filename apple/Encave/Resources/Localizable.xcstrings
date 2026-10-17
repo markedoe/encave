@@ -111,6 +111,16 @@
         }
       }
     },
+    "%lld min": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
     "%lld of %lld": {
       "localizations": {
         "fr": {
@@ -201,6 +211,26 @@
         }
       }
     },
+    "AI label recognition": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnaissance des étiquettes par IA"
+          }
+        }
+      }
+    },
+    "API key": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé d’API"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "fr": {
@@ -261,6 +291,16 @@
         }
       }
     },
+    "Add a Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une photo"
+          }
+        }
+      }
+    },
     "Add a Rack": {
       "localizations": {
         "fr": {
@@ -287,6 +327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez les bouteilles que vous gardez chez vous pour savoir ce que vous avez, où elles sont et quand les ouvrir."
+          }
+        }
+      }
+    },
+    "Add your API key in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez votre clé d’API dans les réglages."
           }
         }
       }
@@ -591,6 +641,16 @@
         }
       }
     },
+    "Choose an AI provider in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un service d’IA dans les réglages."
+          }
+        }
+      }
+    },
     "Château, cuvée…": {
       "localizations": {
         "fr": {
@@ -631,6 +691,16 @@
         }
       }
     },
+    "Complete with AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter avec l’IA"
+          }
+        }
+      }
+    },
     "Country": {
       "localizations": {
         "fr": {
@@ -657,6 +727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Date"
+          }
+        }
+      }
+    },
+    "Decanting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carafage"
           }
         }
       }
@@ -1191,6 +1271,16 @@
         }
       }
     },
+    "Label photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo de l’étiquette"
+          }
+        }
+      }
+    },
     "Large cellar, 120": {
       "localizations": {
         "fr": {
@@ -1247,6 +1337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casier principal"
+          }
+        }
+      }
+    },
+    "Model": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle"
           }
         }
       }
@@ -1431,6 +1531,16 @@
         }
       }
     },
+    "Not needed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inutile"
+          }
+        }
+      }
+    },
     "Notes": {
       "localizations": {
         "fr": {
@@ -1481,12 +1591,52 @@
         }
       }
     },
+    "Off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivée"
+          }
+        }
+      }
+    },
     "Only %lld free positions: the other bottles will have no position.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
+          }
+        }
+      }
+    },
+    "Only the label photo is sent, directly to this service, when you scan a label or tap “Complete with AI”. Your cellar is never sent. The key is stored in the Keychain on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil."
+          }
+        }
+      }
+    },
+    "OpenAI-compatible": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatible OpenAI"
+          }
+        }
+      }
+    },
+    "Optional. Reads the label from a photo with the AI service you choose, using your own API key.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Lit l’étiquette sur une photo avec le service d’IA de votre choix et votre propre clé d’API."
           }
         }
       }
@@ -1547,6 +1697,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pâtes, pizza"
+          }
+        }
+      }
+    },
+    "Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo"
           }
         }
       }
@@ -1651,6 +1811,16 @@
         }
       }
     },
+    "Provider": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fournisseur"
+          }
+        }
+      }
+    },
     "Purchase date": {
       "localizations": {
         "fr": {
@@ -1751,12 +1921,32 @@
         }
       }
     },
+    "Reading the label…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de l’étiquette…"
+          }
+        }
+      }
+    },
     "Reads the label on this device to fill in the name and vintage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Lit l’étiquette sur cet appareil pour remplir le nom et le millésime."
+          }
+        }
+      }
+    },
+    "Reads the label on this device, then completes the details with the AI service set in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lit l’étiquette sur cet appareil, puis complète les informations avec le service d’IA choisi dans les réglages."
           }
         }
       }
@@ -1841,6 +2031,26 @@
         }
       }
     },
+    "Remove Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la photo"
+          }
+        }
+      }
+    },
+    "Replace Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer la photo"
+          }
+        }
+      }
+    },
     "Restaurant": {
       "localizations": {
         "fr": {
@@ -1901,6 +2111,26 @@
         }
       }
     },
+    "Saved with the wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrée avec le vin"
+          }
+        }
+      }
+    },
+    "Scan Again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner à nouveau"
+          }
+        }
+      }
+    },
     "Scan the Label": {
       "localizations": {
         "fr": {
@@ -1927,6 +2157,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un vin"
+          }
+        }
+      }
+    },
+    "Server URL": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse du serveur"
+          }
+        }
+      }
+    },
+    "Serving": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service"
           }
         }
       }
@@ -2131,6 +2381,16 @@
         }
       }
     },
+    "Temperature": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Température"
+          }
+        }
+      }
+    },
     "Test data": {
       "localizations": {
         "fr": {
@@ -2161,6 +2421,26 @@
         }
       }
     },
+    "The AI service returned error %lld.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le service d’IA a renvoyé l’erreur %lld."
+          }
+        }
+      }
+    },
+    "The answer from the AI service could not be read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La réponse du service d’IA est illisible."
+          }
+        }
+      }
+    },
     "The change could not be saved.": {
       "localizations": {
         "fr": {
@@ -2187,6 +2467,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez."
+          }
+        }
+      }
+    },
+    "The model declined to read this photo.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle a refusé de lire cette photo."
           }
         }
       }

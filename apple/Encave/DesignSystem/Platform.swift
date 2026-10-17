@@ -27,4 +27,22 @@ extension View {
         return self
         #endif
     }
+
+    /// Codes, keys and model names: no capitals or corrections.
+    func plainInput() -> some View {
+        #if os(iOS)
+        return textInputAutocapitalization(.never).autocorrectionDisabled()
+        #else
+        return autocorrectionDisabled()
+        #endif
+    }
+
+    /// URL keyboard on iOS.
+    func urlField() -> some View {
+        #if os(iOS)
+        return plainInput().keyboardType(.URL)
+        #else
+        return plainInput()
+        #endif
+    }
 }

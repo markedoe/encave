@@ -58,6 +58,10 @@ targets:
         CFBundleLocalizations: [en, fr]
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Encave uses the camera to read wine labels. Images stay on this device.
+        NSLocalNetworkUsageDescription: Encave connects to the AI server on your network that you set in Settings.
+        # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
         UISupportedInterfaceOrientations:
@@ -92,6 +96,8 @@ targets:
         CFBundleLocalizations: [en, fr]
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
 
 schemes:

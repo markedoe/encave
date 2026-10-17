@@ -7,9 +7,11 @@ import VisionKit
 #endif
 
 /// Reads a wine label on the device: live camera on iPhone and iPad, or a photo.
-/// Images never leave the device.
+/// Returns the text found and the photo, which is sent nowhere unless the user asks for AI.
 struct LabelScanner: View {
-    let onResult: (LabelScanResult) -> Void
+    /// When true, a photo is useful even if no text is found (AI can still read it).
+    var acceptsPhotoWithoutText = false
+    let onResult: (LabelScanResult, Data?) -> Void
 
     static var isAvailable: Bool { true }
 
@@ -18,13 +20,17 @@ struct LabelScanner: View {
     @State private var isReading = false
     @State private var lastResult: LabelScanResult?
     @State private var liveLines: [LabelLine] = []
+    @State private var isCapturing = false
+    #if os(iOS)
+    @State private var handle = LiveTextScanner.Handle()
+    #endif
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 #if os(iOS)
                 if LiveTextScanner.isSupported {
-                    LiveTextScanner(lines: $liveLines)
+                    LiveTextScanner(lines: $liveLines, handle: handle)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .overlay(alignment: .bottom) { liveOverlay }
                         .ignoresSafeArea(edges: .bottom)
@@ -72,17 +78,30 @@ struct LabelScanner: View {
                 }
             }
             Button {
-                onResult(result)
+                capture(result)
             } label: {
-                Text("Use This Label").frame(maxWidth: .infinity)
+                if isCapturing {
+                    ProgressView().frame(maxWidth: .infinity)
+                } else {
+                    Text("Use This Label").frame(maxWidth: .infinity)
+                }
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(result.isEmpty)
+            .disabled((result.isEmpty && !acceptsPhotoWithoutText) || isCapturing)
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding()
+    }
+
+    private func capture(_ result: LabelScanResult) {
+        isCapturing = true
+        Task {
+            let image = try? await handle.scanner?.capturePhoto()
+            isCapturing = false
+            onResult(result, image?.jpegData(compressionQuality: 0.9))
+        }
     }
     #endif
 
@@ -104,7 +123,7 @@ struct LabelScanner: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             if isReading { ProgressView() }
-            if let lastResult, lastResult.isEmpty {
+            if let lastResult, lastResult.isEmpty, !acceptsPhotoWithoutText {
                 Text("No text found. Try a sharper photo.")
                     .font(.footnote)
                     .foregroundStyle(.orange)
@@ -121,7 +140,7 @@ struct LabelScanner: View {
         let lines = await TextRecognizer.lines(in: data)
         let result = LabelTextParser.parse(lines)
         lastResult = result
-        if !result.isEmpty { onResult(result) }
+        if !result.isEmpty || acceptsPhotoWithoutText { onResult(result, data) }
     }
 }
 
@@ -150,7 +169,13 @@ enum TextRecognizer {
 #if os(iOS)
 /// Live text recognition from the camera (VisionKit).
 struct LiveTextScanner: UIViewControllerRepresentable {
+    /// Gives the overlay access to the camera to take the photo.
+    @MainActor final class Handle {
+        weak var scanner: DataScannerViewController?
+    }
+
     @Binding var lines: [LabelLine]
+    let handle: Handle
 
     static var isSupported: Bool {
         DataScannerViewController.isSupported && DataScannerViewController.isAvailable
@@ -165,6 +190,7 @@ struct LiveTextScanner: UIViewControllerRepresentable {
             isHighlightingEnabled: true
         )
         scanner.delegate = context.coordinator
+        handle.scanner = scanner
         try? scanner.startScanning()
         return scanner
     }

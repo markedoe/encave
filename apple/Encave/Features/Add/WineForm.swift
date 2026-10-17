@@ -16,6 +16,7 @@ struct WineDraft: Equatable {
     var windowIsAutomatic = true
     var drinkFrom: Int?
     var drinkUntil: Int?
+    var photoID: String?
 
     init() {}
 
@@ -33,6 +34,7 @@ struct WineDraft: Equatable {
         drinkFrom = wine.drinkFrom
         drinkUntil = wine.drinkUntil
         windowIsAutomatic = wine.drinkFrom == nil
+        photoID = wine.photoID
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -53,7 +55,7 @@ struct WineDraft: Equatable {
             region: clean(region), country: clean(country), appellation: clean(appellation),
             grapes: grapes.split(whereSeparator: { $0 == "," || $0 == ";" })
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
-            drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes)
+            drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes), photoID: photoID
         )
     }
 }
@@ -157,11 +159,14 @@ struct EditWineView: View {
     let wineID: UUID
     @State private var draft = WineDraft()
     @State private var loaded = false
+    @State private var newPhoto: Data?
+    @State private var photoRemoved = false
 
     var body: some View {
         NavigationStack {
             Form {
                 WineFormSections(draft: $draft)
+                PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
             }
             .formStyle(.grouped)
             .navigationTitle("Edit Wine")
@@ -171,9 +176,7 @@ struct EditWineView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        if model.update({ try $0.updateWine(draft.makeWine()) }) { dismiss() }
-                    }
+                    Button("Save", action: save)
                     .disabled(!draft.isValid)
                 }
             }
@@ -184,5 +187,18 @@ struct EditWineView: View {
             }
         }
         .macSheetFrame()
+    }
+
+    private func save() {
+        var wine = draft.makeWine()
+        let oldPhoto = wine.photoID
+        if let newPhoto {
+            wine.photoID = PhotoStore.save(newPhoto) ?? oldPhoto
+        } else if photoRemoved {
+            wine.photoID = nil
+        }
+        guard model.update({ try $0.updateWine(wine) }) else { return }
+        if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
+        dismiss()
     }
 }

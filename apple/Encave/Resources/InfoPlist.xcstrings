@@ -16,6 +16,22 @@
           }
         }
       }
+    },
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave connects to the AI server on your network that you set in Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave se connecte au serveur d’IA de votre réseau choisi dans les réglages."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
