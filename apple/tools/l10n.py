@@ -15,6 +15,102 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Check This Rack': 'Vérifier ce casier',
+    'Every bottle is where it should be.': 'Chaque bouteille est à sa place.',
+    'Bottles not found: %lld': 'Bouteilles introuvables : %lld',
+    'Take Them Out of the Rack': 'Les sortir du casier',
+    'Mark Them as Gone': 'Les marquer comme parties',
+    'Keep Checking': 'Continuer la vérification',
+    'Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.': 'Sorties, elles restent dans la cave sans emplacement. Parties, elles quittent la cave (offertes, bues ailleurs, cassées). Vous pouvez annuler juste après.',
+    'Tap each bottle you find in the rack.': 'Touchez chaque bouteille que vous trouvez dans le casier.',
+    'Found: %lld of %lld': 'Trouvées : %lld sur %lld',
+    'Finish': 'Terminer',
+    'Bottles removed from the cellar: %lld': 'Bouteilles retirées de la cave : %lld',
+    'Drag and drop': 'Glisser-déposer',
+    'On iPad and Mac, drag a bottle to another place to move it, or onto another bottle to swap them.': 'Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille pour les échanger.',
+    'Several wines at once': 'Plusieurs vins à la fois',
+    'In the Cellar, choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.': 'Dans la Cave, choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place.',
+    'Selected: %lld': 'Sélection : %lld',
+    'Select Wines': 'Sélectionner des vins',
+    'Delete these wines?': 'Supprimer ces vins ?',
+    'Delete Wines': 'Supprimer les vins',
+    'Their bottles and tastings are deleted too. You can undo right after.': 'Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après.',
+    'Place in a Rack': 'Ranger dans un casier',
+    'Take Out of Racks': 'Sortir des casiers',
+    'No free place in this rack for bottles without a place.': 'Aucun emplacement libre dans ce casier pour les bouteilles sans emplacement.',
+    'Bottles placed: %lld': 'Bouteilles rangées : %lld',
+    'Bottles taken out of their places: %lld': 'Bouteilles sorties de leur emplacement : %lld',
+    'Wines deleted: %lld': 'Vins supprimés : %lld',
+    'Barcodes': 'Codes-barres',
+    "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.": 'Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne.',
+    'Monthly reminder': 'Rappel mensuel',
+    'Turn on **Monthly Reminder** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak. It is worked out on this device.': 'Activez **Rappel mensuel** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée. C’est calculé sur cet appareil.',
+    'Siri and Shortcuts': 'Siri et Raccourcis',
+    'Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device.': 'Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil.',
+    'Shortcuts and Siri': 'Raccourcis et Siri',
+    'Keyboard shortcuts, Siri, Shortcuts and Spotlight.': 'Raccourcis clavier, Siri, Raccourcis et Spotlight.',
+    'Already in your cellar': 'Déjà dans votre cave',
+    'Use This Wine': 'Utiliser ce vin',
+    'Bottles to Drink Soon': 'Bouteilles à boire bientôt',
+    'Bottles to drink this year: %lld.': 'Bouteilles à boire cette année : %lld.',
+    'Counts the bottles in the last year of their drinking window.': 'Compte les bouteilles dans la dernière année de leur fenêtre de dégustation.',
+    'Drink Soon': 'À boire bientôt',
+    'Find a Wine': 'Trouver un vin',
+    'No bottle is at its best right now.': 'Aucune bouteille n’est à son apogée en ce moment.',
+    'Open Wine': 'Ouvrir le vin',
+    'Opens Encave to add bottles, by scanning the label or typing.': 'Ouvre Encave pour ajouter des bouteilles, en scannant l’étiquette ou en saisissant.',
+    'Says where the bottles of a wine are.': 'Indique où sont les bouteilles d’un vin.',
+    'Suggests bottles from your cellar that are at their best, the most urgent first.': 'Suggère des bouteilles de votre cave à leur apogée, les plus urgentes d’abord.',
+    'Tonight, open %@.': 'Ce soir, ouvrez %@.',
+    'What to Open Tonight': 'Que boire ce soir',
+    '%@': '%@',
+    '%@ has no place in a rack.': '%@ n’a pas d’emplacement dans un casier.',
+    '%@: %@.': '%1$@ : %2$@.',
+    'Your cellar this month': 'Votre cave ce mois-ci',
+    'To drink this year: %lld': 'À boire cette année : %lld',
+    'Now ready: %lld': 'Désormais prêtes : %lld',
+    'Past their peak: %lld': 'Après leur apogée : %lld',
+    'Start with %@.': 'Commencez par %@.',
+    'Monthly Reminder': 'Rappel mensuel',
+    'Reminders': 'Rappels',
+    'Notifications are off for Encave. Turn them on in the system settings.': 'Les notifications sont désactivées pour Encave. Activez-les dans les réglages du système.',
+    'On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak. Worked out on this device.': 'Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée. Calculé sur cet appareil.',
+    'iCloud': 'iCloud',
+    'Storage': 'Stockage',
+    'Use iCloud': 'Utiliser iCloud',
+    'For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.': 'Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés.',
+    'For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.': 'Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance.',
+    'Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.': 'Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi.',
+    'Only encrypted files are stored. Neither Apple nor a relay can see your wines, photos or device names.': 'Seuls des fichiers chiffrés sont stockés. Ni Apple ni un relais ne peuvent voir vos vins, vos photos ou le nom de vos appareils.',
+    'The storage sees when devices sync, how much they send and, for a relay, their IP addresses.': 'Le stockage voit quand les appareils se synchronisent, combien ils envoient et, pour un relais, leurs adresses IP.',
+    'Without syncing away from home, devices still sync on the same Wi-Fi.': 'Sans synchronisation à distance, les appareils se synchronisent toujours sur le même Wi-Fi.',
+    'iCloud is not available. Check that you are signed in to iCloud.': 'iCloud n’est pas disponible. Vérifiez que vous êtes connecté à iCloud.',
+    'Your iCloud storage is full.': 'Votre stockage iCloud est plein.',
+    'The storage cannot be reached. Syncing will resume when it can.': 'Le stockage est injoignable. La synchronisation reprendra dès que possible.',
+    'Away from home': 'Loin de la maison',
+    'To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home** and enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi.': 'Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison** et saisissez l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi.',
+    'On the same Wi-Fi, devices talk directly; no server is involved. Through a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.': 'Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège.',
+    'Off': 'Désactivé',
+    'On': 'Activé',
+    'Sync Away from Home': 'Synchroniser loin de la maison',
+    'Away from Home': 'Loin de la maison',
+    'Keeps devices in sync when they are not on the same Wi-Fi, through a relay that only stores encrypted data.': 'Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un relais qui ne stocke que des données chiffrées.',
+    'Relay': 'Relais',
+    'Status': 'État',
+    'Turn Off': 'Désactiver',
+    'Relay address': 'Adresse du relais',
+    'Check and Turn On': 'Vérifier et activer',
+    'Your other devices receive the relay address and the key the next time they sync on the same Wi-Fi.': 'Vos autres appareils recevront l’adresse du relais et la clé à leur prochaine synchronisation sur le même Wi-Fi.',
+    'The relay only ever receives encrypted files. It cannot see your wines, photos or device names.': 'Le relais ne reçoit que des fichiers chiffrés. Il ne peut voir ni vos vins, ni vos photos, ni le nom de vos appareils.',
+    'It sees when devices sync, how much they send and their IP addresses.': 'Il voit quand les appareils se synchronisent, combien ils envoient et leurs adresses IP.',
+    'Removing a device gives the others a new key, so it can no longer read anything new.': 'Retirer un appareil donne une nouvelle clé aux autres : il ne peut plus rien lire de nouveau.',
+    'A relay is a small open-source service. Run your own on a home server or a free Cloudflare account, or use one run by someone you trust. Without a relay, devices still sync on the same Wi-Fi.': 'Un relais est un petit service open source. Hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance. Sans relais, les appareils se synchronisent toujours sur le même Wi-Fi.',
+    'How to Run a Relay': 'Héberger un relais',
+    'This address does not answer as an Encave relay.': 'Cette adresse ne répond pas comme un relais Encave.',
+    'The removed device could not be shut out of syncing away from home yet. It will be tried again.': 'L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.',
+    'The relay refused this device. Check the relay address.': 'Le relais a refusé cet appareil. Vérifiez l’adresse du relais.',
+    'The relay is full. Remove old photos or use another relay.': 'Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais.',
+    'The relay cannot be reached. Syncing will resume when it can.': 'Le relais est injoignable. La synchronisation reprendra dès que possible.',
     'Your devices': 'Vos appareils',
     'The same cellar on your iPhone, iPad and Mac.': 'La même cave sur votre iPhone, iPad et Mac.',
     'Add a device': 'Ajouter un appareil',
@@ -726,10 +822,22 @@ INFO_PLIST = {
     ),
 }
 
+# Siri and Shortcuts phrases ("${applicationName}" is the app's name).
+APP_SHORTCUTS = {
+    "What should I open tonight in ${applicationName}": "Que boire ce soir avec ${applicationName}",
+    "What to drink tonight with ${applicationName}": "Quoi ouvrir ce soir avec ${applicationName}",
+    "Where is ${wine} in ${applicationName}": "Où est ${wine} dans ${applicationName}",
+    "Find ${wine} in ${applicationName}": "Trouver ${wine} dans ${applicationName}",
+    "What should I drink soon in ${applicationName}": "Quoi boire bientôt avec ${applicationName}",
+    "Add a bottle to ${applicationName}": "Ajouter une bouteille à ${applicationName}",
+    "Scan a wine label with ${applicationName}": "Scanner une étiquette avec ${applicationName}",
+}
+
 # Not preceded by a letter, so identifiers such as "devices.joinButton" are not read as Button("…").
 UI_CALL = re.compile(r'(?<![A-Za-z0-9_])(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
                      r'DisclosureGroup|SecureField|LabeledField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
-                     r'String\(localized:|alert|confirmationDialog|Link|prompt: Text)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
+                     r'String\(localized:|alert|confirmationDialog|Link|prompt: Text|LocalizedStringResource =|TypeDisplayRepresentation =|'
+                     r'IntentDescription|dialog:|shortTitle:)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
 
@@ -775,6 +883,9 @@ def write():
     info = {key: {"localizations": {"en": unit(en), "fr": unit(fr)}} for key, (en, fr) in INFO_PLIST.items()}
     (RES / "InfoPlist.xcstrings").write_text(
         json.dumps({"sourceLanguage": "en", "strings": info, "version": "1.0"}, indent=2, ensure_ascii=False) + "\n")
+    shortcuts = {key: {"localizations": {"fr": unit(value)}} for key, value in APP_SHORTCUTS.items()}
+    (RES / "AppShortcuts.xcstrings").write_text(
+        json.dumps({"sourceLanguage": "en", "strings": shortcuts, "version": "1.0"}, indent=2, ensure_ascii=False) + "\n")
     print(f"Wrote {len(strings)} strings")
 
 

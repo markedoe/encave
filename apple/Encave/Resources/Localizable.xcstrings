@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
     "%@ added": {
       "localizations": {
         "fr": {
@@ -17,6 +27,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ et %2$lld autres"
+          }
+        }
+      }
+    },
+    "%@ has no place in a rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’a pas d’emplacement dans un casier."
           }
         }
       }
@@ -57,6 +77,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, vide"
+          }
+        }
+      }
+    },
+    "%@: %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$@."
           }
         }
       }
@@ -377,6 +407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un nouveau vin, ou d’autres bouteilles d’un vin que vous avez déjà."
+          }
+        }
+      }
+    },
+    "A relay is a small open-source service. Run your own on a home server or a free Cloudflare account, or use one run by someone you trust. Without a relay, devices still sync on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un relais est un petit service open source. Hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance. Sans relais, les appareils se synchronisent toujours sur le même Wi-Fi."
           }
         }
       }
@@ -721,6 +761,16 @@
         }
       }
     },
+    "Already in your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà dans votre cave"
+          }
+        }
+      }
+    },
     "Already in your cellar?": {
       "localizations": {
         "fr": {
@@ -801,6 +851,16 @@
         }
       }
     },
+    "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
+          }
+        }
+      }
+    },
     "At Julie and Marc's": {
       "localizations": {
         "fr": {
@@ -841,6 +901,26 @@
         }
       }
     },
+    "Away from Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loin de la maison"
+          }
+        }
+      }
+    },
+    "Away from home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loin de la maison"
+          }
+        }
+      }
+    },
     "Back Up (JSON)": {
       "localizations": {
         "fr": {
@@ -867,6 +947,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sauvegarde, export et import"
+          }
+        }
+      }
+    },
+    "Barcodes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes-barres"
           }
         }
       }
@@ -1011,6 +1101,16 @@
         }
       }
     },
+    "Bottles not found: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles introuvables : %lld"
+          }
+        }
+      }
+    },
     "Bottles opened, last 12 months": {
       "localizations": {
         "fr": {
@@ -1057,6 +1157,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles par clayette"
+          }
+        }
+      }
+    },
+    "Bottles placed: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles rangées : %lld"
+          }
+        }
+      }
+    },
+    "Bottles removed from the cellar: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles retirées de la cave : %lld"
+          }
+        }
+      }
+    },
+    "Bottles taken out of their places: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles sorties de leur emplacement : %lld"
+          }
+        }
+      }
+    },
+    "Bottles to Drink Soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles à boire bientôt"
+          }
+        }
+      }
+    },
+    "Bottles to drink this year: %lld.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles à boire cette année : %lld."
           }
         }
       }
@@ -1187,6 +1337,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier la clé et charger les modèles"
+          }
+        }
+      }
+    },
+    "Check This Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier ce casier"
+          }
+        }
+      }
+    },
+    "Check and Turn On": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier et activer"
           }
         }
       }
@@ -1521,6 +1691,16 @@
         }
       }
     },
+    "Counts the bottles in the last year of their drinking window.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compte les bouteilles dans la dernière année de leur fenêtre de dégustation."
+          }
+        }
+      }
+    },
     "Crates of 12, 2 × 4": {
       "localizations": {
         "fr": {
@@ -1657,6 +1837,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer le vin"
+          }
+        }
+      }
+    },
+    "Delete Wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les vins"
+          }
+        }
+      }
+    },
+    "Delete these wines?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer ces vins ?"
           }
         }
       }
@@ -2001,12 +2201,32 @@
         }
       }
     },
+    "Drag and drop": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glisser-déposer"
+          }
+        }
+      }
+    },
     "Drink": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Boire"
+          }
+        }
+      }
+    },
+    "Drink Soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À boire bientôt"
           }
         }
       }
@@ -2251,6 +2471,16 @@
         }
       }
     },
+    "Every bottle is where it should be.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque bouteille est à sa place."
+          }
+        }
+      }
+    },
     "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.": {
       "localizations": {
         "fr": {
@@ -2297,6 +2527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplir un vin à partir d’une photo de son étiquette."
+          }
+        }
+      }
+    },
+    "Find a Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver un vin"
           }
         }
       }
@@ -2381,12 +2621,32 @@
         }
       }
     },
+    "For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
+          }
+        }
+      }
+    },
     "For bottles that are not in a rack.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pour les bouteilles qui ne sont pas dans un casier."
+          }
+        }
+      }
+    },
+    "For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés."
           }
         }
       }
@@ -2407,6 +2667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muté"
+          }
+        }
+      }
+    },
+    "Found: %lld of %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvées : %lld sur %lld"
           }
         }
       }
@@ -2731,6 +3001,16 @@
         }
       }
     },
+    "How to Run a Relay": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Héberger un relais"
+          }
+        }
+      }
+    },
     "How to set up AI": {
       "localizations": {
         "fr": {
@@ -2821,6 +3101,16 @@
         }
       }
     },
+    "In the Cellar, choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans la Cave, choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."
+          }
+        }
+      }
+    },
     "Insights": {
       "localizations": {
         "fr": {
@@ -2877,6 +3167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il garde ce qu’il a déjà, mais ne peut plus se synchroniser avec vos autres appareils."
+          }
+        }
+      }
+    },
+    "It sees when devices sync, how much they send and their IP addresses.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il voit quand les appareils se synchronisent, combien ils envoient et leurs adresses IP."
           }
         }
       }
@@ -2941,6 +3241,16 @@
         }
       }
     },
+    "Keep Checking": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer la vérification"
+          }
+        }
+      }
+    },
     "Keep a copy and move your cellar.": {
       "localizations": {
         "fr": {
@@ -2971,12 +3281,32 @@
         }
       }
     },
+    "Keeps devices in sync when they are not on the same Wi-Fi, through a relay that only stores encrypted data.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un relais qui ne stocke que des données chiffrées."
+          }
+        }
+      }
+    },
     "Keyboard shortcuts": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Raccourcis clavier"
+          }
+        }
+      }
+    },
+    "Keyboard shortcuts, Siri, Shortcuts and Spotlight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis clavier, Siri, Raccourcis et Spotlight."
           }
         }
       }
@@ -3201,6 +3531,16 @@
         }
       }
     },
+    "Mark Them as Gone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les marquer comme parties"
+          }
+        }
+      }
+    },
     "Maturity": {
       "localizations": {
         "fr": {
@@ -3227,6 +3567,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modèle"
+          }
+        }
+      }
+    },
+    "Monthly Reminder": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappel mensuel"
+          }
+        }
+      }
+    },
+    "Monthly reminder": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappel mensuel"
           }
         }
       }
@@ -3371,6 +3731,16 @@
         }
       }
     },
+    "No bottle is at its best right now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille n’est à son apogée en ce moment."
+          }
+        }
+      }
+    },
     "No device shows this code on this network. Check the code, and that both devices are on the same Wi-Fi.": {
       "localizations": {
         "fr": {
@@ -3397,6 +3767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas de fenêtre de dégustation"
+          }
+        }
+      }
+    },
+    "No free place in this rack for bottles without a place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun emplacement libre dans ce casier pour les bouteilles sans emplacement."
           }
         }
       }
@@ -3561,6 +3941,26 @@
         }
       }
     },
+    "Notifications are off for Encave. Turn them on in the system settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les notifications sont désactivées pour Encave. Activez-les dans les réglages du système."
+          }
+        }
+      }
+    },
+    "Now ready: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désormais prêtes : %lld"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "fr": {
@@ -3597,6 +3997,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rangées décalées, comme les casiers en métal ou en terre cuite"
+          }
+        }
+      }
+    },
+    "On": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activé"
+          }
+        }
+      }
+    },
+    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle to swap them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille pour les échanger."
           }
         }
       }
@@ -3641,12 +4061,32 @@
         }
       }
     },
+    "On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak. Worked out on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée. Calculé sur cet appareil."
+          }
+        }
+      }
+    },
     "On the other device, open Settings › Devices › Join Another Device’s Cellar, then scan this code or type the numbers.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Sur l’autre appareil, ouvrez Réglages › Appareils › Rejoindre la cave d’un autre appareil, puis scannez ce code ou saisissez les chiffres."
+          }
+        }
+      }
+    },
+    "On the same Wi-Fi, devices talk directly; no server is involved. Through a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
           }
         }
       }
@@ -3711,6 +4151,16 @@
         }
       }
     },
+    "Only encrypted files are stored. Neither Apple nor a relay can see your wines, photos or device names.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuls des fichiers chiffrés sont stockés. Ni Apple ni un relais ne peuvent voir vos vins, vos photos ou le nom de vos appareils."
+          }
+        }
+      }
+    },
     "Only the **name** is required. The producer and the vintage help tell wines apart; leave the vintage on **Non-vintage** for champagnes and blends without a year.": {
       "localizations": {
         "fr": {
@@ -3761,6 +4211,16 @@
         }
       }
     },
+    "Open Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir le vin"
+          }
+        }
+      }
+    },
     "Open the provider's page with the link below the key field, create a key and paste it. The key is stored in the Keychain on this device and sent only to that provider.": {
       "localizations": {
         "fr": {
@@ -3777,6 +4237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compatible OpenAI"
+          }
+        }
+      }
+    },
+    "Opens Encave to add bottles, by scanning the label or typing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre Encave pour ajouter des bouteilles, en scannant l’étiquette ou en saisissant."
           }
         }
       }
@@ -3891,6 +4361,16 @@
         }
       }
     },
+    "Past their peak: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après leur apogée : %lld"
+          }
+        }
+      }
+    },
     "Pasta, pizza": {
       "localizations": {
         "fr": {
@@ -3947,6 +4427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lieu"
+          }
+        }
+      }
+    },
+    "Place in a Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger dans un casier"
           }
         }
       }
@@ -4321,6 +4811,26 @@
         }
       }
     },
+    "Relay": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relais"
+          }
+        }
+      }
+    },
+    "Relay address": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse du relais"
+          }
+        }
+      }
+    },
     "Remember a Wine": {
       "localizations": {
         "fr": {
@@ -4381,6 +4891,16 @@
         }
       }
     },
+    "Reminders": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappels"
+          }
+        }
+      }
+    },
     "Remove": {
       "localizations": {
         "fr": {
@@ -4437,6 +4957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retirer un appareil"
+          }
+        }
+      }
+    },
+    "Removing a device gives the others a new key, so it can no longer read anything new.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer un appareil donne une nouvelle clé aux autres : il ne peut plus rien lire de nouveau."
           }
         }
       }
@@ -4601,6 +5131,16 @@
         }
       }
     },
+    "Says where the bottles of a wine are.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indique où sont les bouteilles d’un vin."
+          }
+        }
+      }
+    },
     "Scan Again": {
       "localizations": {
         "fr": {
@@ -4661,6 +5201,16 @@
         }
       }
     },
+    "Select Wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionner des vins"
+          }
+        }
+      }
+    },
     "Select a rack": {
       "localizations": {
         "fr": {
@@ -4677,6 +5227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un vin"
+          }
+        }
+      }
+    },
+    "Selected: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélection : %lld"
           }
         }
       }
@@ -4737,6 +5297,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Several wines at once": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs vins à la fois"
           }
         }
       }
@@ -4821,6 +5391,16 @@
         }
       }
     },
+    "Shortcuts and Siri": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis et Siri"
+          }
+        }
+      }
+    },
     "Show": {
       "localizations": {
         "fr": {
@@ -4887,6 +5467,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Soyeux, fruits rouges, longue finale."
+          }
+        }
+      }
+    },
+    "Siri and Shortcuts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri et Raccourcis"
           }
         }
       }
@@ -4991,6 +5581,26 @@
         }
       }
     },
+    "Start with %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencez par %@."
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État"
+          }
+        }
+      }
+    },
     "Staying in sync": {
       "localizations": {
         "fr": {
@@ -5027,6 +5637,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter la synchronisation sur cet appareil ?"
+          }
+        }
+      }
+    },
+    "Storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stockage"
           }
         }
       }
@@ -5071,6 +5691,16 @@
         }
       }
     },
+    "Suggests bottles from your cellar that are at their best, the most urgent first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggère des bouteilles de votre cave à leur apogée, les plus urgentes d’abord."
+          }
+        }
+      }
+    },
     "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted.": {
       "localizations": {
         "fr": {
@@ -5087,6 +5717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Balayez un vin vers la droite, ou utilisez **Boire** sur sa fiche. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
+          }
+        }
+      }
+    },
+    "Sync Away from Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser loin de la maison"
           }
         }
       }
@@ -5191,6 +5831,36 @@
         }
       }
     },
+    "Take Out of Racks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortir des casiers"
+          }
+        }
+      }
+    },
+    "Take Them Out of the Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les sortir du casier"
+          }
+        }
+      }
+    },
+    "Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorties, elles restent dans la cave sans emplacement. Parties, elles quittent la cave (offertes, bues ailleurs, cassées). Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
     "Tap **Check Key and Load Models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.": {
       "localizations": {
         "fr": {
@@ -5237,6 +5907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez un emplacement. Toucher une autre bouteille les échange."
+          }
+        }
+      }
+    },
+    "Tap each bottle you find in the rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez chaque bouteille que vous trouvez dans le casier."
           }
         }
       }
@@ -5601,12 +6281,82 @@
         }
       }
     },
+    "The relay cannot be reached. Syncing will resume when it can.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le relais est injoignable. La synchronisation reprendra dès que possible."
+          }
+        }
+      }
+    },
+    "The relay is full. Remove old photos or use another relay.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais."
+          }
+        }
+      }
+    },
+    "The relay only ever receives encrypted files. It cannot see your wines, photos or device names.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le relais ne reçoit que des fichiers chiffrés. Il ne peut voir ni vos vins, ni vos photos, ni le nom de vos appareils."
+          }
+        }
+      }
+    },
+    "The relay refused this device. Check the relay address.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le relais a refusé cet appareil. Vérifiez l’adresse du relais."
+          }
+        }
+      }
+    },
+    "The removed device could not be shut out of syncing away from home yet. It will be tried again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté."
+          }
+        }
+      }
+    },
     "The same cellar on your iPhone, iPad and Mac.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La même cave sur votre iPhone, iPad et Mac."
+          }
+        }
+      }
+    },
+    "The storage cannot be reached. Syncing will resume when it can.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le stockage est injoignable. La synchronisation reprendra dès que possible."
+          }
+        }
+      }
+    },
+    "The storage sees when devices sync, how much they send and, for a relay, their IP addresses.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le stockage voit quand les appareils se synchronisent, combien ils envoient et, pour un relais, leurs adresses IP."
           }
         }
       }
@@ -5661,12 +6411,32 @@
         }
       }
     },
+    "Their bottles and tastings are deleted too. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
     "They Match": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ils sont identiques"
+          }
+        }
+      }
+    },
+    "This address does not answer as an Encave relay.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette adresse ne répond pas comme un relais Encave."
           }
         }
       }
@@ -5811,6 +6581,26 @@
         }
       }
     },
+    "To drink this year: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À boire cette année : %lld"
+          }
+        }
+      }
+    },
+    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home** and enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison** et saisissez l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi."
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "fr": {
@@ -5851,6 +6641,16 @@
         }
       }
     },
+    "Tonight, open %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce soir, ouvrez %@."
+          }
+        }
+      }
+    },
     "Tonight, open…": {
       "localizations": {
         "fr": {
@@ -5887,6 +6687,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Essayer"
+          }
+        }
+      }
+    },
+    "Turn Off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactiver"
+          }
+        }
+      }
+    },
+    "Turn on **Monthly Reminder** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak. It is worked out on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez **Rappel mensuel** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée. C’est calculé sur cet appareil."
           }
         }
       }
@@ -5997,6 +6817,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utiliser cette étiquette"
+          }
+        }
+      }
+    },
+    "Use This Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser ce vin"
+          }
+        }
+      }
+    },
+    "Use iCloud": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser iCloud"
           }
         }
       }
@@ -6141,6 +6981,16 @@
         }
       }
     },
+    "What to Open Tonight": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Que boire ce soir"
+          }
+        }
+      }
+    },
     "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.": {
       "localizations": {
         "fr": {
@@ -6227,6 +7077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Où vous l’avez bu, pour retrouver le vin plus tard."
+          }
+        }
+      }
+    },
+    "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
           }
         }
       }
@@ -6341,6 +7201,16 @@
         }
       }
     },
+    "Wines deleted: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vins supprimés : %lld"
+          }
+        }
+      }
+    },
     "Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.": {
       "localizations": {
         "fr": {
@@ -6367,6 +7237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Entre amis"
+          }
+        }
+      }
+    },
+    "Without syncing away from home, devices still sync on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans synchronisation à distance, les appareils se synchronisent toujours sur le même Wi-Fi."
           }
         }
       }
@@ -6461,6 +7341,16 @@
         }
       }
     },
+    "Your cellar this month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave ce mois-ci"
+          }
+        }
+      }
+    },
     "Your data": {
       "localizations": {
         "fr": {
@@ -6481,6 +7371,16 @@
         }
       }
     },
+    "Your iCloud storage is full.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre stockage iCloud est plein."
+          }
+        }
+      }
+    },
     "Your impression": {
       "localizations": {
         "fr": {
@@ -6497,6 +7397,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre note"
+          }
+        }
+      }
+    },
+    "Your other devices receive the relay address and the key the next time they sync on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos autres appareils recevront l’adresse du relais et la clé à leur prochaine synchronisation sur le même Wi-Fi."
+          }
+        }
+      }
+    },
+    "Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi."
           }
         }
       }
@@ -6637,6 +7557,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "devant"
+          }
+        }
+      }
+    },
+    "iCloud": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud"
+          }
+        }
+      }
+    },
+    "iCloud is not available. Check that you are signed in to iCloud.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud n’est pas disponible. Vérifiez que vous êtes connecté à iCloud."
           }
         }
       }

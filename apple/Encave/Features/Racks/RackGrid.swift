@@ -19,6 +19,8 @@ struct RackGrid: View {
     var focusWine: UUID?
     var showsHeaders = true
     var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
+    /// A bottle dragged onto a place (iPad, Mac): move it there.
+    var onDrop: ((UUID, RackCell) -> Bool)?
 
     private var size: CGFloat { rack.kind == .bins ? cellSize * 1.7 : cellSize }
     private var spacing: CGFloat {
@@ -60,7 +62,7 @@ struct RackGrid: View {
                                 rack: rack, cell: cell, bottles: bottlesByCell[cell] ?? [],
                                 size: size, selectedCount: selectedByCell[cell]?.count ?? 0,
                                 isHighlighted: highlighted?.cell == cell || selectedCell == cell,
-                                focusWine: focusWine, onTap: onTap
+                                focusWine: focusWine, onTap: onTap, onDrop: onDrop
                             )
                         }
                     }
@@ -150,6 +152,7 @@ struct FittedRackGrid: View {
     var selectedCell: RackCell?
     var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
+    var onDrop: ((UUID, RackCell) -> Bool)?
 
     static let padding: CGFloat = 16
 
@@ -160,11 +163,11 @@ struct FittedRackGrid: View {
             let base = RackGrid.fittingCellSize(for: rack, in: space)
             #if os(iOS)
             ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
-                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap)
+                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
             #else
             ScrollView([.horizontal, .vertical]) {
                 RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap)
+                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
                     .padding(padding)
                     .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
             }
@@ -198,6 +201,8 @@ struct RackCellView: View {
     var isHighlighted = false
     var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void
+    var onDrop: ((UUID, RackCell) -> Bool)?
+    @State private var isTargeted = false
 
     /// From this cell size the vintage is written on the bottle; from `nameSize`, the name below it.
     static let vintageSize: CGFloat = 34
@@ -227,6 +232,15 @@ struct RackCellView: View {
             .opacity(isDimmed ? 0.25 : 1)
         }
         .buttonStyle(.plain)
+        .modifier(DragAndDrop(bottle: rack.positionsPerCell == 1 ? bottles.first : nil, cell: cell,
+                              onDrop: onDrop, isTargeted: $isTargeted))
+        .overlay {
+            if isTargeted {
+                RoundedRectangle(cornerRadius: size * 0.16, style: .continuous)
+                    .strokeBorder(Color.accentColor, lineWidth: 3)
+                    .allowsHitTesting(false)
+            }
+        }
         .help(Text(verbatim: bottles.compactMap { model.cellar.wines[$0.wineID]?.displayName }.joined(separator: ", ")))
         .accessibilityLabel(accessibilityText)
         .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)")
@@ -383,6 +397,40 @@ struct RackCellView: View {
         let names = bottles.compactMap { model.cellar.wines[$0.wineID]?.displayName }
         if names.isEmpty { return Text("\(place), empty") }
         return Text(verbatim: "\(place), \(names.joined(separator: ", "))")
+    }
+}
+
+/// Drag a bottle (single places only) and drop bottles on any place, when the
+/// rack screen handles drops.
+private struct DragAndDrop: ViewModifier {
+    let bottle: Bottle?
+    let cell: RackCell
+    let onDrop: ((UUID, RackCell) -> Bool)?
+    @Binding var isTargeted: Bool
+
+    func body(content: Content) -> some View {
+        if let onDrop {
+            content
+                .modifier(Draggable(bottle: bottle))
+                .dropDestination(for: String.self) { items, _ in
+                    guard let id = items.first.flatMap(UUID.init(uuidString:)) else { return false }
+                    return onDrop(id, cell)
+                } isTargeted: { isTargeted = $0 }
+        } else {
+            content
+        }
+    }
+}
+
+private struct Draggable: ViewModifier {
+    let bottle: Bottle?
+
+    func body(content: Content) -> some View {
+        if let bottle {
+            content.draggable(bottle.id.uuidString)
+        } else {
+            content
+        }
     }
 }
 

@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var exportDocument: ExportDocument?
     @State private var importing = false
     @State private var importMessage: String?
+    @State private var remindersOn = Reminders.isEnabled
+    @State private var remindersRefused = false
 
     private static let currencies = ["EUR", "CHF", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK"]
 
@@ -17,6 +19,22 @@ struct SettingsView: View {
         let short = info?["CFBundleShortVersionString"] as? String ?? "–"
         let build = info?["CFBundleVersion"] as? String ?? "–"
         return "\(short) (\(build))"
+    }
+
+    private var remindersBinding: Binding<Bool> {
+        Binding(get: { remindersOn }, set: { on in
+            remindersOn = on
+            if on {
+                Task {
+                    let granted = await Reminders.enable(for: model.cellar)
+                    remindersOn = granted
+                    remindersRefused = !granted
+                }
+            } else {
+                Reminders.disable()
+                remindersRefused = false
+            }
+        })
     }
 
     private var devicesSummary: String {
@@ -48,6 +66,21 @@ struct SettingsView: View {
                 .accessibilityIdentifier("settings.devices")
             } footer: {
                 Text("Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.")
+            }
+
+            Section {
+                Toggle(isOn: remindersBinding) {
+                    Label("Monthly Reminder", systemImage: "bell.badge")
+                }
+                .accessibilityIdentifier("settings.reminders")
+            } header: {
+                Text("Reminders")
+            } footer: {
+                if remindersRefused {
+                    Text("Notifications are off for Encave. Turn them on in the system settings.")
+                } else {
+                    Text("On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak. Worked out on this device.")
+                }
             }
 
             Section {

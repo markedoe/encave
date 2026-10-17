@@ -4,6 +4,7 @@ import SwiftUI
 /// iPhone and iPad: the list, and the selected wine beside it (or pushed on iPhone).
 /// On the Mac, the window's own columns show `CellarList` and `WinePane` directly.
 struct CellarView: View {
+    @Environment(CellarModel.self) private var model
     @State private var selection: UUID?
     /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
     @State private var columns: NavigationSplitViewVisibility = .all
@@ -15,6 +16,12 @@ struct CellarView: View {
             NavigationStack { WinePane(wineID: selection) }
         }
         .navigationSplitViewStyle(.balanced)
+        // Opened from Spotlight, Shortcuts or a notification.
+        .onChange(of: model.openWineRequest, initial: true) { _, id in
+            guard let id else { return }
+            selection = id
+            model.openWineRequest = nil
+        }
     }
 }
 
@@ -40,12 +47,33 @@ struct CellarList: View {
     @State private var filter = CellarFilter()
     @State private var sort: CellarSort = .name
     @State private var showsInsights = false
+    /// Selecting several wines for one action.
+    @State private var isSelecting = false
+    @State private var picked: Set<UUID> = []
+    @State private var confirmingDelete = false
 
     var body: some View {
-        content
-            .navigationTitle("Cellar")
+        Group {
+            if isSelecting {
+                CellarSelectionList(groups: model.cellar.groups(filter: filter, sort: sort, year: model.currentYear),
+                                    picked: $picked)
+            } else {
+                content
+            }
+        }
+            .navigationTitle(isSelecting ? Text("Selected: \(picked.count)") : Text("Cellar"))
             .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
-            .toolbar { toolbar }
+            .toolbar {
+                if isSelecting { selectionToolbar } else { toolbar }
+            }
+            .confirmationDialog("Delete these wines?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                Button("Delete Wines", role: .destructive) {
+                    model.deleteWines(picked)
+                    endSelection()
+                }
+            } message: {
+                Text("Their bottles and tastings are deleted too. You can undo right after.")
+            }
             .sheet(isPresented: $showsInsights) {
                 NavigationStack {
                     InsightsView()
@@ -127,6 +155,12 @@ struct CellarList: View {
     private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
             Menu {
+                Button("Select Wines", systemImage: "checkmark.circle") {
+                    picked = []
+                    withAnimation { isSelecting = true }
+                }
+                .accessibilityIdentifier("cellar.select")
+                Divider()
                 Picker("Sort by", selection: $sort) {
                     Text("Name").tag(CellarSort.name)
                     Text("Vintage").tag(CellarSort.vintage)
@@ -142,6 +176,7 @@ struct CellarList: View {
             } label: {
                 Label("Sort", systemImage: filter.isActive ? "line.3.horizontal.decrease.circle.fill" : "arrow.up.arrow.down")
             }
+            .accessibilityIdentifier("cellar.sort")
             Menu {
                 Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext()) }
                 Button("Remember a Wine", systemImage: "sparkles") { model.sheet = .discovery(discoveryID: nil) }
@@ -161,6 +196,70 @@ struct CellarList: View {
             }
             .accessibilityIdentifier("cellar.settings")
         }
+        #endif
+    }
+}
+
+extension CellarList {
+    @ToolbarContentBuilder
+    var selectionToolbar: some ToolbarContent {
+        ToolbarItem(placement: .confirmationAction) {
+            Button("Done") { endSelection() }
+                .accessibilityIdentifier("cellar.select.done")
+        }
+        ToolbarItemGroup(placement: Self.actionsPlacement) {
+            Menu {
+                ForEach(model.cellar.racks) { rack in
+                    Button(rack.name) {
+                        model.place(picked, inRack: rack.id)
+                        endSelection()
+                    }
+                }
+            } label: {
+                Label("Place in a Rack", systemImage: "square.grid.3x3")
+            }
+            .disabled(picked.isEmpty || model.cellar.racks.isEmpty)
+            Button {
+                model.unplace(picked)
+                endSelection()
+            } label: {
+                Label("Take Out of Racks", systemImage: "tray.and.arrow.up")
+            }
+            .disabled(picked.isEmpty)
+            Button(role: .destructive) {
+                confirmingDelete = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+            .disabled(picked.isEmpty)
+        }
+    }
+
+    #if os(iOS)
+    static let actionsPlacement = ToolbarItemPlacement.bottomBar
+    #else
+    static let actionsPlacement = ToolbarItemPlacement.primaryAction
+    #endif
+
+    func endSelection() {
+        withAnimation { isSelecting = false }
+        picked = []
+    }
+}
+
+/// The cellar's wines with check boxes, to act on several at once.
+private struct CellarSelectionList: View {
+    let groups: [WineGroup]
+    @Binding var picked: Set<UUID>
+
+    var body: some View {
+        List(groups, selection: $picked) { group in
+            WineRow(group: group)
+                .tag(group.wine.id)
+                .accessibilityIdentifier("wine.select.row")
+        }
+        #if os(iOS)
+        .environment(\.editMode, .constant(.active))
         #endif
     }
 }

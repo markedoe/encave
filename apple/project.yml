@@ -22,6 +22,9 @@ settings:
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     GENERATE_INFOPLIST_FILE: NO
+    # iCloud container for syncing away from home, for example iCloud.app.encave.
+    # Empty: the iCloud option is hidden. Enabling it is described in docs/development.md.
+    ENCAVE_CLOUDKIT_CONTAINER: ""
 
 packages:
   CaveKit:
@@ -60,6 +63,8 @@ targets:
         NSCameraUsageDescription: Encave uses the camera to read wine labels. Images stay on this device.
         NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
         NSBonjourServices: [_encave._tcp]
+        # iCloud container for syncing away from home; empty hides the option (docs/development.md).
+        EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
@@ -99,6 +104,7 @@ targets:
         CFBundleLocalizations: [en, fr]
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
+        EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
         NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
         NSBonjourServices: [_encave._tcp]
         NSAppTransportSecurity:

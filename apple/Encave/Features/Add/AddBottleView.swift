@@ -181,6 +181,12 @@ struct AddBottleView: View {
                 }
             }
             .onChange(of: rackID) { chosenSlots = chosenSlots.filter { $0.rackID == rackID } }
+            // The scanner recognized a wine of the cellar by its barcode.
+            .onChange(of: scan.matchedWine) { _, wine in
+                guard let wine else { return }
+                withAnimation { existingWine = wine }
+                scan.matchedWine = nil
+            }
             .onAppear(perform: prepare)
         }
         .macSheetFrame(width: 520, height: 720)

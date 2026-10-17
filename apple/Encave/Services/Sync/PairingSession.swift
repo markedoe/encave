@@ -29,6 +29,8 @@ final class PairingSession {
     private(set) var qrPayload = ""
     /// When the code stops working.
     let expiresAt: Date
+    /// Screen tour: no network.
+    var isDemo: Bool { service?.isDemo ?? true }
 
     @ObservationIgnored private weak var service: SyncService?
     @ObservationIgnored private var decision: CheckedContinuation<Bool, Never>?
@@ -100,9 +102,10 @@ final class PairingSession {
                 service.addMember(member)
                 phase = .syncing
                 guard let local = service.snapshot() else { throw SyncError.closed }
-                let result = try await SyncExchange.run(over: channel, isInitiator: true, local: local,
-                                                        photos: SyncService.photos)
+                let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
+                                                                       photos: SyncService.photos, remote: service.remoteInfo)
                 service.apply(result, from: member.id)
+                service.adoptRemote(remote)
                 service.resume()
                 phase = .done(device: member.name)
             } catch {
@@ -160,9 +163,10 @@ final class PairingSession {
                 service.adoptCellar(received, replace: replace)
                 phase = .syncing
                 guard let local = service.snapshot() else { throw SyncError.closed }
-                let result = try await SyncExchange.run(over: channel, isInitiator: false, local: local,
-                                                        photos: SyncService.photos)
+                let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
+                                                                       photos: SyncService.photos, remote: service.remoteInfo)
                 service.apply(result, from: keys.peer.device)
+                service.adoptRemote(remote)
                 service.resume()
                 phase = .done(device: keys.peer.name)
             } catch {

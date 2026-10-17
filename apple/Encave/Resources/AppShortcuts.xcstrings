@@ -1,0 +1,76 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "What should I open tonight in ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Que boire ce soir avec ${applicationName}"
+          }
+        }
+      }
+    },
+    "What to drink tonight with ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quoi ouvrir ce soir avec ${applicationName}"
+          }
+        }
+      }
+    },
+    "Where is ${wine} in ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où est ${wine} dans ${applicationName}"
+          }
+        }
+      }
+    },
+    "Find ${wine} in ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver ${wine} dans ${applicationName}"
+          }
+        }
+      }
+    },
+    "What should I drink soon in ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quoi boire bientôt avec ${applicationName}"
+          }
+        }
+      }
+    },
+    "Add a bottle to ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une bouteille à ${applicationName}"
+          }
+        }
+      }
+    },
+    "Scan a wine label with ${applicationName}": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner une étiquette avec ${applicationName}"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

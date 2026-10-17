@@ -11,6 +11,10 @@ import VisionKit
 struct LabelScanner: View {
     /// When true, a photo is useful even if no text is found (AI can still read it).
     var acceptsPhotoWithoutText = false
+    /// A wine of the cellar the camera's barcode belongs to, if any.
+    var knownWine: (String) -> Wine? = { _ in nil }
+    /// "Already in your cellar": use that wine instead of reading the label.
+    var onKnownWine: ((Wine) -> Void)?
     let onResult: (LabelScanResult, Data?) -> Void
 
     static var isAvailable: Bool { true }
@@ -20,6 +24,7 @@ struct LabelScanner: View {
     @State private var isReading = false
     @State private var lastResult: LabelScanResult?
     @State private var liveLines: [LabelLine] = []
+    @State private var liveBarcode: String?
     @State private var isCapturing = false
     #if os(iOS)
     @State private var handle = LiveTextScanner.Handle()
@@ -30,7 +35,7 @@ struct LabelScanner: View {
             VStack(spacing: 20) {
                 #if os(iOS)
                 if LiveTextScanner.isSupported {
-                    LiveTextScanner(lines: $liveLines, handle: handle)
+                    LiveTextScanner(lines: $liveLines, barcode: $liveBarcode, handle: handle)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .overlay(alignment: .bottom) { liveOverlay }
                         .ignoresSafeArea(edges: .bottom)
@@ -65,9 +70,13 @@ struct LabelScanner: View {
 
     #if os(iOS)
     private var liveOverlay: some View {
-        let result = LabelTextParser.parse(liveLines)
+        var result = LabelTextParser.parse(liveLines)
+        result.barcode = liveBarcode
+        let known = liveBarcode.flatMap(knownWine)
         return VStack(spacing: 12) {
-            if result.isEmpty {
+            if let known, let onKnownWine {
+                KnownWineCard(wine: known) { onKnownWine(known) }
+            } else if result.isEmpty {
                 Text("Point the camera at the label")
                     .font(.subheadline.weight(.medium))
             } else {
@@ -176,6 +185,8 @@ struct LiveTextScanner: UIViewControllerRepresentable {
     }
 
     @Binding var lines: [LabelLine]
+    /// The last barcode seen (EAN, UPC), matched against the cellar on this device only.
+    @Binding var barcode: String?
     let handle: Handle
 
     static var isSupported: Bool {
@@ -184,7 +195,7 @@ struct LiveTextScanner: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
         let scanner = DataScannerViewController(
-            recognizedDataTypes: [.text()],
+            recognizedDataTypes: [.text(), .barcode(symbologies: [.ean13, .ean8, .upce, .code128])],
             qualityLevel: .accurate,
             recognizesMultipleItems: true,
             isHighFrameRateTrackingEnabled: false,
@@ -202,13 +213,14 @@ struct LiveTextScanner: UIViewControllerRepresentable {
         controller.stopScanning()
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(lines: $lines) }
+    func makeCoordinator() -> Coordinator { Coordinator(lines: $lines, barcode: $barcode) }
 
     @MainActor
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         let lines: Binding<[LabelLine]>
+        let barcode: Binding<String?>
 
-        init(lines: Binding<[LabelLine]>) { self.lines = lines }
+        init(lines: Binding<[LabelLine]>, barcode: Binding<String?>) { self.lines = lines; self.barcode = barcode }
 
         func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
             update(allItems)
@@ -223,6 +235,12 @@ struct LiveTextScanner: UIViewControllerRepresentable {
         }
 
         private func update(_ items: [RecognizedItem]) {
+            for item in items {
+                if case .barcode(let code) = item, let value = code.payloadStringValue,
+                   Wine.normalizedBarcode(value).count >= 6, barcode.wrappedValue != value {
+                    barcode.wrappedValue = value
+                }
+            }
             lines.wrappedValue = items.compactMap { item in
                 guard case .text(let text) = item else { return nil }
                 let height = Double(abs(text.bounds.bottomLeft.y - text.bounds.topLeft.y))
@@ -232,3 +250,33 @@ struct LiveTextScanner: UIViewControllerRepresentable {
     }
 }
 #endif
+
+/// "Already in your cellar": shown when the camera sees the barcode of a known wine.
+private struct KnownWineCard: View {
+    @Environment(CellarModel.self) private var model
+    let wine: Wine
+    let use: () -> Void
+
+    var body: some View {
+        let count = model.cellar.bottles(of: wine.id).count
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                BottleEnd(color: wine.color, size: 34)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Already in your cellar").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(verbatim: wine.displayName).font(.headline).lineLimit(2)
+                    Text("\(count) bottles").font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            Button(action: use) {
+                ActionLabel("Use This Wine", systemImage: "checkmark.circle")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("action.scan.known")
+        }
+        .accessibilityElement(children: .contain)
+        .sensoryFeedback(.success, trigger: wine.id)
+    }
+}

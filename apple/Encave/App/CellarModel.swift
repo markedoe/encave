@@ -40,7 +40,26 @@ final class CellarModel {
         sync = SyncService(model: self, demo: demo)
     }
 
+    /// The app's model, for Siri and Shortcuts (App Intents) while the app runs.
+    private(set) static weak var current: CellarModel?
+
+    /// A wine to show, asked by Spotlight, Shortcuts or a notification.
+    var openWineRequest: UUID?
+
+    func open(wine id: UUID) {
+        guard cellar.wines[id] != nil else { return }
+        sheet = nil
+        selectedTab = .cellar
+        openWineRequest = id
+    }
+
     static func live() -> CellarModel {
+        let model = makeLive()
+        current = model
+        return model
+    }
+
+    private static func makeLive() -> CellarModel {
         // Launch test in CI: sample data in memory, never written to disk.
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--sample-data") {
@@ -136,6 +155,53 @@ final class CellarModel {
         showToast(String(localized: "Deleted \(wine.displayName)")) { [weak self] in
             self?.update { $0 = snapshot }
         }
+    }
+
+    // MARK: Several wines at once (one Undo for all)
+
+    func place(_ wineIDs: Set<UUID>, inRack rackID: UUID) {
+        let snapshot = cellar
+        var total = 0
+        guard update({ total = try $0.place(wines: wineIDs, in: rackID) }) else { return }
+        guard total > 0 else {
+            showToast(String(localized: "No free place in this rack for bottles without a place."))
+            return
+        }
+        successCount += 1
+        showToast(String(localized: "Bottles placed: \(total)")) { [weak self] in self?.update { $0 = snapshot } }
+    }
+
+    func unplace(_ wineIDs: Set<UUID>) {
+        let snapshot = cellar
+        var moved = 0
+        guard update({ moved = $0.unplace(wines: wineIDs) }), moved > 0 else { return }
+        showToast(String(localized: "Bottles taken out of their places: \(moved)")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
+
+    /// Bottles not found where they should be: they stay in the cellar without a place.
+    func takeOut(_ bottleIDs: Set<UUID>) {
+        let snapshot = cellar
+        guard update({ cellar in bottleIDs.forEach { cellar.bottles[$0]?.slot = nil } }) else { return }
+        showToast(String(localized: "Bottles taken out of their places: \(bottleIDs.count)")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
+
+    /// Bottles no longer in the cellar (given away, drunk elsewhere, broken).
+    func markGone(_ bottleIDs: Set<UUID>) {
+        let snapshot = cellar
+        guard update({ cellar in try bottleIDs.forEach { try cellar.markGone($0) } }) else { return }
+        showToast(String(localized: "Bottles removed from the cellar: \(bottleIDs.count)")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
+
+    func deleteWines(_ wineIDs: Set<UUID>) {
+        let snapshot = cellar
+        guard update({ cellar in wineIDs.forEach { cellar.deleteWine($0) } }) else { return }
+        showToast(String(localized: "Wines deleted: \(wineIDs.count)")) { [weak self] in self?.update { $0 = snapshot } }
     }
 
     func addDiscovery(_ discovery: Discovery, wine: Wine) {

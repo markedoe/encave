@@ -35,6 +35,12 @@ struct MacRoot: View {
         }
         // Menu commands and "Show in Rack" set the selected tab: follow them.
         .onChange(of: model.selectedTab, initial: true) { _, tab in follow(tab) }
+        .onChange(of: model.openWineRequest, initial: true) { _, id in
+            guard let id else { return }
+            destination = .cellar
+            wine = id
+            model.openWineRequest = nil
+        }
         .onChange(of: model.highlightedSlot) { _, slot in
             if let slot { destination = .rack(slot.rackID) }
         }

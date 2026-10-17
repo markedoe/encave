@@ -48,6 +48,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "With AI (optional)", body: "If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar."),
                 HelpSection(title: "What you typed stays", body: "A new scan or the AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept."),
                 HelpSection(title: "The photo", body: "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine."),
+                HelpSection(title: "Barcodes", body: "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online."),
             ]),
             HelpArticle(topic: .racks, title: "Racks",
                         summary: "Describe your storage so every bottle has a place.", systemImage: "square.grid.3x3", sections: [
@@ -59,6 +60,8 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Finding a bottle", body: "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.", systemImage: "magnifyingglass"),
                 HelpSection(title: "Zooming", body: "Pinch to zoom in and out, or double-tap a spot. On the Mac, pinch on the trackpad or use ⌘+ and ⌘–. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.", systemImage: "plus.magnifyingglass"),
                 HelpSection(title: "Moving bottles", body: "Tap a bottle, then **Move**, then the new place. Tapping another bottle swaps them; a bin takes the bottle if it has room."),
+                HelpSection(title: "Drag and drop", body: "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle to swap them."),
+                HelpSection(title: "Several wines at once", body: "In the Cellar, choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back."),
                 HelpSection(title: "Irregular racks", body: "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row."),
             ]),
             HelpArticle(topic: .tonight, title: "Tonight and drinking windows",
@@ -66,6 +69,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Maturity", body: "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color."),
                 HelpSection(title: "Suggestions", body: "Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why."),
                 HelpSection(title: "Serving", body: "Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant."),
+                HelpSection(title: "Monthly reminder", body: "Turn on **Monthly Reminder** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak. It is worked out on this device."),
             ]),
             HelpArticle(topic: .drinking, title: "Drinking a bottle",
                         summary: "Keep track of what you opened and what you thought.", systemImage: "wineglass", sections: [
@@ -87,7 +91,8 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Staying in sync", body: "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins."),
                 HelpSection(title: "Bottles already on the new device", body: "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar)."),
                 HelpSection(title: "Removing a device", body: "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted."),
-                HelpSection(title: "Privacy", body: "Devices talk directly on your network; no server is involved. Every exchange is encrypted from end to end with a new key each time. The 6-digit code only helps the devices find each other: the comparison is what protects you."),
+                HelpSection(title: "Away from home", body: "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home** and enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi."),
+                HelpSection(title: "Privacy", body: "On the same Wi-Fi, devices talk directly; no server is involved. Through a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you."),
             ]),
             HelpArticle(topic: .ai, title: "Setting up AI",
                         summary: "Use your own AI service for label recognition.", systemImage: "cpu", sections: [
@@ -111,13 +116,14 @@ struct HelpArticle: Identifiable {
                 HelpSection(body: "The only data that can leave the device is the label photo, and only if you set up an AI service yourself."),
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
-            HelpArticle(topic: .shortcuts, title: "Keyboard shortcuts",
-                        summary: "On the Mac, and on iPad with a keyboard.", systemImage: "keyboard", sections: [
+            HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",
+                        summary: "Keyboard shortcuts, Siri, Shortcuts and Spotlight.", systemImage: "keyboard", sections: [
                 HelpSection(title: "⌘N", body: "Add bottles"),
                 HelpSection(title: "⌥⌘N", body: "Remember a wine tasted elsewhere"),
                 HelpSection(title: "⇧⌘N", body: "Add a rack"),
                 HelpSection(title: "⌘1 – ⌘4", body: "Cellar, Racks, Tonight, Journal"),
                 HelpSection(title: "⌘+ / ⌘–", body: "Zoom a rack in and out"),
+                HelpSection(title: "Siri and Shortcuts", body: "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device."),
             ]),
         ]
     }

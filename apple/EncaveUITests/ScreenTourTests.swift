@@ -50,6 +50,7 @@ final class ScreenTourTests: XCTestCase {
         openSection(0, "cellar")
         snapshot("cellar")
         checkCellarFigures()
+        checkSelection()
         #if os(iOS)
         // The swipe actions on a wine ("Drink" on the leading edge). iPhone only: on iPad
         // the revealed action can cover the narrow list column.
@@ -148,6 +149,34 @@ final class ScreenTourTests: XCTestCase {
             closeSheet()
         }
         #endif
+    }
+
+    // MARK: Selecting several wines
+
+    private func checkSelection() {
+        let sort = element("cellar.sort")
+        guard sort.waitForExistence(timeout: 3), sort.isHittable else {
+            XCTFail("cellar: no sort menu")
+            return
+        }
+        sort.press()
+        let select = element("cellar.select")
+        guard select.waitForExistence(timeout: 3) else {
+            XCTFail("cellar: no Select Wines")
+            app.typeKeyEscapeIfMac()
+            return
+        }
+        select.press()
+        let row = element("wine.select.row")
+        if row.waitForExistence(timeout: 3) {
+            row.press()
+            snapshot("cellar-select")
+        } else {
+            XCTFail("cellar: no wines to select")
+        }
+        let done = element("cellar.select.done")
+        if done.waitForExistence(timeout: 2) { done.press() }
+        sleep(1)
     }
 
     // MARK: Devices
@@ -266,6 +295,18 @@ final class ScreenTourTests: XCTestCase {
             chip.press()
         } else {
             XCTFail("main rack: no wine in the key")
+        }
+
+        // Checking the rack: tap the bottles found.
+        let audit = element("rack.audit")
+        if audit.waitForExistence(timeout: 2), audit.isHittable {
+            audit.press()
+            cell.press()
+            snapshot("rack-audit")
+            let cancel = element("sheet.cancel")
+            if cancel.waitForExistence(timeout: 2) { cancel.press() }
+        } else {
+            XCTFail("main rack: no Check This Rack button")
         }
 
         #if os(iOS)
@@ -497,6 +538,13 @@ private extension XCUIElement {
 }
 
 private extension XCUIApplication {
+    /// Closes an open menu on the Mac.
+    func typeKeyEscapeIfMac() {
+        #if os(macOS)
+        typeKey(.escape, modifierFlags: [])
+        #endif
+    }
+
     /// iPhone-like width (no split view).
     var horizontalSizeClassIsCompact: Bool {
         #if os(iOS)

@@ -26,6 +26,14 @@ final class SyncService {
     /// This device was removed from the cellar by another device.
     private(set) var wasRemoved = false
 
+    /// Away from home: where the encrypted files are (iCloud or a relay), if anywhere.
+    private(set) var remoteStorage: RemoteStorage?
+    /// The key of the cellar's remote files (Keychain).
+    private(set) var remoteKey: CellarKey?
+    private(set) var lastRemoteSync: Date?
+    private(set) var isSyncingRemotely = false
+    private(set) var remoteProblem: String?
+
     let identity: DeviceIdentity
     let deviceName: String
     let platform: String
@@ -39,6 +47,9 @@ final class SyncService {
     @ObservationIgnored private var endpoints: [UUID: NWEndpoint] = [:]
     @ObservationIgnored private var pendingSync: Task<Void, Never>?
     @ObservationIgnored private let files: Files?
+    @ObservationIgnored private var remoteProgress = RemoteProgress()
+    @ObservationIgnored private var remoteLoop: Task<Void, Never>?
+    @ObservationIgnored private var pendingRemote: Task<Void, Never>?
 
     var isSetUp: Bool { membership != nil }
     /// Other devices of the cellar.
@@ -56,6 +67,9 @@ final class SyncService {
         state = (try? files.syncState.load()) ?? nil
         lastSync = files.loadLastSync()
         if membership != nil, state == nil { state = .starting(with: model.cellar, device: identity.id) }
+        remoteStorage = UserDefaults.standard.string(forKey: Self.storageKey).flatMap(RemoteStorage.init)
+        remoteKey = Keychain.getData(Self.cellarKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) }
+        remoteProgress = files.loadRemoteProgress()
         model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
     }
 
@@ -66,10 +80,12 @@ final class SyncService {
         guard isSetUp, !isDemo, !otherDevices.isEmpty else { return }
         startListener()
         startBrowser()
+        startRemoteLoop()
     }
 
     /// Stops the network (the app goes to the background, where iOS would suspend it anyway).
     func pause() {
+        remoteLoop?.cancel(); remoteLoop = nil
         listener?.cancel(); listener = nil
         browser?.cancel(); browser = nil
         nearby = []
@@ -105,6 +121,22 @@ final class SyncService {
         lastSync[device] = nil
         save()
         syncNow()
+        // Away from home: a new key, so the removed device cannot read anything new.
+        // Remembered until done, in case the relay cannot be reached now.
+        if remoteKey != nil {
+            UserDefaults.standard.set(true, forKey: Self.rotationKey)
+            Task { await remoteRound() }
+        }
+    }
+
+    /// Rotates the remote key if a removal is waiting for it, and returns the key to use.
+    private func rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot) async throws -> CellarKey {
+        guard UserDefaults.standard.bool(forKey: Self.rotationKey) else { return key }
+        let newKey = try await RemoteSync.rotate(store: store, identity: identity, from: key, local: local,
+                                                 storage: remoteStorage?.string)
+        storeRemoteKey(newKey)
+        UserDefaults.standard.removeObject(forKey: Self.rotationKey)
+        return newKey
     }
 
     /// Stops syncing on this device. The cellar stays here as it is.
@@ -115,6 +147,11 @@ final class SyncService {
         lastSync = [:]
         wasRemoved = false
         problem = nil
+        remoteStorage = nil
+        UserDefaults.standard.removeObject(forKey: Self.storageKey)
+        UserDefaults.standard.removeObject(forKey: Self.rotationKey)
+        storeRemoteKey(nil)
+        remoteProgress = RemoteProgress()
         files?.deleteAll()
     }
 
@@ -135,6 +172,7 @@ final class SyncService {
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
             self?.syncNow()
+            self?.syncRemotely()
         }
     }
 
@@ -178,8 +216,10 @@ final class SyncService {
                 try await transport.start()
                 let (channel, peer) = try await SyncHandshake.initiate(over: transport, identity: identity, membership: membership)
                 guard let local = snapshot() else { return }
-                let result = try await SyncExchange.run(over: channel, isInitiator: true, local: local, photos: Self.photos)
+                let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
+                                                                       photos: Self.photos, remote: remoteInfo)
                 apply(result, from: peer.id)
+                adoptRemote(remote)
             } catch {
                 report(error)
             }
@@ -198,11 +238,14 @@ final class SyncService {
                 syncing.insert(peer.id)
                 defer { syncing.remove(peer.id) }
                 guard let local = snapshot() else { return }
-                let result = try await SyncExchange.run(over: channel, isInitiator: false, local: local, photos: Self.photos)
+                let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
+                                                                       photos: Self.photos, remote: remoteInfo)
                 apply(result, from: peer.id)
+                adoptRemote(remote)
             } catch {
                 // Someone else's connection failing is not this device's problem to show.
                 if case SyncError.unknownDevice = error { return }
+                if case SyncError.removedDevice = error { return }
                 report(error)
             }
         }
@@ -210,10 +253,14 @@ final class SyncService {
 
     func report(_ error: Error) {
         switch error {
-        case SyncError.unknownDevice:
+        case SyncError.removedDevice:
             wasRemoved = true
             problem = String(localized: "This device was removed from the cellar on another device.")
             pause()
+        case SyncError.unknownDevice:
+            // The other device has not heard of this one yet: it will after syncing with
+            // the device that added this one. Nothing to show.
+            break
         case SyncError.authenticationFailed:
             problem = String(localized: "A device could not prove it belongs to this cellar. Nothing was exchanged.")
         case SyncError.unsupportedVersion:
@@ -225,6 +272,125 @@ final class SyncService {
 
     nonisolated static var photos: PhotoAccess {
         PhotoAccess(data: { PhotoStore.data(for: $0) }, save: { PhotoStore.store($1, id: $0) })
+    }
+
+    // MARK: Away from home
+
+    static let storageKey = "sync.remoteStorage"
+    static let cellarKeyAccount = "sync.cellarKey"
+    static let rotationKey = "sync.rotationPending"
+
+    var remoteInfo: RemoteInfo? {
+        remoteKey.map { RemoteInfo(key: $0, storage: remoteStorage?.string) }
+    }
+
+    /// Turns syncing away from home on with a storage (or off with nil). Checks the
+    /// storage first. The first device to turn it on creates the cellar's key and
+    /// gives it to the others.
+    func setRemoteStorage(_ storage: RemoteStorage?) async throws {
+        guard let storage else {
+            remoteStorage = nil
+            UserDefaults.standard.removeObject(forKey: Self.storageKey)
+            remoteLoop?.cancel(); remoteLoop = nil
+            return
+        }
+        guard let store = storage.store() else { throw RemoteSyncError.unavailable("storage") }
+        try await storage.check()
+        setUpIfNeeded()
+        remoteStorage = storage
+        UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
+        if remoteKey == nil, let membership {
+            // Maybe another device already turned it on and left a key for this one.
+            if let grant = try? await RemoteSync.receiveGrant(store: store, identity: identity, membership: membership,
+                                                             newerThan: 0) {
+                storeRemoteKey(grant.cellarKey)
+            } else {
+                let key = CellarKey.random(cellarID: membership.cellarID)
+                storeRemoteKey(key)
+                try await RemoteSync.grant(key, to: membership.active, store: store, identity: identity,
+                                           storage: storage.string)
+            }
+        }
+        startRemoteLoop()
+        await remoteRound()
+    }
+
+    /// A key and storage received from a device on the network.
+    func adoptRemote(_ info: RemoteInfo?) {
+        guard let info, let membership, info.key.cellarID == membership.cellarID else { return }
+        if info.key.epoch > (remoteKey?.epoch ?? 0) { storeRemoteKey(info.key) }
+        // Only a storage this device can use: an HTTPS relay, or iCloud in a build that has it.
+        if remoteStorage == nil, let storage = info.storage.flatMap(RemoteStorage.init), storage.isAcceptedFromPeer {
+            remoteStorage = storage
+            UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
+            startRemoteLoop()
+        }
+    }
+
+    /// Soon after a change, sends it away from home.
+    func syncRemotely() {
+        guard remoteStorage != nil else { return }
+        pendingRemote?.cancel()
+        pendingRemote = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            await self?.remoteRound()
+        }
+    }
+
+    /// While the app is open: a round every minute, to pick up changes from devices away.
+    private func startRemoteLoop() {
+        guard remoteStorage != nil, remoteLoop == nil, !isDemo else { return }
+        remoteLoop = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.remoteRound()
+                try? await Task.sleep(for: .seconds(60))
+            }
+        }
+    }
+
+    func remoteRound() async {
+        guard let store = remoteStorage?.store(), !isSyncingRemotely, !wasRemoved, let local = snapshot() else { return }
+        isSyncingRemotely = true
+        defer { isSyncingRemotely = false }
+        do {
+            var key = remoteKey
+            if key == nil {
+                key = try await RemoteSync.receiveGrant(store: store, identity: identity, membership: local.membership,
+                                                        newerThan: 0)?.cellarKey
+                if let key { storeRemoteKey(key) }
+            }
+            guard var key else { return }
+            do {
+                key = try await rotateIfNeeded(store: store, key: key, local: local)
+            } catch {
+                remoteProblem = String(localized: "The removed device could not be shut out of syncing away from home yet. It will be tried again.")
+                return
+            }
+            let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: local,
+                                                  progress: remoteProgress, photos: Self.photos)
+            if let newKey = result.newKey { storeRemoteKey(newKey) }
+            remoteProgress = result.progress
+            files?.saveRemoteProgress(remoteProgress)
+            if let snapshot = result.snapshot { apply(snapshot, from: nil) }
+            lastRemoteSync = .now
+            remoteProblem = nil
+        } catch RemoteSyncError.unauthorized {
+            remoteProblem = remoteStorage == .iCloud
+                ? String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
+                : String(localized: "The relay refused this device. Check the relay address.")
+        } catch RemoteSyncError.quotaExceeded {
+            remoteProblem = remoteStorage == .iCloud
+                ? String(localized: "Your iCloud storage is full.")
+                : String(localized: "The relay is full. Remove old photos or use another relay.")
+        } catch {
+            remoteProblem = String(localized: "The storage cannot be reached. Syncing will resume when it can.")
+        }
+    }
+
+    private func storeRemoteKey(_ key: CellarKey?) {
+        remoteKey = key
+        Keychain.setData(key.flatMap { try? JSONEncoder().encode($0) }, for: Self.cellarKeyAccount)
     }
 
     // MARK: Network
@@ -367,6 +533,16 @@ final class SyncService {
 
         private var devicesURL: URL { folder.appendingPathComponent("devices.json") }
         private var lastSyncURL: URL { folder.appendingPathComponent("last-sync.json") }
+        private var remoteURL: URL { folder.appendingPathComponent("remote.json") }
+
+        func loadRemoteProgress() -> RemoteProgress {
+            guard let data = try? Data(contentsOf: remoteURL) else { return RemoteProgress() }
+            return (try? JSONDecoder().decode(RemoteProgress.self, from: data)) ?? RemoteProgress()
+        }
+
+        func saveRemoteProgress(_ progress: RemoteProgress) {
+            try? JSONEncoder().encode(progress).write(to: remoteURL, options: [.atomic])
+        }
 
         func loadMembership() -> Membership? {
             guard let data = try? Data(contentsOf: devicesURL) else { return nil }
@@ -389,7 +565,55 @@ final class SyncService {
         }
 
         func deleteAll() {
-            for url in [devicesURL, lastSyncURL, syncState.fileURL] { try? FileManager.default.removeItem(at: url) }
+            for url in [devicesURL, lastSyncURL, remoteURL, syncState.fileURL] { try? FileManager.default.removeItem(at: url) }
+        }
+    }
+}
+
+/// Where a cellar's encrypted files are kept for devices that are apart.
+enum RemoteStorage: Equatable {
+    case iCloud
+    case relay(URL)
+
+    /// As stored and as passed to other devices: "icloud" or the relay URL.
+    var string: String {
+        switch self {
+        case .iCloud: "icloud"
+        case .relay(let url): url.absoluteString
+        }
+    }
+
+    init?(_ string: String) {
+        if string == "icloud" {
+            self = .iCloud
+        } else if let url = URL(string: string), let scheme = url.scheme, ["https", "http"].contains(scheme), url.host() != nil {
+            self = .relay(url)
+        } else {
+            return nil
+        }
+    }
+
+    /// A storage told by another device: an HTTPS relay, or iCloud if this build has it.
+    var isAcceptedFromPeer: Bool {
+        switch self {
+        case .iCloud: CloudKitMailboxStore.isConfigured
+        case .relay(let url): url.scheme == "https"
+        }
+    }
+
+    func store() -> MailboxStore? {
+        switch self {
+        case .iCloud: CloudKitMailboxStore.make()
+        case .relay(let url): RelayMailboxStore(baseURL: url)
+        }
+    }
+
+    func check() async throws {
+        switch self {
+        case .iCloud:
+            guard await CloudKitMailboxStore.accountAvailable() else { throw RemoteSyncError.unauthorized }
+        case .relay(let url):
+            try await RelayMailboxStore(baseURL: url).check()
         }
     }
 }

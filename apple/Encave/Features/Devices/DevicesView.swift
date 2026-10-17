@@ -72,6 +72,27 @@ struct DevicesView: View {
                 Text("Adding a device shows a code on this one; type or scan it on the other. Both must be on the same Wi-Fi.")
             }
 
+            if !sync.otherDevices.isEmpty {
+                Section {
+                    NavigationLink {
+                        RemoteSyncView()
+                    } label: {
+                        LabeledContent {
+                            switch sync.remoteStorage {
+                            case nil: Text("Off")
+                            case .iCloud: Text(verbatim: "iCloud")
+                            case .relay: Text("Relay")
+                            }
+                        } label: {
+                            Label("Sync Away from Home", systemImage: "globe")
+                        }
+                    }
+                    .accessibilityIdentifier("devices.remote")
+                } footer: {
+                    Text("Keeps devices in sync when they are not on the same Wi-Fi, through a relay that only stores encrypted data.")
+                }
+            }
+
             Section {
                 Label("Encrypted from end to end", systemImage: "lock.shield")
                 Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.")
@@ -154,6 +175,138 @@ private struct DeviceRow: View {
     }
 }
 
+// MARK: - Away from home
+
+/// Syncing away from home: through the user's iCloud, or a relay; and what each can see.
+struct RemoteSyncView: View {
+    @Environment(CellarModel.self) private var model
+    @State private var address = ""
+    @State private var checking = false
+    @State private var error: String?
+
+    var body: some View {
+        let sync = model.sync!
+        Form {
+            if let storage = sync.remoteStorage {
+                Section {
+                    switch storage {
+                    case .iCloud:
+                        LabeledContent("Storage") { Text(verbatim: "iCloud") }
+                    case .relay(let url):
+                        LabeledContent("Relay") { Text(verbatim: url.host() ?? url.absoluteString) }
+                    }
+                    LabeledContent("Status") {
+                        if sync.isSyncingRemotely {
+                            Text("Syncing…")
+                        } else if let problem = sync.remoteProblem {
+                            Text(problem).foregroundStyle(.orange)
+                        } else if let date = sync.lastRemoteSync {
+                            Text("Synced \(date.formatted(.relative(presentation: .named)))")
+                        } else {
+                            Text("Not synced yet")
+                        }
+                    }
+                    Button {
+                        Task { await sync.remoteRound() }
+                    } label: {
+                        Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .disabled(sync.isSyncingRemotely)
+                    Button("Turn Off", role: .destructive) {
+                        Task { try? await sync.setRemoteStorage(nil) }
+                    }
+                } footer: {
+                    Text("Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.")
+                }
+            } else {
+                if CloudKitMailboxStore.isConfigured {
+                    Section {
+                        Button {
+                            turnOn(.iCloud)
+                        } label: {
+                            Label("Use iCloud", systemImage: "icloud")
+                        }
+                        .disabled(checking)
+                        .accessibilityIdentifier("remote.icloud")
+                    } header: {
+                        Text("iCloud")
+                    } footer: {
+                        Text("For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.")
+                    }
+                }
+                Section {
+                    TextField("Relay address", text: $address, prompt: Text(verbatim: "https://"))
+                        .urlField()
+                        .accessibilityIdentifier("remote.address")
+                    Button {
+                        if let url = validURL { turnOn(.relay(url)) }
+                    } label: {
+                        if checking { ProgressView() } else { Text("Check and Turn On") }
+                    }
+                    .disabled(checking || validURL == nil)
+                } header: {
+                    Text("Relay")
+                } footer: {
+                    Text("For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.")
+                }
+                if let error {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                    }
+                }
+            }
+
+            Section {
+                Label("Only encrypted files are stored. Neither Apple nor a relay can see your wines, photos or device names.",
+                      systemImage: "lock.shield")
+                Label("The storage sees when devices sync, how much they send and, for a relay, their IP addresses.",
+                      systemImage: "eye")
+                Label("Removing a device gives the others a new key, so it can no longer read anything new.",
+                      systemImage: "key")
+            } header: {
+                Text("Privacy")
+            } footer: {
+                Text("Without syncing away from home, devices still sync on the same Wi-Fi.")
+            }
+
+            Section {
+                Link(destination: URL(string: "https://github.com/markedoe/encave/blob/main/relay/README.md")!) {
+                    Label("How to Run a Relay", systemImage: "server.rack")
+                }
+                HelpLink(topic: .devices, title: "Help with devices")
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("Away from Home")
+    }
+
+    /// HTTPS, or HTTP only for a server on the local network.
+    private var validURL: URL? {
+        let text = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: text.contains("://") ? text : "https://" + text), let host = url.host(), !host.isEmpty
+        else { return nil }
+        if url.scheme == "https" { return url }
+        if url.scheme == "http", host == "localhost" || host.hasSuffix(".local") { return url }
+        return nil
+    }
+
+    private func turnOn(_ storage: RemoteStorage) {
+        checking = true
+        error = nil
+        Task {
+            do {
+                try await model.sync.setRemoteStorage(storage)
+            } catch {
+                switch storage {
+                case .iCloud: self.error = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
+                case .relay: self.error = String(localized: "This address does not answer as an Encave relay.")
+                }
+            }
+            checking = false
+        }
+    }
+}
+
 // MARK: - Inviting
 
 /// Shows a code and a QR code, then the confirmation step.
@@ -227,7 +380,12 @@ private struct CodeCard: View {
                         .foregroundStyle(.secondary)
                 }
                 HStack(spacing: 8) {
-                    ProgressView()
+                    // A spinner never lets UI tests see the app idle: a still symbol in the screen tour.
+                    if session.isDemo {
+                        Image(systemName: "hourglass").accessibilityHidden(true)
+                    } else {
+                        ProgressView()
+                    }
                     Text("Waiting for the other device…")
                 }
                 .foregroundStyle(.secondary)

@@ -1,13 +1,20 @@
 import SwiftUI
+import UserNotifications
 
 @main
 struct EncaveApp: App {
     @State private var model = CellarModel.live()
+    private let notifications = NotificationRouter()
+
+    init() {
+        UNUserNotificationCenter.current().delegate = notifications
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(model)
+                .onAppear { notifications.model = model }
         }
         #if os(macOS)
         // Sized to the screen: a fixed size larger than a small display put the window off screen.

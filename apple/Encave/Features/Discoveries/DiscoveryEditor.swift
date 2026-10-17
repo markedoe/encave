@@ -115,6 +115,14 @@ struct DiscoveryEditor: View {
                 }
             }
             .onAppear(perform: load)
+            .onChange(of: scan.matchedWine) { _, wine in
+                guard let wine else { return }
+                withAnimation {
+                    draft = WineDraft(wine)
+                    scan.scanned = true
+                }
+                scan.matchedWine = nil
+            }
         }
         .macSheetFrame(width: 520, height: 720)
     }

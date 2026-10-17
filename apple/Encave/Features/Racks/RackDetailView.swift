@@ -21,6 +21,10 @@ struct RackDetailView: View {
     @State private var showsList = false
     @State private var listSelection: UUID?
     @State private var afterList: AppSheet?
+    /// Checking the rack: places whose bottles were found.
+    @State private var auditing = false
+    @State private var checked: Set<Slot> = []
+    @State private var confirmingAudit = false
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
@@ -30,6 +34,22 @@ struct RackDetailView: View {
                 .inlineTitle()
                 .toolbar { toolbar }
                 .navigationDestination(for: WineRoute.self) { WineDetailView(wineID: $0.id) }
+                .confirmationDialog(
+                    Text("Bottles not found: \(missing(rack).count)"),
+                    isPresented: $confirmingAudit, titleVisibility: .visible
+                ) {
+                    Button("Take Them Out of the Rack") {
+                        model.takeOut(Set(missing(rack).map(\.id)))
+                        withAnimation { auditing = false; checked = [] }
+                    }
+                    Button("Mark Them as Gone", role: .destructive) {
+                        model.markGone(Set(missing(rack).map(\.id)))
+                        withAnimation { auditing = false; checked = [] }
+                    }
+                    Button("Keep Checking", role: .cancel) {}
+                } message: {
+                    Text("Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.")
+                }
                 .sheet(item: $openCell) { open in
                     CellSheet(rack: rack, cell: open.cell) { action in
                         openCell = nil
@@ -83,10 +103,11 @@ struct RackDetailView: View {
     private func canvas(_ rack: Rack) -> some View {
         let grid = FittedRackGrid(
             rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
-            selected: moving?.slot.map { [$0] } ?? [],
+            selected: auditing ? checked : (moving?.slot.map { [$0] } ?? []),
             highlighted: model.highlightedSlot,
             selectedCell: selectedCell, focusWine: focusWine,
-            onTap: { cell, bottles in tap(rack, cell, bottles) }
+            onTap: { cell, bottles in tap(rack, cell, bottles) },
+            onDrop: { bottleID, cell in drop(bottleID, on: cell, rack) }
         )
         #if os(macOS)
         grid
@@ -104,7 +125,13 @@ struct RackDetailView: View {
     @ViewBuilder
     private func bottomBar(_ rack: Rack) -> some View {
         VStack(spacing: 0) {
-            if let moving {
+            if auditing {
+                AuditBar(checked: checked.count, total: auditTotal(rack)) {
+                    finishAudit(rack)
+                } cancel: {
+                    withAnimation { auditing = false; checked = [] }
+                }
+            } else if let moving {
                 let displayName = model.cellar.wines[moving.wineID]?.displayName ?? ""
                 HStack {
                     Label("Tap where to put \(displayName)", systemImage: "hand.tap")
@@ -147,6 +174,16 @@ struct RackDetailView: View {
             Button { listSelection = nil; showsList = true } label: { Label("Bottle List", systemImage: "list.bullet") }
                 .accessibilityIdentifier("rack.list")
             #endif
+            Button {
+                selectedCell = nil
+                moving = nil
+                checked = []
+                withAnimation { auditing = true }
+            } label: {
+                Label("Check This Rack", systemImage: "checklist")
+            }
+            .disabled(auditing)
+            .accessibilityIdentifier("rack.audit")
             Button { model.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
         }
     }
@@ -171,7 +208,47 @@ struct RackDetailView: View {
         }
     }
 
+    private func auditTotal(_ rack: Rack) -> Int {
+        model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }.count
+    }
+
+    private func missing(_ rack: Rack) -> [Bottle] {
+        model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id && !checked.contains($0.slot!) }
+    }
+
+    private func finishAudit(_ rack: Rack) {
+        if missing(rack).isEmpty {
+            withAnimation { auditing = false; checked = [] }
+            model.showToast(String(localized: "Every bottle is where it should be."))
+        } else {
+            confirmingAudit = true
+        }
+    }
+
+    /// A bottle dragged onto a place: moves it there, or swaps it with the bottle there.
+    private func drop(_ bottleID: UUID, on cell: RackCell, _ rack: Rack) -> Bool {
+        guard let bottle = model.cellar.bottles[bottleID], bottle.status == .inCellar else { return false }
+        guard bottle.slot?.cell != cell else { return false }
+        if let free = model.cellar.freeSlot(in: cell) {
+            model.move(bottle.id, to: free)
+        } else if rack.positionsPerCell == 1, let from = bottle.slot, from.rackID == rack.id {
+            model.swap(from, Slot(rackID: cell.rackID, row: cell.row, column: cell.column))
+        } else {
+            model.showToast(String(localized: "This place is full."))
+            return false
+        }
+        withAnimation(.snappy) { selectedCell = rack.positionsPerCell == 1 ? cell : nil }
+        return true
+    }
+
     private func tap(_ rack: Rack, _ cell: RackCell, _ bottles: [Bottle]) {
+        if auditing {
+            // A tap says "the bottles of this place are here" (or undoes it).
+            let slots = Set(bottles.compactMap(\.slot))
+            guard !slots.isEmpty else { return }
+            if slots.isSubset(of: checked) { checked.subtract(slots) } else { checked.formUnion(slots) }
+            return
+        }
         if let bottle = moving {
             moving = nil
             guard let from = bottle.slot, from.cell != cell else { return }
@@ -457,5 +534,37 @@ private struct BottleInCellRow: View {
             .controlSize(.regular)
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// While checking a rack: how many bottles were found, and Finish.
+private struct AuditBar: View {
+    let checked: Int
+    let total: Int
+    let finish: () -> Void
+    let cancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Tap each bottle you find in the rack.", systemImage: "checklist")
+                .font(.subheadline.weight(.medium))
+            ProgressView(value: Double(checked), total: Double(max(total, 1)))
+                .tint(Color.accentColor)
+            HStack {
+                Text("Found: \(checked) of \(total)")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Cancel", action: cancel)
+                    .accessibilityIdentifier("sheet.cancel")
+                Button(action: finish) { ActionLabel("Finish", systemImage: "checkmark") }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("action.audit.finish")
+            }
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding()
+        .accessibilityElement(children: .contain)
     }
 }

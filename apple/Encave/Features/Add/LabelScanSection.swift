@@ -16,12 +16,15 @@ final class LabelScan {
     /// A scan filled the form: show the wine as a card, until the user wants to edit it.
     var scanned = false
     var editingDetails = false
+    /// The camera recognized the barcode of a wine already in the cellar.
+    var matchedWine: Wine?
 
     var showsSummary: Bool { scanned && !editingDetails }
 
     /// Result of the scanner: fill the form now, then let the AI complete it.
     func handle(_ result: LabelScanResult, image: Data?, draft: Binding<WineDraft>) {
         showsScanner = false
+        if let barcode = result.barcode { draft.wrappedValue.barcodes.appendIfNew(Wine.normalizedBarcode(barcode)) }
         apply(result, to: draft)
         withAnimation { scanned = true }
         guard let image else { return }
@@ -82,15 +85,29 @@ extension View {
 }
 
 private struct LabelScannerSheet: ViewModifier {
+    @Environment(CellarModel.self) private var model
     @Bindable var scan: LabelScan
     @Binding var draft: WineDraft
 
     func body(content: Content) -> some View {
+        let cellar = model.cellar
         content.sheet(isPresented: $scan.showsScanner) {
-            LabelScanner(acceptsPhotoWithoutText: scan.aiEnabled) { result, image in
+            LabelScanner(acceptsPhotoWithoutText: scan.aiEnabled,
+                         knownWine: { cellar.wine(barcode: $0) },
+                         onKnownWine: { wine in
+                             scan.showsScanner = false
+                             scan.matchedWine = wine
+                         }) { result, image in
                 scan.handle(result, image: image, draft: $draft)
             }
+            .environment(model)
         }
+    }
+}
+
+extension Array where Element == String {
+    mutating func appendIfNew(_ value: String) {
+        if !value.isEmpty, !contains(value) { append(value) }
     }
 }
 

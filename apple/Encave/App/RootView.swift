@@ -16,10 +16,20 @@ struct RootView: View {
                 .environment(model)
         }
         .sensoryFeedback(.success, trigger: model.successCount)
+        // The monthly reminder reflects the cellar as it is now.
+        .task(id: model.cellar) {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            await Reminders.schedule(for: model.cellar)
+            // Spotlight: an on-device index of the wines (not for the sample cellar of the screen tour).
+            if !model.sync.isDemo { await SpotlightIndex.update(model.cellar) }
+        }
         // Sync runs while the app is open; iOS suspends it in the background anyway.
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
-            case .active: model.sync.resume()
+            case .active:
+                model.sync.resume()
+                Task { await Reminders.schedule(for: model.cellar) }
             case .background: model.sync.pause()
             default: break
             }

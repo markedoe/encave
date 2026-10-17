@@ -17,6 +17,7 @@ struct WineDraft: Equatable {
     var drinkFrom: Int?
     var drinkUntil: Int?
     var photoID: String?
+    var barcodes: [String] = []
 
     init() {}
 
@@ -35,6 +36,7 @@ struct WineDraft: Equatable {
         drinkUntil = wine.drinkUntil
         windowIsAutomatic = wine.drinkFrom == nil
         photoID = wine.photoID
+        barcodes = wine.barcodes ?? []
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -55,7 +57,7 @@ struct WineDraft: Equatable {
             region: clean(region), country: clean(country), appellation: clean(appellation),
             grapes: grapes.split(whereSeparator: { $0 == "," || $0 == ";" })
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
-            drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes), photoID: photoID
+            drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes), photoID: photoID, barcodes: barcodes
         )
     }
 }
