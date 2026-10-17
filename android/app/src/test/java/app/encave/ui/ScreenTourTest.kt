@@ -1,6 +1,7 @@
 package app.encave.ui
 
 import android.graphics.Bitmap
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -16,6 +17,8 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pinch
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
@@ -56,6 +59,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
         fun configurations() = listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } }
 
+        private const val DOUBLE_TAP_WAIT = 500L
+
         /** Buttons laid out side by side that must have the same width. */
         private val pairs = listOf("action.drink" to "action.add_bottles", "action.surprise_drink" to "action.surprise_next")
     }
@@ -89,6 +94,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     private fun tap(tag: String) {
         compose.onAllNodesWithTag(tag).onFirst().performClick()
+        // Rack cells also take double taps (zoom), so a single tap counts once the double-tap time has passed.
+        if (tag.startsWith("cell.")) compose.mainClock.advanceTimeBy(DOUBLE_TAP_WAIT)
         compose.waitForIdle()
     }
 
@@ -199,10 +206,48 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     @Test
     fun rackCellSheet() {
+        // A place holding two bottles opens the list of the place.
         tab("Racks")
-        tap("rack.row.0")
+        scrollTo("rack.row.3")
+        tap("rack.row.3")
         tap("cell.0.0")
         capture("07-rack-cell-sheet")
+    }
+
+    /** Laid-out width, even when the cell is scrolled out of view. */
+    private fun widthOf(tag: String) =
+        compose.onAllNodesWithTag(tag, useUnmergedTree = true).onFirst().fetchSemanticsNode().size.width.toFloat()
+
+    @Test
+    fun rackCardKeyZoomAndList() {
+        tab("Racks")
+        tap("rack.row.0")
+        // One bottle per place: a tap shows it in a card above the key.
+        tap("cell.0.0")
+        compose.onNodeWithTag("rack.selection").assertExists()
+        capture("15-rack-card")
+        tap("rack.selection.close")
+        compose.onNodeWithTag("rack.selection").assertDoesNotExist()
+        // A wine in the key lights up its bottles.
+        tap("rack.key.wine")
+        capture("16-rack-key")
+        tap("rack.key.wine")
+        // Pinch: the rack is drawn again with bigger cells.
+        val before = widthOf("cell.0.0")
+        compose.onNodeWithTag("rack.canvas").performTouchInput {
+            pinch(center - Offset(40f, 0f), center - Offset(320f, 0f), center + Offset(40f, 0f), center + Offset(320f, 0f))
+        }
+        compose.waitForIdle()
+        val after = widthOf("cell.0.0")
+        assertTrue("$device-$language: cells did not grow ($before to $after)", after > before * 1.5f)
+        capture("17-rack-zoomed")
+        // The bottle list: picking a bottle closes it and selects the bottle.
+        tap("action.bottle_list")
+        capture("18-rack-bottle-list")
+        tap("rack.list.row")
+        compose.onNodeWithTag("rack.list").assertDoesNotExist()
+        compose.onNodeWithTag("rack.selection").assertExists()
+        capture("19-rack-list-picked")
     }
 
     @Test

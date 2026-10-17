@@ -3,6 +3,7 @@ package app.encave.ui
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -60,7 +61,9 @@ class SmokeTest {
         compose.onNodeWithText("Main rack").performClick()
         compose.waitForIdle()
         compose.onNode(hasContentDescription("A1", substring = true)).assertExists()
-        compose.onNodeWithContentDescription("Zoom in").performClick()
+        compose.onNodeWithContentDescription("Bottle list").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithTag("rack.list.row").onFirst().assertExists()
     }
 
     @Test
@@ -105,6 +108,8 @@ class SmokeTest {
         compose.onNodeWithText("Diamond bins").performClick()
         compose.waitForIdle()
         compose.onNode(hasContentDescription("Bin A1, 6 of 10 bottles", substring = true)).performClick()
+        // Cells also take double taps (zoom): a single tap counts after the double-tap time.
+        compose.mainClock.advanceTimeBy(500)
         compose.waitForIdle()
         compose.onAllNodesWithText("Add a bottle here").onFirst().assertExists()
         compose.onAllNodesWithText("Terrasses du Sud", substring = true).onFirst().assertExists()
