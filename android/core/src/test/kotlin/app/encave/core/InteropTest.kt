@@ -25,7 +25,7 @@ class InteropTest {
         assertEquals(Instant.ofEpochSecond(1_790_000_000), backup.exportedAt)
         val cellar = backup.cellar
         val sample = SampleData.cellar(year = 2026)
-        assertEquals(sample.racks.map { it.name to it.layout }, cellar.racks.map { it.name to it.layout })
+        assertEquals(sample.racks.map { it.name to it.kind }, cellar.racks.map { it.name to it.kind })
         assertEquals(sample.bottles.size, cellar.bottles.size)
         assertEquals(sample.wines.values.map { it.displayName }.toSet(), cellar.wines.values.map { it.displayName }.toSet())
         assertEquals(2, cellar.consumedBottles.size)

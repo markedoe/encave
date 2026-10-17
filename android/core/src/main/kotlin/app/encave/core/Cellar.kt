@@ -110,14 +110,24 @@ class Cellar(
 
     fun freeSlots(rack: Rack): List<Slot> {
         val taken = bottlesInCellar.mapNotNull { it.slot }.toSet()
-        val result = mutableListOf<Slot>()
-        for (row in 0 until rack.rows) {
-            for (column in 0 until rack.columns) {
-                val slot = Slot(rack.id, row, column)
-                if (slot !in taken) result += slot
-            }
-        }
-        return result
+        return rack.allSlots.filter { it !in taken }
+    }
+
+    /** Bottles of a rack by cell, front first. */
+    fun bottlesByCell(rack: Rack): Map<RackCell, List<Bottle>> =
+        bottlesInCellar.filter { it.slot?.rackId == rack.id }.groupBy { it.slot!!.cell }
+            .mapValues { (_, bottles) -> bottles.sortedBy { it.slot?.depth ?: 0 } }
+
+    /** Bottles in one cell, front first. */
+    fun bottlesIn(cell: RackCell): List<Bottle> =
+        bottlesInCellar.filter { it.slot?.cell == cell }.sortedBy { it.slot?.depth ?: 0 }
+
+    /** The first free place in a cell (the front, or the next place in a bin). */
+    fun freeSlot(cell: RackCell): Slot? {
+        val rack = rack(cell.rackId) ?: return null
+        if (!rack.contains(cell)) return null
+        val taken = bottlesIn(cell).mapNotNull { it.slot?.depth }.toSet()
+        return (0 until rack.positionsPerCell).firstOrNull { it !in taken }?.let { Slot(cell.rackId, cell.row, cell.column, it) }
     }
 
     fun occupancy(rack: Rack): Int = bottlesInCellar.count { it.slot?.rackId == rack.id }
@@ -265,7 +275,7 @@ class Cellar(
         if (index < 0) throw CellarException(CellarError.UnknownRack)
         val outside = bottlesInCellar.any {
             val slot = it.slot
-            slot != null && slot.rackId == updated.id && (slot.row >= updated.rows || slot.column >= updated.columns)
+            slot != null && slot.rackId == updated.id && !updated.contains(slot)
         }
         if (outside) throw CellarException(CellarError.RackNotEmpty)
         rackList[index] = updated
@@ -295,9 +305,7 @@ class Cellar(
 
     private fun validateInRange(slot: Slot) {
         val rack = rack(slot.rackId) ?: throw CellarException(CellarError.UnknownRack)
-        if (slot.row !in 0 until rack.rows || slot.column !in 0 until rack.columns) {
-            throw CellarException(CellarError.SlotOutOfRange)
-        }
+        if (!rack.contains(slot)) throw CellarException(CellarError.SlotOutOfRange)
     }
 
     private fun validateFree(slot: Slot) {

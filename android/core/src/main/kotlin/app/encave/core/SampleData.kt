@@ -14,6 +14,7 @@ object SampleData {
     data class Labels(
         val mainRack: String = "Main rack",
         val wineFridge: String = "Wine fridge",
+        val bins: String = "Diamond bins",
         val tastingNote: String = "Silky, red fruit, long finish.",
         val kitchen: String = "Kitchen",
         val occasion: String = "Dinner with friends",
@@ -31,9 +32,11 @@ object SampleData {
     fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = Instant.now()): Cellar {
         val cellar = Cellar()
         val main = Rack(name = labels.mainRack, rows = 6, columns = 8)
-        val small = Rack(name = labels.wineFridge, rows = 4, columns = 6, layout = RackLayout.Diamond)
+        val small = Rack(name = labels.wineFridge, kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
+        val bins = Rack(name = labels.bins, kind = RackKind.Bins, rows = 2, columns = 3, binCapacity = 10)
         cellar.addRack(main)
         cellar.addRack(small)
+        cellar.addRack(bins)
 
         val entries: List<Triple<Wine, Int, Rack?>> = listOf(
             Triple(
@@ -58,7 +61,7 @@ object SampleData {
                 Wine(name = "Terrasses du Sud", producer = "Domaine Ferrand", vintage = year - 3, color = WineColor.Red,
                     region = "Rhône", country = "France", appellation = "Gigondas", grapes = listOf("Grenache", "Syrah"),
                     drinkFrom = year + 1, drinkUntil = year + 10),
-                6, main,
+                6, bins,
             ),
             Triple(
                 Wine(name = "Rosé de Provence", producer = "Château Lumière", vintage = year - 5, color = WineColor.Rose,

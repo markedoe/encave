@@ -98,4 +98,27 @@ class SmokeTest {
         compose.waitForIdle()
         compose.onAllNodesWithText("Your impression").onFirst().assertExists()
     }
+
+    @Test
+    fun binsShowTheirBottles() {
+        tab("Racks")
+        compose.onNodeWithText("Diamond bins").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasContentDescription("Bin A1, 6 of 10 bottles", substring = true)).performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Add a bottle here").onFirst().assertExists()
+        compose.onAllNodesWithText("Terrasses du Sud", substring = true).onFirst().assertExists()
+    }
+
+    @Test
+    fun shelvesAndRackEditor() {
+        tab("Racks")
+        compose.onNodeWithText("Wine fridge").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasContentDescription("Shelf A, 1", substring = true)).assertExists()
+        compose.onNodeWithContentDescription("Edit rack").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Honeycomb rack").onFirst().performClick()
+        compose.onNode(hasText("Holds", substring = true)).assertExists()
+    }
 }

@@ -111,12 +111,12 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     modifier = Modifier.animateItem().clickable(enabled = !reordering) {
                         navigator.open(RackDetailRoute(rack.id.toString()))
                     },
-                    leadingContent = { RackPreview(rack, Modifier.padding(vertical = Dimens.xs), maxSize = 56.dp) },
+                    leadingContent = { RackThumbnail(rack, cellar, Modifier.padding(vertical = Dimens.xs)) },
                     headlineContent = { Text(rack.name, style = MaterialTheme.typography.titleMedium) },
                     supportingContent = {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                             Text(
-                                "${stringResource(rack.layout.labelRes)} · ${stringResource(R.string.rack_size, rack.rows, rack.columns)}",
+                                "${stringResource(rack.kind.labelRes)} · ${stringResource(R.string.rack_holds, rack.capacity)}",
                             )
                             Text(stringResource(R.string.rack_occupancy, used, rack.capacity))
                             LinearProgressIndicator(

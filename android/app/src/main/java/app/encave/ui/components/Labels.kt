@@ -27,7 +27,12 @@ import app.encave.core.DishCategory
 import app.encave.core.Discovery
 import app.encave.core.Maturity
 import app.encave.core.PairingReason
-import app.encave.core.RackLayout
+import app.encave.core.Bottle
+import app.encave.core.Cellar
+import app.encave.core.Rack
+import app.encave.core.RackCell
+import app.encave.core.RackKind
+import app.encave.core.Slot
 import app.encave.core.SampleData
 import app.encave.core.Wine
 import app.encave.core.WineColor
@@ -91,11 +96,68 @@ val CellarSort.labelRes: Int
         CellarSort.Region -> R.string.sort_region
     }
 
-val RackLayout.labelRes: Int
+val RackKind.labelRes: Int
     get() = when (this) {
-        RackLayout.Grid -> R.string.layout_grid
-        RackLayout.Diamond -> R.string.layout_diamond
+        RackKind.Grid -> R.string.kind_grid
+        RackKind.Staggered -> R.string.kind_staggered
+        RackKind.Shelves -> R.string.kind_shelves
+        RackKind.Bins -> R.string.kind_bins
     }
+
+val RackKind.bodyRes: Int
+    get() = when (this) {
+        RackKind.Grid -> R.string.kind_grid_body
+        RackKind.Staggered -> R.string.kind_staggered_body
+        RackKind.Shelves -> R.string.kind_shelves_body
+        RackKind.Bins -> R.string.kind_bins_body
+    }
+
+/** What a row is called in this kind of storage. */
+val RackKind.rowsRes: Int
+    get() = when (this) {
+        RackKind.Grid, RackKind.Staggered -> R.string.rows_grid
+        RackKind.Shelves -> R.string.rows_shelves
+        RackKind.Bins -> R.string.rows_bins
+    }
+
+val RackKind.columnsRes: Int
+    get() = when (this) {
+        RackKind.Grid -> R.string.columns_grid
+        RackKind.Staggered -> R.string.columns_staggered
+        RackKind.Shelves -> R.string.columns_shelves
+        RackKind.Bins -> R.string.columns_bins
+    }
+
+/** "B3", "B3, back", "Shelf B, 3, front" or "Bin B3", for people (files use "B3-2"). */
+fun Rack.displayLabel(slot: Slot, resources: Resources): String {
+    val cell = displayLabel(slot.cell, resources)
+    if (kind == RackKind.Bins || positionsPerCell <= 1) return cell
+    val depthName = resources.getString(
+        when (slot.depth) {
+            0 -> R.string.depth_front
+            positionsPerCell - 1 -> R.string.depth_back
+            else -> R.string.depth_middle
+        },
+    )
+    return resources.getString(R.string.place_with_depth, cell, depthName)
+}
+
+fun Rack.displayLabel(cell: RackCell, resources: Resources): String = when (kind) {
+    RackKind.Grid, RackKind.Staggered -> label(cell)
+    RackKind.Shelves -> resources.getString(R.string.place_shelf, Rack.rowLetters(cell.row), cell.column + 1)
+    RackKind.Bins -> resources.getString(R.string.place_bin, label(cell))
+}
+
+/** "Main rack · Shelf B, 3, back", the storage note, or null. */
+fun Cellar.displayLocation(bottle: Bottle, resources: Resources): String? {
+    val slot = bottle.slot
+    val rack = slot?.let { rack(it.rackId) }
+    if (slot != null && rack != null) return "${rack.name} · ${rack.displayLabel(slot, resources)}"
+    return locationLabel(bottle)
+}
+
+@Composable
+fun Cellar.displayLocation(bottle: Bottle): String? = displayLocation(bottle, LocalResources.current)
 
 val DishCategory.labelRes: Int
     get() = when (this) {
@@ -153,6 +215,7 @@ fun sampleLabels(resources: Resources) = SampleData.Labels(
     nose = resources.getString(R.string.sample_nose),
     palate = resources.getString(R.string.sample_palate),
     pairing = resources.getString(R.string.sample_pairing),
+    bins = resources.getString(R.string.sample_bins),
     friendsPlace = resources.getString(R.string.sample_friends_place),
     friendsNote = resources.getString(R.string.sample_friends_note),
     restaurantPlace = resources.getString(R.string.sample_restaurant_place),

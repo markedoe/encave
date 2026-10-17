@@ -102,9 +102,9 @@ class CommandTest {
         cellar.addBottles(Wine(name = "W"), slots = listOf(Slot(rack.id, 2, 2)))
         rack = rack.copy(rows = 2)
         expectError(CellarError.RackNotEmpty) { cellar.updateRack(rack) }
-        rack = rack.copy(rows = 3, layout = RackLayout.Diamond)
+        rack = rack.copy(rows = 3, kind = RackKind.Shelves)
         cellar.updateRack(rack)
-        assertEquals(RackLayout.Diamond, cellar.racks[0].layout)
+        assertEquals(RackKind.Shelves, cellar.racks[0].kind)
     }
 
     @Test
@@ -306,7 +306,7 @@ class CompatibilityTest {
          "bottles":["$bottleId",{"id":"$bottleId","wineID":"$wineId","status":"inCellar","addedAt":700000000}]}
         """
         val cellar = CellarJson.decode(json)
-        assertEquals(RackLayout.Grid, cellar.racks[0].layout)
+        assertEquals(RackKind.Grid, cellar.racks[0].kind)
         assertEquals(750, cellar.bottles[bottleId]?.sizeML)
         assertEquals("EUR", cellar.settings.currency)
         assertEquals(Cellar.CURRENT_SCHEMA_VERSION, cellar.schemaVersion)

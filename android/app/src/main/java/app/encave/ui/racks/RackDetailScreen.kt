@@ -65,6 +65,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.core.Bottle
 import app.encave.core.Rack
+import app.encave.core.Slot
+import app.encave.ui.UiText
+import app.encave.ui.components.displayLabel
+import androidx.compose.ui.platform.LocalResources
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
@@ -120,6 +124,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var scale by rememberSaveable { mutableFloatStateOf(1f) }
     var movingId by rememberSaveable { mutableStateOf<String?>(null) }
     var actionsId by rememberSaveable { mutableStateOf<String?>(null) }
+    var openCell by rememberSaveable { mutableStateOf<String?>(null) }
     var drinking by remember { mutableStateOf<Bottle?>(null) }
     val moving = movingId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
     val highlighted = route.highlightBottleId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id }?.slot }
@@ -202,25 +207,30 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         modifier = Modifier.scaled(scale),
                         highlighted = highlighted,
                         selected = setOfNotNull(moving?.slot),
-                        clickLabel = { bottle -> if (moving != null) moveHere else if (bottle == null) addHere else actions },
-                        onCellClick = { slot, bottle ->
+                        clickLabel = { bottles -> if (moving != null) moveHere else if (bottles.isEmpty()) addHere else actions },
+                        onCellClick = { cell, bottles ->
                             val source = moving
                             when {
                                 source != null -> {
-                                    val from = source.slot
-                                    when {
-                                        from == slot -> Unit
-                                        bottle == null -> viewModel.move(source.id, slot)
-                                        from != null -> viewModel.swap(from, slot)
-                                        else -> Unit
-                                    }
                                     movingId = null
+                                    val from = source.slot
+                                    if (from == null || from.cell == cell) return@RackGrid
+                                    val free = cellar.freeSlot(cell)
+                                    when {
+                                        free != null -> viewModel.move(source.id, free)
+                                        rack.positionsPerCell == 1 -> viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
+                                        else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
+                                    }
                                 }
-                                bottle != null -> actionsId = bottle.id.toString()
-                                else -> navigator.open(AddBottleRoute(rackId = rack.id.toString(), row = slot.row, column = slot.column))
+                                bottles.isEmpty() -> cellar.freeSlot(cell)?.let { free ->
+                                    navigator.open(
+                                        AddBottleRoute(rackId = rack.id.toString(), row = free.row, column = free.column, depth = free.depth),
+                                    )
+                                }
+                                else -> openCell = "${cell.row}:${cell.column}"
                             }
                         },
-                        onCellLongClick = { _, bottle -> if (bottle != null) movingId = bottle.id.toString() },
+                        onCellLongClick = { _, bottles -> bottles.firstOrNull()?.let { movingId = it.id.toString() } },
                     )
                 }
                 ZoomControls(
@@ -233,6 +243,19 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
         }
     }
 
+    val cellRef = openCell?.split(":")?.let { (r, c) -> rack?.let { app.encave.core.RackCell(it.id, r.toInt(), c.toInt()) } }
+    if (cellRef != null && rack != null) {
+        CellSheet(
+            rack = rack,
+            cell = cellRef,
+            cellar = cellar,
+            onDismiss = { openCell = null },
+            onBottle = { actionsId = it.id.toString() },
+            onAdd = cellar.freeSlot(cellRef)?.let { free ->
+                { navigator.open(AddBottleRoute(rackId = rack.id.toString(), row = free.row, column = free.column, depth = free.depth)) }
+            },
+        )
+    }
     val actionBottle = actionsId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
     if (actionBottle != null && rack != null) {
         BottleActionsSheet(
@@ -284,7 +307,7 @@ private fun BottleActionsSheet(
         Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l)) {
             ListItem(
                 headlineContent = { Text(title, style = MaterialTheme.typography.titleLarge) },
-                supportingContent = { Text("${rack.name} · ${bottle.slot?.let(rack::label).orEmpty()}") },
+                supportingContent = { Text("${rack.name} · ${bottle.slot?.let { rack.displayLabel(it, LocalResources.current) }.orEmpty()}") },
             )
             listOf(
                 Triple(Icons.AutoMirrored.Outlined.OpenInNew, R.string.action_open_wine, onOpen),
@@ -297,6 +320,43 @@ private fun BottleActionsSheet(
                     leadingContent = { Icon(icon, contentDescription = null) },
                     headlineContent = { Text(stringResource(label)) },
                     modifier = Modifier.clickable { onDismiss(); action() },
+                )
+            }
+        }
+    }
+}
+
+/** The bottles in one cell (several for double depth, shelves and bins), and room to add one. */
+@Composable
+private fun CellSheet(
+    rack: Rack,
+    cell: app.encave.core.RackCell,
+    cellar: app.encave.core.Cellar,
+    onDismiss: () -> Unit,
+    onBottle: (Bottle) -> Unit,
+    onAdd: (() -> Unit)?,
+) {
+    val resources = LocalResources.current
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l)) {
+            ListItem(
+                headlineContent = { Text(rack.displayLabel(cell, resources), style = MaterialTheme.typography.titleLarge) },
+                supportingContent = { Text(rack.name) },
+            )
+            cellar.bottlesIn(cell).forEach { bottle ->
+                val wine = cellar.wines[bottle.wineId]
+                ListItem(
+                    leadingContent = { app.encave.ui.components.WineColorDot(wine?.color, size = 28.dp) },
+                    headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
+                    supportingContent = { Text(bottle.slot?.let { rack.displayLabel(it, resources) }.orEmpty()) },
+                    modifier = Modifier.clickable { onDismiss(); onBottle(bottle) },
+                )
+            }
+            if (onAdd != null) {
+                ListItem(
+                    leadingContent = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.rack_add_here)) },
+                    modifier = Modifier.clickable { onDismiss(); onAdd() },
                 )
             }
         }

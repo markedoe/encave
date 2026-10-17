@@ -53,6 +53,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.displayLocation
 import app.encave.core.Cellar
 import app.encave.core.DishCategory
 import app.encave.core.Maturity
@@ -193,7 +194,7 @@ private fun SurpriseCard(group: WineGroup, cellar: Cellar, year: Int, onOpen: ()
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    cellar.locationLabel(group.bottles.first()) ?: stringResource(R.string.location_none),
+                    cellar.displayLocation(group.bottles.first()) ?: stringResource(R.string.location_none),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                 )
                 MaturityLabel(Maturity.of(group.wine, year), Modifier.padding(top = Dimens.xs))

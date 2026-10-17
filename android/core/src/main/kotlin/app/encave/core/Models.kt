@@ -82,43 +82,123 @@ data class Wine(
     }
 }
 
-/** Where a bottle sits: rack, row and column (zero-based). */
+/**
+ * Where a bottle sits: rack, row and column (zero-based), and how deep in the cell
+ * (front or back of a double-depth rack, or the place in a bin's pile).
+ */
 @Serializable
 data class Slot(
     @SerialName("rackID") @Serializable(with = UuidSerializer::class) val rackId: UUID,
     val row: Int,
     val column: Int,
-)
-
-/** How the positions of a rack are drawn. The slot grid is the same; only the shape differs. */
-@Serializable
-enum class RackLayout(val raw: String) {
-    /** Square cells in rows and columns. */
-    @SerialName("grid") Grid("grid"),
-
-    /** Diamond (X-shaped) bins, rows offset like a brick wall. */
-    @SerialName("diamond") Diamond("diamond"),
+    /** 0 is the front (or the first bottle of a bin). */
+    val depth: Int = 0,
+) {
+    /** The cell this slot belongs to, whatever its depth. */
+    val cell: RackCell get() = RackCell(rackId, row, column)
 }
 
-/** A physical rack, modeled as a grid. Rows are lettered, columns numbered. */
+/** One cell of a rack: a position in a grid, a place on a shelf or a whole bin. */
+data class RackCell(val rackId: UUID, val row: Int, val column: Int)
+
+/** The kind of storage, as it exists in real cellars. */
+@Serializable
+enum class RackKind(val raw: String) {
+    /** Classic rack: one bottle per cell in rows and columns, possibly two deep. */
+    @SerialName("grid") Grid("grid"),
+
+    /** Honeycomb rack: every other row is offset by half a bottle and holds one fewer. */
+    @SerialName("staggered") Staggered("staggered"),
+
+    /** Wine fridge or cabinet: shelves holding a row of bottles, one or more deep. */
+    @SerialName("shelves") Shelves("shelves"),
+
+    /** Diamond bins or crates: each bin holds several bottles in a pile. */
+    @SerialName("bins") Bins("bins"),
+}
+
+/**
+ * A place where bottles are stored: a rack, a wine fridge, a set of bins.
+ * Rows (or shelves) are lettered from the top, cells numbered from the left.
+ * Files from versions with a "layout" key ("grid" or the decorative "diamond") load as grids.
+ */
 @Serializable
 data class Rack(
     @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
+    val kind: RackKind = RackKind.Grid,
+    /** Rows, shelves, or rows of bins. */
     val rows: Int,
+    /** Cells per row (the widest row for honeycomb racks). */
     val columns: Int,
-    val layout: RackLayout = RackLayout.Grid,
+    /** Bottles one behind the other in a cell (grid and shelves). */
+    val depth: Int = 1,
+    /** Bottles per bin (bins only). */
+    val binCapacity: Int = 12,
+    /** Cells in each row when rows differ (a triangle top, an irregular cellar). */
+    val rowColumns: List<Int>? = null,
 ) {
-    val capacity: Int get() = rows * columns
+    /** Cells in a row: custom widths first, then one fewer on offset honeycomb rows. */
+    fun columnsInRow(row: Int): Int {
+        rowColumns?.getOrNull(row)?.let { return it }
+        if (kind == RackKind.Staggered && row % 2 == 1) return maxOf(1, columns - 1)
+        return columns
+    }
+
+    /** The widest row, for drawing. */
+    val maxColumns: Int get() = (0 until rows).maxOfOrNull { columnsInRow(it) } ?: columns
+
+    /** Bottles that fit in one cell. */
+    val positionsPerCell: Int
+        get() = when (kind) {
+            RackKind.Bins -> binCapacity
+            RackKind.Staggered -> 1
+            else -> depth
+        }
+
+    val cellCount: Int get() = (0 until rows).sumOf { columnsInRow(it) }
+
+    val capacity: Int get() = cellCount * positionsPerCell
+
+    fun contains(slot: Slot): Boolean = slot.rackId == id && slot.row in 0 until rows &&
+        slot.column in 0 until columnsInRow(slot.row) && slot.depth in 0 until positionsPerCell
+
+    fun contains(cell: RackCell): Boolean =
+        cell.rackId == id && cell.row in 0 until rows && cell.column in 0 until columnsInRow(cell.row)
+
+    val cells: List<RackCell>
+        get() = (0 until rows).flatMap { row -> (0 until columnsInRow(row)).map { RackCell(id, row, it) } }
+
+    /**
+     * Every slot, in the order bottles are placed automatically: a bin is filled before
+     * the next one; elsewhere the front of a row is filled before the back.
+     */
+    val allSlots: List<Slot>
+        get() = (0 until rows).flatMap { row ->
+            val width = columnsInRow(row)
+            if (kind == RackKind.Bins) {
+                (0 until width).flatMap { column -> (0 until positionsPerCell).map { Slot(id, row, column, it) } }
+            } else {
+                (0 until positionsPerCell).flatMap { depth -> (0 until width).map { Slot(id, row, it, depth) } }
+            }
+        }
 
     /** "B3" for row 1, column 2. */
     fun label(row: Int, column: Int): String = "${rowLetters(row)}${column + 1}"
 
-    fun label(slot: Slot): String = label(slot.row, slot.column)
+    /** "B3", or "B3-2" for the second bottle of a cell that holds several. */
+    fun label(slot: Slot): String {
+        val base = label(slot.row, slot.column)
+        return if (positionsPerCell > 1) "$base-${slot.depth + 1}" else base
+    }
 
-    /** Parses "B3" back into a slot of this rack. */
+    fun label(cell: RackCell): String = label(cell.row, cell.column)
+
+    /** Parses "B3" or "B3-2" back into a slot of this rack. */
     fun slotForLabel(label: String): Slot? {
-        val upper = label.trim().uppercase(Locale.ROOT)
+        val parts = label.trim().uppercase(Locale.ROOT).split("-", limit = 2)
+        val upper = parts.first()
+        val depth = if (parts.size > 1) (parts[1].toIntOrNull() ?: 0) - 1 else 0
         val letters = upper.takeWhile { it.isLetter() }
         if (letters.isEmpty()) return null
         val column = upper.drop(letters.length).toIntOrNull() ?: return null
@@ -127,16 +207,23 @@ data class Rack(
             if (char !in 'A'..'Z') return null
             row = row * 26 + (char - 'A' + 1)
         }
-        val slot = Slot(id, row - 1, column - 1)
-        if (slot.row !in 0 until rows || slot.column !in 0 until columns) return null
-        return slot
+        val slot = Slot(id, row - 1, column - 1, depth)
+        return if (contains(slot)) slot else null
     }
 
-    /** Rows and columns are at least 1, as in the Swift initializer. */
-    fun normalized(): Rack =
-        if (rows >= 1 && columns >= 1) this else copy(rows = rows.coerceAtLeast(1), columns = columns.coerceAtLeast(1))
+    /** Limits applied by the Swift initializer and decoder. */
+    fun normalized(): Rack {
+        val fixed = copy(
+            rows = rows.coerceAtLeast(1), columns = columns.coerceAtLeast(1),
+            depth = depth.coerceIn(1, MAX_DEPTH), binCapacity = binCapacity.coerceAtLeast(1),
+            rowColumns = rowColumns?.map { it.coerceAtLeast(1) },
+        )
+        return if (fixed == this) this else fixed
+    }
 
     companion object {
+        const val MAX_DEPTH = 3
+
         fun rowLetters(index: Int): String {
             var n = index
             val letters = StringBuilder()

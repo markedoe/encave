@@ -1,219 +1,49 @@
 {
   "cellar" : {
     "bottles" : [
-      "D7427767-EC5F-403F-87CD-813D9EA82073",
+      "8A14AD0E-F1E1-49F9-BC8F-A0EFD467C248",
       {
-        "addedAt" : "2026-06-19T09:49:25Z",
+        "addedAt" : "2026-03-21T10:13:07Z",
         "currency" : "EUR",
-        "id" : "D7427767-EC5F-403F-87CD-813D9EA82073",
-        "purchaseDate" : "2026-06-19T09:49:25Z",
-        "purchasePrice" : 24,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 7,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B"
-      },
-      "60BBAFDD-D40F-40CF-ABF1-7486C18DAB5E",
-      {
-        "addedAt" : "2026-04-20T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "60BBAFDD-D40F-40CF-ABF1-7486C18DAB5E",
-        "purchaseDate" : "2026-04-20T09:49:25Z",
-        "purchasePrice" : 36,
+        "id" : "8A14AD0E-F1E1-49F9-BC8F-A0EFD467C248",
+        "purchaseDate" : "2026-03-21T10:13:07Z",
+        "purchasePrice" : 29,
         "sizeML" : 750,
         "slot" : {
           "column" : 5,
-          "rackID" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
+          "depth" : 0,
+          "rackID" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
           "row" : 0
         },
         "status" : "inCellar",
-        "wineID" : "1A14A08C-7B0D-4123-8EF7-5FB3051D546C"
+        "wineID" : "3344C0AA-E74F-441D-B47F-92E506900C2A"
       },
-      "4DE6AF82-AE56-4E0C-AD48-053569BABCFA",
+      "6D1ED9AF-8701-4975-9888-BCC0C7AC809B",
       {
-        "addedAt" : "2026-06-19T09:49:25Z",
+        "addedAt" : "2026-09-17T10:13:07Z",
         "currency" : "EUR",
-        "id" : "4DE6AF82-AE56-4E0C-AD48-053569BABCFA",
-        "purchaseDate" : "2026-06-19T09:49:25Z",
-        "purchasePrice" : 24,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 1,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 1
-        },
-        "status" : "inCellar",
-        "wineID" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B"
-      },
-      "8B19E5EA-307B-4739-90B7-F6DF914890EA",
-      {
-        "addedAt" : "2026-07-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "8B19E5EA-307B-4739-90B7-F6DF914890EA",
-        "purchaseDate" : "2026-07-19T09:49:25Z",
-        "purchasePrice" : 16,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 2,
-          "rackID" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "DEE1A1EF-8433-47B2-9EDB-EAEE7A60DDDB"
-      },
-      "2BCA75AD-1B96-46B3-837D-34A57778DD3F",
-      {
-        "addedAt" : "2026-07-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "2BCA75AD-1B96-46B3-837D-34A57778DD3F",
-        "purchaseDate" : "2026-07-19T09:49:25Z",
-        "purchasePrice" : 16,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 3,
-          "rackID" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "DEE1A1EF-8433-47B2-9EDB-EAEE7A60DDDB"
-      },
-      "4C832429-80D8-4758-AB86-98E198817CF8",
-      {
-        "addedAt" : "2026-09-17T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "4C832429-80D8-4758-AB86-98E198817CF8",
-        "purchaseDate" : "2026-09-17T09:49:25Z",
-        "purchasePrice" : 38,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 0,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "6894BF58-3D48-4705-8437-F7723DC3EA0F"
-      },
-      "FF95F5C9-4F34-476D-A5C9-57720E19721A",
-      {
-        "addedAt" : "2026-09-17T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "FF95F5C9-4F34-476D-A5C9-57720E19721A",
-        "purchaseDate" : "2026-09-17T09:49:25Z",
+        "id" : "6D1ED9AF-8701-4975-9888-BCC0C7AC809B",
+        "purchaseDate" : "2026-09-17T10:13:07Z",
         "purchasePrice" : 38,
         "sizeML" : 750,
         "slot" : {
           "column" : 1,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
+          "depth" : 0,
+          "rackID" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
           "row" : 0
         },
         "status" : "inCellar",
-        "wineID" : "6894BF58-3D48-4705-8437-F7723DC3EA0F"
+        "wineID" : "474B3813-8084-4A78-AB0C-FBE5F48C13E3"
       },
-      "EB7B6F4B-C1C2-4F7A-9971-75079C775CF0",
+      "5A812544-CBA8-434E-B3A6-2EADD3BFC218",
       {
-        "addedAt" : "2026-09-17T09:49:25Z",
+        "addedAt" : "2026-10-17T10:13:07Z",
         "currency" : "EUR",
-        "id" : "EB7B6F4B-C1C2-4F7A-9971-75079C775CF0",
-        "purchaseDate" : "2026-09-17T09:49:25Z",
-        "purchasePrice" : 38,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 2,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "6894BF58-3D48-4705-8437-F7723DC3EA0F"
-      },
-      "E3E27B32-9923-473E-9F8A-CF00D2594F6E",
-      {
-        "addedAt" : "2026-06-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "E3E27B32-9923-473E-9F8A-CF00D2594F6E",
-        "purchaseDate" : "2026-06-19T09:49:25Z",
-        "purchasePrice" : 24,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 6,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B"
-      },
-      "D43EED22-FEA4-4774-8315-6B02D324082F",
-      {
-        "addedAt" : "2026-05-20T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "D43EED22-FEA4-4774-8315-6B02D324082F",
-        "purchaseDate" : "2026-05-20T09:49:25Z",
-        "purchasePrice" : 14,
-        "sizeML" : 750,
-        "status" : "inCellar",
-        "storageNote" : "Kitchen",
-        "wineID" : "43FB8AD6-4B03-45FA-8D69-000589E848FC"
-      },
-      "7605C070-E9C5-4F65-AD11-C5661F39BE05",
-      {
-        "addedAt" : "2026-04-20T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "7605C070-E9C5-4F65-AD11-C5661F39BE05",
-        "purchaseDate" : "2026-04-20T09:49:25Z",
-        "purchasePrice" : 36,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 4,
-          "rackID" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "1A14A08C-7B0D-4123-8EF7-5FB3051D546C"
-      },
-      "CAC0D6E9-2982-4F5F-A9B4-BD29FC4FB342",
-      {
-        "addedAt" : "2026-06-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "CAC0D6E9-2982-4F5F-A9B4-BD29FC4FB342",
-        "purchaseDate" : "2026-06-19T09:49:25Z",
-        "purchasePrice" : 24,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 0,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 1
-        },
-        "status" : "inCellar",
-        "wineID" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B"
-      },
-      "839F21A2-6D94-4AFA-B1B5-5FC11FF424D4",
-      {
-        "addedAt" : "2026-08-18T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "839F21A2-6D94-4AFA-B1B5-5FC11FF424D4",
-        "purchaseDate" : "2026-08-18T09:49:25Z",
-        "purchasePrice" : 54,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 3,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "6363FC52-00F8-4C72-A756-6A7E9B463FDF"
-      },
-      "8430D15E-600F-4A96-A6DD-963B3EDECE07",
-      {
-        "addedAt" : "2026-10-17T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "8430D15E-600F-4A96-A6DD-963B3EDECE07",
+        "id" : "5A812544-CBA8-434E-B3A6-2EADD3BFC218",
         "sizeML" : 750,
         "status" : "consumed",
         "tasting" : {
-          "date" : "2026-10-05T09:49:25Z",
+          "date" : "2026-10-05T10:13:07Z",
           "foodPairing" : "Roast duck",
           "nose" : "Cherry, violet, a touch of undergrowth",
           "note" : "Silky, red fruit, long finish.",
@@ -221,123 +51,311 @@
           "palate" : "Fine tannins, fresh acidity",
           "rating" : 5
         },
-        "wineID" : "0B1ED851-72B2-4FDB-AADB-D143E6D59A5C"
+        "wineID" : "200BF71C-57D1-4312-B5BE-3EFE5092D8C2"
       },
-      "A8CF954D-6DAC-44D7-AA2F-D81FD06F927C",
+      "24AC638B-6B36-4351-8B7A-7F39F7B64785",
       {
-        "addedAt" : "2026-10-17T09:49:25Z",
+        "addedAt" : "2026-05-20T10:13:07Z",
         "currency" : "EUR",
-        "id" : "A8CF954D-6DAC-44D7-AA2F-D81FD06F927C",
+        "id" : "24AC638B-6B36-4351-8B7A-7F39F7B64785",
+        "purchaseDate" : "2026-05-20T10:13:07Z",
+        "purchasePrice" : 14,
         "sizeML" : 750,
-        "status" : "consumed",
-        "tasting" : {
-          "date" : "2026-09-07T09:49:25Z",
-          "rating" : 4
-        },
-        "wineID" : "0B1ED851-72B2-4FDB-AADB-D143E6D59A5C"
+        "status" : "inCellar",
+        "storageNote" : "Kitchen",
+        "wineID" : "88C3E24B-3BF8-409B-BF87-52C352C3938B"
       },
-      "6C0C17D2-F09A-4CAE-A64F-CD7DC98D786A",
+      "792A4075-8C41-4C94-8E4F-9CBC62AC7690",
       {
-        "addedAt" : "2026-07-19T09:49:25Z",
+        "addedAt" : "2026-07-19T10:13:07Z",
         "currency" : "EUR",
-        "id" : "6C0C17D2-F09A-4CAE-A64F-CD7DC98D786A",
-        "purchaseDate" : "2026-07-19T09:49:25Z",
+        "id" : "792A4075-8C41-4C94-8E4F-9CBC62AC7690",
+        "purchaseDate" : "2026-07-19T10:13:07Z",
         "purchasePrice" : 16,
         "sizeML" : 750,
         "slot" : {
-          "column" : 0,
-          "rackID" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
-          "row" : 0
-        },
-        "status" : "inCellar",
-        "wineID" : "DEE1A1EF-8433-47B2-9EDB-EAEE7A60DDDB"
-      },
-      "EE5676BE-3A96-4CD4-BEFE-71D2E76306A9",
-      {
-        "addedAt" : "2026-06-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "EE5676BE-3A96-4CD4-BEFE-71D2E76306A9",
-        "purchaseDate" : "2026-06-19T09:49:25Z",
-        "purchasePrice" : 24,
-        "sizeML" : 750,
-        "slot" : {
           "column" : 2,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 1
-        },
-        "status" : "inCellar",
-        "wineID" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B"
-      },
-      "501559D2-7417-44E6-B2B3-7DF2CF5F1420",
-      {
-        "addedAt" : "2026-06-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "501559D2-7417-44E6-B2B3-7DF2CF5F1420",
-        "purchaseDate" : "2026-06-19T09:49:25Z",
-        "purchasePrice" : 24,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 5,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
+          "depth" : 0,
+          "rackID" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
           "row" : 0
         },
         "status" : "inCellar",
-        "wineID" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B"
+        "wineID" : "5654EB3F-D8F8-45B0-B89D-72AD8BBDB5C9"
       },
-      "400B88A5-332B-4621-A0A1-E527EFC4BEC0",
+      "F118AA02-2C17-4EF6-A16D-C2EA66C833D6",
       {
-        "addedAt" : "2026-03-21T09:49:25Z",
+        "addedAt" : "2026-07-19T10:13:07Z",
         "currency" : "EUR",
-        "id" : "400B88A5-332B-4621-A0A1-E527EFC4BEC0",
-        "purchaseDate" : "2026-03-21T09:49:25Z",
-        "purchasePrice" : 29,
-        "sizeML" : 750,
-        "slot" : {
-          "column" : 3,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-          "row" : 1
-        },
-        "status" : "inCellar",
-        "wineID" : "C5077516-83BE-4454-A3F1-B13182E6294C"
-      },
-      "AA57FF44-2878-4A87-9E54-5E0C374FAAA6",
-      {
-        "addedAt" : "2026-07-19T09:49:25Z",
-        "currency" : "EUR",
-        "id" : "AA57FF44-2878-4A87-9E54-5E0C374FAAA6",
-        "purchaseDate" : "2026-07-19T09:49:25Z",
+        "id" : "F118AA02-2C17-4EF6-A16D-C2EA66C833D6",
+        "purchaseDate" : "2026-07-19T10:13:07Z",
         "purchasePrice" : 16,
         "sizeML" : 750,
         "slot" : {
           "column" : 1,
-          "rackID" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
+          "depth" : 0,
+          "rackID" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
           "row" : 0
         },
         "status" : "inCellar",
-        "wineID" : "DEE1A1EF-8433-47B2-9EDB-EAEE7A60DDDB"
+        "wineID" : "5654EB3F-D8F8-45B0-B89D-72AD8BBDB5C9"
       },
-      "BF0D1751-98BB-49A5-A76D-F68742A241EF",
+      "7B38C5A2-A64C-42B4-8812-1F8FBC79F61A",
       {
-        "addedAt" : "2026-08-18T09:49:25Z",
+        "addedAt" : "2026-09-17T10:13:07Z",
         "currency" : "EUR",
-        "id" : "BF0D1751-98BB-49A5-A76D-F68742A241EF",
-        "purchaseDate" : "2026-08-18T09:49:25Z",
+        "id" : "7B38C5A2-A64C-42B4-8812-1F8FBC79F61A",
+        "purchaseDate" : "2026-09-17T10:13:07Z",
+        "purchasePrice" : 38,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 2,
+          "depth" : 0,
+          "rackID" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "474B3813-8084-4A78-AB0C-FBE5F48C13E3"
+      },
+      "94A60C6F-C4E8-461B-A76E-FE6B62C10904",
+      {
+        "addedAt" : "2026-06-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "94A60C6F-C4E8-461B-A76E-FE6B62C10904",
+        "purchaseDate" : "2026-06-19T10:13:07Z",
+        "purchasePrice" : 24,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 5,
+          "rackID" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D"
+      },
+      "EC7C3BD5-2714-4F28-93E9-A30B753F64EF",
+      {
+        "addedAt" : "2026-04-20T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "EC7C3BD5-2714-4F28-93E9-A30B753F64EF",
+        "purchaseDate" : "2026-04-20T10:13:07Z",
+        "purchasePrice" : 36,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 5,
+          "depth" : 0,
+          "rackID" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "791A1303-EBEE-4B1E-AF60-2C3FD72D7A14"
+      },
+      "B730246D-A363-40A2-94E4-B25E539A51C1",
+      {
+        "addedAt" : "2026-06-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "B730246D-A363-40A2-94E4-B25E539A51C1",
+        "purchaseDate" : "2026-06-19T10:13:07Z",
+        "purchasePrice" : 24,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 1,
+          "rackID" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D"
+      },
+      "2884EC4A-15F3-42E1-924B-B67991BAC9AF",
+      {
+        "addedAt" : "2026-06-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "2884EC4A-15F3-42E1-924B-B67991BAC9AF",
+        "purchaseDate" : "2026-06-19T10:13:07Z",
+        "purchasePrice" : 24,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 0,
+          "rackID" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D"
+      },
+      "257E0558-45D5-4623-AB66-E056C1EBBC77",
+      {
+        "addedAt" : "2026-06-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "257E0558-45D5-4623-AB66-E056C1EBBC77",
+        "purchaseDate" : "2026-06-19T10:13:07Z",
+        "purchasePrice" : 24,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 3,
+          "rackID" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D"
+      },
+      "CCA44F9D-6ED8-47B2-84CF-C69305D9ED13",
+      {
+        "addedAt" : "2026-06-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "CCA44F9D-6ED8-47B2-84CF-C69305D9ED13",
+        "purchaseDate" : "2026-06-19T10:13:07Z",
+        "purchasePrice" : 24,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 4,
+          "rackID" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D"
+      },
+      "835C7477-076F-4262-A166-68722F3C3AE6",
+      {
+        "addedAt" : "2026-04-20T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "835C7477-076F-4262-A166-68722F3C3AE6",
+        "purchaseDate" : "2026-04-20T10:13:07Z",
+        "purchasePrice" : 36,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 4,
+          "depth" : 0,
+          "rackID" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "791A1303-EBEE-4B1E-AF60-2C3FD72D7A14"
+      },
+      "365949AF-C588-4AFD-B760-8793A1B22D5E",
+      {
+        "addedAt" : "2026-10-17T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "365949AF-C588-4AFD-B760-8793A1B22D5E",
+        "sizeML" : 750,
+        "status" : "consumed",
+        "tasting" : {
+          "date" : "2026-09-07T10:13:07Z",
+          "rating" : 4
+        },
+        "wineID" : "200BF71C-57D1-4312-B5BE-3EFE5092D8C2"
+      },
+      "3C88050C-4AC7-4909-9DA6-01C786C2D1A1",
+      {
+        "addedAt" : "2026-07-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "3C88050C-4AC7-4909-9DA6-01C786C2D1A1",
+        "purchaseDate" : "2026-07-19T10:13:07Z",
+        "purchasePrice" : 16,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 3,
+          "depth" : 0,
+          "rackID" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "5654EB3F-D8F8-45B0-B89D-72AD8BBDB5C9"
+      },
+      "ABC13C01-0556-4FC3-850C-EDD6EA5C09E4",
+      {
+        "addedAt" : "2026-08-18T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "ABC13C01-0556-4FC3-850C-EDD6EA5C09E4",
+        "purchaseDate" : "2026-08-18T10:13:07Z",
         "purchasePrice" : 54,
         "sizeML" : 750,
         "slot" : {
           "column" : 4,
-          "rackID" : "42E8BE80-F71D-4123-9603-29617B39AD32",
+          "depth" : 0,
+          "rackID" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
           "row" : 0
         },
         "status" : "inCellar",
-        "wineID" : "6363FC52-00F8-4C72-A756-6A7E9B463FDF"
+        "wineID" : "058DFF40-70E9-4DA2-9C9F-69F38919B85A"
+      },
+      "AD841E89-CD9D-4D3E-AE54-871EDDC664C4",
+      {
+        "addedAt" : "2026-09-17T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "AD841E89-CD9D-4D3E-AE54-871EDDC664C4",
+        "purchaseDate" : "2026-09-17T10:13:07Z",
+        "purchasePrice" : 38,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 0,
+          "rackID" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "474B3813-8084-4A78-AB0C-FBE5F48C13E3"
+      },
+      "C9ED873A-8BA1-4289-A210-FE863B82894B",
+      {
+        "addedAt" : "2026-06-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "C9ED873A-8BA1-4289-A210-FE863B82894B",
+        "purchaseDate" : "2026-06-19T10:13:07Z",
+        "purchasePrice" : 24,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 2,
+          "rackID" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D"
+      },
+      "5AFE5BD8-E149-4D73-86B8-955983B2A1B2",
+      {
+        "addedAt" : "2026-07-19T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "5AFE5BD8-E149-4D73-86B8-955983B2A1B2",
+        "purchaseDate" : "2026-07-19T10:13:07Z",
+        "purchasePrice" : 16,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 0,
+          "depth" : 0,
+          "rackID" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "5654EB3F-D8F8-45B0-B89D-72AD8BBDB5C9"
+      },
+      "470F79D8-F854-42C6-B35D-A29C9248F362",
+      {
+        "addedAt" : "2026-08-18T10:13:07Z",
+        "currency" : "EUR",
+        "id" : "470F79D8-F854-42C6-B35D-A29C9248F362",
+        "purchaseDate" : "2026-08-18T10:13:07Z",
+        "purchasePrice" : 54,
+        "sizeML" : 750,
+        "slot" : {
+          "column" : 3,
+          "depth" : 0,
+          "rackID" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
+          "row" : 0
+        },
+        "status" : "inCellar",
+        "wineID" : "058DFF40-70E9-4DA2-9C9F-69F38919B85A"
       }
     ],
     "discoveries" : [
-      "55FDE859-5369-45FD-B85E-F23B3ED90083",
+      "A8A32E5B-FF07-4D1A-8582-0A2C68DCBF26",
       {
-        "date" : "2026-10-08T09:49:25Z",
-        "id" : "55FDE859-5369-45FD-B85E-F23B3ED90083",
+        "date" : "2026-10-08T10:13:07Z",
+        "id" : "A8A32E5B-FF07-4D1A-8582-0A2C68DCBF26",
         "note" : "Very fresh, perfect with the cheese platter.",
         "place" : "At Julie and Marc's",
         "rating" : 4,
@@ -346,13 +364,13 @@
           "Gift idea"
         ],
         "wantsToBuy" : true,
-        "wineID" : "51ADE02C-01B9-49D6-92A5-FEAFDAD53D90"
+        "wineID" : "71B67CE8-273F-4412-BDDD-5837575F1969"
       },
-      "9C9F5E84-0850-42B5-A988-25ACA58C1FE8",
+      "4DCD2DA6-E05F-4FF8-8026-BFFFCA897AF3",
       {
         "currency" : "EUR",
-        "date" : "2026-09-22T09:49:25Z",
-        "id" : "9C9F5E84-0850-42B5-A988-25ACA58C1FE8",
+        "date" : "2026-09-22T10:13:07Z",
+        "id" : "4DCD2DA6-E05F-4FF8-8026-BFFFCA897AF3",
         "note" : "Mineral and salty, great with grilled fish.",
         "place" : "Bistro on the harbour, Lisbon",
         "price" : 32,
@@ -362,23 +380,36 @@
           "For summer"
         ],
         "wantsToBuy" : true,
-        "wineID" : "472ADA1B-980E-47BF-8ED8-2DC235AC096C"
+        "wineID" : "3227E214-6045-4852-98AA-C615491513FB"
       }
     ],
     "racks" : [
       {
+        "binCapacity" : 12,
         "columns" : 8,
-        "id" : "42E8BE80-F71D-4123-9603-29617B39AD32",
-        "layout" : "grid",
+        "depth" : 1,
+        "id" : "A7A59D1D-1354-45AC-A089-11CC7E36AB0B",
+        "kind" : "grid",
         "name" : "Main rack",
         "rows" : 6
       },
       {
+        "binCapacity" : 12,
         "columns" : 6,
-        "id" : "64D5DB53-A915-4154-AE33-D8460BB3FDD7",
-        "layout" : "diamond",
+        "depth" : 2,
+        "id" : "95A90D1F-0FA7-4DF4-92B8-56829FC99286",
+        "kind" : "shelves",
         "name" : "Wine fridge",
         "rows" : 4
+      },
+      {
+        "binCapacity" : 10,
+        "columns" : 3,
+        "depth" : 1,
+        "id" : "A4FC11DC-30C0-42D2-8960-88FA2C5EDE28",
+        "kind" : "bins",
+        "name" : "Diamond bins",
+        "rows" : 2
       }
     ],
     "schemaVersion" : 2,
@@ -386,39 +417,20 @@
       "currency" : "EUR"
     },
     "wines" : [
-      "6363FC52-00F8-4C72-A756-6A7E9B463FDF",
+      "3227E214-6045-4852-98AA-C615491513FB",
       {
-        "appellation" : "Meursault",
         "color" : "white",
-        "country" : "France",
-        "drinkFrom" : 2025,
-        "drinkUntil" : 2026,
+        "country" : "Portugal",
         "grapes" : [
-          "Chardonnay"
+          "Alvarinho"
         ],
-        "id" : "6363FC52-00F8-4C72-A756-6A7E9B463FDF",
-        "name" : "Les Pierres Blanches",
-        "producer" : "Maison Clément",
-        "region" : "Bourgogne",
-        "vintage" : 2022
+        "id" : "3227E214-6045-4852-98AA-C615491513FB",
+        "name" : "Alvarinho Reserva",
+        "producer" : "Quinta do Mar",
+        "region" : "Vinho Verde",
+        "vintage" : 2024
       },
-      "0B1ED851-72B2-4FDB-AADB-D143E6D59A5C",
-      {
-        "appellation" : "Gevrey-Chambertin",
-        "color" : "red",
-        "country" : "France",
-        "drinkFrom" : 2023,
-        "drinkUntil" : 2030,
-        "grapes" : [
-          "Pinot Noir"
-        ],
-        "id" : "0B1ED851-72B2-4FDB-AADB-D143E6D59A5C",
-        "name" : "Vieilles Vignes",
-        "producer" : "Domaine Arnaud",
-        "region" : "Bourgogne",
-        "vintage" : 2019
-      },
-      "C5077516-83BE-4454-A3F1-B13182E6294C",
+      "3344C0AA-E74F-441D-B47F-92E506900C2A",
       {
         "color" : "dessert",
         "country" : "France",
@@ -427,71 +439,13 @@
         "grapes" : [
           "Gewurztraminer"
         ],
-        "id" : "C5077516-83BE-4454-A3F1-B13182E6294C",
+        "id" : "3344C0AA-E74F-441D-B47F-92E506900C2A",
         "name" : "Vendanges Tardives",
         "producer" : "Domaine Weber",
         "region" : "Alsace",
         "vintage" : 2014
       },
-      "DEE1A1EF-8433-47B2-9EDB-EAEE7A60DDDB",
-      {
-        "color" : "white",
-        "country" : "Switzerland",
-        "drinkFrom" : 2025,
-        "drinkUntil" : 2028,
-        "grapes" : [
-          "Chasselas"
-        ],
-        "id" : "DEE1A1EF-8433-47B2-9EDB-EAEE7A60DDDB",
-        "name" : "Cuvée du Lac",
-        "producer" : "Cave des Coteaux",
-        "region" : "Vaud",
-        "vintage" : 2024
-      },
-      "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B",
-      {
-        "appellation" : "Gigondas",
-        "color" : "red",
-        "country" : "France",
-        "drinkFrom" : 2027,
-        "drinkUntil" : 2036,
-        "grapes" : [
-          "Grenache",
-          "Syrah"
-        ],
-        "id" : "8BEEB19B-D19C-4D64-A5A4-6D01EE69253B",
-        "name" : "Terrasses du Sud",
-        "producer" : "Domaine Ferrand",
-        "region" : "Rhône",
-        "vintage" : 2023
-      },
-      "51ADE02C-01B9-49D6-92A5-FEAFDAD53D90",
-      {
-        "color" : "dessert",
-        "country" : "France",
-        "grapes" : [
-          "Chenin Blanc"
-        ],
-        "id" : "51ADE02C-01B9-49D6-92A5-FEAFDAD53D90",
-        "name" : "Coteaux du Layon",
-        "producer" : "Domaine des Sablons",
-        "region" : "Loire",
-        "vintage" : 2020
-      },
-      "1A14A08C-7B0D-4123-8EF7-5FB3051D546C",
-      {
-        "color" : "sparkling",
-        "country" : "France",
-        "grapes" : [
-          "Chardonnay",
-          "Pinot Noir"
-        ],
-        "id" : "1A14A08C-7B0D-4123-8EF7-5FB3051D546C",
-        "name" : "Brut Réserve",
-        "producer" : "Maison Aubry",
-        "region" : "Champagne"
-      },
-      "43FB8AD6-4B03-45FA-8D69-000589E848FC",
+      "88C3E24B-3BF8-409B-BF87-52C352C3938B",
       {
         "color" : "rose",
         "country" : "France",
@@ -501,26 +455,41 @@
           "Grenache",
           "Cinsault"
         ],
-        "id" : "43FB8AD6-4B03-45FA-8D69-000589E848FC",
+        "id" : "88C3E24B-3BF8-409B-BF87-52C352C3938B",
         "name" : "Rosé de Provence",
         "producer" : "Château Lumière",
         "region" : "Provence",
         "vintage" : 2021
       },
-      "472ADA1B-980E-47BF-8ED8-2DC235AC096C",
+      "5654EB3F-D8F8-45B0-B89D-72AD8BBDB5C9",
       {
         "color" : "white",
-        "country" : "Portugal",
+        "country" : "Switzerland",
+        "drinkFrom" : 2025,
+        "drinkUntil" : 2028,
         "grapes" : [
-          "Alvarinho"
+          "Chasselas"
         ],
-        "id" : "472ADA1B-980E-47BF-8ED8-2DC235AC096C",
-        "name" : "Alvarinho Reserva",
-        "producer" : "Quinta do Mar",
-        "region" : "Vinho Verde",
+        "id" : "5654EB3F-D8F8-45B0-B89D-72AD8BBDB5C9",
+        "name" : "Cuvée du Lac",
+        "producer" : "Cave des Coteaux",
+        "region" : "Vaud",
         "vintage" : 2024
       },
-      "6894BF58-3D48-4705-8437-F7723DC3EA0F",
+      "791A1303-EBEE-4B1E-AF60-2C3FD72D7A14",
+      {
+        "color" : "sparkling",
+        "country" : "France",
+        "grapes" : [
+          "Chardonnay",
+          "Pinot Noir"
+        ],
+        "id" : "791A1303-EBEE-4B1E-AF60-2C3FD72D7A14",
+        "name" : "Brut Réserve",
+        "producer" : "Maison Aubry",
+        "region" : "Champagne"
+      },
+      "474B3813-8084-4A78-AB0C-FBE5F48C13E3",
       {
         "appellation" : "Pauillac",
         "color" : "red",
@@ -531,11 +500,73 @@
           "Cabernet Sauvignon",
           "Merlot"
         ],
-        "id" : "6894BF58-3D48-4705-8437-F7723DC3EA0F",
+        "id" : "474B3813-8084-4A78-AB0C-FBE5F48C13E3",
         "name" : "Clos des Tilleuls",
         "producer" : "Domaine Arnaud",
         "region" : "Bordeaux",
         "vintage" : 2017
+      },
+      "058DFF40-70E9-4DA2-9C9F-69F38919B85A",
+      {
+        "appellation" : "Meursault",
+        "color" : "white",
+        "country" : "France",
+        "drinkFrom" : 2025,
+        "drinkUntil" : 2026,
+        "grapes" : [
+          "Chardonnay"
+        ],
+        "id" : "058DFF40-70E9-4DA2-9C9F-69F38919B85A",
+        "name" : "Les Pierres Blanches",
+        "producer" : "Maison Clément",
+        "region" : "Bourgogne",
+        "vintage" : 2022
+      },
+      "200BF71C-57D1-4312-B5BE-3EFE5092D8C2",
+      {
+        "appellation" : "Gevrey-Chambertin",
+        "color" : "red",
+        "country" : "France",
+        "drinkFrom" : 2023,
+        "drinkUntil" : 2030,
+        "grapes" : [
+          "Pinot Noir"
+        ],
+        "id" : "200BF71C-57D1-4312-B5BE-3EFE5092D8C2",
+        "name" : "Vieilles Vignes",
+        "producer" : "Domaine Arnaud",
+        "region" : "Bourgogne",
+        "vintage" : 2019
+      },
+      "D022965B-69A8-4FCB-BE4D-0A63D4313F0D",
+      {
+        "appellation" : "Gigondas",
+        "color" : "red",
+        "country" : "France",
+        "drinkFrom" : 2027,
+        "drinkUntil" : 2036,
+        "grapes" : [
+          "Grenache",
+          "Syrah"
+        ],
+        "id" : "D022965B-69A8-4FCB-BE4D-0A63D4313F0D",
+        "name" : "Terrasses du Sud",
+        "producer" : "Domaine Ferrand",
+        "region" : "Rhône",
+        "vintage" : 2023
+      },
+      "71B67CE8-273F-4412-BDDD-5837575F1969",
+      {
+        "color" : "dessert",
+        "country" : "France",
+        "grapes" : [
+          "Chenin Blanc"
+        ],
+        "id" : "71B67CE8-273F-4412-BDDD-5837575F1969",
+        "name" : "Coteaux du Layon",
+        "producer" : "Domaine des Sablons",
+        "region" : "Loire",
+        "vintage" : 2020
       }
     ]
   },

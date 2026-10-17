@@ -151,7 +151,9 @@ fun Cellar.importCsv(text: String, now: Instant = Instant.now()): ImportSummary 
             val rackName = value("rack")
             val label = value("slot")
             val rack = rackName?.let { name -> racks.firstOrNull { it.name.equals(name, ignoreCase = true) } }
-            val slot = if (label != null) rack?.slotForLabel(label) else null
+            val wanted = if (label != null) rack?.slotForLabel(label) else null
+            // A label already taken (several bottles listed in one cell) uses the next free place.
+            val slot = wanted?.let { if (bottleAt(it) == null) it else freeSlot(it.cell) }
             bottle = when {
                 status == Bottle.Status.Consumed -> bottle.copy(
                     status = Bottle.Status.Consumed,
@@ -161,7 +163,7 @@ fun Cellar.importCsv(text: String, now: Instant = Instant.now()): ImportSummary 
                     ).normalized(),
                 )
                 status == Bottle.Status.Gone -> bottle.copy(status = Bottle.Status.Gone)
-                slot != null && bottleAt(slot) == null -> bottle.copy(slot = slot)
+                slot != null -> bottle.copy(slot = slot)
                 rackName != null -> bottle.copy(
                     storageNote = bottle.storageNote ?: listOfNotNull(rackName, label).joinToString(" · "),
                 )

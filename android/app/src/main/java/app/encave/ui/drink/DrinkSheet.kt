@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import app.encave.R
+import app.encave.ui.components.displayLocation
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Tasting
@@ -227,13 +228,13 @@ fun DrinkSheet(
                         FilterChip(
                             selected = bottle.id == chosen.id,
                             onClick = { chosenId = bottle.id.toString() },
-                            label = { Text(cellar.locationLabel(bottle) ?: stringResource(R.string.location_none)) },
+                            label = { Text(cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)) },
                         )
                     }
                 }
             } else {
                 Text(
-                    cellar.locationLabel(chosen) ?: stringResource(R.string.location_none),
+                    cellar.displayLocation(chosen) ?: stringResource(R.string.location_none),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                 )
             }

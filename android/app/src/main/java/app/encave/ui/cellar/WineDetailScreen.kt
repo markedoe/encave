@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.displayLocation
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Maturity
@@ -369,7 +370,7 @@ private fun BottleRow(
         add(stringResource(R.string.detail_added, Formats.day(bottle.addedAt)))
     }
     ListItem(
-        headlineContent = { Text(cellar.locationLabel(bottle) ?: stringResource(R.string.location_none)) },
+        headlineContent = { Text(cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)) },
         supportingContent = { Text(details.joinToString(" · ")) },
         trailingContent = {
             Box {

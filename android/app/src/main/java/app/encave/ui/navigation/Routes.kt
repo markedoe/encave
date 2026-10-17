@@ -31,6 +31,7 @@ data class AddBottleRoute(
     val rackId: String? = null,
     val row: Int = -1,
     val column: Int = -1,
+    val depth: Int = 0,
     /** Set when buying a wine from the shopping list: it is marked bought once saved. */
     val discoveryId: String? = null,
 )

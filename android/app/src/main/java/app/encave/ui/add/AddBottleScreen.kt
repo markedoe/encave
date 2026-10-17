@@ -119,7 +119,7 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     // Slots chosen by hand; until then the first free slots are suggested.
     val pickedSlots = remember {
         mutableStateListOf<Slot>().apply {
-            if (routeRack != null && route.row >= 0 && route.column >= 0) add(Slot(routeRack.id, route.row, route.column))
+            if (routeRack != null && route.row >= 0 && route.column >= 0) add(Slot(routeRack.id, route.row, route.column, route.depth))
         }
     }
     var slotsTouched by rememberSaveable { mutableStateOf(pickedSlots.isNotEmpty()) }
@@ -251,15 +251,18 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                 onRack = { rackId = it.id.toString(); slotsTouched = false; pickedSlots.clear() },
                 slots = slots,
                 quantity = quantity,
-                onToggleSlot = { slot ->
+                onToggleCell = { cell ->
                     if (!slotsTouched) {
                         pickedSlots.clear()
                         slotsTouched = true
                     }
-                    if (slot in pickedSlots) pickedSlots.remove(slot)
-                    else {
-                        pickedSlots.add(slot)
+                    // A tap takes the next free place in the cell; once the cell is full of picks, it clears them.
+                    val next = freeSlots.firstOrNull { it.cell == cell && it !in pickedSlots }
+                    if (next != null) {
+                        pickedSlots.add(next)
                         if (pickedSlots.size > quantity) quantity = pickedSlots.size
+                    } else {
+                        pickedSlots.removeAll { it.cell == cell }
                     }
                 },
                 storage = storage,
@@ -357,7 +360,7 @@ private fun LocationSection(
     onRack: (Rack) -> Unit,
     slots: List<Slot>,
     quantity: Int,
-    onToggleSlot: (Slot) -> Unit,
+    onToggleCell: (app.encave.core.RackCell) -> Unit,
     storage: String,
     onStorage: (String) -> Unit,
 ) {
@@ -397,8 +400,8 @@ private fun LocationSection(
                 selected = slots.toSet(),
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 cellSize = 48.dp,
-                clickLabel = { bottle -> if (bottle == null) chooseLabel else null },
-                onCellClick = { slot, bottle -> if (bottle == null) onToggleSlot(slot) },
+                clickLabel = { chooseLabel },
+                onCellClick = { cell, _ -> onToggleCell(cell) },
             )
         }
     } else {

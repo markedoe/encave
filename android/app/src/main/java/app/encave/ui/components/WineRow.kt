@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -25,14 +26,15 @@ import app.encave.core.Cellar
 import app.encave.core.Maturity
 import app.encave.core.WineGroup
 
-/** "Main rack · A1, A3" for bottles in racks, storage notes as they are. */
+/** "Main rack · A1, A3" for bottles in racks (people's labels), storage notes as they are. */
 @Composable
 fun locationsText(cellar: Cellar, bottles: List<Bottle>): String {
+    val resources = LocalResources.current
     val parts = mutableListOf<String>()
     bottles.filter { it.slot != null }.groupBy { it.slot!!.rackId }.forEach { (rackId, inRack) ->
         val rack = cellar.rack(rackId) ?: return@forEach
-        parts += "${rack.name} · " + inRack.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }))
-            .joinToString(", ") { rack.label(it.slot!!) }
+        parts += "${rack.name} · " + inRack.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
+            .joinToString(", ") { rack.displayLabel(it.slot!!, resources) }
     }
     bottles.filter { it.slot == null }.mapNotNull { it.storageNote?.takeIf(String::isNotBlank) }.distinct().forEach { parts += it }
     if (bottles.any { it.slot == null && it.storageNote.isNullOrBlank() } || parts.isEmpty()) {
