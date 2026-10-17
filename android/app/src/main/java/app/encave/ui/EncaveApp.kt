@@ -8,7 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
@@ -106,7 +106,7 @@ fun EncaveApp(viewModel: AppViewModel) {
             d.hasRoute(DiscoveryEditorRoute::class)
     } ?: false
     // Bar on phones, rail on tablets and foldables, drawer on large screens.
-    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val layoutType = when {
         fullScreen -> NavigationSuiteType.None
         adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND) ->

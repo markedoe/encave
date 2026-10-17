@@ -10,7 +10,7 @@ import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.outlined.Eco
-import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.HourglassBottom
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +68,7 @@ val Maturity.icon: ImageVector
         Maturity.Ready -> Icons.Outlined.CheckCircle
         Maturity.PastPeak -> Icons.Outlined.WarningAmber
         Maturity.Young -> Icons.Outlined.Eco
-        Maturity.Unknown -> Icons.Outlined.HelpOutline
+        Maturity.Unknown -> Icons.AutoMirrored.Outlined.HelpOutline
     }
 
 /** Theme roles for maturity; always shown with an icon and a label. */
