@@ -50,8 +50,10 @@ final class ScreenTourTests: XCTestCase {
         openSection(0, "cellar")
         snapshot("cellar")
         #if os(iOS)
-        // The swipe actions on a wine ("Drink" on the leading edge).
-        if element("wine.row").waitForExistence(timeout: 10), element("wine.row").isHittable {
+        // The swipe actions on a wine ("Drink" on the leading edge). iPhone only: on iPad
+        // the revealed action can cover the narrow list column.
+        if app.horizontalSizeClassIsCompact,
+           element("wine.row").waitForExistence(timeout: 10), element("wine.row").isHittable {
             element("wine.row").swipeRight()
             snapshot("cellar-swipe")
             // Close the actions again; the revealed button can cover the row on iPad.

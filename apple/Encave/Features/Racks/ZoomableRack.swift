@@ -61,7 +61,9 @@ struct ZoomableRack: UIViewRepresentable {
             coordinator.base = baseCellSize
             coordinator.render(keepingCenter: true)
         } else {
-            coordinator.render(keepingCenter: false)
+            // Same size (new highlight, focus, selection): redraw without touching the zoom,
+            // which may be in the middle of a pinch.
+            coordinator.refresh()
         }
     }
 
@@ -103,9 +105,26 @@ struct ZoomableRack: UIViewRepresentable {
             }
         }
 
+        /// Same size, new content: only the drawing changes.
+        func refresh() {
+            guard let host, host.view.frame.size != .zero else { return render(keepingCenter: false) }
+            host.rootView = content()
+        }
+
+        private func content() -> AnyView {
+            guard let parent, let model else { return AnyView(EmptyView()) }
+            return AnyView(
+                RackGrid(rack: parent.rack, cellSize: base * level, selected: parent.selected,
+                         highlighted: parent.highlighted, selectedCell: parent.selectedCell,
+                         focusWine: parent.focusWine, onTap: parent.onTap)
+                    .padding(FittedRackGrid.padding)
+                    .environment(model)
+            )
+        }
+
         /// Draws the rack at `base × level`, then resets the scroll view's own scale to 1.
         func render(keepingCenter: Bool) {
-            guard let parent, let model, let host, let scroll else { return }
+            guard let host, let scroll else { return }
             // The point of the rack in the middle of the screen, as a fraction of its size.
             let oldSize = host.view.frame.size
             let middle = CGPoint(x: scroll.contentOffset.x + scroll.bounds.width / 2,
@@ -113,13 +132,7 @@ struct ZoomableRack: UIViewRepresentable {
             let fraction = CGPoint(x: oldSize.width > 0 ? middle.x / oldSize.width : 0.5,
                                    y: oldSize.height > 0 ? middle.y / oldSize.height : 0.5)
 
-            host.rootView = AnyView(
-                RackGrid(rack: parent.rack, cellSize: base * level, selected: parent.selected,
-                         highlighted: parent.highlighted, selectedCell: parent.selectedCell,
-                         focusWine: parent.focusWine, onTap: parent.onTap)
-                    .padding(FittedRackGrid.padding)
-                    .environment(model)
-            )
+            host.rootView = content()
             scroll.minimumZoomScale = 1 / level
             scroll.maximumZoomScale = ZoomableRack.maxZoom / level
             if scroll.zoomScale != 1 { scroll.zoomScale = 1 }
