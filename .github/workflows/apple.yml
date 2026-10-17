@@ -21,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.2
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: swift test --package-path apple/Packages/CaveKit
 
   l10n:
     name: French translations
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 apple/tools/l10n.py --check
 
   mac-launch:
@@ -40,7 +40,7 @@ jobs:
       run:
         working-directory: apple
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Select newest Xcode
         working-directory: .
@@ -133,7 +133,7 @@ jobs:
       run:
         working-directory: apple
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Select newest Xcode
         working-directory: .
@@ -242,7 +242,7 @@ jobs:
       # Uploads on push or manual run, only when the secrets are available (never on forks).
       UPLOAD: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Select newest Xcode
         working-directory: .
