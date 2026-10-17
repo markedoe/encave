@@ -14,6 +14,8 @@ where each bottle sits in your racks, and when it is ready to drink.
   - Each wine shows its drinking window and why, serving temperature and
     decanting advice.
   - Bottles on order (deliveries, en primeur) wait apart until they arrive.
+  - Keep bottles for an occasion, so they are not suggested for tonight.
+  - A printable PDF inventory for insurance or a move.
 - **Adding a bottle in seconds:**
   - Scan the label: the text is read on the device, and the barcode recognizes
     wines you already have.
@@ -24,6 +26,9 @@ where each bottle sits in your racks, and when it is ready to drink.
   - Find a wine with the key under the rack.
   - Pinch to zoom, and move bottles.
 - **Tonight:** what to open now, the most urgent first, and food pairings.
+  - **Ask your cellar** ("something light for a ratatouille"), answered with
+    your own bottles by the on-device model of Apple Intelligence; nothing is
+    sent anywhere.
 - **Journal:**
   - your tastings and insights, your year in wine, and the pace to drink your
     cellar before windows close;
@@ -33,12 +38,14 @@ where each bottle sits in your racks, and when it is ready to drink.
   - They sync directly on the same Wi-Fi, or away from home through a relay you
     choose (iCloud too, in builds set up with an iCloud container). Everything
     is encrypted from end to end.
-- **Reminders and Siri:** a monthly reminder of the bottles to drink, "What should
-  I open tonight?", wines in Spotlight. Everything is worked out on the device.
+- **Reminders and Siri:** a monthly reminder of the bottles to drink, a reminder
+  on delivery days, "What should I open tonight?", wines in Spotlight, and on
+  the Mac a glass in the menu bar. Everything is worked out on the device.
 - French and English, light and dark mode, Dynamic Type, VoiceOver and TalkBack.
 
-Android has the cellar, racks, Tonight, Journal and AI recognition. Sync and the
-newer features are in progress (see the [roadmap](docs/ROADMAP.md)).
+Android has the cellar, racks, Tonight, Journal, AI recognition and sync with
+your devices (local network and relay). The newer features are in progress (see
+the [roadmap](docs/ROADMAP.md)).
 
 ## Principles
 
