@@ -31,7 +31,12 @@ data class AddBottleRoute(
     val rackId: String? = null,
     val row: Int = -1,
     val column: Int = -1,
+    /** Set when buying a wine from the shopping list: it is marked bought once saved. */
+    val discoveryId: String? = null,
 )
+
+/** Remember a wine tasted elsewhere (new), or edit a discovery. */
+@Serializable data class DiscoveryEditorRoute(val discoveryId: String? = null)
 
 @Serializable data class RackDetailRoute(val rackId: String, val highlightBottleId: String? = null)
 @Serializable data class RackEditorRoute(val rackId: String? = null)

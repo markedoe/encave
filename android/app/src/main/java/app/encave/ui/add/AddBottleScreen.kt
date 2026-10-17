@@ -153,7 +153,11 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
             storageNote = if (!inRack || rack == null) storage.trim().ifEmpty { null } else null,
             sizeML = sizeML,
         )
-        viewModel.addBottles(wine, quantity, slots, purchase, photo = if (existing == null) form.newPhoto else null)
+        viewModel.addBottles(
+            wine, quantity, slots, purchase,
+            photo = if (existing == null) form.newPhoto else null,
+            boughtDiscoveryId = route.discoveryId?.let { runCatching { UUID.fromString(it) }.getOrNull() },
+        )
         navigator.back()
     }
 

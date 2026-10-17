@@ -91,8 +91,12 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
     val ai by viewModel.ai.settings.collectAsStateWithLifecycle()
     var reading by remember { mutableStateOf(false) }
     var filled by rememberSaveable { mutableStateOf(false) }
-    val cameraFile = remember { File(context.cacheDir, "camera/label.jpg").apply { parentFile?.mkdirs() } }
-    val cameraUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.files", cameraFile) }
+    // Created when needed: the camera app writes the photo to this file in our cache.
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    fun cameraTarget(): Uri? = cameraUri ?: runCatching {
+        val file = File(context.cacheDir, "camera/label.jpg").apply { parentFile?.mkdirs() }
+        FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+    }.getOrNull().also { cameraUri = it }
 
     fun analyze(jpeg: ByteArray) {
         reading = true
@@ -118,7 +122,7 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
     }
 
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(::use) }
-    val take = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) use(cameraUri) }
+    val take = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) cameraUri?.let(::use) }
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         if (form.hasPhoto) {
@@ -128,7 +132,10 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
             )
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            OutlinedButton(onClick = { take.launch(cameraUri) }) {
+            OutlinedButton(onClick = {
+                val target = cameraTarget()
+                if (target != null) runCatching { take.launch(target) }.onFailure { viewModel.showMessage(UiText.Res(R.string.photo_failed)) }
+            }) {
                 Icon(Icons.Outlined.PhotoCamera, contentDescription = null)
                 Text(stringResource(if (form.hasPhoto) R.string.photo_replace else R.string.photo_take))
             }

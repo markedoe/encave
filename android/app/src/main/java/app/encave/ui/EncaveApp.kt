@@ -39,7 +39,9 @@ import app.encave.ui.journal.JournalScreen
 import app.encave.ui.journal.TastingScreen
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.CellarRoute
+import app.encave.ui.navigation.DiscoveryEditorRoute
 import app.encave.ui.navigation.EditWineRoute
+import app.encave.ui.discoveries.DiscoveryEditorScreen
 import app.encave.ui.navigation.InsightsRoute
 import app.encave.ui.navigation.JournalRoute
 import app.encave.ui.navigation.PairingRoute
@@ -99,7 +101,8 @@ fun EncaveApp(viewModel: AppViewModel) {
     LaunchedEffect(current) { if (current != null) selected = current }
     // Full-screen forms hide the navigation bar or rail.
     val fullScreen = entry?.destination?.let { d ->
-        d.hasRoute(AddBottleRoute::class) || d.hasRoute(EditWineRoute::class) || d.hasRoute(RackEditorRoute::class)
+        d.hasRoute(AddBottleRoute::class) || d.hasRoute(EditWineRoute::class) || d.hasRoute(RackEditorRoute::class) ||
+            d.hasRoute(DiscoveryEditorRoute::class)
     } ?: false
     val layoutType = if (fullScreen) NavigationSuiteType.None
     else NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
@@ -135,6 +138,9 @@ fun EncaveApp(viewModel: AppViewModel) {
                 composable<PairingRoute> { PairingScreen(viewModel, navigator) }
                 composable<InsightsRoute> { InsightsScreen(viewModel, navigator) }
                 composable<SettingsRoute> { SettingsScreen(viewModel, navigator) }
+                composable<DiscoveryEditorRoute> {
+                    DiscoveryEditorScreen(viewModel, navigator, it.toRoute<DiscoveryEditorRoute>().discoveryId)
+                }
             }
         }
     }

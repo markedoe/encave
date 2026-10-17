@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
@@ -47,6 +48,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
@@ -95,6 +97,7 @@ import app.encave.ui.components.labelRes
 import app.encave.ui.components.sampleLabels
 import app.encave.ui.drink.DrinkSheet
 import app.encave.ui.navigation.AddBottleRoute
+import app.encave.ui.navigation.DiscoveryEditorRoute
 import app.encave.ui.navigation.EditWineRoute
 import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.SettingsRoute
@@ -181,12 +184,17 @@ private fun CellarList(
         },
         floatingActionButton = {
             if (!isEmpty) {
-                ExtendedFloatingActionButton(
-                    onClick = { navigator.open(AddBottleRoute()) },
-                    expanded = fabExpanded,
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text(stringResource(R.string.action_add_bottle)) },
-                )
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                    SmallFloatingActionButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
+                        Icon(Icons.Outlined.AutoAwesome, contentDescription = stringResource(R.string.discovery_new_long))
+                    }
+                    ExtendedFloatingActionButton(
+                        onClick = { navigator.open(AddBottleRoute()) },
+                        expanded = fabExpanded,
+                        icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                        text = { Text(stringResource(R.string.action_add_bottle)) },
+                    )
+                }
             }
         },
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
@@ -205,6 +213,9 @@ private fun CellarList(
                 }
                 OutlinedButton(onClick = { viewModel.loadSample(sampleLabels(resources)) }) {
                     Text(stringResource(R.string.action_load_sample))
+                }
+                TextButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
+                    Text(stringResource(R.string.discovery_new_long))
                 }
             }
             else -> Column(Modifier.padding(padding).fillMaxSize()) {

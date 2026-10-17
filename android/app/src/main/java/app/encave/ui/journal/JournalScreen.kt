@@ -1,6 +1,23 @@
 package app.encave.ui.journal
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import app.encave.core.DiscoveryFilter
+import app.encave.ui.discoveries.DiscoveryActions
+import app.encave.ui.discoveries.DiscoveryFilterBar
+import app.encave.ui.discoveries.discoveryItems
+import app.encave.ui.navigation.AddBottleRoute
+import app.encave.ui.navigation.DiscoveryEditorRoute
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -74,9 +91,26 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val locale = LocalConfiguration.current.locales[0]
     val monthFormat = remember(locale) { DateTimeFormatter.ofPattern("LLLL yyyy", locale) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    var showDiscoveries by rememberSaveable { mutableStateOf(false) }
+    var discoveryFilter by remember { mutableStateOf(DiscoveryFilter()) }
+    val actions = remember(viewModel, navigator) {
+        DiscoveryActions(
+            open = { navigator.open(DiscoveryEditorRoute(it.id.toString())) },
+            addToCellar = { navigator.open(AddBottleRoute(wineId = it.wineId.toString(), discoveryId = it.id.toString())) },
+            toggleToBuy = { viewModel.toggleToBuy(it.id) },
+            delete = { viewModel.deleteDiscovery(it.id) },
+        )
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { navigator.open(DiscoveryEditorRoute()) },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.discovery_new)) },
+            )
+        },
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.nav_journal)) },
@@ -93,47 +127,76 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         },
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
-        if (months.isEmpty()) {
-            EmptyState(
-                icon = Icons.Outlined.AutoStories,
-                title = stringResource(R.string.journal_empty_title),
-                body = stringResource(R.string.journal_empty_body),
-                modifier = Modifier.padding(padding),
-            ) {
-                if (cellar.bottlesInCellar.isNotEmpty()) {
-                    OutlinedButton(onClick = { navigator.open(InsightsRoute) }) { Text(stringResource(R.string.action_insights)) }
+        Column(Modifier.padding(top = padding.calculateTopPadding()).fillMaxSize()) {
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s)) {
+                SegmentedButton(selected = !showDiscoveries, onClick = { showDiscoveries = false }, shape = SegmentedButtonDefaults.itemShape(0, 2)) {
+                    Text(stringResource(R.string.journal_tastings))
+                }
+                SegmentedButton(selected = showDiscoveries, onClick = { showDiscoveries = true }, shape = SegmentedButtonDefaults.itemShape(1, 2)) {
+                    Text(stringResource(R.string.journal_discoveries))
                 }
             }
-            return@Scaffold
-        }
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = Dimens.xxl)) {
-            months.forEach { (month, bottles) ->
-                item(key = month.toString()) {
-                    SectionHeader(monthFormat.format(month).replaceFirstChar { it.titlecase(locale) })
+            if (showDiscoveries) {
+                if (cellar.discoveries.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Outlined.AutoAwesome,
+                        title = stringResource(R.string.discovery_empty_title),
+                        body = stringResource(R.string.discovery_empty_body),
+                    ) {
+                        Button(onClick = { navigator.open(DiscoveryEditorRoute()) }) { Text(stringResource(R.string.discovery_new)) }
+                    }
+                } else {
+                    DiscoveryFilterBar(cellar, discoveryFilter) { discoveryFilter = it }
+                    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
+                        discoveryItems(cellar, viewModel.photos, discoveryFilter, actions)
+                    }
                 }
-                items(bottles, key = { it.id.toString() }) { bottle ->
-                    val tasting = bottle.tasting!!
-                    val wine = cellar.wines[bottle.wineId]
-                    ListItem(
-                        modifier = Modifier.clickable { navigator.open(TastingRoute(bottle.id.toString())) },
-                        leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
-                        headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                        overlineContent = { Text(Formats.day(tasting.date)) },
-                        supportingContent = {
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                RatingStars(tasting.rating)
-                                tasting.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-                                tasting.occasion?.takeIf { it.isNotBlank() }?.let {
-                                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                }
-                            }
-                        },
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
+            } else if (months.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Outlined.AutoStories,
+                    title = stringResource(R.string.journal_empty_title),
+                    body = stringResource(R.string.journal_empty_body),
+                ) {
+                    if (cellar.bottlesInCellar.isNotEmpty()) {
+                        OutlinedButton(onClick = { navigator.open(InsightsRoute) }) { Text(stringResource(R.string.action_insights)) }
+                    }
+                }
+            } else {
+                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
+                    months.forEach { (month, bottles) ->
+                        item(key = month.toString()) {
+                            SectionHeader(monthFormat.format(month).replaceFirstChar { it.titlecase(locale) })
+                        }
+                        items(bottles, key = { it.id.toString() }) { bottle ->
+                            TastingRow(cellar, bottle) { navigator.open(TastingRoute(bottle.id.toString())) }
+                            HorizontalDivider(Modifier.padding(start = 56.dp))
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun TastingRow(cellar: app.encave.core.Cellar, bottle: app.encave.core.Bottle, onClick: () -> Unit) {
+    val tasting = bottle.tasting ?: return
+    val wine = cellar.wines[bottle.wineId]
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
+        headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        overlineContent = { Text(Formats.day(tasting.date)) },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                RatingStars(tasting.rating)
+                tasting.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                tasting.occasion?.takeIf { it.isNotBlank() }?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        },
+    )
 }
 
 /** View and edit a full tasting note; a bottle can also be put back if it was marked by mistake. */

@@ -65,6 +65,9 @@ import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Maturity
 import app.encave.core.ServingAdvice
+import app.encave.core.discoveriesOf
+import app.encave.ui.discoveries.DiscoveryRow
+import app.encave.ui.navigation.DiscoveryEditorRoute
 import app.encave.core.Wine
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
@@ -203,6 +206,16 @@ fun WineDetailScreen(
                 )
             }
             ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice) } }
+            val discoveries = cellar.discoveriesOf(wine.id)
+            if (discoveries.isNotEmpty()) {
+                item { SectionHeader(stringResource(R.string.journal_discoveries)) }
+                items(discoveries, key = { "d" + it.id }) { discovery ->
+                    DiscoveryRow(
+                        cellar, viewModel.photos, discovery, showsWine = false,
+                        onClick = { navigator.open(DiscoveryEditorRoute(discovery.id.toString())) },
+                    )
+                }
+            }
             item { Details(wine) }
             if (tastings.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.detail_tastings)) }

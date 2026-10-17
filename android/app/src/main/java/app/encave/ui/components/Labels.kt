@@ -3,6 +3,12 @@ package app.encave.ui.components
 import android.content.res.Resources
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Flight
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.HourglassBottom
@@ -18,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import app.encave.R
 import app.encave.core.CellarSort
 import app.encave.core.DishCategory
+import app.encave.core.Discovery
 import app.encave.core.Maturity
 import app.encave.core.PairingReason
 import app.encave.core.RackLayout
@@ -146,7 +153,33 @@ fun sampleLabels(resources: Resources) = SampleData.Labels(
     nose = resources.getString(R.string.sample_nose),
     palate = resources.getString(R.string.sample_palate),
     pairing = resources.getString(R.string.sample_pairing),
+    friendsPlace = resources.getString(R.string.sample_friends_place),
+    friendsNote = resources.getString(R.string.sample_friends_note),
+    restaurantPlace = resources.getString(R.string.sample_restaurant_place),
+    restaurantNote = resources.getString(R.string.sample_restaurant_note),
+    tagToBuy = resources.getString(R.string.sample_tag_to_buy),
+    tagGift = resources.getString(R.string.sample_tag_gift),
 )
+
+val Discovery.Setting.labelRes: Int
+    get() = when (this) {
+        Discovery.Setting.Friends -> R.string.setting_friends
+        Discovery.Setting.Restaurant -> R.string.setting_restaurant
+        Discovery.Setting.Travel -> R.string.setting_travel
+        Discovery.Setting.Shop -> R.string.setting_shop
+        Discovery.Setting.Tasting -> R.string.setting_tasting
+        Discovery.Setting.Other -> R.string.setting_other
+    }
+
+val Discovery.Setting.icon: ImageVector
+    get() = when (this) {
+        Discovery.Setting.Friends -> Icons.Outlined.Group
+        Discovery.Setting.Restaurant -> Icons.Outlined.Restaurant
+        Discovery.Setting.Travel -> Icons.Outlined.Flight
+        Discovery.Setting.Shop -> Icons.Outlined.ShoppingBag
+        Discovery.Setting.Tasting -> Icons.Outlined.WineBar
+        Discovery.Setting.Other -> Icons.Outlined.Place
+    }
 
 object Formats {
     private fun locale() = Locale.getDefault()

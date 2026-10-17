@@ -84,4 +84,18 @@ class SmokeTest {
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Source code"))
     }
+
+    @Test
+    fun discoveriesAndEditor() {
+        tab("Journal")
+        compose.onNodeWithText("Discoveries").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Alvarinho Reserva", substring = true).onFirst().assertExists().performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Where").onFirst().assertExists()
+        compose.onNodeWithContentDescription("Close").performClick()
+        compose.onNodeWithText("Remember a wine", useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Your impression").onFirst().assertExists()
+    }
 }

@@ -18,6 +18,11 @@ import app.encave.core.CellarException
 import app.encave.core.CellarExport
 import app.encave.core.CellarFilter
 import app.encave.core.CellarSort
+import app.encave.core.Discovery
+import app.encave.core.addDiscovery
+import app.encave.core.deleteDiscovery
+import app.encave.core.markBought
+import app.encave.core.updateDiscovery
 import app.encave.core.WineGroup
 import app.encave.core.ImportError
 import app.encave.core.ImportException
@@ -130,11 +135,22 @@ class AppViewModel(
     // region Bottles
 
     /** [photo] is a prepared JPEG for a new wine; it is saved before the bottles are added. */
-    fun addBottles(wine: Wine, quantity: Int, slots: List<Slot>, purchase: PurchaseInfo, photo: ByteArray? = null) {
+    fun addBottles(
+        wine: Wine,
+        quantity: Int,
+        slots: List<Slot>,
+        purchase: PurchaseInfo,
+        photo: ByteArray? = null,
+        boughtDiscoveryId: UUID? = null,
+    ) {
         viewModelScope.launch {
             val photoId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val record = if (photoId != null) wine.copy(photoId = photoId) else wine
-            repository.update { it.addBottles(record, quantity, slots, purchase) }
+            repository.update { cellar ->
+                cellar.addBottles(record, quantity, slots, purchase).also {
+                    if (boughtDiscoveryId != null && cellar.discoveries[boughtDiscoveryId] != null) cellar.markBought(boughtDiscoveryId)
+                }
+            }
                 .onSuccess { post(UiText.Plural(R.plurals.bottles_added, it.size)) }
                 .onFailure {
                     photos.delete(photoId)
@@ -222,6 +238,63 @@ class AppViewModel(
                 change<Unit> { c -> c.merge(Cellar(listOf(wine), bottles)) }
             }
         }) { it.deleteWine(wineId) }
+    }
+
+    // endregion
+
+    // region Discoveries
+
+    fun addDiscovery(discovery: Discovery, wine: Wine, photo: ByteArray?) {
+        viewModelScope.launch {
+            val photoId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
+            val record = if (photoId != null) wine.copy(photoId = photoId) else wine
+            repository.update { it.addDiscovery(discovery, record) }
+                .onSuccess {
+                    post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
+                }
+                .onFailure {
+                    photos.delete(photoId)
+                    post(errorText(it))
+                }
+        }
+    }
+
+    fun updateDiscovery(discovery: Discovery, wine: Wine, photo: ByteArray?, removePhoto: Boolean) {
+        viewModelScope.launch {
+            val previous = cellar.value.wines[wine.id]?.photoId
+            val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
+            val record = when {
+                newId != null -> wine.copy(photoId = newId)
+                removePhoto -> wine.copy(photoId = null)
+                else -> wine
+            }
+            repository.update {
+                it.updateWine(record)
+                it.updateDiscovery(discovery)
+            }.onSuccess {
+                if (record.photoId != previous) photos.delete(previous)
+                post(UiText.Res(R.string.msg_saved))
+            }.onFailure {
+                photos.delete(newId)
+                post(errorText(it))
+            }
+        }
+    }
+
+    fun toggleToBuy(id: UUID) = change<Unit> { cellar ->
+        val discovery = cellar.discoveries[id] ?: return@change
+        val wants = !discovery.wantsToBuy
+        cellar.updateDiscovery(discovery.copy(wantsToBuy = wants, boughtAt = if (wants) null else discovery.boughtAt))
+    }
+
+    fun deleteDiscovery(id: UUID) {
+        val discovery = cellar.value.discoveries[id] ?: return
+        val wine = cellar.value.wines[discovery.wineId]
+        change<Unit>({
+            post(UiText.Res(R.string.discovery_deleted)) {
+                change<Unit> { c -> if (wine != null) c.addDiscovery(discovery, wine) }
+            }
+        }) { it.deleteDiscovery(id) }
     }
 
     // endregion
