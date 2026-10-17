@@ -76,6 +76,24 @@ public struct CellarFilter: Equatable, Sendable {
 public extension Cellar {
     var bottlesInCellar: [Bottle] { bottles.values.filter { $0.status == .inCellar } }
 
+    /// Bottles bought but not delivered yet.
+    var bottlesOnOrder: [Bottle] { bottles.values.filter { $0.status == .ordered } }
+
+    /// Wines with bottles on order, the soonest expected first (unknown dates last).
+    func orderGroups() -> [WineGroup] {
+        Dictionary(grouping: bottlesOnOrder, by: \.wineID)
+            .compactMap { wineID, bottles -> WineGroup? in
+                guard let wine = wines[wineID] else { return nil }
+                let sorted = bottles.sorted { ($0.expectedAt ?? .distantFuture, $0.addedAt) < ($1.expectedAt ?? .distantFuture, $1.addedAt) }
+                return WineGroup(wine: wine, bottles: sorted)
+            }
+            .sorted { a, b in
+                let da = a.bottles.first?.expectedAt ?? .distantFuture
+                let db = b.bottles.first?.expectedAt ?? .distantFuture
+                return da != db ? da < db : Cellar.nameOrder(a.wine, b.wine)
+            }
+    }
+
     var consumedBottles: [Bottle] {
         bottles.values
             .filter { $0.status == .consumed }
@@ -228,6 +246,8 @@ public extension Cellar {
 
 public enum CellarError: Error, Equatable {
     case unknownWine, unknownBottle, unknownRack, unknownDiscovery, slotTaken, slotOutOfRange, alreadyConsumed, rackNotEmpty
+    /// The bottle is on order: receive it before placing or drinking it.
+    case notReceived
 }
 
 /// Purchase details applied to every bottle added in one go.
@@ -239,11 +259,17 @@ public struct PurchaseInfo: Equatable, Sendable {
     public var receivedFrom: String?
     public var storageNote: String?
     public var sizeML: Int
+    /// The bottles are bought but not delivered yet.
+    public var isOrdered: Bool
+    /// When ordered bottles should arrive, if known.
+    public var expectedAt: Date?
 
     public init(date: Date? = nil, price: Decimal? = nil, currency: String? = nil, place: String? = nil,
-                receivedFrom: String? = nil, storageNote: String? = nil, sizeML: Int = 750) {
+                receivedFrom: String? = nil, storageNote: String? = nil, sizeML: Int = 750,
+                isOrdered: Bool = false, expectedAt: Date? = nil) {
         self.date = date; self.price = price; self.currency = currency; self.place = place
         self.receivedFrom = receivedFrom; self.storageNote = storageNote; self.sizeML = sizeML
+        self.isOrdered = isOrdered; self.expectedAt = isOrdered ? expectedAt : nil
     }
 }
 
@@ -256,25 +282,47 @@ public extension Cellar {
         addedAt: Date = .now
     ) throws -> [Bottle] {
         guard quantity > 0 else { return [] }
+        if purchase.isOrdered, !slots.isEmpty { throw CellarError.notReceived }
         for slot in slots { try validateFree(slot) }
         guard Set(slots).count == slots.count else { throw CellarError.slotTaken }
         wines[wine.id] = wine
         var added: [Bottle] = []
         for index in 0..<quantity {
-            let bottle = Bottle(
+            var bottle = Bottle(
                 wineID: wine.id, slot: index < slots.count ? slots[index] : nil,
                 storageNote: purchase.storageNote, addedAt: addedAt, purchaseDate: purchase.date,
                 purchasePrice: purchase.price, currency: purchase.currency ?? settings.currency,
                 purchasePlace: purchase.place, receivedFrom: purchase.receivedFrom, sizeML: purchase.sizeML
             )
+            if purchase.isOrdered {
+                bottle.status = .ordered
+                bottle.expectedAt = purchase.expectedAt
+            }
             bottles[bottle.id] = bottle
             added.append(bottle)
         }
         return added
     }
 
+    /// Marks ordered bottles as delivered, placing them in the given slots
+    /// (in order) when provided. They count as added on `date`.
+    mutating func receive(_ bottleIDs: [UUID], slots: [Slot] = [], at date: Date = .now) throws {
+        for id in bottleIDs where bottles[id]?.status != .ordered { throw CellarError.unknownBottle }
+        for slot in slots { try validateFree(slot) }
+        guard Set(slots).count == slots.count else { throw CellarError.slotTaken }
+        for (index, id) in bottleIDs.enumerated() {
+            guard var bottle = bottles[id] else { continue }
+            bottle.status = .inCellar
+            bottle.expectedAt = nil
+            bottle.addedAt = date
+            bottle.slot = index < slots.count ? slots[index] : nil
+            bottles[id] = bottle
+        }
+    }
+
     mutating func drink(_ bottleID: UUID, tasting: Tasting) throws {
         guard var bottle = bottles[bottleID] else { throw CellarError.unknownBottle }
+        guard bottle.status != .ordered else { throw CellarError.notReceived }
         guard bottle.status == .inCellar else { throw CellarError.alreadyConsumed }
         bottle.status = .consumed
         bottle.slot = nil
@@ -315,6 +363,7 @@ public extension Cellar {
     mutating func updateBottle(_ bottle: Bottle) throws {
         guard bottles[bottle.id] != nil else { throw CellarError.unknownBottle }
         if let slot = bottle.slot {
+            guard bottle.status != .ordered else { throw CellarError.notReceived }
             try validateInRange(slot)
             if let occupant = self.bottle(at: slot), occupant.id != bottle.id { throw CellarError.slotTaken }
         }

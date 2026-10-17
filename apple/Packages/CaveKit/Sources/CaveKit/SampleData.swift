@@ -23,6 +23,7 @@ public enum SampleData {
         public var restaurantNote = "Mineral and salty, great with grilled fish."
         public var tagToBuy = "For summer"
         public var tagGift = "Gift idea"
+        public var merchant = "Wine merchant"
         public init() {}
     }
 
@@ -86,6 +87,14 @@ public enum SampleData {
             _ = try? cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase,
                                        addedAt: .now - Double(30 * (index + 1)) * day)
         }
+
+        // Last year's vintage bought en primeur, not delivered yet.
+        let primeur = Wine(name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 1, color: .red,
+                           region: "Bordeaux", country: "France", appellation: "Pauillac",
+                           grapes: ["Cabernet Sauvignon", "Merlot"], drinkFrom: year + 6, drinkUntil: year + 20)
+        _ = try? cellar.addBottles(of: primeur, quantity: 6, purchase: PurchaseInfo(
+            date: .now - 60 * day, price: 41, currency: cellar.settings.currency, place: labels.merchant,
+            isOrdered: true, expectedAt: .now + 75 * day))
 
         // A few past tastings for the journal.
         let tasted = Wine(name: "Vieilles Vignes", producer: "Domaine Arnaud", vintage: year - 7, color: .red,

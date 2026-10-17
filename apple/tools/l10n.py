@@ -15,6 +15,30 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Bottles on order': 'Bouteilles en commande',
+    'Bottles on order are listed apart and are not suggested for tonight until they arrive.': 'Les bouteilles en commande sont listées à part et ne sont pas proposées pour ce soir avant leur arrivée.',
+    'Bottles received: %lld': 'Bouteilles reçues : %lld',
+    'Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them and choose **Received**. They then join the cellar without a place, ready to be put in a rack.': 'Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées pour choisir **Reçues**. Elles rejoignent alors la cave sans emplacement, prêtes à être rangées dans un casier.',
+    'Bought or ordered en primeur. The bottles join the cellar when you mark them received.': 'Achetées ou commandées en primeur. Les bouteilles rejoignent la cave quand vous les marquez comme reçues.',
+    'Cancel Order': 'Annuler la commande',
+    'Delivery date unknown': 'Date de livraison inconnue',
+    'Delivery expected today': 'Livraison prévue aujourd’hui',
+    'Expected %@': 'Prévue le %@',
+    'Expected delivery': 'Livraison prévue',
+    'Late: expected %@': 'En retard : prévue le %@',
+    'Mark All Received': 'Tout marquer comme reçu',
+    'Mark Received': 'Marquer comme reçu',
+    'Not delivered yet': 'Pas encore livrées',
+    'On order': 'En commande',
+    'On order: %lld × %@': 'En commande : %1$lld × %2$@',
+    'On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak, and on the day bottles on order are expected. Worked out on this device.': 'Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, et le jour où des bouteilles en commande sont attendues. Calculé sur cet appareil.',
+    'Order cancelled': 'Commande annulée',
+    'Received': 'Reçues',
+    'Received bottles join the cellar without a place; move them to a rack from here.': 'Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page.',
+    'Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.': 'Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil.',
+    'Wine merchant': 'Caviste',
+    '%lld bottles on order': '%lld bouteilles en commande',
+    '%@: %lld bottles. Mark them received when they arrive.': '%1$@ : %2$lld bouteilles. Marquez-les comme reçues à leur arrivée.',
     'Coming from another app': 'Venir d’une autre app',
     'Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.': 'Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil.',
     'Label photos stay on your devices and sync between them, but are not included in backups yet.': 'Les photos d’étiquettes restent sur vos appareils et se synchronisent entre eux, mais ne sont pas encore incluses dans les sauvegardes.',
@@ -865,7 +889,7 @@ def to_key(literal):
         expr = match.group(1)
         if "count" in expr or any(op in expr for op in (" - ", " + ", " * ", "reduce")):
             return "%lld"
-        stringy = any(t in expr for t in ("name", "Name", "label", "first", "formatted", "location", "displayName",
+        stringy = any(t in expr for t in ("name", "Name", "label", "Label", "first", "formatted", "location", "displayName",
                                             "letters", "Letters", "place", "digits"))
         return "%@" if stringy else "%lld"
     return re.sub(r"\\\((.*?)\)(?=[^)]*(?:\\\(|$))", repl, literal) if "\\(" in literal else literal

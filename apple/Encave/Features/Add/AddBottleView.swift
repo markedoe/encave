@@ -21,6 +21,9 @@ struct AddBottleView: View {
     @State private var purchaseDate = Date.now
     @State private var purchasePlace = ""
     @State private var receivedFrom = ""
+    @State private var isOrdered = false
+    @State private var hasExpectedDate = false
+    @State private var expectedDate = Date.now
     @State private var choosingSlots = false
     @State private var prepared = false
     @State private var scan = LabelScan()
@@ -95,46 +98,61 @@ struct AddBottleView: View {
                         }
                     }
                     .fieldHelp("Half bottle 37.5 cl, bottle 75 cl, magnum 1.5 l, double magnum 3 l.")
+                    Toggle("Not delivered yet", isOn: $isOrdered.animation())
+                        .fieldHelp("Bought or ordered en primeur. The bottles join the cellar when you mark them received.")
+                        .accessibilityIdentifier("add.ordered")
+                    if isOrdered {
+                        Toggle("Expected delivery", isOn: $hasExpectedDate.animation())
+                        if hasExpectedDate {
+                            DatePicker("Date", selection: $expectedDate, displayedComponents: .date)
+                        }
+                    }
                 } header: {
                     Text("Bottles")
                 } footer: {
-                    Text("Each bottle is tracked on its own, so you can drink or move them one by one.")
+                    if isOrdered {
+                        Text("Bottles on order are listed apart and are not suggested for tonight until they arrive.")
+                    } else {
+                        Text("Each bottle is tracked on its own, so you can drink or move them one by one.")
+                    }
                 }
 
-                Section {
-                    Picker("Rack", selection: $rackID) {
-                        Text("No rack").tag(UUID?.none)
-                        ForEach(model.cellar.racks) { rack in
-                            Text(rack.name).tag(UUID?.some(rack.id))
-                        }
-                    }
-                    if let rack = selectedRack {
-                        let free = model.cellar.freeSlots(in: rack).count
-                        Button {
-                            choosingSlots = true
-                        } label: {
-                            LabeledContent("Positions") {
-                                Text(slotSummary(rack: rack))
-                                    .foregroundStyle(chosenSlots.isEmpty ? Color.secondary : Color.primary)
+                if !isOrdered {
+                    Section {
+                        Picker("Rack", selection: $rackID) {
+                            Text("No rack").tag(UUID?.none)
+                            ForEach(model.cellar.racks) { rack in
+                                Text(rack.name).tag(UUID?.some(rack.id))
                             }
                         }
-                        if free < quantity {
-                            Label("Only \(free) free positions: the other bottles will have no position.",
-                                  systemImage: "exclamationmark.triangle")
-                                .font(.footnote)
-                                .foregroundStyle(.orange)
+                        if let rack = selectedRack {
+                            let free = model.cellar.freeSlots(in: rack).count
+                            Button {
+                                choosingSlots = true
+                            } label: {
+                                LabeledContent("Positions") {
+                                    Text(slotSummary(rack: rack))
+                                        .foregroundStyle(chosenSlots.isEmpty ? Color.secondary : Color.primary)
+                                }
+                            }
+                            if free < quantity {
+                                Label("Only \(free) free positions: the other bottles will have no position.",
+                                      systemImage: "exclamationmark.triangle")
+                                    .font(.footnote)
+                                    .foregroundStyle(.orange)
+                            }
+                        } else {
+                            TextField("Where is it?", text: $storageNote, prompt: Text("Kitchen, box in the garage…"))
+                                .fieldHelp("For bottles that are not in a rack.")
                         }
-                    } else {
-                        TextField("Where is it?", text: $storageNote, prompt: Text("Kitchen, box in the garage…"))
-                            .fieldHelp("For bottles that are not in a rack.")
-                    }
-                } header: {
-                    Text("Location")
-                } footer: {
-                    if selectedRack != nil, chosenSlots.isEmpty {
-                        Text("The first free positions are used unless you choose them. Tap Positions to pick them on the rack.")
-                    } else if selectedRack == nil {
-                        Text("Choose a rack to see exactly where the bottles are, or note where they are kept.")
+                    } header: {
+                        Text("Location")
+                    } footer: {
+                        if selectedRack != nil, chosenSlots.isEmpty {
+                            Text("The first free positions are used unless you choose them. Tap Positions to pick them on the rack.")
+                        } else if selectedRack == nil {
+                            Text("Choose a rack to see exactly where the bottles are, or note where they are kept.")
+                        }
                     }
                 }
 
@@ -214,8 +232,8 @@ struct AddBottleView: View {
         if existingWine == nil, let labelPhoto = scan.photo {
             wine.photoID = PhotoStore.save(labelPhoto)
         }
-        var slots = chosenSlots
-        if let rack = selectedRack, slots.count < quantity {
+        var slots = isOrdered ? [] : chosenSlots
+        if !isOrdered, let rack = selectedRack, slots.count < quantity {
             let free = model.cellar.freeSlots(in: rack).filter { !slots.contains($0) }
             slots += free.prefix(quantity - slots.count)
         }
@@ -224,8 +242,8 @@ struct AddBottleView: View {
             currency: model.cellar.settings.currency,
             place: purchasePlace.isEmpty ? nil : purchasePlace,
             receivedFrom: receivedFrom.isEmpty ? nil : receivedFrom,
-            storageNote: selectedRack == nil && !storageNote.isEmpty ? storageNote : nil,
-            sizeML: sizeML
+            storageNote: !isOrdered && selectedRack == nil && !storageNote.isEmpty ? storageNote : nil,
+            sizeML: sizeML, isOrdered: isOrdered, expectedAt: hasExpectedDate ? expectedDate : nil
         )
         let added = model.addBottles(of: wine, quantity: quantity, slots: Array(slots.prefix(quantity)), purchase: purchase)
         if added, let discoveryID = context.discoveryID {

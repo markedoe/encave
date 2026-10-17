@@ -314,3 +314,59 @@ import Testing
         #expect(cellar.wines.values.first?.color == .red)
     }
 }
+
+@Suite struct OnOrderTests {
+    @Test func orderedBottlesStayOutOfTheCellarUntilReceived() throws {
+        var cellar = Cellar()
+        let rack = Rack(name: "Small", rows: 1, columns: 2)
+        cellar.addRack(rack)
+        let soon = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let wine = Wine(name: "En primeur", vintage: 2024)
+        let ordered = try cellar.addBottles(of: wine, quantity: 2, purchase: PurchaseInfo(price: 30, isOrdered: true, expectedAt: soon))
+        #expect(ordered.allSatisfy { $0.status == .ordered && $0.expectedAt == soon })
+        #expect(cellar.bottlesInCellar.isEmpty)
+        #expect(cellar.groups().isEmpty)
+        #expect(cellar.orderGroups().map(\.wine.id) == [wine.id])
+        #expect(cellar.statistics(year: 2026).bottleCount == 0)
+        #expect(cellar.wines[wine.id] != nil, "a wine with only ordered bottles is kept")
+
+        #expect(throws: CellarError.notReceived) {
+            try cellar.addBottles(of: wine, slots: [Slot(rackID: rack.id, row: 0, column: 0)], purchase: PurchaseInfo(isOrdered: true))
+        }
+        #expect(throws: CellarError.notReceived) { try cellar.drink(ordered[0].id, tasting: Tasting()) }
+
+        let arrival = Date(timeIntervalSinceReferenceDate: 800_100_000)
+        try cellar.receive(ordered.map(\.id), slots: [Slot(rackID: rack.id, row: 0, column: 1)], at: arrival)
+        let received = cellar.bottles(of: wine.id)
+        #expect(received.count == 2)
+        #expect(received.allSatisfy { $0.expectedAt == nil && $0.addedAt == arrival })
+        #expect(received.compactMap(\.slot) == [Slot(rackID: rack.id, row: 0, column: 1)])
+        #expect(cellar.orderGroups().isEmpty)
+        #expect(throws: CellarError.unknownBottle) { try cellar.receive([received[0].id]) }
+    }
+
+    @Test func ordersSortBySoonestArrival() throws {
+        var cellar = Cellar()
+        let late = Wine(name: "A late"), early = Wine(name: "B early"), unknown = Wine(name: "C unknown")
+        try cellar.addBottles(of: late, purchase: PurchaseInfo(isOrdered: true, expectedAt: Date(timeIntervalSinceReferenceDate: 2_000)))
+        try cellar.addBottles(of: early, purchase: PurchaseInfo(isOrdered: true, expectedAt: Date(timeIntervalSinceReferenceDate: 1_000)))
+        try cellar.addBottles(of: unknown, purchase: PurchaseInfo(isOrdered: true))
+        #expect(cellar.orderGroups().map(\.wine.name) == ["B early", "A late", "C unknown"])
+    }
+
+    @Test func ordersSurviveCSVAndJSON() throws {
+        var cellar = Cellar()
+        let expected = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        try cellar.addBottles(of: Wine(name: "Arriving"), purchase: PurchaseInfo(isOrdered: true, expectedAt: expected))
+        let csv = CellarExport.csv(cellar, includeHistory: false)
+        #expect(csv.contains("ordered"))
+        var imported = Cellar()
+        try imported.importCSV(csv)
+        let bottle = try #require(imported.bottlesOnOrder.first)
+        #expect(Calendar(identifier: .gregorian).isDate(try #require(bottle.expectedAt), inSameDayAs: expected))
+
+        let data = try JSONEncoder().encode(cellar)
+        let decoded = try JSONDecoder().decode(Cellar.self, from: data)
+        #expect(decoded.bottlesOnOrder.first?.expectedAt == expected)
+    }
+}

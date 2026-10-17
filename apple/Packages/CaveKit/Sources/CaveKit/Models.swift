@@ -304,6 +304,9 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
         case consumed
         /// Given away, sold or broken: no longer in the cellar, not drunk by you.
         case gone
+        /// Bought but not delivered yet (in transit, en primeur). Never in a rack,
+        /// not counted in the cellar until received.
+        case ordered
     }
 
     public var id: UUID
@@ -321,17 +324,20 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
     /// Bottle size in millilitres (750 standard, 1500 magnum...).
     public var sizeML: Int
     public var tasting: Tasting?
+    /// When an ordered bottle should arrive. Only meaningful for `.ordered`.
+    public var expectedAt: Date?
 
     public init(
         id: UUID = UUID(), wineID: UUID, status: Status = .inCellar, slot: Slot? = nil,
         storageNote: String? = nil, addedAt: Date = .now, purchaseDate: Date? = nil,
         purchasePrice: Decimal? = nil, currency: String? = nil, purchasePlace: String? = nil,
-        receivedFrom: String? = nil, sizeML: Int = 750, tasting: Tasting? = nil
+        receivedFrom: String? = nil, sizeML: Int = 750, tasting: Tasting? = nil, expectedAt: Date? = nil
     ) {
         self.id = id; self.wineID = wineID; self.status = status; self.slot = slot
         self.storageNote = storageNote; self.addedAt = addedAt; self.purchaseDate = purchaseDate
         self.purchasePrice = purchasePrice; self.currency = currency; self.purchasePlace = purchasePlace
         self.receivedFrom = receivedFrom; self.sizeML = sizeML; self.tasting = tasting
+        self.expectedAt = expectedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -349,6 +355,7 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
         receivedFrom = try c.decodeIfPresent(String.self, forKey: .receivedFrom)
         sizeML = try c.decodeIfPresent(Int.self, forKey: .sizeML) ?? 750
         tasting = try c.decodeIfPresent(Tasting.self, forKey: .tasting)
+        expectedAt = try c.decodeIfPresent(Date.self, forKey: .expectedAt)
     }
 }
 

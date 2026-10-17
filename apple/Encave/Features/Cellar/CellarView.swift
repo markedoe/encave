@@ -92,7 +92,7 @@ struct CellarList: View {
     @ViewBuilder
     private var content: some View {
         let groups = model.cellar.groups(filter: filter, sort: sort, year: model.currentYear)
-        if model.cellar.bottlesInCellar.isEmpty {
+        if model.cellar.bottlesInCellar.isEmpty && model.cellar.bottlesOnOrder.isEmpty {
             EmptyCellarView()
         } else {
             ScrollViewReader { proxy in
@@ -109,6 +109,9 @@ struct CellarList: View {
                         })
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                             .listRowBackground(Color.clear)
+                    }
+                    if !filter.isActive {
+                        OrdersSection()
                     }
                 }
                 Section {
@@ -353,6 +356,43 @@ struct WineContextMenu: View {
         Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: group.wine.id) }
         Divider()
         Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(group.wine.id) }
+    }
+}
+
+/// Bottles bought but not delivered yet, the soonest first. Swipe or use the
+/// menu to mark them received; they then join the cellar without a place.
+struct OrdersSection: View {
+    @Environment(CellarModel.self) private var model
+
+    var body: some View {
+        let orders = model.cellar.orderGroups()
+        if !orders.isEmpty {
+            Section {
+                ForEach(orders) { group in
+                    WineRow(group: group)
+                        .tag(group.wine.id)
+                        .accessibilityIdentifier("order.row")
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                model.receive(group.bottles.map(\.id))
+                            } label: {
+                                Label("Received", systemImage: "shippingbox")
+                            }
+                            .tint(.accentColor)
+                        }
+                        .contextMenu {
+                            Button("Mark Received", systemImage: "shippingbox") {
+                                model.receive(group.bottles.map(\.id))
+                            }
+                        }
+                        .accessibilityAction(named: Text("Mark Received")) {
+                            model.receive(group.bottles.map(\.id))
+                        }
+                }
+            } header: {
+                Text("On order")
+            }
+        }
     }
 }
 

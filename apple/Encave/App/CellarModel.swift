@@ -125,8 +125,20 @@ final class CellarModel {
         let ok = update { try $0.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase) }
         guard ok else { return false }
         successCount += 1
-        showToast(String(localized: "Added \(quantity) × \(wine.displayName)"))
+        showToast(purchase.isOrdered
+                  ? String(localized: "On order: \(quantity) × \(wine.displayName)")
+                  : String(localized: "Added \(quantity) × \(wine.displayName)"))
         return true
+    }
+
+    /// Ordered bottles that arrived. They join the cellar without a place.
+    func receive(_ bottleIDs: [UUID]) {
+        let previous = bottleIDs.compactMap { cellar.bottles[$0] }
+        guard !previous.isEmpty, update({ try $0.receive(bottleIDs) }) else { return }
+        successCount += 1
+        showToast(String(localized: "Bottles received: \(previous.count)")) { [weak self] in
+            self?.update { cellar in previous.forEach { cellar.bottles[$0.id] = $0 } }
+        }
     }
 
     func drink(_ bottleID: UUID, tasting: Tasting) {
@@ -141,10 +153,17 @@ final class CellarModel {
 
     func markGone(_ bottleID: UUID) {
         guard let bottle = cellar.bottles[bottleID] else { return }
-        let previousSlot = bottle.slot
         guard update({ try $0.markGone(bottleID) }) else { return }
-        showToast(String(localized: "Bottle removed from the cellar")) { [weak self] in
-            self?.update { $0.undoDrink(bottleID, previousSlot: previousSlot) }
+        showToast(bottle.status == .ordered
+                  ? String(localized: "Order cancelled")
+                  : String(localized: "Bottle removed from the cellar")) { [weak self] in
+            // Put the record back as it was (an order stays an order), in its
+            // place if nothing took it meanwhile.
+            self?.update { cellar in
+                var restored = bottle
+                if let slot = bottle.slot, cellar.bottle(at: slot) != nil { restored.slot = nil }
+                cellar.bottles[bottleID] = restored
+            }
         }
     }
 
@@ -337,6 +356,7 @@ extension SampleData.Labels {
         labels.restaurantNote = String(localized: "Mineral and salty, great with grilled fish.")
         labels.tagToBuy = String(localized: "For summer")
         labels.tagGift = String(localized: "Gift idea")
+        labels.merchant = String(localized: "Wine merchant")
         return labels
     }
 }

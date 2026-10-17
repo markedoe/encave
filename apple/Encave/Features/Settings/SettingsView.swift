@@ -70,7 +70,7 @@ struct SettingsView: View {
 
             Section {
                 Toggle(isOn: remindersBinding) {
-                    Label("Monthly Reminder", systemImage: "bell.badge")
+                    Label("Reminders", systemImage: "bell.badge")
                 }
                 .accessibilityIdentifier("settings.reminders")
             } header: {
@@ -79,7 +79,7 @@ struct SettingsView: View {
                 if remindersRefused {
                     Text("Notifications are off for Encave. Turn them on in the system settings.")
                 } else {
-                    Text("On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak. Worked out on this device.")
+                    Text("On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak, and on the day bottles on order are expected. Worked out on this device.")
                 }
             }
 

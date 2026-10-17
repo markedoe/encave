@@ -53,14 +53,15 @@ public enum CellarExport {
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
-        "rating", "tasted_on", "note",
+        "rating", "tasted_on", "note", "expected_on",
     ]
 
-    /// One row per bottle. Includes consumed bottles when `includeHistory` is true.
+    /// One row per bottle, including bottles on order. Includes consumed and
+    /// given-away bottles when `includeHistory` is true.
     public static func csv(_ cellar: Cellar, includeHistory: Bool = true) -> String {
         let day = dayFormatter()
         let bottles = cellar.bottles.values
-            .filter { includeHistory || $0.status == .inCellar }
+            .filter { includeHistory || $0.status == .inCellar || $0.status == .ordered }
             .sorted { a, b in
                 let wa = cellar.wines[a.wineID], wb = cellar.wines[b.wineID]
                 if let wa, let wb, wa.id != wb.id { return Cellar.nameOrder(wa, wb) }
@@ -78,7 +79,7 @@ public enum CellarExport {
                 bottle.purchaseDate.map(day.string(from:)), bottle.purchasePrice.map { "\($0)" }, bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, String(bottle.sizeML),
                 bottle.tasting?.rating.map(String.init), bottle.tasting.map { day.string(from: $0.date) },
-                bottle.tasting?.note,
+                bottle.tasting?.note, bottle.expectedAt.map(day.string(from:)),
             ]
             lines.append(fields.map { escape($0 ?? "") }.joined(separator: ","))
         }
@@ -175,6 +176,9 @@ public extension Cellar {
                                              rating: value("rating").flatMap(CSVColumns.rating), note: value("note"))
                 } else if status == .gone {
                     bottle.status = .gone
+                } else if status == .ordered {
+                    bottle.status = .ordered
+                    bottle.expectedAt = value("expected_on").flatMap(day.date(from:))
                 } else if let rackName = value("rack"), let label = value("slot"),
                           let rack = racks.first(where: { $0.name.caseInsensitiveCompare(rackName) == .orderedSame }),
                           let wanted = rack.slot(forLabel: label),
@@ -242,6 +246,7 @@ enum CSVColumns {
         "receivedfrom": "received_from", "sizeml": "size_ml", "tastedon": "tasted_on",
         "rating": "rating", "yourrating": "rating", "note": "note", "notes": "note", "yourreview": "note",
         "personalnote": "note", "commentaire": "note",
+        "expectedon": "expected_on", "deliverydate": "expected_on", "livraison": "expected_on",
         "scandate": "scan_date", "scanreviewlocation": "place", "place": "place", "lieu": "place",
     ]
 

@@ -93,12 +93,31 @@ struct WineDetailView: View {
                     }
                 }
 
-                Section {
-                    ForEach(bottles) { bottle in
-                        BottleRow(bottle: bottle)
+                let orders = model.cellar.bottlesOnOrder.filter { $0.wineID == wineID }
+                    .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
+                if !bottles.isEmpty || orders.isEmpty {
+                    Section {
+                        ForEach(bottles) { bottle in
+                            BottleRow(bottle: bottle)
+                        }
+                    } header: {
+                        Text("\(bottles.count) bottles in the cellar")
                     }
-                } header: {
-                    Text("\(bottles.count) bottles in the cellar")
+                }
+                if !orders.isEmpty {
+                    Section {
+                        ForEach(orders) { bottle in
+                            OrderedBottleRow(bottle: bottle)
+                        }
+                        Button("Mark All Received", systemImage: "shippingbox") {
+                            model.receive(orders.map(\.id))
+                        }
+                        .accessibilityIdentifier("action.order.receive")
+                    } header: {
+                        Text("\(orders.count) bottles on order")
+                    } footer: {
+                        Text("Received bottles join the cellar without a place; move them to a rack from here.")
+                    }
                 }
 
                 let discoveries = model.cellar.discoveries(of: wineID)
@@ -303,6 +322,52 @@ struct BottleRow: View {
         if let place = bottle.purchasePlace { parts.append(place) }
         if bottle.sizeML != 750 { parts.append(BottleSize.label(for: bottle.sizeML)) }
         return parts.isEmpty ? String(localized: "Added \(bottle.addedAt.formatted(date: .abbreviated, time: .omitted))") : parts.joined(separator: " · ")
+    }
+}
+
+/// A bottle bought but not delivered yet.
+struct OrderedBottleRow: View {
+    @Environment(CellarModel.self) private var model
+    let bottle: Bottle
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ArrivalLabel(date: bottle.expectedAt)
+                .font(.body)
+            let details = [
+                bottle.purchasePrice.map { $0.formatted(.currency(code: bottle.currency ?? model.cellar.settings.currency)) },
+                bottle.purchasePlace,
+                bottle.sizeML != 750 ? BottleSize.label(for: bottle.sizeML) : nil,
+            ].compactMap { $0 }
+            if !details.isEmpty {
+                Text(details.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button {
+                model.receive([bottle.id])
+            } label: {
+                Label("Received", systemImage: "shippingbox")
+            }
+            .tint(.accentColor)
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                model.markGone(bottle.id)
+            } label: {
+                Label("Cancel Order", systemImage: "xmark.circle")
+            }
+        }
+        .contextMenu {
+            Button("Mark Received", systemImage: "shippingbox") { model.receive([bottle.id]) }
+            Divider()
+            Button("Cancel Order", systemImage: "xmark.circle", role: .destructive) { model.markGone(bottle.id) }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: Text("Mark Received")) { model.receive([bottle.id]) }
+        .accessibilityAction(named: Text("Cancel Order")) { model.markGone(bottle.id) }
     }
 }
 

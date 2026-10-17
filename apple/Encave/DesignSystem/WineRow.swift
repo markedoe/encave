@@ -16,8 +16,11 @@ struct WineRow: View {
         return labels.count > 1 ? String(localized: "\(first) and \(labels.count - 1) more") : first
     }
 
+    /// Bottles on order: when they should arrive, instead of maturity and place.
+    private var isOrder: Bool { group.bottles.first?.status == .ordered }
+
     var body: some View {
-        let maturity = Maturity.of(group.wine, year: model.currentYear)
+        let maturity: Maturity = isOrder ? .unknown : Maturity.of(group.wine, year: model.currentYear)
         HStack(spacing: 14) {
             BottleEnd(color: group.wine.color, size: 34)
             VStack(alignment: .leading, spacing: 3) {
@@ -31,6 +34,9 @@ struct WineRow: View {
                         .lineLimit(1)
                 }
                 HStack(spacing: 10) {
+                    if isOrder {
+                        ArrivalLabel(date: group.bottles.first?.expectedAt)
+                    }
                     if maturity != .unknown {
                         Label(maturity.shortTitle, systemImage: maturity.systemImage)
                             .foregroundStyle(maturity.tint)
@@ -73,6 +79,28 @@ struct CompactLabelStyle: LabelStyle {
         HStack(spacing: 3) {
             configuration.icon.imageScale(.small)
             configuration.title
+        }
+    }
+}
+
+/// "Expected 12 Nov", "Late: expected 3 Oct" or "Delivery date unknown".
+/// Lateness is said in words and with its own symbol, not only in color.
+struct ArrivalLabel: View {
+    let date: Date?
+
+    var body: some View {
+        if let date {
+            let dayLabel = date.formatted(.dateTime.day().month())
+            if Calendar.current.startOfDay(for: date) < Calendar.current.startOfDay(for: .now) {
+                Label("Late: expected \(dayLabel)", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+            } else {
+                Label("Expected \(dayLabel)", systemImage: "shippingbox")
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            Label("Delivery date unknown", systemImage: "shippingbox")
+                .foregroundStyle(.secondary)
         }
     }
 }

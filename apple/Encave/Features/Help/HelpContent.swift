@@ -41,6 +41,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Drinking window", body: "The years when the wine is at its best. With **Estimate automatically**, it is worked out from the style and the vintage; turn it off to enter the years from the producer or a guide."),
                 HelpSection(title: "Quantity, size and location", body: "Add several bottles at once. Choose a rack to place them: the first free places are used unless you pick them. Without a rack, write where they are (kitchen, box in the garage)."),
                 HelpSection(title: "Purchase details", body: "Optional: price per bottle, date, shop or the person who gave it to you. Prices are used for the value of your cellar in Insights."),
+                HelpSection(title: "Bottles on order", body: "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them and choose **Received**. They then join the cellar without a place, ready to be put in a rack.", systemImage: "shippingbox"),
             ]),
             HelpArticle(topic: .scanning, title: "Scanning a label",
                         summary: "Fill in a wine from a photo of its label.", systemImage: "camera.viewfinder", sections: [
@@ -69,7 +70,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Maturity", body: "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color."),
                 HelpSection(title: "Suggestions", body: "Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why."),
                 HelpSection(title: "Serving", body: "Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant."),
-                HelpSection(title: "Monthly reminder", body: "Turn on **Monthly Reminder** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak. It is worked out on this device."),
+                HelpSection(title: "Reminders", body: "Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device."),
             ]),
             HelpArticle(topic: .drinking, title: "Drinking a bottle",
                         summary: "Keep track of what you opened and what you thought.", systemImage: "wineglass", sections: [

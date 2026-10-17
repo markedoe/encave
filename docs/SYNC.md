@@ -39,6 +39,19 @@ stands for objects that exist but were never stamped.
 - **Starting.** When sync is set up on a cellar that already has data, every
   object gets a first stamp (`SyncState.starting`).
 
+### Object format
+
+Objects are the records of the cellar file, encoded as JSON as described in
+section 7 (dates, UUID-keyed maps). Optional fields are left out when empty.
+Two details matter for other implementations:
+
+- `bottle.status` is one of `inCellar`, `consumed`, `gone` or `ordered`
+  (bought, not delivered yet; such a bottle has no place and may carry
+  `expectedAt`, a date).
+- Readers are strict: an unknown enum value fails decoding. A device that does
+  not know a new value refuses the sync instead of rewriting the object with a
+  wrong value and a newer stamp, which would spread the loss to every device.
+
 ### Merge
 
 `merge(local, localState, remote, remoteState)` is deterministic: both devices

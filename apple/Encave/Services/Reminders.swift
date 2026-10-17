@@ -3,14 +3,20 @@ import Foundation
 import UserNotifications
 
 /// A monthly reminder, on the first of the month, of the bottles to drink this year,
-/// those whose window opens and those past their peak. Computed and scheduled on the
-/// device: no push server, nothing leaves it.
+/// those whose window opens and those past their peak, and one on the day bottles on
+/// order are expected. Computed and scheduled on the device: no push server, nothing
+/// leaves it.
 @MainActor
 enum Reminders {
     nonisolated static let enabledKey = "reminders.enabled"
     nonisolated static let identifier = "encave.monthly"
     /// Tapping the notification opens Tonight.
     nonisolated static let tabKey = "tab"
+    /// Tapping a delivery reminder opens the wine.
+    nonisolated static let wineKey = "wine"
+    nonisolated static let deliveryPrefix = "encave.delivery."
+    /// At most this many delivery reminders are pending (the system allows 64 in all).
+    nonisolated static let maxDeliveries = 20
 
     nonisolated static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
 
@@ -24,7 +30,14 @@ enum Reminders {
 
     static func disable() {
         UserDefaults.standard.set(false, forKey: enabledKey)
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        Task { await removeDeliveries(center) }
+    }
+
+    private static func removeDeliveries(_ center: UNUserNotificationCenter) async {
+        let pending = await center.pendingNotificationRequests().map(\.identifier)
+        center.removePendingNotificationRequests(withIdentifiers: pending.filter { $0.hasPrefix(deliveryPrefix) })
     }
 
     /// Replaces the pending reminder with one for the first of next month, from the
@@ -32,7 +45,9 @@ enum Reminders {
     static func schedule(for cellar: Cellar) async {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        await removeDeliveries(center)
         guard isEnabled else { return }
+        await scheduleDeliveries(for: cellar, center: center)
         let calendar = Calendar.current
         guard let next = calendar.nextDate(after: .now, matching: DateComponents(day: 1, hour: 10, minute: 0),
                                            matchingPolicy: .nextTime) else { return }
@@ -48,6 +63,29 @@ enum Reminders {
         let trigger = UNCalendarNotificationTrigger(
             dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: next), repeats: false)
         try? await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+    }
+
+    /// One reminder per wine on order, at 10:00 on the expected day.
+    private static func scheduleDeliveries(for cellar: Cellar, center: UNUserNotificationCenter) async {
+        let calendar = Calendar.current
+        var count = 0
+        for group in cellar.orderGroups() {
+            guard count < maxDeliveries, let expected = group.bottles.first?.expectedAt,
+                  let day = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: expected),
+                  day > .now else { continue } // Past days are shown as late in the app instead.
+            let content = UNMutableNotificationContent()
+            content.title = String(localized: "Delivery expected today")
+            let wineName = group.wine.displayName
+            content.body = String(localized: "\(wineName): \(group.count) bottles. Mark them received when they arrive.")
+            content.sound = .default
+            content.userInfo = [tabKey: AppTab.cellar.rawValue, wineKey: group.wine.id.uuidString]
+            content.threadIdentifier = deliveryPrefix
+            let trigger = UNCalendarNotificationTrigger(
+                dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: day), repeats: false)
+            let id = deliveryPrefix + group.wine.id.uuidString
+            try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+            count += 1
+        }
     }
 
     static func body(for digest: DrinkingDigest) -> String {
@@ -66,9 +104,15 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unc
     weak var model: CellarModel?
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        let tab = response.notification.request.content.userInfo[Reminders.tabKey] as? String
+        let info = response.notification.request.content.userInfo
+        let tab = info[Reminders.tabKey] as? String
+        let wineID = (info[Reminders.wineKey] as? String).flatMap(UUID.init(uuidString:))
         await MainActor.run {
-            if let tab, let section = AppTab(rawValue: tab) { model?.selectedTab = section }
+            if let wineID, model?.cellar.wines[wineID] != nil {
+                model?.open(wine: wineID)
+            } else if let tab, let section = AppTab(rawValue: tab) {
+                model?.selectedTab = section
+            }
         }
     }
 

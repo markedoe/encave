@@ -91,6 +91,16 @@
         }
       }
     },
+    "%@: %lld bottles. Mark them received when they arrive.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$lld bouteilles. Marquez-les comme reçues à leur arrivée."
+          }
+        }
+      }
+    },
     "%lld bottles": {
       "localizations": {
         "en": {
@@ -167,6 +177,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld bottles on order": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld bouteilles en commande"
           }
         }
       }
@@ -1121,6 +1141,26 @@
         }
       }
     },
+    "Bottles on order": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles en commande"
+          }
+        }
+      }
+    },
+    "Bottles on order are listed apart and are not suggested for tonight until they arrive.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles en commande sont listées à part et ne sont pas proposées pour ce soir avant leur arrivée."
+          }
+        }
+      }
+    },
     "Bottles opened, last 12 months": {
       "localizations": {
         "fr": {
@@ -1177,6 +1217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles rangées : %lld"
+          }
+        }
+      }
+    },
+    "Bottles received: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles reçues : %lld"
           }
         }
       }
@@ -1251,6 +1301,26 @@
         }
       }
     },
+    "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them and choose **Received**. They then join the cellar without a place, ready to be put in a rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées pour choisir **Reçues**. Elles rejoignent alors la cave sans emplacement, prêtes à être rangées dans un casier."
+          }
+        }
+      }
+    },
+    "Bought or ordered en primeur. The bottles join the cellar when you mark them received.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Achetées ou commandées en primeur. Les bouteilles rejoignent la cave quand vous les marquez comme reçues."
+          }
+        }
+      }
+    },
     "Busiest month: %@": {
       "localizations": {
         "fr": {
@@ -1307,6 +1377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Cancel Order": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler la commande"
           }
         }
       }
@@ -1917,6 +1997,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ supprimé"
+          }
+        }
+      }
+    },
+    "Delivery date unknown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date de livraison inconnue"
+          }
+        }
+      }
+    },
+    "Delivery expected today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Livraison prévue aujourd’hui"
           }
         }
       }
@@ -2537,6 +2637,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tout est facultatif et modifiable plus tard depuis le Journal."
+          }
+        }
+      }
+    },
+    "Expected %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévue le %@"
+          }
+        }
+      }
+    },
+    "Expected delivery": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Livraison prévue"
           }
         }
       }
@@ -3461,6 +3581,16 @@
         }
       }
     },
+    "Late: expected %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En retard : prévue le %@"
+          }
+        }
+      }
+    },
     "Layout": {
       "localizations": {
         "fr": {
@@ -3597,6 +3727,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casier principal"
+          }
+        }
+      }
+    },
+    "Mark All Received": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout marquer comme reçu"
+          }
+        }
+      }
+    },
+    "Mark Received": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer comme reçu"
           }
         }
       }
@@ -3941,6 +4091,16 @@
         }
       }
     },
+    "Not delivered yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore livrées"
+          }
+        }
+      }
+    },
     "Not found": {
       "localizations": {
         "fr": {
@@ -4111,6 +4271,26 @@
         }
       }
     },
+    "On order": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En commande"
+          }
+        }
+      }
+    },
+    "On order: %lld × %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En commande : %1$lld × %2$@"
+          }
+        }
+      }
+    },
     "On the Mac, and on iPad with a keyboard.": {
       "localizations": {
         "fr": {
@@ -4137,6 +4317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un code QR et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil** et scannez le code QR, ou saisissez le code (sur un Mac). Les deux appareils doivent être sur le même Wi-Fi."
+          }
+        }
+      }
+    },
+    "On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak, and on the day bottles on order are expected. Worked out on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, et le jour où des bouteilles en commande sont attendues. Calculé sur cet appareil."
           }
         }
       }
@@ -4387,6 +4577,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Orange"
+          }
+        }
+      }
+    },
+    "Order cancelled": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commande annulée"
           }
         }
       }
@@ -4847,6 +5047,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Prêt à boire"
+          }
+        }
+      }
+    },
+    "Received": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reçues"
+          }
+        }
+      }
+    },
+    "Received bottles join the cellar without a place; move them to a rack from here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page."
           }
         }
       }
@@ -6791,6 +7011,16 @@
         }
       }
     },
+    "Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil."
+          }
+        }
+      }
+    },
     "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row.": {
       "localizations": {
         "fr": {
@@ -7237,6 +7467,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cave à vin, 24"
+          }
+        }
+      }
+    },
+    "Wine merchant": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caviste"
           }
         }
       }
