@@ -53,7 +53,7 @@ public enum CellarExport {
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
-        "rating", "tasted_on", "note", "expected_on",
+        "rating", "tasted_on", "note", "expected_on", "tags",
     ]
 
     /// One row per bottle, including bottles on order. Includes consumed and
@@ -79,7 +79,7 @@ public enum CellarExport {
                 bottle.purchaseDate.map(day.string(from:)), bottle.purchasePrice.map { "\($0)" }, bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, String(bottle.sizeML),
                 bottle.tasting?.rating.map(String.init), bottle.tasting.map { day.string(from: $0.date) },
-                bottle.tasting?.note, bottle.expectedAt.map(day.string(from:)),
+                bottle.tasting?.note, bottle.expectedAt.map(day.string(from:)), wine.tags?.joined(separator: "; "),
             ]
             lines.append(fields.map { escape($0 ?? "") }.joined(separator: ","))
         }
@@ -246,6 +246,7 @@ enum CSVColumns {
         "receivedfrom": "received_from", "sizeml": "size_ml", "tastedon": "tasted_on",
         "rating": "rating", "yourrating": "rating", "note": "note", "notes": "note", "yourreview": "note",
         "personalnote": "note", "commentaire": "note",
+        "tags": "tags", "tag": "tags",
         "expectedon": "expected_on", "deliverydate": "expected_on", "livraison": "expected_on",
         "scandate": "scan_date", "scanreviewlocation": "place", "place": "place", "lieu": "place",
     ]
@@ -269,7 +270,8 @@ enum CSVColumns {
             country: value("country"), appellation: value("appellation"),
             grapes: (value("grapes") ?? "").split(whereSeparator: { $0 == ";" || $0 == "," })
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
-            drinkFrom: from, drinkUntil: until
+            drinkFrom: from, drinkUntil: until,
+            tags: value("tags")?.split(whereSeparator: { $0 == ";" || $0 == "," }).map(String.init)
         )
     }
 

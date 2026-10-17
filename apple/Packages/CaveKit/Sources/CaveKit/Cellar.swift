@@ -65,16 +65,31 @@ public struct CellarFilter: Equatable, Sendable {
     public var colors: Set<WineColor>
     public var maturities: Set<Maturity>
     public var rackID: UUID?
+    /// Only wines with this tag.
+    public var tag: String?
 
-    public init(query: String = "", colors: Set<WineColor> = [], maturities: Set<Maturity> = [], rackID: UUID? = nil) {
-        self.query = query; self.colors = colors; self.maturities = maturities; self.rackID = rackID
+    public init(query: String = "", colors: Set<WineColor> = [], maturities: Set<Maturity> = [], rackID: UUID? = nil,
+                tag: String? = nil) {
+        self.query = query; self.colors = colors; self.maturities = maturities; self.rackID = rackID; self.tag = tag
     }
 
-    public var isActive: Bool { !colors.isEmpty || !maturities.isEmpty || rackID != nil }
+    public var isActive: Bool { !colors.isEmpty || !maturities.isEmpty || rackID != nil || tag != nil }
 }
 
 public extension Cellar {
     var bottlesInCellar: [Bottle] { bottles.values.filter { $0.status == .inCellar } }
+
+    /// Tags of wines with bottles in the cellar, most used first.
+    var wineTags: [String] {
+        var counts: [String: (name: String, count: Int)] = [:]
+        let inCellar = Set(bottlesInCellar.map(\.wineID))
+        for wine in wines.values where inCellar.contains(wine.id) {
+            for tag in wine.tags ?? [] { counts[tag.lowercased(), default: (tag, 0)].count += 1 }
+        }
+        return counts.values
+            .sorted { $0.count == $1.count ? $0.name.localizedStandardCompare($1.name) == .orderedAscending : $0.count > $1.count }
+            .map(\.name)
+    }
 
     /// Bottles bought but not delivered yet.
     var bottlesOnOrder: [Bottle] { bottles.values.filter { $0.status == .ordered } }
@@ -115,6 +130,7 @@ public extension Cellar {
                 guard let color = wine.color, filter.colors.contains(color) else { return nil }
             }
             if !filter.maturities.isEmpty, !filter.maturities.contains(Maturity.of(wine, year: year)) { return nil }
+            if let tag = filter.tag, !wine.hasTag(tag) { return nil }
             var kept = bottles
             if let rackID = filter.rackID {
                 kept = bottles.filter { $0.slot?.rackID == rackID }
@@ -480,7 +496,7 @@ public extension Cellar {
 extension Wine {
     func matches(_ needle: String) -> Bool {
         let fields = [name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
-            + (barcodes ?? []).map(Optional.some)
+            + (barcodes ?? []).map(Optional.some) + (tags ?? []).map(Optional.some)
         return fields.compactMap { $0 }.contains {
             $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
         }

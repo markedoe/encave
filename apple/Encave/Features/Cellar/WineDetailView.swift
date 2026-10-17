@@ -87,6 +87,11 @@ struct WineDetailView: View {
                     if !wine.grapes.isEmpty {
                         LabeledContent("Grapes", value: wine.grapes.formatted(.list(type: .and)))
                     }
+                    if let tags = wine.tags {
+                        LabeledContent("Tags") {
+                            Text(verbatim: tags.joined(separator: ", "))
+                        }
+                    }
                     if let notes = wine.notes, !notes.isEmpty {
                         Text(notes)
                             .font(.callout)

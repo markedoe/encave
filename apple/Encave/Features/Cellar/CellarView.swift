@@ -300,7 +300,7 @@ private struct CellarSummary: View {
 
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
-        let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil
+        let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil && filter.tag == nil
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Button(action: onBottles) {
@@ -340,6 +340,17 @@ private struct CellarSummary: View {
                             toggle(maturity, in: \.maturities)
                         } leading: {
                             Image(systemName: maturity.systemImage).foregroundStyle(maturity.tint)
+                        }
+                    }
+                    let tags = model.cellar.wineTags
+                    if !tags.isEmpty {
+                        Divider().frame(height: 24)
+                        ForEach(tags, id: \.self) { tag in
+                            ChoiceChip(verbatim: tag, isSelected: filter.tag == tag) {
+                                withAnimation(.snappy) { filter.tag = filter.tag == tag ? nil : tag }
+                            } leading: {
+                                Image(systemName: "tag")
+                            }
                         }
                     }
                 }

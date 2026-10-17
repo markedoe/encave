@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag under the styles: tap it to see only those wines. Search finds tags too.': 'Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag sous les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags.',
+    'Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.': 'Vos propres groupes, comme cadeau, année de naissance ou pour un ami. Filtrez la Cave par tag.',
+    'Birth year': 'Année de naissance',
     'Why this window': 'Pourquoi cette fenêtre',
     'Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year.': 'Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an.',
     'Drink Sooner': 'Boire plus tôt',

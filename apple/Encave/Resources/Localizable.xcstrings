@@ -1031,6 +1031,16 @@
         }
       }
     },
+    "Birth year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Année de naissance"
+          }
+        }
+      }
+    },
     "Bistro on the harbour, Lisbon": {
       "localizations": {
         "fr": {
@@ -3107,6 +3117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casier classique"
+          }
+        }
+      }
+    },
+    "Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag under the styles: tap it to see only those wines. Search finds tags too.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag sous les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."
           }
         }
       }
@@ -7977,6 +7997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal."
+          }
+        }
+      }
+    },
+    "Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos propres groupes, comme cadeau, année de naissance ou pour un ami. Filtrez la Cave par tag."
           }
         }
       }

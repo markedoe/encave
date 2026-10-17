@@ -48,6 +48,8 @@ Two details matter for other implementations:
 - `bottle.status` is one of `inCellar`, `consumed`, `gone` or `ordered`
   (bought, not delivered yet; such a bottle has no place and may carry
   `expectedAt`, a date).
+- `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
+  when empty.
 - Readers are strict: an unknown enum value fails decoding. A device that does
   not know a new value refuses the sync instead of rewriting the object with a
   wrong value and a newer stamp, which would spread the loss to every device.

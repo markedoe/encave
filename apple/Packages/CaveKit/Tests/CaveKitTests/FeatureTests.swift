@@ -406,3 +406,22 @@ import Testing
         #expect(wine.movingWindowEnd(by: -100).drinkUntil == estimate.from, "never ends before it starts")
     }
 }
+
+@Suite struct WineTagTests {
+    @Test func tagsFilterSearchAndStayOutOfOldFiles() throws {
+        var cellar = Cellar()
+        let gift = Wine(name: "Gift wine", tags: [" Gift ", "gift", "Birth year"])
+        #expect(gift.tags == ["Gift", "Birth year"])
+        #expect(Wine(name: "Plain", tags: ["  "]).tags == nil)
+        try cellar.addBottles(of: gift)
+        try cellar.addBottles(of: Wine(name: "Plain"))
+        #expect(cellar.groups(filter: CellarFilter(tag: "gift"), sort: .name, year: 2026).map(\.wine.name) == ["Gift wine"])
+        #expect(cellar.groups(matching: "birth").map(\.wine.name) == ["Gift wine"])
+        #expect(cellar.wineTags == ["Birth year", "Gift"])
+        var copy = Cellar()
+        try copy.importCSV(CellarExport.csv(cellar))
+        #expect(copy.wines.values.first { $0.name == "Gift wine" }?.tags == ["Gift", "Birth year"])
+        let plain = try JSONEncoder().encode(Wine(name: "Plain"))
+        #expect(!String(decoding: plain, as: UTF8.self).contains("tags"))
+    }
+}

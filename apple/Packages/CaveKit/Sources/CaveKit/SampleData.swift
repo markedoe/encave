@@ -24,6 +24,7 @@ public enum SampleData {
         public var tagToBuy = "For summer"
         public var tagGift = "Gift idea"
         public var merchant = "Wine merchant"
+        public var tagBirthYear = "Birth year"
         public init() {}
     }
 
@@ -73,7 +74,7 @@ public enum SampleData {
                   drinkFrom: year - 1, drinkUntil: year + 4), 3, honeycomb),
             (Wine(name: "Vintage Port", producer: "Quinta da Serra", vintage: year - 15, color: .fortified,
                   region: "Douro", country: "Portugal", appellation: "Porto", grapes: ["Touriga Nacional"],
-                  drinkFrom: year - 5, drinkUntil: year + 25), 4, stairs),
+                  drinkFrom: year - 5, drinkUntil: year + 25, tags: [labels.tagBirthYear]), 4, stairs),
         ]
 
         let day: TimeInterval = 86_400

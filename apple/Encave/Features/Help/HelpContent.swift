@@ -42,6 +42,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Drinking window", body: "The years when the wine is at its best. With **Estimate automatically**, it is worked out from the style and the vintage; turn it off to enter the years from the producer or a guide."),
                 HelpSection(title: "Quantity, size and location", body: "Add several bottles at once. Choose a rack to place them: the first free places are used unless you pick them. Without a rack, write where they are (kitchen, box in the garage)."),
                 HelpSection(title: "Purchase details", body: "Optional: price per bottle, date, shop or the person who gave it to you. Prices are used for the value of your cellar in Insights."),
+                HelpSection(title: "Tags", body: "Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag under the styles: tap it to see only those wines. Search finds tags too.", systemImage: "tag"),
                 HelpSection(title: "Bottles on order", body: "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them and choose **Received**. They then join the cellar without a place, ready to be put in a rack.", systemImage: "shippingbox"),
             ]),
             HelpArticle(topic: .scanning, title: "Scanning a label",

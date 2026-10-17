@@ -18,6 +18,9 @@ struct WineDraft: Equatable {
     var drinkUntil: Int?
     var photoID: String?
     var barcodes: [String] = []
+    var tags: [String] = []
+    /// A tag being typed, kept on save.
+    var pendingTag = ""
 
     init() {}
 
@@ -37,6 +40,7 @@ struct WineDraft: Equatable {
         windowIsAutomatic = wine.drinkFrom == nil
         photoID = wine.photoID
         barcodes = wine.barcodes ?? []
+        tags = wine.tags ?? []
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -57,13 +61,15 @@ struct WineDraft: Equatable {
             region: clean(region), country: clean(country), appellation: clean(appellation),
             grapes: grapes.split(whereSeparator: { $0 == "," || $0 == ";" })
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
-            drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes), photoID: photoID, barcodes: barcodes
+            drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes), photoID: photoID, barcodes: barcodes,
+            tags: tags + pendingTag.split(separator: ",").map(String.init)
         )
     }
 }
 
 /// Form sections describing a wine. Used by "Add bottle" and "Edit wine".
 struct WineFormSections: View {
+    @Environment(CellarModel.self) private var model
     @Binding var draft: WineDraft
     @FocusState private var nameFocused: Bool
     var focusName = false
@@ -157,6 +163,14 @@ struct WineFormSections: View {
             Text("Drinking window")
         } footer: {
             Text("The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.")
+        }
+
+        Section {
+            TagEditor(tags: $draft.tags, suggestions: model.cellar.wineTags, newTag: $draft.pendingTag)
+        } header: {
+            Text("Tags")
+        } footer: {
+            Text("Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.")
         }
 
         Section {

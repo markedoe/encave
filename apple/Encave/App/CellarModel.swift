@@ -357,6 +357,7 @@ extension SampleData.Labels {
         labels.tagToBuy = String(localized: "For summer")
         labels.tagGift = String(localized: "Gift idea")
         labels.merchant = String(localized: "Wine merchant")
+        labels.tagBirthYear = String(localized: "Birth year")
         return labels
     }
 }

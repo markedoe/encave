@@ -26,12 +26,14 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     /// Barcodes (EAN, UPC) seen on its bottles, to recognize it at the next scan.
     /// Nil rather than empty, so files of wines without barcodes stay as they were.
     public var barcodes: [String]?
+    /// The user's own groups ("Gift", "Birth year"). Nil rather than empty, like barcodes.
+    public var tags: [String]?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
         color: WineColor? = nil, region: String? = nil, country: String? = nil,
         appellation: String? = nil, grapes: [String] = [], drinkFrom: Int? = nil, drinkUntil: Int? = nil,
-        notes: String? = nil, photoID: String? = nil, barcodes: [String]? = nil
+        notes: String? = nil, photoID: String? = nil, barcodes: [String]? = nil, tags: [String]? = nil
     ) {
         self.id = id; self.name = name; self.producer = producer; self.vintage = vintage
         self.color = color; self.region = region; self.country = country
@@ -39,6 +41,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         self.drinkFrom = drinkFrom; self.drinkUntil = drinkUntil; self.notes = notes
         self.photoID = photoID
         self.barcodes = barcodes?.isEmpty == true ? nil : barcodes
+        self.tags = Wine.normalizedTags(tags)
     }
 
     public init(from decoder: Decoder) throws {
@@ -57,6 +60,18 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         photoID = try c.decodeIfPresent(String.self, forKey: .photoID)
         barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes)
+        tags = try c.decodeIfPresent([String].self, forKey: .tags)
+    }
+
+    /// Trimmed, without empty or duplicate tags (ignoring case); nil when none are left.
+    public static func normalizedTags(_ tags: [String]?) -> [String]? {
+        let clean = Discovery.normalized(tags ?? [])
+        return clean.isEmpty ? nil : clean
+    }
+
+    /// True if the wine has this tag, ignoring case.
+    public func hasTag(_ tag: String) -> Bool {
+        (tags ?? []).contains { $0.caseInsensitiveCompare(tag) == .orderedSame }
     }
 
     /// Digits only: "3 760 1234 5678 9" and "3760123456789" are the same barcode.
