@@ -43,9 +43,9 @@ where each bottle sits in your racks, and when it is ready to drink.
   the Mac a glass in the menu bar. Everything is worked out on the device.
 - French and English, light and dark mode, Dynamic Type, VoiceOver and TalkBack.
 
-Android has the cellar, racks, Tonight, Journal, AI recognition and sync with
-your devices (local network and relay). The newer features are in progress (see
-the [roadmap](docs/ROADMAP.md)).
+Android has the same features, apart from Siri and Spotlight, label reading on
+the device (barcodes only), Ask your cellar and the Mac menu bar; iCloud sync is
+Apple-only, relays work for both (see the [roadmap](docs/ROADMAP.md)).
 
 ## Principles
 

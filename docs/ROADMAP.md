@@ -158,9 +158,9 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight.
 |-------|---------|--------|
 | 0. Public release | Clean repository, CI, TestFlight pipeline | Done |
 | 1. Design in the app | The six journeys built in SwiftUI and Compose, reviewed on device through TestFlight; design tokens | Done, refined continuously |
-| 2. Sync | Pairing, local network sync, relay, protocol spec and test vectors | Apple done; Android in progress |
+| 2. Sync | Pairing, local network sync, relay, protocol spec and test vectors | Apple and Android done; first test between an iPhone and an Android phone next |
 | 3. Apple apps MVP | iPhone, iPad, Mac with sync | Internal TestFlight; external beta next |
-| 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple except sync; Play internal testing next |
+| 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple, sync included (not yet tried on a phone); Play internal testing next |
 | 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | CloudKit built (needs the iCloud container); Google Drive planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
 | 6. Household sharing | Roles, signed files, remote pairing | Planned |
 | 7. Launch | Store listings, documentation, privacy policy | Planned |
@@ -172,22 +172,22 @@ kept within the privacy rules: everything is worked out on the device.
 
 | Feature | Apple | Android |
 |---------|-------|---------|
-| Monthly reminder of bottles to drink, delivery-day reminder | Done | Planned (WorkManager) |
-| Siri, Shortcuts, Spotlight | Done | Planned (App Shortcuts) |
-| Barcode recognizes wines you already have (matched on the device) | Done | Planned (CameraX + zxing-cpp) |
-| Select several wines: place, take out, delete | Done | Planned |
-| Rack check (audit) | Done | Planned |
-| Drag and drop in racks | iPad and Mac | Planned (tablets) |
-| Import CellarTracker and Vivino CSV exports | Done | Planned |
-| Year in wine, drink-down plan | Done | Planned |
-| Bottles on order (en primeur, deliveries) | Done | Format supported; screens planned |
-| Bottles kept for an occasion (not suggested for tonight) | Done | Planned |
-| Tags on wines, filter chips | Done | Format supported; screens planned |
-| "Why this window", drink sooner or keep longer | Done | Planned |
+| Monthly reminder of bottles to drink, delivery-day reminder | Done | Done (WorkManager) |
+| Siri, Shortcuts, Spotlight | Done | App shortcuts and links done |
+| Barcode recognizes wines you already have (matched on the device) | Done | Done (CameraX + zxing-cpp) |
+| Select several wines: place, take out, delete | Done | Done |
+| Rack check (audit) | Done | Done |
+| Drag and drop in racks | iPad and Mac | Tablets |
+| Import CellarTracker and Vivino CSV exports | Done | Done |
+| Year in wine, drink-down plan | Done | Done |
+| Bottles on order (en primeur, deliveries) | Done | Done |
+| Bottles kept for an occasion (not suggested for tonight) | Done | Done |
+| Tags on wines, filter chips | Done | Done |
+| "Why this window", drink sooner or keep longer | Done | Done |
 | Ask your cellar (on-device language model) | Done (Apple Intelligence devices) | Later |
-| Printable PDF inventory | Done | Planned |
+| Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
-| Sortable table with an inspector | Mac and iPad | Planned (tablets) |
+| Sortable table with an inspector | Mac and iPad | Tablets |
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
 | Saved searches, several photos per wine | Planned | Planned |
 | Watch app | Later | Later (Wear OS tile) |
