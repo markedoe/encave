@@ -38,6 +38,8 @@ final class ScreenTourTests: XCTestCase {
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
         #if os(macOS)
         app.activate()
+        sleep(3)
+        snapshot("launch")
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 20), "The main window opens")
         #endif
 
@@ -46,7 +48,7 @@ final class ScreenTourTests: XCTestCase {
         snapshot("cellar")
         #if os(iOS)
         // The swipe actions on a wine ("Drink" on the leading edge).
-        if element("wine.row").waitForExistence(timeout: 10) {
+        if element("wine.row").waitForExistence(timeout: 10), element("wine.row").isHittable {
             element("wine.row").swipeRight()
             snapshot("cellar-swipe")
             element("wine.row").swipeLeft()
