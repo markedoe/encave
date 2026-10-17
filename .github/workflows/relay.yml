@@ -20,6 +20,9 @@ jobs:
     name: Relay and remote sync
     runs-on: ubuntu-latest
     container: swift:6.2
+    defaults:
+      run:
+        shell: bash
     env:
       NODE_VERSION: "22.11.0"
     steps:
