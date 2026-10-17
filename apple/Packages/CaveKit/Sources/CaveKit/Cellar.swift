@@ -18,21 +18,39 @@ public struct Cellar: Codable, Equatable, Sendable {
         discoveries: [Discovery] = []
     ) {
         schemaVersion = Cellar.currentSchemaVersion
-        self.wines = Dictionary(uniqueKeysWithValues: wines.map { ($0.id, $0) })
-        self.bottles = Dictionary(uniqueKeysWithValues: bottles.map { ($0.id, $0) })
-        self.racks = racks
+        self.wines = Dictionary(wines.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        self.bottles = Dictionary(bottles.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        self.racks = Cellar.unique(racks)
         self.settings = settings
-        self.discoveries = Dictionary(uniqueKeysWithValues: discoveries.map { ($0.id, $0) })
+        self.discoveries = Dictionary(discoveries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        wines = try c.decodeIfPresent([UUID: Wine].self, forKey: .wines) ?? [:]
-        bottles = try c.decodeIfPresent([UUID: Bottle].self, forKey: .bottles) ?? [:]
-        racks = try c.decodeIfPresent([Rack].self, forKey: .racks) ?? []
+        // Keyed by each object's own ID, whatever the file says, and racks without
+        // duplicates: data from another device or a backup must not break the
+        // assumptions of the merge and the UI.
+        wines = Cellar.rekeyed(try c.decodeIfPresent([UUID: Wine].self, forKey: .wines) ?? [:])
+        bottles = Cellar.rekeyed(try c.decodeIfPresent([UUID: Bottle].self, forKey: .bottles) ?? [:])
+        racks = Cellar.unique(try c.decodeIfPresent([Rack].self, forKey: .racks) ?? [])
         settings = try c.decodeIfPresent(CellarSettings.self, forKey: .settings) ?? CellarSettings()
-        discoveries = try c.decodeIfPresent([UUID: Discovery].self, forKey: .discoveries) ?? [:]
+        discoveries = Cellar.rekeyed(try c.decodeIfPresent([UUID: Discovery].self, forKey: .discoveries) ?? [:])
         schemaVersion = Cellar.currentSchemaVersion
+    }
+
+    /// The first rack of each ID, in order.
+    static func unique(_ racks: [Rack]) -> [Rack] {
+        var seen = Set<UUID>()
+        return racks.filter { seen.insert($0.id).inserted }
+    }
+
+    private static func rekeyed<T: Identifiable>(_ items: [UUID: T]) -> [UUID: T] where T.ID == UUID {
+        var result: [UUID: T] = [:]
+        for key in items.keys.sorted(by: { $0.uuidString < $1.uuidString }) {
+            guard let item = items[key], result[item.id] == nil else { continue }
+            result[item.id] = item
+        }
+        return result
     }
 
     public var isEmpty: Bool { wines.isEmpty && bottles.isEmpty && racks.isEmpty && discoveries.isEmpty }

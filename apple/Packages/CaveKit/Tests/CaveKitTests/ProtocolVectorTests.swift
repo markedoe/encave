@@ -55,6 +55,45 @@ import Testing
         }
     }
 
+    /// Remote sync (SYNC.md §8): mailbox and inbox IDs, tokens, the data key, an
+    /// envelope with a fixed nonce, and a grant key with a fixed ephemeral.
+    @Test func remoteVectors() throws {
+        let cellarKey = CellarKey(cellarID: Self.cellar, epoch: 1, key: Self.bytes(0x10))
+        let sender = try DeviceIdentity(id: Self.hostDevice, privateKeyData: Self.bytes(0x81))
+        let recipient = try Self.key(0xC1)
+        let envelope = try Envelope.seal(Data("hello".utf8), kind: .photo, path: "photo/x", key: cellarKey.dataKey,
+                                         nonce: ChaChaPoly.Nonce(data: Data(repeating: 0x07, count: 12)))
+        let ephemeral = try Self.key(0x01)
+        let grantPath = "grant/\(Self.cellar.uuidString.lowercased())-00000002-\(Self.hostDevice.uuidString.lowercased())"
+        let grantKey = try KeyGrant.key(
+            path: grantPath, ephemeralPublic: ephemeral.publicKey.rawRepresentation,
+            recipient: recipient.publicKey.rawRepresentation,
+            ee: KeySchedule.dh(ephemeral, recipient.publicKey.rawRepresentation),
+            se: KeySchedule.dh(sender.privateKey, recipient.publicKey.rawRepresentation))
+        let values: [(String, String)] = [
+            ("relay token", cellarKey.token),
+            ("mailbox", cellarKey.mailboxID),
+            ("data key", Self.hex(cellarKey.dataKey)),
+            ("inbox token", sender.inboxToken),
+            ("inbox", sender.inboxID),
+            ("envelope", Self.hex(envelope)),
+            ("grant key", Self.hex(grantKey)),
+        ]
+        for (name, value) in values {
+            #expect(Self.remoteExpected[name] == value, "\(name): \(value)")
+        }
+    }
+
+    static let remoteExpected: [String: String] = [
+        "relay token": "zyJIksEyVCrPawgL8q0UGr5GMi1KewaCGSzwHGOLFno",
+        "mailbox": "cace8487402ad2a081f417653a8443def",
+        "data key": "d9bdb64332f3da0ef2e703d1cbdf3be079c75095ce76a6818f07fdfa2b802f54",
+        "inbox token": "K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8",
+        "inbox": "i2a17946aea22c15127c53bac03a59f8a",
+        "envelope": "454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf",
+        "grant key": "a9547f8ceac9dc53b97196fc6bb6f23ad6659127b8cc83591b95236c8303567d",
+    ]
+
     static let expected: [String: String] = [
         "host ephemeral public": "07a37cbc142093c8b755dc1b10e86cb426374ad16aa853ed0bdfc0b2b86d1c7c",
         "joiner ephemeral public": "64b101b1d0be5a8704bd078f9895001fc03e8e9f9522f188dd128d9846d48466",

@@ -8,7 +8,8 @@
 // TTL_DAYS (default 365) are deleted.
 
 import { createServer } from "node:http";
-import { mkdir, open, readFile, readdir, rm, stat, writeFile, rename } from "node:fs/promises";
+import { link, mkdir, readFile, readdir, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { handle } from "./protocol.mjs";
 
@@ -23,21 +24,6 @@ class FileStorage {
   constructor(root) { this.root = root; }
   dir(mailbox) { return join(this.root, mailbox); }
   file(mailbox, path) { return join(this.root, mailbox, "files", ...path.split("/")); }
-
-  async getTokenHash(mailbox) {
-    try { return (await readFile(join(this.dir(mailbox), "token"), "utf8")).trim(); } catch { return null; }
-  }
-
-  async setTokenHashIfAbsent(mailbox, hash) {
-    await mkdir(this.dir(mailbox), { recursive: true });
-    try {
-      const handle = await open(join(this.dir(mailbox), "token"), "wx");
-      await handle.writeFile(hash);
-      await handle.close();
-    } catch (error) {
-      if (error.code !== "EEXIST") throw error;
-    }
-  }
 
   async walk(mailbox) {
     const base = join(this.dir(mailbox), "files");
@@ -68,15 +54,18 @@ class FileStorage {
   async create(mailbox, path, bytes) {
     const target = this.file(mailbox, path);
     await mkdir(join(target, ".."), { recursive: true });
-    // "wx": fails if the file exists, so a file is never replaced.
-    let handle;
+    // Written in full to a temporary file, then linked into place: readers never
+    // see a partial file, and link fails if the file exists, so none is replaced.
+    const temporary = `${target}.${randomUUID()}.tmp`;
+    await writeFile(temporary, bytes);
     try {
-      handle = await open(target, "wx");
+      await link(temporary, target);
     } catch (error) {
       if (error.code === "EEXIST") return false;
       throw error;
+    } finally {
+      await unlink(temporary).catch(() => {});
     }
-    try { await handle.writeFile(bytes); } finally { await handle.close(); }
     await writeFile(join(this.dir(mailbox), "touched"), String(Date.now()));
     return true;
   }

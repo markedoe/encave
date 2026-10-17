@@ -6,6 +6,23 @@ import Network
 final class NetworkTransport: FrameTransport, @unchecked Sendable {
     let connection: NWConnection
     private let queue = DispatchQueue(label: "app.encave.sync.connection")
+    private let lock = NSLock()
+    private var _maxIncoming = NetworkTransport.unauthenticatedLimit
+
+    /// Frames from a device not authenticated yet are small (hellos, pairing
+    /// messages): anything larger is refused, so a stranger cannot make this
+    /// device buffer megabytes. Raised with `allowLargeFrames()` after the handshake.
+    static let unauthenticatedLimit = 64 * 1024
+
+    var maxIncoming: Int {
+        lock.lock(); defer { lock.unlock() }
+        return _maxIncoming
+    }
+
+    /// The other device is authenticated: frames up to the protocol limit.
+    func allowLargeFrames() {
+        lock.lock(); _maxIncoming = SyncProtocol.maxFrameSize; lock.unlock()
+    }
 
     init(connection: NWConnection) {
         self.connection = connection
@@ -13,14 +30,20 @@ final class NetworkTransport: FrameTransport, @unchecked Sendable {
 
     /// Starts the connection and waits until it is ready (or fails within `timeout`).
     func start(timeout: Duration = .seconds(15)) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask { try await self.waitUntilReady() }
-            group.addTask {
-                try await Task.sleep(for: timeout)
-                throw SyncError.closed
-            }
-            defer { group.cancelAll() }
-            try await group.next()
+        let timer = closing(after: timeout)
+        defer { timer.cancel() }
+        // Cancelling the connection on time-out resumes the wait with `.cancelled`.
+        try await waitUntilReady()
+    }
+
+    /// Closes the connection after `delay` unless the returned task is cancelled
+    /// first: a deadline for steps where the other side could stay silent.
+    @discardableResult
+    func closing(after delay: Duration) -> Task<Void, Never> {
+        Task { [self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+            connection.cancel()
         }
     }
 
@@ -53,7 +76,7 @@ final class NetworkTransport: FrameTransport, @unchecked Sendable {
     func receive() async throws -> Data {
         let header = try await read(4)
         let length = header.reduce(0) { $0 << 8 | Int($1) }
-        guard length <= SyncProtocol.maxFrameSize else { throw SyncError.frameTooLarge }
+        guard length <= maxIncoming else { throw SyncError.frameTooLarge }
         return length == 0 ? Data() : try await read(length)
     }
 

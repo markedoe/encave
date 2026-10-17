@@ -59,7 +59,7 @@ struct CloudKitMailboxStore: MailboxStore {
                     token = changes.changeToken
                     more = changes.moreComing
                 }
-            } catch let error as CKError where error.code == .zoneNotFound || error.code == .userDeletedZone {
+            } catch let error as CKError where Self.isMissingZone(error) {
                 return []
             } catch {
                 throw Self.map(error)
@@ -72,7 +72,7 @@ struct CloudKitMailboxStore: MailboxStore {
                 let record = try await database.record(for: recordID(path))
                 guard let url = (record["data"] as? CKAsset)?.fileURL else { return nil }
                 return try Data(contentsOf: url)
-            } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
+            } catch let error as CKError where error.code == .unknownItem || Self.isMissingZone(error) {
                 return nil
             } catch {
                 throw Self.map(error)
@@ -92,12 +92,12 @@ struct CloudKitMailboxStore: MailboxStore {
                     switch saved[record.recordID] {
                     case .success: return true
                     case .failure(let error as CKError) where error.code == .serverRecordChanged: return false
-                    case .failure(let error as CKError) where error.code == .zoneNotFound && attempt == 0:
+                    case .failure(let error as CKError) where Self.isMissingZone(error) && attempt == 0:
                         try await createZone()
                     case .failure(let error): throw Self.map(error)
                     case nil: throw RemoteSyncError.unavailable("no result")
                     }
-                } catch let error as CKError where error.code == .zoneNotFound && attempt == 0 {
+                } catch let error as CKError where Self.isMissingZone(error) && attempt == 0 {
                     try await createZone()
                 } catch let error as RemoteSyncError {
                     throw error
@@ -111,7 +111,7 @@ struct CloudKitMailboxStore: MailboxStore {
         func delete(_ path: String) async throws {
             do {
                 _ = try await database.modifyRecords(saving: [], deleting: [recordID(path)])
-            } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
+            } catch let error as CKError where error.code == .unknownItem || Self.isMissingZone(error) {
                 return
             } catch {
                 throw Self.map(error)
@@ -124,6 +124,12 @@ struct CloudKitMailboxStore: MailboxStore {
             } catch {
                 throw Self.map(error)
             }
+        }
+
+        /// The zone does not exist yet, or the user deleted the app's iCloud data
+        /// (then the zone is made again on the next write).
+        static func isMissingZone(_ error: CKError) -> Bool {
+            error.code == .zoneNotFound || error.code == .userDeletedZone
         }
 
         static func map(_ error: Error) -> RemoteSyncError {

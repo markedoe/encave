@@ -10,16 +10,6 @@ class R2Storage {
   constructor(bucket) { this.bucket = bucket; }
   key(mailbox, path) { return `${mailbox}/f/${path}`; }
 
-  async getTokenHash(mailbox) {
-    const object = await this.bucket.get(`${mailbox}/token`);
-    return object ? (await object.text()).trim() : null;
-  }
-
-  async setTokenHashIfAbsent(mailbox, hash) {
-    // Conditional put: stored only if no token exists yet (null otherwise).
-    await this.bucket.put(`${mailbox}/token`, hash, { onlyIf: new Headers({ "If-None-Match": "*" }) });
-  }
-
   async list(mailbox, prefix, after, limit) {
     const base = `${mailbox}/f/`;
     const listed = await this.bucket.list({

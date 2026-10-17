@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { mailboxFor } from "../protocol.mjs";
 
 const port = 18000 + Math.floor(Math.random() * 1000);
 const base = `http://localhost:${port}`;
@@ -26,9 +27,10 @@ after(async () => {
   await rm(dataDir, { recursive: true, force: true });
 });
 
-const mailbox = "c" + "a".repeat(32);
-const inbox = "i" + "b".repeat(32);
 const token = "token-of-the-cellar-0123456789";
+const inboxToken = "inbox-owner-token-0123456789";
+const mailbox = await mailboxFor("c", token);
+const inbox = await mailboxFor("i", inboxToken);
 const auth = (t = token) => ({ authorization: `Bearer ${t}` });
 
 test("health", async () => {
@@ -36,11 +38,20 @@ test("health", async () => {
   assert.equal(body.service, "encave-relay");
 });
 
-test("a mailbox remembers its first token and refuses others", async () => {
+test("a mailbox opens only with the token it is derived from", async () => {
   assert.equal((await fetch(`${base}/v1/m/${mailbox}?prefix=`)).status, 401);
+  // Another token cannot claim the mailbox first.
+  assert.equal((await fetch(`${base}/v1/m/${mailbox}/snap/a/1`, { method: "PUT", headers: auth("another-token-0123456789"), body: "x" })).status, 401);
   assert.equal((await fetch(`${base}/v1/m/${mailbox}/snap/a/1`, { method: "PUT", headers: auth(), body: "x" })).status, 201);
   assert.equal((await fetch(`${base}/v1/m/${mailbox}/snap/a/1`, { headers: auth("another-token-0123456789") })).status, 401);
   assert.equal(await (await fetch(`${base}/v1/m/${mailbox}/snap/a/1`, { headers: auth() })).text(), "x");
+});
+
+test("reading with a wrong token stores nothing", async () => {
+  const stranger = await mailboxFor("c", "a-stranger-token-0123456789");
+  assert.equal((await fetch(`${base}/v1/m/${stranger}/x`, { headers: auth("junk-token-0123456789abc") })).status, 401);
+  const { readdir } = await import("node:fs/promises");
+  assert.ok(!(await readdir(dataDir)).includes(stranger));
 });
 
 test("files are created once and never replaced", async () => {
@@ -68,9 +79,15 @@ test("anyone can drop a grant in an inbox, only the owner reads it", async () =>
   assert.equal((await fetch(`${base}/v1/m/${inbox}/grant/x-1`, { method: "PUT", body: "g" })).status, 201);
   assert.equal((await fetch(`${base}/v1/m/${inbox}/other`, { method: "PUT", body: "g" })).status, 401);
   assert.equal((await fetch(`${base}/v1/m/${inbox}?prefix=grant/`)).status, 401);
-  const owner = auth("inbox-owner-token-0123456789");
-  const page = await (await fetch(`${base}/v1/m/${inbox}?prefix=grant/`, { headers: owner })).json();
+  // Someone else listing first cannot lock the owner out.
+  assert.equal((await fetch(`${base}/v1/m/${inbox}?prefix=grant/`, { headers: auth("squatter-token-0123456789") })).status, 401);
+  const page = await (await fetch(`${base}/v1/m/${inbox}?prefix=grant/`, { headers: auth(inboxToken) })).json();
   assert.deepEqual(page.files, ["grant/x-1"]);
+});
+
+test("grants are small", async () => {
+  const big = new Uint8Array(4 * 1024 + 1);
+  assert.equal((await fetch(`${base}/v1/m/${inbox}/grant/big`, { method: "PUT", body: big })).status, 413);
 });
 
 test("bad names and big files are refused", async () => {

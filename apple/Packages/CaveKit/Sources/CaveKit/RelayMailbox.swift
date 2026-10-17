@@ -101,8 +101,14 @@ struct RelayMailbox: Mailbox {
                 throw RemoteSyncError.unavailable("bad list response")
             }
             files += page.files.filter { $0.hasPrefix(prefix) && RelayPath.isValid($0) }
-            after = page.next
-        } while after != nil
+            // A page must move forward, and a mailbox holds at most a few thousand
+            // files: a relay that says otherwise is not followed for ever.
+            guard let next = page.next else { break }
+            guard next > (after ?? ""), files.count <= 10_000 else {
+                throw RemoteSyncError.unavailable("bad list paging")
+            }
+            after = next
+        } while true
         return files
     }
 

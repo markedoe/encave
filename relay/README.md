@@ -13,7 +13,9 @@ Sync away from home**.
 ## What the relay sees
 
 - Random mailbox IDs, which change when a device is removed.
-- Encrypted files: their number, sizes and when they are written.
+- Encrypted files: their number, sizes and when they are written, and their
+  names: random device IDs and change counters, and hashes of photos (see
+  [docs/SYNC.md](../docs/SYNC.md) §9).
 - The IP addresses of the devices that connect. The Node server keeps no logs;
   on Cloudflare, check your account's logging settings.
 
@@ -32,14 +34,16 @@ It never sees cellar contents, device names, photos or keys.
 - Mailbox IDs are `c` (a cellar) or `i` (a device's inbox) followed by 32
   lowercase hex characters.
 - Paths use lowercase letters, digits, `-`, `_` and `/`.
-- Requests carry `Authorization: Bearer <token>`. The relay keeps only the SHA-256
-  of the first token used with a mailbox and refuses any other.
-- In an inbox, anyone may create `grant/…` files (that is how a device receives a
-  key); only the owner may list, read or delete.
+- Requests carry `Authorization: Bearer <token>`. A mailbox ID is its kind
+  followed by the first 32 hex characters of the SHA-256 of its token, so the
+  relay checks tokens without storing any, and nobody can claim a mailbox
+  before its owner. Requests with a wrong token create nothing.
+- In an inbox, anyone may create `grant/…` files of up to 4 KB (that is how a
+  device receives a key); only the owner may list, read or delete.
 
 **Limits:**
-- 8 MB per file;
-- 400 MB and 3,000 files per mailbox, 200 files per inbox;
+- 8 MB per file, 4 KB per grant;
+- 400 MB and 3,000 files per mailbox, 1 MB and 200 files per inbox;
 - 300 requests per minute per client on the Node server.
 
 Mailboxes not written to for a year are deleted, so a relay is a mailbox, not a

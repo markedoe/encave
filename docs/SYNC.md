@@ -59,23 +59,38 @@ Two details matter for other implementations:
 `merge(local, localState, remote, remoteState)` is deterministic: both devices
 compute the same result.
 
+0. **Bounds.** A received state is refused if its clock is over 2^53, if any of
+   its stamps has a counter over its clock, or if a membership stamp counter is
+   over 2^53. This keeps every clock far from overflowing.
 1. For every key in either cellar or either stamp map, take each side's stamp
-   (or `Stamp.zero` if the object exists without one). The greater stamp wins:
-   its object is kept, or the object is dropped if the winning stamp is a
-   deletion. Equal stamps come from the same change on the same device, so
-   the content is the same; as a safeguard, the Swift code then keeps the
-   version whose sorted-keys JSON encoding is lexicographically greater.
+   (or `Stamp.zero` if the object exists without one). The greater stamp wins
+   and becomes the merged stamp. If it is a deletion, the object is dropped.
+   Otherwise the object of the winning side is kept; if that side has no
+   object (repair removed it without a stamp), the other side's object is kept
+   under the winning stamp.
+   Equal stamps come from the same change on the same device, so the content
+   is the same except where repair changed it: for a bottle, the version
+   without a place wins; otherwise the local version is kept.
 2. Settings: same rule with the `settings` stamp.
-3. Rack order: the order of the side with the greater `rack-order` stamp, then
-   the other side's racks; racks are deduplicated, unknown ones dropped.
-4. **Repair**, the same on every device:
+3. **Revival.** A bottle or discovery whose wine was deleted, but whose own
+   stamp is greater than the wine's deletion stamp (it was added or changed
+   after the deletion, on another device), brings the wine back: its content
+   from whichever side has it, and as its stamp the greatest such stamp of
+   what refers to it, made a non-deletion.
+4. Rack order: the base is the list of the side with the greater `rack-order`
+   stamp; on equal stamps, the list that is smaller when compared element by
+   element as lowercase UUID strings. Racks of the merged cellar missing from
+   the base follow, sorted by lowercase ID. Duplicate rack IDs keep the first.
+5. **Repair**, the same on every device:
    - bottles and discoveries whose wine is gone are removed;
    - bottles not in the cellar, or in a rack that no longer exists or no
      longer contains their place, lose their place;
-   - if two bottles share a place, the one with the greater stamp keeps it and
-     the others lose their place (they stay in the cellar);
+   - if two bottles share a place, the one with the greater stamp keeps it
+     (on equal stamps, the smaller lowercase ID) and the others lose their
+     place (they stay in the cellar);
    - wines with no bottles and no discoveries are removed.
-5. The merged clock is the greater of both clocks; the device keeps its own ID.
+6. The merged clock is the greatest of both clocks and of every merged stamp
+   and membership stamp counter; the device keeps its own ID.
 
 A device that applies a merge result while the user edited during the session
 merges again with its current state, so no local change is lost.
@@ -87,9 +102,14 @@ leaves the device (Keychain on Apple platforms). Its device ID is a random UUID.
 
 `Membership = {cellarID, members: {id: Member}, stamps: {id: Stamp}}` with
 `Member = {id, name, publicKey (32 bytes), platform ("ios", "ipados", "macos",
-"android"), addedAt}`. Adding a member stamps it; removing it leaves a deletion
-stamp, so an older copy cannot add it back. Two memberships merge per member
-with the same stamp rule.
+"android"), addedAt, inbox?}`. `inbox` is the device's relay inbox ID
+(section 8); each device sets it in its own record, with a new stamp, when it
+is missing. Adding a member stamps it; removing it leaves a deletion stamp.
+
+Two memberships merge per member with the stamp rule, except that **a removal
+is final**: a deletion stamp wins over any non-deletion stamp, whatever the
+counters. A removed device cannot add itself back by sending a newer record;
+to join again it pairs as a new device, with a new ID and key.
 
 `networkTag(cellarID)` = first 6 bytes, as lowercase hex, of
 `H("encave-cellar-tag-v1", [cellarID lowercase string])`.
@@ -124,8 +144,13 @@ A frame that fails to decrypt ends the session. Messages always have a `type`.
 A device that refuses a session may send `{"type":"error","reason":…}` with
 reason `unknown-device` (not known yet, for example added recently on another
 device), `removed-device` (removed from the cellar), `other-cellar`,
-`unsupported-version` or `rejected` before closing. Only `removed-device`
-means the device was removed.
+`unsupported-version` or `rejected` before closing.
+
+Error frames arrive before authentication, so anyone on the network can send
+one. They are hints for the message shown to the user ("could not sync with
+this device"), never a reason to stop syncing or to leave the cellar. A device
+learns that it was removed only from an authenticated membership: one merged
+during a sync session, or read from the cellar's mailbox.
 
 **Discovery (Bonjour).** Service type `_encave._tcp`.
 
@@ -168,10 +193,15 @@ padding>`. A joiner that scanned it refuses a host whose commitment differs.
    "accepted":true|false}`; pairing stops unless both accepted.
 6. Host → joiner: `{"type":"pair-welcome","cellar":cellarID,
    "identityKey":hostIdentityPublic,"membersData":<Membership JSON>}`.
-7. Joiner → host: `{"type":"pair-member","identityKey":joinerIdentityPublic}`.
-8. The host adds the joiner to its membership; the joiner adopts the cellar ID
-   and members and adds itself. Then they run the exchange (section 7) on the
-   same channel, the host as initiator.
+   The host's own record in it carries its `inbox`.
+7. Joiner → host: `{"type":"pair-member","identityKey":joinerIdentityPublic,
+   "name":…,"platform":…,"inbox":…}`. The host records the name and platform
+   from this encrypted message, not from step 2.
+8. The host refuses a joiner whose device ID is its own, belongs to a removed
+   device, or belongs to a member with another identity key. Otherwise it adds
+   the joiner to its membership; the joiner adopts the cellar ID and members
+   and adds itself. Then they run the exchange (section 7) on the same channel,
+   the host as initiator.
 
 When joining, the user chooses to **combine** the joiner's own cellar with the
 host's, or to **replace** it (start from an empty cellar).
@@ -210,9 +240,10 @@ no longer in the membership) cannot complete a handshake.
 Over the encrypted channel, the initiator always speaks first at each step, so
 neither side waits on a full buffer.
 
-1. `{"type":"sync-state","cellarData":<cellar JSON>,"syncData":<SyncState JSON>,
-   "membersData":<Membership JSON>}` each way. Both merge (section 1) and merge
-   memberships.
+1. `{"type":"sync-state","cellarData":…,"syncData":…,"membersData":…}` each
+   way. Each of the three values is a standard Base64 string of UTF-8 JSON: the
+   cellar, the `SyncState` and the `Membership`. Both check the bounds, merge
+   (section 1) and merge memberships.
 2. `{"type":"photos-want","photos":[ids]}` each way: the photos referenced by
    the merged cellar that the device does not have.
 3. The initiator sends `{"type":"photo","photoID":…,"photoData":…}` for each
@@ -221,14 +252,17 @@ neither side waits on a full buffer.
 
 4. `{"type":"sync-keys","syncData":<RemoteInfo JSON or absent>}` each way
    (initiator first): the remote sync key and storage this device uses (section
-   8), so turning remote sync on reaches the other devices. A key for another
-   cellar is ignored; a device adopts a key with a higher epoch than its own.
-   This key is never written into a snapshot.
+   8), so turning remote sync on reaches the other devices. `RemoteInfo` is
+   `{"key":CellarKey,"storage":string?}` and `CellarKey` is
+   `{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes}`. A key for
+   another cellar is ignored; a device adopts a key that supersedes its own
+   (section 8). This key is never written into a snapshot.
 
 Photo IDs of new photos are `sha256-` + the lowercase hex SHA-256 of the JPEG,
 and a received photo whose content does not match its ID is ignored. IDs from
 before sync (UUIDs) are accepted as they are. Photo IDs are restricted to
-letters, digits and dashes, at most 80 characters.
+letters, digits and dashes, at most 80 characters; a photo with any other ID is
+never requested, sent, uploaded or downloaded.
 
 JSON uses the same structure as the cellar file shared with Android, with two
 details that matter for exact round trips:
@@ -242,9 +276,11 @@ details that matter for exact round trips:
 
 ## 8. Remote sync
 
-Devices that are apart exchange encrypted files through a **storage**: today a
-relay (`relay/`, an HTTP service anyone can host); CloudKit and Google Drive are
-planned (see [REMOTE_SYNC.md](REMOTE_SYNC.md) for the analysis). Any storage that
+Devices that are apart exchange encrypted files through a **storage**: a relay
+(`relay/`, an HTTP service anyone can host) or, between Apple devices, the
+user's iCloud (CloudKit private database, offered when the app is built with an
+iCloud container); Google Drive is planned (see [REMOTE_SYNC.md](REMOTE_SYNC.md)
+for the analysis). Any storage that
 can list, read, create (never replace) and delete files works, because every
 file is written once by one device. Implementation: `RemoteSync.swift`,
 `RelayMailbox.swift`.
@@ -256,13 +292,23 @@ by the devices of a cellar. From it (HKDF-SHA256, empty salt):
 
 | Name | Info | Use |
 |---|---|---|
-| mailbox ID | `encave/v1/mailbox` (16 bytes) | `c` + lowercase hex: where the cellar's files are |
 | token | `encave/v1/relay-auth` | Base64URL without padding: proves the right to use the mailbox |
 | data key | `encave/v1/data` | encrypts the files |
 
-Each device also has an **inbox**: ID `i` + lowercase hex of the first 16 bytes
-of `H("encave-inbox-v1", [identity public key])`, token = Base64URL of
-`KDF(identity private key, empty salt, "encave/v1/inbox-auth")`.
+The **mailbox ID** is `c` followed by the first 32 lowercase hex characters of
+SHA-256 of the token (its UTF-8 string). A relay checks a token by recomputing
+this, so it stores nothing and nobody can claim a mailbox before its owner.
+
+Each device also has an **inbox**: token = Base64URL without padding of
+`KDF(identity private key, empty salt, "encave/v1/inbox-auth")`, ID = `i`
+followed by the first 32 lowercase hex characters of SHA-256 of that token. The
+ID is published in the device's member record (`Member.inbox`); a member
+without one gets keys only during network syncs.
+
+A key **supersedes** another of the same cellar if its epoch is greater, or, on
+the same epoch (two devices turned remote sync on, or rotated, at the same
+time), if the SHA-256 of its 32 key bytes is smaller, compared byte by byte.
+Devices always move to a superseding key, so they settle on one.
 
 ### Files
 
@@ -288,14 +334,21 @@ H("encave-grant-v1", [ephemeralPublic, recipientPublic, path]), "encave grant")`
 and the plaintext is `{"cellarKey":…,"from":senderID,"storage":"https://…"}`.
 The recipient accepts a grant only from a current member of its cellar and
 only for its cellar; both identity keys enter the key, so only a member can
-have written it.
+have written it. Grants are at most 4 KiB. A grant that cannot be opened is
+deleted, except one from a device of this cellar not known yet (kept for a
+later round); grants from removed devices are deleted.
 
 ### One round
 
-1. Read the inbox; adopt a granted key with a higher epoch.
-2. List `snap/`; for each other current member, read its newest snapshot if
-   newer than the last one read, and merge it (section 1).
-3. Fetch the photos the merged cellar references and this device lacks.
+1. Read the inbox; adopt a granted key that supersedes the current one (and
+   start reading the new mailbox from scratch).
+2. List `snap/`; for each other current member (a device of the membership,
+   not removed; files of other device IDs are ignored), read its newest
+   snapshot if newer than the last one read, check the bounds (section 1) and
+   merge it. A snapshot that cannot be read, decrypted, decoded or checked is
+   skipped for this round; the other devices still sync.
+3. Fetch the photos the merged cellar references and this device lacks (valid
+   photo IDs only).
 4. If anything changed since this device's last upload: upload its missing
    photos, then a snapshot of the merged state, then delete its older snapshots.
 
@@ -304,12 +357,15 @@ and when it comes back to the foreground.
 
 ### Removing a device
 
-The device that removes another creates a new cellar key (epoch + 1), leaves
-a grant in each remaining member's inbox, writes a snapshot with the updated
-membership to the **old** mailbox (so devices that have not switched yet learn
-about the removal) and the cellar to the **new** one. The removed device cannot
-find the new mailbox (its ID comes from the new key) and its files in the old
-one are ignored, because it is no longer a member.
+The device that removes another creates a new cellar key (epoch + 1) and keeps
+it until the rotation is done, so a retry after a failure reuses the same key.
+It leaves a grant in each remaining member's inbox, writes to the **old**
+mailbox a snapshot with an empty cellar, no object stamps, its clock and the
+updated membership (so devices that have not switched yet learn about the
+removal, while the removed device, which can still read the old mailbox, learns
+nothing else), and writes the cellar to the **new** mailbox. The removed device
+cannot find the new mailbox (its ID comes from the new key) and its files in
+the old one are ignored, because it is no longer a member.
 
 ### Turning it on
 
@@ -331,15 +387,28 @@ setting when they meet.
   devices refuse its handshakes as soon as they have the updated membership.
   It keeps the data it already has.
 - **The relay** sees mailbox and inbox IDs, file counts, sizes, timing and IP
-  addresses; never contents, names or keys. The first token used with a
-  mailbox is the only one it accepts afterwards, so someone who learns a
-  mailbox ID cannot read it.
+  addresses; never contents, names or keys. It also sees file paths: device
+  IDs and Lamport clocks in snapshot names (how often the cellar changes), the
+  cellar ID, epoch and sender in grant names, and the hashes of photos. Device
+  IDs are the same before and after a key rotation, so the relay can link the
+  old and new mailboxes. A mailbox opens only with the token its ID is derived
+  from, so someone who learns a mailbox ID cannot read it or lock its owner out.
+- **On the local network,** the Bonjour records (`d`, `c`) stay the same on
+  every network, so they can track a device across networks. During pairing,
+  device names cross the network in plain text in steps 2 and 3 (the names
+  that are stored come from the encrypted step 7).
 - **Not covered yet:**
   - A device that is lost while still a member keeps access until another
     device removes it.
   - Before a key rotation, a removed device that still holds the old key could
-    write files under another device's name in the old mailbox. Signing files
-    with device keys (planned) closes this.
+    write files under another device's name in the old mailbox. It cannot add
+    itself back (removals are final), but it could send wrong cellar content.
+    Signing files with device keys (planned) closes this.
+  - A malicious member can send any cellar content; the bounds on clocks only
+    keep it from breaking other devices.
+  - The protocol version is not yet bound into the pairing and sync
+    transcripts; it must be before a version 2 exists, so a device in the
+    middle cannot hold two newer devices to version 1.
   - View-only members.
   - Remote pairing with a 6-digit code, planned with a PAKE through the relay.
 
@@ -370,3 +439,20 @@ Inputs (all keys are X25519 private keys given as 32 raw bytes):
 | first frame (ciphertext ‖ tag) | `8f7553c327cfefd5e3c77017246680dc74a070adfcdf6b09a06a2a8bf7c21dd2bbe39db85c` |
 | rendezvous of `123456` | `2bc4802d60f2f128` |
 | network tag of the cellar | `aedcc6a68baa` |
+
+**Remote sync** (section 8). Inputs: cellar key `{cellar above, epoch 1, key
+bytes 10 11 … 2f}`; device identity private key `81 82 … a0` (the host device
+above); for the envelope, plaintext `hello`, kind 2 (photo), path `photo/x`,
+nonce 12 × `07`; for the grant, path `grant/<cellar>-00000002-<host device>`
+(lowercase UUIDs), ephemeral private key `01 02 … 20`, recipient identity
+private key `c1 c2 … e0`, sender identity `81 82 … a0`.
+
+| Value | Expected |
+|---|---|
+| relay token | `zyJIksEyVCrPawgL8q0UGr5GMi1KewaCGSzwHGOLFno` |
+| mailbox ID | `cace8487402ad2a081f417653a8443def` |
+| data key | `d9bdb64332f3da0ef2e703d1cbdf3be079c75095ce76a6818f07fdfa2b802f54` |
+| inbox token | `K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8` |
+| inbox ID | `i2a17946aea22c15127c53bac03a59f8a` |
+| envelope (whole file) | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` |
+| grant key | `a9547f8ceac9dc53b97196fc6bb6f23ad6659127b8cc83591b95236c8303567d` |

@@ -92,14 +92,24 @@ final class PairingSession {
         task?.cancel()
         task = Task { [weak self] in
             guard let self else { return }
+            // Set once the device is added: from then on, a failed first sync is not a
+            // failed pairing (the next sync completes it).
+            var added: String?
             do {
                 try await transport.start()
+                // A device that connects and stays silent must not hold the code.
+                let keyDeadline = transport.closing(after: .seconds(20))
                 let keys = try await host.exchangeKeys(over: transport)
+                keyDeadline.cancel()
                 let accepted = await ask(code: keys.confirmationCode, device: keys.peer.name)
                 guard let service, let membership = service.membership else { throw SyncError.closed }
+                let answerDeadline = transport.closing(after: .seconds(Self.lifetime))
                 let (channel, member) = try await host.finish(over: transport, keys: keys, accepted: accepted,
                                                               membership: membership)
+                answerDeadline.cancel()
+                transport.allowLargeFrames()
                 service.addMember(member)
+                added = member.name
                 phase = .syncing
                 guard let local = service.snapshot() else { throw SyncError.closed }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
@@ -109,7 +119,7 @@ final class PairingSession {
                 service.resume()
                 phase = .done(device: member.name)
             } catch {
-                fail(error)
+                if let added { finishWithoutSync(device: added) } else { fail(error) }
             }
             transport.close()
         }
@@ -155,12 +165,19 @@ final class PairingSession {
         task?.cancel()
         task = Task { [weak self] in
             guard let self else { return }
+            var added: String?
             do {
                 try await transport.start()
+                let keyDeadline = transport.closing(after: .seconds(20))
                 let keys = try await joiner.exchangeKeys(over: transport)
+                keyDeadline.cancel()
                 let accepted = await ask(code: keys.confirmationCode, device: keys.peer.name)
+                let answerDeadline = transport.closing(after: .seconds(Self.lifetime))
                 let (channel, received) = try await joiner.finish(over: transport, keys: keys, accepted: accepted)
+                answerDeadline.cancel()
+                transport.allowLargeFrames()
                 service.adoptCellar(received, replace: replace)
+                added = keys.peer.name
                 phase = .syncing
                 guard let local = service.snapshot() else { throw SyncError.closed }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
@@ -170,7 +187,7 @@ final class PairingSession {
                 service.resume()
                 phase = .done(device: keys.peer.name)
             } catch {
-                fail(error)
+                if let added { finishWithoutSync(device: added) } else { fail(error) }
             }
             transport.close()
         }
@@ -201,6 +218,14 @@ final class PairingSession {
         listener?.cancel(); listener = nil
         browser?.cancel(); browser = nil
         transport?.close()
+    }
+
+    /// Paired, but the first sync did not finish: the devices complete it the next
+    /// time they meet on the network.
+    private func finishWithoutSync(device: String) {
+        stop()
+        service?.resume()
+        phase = .done(device: device)
     }
 
     private func fail(_ error: Error) {

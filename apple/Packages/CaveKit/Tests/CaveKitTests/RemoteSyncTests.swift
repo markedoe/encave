@@ -19,7 +19,7 @@ private struct RemoteDevice {
     mutating func sync(_ store: MailboxStore) async throws {
         if key == nil {
             key = try await RemoteSync.receiveGrant(store: store, identity: identity, membership: snapshot.membership,
-                                                    newerThan: 0)?.cellarKey
+                                                    current: nil)?.cellarKey
         }
         guard let key else { return }
         let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: snapshot,
@@ -40,7 +40,8 @@ private func household(_ count: Int = 3) -> [RemoteDevice] {
     var membership = Membership()
     var clock: UInt64 = 0
     for (index, identity) in identities.enumerated() {
-        membership.add(Member(id: identity.id, name: "Device \(index)", publicKey: identity.publicKey, platform: "ios"),
+        membership.add(Member(id: identity.id, name: "Device \(index)", publicKey: identity.publicKey, platform: "ios",
+                              inbox: identity.inboxID),
                        clock: &clock, by: identities[0].id)
     }
     let key = CellarKey.random(cellarID: membership.cellarID)
@@ -116,8 +117,10 @@ private func household(_ count: Int = 3) -> [RemoteDevice] {
         var clock = devices[0].snapshot.state.clock
         devices[0].snapshot.membership.remove(devices[2].identity.id, clock: &clock, by: devices[0].identity.id)
         devices[0].snapshot.state.clock = clock
-        devices[0].key = try await RemoteSync.rotate(store: store, identity: devices[0].identity, from: oldKey,
-                                                     local: devices[0].snapshot, storage: nil)
+        let newKey = CellarKey.random(cellarID: oldKey.cellarID, epoch: oldKey.epoch + 1)
+        try await RemoteSync.rotate(store: store, identity: devices[0].identity, from: oldKey, to: newKey,
+                                    local: devices[0].snapshot, storage: nil)
+        devices[0].key = newKey
         try devices[0].edit { try $0.addBottles(of: Wine(name: "After removal"), quantity: 1) }
         try await devices[0].sync(store)
 
@@ -133,6 +136,85 @@ private func household(_ count: Int = 3) -> [RemoteDevice] {
         #expect(!devices[2].snapshot.cellar.wines.values.contains { $0.name == "After removal" })
     }
 
+    @Test func theRemovedDeviceDoesNotGetWhatChangedBeforeTheRotation() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household()
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        for index in devices.indices { try await devices[index].sync(store) }
+        let oldKey = try #require(devices[0].key)
+        // A adds a bottle while C is away, then removes C without syncing first.
+        try devices[0].edit { try $0.addBottles(of: Wine(name: "Before removal"), quantity: 1) }
+        var clock = devices[0].snapshot.state.clock
+        devices[0].snapshot.membership.remove(devices[2].identity.id, clock: &clock, by: devices[0].identity.id)
+        devices[0].snapshot.state.clock = clock
+        try await RemoteSync.rotate(store: store, identity: devices[0].identity, from: oldKey,
+                                    to: CellarKey.random(cellarID: oldKey.cellarID, epoch: 2),
+                                    local: devices[0].snapshot, storage: nil)
+        try await devices[2].sync(store)
+        #expect(devices[2].snapshot.membership.members[devices[2].identity.id] == nil)
+        #expect(!devices[2].snapshot.cellar.wines.values.contains { $0.name == "Before removal" })
+    }
+
+    @Test func aRotationRetriedAfterAFailureKeepsOneKey() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household()
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        for index in devices.indices { try await devices[index].sync(store) }
+        let oldKey = try #require(devices[0].key)
+        let pending = CellarKey.random(cellarID: oldKey.cellarID, epoch: 2)
+        // The same pending key is used for the first try and the retry.
+        try await RemoteSync.rotate(store: store, identity: devices[0].identity, from: oldKey, to: pending,
+                                    local: devices[0].snapshot, storage: nil)
+        try await RemoteSync.rotate(store: store, identity: devices[0].identity, from: oldKey, to: pending,
+                                    local: devices[0].snapshot, storage: nil)
+        devices[0].key = pending
+        try await devices[1].sync(store)
+        try await devices[2].sync(store)
+        #expect(devices[1].key == pending)
+        #expect(devices[2].key == pending)
+    }
+
+    @Test func twoKeysOfTheSameEpochSettleOnOne() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household(2)
+        let cellarID = devices[0].snapshot.membership.cellarID
+        // Both devices turn remote sync on at once.
+        let keyA = CellarKey.random(cellarID: cellarID), keyB = CellarKey.random(cellarID: cellarID)
+        devices[0].key = keyA
+        devices[1].key = keyB
+        try await RemoteSync.grant(keyA, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        try await RemoteSync.grant(keyB, to: devices[1].snapshot.membership.active, store: store,
+                                   identity: devices[1].identity, storage: nil)
+        try devices[0].edit { try $0.addBottles(of: Wine(name: "From A"), quantity: 1) }
+        try devices[1].edit { try $0.addBottles(of: Wine(name: "From B"), quantity: 1) }
+        for _ in 0..<2 { for index in devices.indices { try await devices[index].sync(store) } }
+        #expect(devices[0].key == devices[1].key)
+        #expect(devices[0].snapshot.cellar == devices[1].snapshot.cellar)
+        #expect(devices[0].snapshot.cellar.wines.count == 2)
+    }
+
+    @Test func anUnreadableSnapshotDoesNotStopTheRound() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household()
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        for index in devices.indices { try await devices[index].sync(store) }
+        let key = try #require(devices[0].key)
+        // C's newest snapshot is garbage; B's is fine.
+        let mailbox = store.mailbox(id: key.mailboxID, token: key.token)
+        try await mailbox.create(SnapshotPath(device: devices[2].identity.id, clock: 999).string, data: Data("junk".utf8))
+        try devices[1].edit { try $0.addBottles(of: Wine(name: "From B"), quantity: 1) }
+        try await devices[1].sync(store)
+        let result = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
+                                              local: devices[0].snapshot, progress: devices[0].progress,
+                                              photos: devices[0].photos.access)
+        #expect(result.unreadable == [devices[2].identity.id])
+        #expect(result.snapshot?.cellar.wines.values.contains { $0.name == "From B" } == true)
+    }
+
     @Test func grantsFromStrangersAreIgnored() async throws {
         let store = MemoryMailboxStore()
         let devices = household(2)
@@ -141,7 +223,7 @@ private func household(_ count: Int = 3) -> [RemoteDevice] {
         try await RemoteSync.grant(fake, to: [devices[1].snapshot.membership.members[devices[1].identity.id]!],
                                    store: store, identity: stranger, storage: "https://evil.example")
         let received = try await RemoteSync.receiveGrant(store: store, identity: devices[1].identity,
-                                                         membership: devices[1].snapshot.membership, newerThan: 0)
+                                                         membership: devices[1].snapshot.membership, current: nil)
         #expect(received == nil)
     }
 

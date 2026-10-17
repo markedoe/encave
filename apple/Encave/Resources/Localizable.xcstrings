@@ -821,6 +821,16 @@
         }
       }
     },
+    "Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil."
+          }
+        }
+      }
+    },
     "Another device runs a different version of Encave. Update both devices.": {
       "localizations": {
         "fr": {
@@ -1457,6 +1467,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Changer"
+          }
+        }
+      }
+    },
+    "Changes from another device could not be read. Update Encave on all your devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils."
           }
         }
       }

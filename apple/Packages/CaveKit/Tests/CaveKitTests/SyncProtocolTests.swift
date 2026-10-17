@@ -64,6 +64,8 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         async let joinerDone = joiner.finish(over: joinerEnd, keys: jk, accepted: true)
         let ((_, newMember), (_, received)) = try await (hostDone, joinerDone)
         #expect(newMember.publicKey == joinerID.publicKey)
+        #expect(newMember.inbox == joinerID.inboxID)
+        #expect(received.members[hostID.id]?.inbox == hostID.inboxID)
         #expect(received.cellarID == membership.cellarID)
         #expect(received.members[hostID.id]?.publicKey == hostID.publicKey)
     }

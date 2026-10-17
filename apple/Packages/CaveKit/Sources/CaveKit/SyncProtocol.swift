@@ -66,9 +66,14 @@ public struct Member: Codable, Hashable, Sendable, Identifiable {
     /// "ios", "ipados", "macos" or "android".
     public var platform: String
     public var addedAt: Date
+    /// The device's inbox on a relay, where others leave it new cellar keys
+    /// (`DeviceIdentity.inboxID`). Set by the device itself; nil for records from
+    /// before remote sync, which then get keys only on the local network.
+    public var inbox: String?
 
-    public init(id: UUID, name: String, publicKey: Data, platform: String, addedAt: Date = .now) {
+    public init(id: UUID, name: String, publicKey: Data, platform: String, addedAt: Date = .now, inbox: String? = nil) {
         self.id = id; self.name = name; self.publicKey = publicKey; self.platform = platform; self.addedAt = addedAt
+        self.inbox = inbox
     }
 }
 
@@ -100,6 +105,16 @@ public struct Membership: Codable, Equatable, Sendable {
         stamps[member.id] = Stamp(counter: clock, device: device)
     }
 
+    /// Makes sure this device's own record names its inbox. Returns true if it changed
+    /// (the change is stamped, so it reaches the other devices). A removed device stays removed.
+    @discardableResult
+    public mutating func publishInbox(of identity: DeviceIdentity, clock: inout UInt64) -> Bool {
+        guard var me = members[identity.id], me.inbox != identity.inboxID else { return false }
+        me.inbox = identity.inboxID
+        add(me, clock: &clock, by: identity.id)
+        return true
+    }
+
     public mutating func remove(_ id: UUID, clock: inout UInt64, by device: UUID) {
         clock += 1
         members[id] = nil
@@ -107,6 +122,8 @@ public struct Membership: Codable, Equatable, Sendable {
     }
 
     /// Combines two lists of the same cellar; each device as of its latest change.
+    /// A removal is final: it wins over any later stamp, so a removed device cannot
+    /// add itself back by sending a newer record. Pairing again gives a new device ID.
     public func merged(with other: Membership) -> Membership {
         var result = Membership(cellarID: cellarID)
         for id in Set(stamps.keys).union(other.stamps.keys).union(members.keys).union(other.members.keys) {
@@ -116,6 +133,7 @@ public struct Membership: Codable, Equatable, Sendable {
             switch (a, b) {
             case (nil, _): useOther = true
             case (_, nil): useOther = false
+            case (let a?, let b?) where a.deleted != b.deleted: useOther = b.deleted
             case (let a?, let b?): useOther = b > a
             }
             let stamp = useOther ? b : a
@@ -152,6 +170,8 @@ public struct WireMessage: Codable, Sendable, Equatable {
     public var photoID: String?
     public var photoData: Data?
     public var reason: String?
+    /// The sender's relay inbox, sent once encrypted in pairing.
+    public var inbox: String?
 
     public init(type: String) { self.type = type }
 
@@ -420,9 +440,18 @@ public extension PairingHost {
                 membership: Membership) async throws -> (SecureChannel, Member) {
         let channel = SecureChannel(transport: transport, sendKey: keys.hostToJoiner, receiveKey: keys.joinerToHost)
         try await channel.send(WireMessage.make("pair-confirm") { $0.accepted = accepted })
+        // A "no" here ends the pairing at once, without waiting for the other answer.
+        guard accepted else { throw SyncError.rejected }
         let answer = try await channel.receive().require("pair-confirm")
-        guard accepted, answer.accepted == true else { throw SyncError.rejected }
-        let me = Member(id: info.device, name: info.name, publicKey: identity.publicKey, platform: info.platform)
+        guard answer.accepted == true else { throw SyncError.rejected }
+        // A joiner may not take the ID of this device, or of a device of the cellar
+        // with another key, or of a removed device (a removal is final).
+        let claimed = keys.peer.device
+        if claimed == info.device || membership.stamps[claimed]?.deleted == true {
+            throw SyncError.protocolViolation("device ID in use")
+        }
+        let me = Member(id: info.device, name: info.name, publicKey: identity.publicKey, platform: info.platform,
+                        inbox: identity.inboxID)
         var members = membership
         members.members[me.id] = members.members[me.id] ?? me
         try await channel.send(WireMessage.make("pair-welcome") {
@@ -433,7 +462,12 @@ public extension PairingHost {
         guard let identityKey = reply.identityKey, identityKey.count == 32 else {
             throw SyncError.protocolViolation("missing identity key")
         }
-        let member = Member(id: keys.peer.device, name: keys.peer.name, publicKey: identityKey, platform: keys.peer.platform)
+        if let existing = membership.members[claimed], existing.publicKey != identityKey {
+            throw SyncError.protocolViolation("device ID in use")
+        }
+        // Name and platform as sent over the encrypted channel.
+        let member = Member(id: claimed, name: reply.name ?? keys.peer.name, publicKey: identityKey,
+                            platform: reply.platform ?? keys.peer.platform, inbox: reply.inbox)
         return (channel, member)
     }
 }
@@ -469,8 +503,10 @@ public extension PairingJoiner {
                 accepted: Bool) async throws -> (SecureChannel, Membership) {
         let channel = SecureChannel(transport: transport, sendKey: keys.joinerToHost, receiveKey: keys.hostToJoiner)
         try await channel.send(WireMessage.make("pair-confirm") { $0.accepted = accepted })
+        // A "no" here ends the pairing at once, without waiting for the other answer.
+        guard accepted else { throw SyncError.rejected }
         let answer = try await channel.receive().require("pair-confirm")
-        guard accepted, answer.accepted == true else { throw SyncError.rejected }
+        guard answer.accepted == true else { throw SyncError.rejected }
         let welcome = try await channel.receive().require("pair-welcome")
         guard let data = welcome.membersData, var membership = try? JSONDecoder.sync.decode(Membership.self, from: data),
               let hostKey = welcome.identityKey, hostKey.count == 32 else {
@@ -481,7 +517,10 @@ public extension PairingJoiner {
             host.publicKey = hostKey
             membership.members[host.id] = host
         }
-        try await channel.send(WireMessage.make("pair-member") { $0.identityKey = identity.publicKey })
+        try await channel.send(WireMessage.make("pair-member") {
+            $0.identityKey = identity.publicKey
+            $0.name = info.name; $0.platform = info.platform; $0.inbox = identity.inboxID
+        })
         return (channel, membership)
     }
 }
@@ -665,16 +704,19 @@ public enum SyncExchange {
               let remoteMembers = try? JSONDecoder.sync.decode(Membership.self, from: membersData)
         else { throw SyncError.protocolViolation("unreadable sync-state") }
         guard remoteMembers.cellarID == local.membership.cellarID else { throw SyncError.otherCellar }
+        try SyncState.check(remoteState, membership: remoteMembers)
 
         let merge = CellarMerge.merge(local: local.cellar, local.state, remote: remoteCellar, remoteState)
         var state = local.state
         state.stamps = merge.stamps
         state.clock = merge.clock
         let membership = local.membership.merged(with: remoteMembers)
+        state.clock = max(state.clock, membership.stamps.values.map(\.counter).max() ?? 0)
         let result = SyncSnapshot(cellar: merge.cellar, state: state, membership: membership)
 
         // Photos: each side asks for the ones it is missing.
-        let wanted = Set(merge.cellar.wines.values.compactMap(\.photoID)).filter { photos.data($0) == nil }.sorted()
+        let wanted = Set(merge.cellar.wines.values.compactMap(\.photoID))
+            .filter { PhotoID.isValid($0) && photos.data($0) == nil }.sorted()
         let ask = WireMessage.make("photos-want") { $0.photos = wanted }
         let request: WireMessage
         if isInitiator {
@@ -686,7 +728,7 @@ public enum SyncExchange {
         }
         // Only photos of the merged cellar are sent, whatever is asked.
         let known = Set(merge.cellar.wines.values.compactMap(\.photoID))
-        let toSend = (request.photos ?? []).filter { known.contains($0) }
+        let toSend = (request.photos ?? []).filter { known.contains($0) && PhotoID.isValid($0) }
 
         func sendPhotos() async throws {
             for id in toSend {
@@ -720,6 +762,14 @@ public enum SyncExchange {
 /// Label photos are named after their content when synced, so a device can check
 /// that a photo it receives is the one it asked for.
 public enum PhotoID {
+    /// Letters, digits and dashes, at most 80 characters: anything else is never
+    /// fetched or sent, so it cannot reach a file path or a URL.
+    public static func isValid(_ id: String) -> Bool {
+        !id.isEmpty && id.count <= 80 && id.unicodeScalars.allSatisfy {
+            ("a"..."z").contains($0) || ("A"..."Z").contains($0) || ("0"..."9").contains($0) || $0 == "-"
+        }
+    }
+
     /// IDs of photos taken before sync existed are not content hashes: accept them as is.
     public static func matches(_ id: String, _ data: Data) -> Bool {
         guard id.hasPrefix("sha256-") else { return true }

@@ -64,15 +64,33 @@ public struct SyncState: Codable, Equatable, Sendable {
         compare(.wine, old.wines, new.wines)
         compare(.bottle, old.bottles, new.bottles)
         compare(.discovery, old.discoveries, new.discoveries)
-        compare(.rack, Dictionary(uniqueKeysWithValues: old.racks.map { ($0.id, $0) }),
-                Dictionary(uniqueKeysWithValues: new.racks.map { ($0.id, $0) }))
+        compare(.rack, CellarMerge.byID(old.racks), CellarMerge.byID(new.racks))
         if old.settings != new.settings { stamp(SyncKey.settings, deleted: false) }
         if old.racks.map(\.id) != new.racks.map(\.id) { stamp(SyncKey.rackOrder, deleted: false) }
     }
 
     private mutating func stamp(_ key: String, deleted: Bool) {
+        // Clocks are kept far below the limit by `SyncState.check`, so this cannot overflow.
         clock += 1
         stamps[key] = Stamp(counter: clock, device: device, deleted: deleted)
+    }
+
+    /// The largest counter a sender may use. Far below `UInt64.max`, so a device
+    /// can never be pushed to the point where its next change overflows, and exact
+    /// in JSON readers that use doubles.
+    public static let maxCounter: UInt64 = 1 << 53
+
+    /// Refuses a state from another device whose counters are out of bounds: over
+    /// `maxCounter`, or over the sender's own clock (it would make a later local
+    /// change look older than a remote one).
+    /// Membership counters are only bounded: they may come from devices with a
+    /// higher clock, and merging raises the local clock past them.
+    public static func check(_ state: SyncState, membership: Membership? = nil) throws {
+        let memberCounters = membership?.stamps.values.map(\.counter) ?? []
+        guard state.clock <= maxCounter, state.stamps.values.allSatisfy({ $0.counter <= state.clock }),
+              memberCounters.allSatisfy({ $0 <= maxCounter }) else {
+            throw SyncError.protocolViolation("clock out of bounds")
+        }
     }
 
     /// The stamp of an object, or `.zero` if it exists but was never stamped.
@@ -132,8 +150,8 @@ public enum CellarMerge {
         merged.wines = pick(.wine, local.wines, remote.wines)
         merged.bottles = pick(.bottle, local.bottles, remote.bottles)
         merged.discoveries = pick(.discovery, local.discoveries, remote.discoveries)
-        let racks = pick(.rack, Dictionary(uniqueKeysWithValues: local.racks.map { ($0.id, $0) }),
-                         Dictionary(uniqueKeysWithValues: remote.racks.map { ($0.id, $0) }))
+        let racks = pick(.rack, byID(local.racks), byID(remote.racks))
+        revive(&merged, stamps: &stamps, local: local, remote: remote)
 
         // Settings: one object.
         let settings = choose(local.settings, localState.stamps[SyncKey.settings] ?? .zero,
@@ -141,31 +159,59 @@ public enum CellarMerge {
         merged.settings = settings.0 ?? local.settings
         if let stamp = settings.1 { stamps[SyncKey.settings] = stamp }
 
-        // Rack order: the order of the copy that reordered last, then any other racks.
+        // Rack order: the order of the copy that reordered last (on equal stamps, the
+        // list that is smaller compared as lowercase IDs), then the other racks by ID.
         let orderA = localState.stamps[SyncKey.rackOrder] ?? .zero
         let orderB = remoteState.stamps[SyncKey.rackOrder] ?? .zero
-        let order = orderB > orderA ? remote.racks.map(\.id) + local.racks.map(\.id)
-                                    : local.racks.map(\.id) + remote.racks.map(\.id)
+        let idsA = local.racks.map { $0.id.uuidString.lowercased() }
+        let idsB = remote.racks.map { $0.id.uuidString.lowercased() }
+        let remoteFirst = orderA == orderB ? idsB.lexicographicallyPrecedes(idsA) : orderB > orderA
+        let base = remoteFirst ? remote.racks : local.racks
         if orderA != .zero || orderB != .zero { stamps[SyncKey.rackOrder] = max(orderA, orderB) }
         var seen = Set<UUID>()
         var ordered: [Rack] = []
-        for id in order where !seen.contains(id) {
-            seen.insert(id)
-            if let rack = racks[id] { ordered.append(rack) }
+        for rack in base where !seen.contains(rack.id) {
+            seen.insert(rack.id)
+            if let kept = racks[rack.id] { ordered.append(kept) }
         }
-        // Racks only in the stamps of neither order (should not happen): by ID.
-        for rack in racks.values.sorted(by: { $0.id.uuidString < $1.id.uuidString }) where !seen.contains(rack.id) {
+        for rack in racks.values.sorted(by: { $0.id.uuidString.lowercased() < $1.id.uuidString.lowercased() })
+        where !seen.contains(rack.id) {
             ordered.append(rack)
         }
         merged.racks = ordered
 
         repair(&merged, stamps: stamps)
-        return Result(cellar: merged, stamps: stamps, clock: max(localState.clock, remoteState.clock))
+        // At least every counter seen, so the next local change is newer than all of them.
+        let clock = ([localState.clock, remoteState.clock] + stamps.values.map(\.counter)).max() ?? 0
+        return Result(cellar: merged, stamps: stamps, clock: clock)
+    }
+
+    static func byID(_ racks: [Rack]) -> [UUID: Rack] {
+        Dictionary(racks.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// A bottle or discovery changed after its wine was deleted on another device
+    /// (someone added a bottle while someone else deleted the wine): the wine comes
+    /// back, with the newest stamp of what refers to it, so nothing added is lost.
+    private static func revive(_ merged: inout Cellar, stamps: inout [String: Stamp], local: Cellar, remote: Cellar) {
+        var newest: [UUID: Stamp] = [:]
+        let references = merged.bottles.values.map { (SyncKey(.bottle, $0.id).string, $0.wineID) }
+            + merged.discoveries.values.map { (SyncKey(.discovery, $0.id).string, $0.wineID) }
+        for (key, wineID) in references where merged.wines[wineID] == nil {
+            guard let stamp = stamps[key], let deletion = stamps[SyncKey(.wine, wineID).string],
+                  deletion.deleted, stamp > deletion else { continue }
+            newest[wineID] = max(newest[wineID] ?? stamp, stamp)
+        }
+        for (wineID, stamp) in newest {
+            guard let wine = preferred(local.wines[wineID], remote.wines[wineID]) else { continue }
+            merged.wines[wineID] = wine
+            stamps[SyncKey(.wine, wineID).string] = Stamp(counter: stamp.counter, device: stamp.device)
+        }
     }
 
     /// The version that changed last, and its stamp. Equal stamps with different
     /// content (two devices that never synced, same object) fall back to the content.
-    private static func choose<T: Codable>(_ a: T?, _ sa: Stamp?, _ b: T?, _ sb: Stamp?) -> (T?, Stamp?) {
+    private static func choose<T>(_ a: T?, _ sa: Stamp?, _ b: T?, _ sb: Stamp?) -> (T?, Stamp?) {
         switch (sa, sb) {
         case (nil, nil): return (nil, nil)
         case (let sa?, nil): return (sa.deleted ? nil : a ?? b, sa)
@@ -180,14 +226,16 @@ public enum CellarMerge {
         }
     }
 
-    /// A choice between two versions that does not depend on which device merges.
-    private static func preferred<T: Codable>(_ a: T?, _ b: T?) -> T? {
+    /// A choice between two versions with the same stamp that does not depend on
+    /// which device merges. They come from the same change, so they differ only
+    /// where repair changed one without a stamp: a bottle that lost its place. The
+    /// version without a place wins; otherwise either is fine and the local one is kept.
+    private static func preferred<T>(_ a: T?, _ b: T?) -> T? {
         guard let a, let b else { return a ?? b }
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        let ea = (try? encoder.encode(a)) ?? Data()
-        let eb = (try? encoder.encode(b)) ?? Data()
-        return ea.lexicographicallyPrecedes(eb) ? b : a
+        if let ba = a as? Bottle, let bb = b as? Bottle, (ba.slot == nil) != (bb.slot == nil) {
+            return ba.slot == nil ? a : b
+        }
+        return a
     }
 
     /// Fixes what a merge can leave inconsistent, the same way on every device:
@@ -200,7 +248,7 @@ public enum CellarMerge {
         for (id, discovery) in cellar.discoveries where cellar.wines[discovery.wineID] == nil {
             cellar.discoveries[id] = nil
         }
-        let racks = Dictionary(uniqueKeysWithValues: cellar.racks.map { ($0.id, $0) })
+        let racks = byID(cellar.racks)
         for (id, bottle) in cellar.bottles {
             guard let slot = bottle.slot else { continue }
             if bottle.status != .inCellar || !(racks[slot.rackID]?.contains(slot) ?? false) {
@@ -212,7 +260,7 @@ public enum CellarMerge {
             let ranked = together.sorted { x, y in
                 let sx = stamps[SyncKey(.bottle, x.id).string] ?? .zero
                 let sy = stamps[SyncKey(.bottle, y.id).string] ?? .zero
-                return sx != sy ? sx > sy : x.id.uuidString < y.id.uuidString
+                return sx != sy ? sx > sy : x.id.uuidString.lowercased() < y.id.uuidString.lowercased()
             }
             for loser in ranked.dropFirst() { cellar.bottles[loser.id]?.slot = nil }
         }

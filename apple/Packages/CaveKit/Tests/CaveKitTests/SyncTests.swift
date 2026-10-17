@@ -214,3 +214,88 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(b.cellar.wines[wine.id]?.notes == "A after sync")
     }
 }
+
+@Suite struct SyncHardeningTests {
+    @Test func aRemovalCannotBeUndoneByANewerRecord() {
+        let device = UUID(), other = UUID()
+        var removed = Membership()
+        var clock: UInt64 = 0
+        removed.add(Member(id: device, name: "R", publicKey: Data(count: 32), platform: "ios"), clock: &clock, by: other)
+        var forged = removed
+        removed.remove(device, clock: &clock, by: other)
+        var later: UInt64 = 1_000
+        forged.add(Member(id: device, name: "R", publicKey: Data(count: 32), platform: "ios"), clock: &later, by: device)
+        #expect(removed.merged(with: forged).members[device] == nil)
+        #expect(forged.merged(with: removed).members[device] == nil)
+    }
+
+    @Test func clocksOutOfBoundsAreRefused() throws {
+        var state = SyncState(clock: 5)
+        state.stamps["settings"] = Stamp(counter: 9, device: state.device)
+        #expect(throws: SyncError.self) { try SyncState.check(state) }
+        #expect(throws: SyncError.self) { try SyncState.check(SyncState(clock: UInt64.max)) }
+        try SyncState.check(SyncState(clock: 7))
+    }
+
+    @Test func theMergedClockCoversEveryStamp() {
+        var remote = SyncState(clock: 3)
+        remote.stamps["settings"] = Stamp(counter: 3, device: remote.device)
+        var local = SyncState(clock: 1)
+        local.stamps["rack-order"] = Stamp(counter: 2, device: local.device)
+        let result = CellarMerge.merge(local: Cellar(), local, remote: Cellar(), remote)
+        #expect(result.clock >= 3)
+    }
+
+    @Test func duplicateRacksInAFileAreDropped() throws {
+        let rack = Rack(name: "Twice", rows: 1, columns: 1)
+        var cellar = Cellar()
+        cellar.racks = [rack, rack]
+        let data = try JSONFileCellarStore.makeEncoder().encode(cellar)
+        let decoded = try JSONFileCellarStore.makeDecoder().decode(Cellar.self, from: data)
+        #expect(decoded.racks.count == 1)
+        // The merge copes with duplicates in memory too.
+        _ = CellarMerge.merge(local: cellar, SyncState(), remote: cellar, SyncState())
+    }
+
+    @Test func rackOrderConvergesOnEqualStamps() {
+        let r0 = Rack(name: "R0", rows: 1, columns: 1), a = Rack(name: "a", rows: 1, columns: 1)
+        let b = Rack(name: "b", rows: 1, columns: 1)
+        let device = UUID()
+        var state = SyncState(device: device, clock: 10)
+        state.stamps["rack-order"] = Stamp(counter: 10, device: device)
+        for rack in [r0, a, b] { state.stamps["rack:\(rack.id.uuidString.lowercased())"] = Stamp(counter: 1, device: device) }
+        var x = Cellar(), y = Cellar()
+        x.racks = [r0, a, b]
+        y.racks = [r0, b, a]
+        var stateY = state
+        stateY.device = UUID()
+        let one = CellarMerge.merge(local: x, state, remote: y, stateY).cellar.racks.map(\.id)
+        let two = CellarMerge.merge(local: y, stateY, remote: x, state).cellar.racks.map(\.id)
+        #expect(one == two)
+    }
+
+    @Test func aBottleAddedWhileItsWineWasDeletedBringsTheWineBack() throws {
+        let wine = Wine(name: "Shared")
+        var cellar = Cellar()
+        try cellar.addBottles(of: wine, quantity: 1)
+        let deviceA = UUID(), deviceB = UUID()
+        var stateA = SyncState.starting(with: cellar, device: deviceA)
+        var stateB = stateA
+        stateB.device = deviceB
+        // A deletes the wine; B, later in Lamport order, adds a bottle of it.
+        var cellarA = cellar, cellarB = cellar
+        let beforeA = cellarA
+        cellarA.deleteWine(wine.id)
+        stateA.record(from: beforeA, to: cellarA)
+        stateB.clock += 5
+        let beforeB = cellarB
+        try cellarB.addBottles(of: wine, quantity: 1)
+        stateB.record(from: beforeB, to: cellarB)
+        let onA = CellarMerge.merge(local: cellarA, stateA, remote: cellarB, stateB)
+        let onB = CellarMerge.merge(local: cellarB, stateB, remote: cellarA, stateA)
+        #expect(onA.cellar == onB.cellar)
+        #expect(onA.stamps == onB.stamps)
+        #expect(onA.cellar.wines[wine.id] != nil)
+        #expect(onA.cellar.bottles.count == 1)
+    }
+}
