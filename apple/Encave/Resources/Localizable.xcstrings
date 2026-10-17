@@ -6571,6 +6571,16 @@
         }
       }
     },
+    "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute."
+          }
+        }
+      }
+    },
     "The cellar stays on this device as it is. Other devices keep syncing together.": {
       "localizations": {
         "fr": {

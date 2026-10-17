@@ -465,6 +465,8 @@ final class SyncService {
             remoteProblem = remoteStorage == .iCloud
                 ? String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
                 : String(localized: "The relay refused this device. Check the relay address.")
+        } catch RemoteSyncError.fileTooLarge {
+            remoteProblem = String(localized: "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.")
         } catch RemoteSyncError.quotaExceeded {
             remoteProblem = remoteStorage == .iCloud
                 ? String(localized: "Your iCloud storage is full.")

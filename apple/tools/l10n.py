@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.': 'La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.',
     'Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.': 'Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.',
     'Changes from another device could not be read. Update Encave on all your devices.': 'Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.',
     'This bottle is on order: mark it received first.': 'Cette bouteille est en commande : marquez-la d’abord comme reçue.',

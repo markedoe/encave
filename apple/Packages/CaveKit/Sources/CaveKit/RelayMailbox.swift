@@ -82,7 +82,8 @@ struct RelayMailbox: Mailbox {
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         switch status {
         case 401, 403: throw RemoteSyncError.unauthorized
-        case 413, 507: throw RemoteSyncError.quotaExceeded
+        case 413: throw RemoteSyncError.fileTooLarge
+        case 507: throw RemoteSyncError.quotaExceeded
         case 429, 500...: throw RemoteSyncError.unavailable("relay status \(status)")
         default: return (data, status)
         }

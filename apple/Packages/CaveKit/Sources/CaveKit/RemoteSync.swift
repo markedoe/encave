@@ -33,6 +33,8 @@ public protocol MailboxStore: Sendable {
 public enum RemoteSyncError: Error, Equatable, Sendable {
     case unauthorized
     case quotaExceeded
+    /// One file is larger than the storage accepts (a very large cellar).
+    case fileTooLarge
     case unavailable(String)
     case corrupted(String)
 }
