@@ -458,6 +458,21 @@ class AppViewModel(
 
     fun exportCsv(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.csv(it) }
 
+    /** The printable inventory (PDF, A4); labels come from [resources]. */
+    fun exportPdf(resolver: ContentResolver, uri: Uri, resources: android.content.res.Resources) {
+        val snapshot = cellar.value
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    requireNotNull(resolver.openOutputStream(uri, "wt")).use {
+                        app.encave.ui.settings.InventoryPdf.write(snapshot, resources, year, it)
+                    }
+                }
+            }
+            post(UiText.Res(if (result.isSuccess) R.string.msg_exported else R.string.msg_export_failed))
+        }
+    }
+
     private fun export(resolver: ContentResolver, uri: Uri, render: (Cellar) -> String) {
         val snapshot = cellar.value
         viewModelScope.launch {
@@ -495,7 +510,9 @@ class AppViewModel(
         }
     }
 
-    private fun importText(summary: ImportSummary): UiText = if (summary.rowsSkipped > 0) {
+    private fun importText(summary: ImportSummary): UiText = if (summary.discoveriesAdded > 0) {
+        UiText.Res(R.string.msg_imported_discoveries, listOf(summary.discoveriesAdded))
+    } else if (summary.rowsSkipped > 0) {
         UiText.Res(R.string.msg_imported_skipped, listOf(summary.winesAdded, summary.bottlesAdded, summary.rowsSkipped))
     } else {
         UiText.Res(R.string.msg_imported, listOf(summary.winesAdded, summary.bottlesAdded))

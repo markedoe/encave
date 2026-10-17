@@ -857,6 +857,27 @@ S = [
  ("help_racks_check", "Choose **Check this rack**, tap each bottle you find, then **End check**. For the bottles not found, choose **Take them out of the rack** (they stay in the cellar without a place) or **Mark them as gone** (they leave the cellar). **Undo** puts everything back.",
   "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."),
 
+ # Printed inventory and import from other apps
+ ("settings_export_pdf", "Inventory for printing (PDF)", "Inventaire à imprimer (PDF)"),
+ ("settings_export_pdf_body", "Every wine with its places and purchase value, for insurance or a move", "Chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement"),
+ ("settings_import_other", "Import from another app", "Importer depuis une autre app"),
+ ("settings_import_other_body", "A CSV from CellarTracker, Vivino or a spreadsheet, read on this device", "Un CSV de CellarTracker, Vivino ou d’un tableur, lu sur cet appareil"),
+ ("pdf_title", "Cellar inventory", "Inventaire de la cave"),
+ ("pdf_subtitle", "%1$s · %2$d bottles", "%1$s · %2$d bouteilles"),
+ ("pdf_value", "Purchase value: %1$s", "Valeur d’achat : %1$s"),
+ ("pdf_wine", "Wine", "Vin"),
+ ("pdf_bottles", "Bottles", "Bouteilles"),
+ ("pdf_purchase_value", "Purchase value", "Valeur d’achat"),
+ ("pdf_made_with", "Made with Encave", "Réalisé avec Encave"),
+ ("pdf_page", "Page %1$d of %2$d", "Page %1$d sur %2$d"),
+ ("msg_imported_discoveries", "Imported: %1$d discoveries", "Importé : %1$d découvertes"),
+ ("help_data_pdf_title", "Printed inventory", "Inventaire imprimé"),
+ ("help_data_pdf", "**Inventory for printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.",
+  "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché."),
+ ("help_data_other_title", "Coming from another app", "Venir d’une autre app"),
+ ("help_data_other", "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import from another app**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.",
+  "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil."),
+
 ]
 
 P = [

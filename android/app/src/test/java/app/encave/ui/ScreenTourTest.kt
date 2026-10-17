@@ -280,6 +280,18 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.onNodeWithTag("action.audit.finish").assertDoesNotExist()
     }
 
+    /** The first page of the printed inventory, drawn as in the PDF (at twice the size). */
+    @Test
+    fun inventoryPdf() {
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val image = Bitmap.createBitmap(595 * 2, 842 * 2, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(image)
+        canvas.scale(2f, 2f)
+        app.encave.ui.settings.InventoryPdf.drawPage(application.repository.cellar.value, application.resources, java.time.LocalDate.now().year, 0, canvas)
+        outDir.mkdirs()
+        File(outDir, "34-inventory-pdf.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
     @Test
     fun addBottle() {
         tap("action.fab_add")

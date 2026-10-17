@@ -147,6 +147,8 @@ data class HelpArticle(
                 listOf(
                     HelpSection(R.string.help_data_backup, R.string.help_data_backup_title),
                     HelpSection(R.string.help_data_csv, R.string.help_data_csv_title),
+                    HelpSection(R.string.help_data_pdf, R.string.help_data_pdf_title),
+                    HelpSection(R.string.help_data_other, R.string.help_data_other_title),
                     HelpSection(R.string.help_data_photos, R.string.help_data_photos_title),
                 ),
             ),

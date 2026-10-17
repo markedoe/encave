@@ -11,7 +11,8 @@ enum class ImportError { NotAnEncaveBackup, EmptyFile, MissingNameColumn }
 class ImportException(val error: ImportError) : Exception(error.name)
 
 /** Result of an import, for the confirmation message. */
-data class ImportSummary(val winesAdded: Int, val bottlesAdded: Int, val rowsSkipped: Int)
+/** [discoveriesAdded]: rows of a tasting history (Vivino) added as discoveries. */
+data class ImportSummary(val winesAdded: Int, val bottlesAdded: Int, val rowsSkipped: Int, val discoveriesAdded: Int = 0)
 
 object CellarExport {
     val csvColumns = listOf(
@@ -181,6 +182,7 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
 internal fun Cellar.importDiscoveries(rows: List<List<String>>, columns: List<String>, nameIndex: Int, now: Instant): ImportSummary {
     var winesAdded = 0
     var rowsSkipped = 0
+    var added = 0
     for (row in rows.drop(1)) {
         fun value(column: String): String? {
             val index = columns.indexOf(column)
@@ -201,9 +203,10 @@ internal fun Cellar.importDiscoveries(rows: List<List<String>>, columns: List<St
             currency = value("currency") ?: settings.currency,
         )
         addDiscovery(discovery, wine)
+        added++
         if (!known) winesAdded++
     }
-    return ImportSummary(winesAdded, 0, rowsSkipped)
+    return ImportSummary(winesAdded, 0, rowsSkipped, added)
 }
 
 /** Column names and values of other apps' and spreadsheets' exports. */

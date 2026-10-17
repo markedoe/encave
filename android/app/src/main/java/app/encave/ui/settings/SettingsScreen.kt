@@ -37,6 +37,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Switch
 import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.MoveToInbox
 import app.encave.reminders.Reminders
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -85,6 +87,9 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     }
     val exportCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         uri?.let { viewModel.exportCsv(resolver, it) }
+    }
+    val exportPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+        uri?.let { viewModel.exportPdf(resolver, it, resources) }
     }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.import(resolver, it) }
@@ -163,12 +168,26 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 supportingContent = { Text(stringResource(R.string.settings_export_csv_body)) },
             )
             ListItem(
+                modifier = Modifier.clickable { exportPdf.launch("encave-inventory-$today.pdf") }.testTag("settings.pdf"),
+                leadingContent = { Icon(Icons.Outlined.PictureAsPdf, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_export_pdf)) },
+                supportingContent = { Text(stringResource(R.string.settings_export_pdf_body)) },
+            )
+            ListItem(
                 modifier = Modifier.clickable {
                     import.launch(arrayOf("application/json", "text/csv", "text/comma-separated-values", "text/plain", "application/octet-stream"))
                 },
                 leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_import)) },
                 supportingContent = { Text(stringResource(R.string.settings_import_body)) },
+            )
+            ListItem(
+                modifier = Modifier.clickable {
+                    import.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain", "application/octet-stream"))
+                }.testTag("settings.import_other"),
+                leadingContent = { Icon(Icons.Outlined.MoveToInbox, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_import_other)) },
+                supportingContent = { Text(stringResource(R.string.settings_import_other_body)) },
             )
 
             SectionHeader(stringResource(R.string.settings_test_data))
