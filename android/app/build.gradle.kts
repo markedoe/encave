@@ -47,9 +47,12 @@ android {
     }
 
     testOptions {
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             // The tokens test checks DesignTokens.kt against the shared file.
             it.systemProperty("encave.tokens", rootProject.file("../design/tokens.json").absolutePath)
+            // Robolectric intercepts FileDescriptor.sync(), used by the atomic cellar save.
+            it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
         }
     }
 }
@@ -86,6 +89,11 @@ dependencies {
     implementation(libs.adaptive.navigation)
     debugImplementation(libs.compose.ui.tooling)
 
+    debugImplementation(libs.compose.ui.test.manifest)
+
     testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
 }

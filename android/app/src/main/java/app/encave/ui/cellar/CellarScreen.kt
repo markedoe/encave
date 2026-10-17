@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,6 +48,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -290,8 +293,14 @@ private fun CellarSearchBar(
     val suggestions = remember(cellar, query) {
         cellar.wineSuggestions(query).filter { wine -> cellar.bottlesInCellar.any { it.wineId == wine.id } }
     }
+    if (!expanded) {
+        // Collapsed: a pill that opens the search. A focusable text field here would
+        // expand the search as soon as it gets focus (keyboard navigation, launch).
+        CollapsedSearch(query, onOpen = { onExpandedChange(true) }, onClear = { onQueryChange("") }, onSettings = onSettings)
+        return
+    }
     SearchBar(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = if (expanded) 0.dp else Dimens.l),
+        modifier = Modifier.fillMaxWidth(),
         inputField = {
             SearchBarDefaults.InputField(
                 query = query,
@@ -301,22 +310,14 @@ private fun CellarSearchBar(
                 onExpandedChange = onExpandedChange,
                 placeholder = { Text(stringResource(R.string.search_hint)) },
                 leadingIcon = {
-                    if (expanded) {
-                        IconButton(onClick = { onExpandedChange(false) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                        }
-                    } else {
-                        Icon(Icons.Filled.Search, contentDescription = null)
+                    IconButton(onClick = { onExpandedChange(false) }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { onQueryChange("") }) {
                             Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
-                        }
-                    } else if (!expanded) {
-                        IconButton(onClick = onSettings) {
-                            Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
                         }
                     }
                 },
@@ -341,6 +342,39 @@ private fun CellarSearchBar(
                     leadingContent = { WineColorDot(wine.color, size = 16.dp) },
                     modifier = Modifier.clickable { onOpen(wine.id.toString()) },
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit) {
+    Surface(
+        onClick = onOpen,
+        shape = SearchBarDefaults.inputFieldShape,
+        color = SearchBarDefaults.colors().containerColor,
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(SearchBarDefaults.windowInsets)
+            .padding(horizontal = Dimens.l, vertical = Dimens.s)
+            .heightIn(min = SearchBarDefaults.InputFieldHeight),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = Dimens.l)) {
+            Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                query.ifEmpty { stringResource(R.string.search_hint) },
+                modifier = Modifier.weight(1f).padding(horizontal = Dimens.l),
+                color = if (query.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+            if (query.isNotEmpty()) {
+                IconButton(onClick = onClear) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
+                }
+            }
+            IconButton(onClick = onSettings) {
+                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
             }
         }
     }
