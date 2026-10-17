@@ -370,15 +370,19 @@ struct EmptyCellarView: View {
         } description: {
             Text("Add the bottles you keep at home to know what you have, where it is and when to open it.")
         } actions: {
-            Button {
-                model.sheet = .addBottle(AddBottleContext())
-            } label: {
-                Text("Add a Bottle").frame(minWidth: 200)
+            // A column on every platform: on the Mac, actions are laid out in
+            // a row and would be cut off in the narrow content column.
+            VStack(spacing: 12) {
+                Button {
+                    model.sheet = .addBottle(AddBottleContext())
+                } label: {
+                    Text("Add a Bottle").frame(minWidth: 200)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                Button("Remember a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
+                Button("Load sample cellar") { model.loadSample() }
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            Button("Remember a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
-            Button("Load sample cellar") { model.loadSample() }
         }
     }
 }
