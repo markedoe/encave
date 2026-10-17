@@ -20,6 +20,15 @@ extension View {
     }
 
     /// Number keyboard on iOS.
+    /// Digits only (a code), with no decimal point.
+    func digitsKeyboard() -> some View {
+        #if os(iOS)
+        return keyboardType(.numberPad).textContentType(.oneTimeCode)
+        #else
+        return self
+        #endif
+    }
+
     func numericKeyboard() -> some View {
         #if os(iOS)
         return keyboardType(.decimalPad)

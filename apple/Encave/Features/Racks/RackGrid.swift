@@ -111,6 +111,10 @@ struct RackGrid: View {
 }
 
 extension RackGrid {
+    /// Largest cell when fitting: big enough to read names on an iPad or a Mac,
+    /// small enough that a little rack does not look like a toy.
+    static let maxFittedCell: CGFloat = 112
+
     /// The cell size at which the whole rack fits in a space, headers included.
     static func fittingCellSize(for rack: Rack, in space: CGSize, showsHeaders: Bool = true) -> CGFloat {
         let columns = CGFloat(rack.maxColumns), rows = CGFloat(rack.rows)
@@ -135,9 +139,9 @@ extension RackGrid {
         if fit >= RackCellView.nameSize, rack.kind == .grid || rack.kind == .shelves {
             let taller = height + rows * (RackCellView.nameHeightRatio - 1)
             let withNames = min(space.width / width, space.height / taller)
-            return min(max(withNames >= RackCellView.nameSize ? withNames : min(fit, RackCellView.nameSize - 0.5), 26), 84)
+            return min(max(withNames >= RackCellView.nameSize ? withNames : min(fit, RackCellView.nameSize - 0.5), 26), Self.maxFittedCell)
         }
-        return min(max(fit, 26), 84)
+        return min(max(fit, 26), Self.maxFittedCell)
     }
 }
 

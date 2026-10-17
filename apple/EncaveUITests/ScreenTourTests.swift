@@ -320,7 +320,9 @@ final class ScreenTourTests: XCTestCase {
         canvas.pinch(withScale: 2.2, velocity: 1.5)
         sleep(2)
         let after = cell.frame.width
-        XCTAssertGreaterThan(after, before * 1.3, "main rack: pinching did not zoom (\(before) → \(after) pt)")
+        let zoom = (canvas.value as? String) ?? "?"
+        XCTAssertGreaterThan(after, before * 1.3,
+                             "main rack: pinching did not zoom (\(before) → \(after) pt, canvas zoom \(zoom), canvas \(canvas.frame))")
         snapshot("rack-zoomed")
         #endif
     }
@@ -435,7 +437,8 @@ final class ScreenTourTests: XCTestCase {
             let button = buttons.element(boundBy: index)
             guard button.exists, button.isHittable else { continue }
             guard let offset = contentOffset(of: button.frame, in: image, scale: scale) else { continue }
-            XCTAssertLessThanOrEqual(abs(offset), 3,
+            // 4 pt: glyph shapes (a thin "+") move the ink a little; the bug this catches was 10 pt and more.
+            XCTAssertLessThanOrEqual(abs(offset), 4,
                 "\(screen): the content of \(button.identifier) is \(Int(offset)) pt off center")
         }
         #endif

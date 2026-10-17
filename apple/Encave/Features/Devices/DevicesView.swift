@@ -508,7 +508,7 @@ struct JoinDeviceView: View {
                 TextField("Code", text: $digits, prompt: Text(verbatim: "123 456"))
                     .font(.system(.title, design: .rounded).monospacedDigit())
                     .multilineTextAlignment(.center)
-                    .numericKeyboard()
+                    .digitsKeyboard()
                     .focused($codeFocused)
                     .onChange(of: digits) { _, new in
                         let clean = String(new.filter(\.isNumber).prefix(6))

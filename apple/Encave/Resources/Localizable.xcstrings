@@ -301,6 +301,16 @@
         }
       }
     },
+    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Exporter un tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement."
+          }
+        }
+      }
+    },
     "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.": {
       "localizations": {
         "fr": {
@@ -1241,6 +1251,16 @@
         }
       }
     },
+    "Busiest month: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mois le plus actif : %@"
+          }
+        }
+      }
+    },
     "By country": {
       "localizations": {
         "fr": {
@@ -1617,6 +1637,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réunir avec l’autre cave"
+          }
+        }
+      }
+    },
+    "Coming from another app": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Venir d’une autre app"
           }
         }
       }
@@ -2521,6 +2551,36 @@
         }
       }
     },
+    "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil."
+          }
+        }
+      }
+    },
+    "Favorite occasion: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Occasion préférée : %@"
+          }
+        }
+      }
+    },
+    "Favorite: %@, %lld stars": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préféré : %1$@, %2$lld étoiles"
+          }
+        }
+      }
+    },
     "Fill in a wine from a photo of its label.": {
       "localizations": {
         "fr": {
@@ -3371,6 +3431,16 @@
         }
       }
     },
+    "Label photos stay on your devices and sync between them, but are not included in backups yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos d’étiquettes restent sur vos appareils et se synchronisent entre eux, mais ne sont pas encore incluses dans les sauvegardes."
+          }
+        }
+      }
+    },
     "Large cellar, 120": {
       "localizations": {
         "fr": {
@@ -3597,6 +3667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plus"
+          }
+        }
+      }
+    },
+    "Most opened region: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Région la plus ouverte : %@"
           }
         }
       }
@@ -7261,6 +7341,16 @@
         }
       }
     },
+    "Year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Année"
+          }
+        }
+      }
+    },
     "Your cellar could not be loaded.": {
       "localizations": {
         "fr": {
@@ -7441,6 +7531,16 @@
         }
       }
     },
+    "Your year in wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre année en vin"
+          }
+        }
+      }
+    },
     "Zoom In": {
       "localizations": {
         "fr": {
@@ -7547,6 +7647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "vins différents"
+          }
+        }
+      }
+    },
+    "discoveries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "découvertes"
           }
         }
       }

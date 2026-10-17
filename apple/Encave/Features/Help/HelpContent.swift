@@ -106,8 +106,9 @@ struct HelpArticle: Identifiable {
             HelpArticle(topic: .data, title: "Backup, export and import",
                         summary: "Keep a copy and move your cellar.", systemImage: "externaldrive", sections: [
                 HelpSection(title: "Back up", body: "**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced."),
-                HelpSection(title: "Spreadsheet", body: "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app."),
-                HelpSection(title: "Photos", body: "Label photos stay on the device and are not included in backups yet."),
+                HelpSection(title: "Spreadsheet", body: "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place."),
+                HelpSection(title: "Coming from another app", body: "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device."),
+                HelpSection(title: "Photos", body: "Label photos stay on your devices and sync between them, but are not included in backups yet."),
             ]),
             HelpArticle(topic: .privacy, title: "Privacy",
                         summary: "Your cellar stays yours.", systemImage: "lock.shield", sections: [

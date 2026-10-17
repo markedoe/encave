@@ -12,11 +12,24 @@ struct ActionLabel: View {
         self.systemImage = systemImage
     }
 
+    /// On one line with the icon if it fits, else on one line without it (a narrow
+    /// iPhone, a long French title), else wrapped (the largest text sizes).
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: systemImage)
-                .accessibilityHidden(true)
-            Text(title)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 6) {
+                icon
+                Text(title).lineLimit(1)
+            }
+            Text(title).lineLimit(1)
+            HStack(spacing: 6) {
+                icon
+                Text(title).multilineTextAlignment(.center)
+            }
         }
+    }
+
+    private var icon: some View {
+        Image(systemName: systemImage)
+            .accessibilityHidden(true)
     }
 }

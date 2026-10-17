@@ -83,6 +83,13 @@ struct ZoomableRack: UIViewRepresentable {
 
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
             (scrollView as? CenteringScrollView)?.centerContent()
+            report(scrollView)
+        }
+
+        /// The zoom, for VoiceOver and for the screen tour ("2.2×").
+        func report(_ scrollView: UIScrollView) {
+            let zoom = level * scrollView.zoomScale
+            scrollView.accessibilityValue = String(format: "%.1f×", zoom)
         }
 
         func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
@@ -137,6 +144,7 @@ struct ZoomableRack: UIViewRepresentable {
             scroll.minimumZoomScale = 1 / level
             scroll.maximumZoomScale = ZoomableRack.maxZoom / level
             if scroll.zoomScale != 1 { scroll.zoomScale = 1 }
+            report(scroll)
             let size = host.sizeThatFits(in: CGSize(width: CGFloat.infinity, height: CGFloat.infinity))
             guard size != oldSize || !keepingCenter else { return }
             host.view.frame = CGRect(origin: .zero, size: size)

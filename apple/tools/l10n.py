@@ -15,6 +15,20 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Coming from another app': 'Venir d’une autre app',
+    'Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.': 'Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil.',
+    'Label photos stay on your devices and sync between them, but are not included in backups yet.': 'Les photos d’étiquettes restent sur vos appareils et se synchronisent entre eux, mais ne sont pas encore incluses dans les sauvegardes.',
+    '**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.': '**Exporter un tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement.',
+    'Your year in wine': 'Votre année en vin',
+    'Year': 'Année',
+    'bottles opened': 'bouteilles ouvertes',
+    'different wines': 'vins différents',
+    'discoveries': 'découvertes',
+    'Favorite: %@, %lld stars': 'Préféré : %1$@, %2$lld étoiles',
+    'Most opened region: %@': 'Région la plus ouverte : %@',
+    'Most opened style: ': 'Style le plus ouvert : ',
+    'Favorite occasion: %@': 'Occasion préférée : %@',
+    'Busiest month: %@': 'Mois le plus actif : %@',
     'Check This Rack': 'Vérifier ce casier',
     'Every bottle is where it should be.': 'Chaque bouteille est à sa place.',
     'Bottles not found: %lld': 'Bouteilles introuvables : %lld',
