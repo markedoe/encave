@@ -1,0 +1,98 @@
+package app.encave.core
+
+import java.math.BigDecimal
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+
+/**
+ * A small fictional cellar for trying the app and for previews.
+ * Producers are invented; appellations are real places.
+ */
+object SampleData {
+    /** Labels are passed in so the app can localize them. */
+    data class Labels(
+        val mainRack: String = "Main rack",
+        val wineFridge: String = "Wine fridge",
+        val tastingNote: String = "Silky, red fruit, long finish.",
+        val kitchen: String = "Kitchen",
+        val occasion: String = "Dinner with friends",
+        val nose: String = "Cherry, violet, a touch of undergrowth",
+        val palate: String = "Fine tannins, fresh acidity",
+        val pairing: String = "Roast duck",
+    )
+
+    fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = Instant.now()): Cellar {
+        val cellar = Cellar()
+        val main = Rack(name = labels.mainRack, rows = 6, columns = 8)
+        val small = Rack(name = labels.wineFridge, rows = 4, columns = 6, layout = RackLayout.Diamond)
+        cellar.addRack(main)
+        cellar.addRack(small)
+
+        val entries: List<Triple<Wine, Int, Rack?>> = listOf(
+            Triple(
+                Wine(name = "Clos des Tilleuls", producer = "Domaine Arnaud", vintage = year - 9, color = WineColor.Red,
+                    region = "Bordeaux", country = "France", appellation = "Pauillac", grapes = listOf("Cabernet Sauvignon", "Merlot"),
+                    drinkFrom = year - 2, drinkUntil = year + 8),
+                3, main,
+            ),
+            Triple(
+                Wine(name = "Les Pierres Blanches", producer = "Maison Clément", vintage = year - 4, color = WineColor.White,
+                    region = "Bourgogne", country = "France", appellation = "Meursault", grapes = listOf("Chardonnay"),
+                    drinkFrom = year - 1, drinkUntil = year),
+                2, main,
+            ),
+            Triple(
+                Wine(name = "Cuvée du Lac", producer = "Cave des Coteaux", vintage = year - 2, color = WineColor.White,
+                    region = "Vaud", country = "Switzerland", grapes = listOf("Chasselas"),
+                    drinkFrom = year - 1, drinkUntil = year + 2),
+                4, small,
+            ),
+            Triple(
+                Wine(name = "Terrasses du Sud", producer = "Domaine Ferrand", vintage = year - 3, color = WineColor.Red,
+                    region = "Rhône", country = "France", appellation = "Gigondas", grapes = listOf("Grenache", "Syrah"),
+                    drinkFrom = year + 1, drinkUntil = year + 10),
+                6, main,
+            ),
+            Triple(
+                Wine(name = "Rosé de Provence", producer = "Château Lumière", vintage = year - 5, color = WineColor.Rose,
+                    region = "Provence", country = "France", grapes = listOf("Grenache", "Cinsault"),
+                    drinkFrom = year - 4, drinkUntil = year - 2),
+                1, null,
+            ),
+            Triple(
+                Wine(name = "Brut Réserve", producer = "Maison Aubry", color = WineColor.Sparkling,
+                    region = "Champagne", country = "France", grapes = listOf("Chardonnay", "Pinot Noir")),
+                2, small,
+            ),
+            Triple(
+                Wine(name = "Vendanges Tardives", producer = "Domaine Weber", vintage = year - 12, color = WineColor.Dessert,
+                    region = "Alsace", country = "France", grapes = listOf("Gewurztraminer"),
+                    drinkFrom = year - 6, drinkUntil = year + 15),
+                1, main,
+            ),
+        )
+
+        val prices = listOf(38, 54, 16, 24, 14, 36, 29).map { BigDecimal(it) }
+        entries.forEachIndexed { index, (wine, quantity, rack) ->
+            val slots = rack?.let { cellar.freeSlots(it).take(quantity) } ?: emptyList()
+            val date = now - Duration.ofDays(30L * (index + 1))
+            val purchase = PurchaseInfo(
+                date = date, price = prices[index % prices.size],
+                currency = cellar.settings.currency, storageNote = if (rack == null) labels.kitchen else null,
+            )
+            runCatching { cellar.addBottles(wine, quantity, slots, purchase, addedAt = date) }
+        }
+
+        // A few past tastings for the journal.
+        val tasted = Wine(name = "Vieilles Vignes", producer = "Domaine Arnaud", vintage = year - 7, color = WineColor.Red,
+            region = "Bourgogne", country = "France", appellation = "Gevrey-Chambertin", grapes = listOf("Pinot Noir"),
+            drinkFrom = year - 3, drinkUntil = year + 4)
+        val bottles = cellar.addBottles(tasted, quantity = 2, addedAt = now)
+        cellar.drink(bottles[0].id, Tasting(date = now - Duration.ofDays(12), rating = 5,
+            note = labels.tastingNote, occasion = labels.occasion, nose = labels.nose,
+            palate = labels.palate, foodPairing = labels.pairing))
+        cellar.drink(bottles[1].id, Tasting(date = now - Duration.ofDays(40), rating = 4))
+        return cellar
+    }
+}

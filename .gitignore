@@ -39,3 +39,10 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Android / Gradle
+.gradle/
+.kotlin/
+local.properties
+captures/
+*.hprof
