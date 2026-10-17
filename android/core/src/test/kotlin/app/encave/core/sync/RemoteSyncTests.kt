@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -31,6 +32,7 @@ private class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnaps
         val result = RemoteSync.run(store, identity, key, snapshot, progress, photos)
         result.snapshot?.let { snapshot = it }
         result.newKey?.let { this.key = it }
+        snapshot = snapshot.copy(state = snapshot.state.copy(clock = maxOf(snapshot.state.clock, result.clock)))
         progress = result.progress
     }
 }
@@ -55,6 +57,30 @@ private suspend fun grantAll(devices: List<RemoteDevice>, store: MailboxStore, s
     RemoteSync.grant(devices[0].key!!, devices[0].snapshot.membership.active, store, devices[0].identity, storage)
 
 class RemoteSyncTests {
+    @Test
+    fun aChangeFromTheLocalNetworkIsUploadedEvenIfTheClockDidNotMove() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household(2)
+        grantAll(devices, store, null)
+        devices.forEach { it.sync(store) }
+        // A merge brings in a stamp with a lower counter: the clock stays, the content changes.
+        val before = devices[0].snapshot.state.clock
+        val wine = Wine(name = "From the network")
+        val cellar = devices[0].snapshot.cellar.copy().also { it.addBottles(wine) }
+        val bottle = cellar.bottles.values.single { it.wineId == wine.id }
+        val elsewhere = UUID.randomUUID()
+        val stamps = devices[0].snapshot.state.stamps + mapOf(
+            "wine:${wine.id.toString().lowercase()}" to Stamp(1, elsewhere),
+            "bottle:${bottle.id.toString().lowercase()}" to Stamp(1, elsewhere),
+        )
+        devices[0].snapshot = devices[0].snapshot.copy(cellar = cellar, state = devices[0].snapshot.state.copy(stamps = stamps))
+        assertEquals(before, devices[0].snapshot.state.clock)
+        devices[0].sync(store)
+        assertTrue(devices[0].snapshot.state.clock > before, "the clock is raised so readers see a newer snapshot")
+        devices[1].sync(store)
+        assertNotNull(devices[1].snapshot.cellar.wines[wine.id])
+    }
+
     @Test
     fun aChangeReachesTheOtherDevicesThroughStorage() = runBlocking {
         val store = MemoryMailboxStore()

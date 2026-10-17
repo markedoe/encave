@@ -631,6 +631,7 @@
     <string name="remote_how_to">How to run a relay</string>
     <string name="remote_problem_refused">The relay refused this device. Check the relay address.</string>
     <string name="remote_problem_full">The relay is full. Remove old photos or use another relay.</string>
+    <string name="remote_problem_too_large">The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.</string>
     <string name="remote_problem_unreachable">The storage cannot be reached. Syncing will resume when it can.</string>
     <string name="remote_problem_unreadable">Changes from another device could not be read. Update Encave on all your devices.</string>
     <string name="remote_problem_removal">The removed device could not be shut out of syncing away from home yet. It will be tried again.</string>

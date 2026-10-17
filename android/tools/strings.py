@@ -677,6 +677,8 @@ S = [
  ("remote_how_to", "How to run a relay", "Héberger un relais"),
  ("remote_problem_refused", "The relay refused this device. Check the relay address.", "Le relais a refusé cet appareil. Vérifiez l’adresse du relais."),
  ("remote_problem_full", "The relay is full. Remove old photos or use another relay.", "Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais."),
+ ("remote_problem_too_large", "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.",
+  "La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute."),
  ("remote_problem_unreachable", "The storage cannot be reached. Syncing will resume when it can.", "Le stockage est injoignable. La synchronisation reprendra dès que possible."),
  ("remote_problem_unreadable", "Changes from another device could not be read. Update Encave on all your devices.", "Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils."),
  ("remote_problem_removal", "The removed device could not be shut out of syncing away from home yet. It will be tried again.", "L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté."),

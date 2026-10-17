@@ -630,6 +630,7 @@
     <string name="remote_how_to">Héberger un relais</string>
     <string name="remote_problem_refused">Le relais a refusé cet appareil. Vérifiez l’adresse du relais.</string>
     <string name="remote_problem_full">Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais.</string>
+    <string name="remote_problem_too_large">La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.</string>
     <string name="remote_problem_unreachable">Le stockage est injoignable. La synchronisation reprendra dès que possible.</string>
     <string name="remote_problem_unreadable">Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.</string>
     <string name="remote_problem_removal">L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.</string>

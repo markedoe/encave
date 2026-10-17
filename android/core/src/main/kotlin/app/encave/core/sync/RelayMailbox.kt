@@ -103,7 +103,8 @@ private class RelayMailbox(val base: String, val id: String, val token: String) 
             }
             when (val status = result.first) {
                 401, 403 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)
-                413, 507 -> throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
+                413 -> throw RemoteSyncException(RemoteSyncError.FileTooLarge)
+                507 -> throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
                 else -> if (status == 429 || status >= 500) throw RemoteSyncException(RemoteSyncError.Unavailable("relay status $status"))
             }
             result

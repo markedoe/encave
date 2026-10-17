@@ -138,6 +138,7 @@ private val SyncManager.RemoteProblem.text: Int
     get() = when (this) {
         SyncManager.RemoteProblem.Refused -> R.string.remote_problem_refused
         SyncManager.RemoteProblem.Full -> R.string.remote_problem_full
+        SyncManager.RemoteProblem.FileTooLarge -> R.string.remote_problem_too_large
         SyncManager.RemoteProblem.Unreachable -> R.string.remote_problem_unreachable
         SyncManager.RemoteProblem.RemovalPending -> R.string.remote_problem_removal
         SyncManager.RemoteProblem.Unreadable -> R.string.remote_problem_unreadable
