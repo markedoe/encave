@@ -189,7 +189,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
-        kind = (try? c.decodeIfPresent(RackKind.self, forKey: .kind)) ?? .grid
+        // Absent in files from version 0.1 and 0.2 (grids). An unknown value fails, like any enum.
+        kind = try c.decodeIfPresent(RackKind.self, forKey: .kind) ?? .grid
         rows = max(1, try c.decode(Int.self, forKey: .rows))
         columns = max(1, try c.decode(Int.self, forKey: .columns))
         depth = min(Rack.maxDepth, max(1, try c.decodeIfPresent(Int.self, forKey: .depth) ?? 1))

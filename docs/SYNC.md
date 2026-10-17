@@ -14,7 +14,8 @@ test vectors at the end are checked by `ProtocolVectorTests`.
 
 ## 1. Data model and merge
 
-The cellar file (`cellar.json`, also the backup format) is unchanged by sync.
+The cellar file (`cellar.json`) is unchanged by sync. Backups hold the same
+cellar inside a small envelope, with dates as ISO 8601 strings.
 Sync metadata lives next to it in `sync.json` (`SyncState`) and the list of
 devices in `devices.json` (`Membership`).
 
@@ -42,17 +43,24 @@ stands for objects that exist but were never stamped.
 ### Object format
 
 Objects are the records of the cellar file, encoded as JSON as described in
-section 7 (dates, UUID-keyed maps). Optional fields are left out when empty.
-Two details matter for other implementations:
+section 7 (dates, UUID-keyed maps). Fields without a value (nil) are left out;
+arrays such as `grapes` and numbers with a default (`sizeML`, `depth`,
+`binCapacity`) are always written. Details that matter for other
+implementations:
 
 - `bottle.status` is one of `inCellar`, `consumed`, `gone` or `ordered`
   (bought, not delivered yet; such a bottle has no place and may carry
   `expectedAt`, a date).
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
   when empty.
-- Readers are strict: an unknown enum value fails decoding. A device that does
-  not know a new value refuses the sync instead of rewriting the object with a
-  wrong value and a newer stamp, which would spread the loss to every device.
+- Readers are strict: an unknown value of `wine.color`, `bottle.status` or
+  `rack.kind` fails decoding; readers never replace it with a default. A device
+  that does not know a new value refuses the sync instead of rewriting the
+  object with a wrong value and a newer stamp, which would spread the loss to
+  every device. (A rack without `kind`, from version 0.1 or 0.2, is a grid.)
+- Readers key each wine, bottle and discovery by its own `id`, not by the map
+  key; if two entries have the same `id`, the one whose map key sorts first
+  (uppercase UUID string) is kept. Racks with a repeated `id` keep the first.
 
 ### Merge
 
@@ -81,6 +89,8 @@ compute the same result.
    stamp; on equal stamps, the list that is smaller when compared element by
    element as lowercase UUID strings. Racks of the merged cellar missing from
    the base follow, sorted by lowercase ID. Duplicate rack IDs keep the first.
+   The merged `rack-order` stamp is the greater of the two (none if both are
+   zero).
 5. **Repair**, the same on every device:
    - bottles and discoveries whose wine is gone are removed;
    - bottles not in the cellar, or in a rack that no longer exists or no
@@ -130,7 +140,10 @@ to join again it pairs as a new device, with a new ID and key.
 ## 4. Transport
 
 TCP. Each **frame** is a 4-byte big-endian length followed by that many bytes;
-frames over 16 MiB are refused. Before encryption starts, a frame is one JSON
+frames over 16 MiB are refused. Until the other device is authenticated (the
+end of pairing step 7, or the end of the sync handshake), a device refuses
+frames over 64 KiB: every pairing message, `pair-welcome` included, must fit.
+Before encryption starts, a frame is one JSON
 object (UTF-8, keys sorted, binary values in standard Base64). After the
 handshake, each frame is `ciphertext ‖ tag` of ChaCha20-Poly1305 over that JSON
 object, with:
@@ -141,10 +154,11 @@ object, with:
 - no additional data.
 
 A frame that fails to decrypt ends the session. Messages always have a `type`.
-A device that refuses a session may send `{"type":"error","reason":…}` with
-reason `unknown-device` (not known yet, for example added recently on another
-device), `removed-device` (removed from the cellar), `other-cellar`,
-`unsupported-version` or `rejected` before closing.
+The responder of a sync handshake may send `{"type":"error","reason":…}`
+before closing, with reason `unknown-device` (not known yet, for example added
+recently on another device), `removed-device` (removed from the cellar),
+`other-cellar` or `unsupported-version`; `rejected` is reserved. A responder
+also refuses a hello that carries its own device ID.
 
 Error frames arrive before authentication, so anyone on the network can send
 one. They are hints for the message shown to the user ("could not sync with
@@ -194,8 +208,9 @@ padding>`. A joiner that scanned it refuses a host whose commitment differs.
    From here frames are encrypted. Each sends `{"type":"pair-confirm",
    "accepted":true|false}`; pairing stops unless both accepted.
 6. Host → joiner: `{"type":"pair-welcome","cellar":cellarID,
-   "identityKey":hostIdentityPublic,"membersData":<Membership JSON>}`.
-   The host's own record in it carries its `inbox`.
+   "identityKey":hostIdentityPublic,"membersData":M}` where `M` is a standard
+   Base64 string of the Membership JSON. The host's own record in it carries
+   its `inbox`; the joiner sets that record's public key to `identityKey`.
 7. Joiner → host: `{"type":"pair-member","identityKey":joinerIdentityPublic,
    "name":…,"platform":…,"inbox":…}`. The host records the name and platform
    from this encrypted message, not from step 2.
@@ -203,7 +218,7 @@ padding>`. A joiner that scanned it refuses a host whose commitment differs.
    device, or belongs to a member with another identity key. Otherwise it adds
    the joiner to its membership; the joiner adopts the cellar ID and members
    and adds itself. Then they run the exchange (section 7) on the same channel,
-   the host as initiator.
+   the host as initiator: the pairing keys stay, and the frame counters go on.
 
 When joining, the user chooses to **combine** the joiner's own cellar with the
 host's, or to **replace** it (start from an empty cellar).
@@ -244,16 +259,18 @@ neither side waits on a full buffer.
 
 1. `{"type":"sync-state","cellarData":…,"syncData":…,"membersData":…}` each
    way. Each of the three values is a standard Base64 string of UTF-8 JSON: the
-   cellar, the `SyncState` and the `Membership`. Both check the bounds, merge
-   (section 1) and merge memberships.
+   cellar, the `SyncState` and the `Membership`. A device refuses a membership
+   with another cellar ID. Both check the bounds, merge (section 1) and merge
+   memberships.
 2. `{"type":"photos-want","photos":[ids]}` each way: the photos referenced by
    the merged cellar that the device does not have.
 3. The initiator sends `{"type":"photo","photoID":…,"photoData":…}` for each
    requested photo that the merged cellar references, then
    `{"type":"photos-end"}`; then the responder does the same.
 
-4. `{"type":"sync-keys","syncData":<RemoteInfo JSON or absent>}` each way
-   (initiator first): the remote sync key and storage this device uses (section
+4. `{"type":"sync-keys","syncData":R}` each way, where `R` is a standard Base64
+   string of the `RemoteInfo` JSON, or is left out (initiator first): the
+   remote sync key and storage this device uses (section
    8), so turning remote sync on reaches the other devices. `RemoteInfo` is
    `{"key":CellarKey,"storage":string?}` and `CellarKey` is
    `{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes}`. A key for
@@ -261,7 +278,8 @@ neither side waits on a full buffer.
    (section 8). This key is never written into a snapshot.
 
 Photo IDs of new photos are `sha256-` + the lowercase hex SHA-256 of the JPEG,
-and a received photo whose content does not match its ID is ignored. IDs from
+and a received photo that was not asked for, or whose content does not match
+its ID, is ignored. IDs from
 before sync (UUIDs) are accepted as they are. Photo IDs are restricted to
 letters, digits and dashes, at most 80 characters; a photo with any other ID is
 never requested, sent, uploaded or downloaded.
@@ -324,7 +342,8 @@ path (UTF-8)` as additional data, so a file cannot be moved to another name.
 | `photo/<photo ID, lowercase>` | 2 | the JPEG |
 
 Each device writes only under its own `snap/<device>/` and keeps its newest two
-snapshots. Paths use lowercase letters, digits, `-`, `_` and `/`.
+snapshots. Paths use lowercase letters, digits, `-`, `_` and `/`, at most 200
+characters, with no empty, `.` or `..` parts.
 
 ### Key grants
 
@@ -338,7 +357,10 @@ The recipient accepts a grant only from a current member of its cellar and
 only for its cellar; both identity keys enter the key, so only a member can
 have written it. Grants are at most 4 KiB. A grant that cannot be opened is
 deleted, except one from a device of this cellar not known yet (kept for a
-later round); grants from removed devices are deleted.
+later round); grants from removed devices are deleted. The recipient also
+checks that the grant's path names the same cellar, epoch and sender as its
+content. It uses a grant only if its key supersedes the current one, and it
+deletes the grants of its cellar with an older epoch than the key it keeps.
 
 ### One round
 
@@ -347,8 +369,10 @@ later round); grants from removed devices are deleted.
 2. List `snap/`; for each other current member (a device of the membership,
    not removed; files of other device IDs are ignored), read its newest
    snapshot if newer than the last one read, check the bounds (section 1) and
-   merge it. A snapshot that cannot be read, decrypted, decoded or checked is
-   skipped for this round; the other devices still sync.
+   merge it. A snapshot counts only if its `syncData` names the same device as
+   its path and its `membersData` the same cellar ID. A snapshot that cannot be
+   read, decrypted, decoded or checked is skipped for this round; the other
+   devices still sync.
 3. Fetch the photos the merged cellar references and this device lacks (valid
    photo IDs only).
 4. If anything changed since this device's last upload (its clock, or any
@@ -370,14 +394,22 @@ updated membership (so devices that have not switched yet learn about the
 removal, while the removed device, which can still read the old mailbox, learns
 nothing else), and writes the cellar to the **new** mailbox. The removed device
 cannot find the new mailbox (its ID comes from the new key) and its files in
-the old one are ignored, because it is no longer a member.
+the old one are ignored, because it is no longer a member. If, before the
+rotation is done, the device receives a key of the same or a later epoch, it
+replaces the kept key with a new one at that epoch + 1.
 
 ### Turning it on
 
-The first device to turn on a relay creates the key (epoch 1) and leaves a grant
-for every other member. The key and relay address also travel in the
-`sync-keys` step of every network sync (section 7), so devices pick up the
-setting when they meet.
+A device that turns on remote sync first reads its inbox. If another member
+already left it a key, it uses that key. Otherwise it creates the key (epoch 1)
+and leaves a grant for every other member that has an inbox. The key and the
+storage also travel in the `sync-keys` step of every network sync (section 7),
+so devices pick up the setting when they meet.
+
+`storage` is `"icloud"` or the relay's URL. A device uses a storage told by
+another device only if it has none yet, and only an `https://` relay, or
+iCloud on Apple devices that support it. A device that receives a new key in a
+grant also moves to the grant's storage.
 
 ## 9. Security notes
 
