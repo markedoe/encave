@@ -90,6 +90,15 @@ dependencies {
     implementation(libs.adaptive)
     implementation(libs.adaptive.layout)
     implementation(libs.adaptive.navigation)
+    // Device sync: relay rounds in the background.
+    implementation(libs.androidx.work)
+    // Pairing: scanning the other device's QR code on the device (no ML Kit, which reports to Google).
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.zxing.cpp)
+    // Drawing this device's pairing QR code (encoder only, pure Java).
+    implementation(libs.zxing.core)
     debugImplementation(libs.compose.ui.tooling)
 
     debugImplementation(libs.compose.ui.test.manifest)

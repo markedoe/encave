@@ -153,7 +153,7 @@ class AppViewModel(
             }
                 .onSuccess { post(UiText.Plural(R.plurals.bottles_added, it.size)) }
                 .onFailure {
-                    photos.delete(photoId)
+                    deleteUnusedPhoto(photoId)
                     post(errorText(it))
                 }
         }
@@ -207,6 +207,11 @@ class AppViewModel(
 
     // region Wines
 
+    /** Photos are named after their content, so two wines may share one: delete only if no wine uses it. */
+    private fun deleteUnusedPhoto(id: String?) {
+        if (id != null && repository.cellar.value.wines.values.none { it.photoId == id }) photos.delete(id)
+    }
+
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
     fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false) {
         viewModelScope.launch {
@@ -219,11 +224,11 @@ class AppViewModel(
             }
             repository.update { it.updateWine(record) }
                 .onSuccess {
-                    if (record.photoId != previous) photos.delete(previous)
+                    if (record.photoId != previous) deleteUnusedPhoto(previous)
                     post(UiText.Res(R.string.msg_saved))
                 }
                 .onFailure {
-                    photos.delete(newId)
+                    deleteUnusedPhoto(newId)
                     post(errorText(it))
                 }
         }
@@ -254,7 +259,7 @@ class AppViewModel(
                     post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
                 }
                 .onFailure {
-                    photos.delete(photoId)
+                    deleteUnusedPhoto(photoId)
                     post(errorText(it))
                 }
         }
@@ -273,10 +278,10 @@ class AppViewModel(
                 it.updateWine(record)
                 it.updateDiscovery(discovery)
             }.onSuccess {
-                if (record.photoId != previous) photos.delete(previous)
+                if (record.photoId != previous) deleteUnusedPhoto(previous)
                 post(UiText.Res(R.string.msg_saved))
             }.onFailure {
-                photos.delete(newId)
+                deleteUnusedPhoto(newId)
                 post(errorText(it))
             }
         }

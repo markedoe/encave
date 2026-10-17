@@ -47,24 +47,50 @@ class CellarRepository(
         }
     }
 
+    /**
+     * Told of every change made on this device (not of changes received from other
+     * devices), with the cellar before and after, while the change still holds the
+     * lock: sync records what changed.
+     */
+    @Volatile var onLocalChange: ((old: Cellar, new: Cellar) -> Unit)? = null
+
     /** Applies [change] to a copy, saves it, then publishes it. */
     suspend fun <T> update(change: (Cellar) -> T): Result<T> = mutex.withLock {
-        val copy = state.value.copy()
+        val before = state.value
+        val copy = before.copy()
         val result = runCatching { change(copy) }
         if (result.isFailure) return@withLock result
         val saved = withContext(io) { runCatching { store.save(copy) } }
         saved.exceptionOrNull()?.let { return@withLock Result.failure(it) }
         loadFailed = false
         state.value = copy
+        onLocalChange?.invoke(before, copy)
         result
     }
 
     /** Replaces the whole cellar (sample data, erase all). */
     suspend fun replace(cellar: Cellar): Result<Unit> = mutex.withLock {
+        val before = state.value
         val copy = cellar.copy()
         withContext(io) { runCatching { store.save(copy) } }.onSuccess {
             loadFailed = false
             state.value = copy
+            onLocalChange?.invoke(before, copy)
         }
     }
+
+    /**
+     * Applies what came from another device: [merge] gets the current cellar and
+     * returns the new one. Not reported to [onLocalChange].
+     */
+    suspend fun applySynced(merge: (Cellar) -> Cellar): Result<Unit> = mutex.withLock {
+        val merged = merge(state.value.copy())
+        withContext(io) { runCatching { store.save(merged) } }.onSuccess {
+            loadFailed = false
+            state.value = merged
+        }
+    }
+
+    /** Reads the cellar while no change is running (a consistent copy for sync). */
+    suspend fun <T> read(block: (Cellar) -> T): T = mutex.withLock { block(state.value) }
 }

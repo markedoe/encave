@@ -6,9 +6,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import app.encave.core.sync.PhotoAccess
+import app.encave.core.sync.PhotoId
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.util.Locale
 import java.util.UUID
 
 /**
@@ -55,14 +56,36 @@ class PhotoStore(context: Context) {
         }
     }.getOrNull()
 
-    /** Saves a prepared JPEG; returns the new photo identifier. */
-    fun save(jpeg: ByteArray): String? = runCatching {
-        val id = UUID.randomUUID().toString().uppercase(Locale.ROOT)
-        val temp = File(folder, "$id.tmp")
+    /**
+     * Saves a prepared JPEG; returns the new photo identifier, named after its content
+     * ("sha256-…") so other devices can check a synced photo is the one they asked for.
+     */
+    fun save(jpeg: ByteArray): String? {
+        val id = PhotoId.make(jpeg)
+        return if (store(id, jpeg)) id else null
+    }
+
+    /** Writes a photo under an ID (a received one). False if the ID is not a safe file name. */
+    fun store(id: String, jpeg: ByteArray): Boolean = runCatching {
+        if (!PhotoId.isValid(id)) return false
+        val target = file(id)
+        if (target.exists()) return true
+        val temp = File(folder, "$id.${UUID.randomUUID()}.tmp")
         temp.writeBytes(jpeg)
-        check(temp.renameTo(file(id)))
-        id
-    }.getOrNull()
+        check(temp.renameTo(target))
+        true
+    }.getOrDefault(false)
+
+    /** The photo's bytes, for sync. */
+    fun data(id: String): ByteArray? = if (PhotoId.isValid(id)) file(id).takeIf { it.exists() }?.readBytes() else null
+
+    /** Photos for a sync session: read and saved by ID. */
+    val syncAccess: PhotoAccess = object : PhotoAccess {
+        override fun data(id: String): ByteArray? = this@PhotoStore.data(id)
+        override fun save(id: String, data: ByteArray) {
+            store(id, data)
+        }
+    }
 
     fun delete(id: String?) {
         if (id != null) file(id).delete()

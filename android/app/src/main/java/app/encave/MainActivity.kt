@@ -24,4 +24,17 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    /** Devices sync while the app is open: on start (and back from the background). */
+    override fun onStart() {
+        super.onStart()
+        val sync = (application as EncaveApplication).sync
+        sync.resume()
+        sync.syncRemotely()
+    }
+
+    override fun onStop() {
+        (application as EncaveApplication).sync.pause()
+        super.onStop()
+    }
 }
