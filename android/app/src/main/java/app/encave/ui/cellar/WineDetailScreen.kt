@@ -357,10 +357,9 @@ private fun WindowCard(wine: Wine, year: Int, onMoveEnd: (Int) -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.detail_window), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                MaturityLabel(maturity)
-            }
+            // The maturity under the title: long labels ("No drinking window") never squeeze it.
+            Text(stringResource(R.string.detail_window), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+            MaturityLabel(maturity)
             val from = wine.drinkFrom
             val until = wine.drinkUntil
             if (from != null && until != null && from <= until) {

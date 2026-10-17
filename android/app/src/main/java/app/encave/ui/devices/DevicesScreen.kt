@@ -78,6 +78,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.EncaveApplication
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.core.sync.Member
 import app.encave.core.sync.RelayMailboxStore
 import app.encave.sync.SyncManager
@@ -180,7 +181,7 @@ fun DevicesScreen(navigator: AppNavigator) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.devices_title)) }, navigationIcon = { Back(navigator) }) },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             status.problem?.let { problem ->
                 ListItem(
                     leadingContent = { Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
@@ -360,7 +361,7 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.remote_title)) }, navigationIcon = { Back(navigator) }) },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             val storage = status.remoteStorage
             if (storage != null) {
                 SectionHeader(stringResource(R.string.devices_remote_relay))

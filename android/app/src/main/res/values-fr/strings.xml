@@ -260,7 +260,8 @@
     <string name="settings_erase_body">Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil.</string>
     <string name="settings_privacy">Confidentialité</string>
     <string name="settings_privacy_stored">Votre cave est enregistrée uniquement sur cet appareil.</string>
-    <string name="settings_privacy_body">Encave n’a ni accès au réseau, ni compte, ni statistiques d’usage. La synchronisation entre vos appareils et avec les personnes avec qui vous partagez une cave sera chiffrée de bout en bout.</string>
+    <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave.</string>
+    <string name="settings_privacy_stored_devices">Votre cave est enregistrée uniquement sur vos appareils.</string>
     <string name="settings_about">À propos</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Code source</string>
@@ -442,7 +443,7 @@
     <string name="help_field_appellation">L’appellation d’origine, comme Pauillac ou Chablis.</string>
     <string name="help_field_region">La région viticole, comme Bordeaux ou la Toscane.</string>
     <string name="help_field_grapes">Cépages, séparés par des virgules.</string>
-    <string name="help_origin_footer">Facultatif. Améliore la recherche et les accords mets-vins. Séparez les cépages par des virgules.</string>
+    <string name="help_origin_footer">Facultatif. Améliore la recherche et les accords mets-vins.</string>
     <string name="help_window_footer">Les années où le vin est à son meilleur, d’après le producteur ou un guide. Utilisé par Ce soir pour suggérer quoi ouvrir.</string>
     <string name="help_notes_footer">Sur le vin lui-même. Les notes sur une bouteille ouverte vont dans sa dégustation.</string>
     <string name="help_field_rating">D’une étoile (décevant) à cinq (exceptionnel). Touchez à nouveau la même étoile pour l’effacer.</string>
@@ -726,6 +727,8 @@
     <string name="help_tonight_why">Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an.</string>
     <string name="insights_drink_down">Rythme de dégustation</string>
     <string name="insights_pace">Environ %1$s bouteilles par mois</string>
+    <string name="insights_pace_one">Environ une bouteille par mois</string>
+    <string name="insights_pace_less">Moins d’une bouteille par mois</string>
     <string name="insights_pace_detail">pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation.</string>
     <string name="insights_past_peak">Après leur apogée : %1$d</string>
     <string name="insights_windows_ending">Fins de fenêtre par année</string>

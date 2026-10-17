@@ -61,11 +61,14 @@ class ScreenTourTest(private val device: String, private val language: String) {
         private val devices = mapOf(
             "phone" to "w411dp-h891dp-port-xxhdpi",
             "tablet" to "w1280dp-h800dp-land-xhdpi",
+            // Dark theme, to check contrast; English only.
+            "phone-dark" to "w411dp-h891dp-port-night-xxhdpi",
         )
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
-        fun configurations() = listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } }
+        fun configurations() = listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } } +
+            listOf(arrayOf("phone-dark", "en"))
 
         private const val DOUBLE_TAP_WAIT = 500L
 

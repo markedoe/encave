@@ -1,5 +1,7 @@
 package app.encave.ui.racks
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -112,7 +114,12 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     modifier = Modifier.animateItem().testTag("rack.row.$index").clickable(enabled = !reordering) {
                         navigator.open(RackDetailRoute(rack.id.toString()))
                     },
-                    leadingContent = { RackThumbnail(rack, cellar, Modifier.padding(vertical = Dimens.xs)) },
+                    // A fixed-width slot, so the names line up whatever the shape of the rack.
+                    leadingContent = {
+                        Box(Modifier.width(92.dp), contentAlignment = Alignment.CenterStart) {
+                            RackThumbnail(rack, cellar, Modifier.padding(vertical = Dimens.xs))
+                        }
+                    },
                     headlineContent = { Text(rack.name, style = MaterialTheme.typography.titleMedium) },
                     supportingContent = {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {

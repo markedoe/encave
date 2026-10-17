@@ -70,6 +70,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
@@ -218,6 +219,7 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
+                .readableWidth()
                 .padding(horizontal = Dimens.l, vertical = Dimens.s),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
@@ -625,7 +627,7 @@ fun EditWineScreen(viewModel: AppViewModel, navigator: AppNavigator, wineId: Str
             return@Scaffold
         }
         Column(
-            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState())
+            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth()
                 .padding(horizontal = Dimens.l, vertical = Dimens.s),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {

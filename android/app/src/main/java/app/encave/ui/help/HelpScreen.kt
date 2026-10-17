@@ -47,6 +47,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.data.ai.AiProvider
 import app.encave.ui.AppNavigator
 import app.encave.ui.settings.keyLinkLabel
@@ -142,7 +143,7 @@ fun HelpScreen(navigator: AppNavigator, initialTopic: String? = null) {
             )
         },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             if (article != null) {
                 HelpArticleContent(article, Modifier.padding(Dimens.l))
             } else {

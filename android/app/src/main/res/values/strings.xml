@@ -261,7 +261,8 @@
     <string name="settings_erase_body">This removes every bottle, rack and tasting from this device.</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_stored">Your cellar is stored only on this device.</string>
-    <string name="settings_privacy_body">Encave has no network access, no account and no analytics. Sync between your devices and with the people you share a cellar with will be end-to-end encrypted.</string>
+    <string name="settings_privacy_body">No account, no tracking, no advertising. Devices sync directly on your network, encrypted from end to end; no server ever sees your cellar.</string>
+    <string name="settings_privacy_stored_devices">Your cellar is stored only on your devices.</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Source code</string>
@@ -443,7 +444,7 @@
     <string name="help_field_appellation">The protected name of origin, such as Pauillac or Chablis.</string>
     <string name="help_field_region">The wine region, such as Bordeaux or Tuscany.</string>
     <string name="help_field_grapes">Grape varieties, separated by commas.</string>
-    <string name="help_origin_footer">Optional. Makes search and food pairing better. Separate grapes with commas.</string>
+    <string name="help_origin_footer">Optional. Makes search and food pairing better.</string>
     <string name="help_window_footer">The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.</string>
     <string name="help_notes_footer">About the wine itself. Notes on a bottle you opened go in its tasting.</string>
     <string name="help_field_rating">From one star (disappointing) to five (exceptional). Tap the same star again to clear it.</string>
@@ -727,6 +728,8 @@
     <string name="help_tonight_why">Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink sooner** and **Keep longer** move its end by a year.</string>
     <string name="insights_drink_down">Drink-down plan</string>
     <string name="insights_pace">About %1$s bottles a month</string>
+    <string name="insights_pace_one">About one bottle a month</string>
+    <string name="insights_pace_less">Less than one bottle a month</string>
     <string name="insights_pace_detail">to open every bottle before the end of its drinking window.</string>
     <string name="insights_past_peak">Past their peak: %1$d</string>
     <string name="insights_windows_ending">Windows ending each year</string>

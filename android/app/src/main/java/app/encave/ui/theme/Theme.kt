@@ -48,19 +48,23 @@ private fun brandScheme(dark: Boolean): ColorScheme {
     val ink = if (dark) Color.White else Color.Black
     val paper = if (dark) Color.Black else Color.White
     fun tint(amount: Float) = lerp(paper, accent, amount)
+    // Dark surfaces: a grey of the given lightness (colors mix in Oklab, so 0.16 is a deep
+    // grey, as Material's dark surfaces), warmed by a little accent. Pure black would hide
+    // cards and sheets against the background.
+    fun tone(lightness: Float, accentAmount: Float) = lerp(lerp(Color.Black, Color.White, lightness), accent, accentAmount)
     return if (dark) {
         darkColorScheme(
             primary = accent, onPrimary = lerp(accent, Color.Black, 0.8f),
             primaryContainer = lerp(accent, Color.Black, 0.6f), onPrimaryContainer = lerp(accent, Color.White, 0.8f),
             secondary = lerp(accent, Color.White, 0.35f), onSecondary = lerp(accent, Color.Black, 0.85f),
-            secondaryContainer = tint(0.28f), onSecondaryContainer = lerp(accent, Color.White, 0.85f),
+            secondaryContainer = tone(0.22f, 0.28f), onSecondaryContainer = lerp(accent, Color.White, 0.85f),
             tertiary = lerp(DesignTokens.wineColors.getValue("wine-dessert").resolve(true), Color.White, 0.2f),
-            background = tint(0.04f), onBackground = lerp(ink, accent, 0.06f),
-            surface = tint(0.04f), onSurface = lerp(ink, accent, 0.06f),
-            surfaceVariant = tint(0.16f), onSurfaceVariant = lerp(ink, accent, 0.25f).copy(alpha = 0.85f),
-            surfaceContainerLowest = tint(0.02f), surfaceContainerLow = tint(0.07f), surfaceContainer = tint(0.09f),
-            surfaceContainerHigh = tint(0.12f), surfaceContainerHighest = tint(0.15f),
-            outline = lerp(ink, accent, 0.3f).copy(alpha = 0.5f), outlineVariant = tint(0.22f),
+            background = tone(0.16f, 0.03f), onBackground = lerp(ink, accent, 0.06f),
+            surface = tone(0.16f, 0.03f), onSurface = lerp(ink, accent, 0.06f),
+            surfaceVariant = tone(0.30f, 0.10f), onSurfaceVariant = lerp(ink, accent, 0.25f).copy(alpha = 0.85f),
+            surfaceContainerLowest = tone(0.12f, 0.02f), surfaceContainerLow = tone(0.19f, 0.04f), surfaceContainer = tone(0.22f, 0.05f),
+            surfaceContainerHigh = tone(0.26f, 0.06f), surfaceContainerHighest = tone(0.30f, 0.07f),
+            outline = lerp(ink, accent, 0.3f).copy(alpha = 0.6f), outlineVariant = tone(0.36f, 0.10f),
         )
     } else {
         lightColorScheme(

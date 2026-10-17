@@ -56,6 +56,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.BuildConfig
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
@@ -108,11 +109,15 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         },
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             SectionHeader(stringResource(R.string.settings_privacy))
             ListItem(
                 leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                headlineContent = { Text(stringResource(R.string.settings_privacy_stored)) },
+                headlineContent = {
+                    val sync by (context.applicationContext as app.encave.EncaveApplication).sync.state.collectAsStateWithLifecycle()
+                    val shared = (sync.membership?.members?.size ?: 0) > 1
+                    Text(stringResource(if (shared) R.string.settings_privacy_stored_devices else R.string.settings_privacy_stored))
+                },
                 supportingContent = { Text(stringResource(R.string.settings_privacy_body)) },
             )
 
