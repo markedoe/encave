@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -39,6 +41,10 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,17 +55,33 @@ import app.encave.core.Rack
 import app.encave.core.RackCell
 import app.encave.core.RackKind
 import app.encave.core.Slot
+import app.encave.core.Wine
+import app.encave.core.WineColor
+import java.util.UUID
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.displayLabel
 import app.encave.ui.theme.LocalWinePalette
 
+/** From these cell sizes a bottle shows its vintage, then (grid and shelves) its name under it. */
+object RackLabels {
+    val vintageSize = 34.dp
+    val nameSize = 56.dp
+
+    /** Cells showing a name are this much taller than wide. */
+    const val NAME_HEIGHT_RATIO = 1.3f
+
+    fun showsVintage(rack: Rack, cell: Dp) = cell >= vintageSize && rack.kind != RackKind.Bins
+    fun showsName(rack: Rack, cell: Dp) = cell >= nameSize && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)
+}
+
 /**
  * Width and height of [RackGrid] for a cell size, following its layout (cells, gaps,
- * offset rows, nesting, headers, shelf bars, padding). [labelHeight] is the height of
- * the column-number row, which follows the font size.
+ * offset rows, nesting, headers, shelf bars, padding, names under bottles). [labelHeight]
+ * is the height of the column-number row, which follows the font size.
  */
 fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): Pair<Dp, Dp> {
     val size = if (rack.kind == RackKind.Bins) cell * 1.7f else cell
+    val cellHeight = if (RackLabels.showsName(rack, cell)) size * RackLabels.NAME_HEIGHT_RATIO else size
     val spacing = when (rack.kind) {
         RackKind.Grid -> cell * 0.08f
         RackKind.Staggered -> cell * 0.04f
@@ -86,21 +108,39 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
     }
     val shelf = if (rack.kind == RackKind.Shelves) maxOf(4.dp, cell * 0.09f) else 0.dp
     val headerRow = if (showHeaders && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)) labelHeight + gap else 0.dp
-    val height = headerRow + (size + shelf) * rack.rows - overlap * (rack.rows - 1) + gap * (rack.rows - 1) + pad * 2
+    val height = headerRow + (cellHeight + shelf) * rack.rows - overlap * (rack.rows - 1) + gap * (rack.rows - 1) + pad * 2
     return width to height
 }
 
-/** The largest cell size (16–80dp) at which the whole rack fits in [width] × [height]. */
+/**
+ * The largest cell size (16–80dp) at which the whole rack fits in [width] × [height].
+ * Grid and shelf cells get taller once they show names, so sizes from
+ * [RackLabels.nameSize] are only used when the rack still fits with the names.
+ */
 fun fittingCellSize(rack: Rack, width: Dp, height: Dp, showHeaders: Boolean = true, labelHeight: Dp = 20.dp): Dp {
-    var low = 16f
-    var high = 80f
-    repeat(24) {
-        val mid = (low + high) / 2
-        val (w, h) = rackGridSize(rack, mid.dp, showHeaders, labelHeight)
-        if (w <= width && h <= height) low = mid else high = mid
+    fun fits(cell: Float): Boolean {
+        val (w, h) = rackGridSize(rack, cell.dp, showHeaders, labelHeight)
+        return w <= width && h <= height
     }
-    return low.dp
+    fun search(from: Float, to: Float): Float {
+        var low = from
+        var high = to
+        repeat(24) {
+            val mid = (low + high) / 2
+            if (fits(mid)) low = mid else high = mid
+        }
+        return low
+    }
+    val nameSize = RackLabels.nameSize.value
+    val withNames = rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves
+    if (withNames && fits(nameSize)) return search(nameSize, 80f).dp
+    // Below the name size, cell heights do not jump, so the search is monotonic.
+    return search(16f, if (withNames) nameSize - 0.01f else 80f).dp
 }
+
+/** Light wine colors need dark text written on them; red and fortified need light text. */
+val WineColor?.prefersDarkLabel: Boolean
+    get() = this != WineColor.Red && this != WineColor.Fortified
 
 /** A rhombus, for diamond bins. */
 val DiamondShape: Shape = GenericShape { size, _ ->
@@ -124,7 +164,9 @@ private fun Modifier.overlapUp(overlap: Dp) = layout { measurable, constraints -
  * - honeycomb: touching round holes, every other row offset by half,
  * - shelves: a row of bottles on a shelf, with dots for the places behind,
  * - bins: diamond bins showing a small pile of bottles and a count.
- * Each cell is at least 48dp and is read by TalkBack ("B3, Name 2015" or "Bin B3, 7 of 10 bottles").
+ * From [RackLabels.vintageSize] bottles show their vintage, and from [RackLabels.nameSize]
+ * grid and shelf cells also show the wine's name. Each cell is read by TalkBack
+ * ("B3, Name 2015" or "Bin B3, 7 of 10 bottles").
  */
 @Composable
 fun RackGrid(
@@ -134,14 +176,20 @@ fun RackGrid(
     cellSize: Dp = 56.dp,
     selected: Set<Slot> = emptySet(),
     highlighted: Slot? = null,
+    /** The bottle shown in the card under the rack. */
+    selectedCell: RackCell? = null,
+    /** A wine chosen in the key: its bottles stand out, the others fade. */
+    focusWine: UUID? = null,
     showHeaders: Boolean = true,
     clickLabel: (List<Bottle>) -> String? = { null },
     onCellClick: ((RackCell, List<Bottle>) -> Unit)? = null,
     onCellLongClick: ((RackCell, List<Bottle>) -> Unit)? = null,
+    onCellDoubleClick: ((RackCell) -> Unit)? = null,
 ) {
     val byCell = cellar.bottlesByCell(rack)
     val selectedByCell = selected.filter { it.rackId == rack.id }.groupBy { it.cell }
     val size = if (rack.kind == RackKind.Bins) cellSize * 1.7f else cellSize
+    val cellHeight = if (RackLabels.showsName(rack, cellSize)) size * RackLabels.NAME_HEIGHT_RATIO else size
     val spacing = when (rack.kind) {
         RackKind.Grid -> cellSize * 0.08f
         RackKind.Staggered -> cellSize * 0.04f
@@ -201,12 +249,14 @@ fun RackGrid(
                             val cell = RackCell(rack.id, row, column)
                             val bottles = byCell[cell].orEmpty()
                             RackCellView(
-                                rack = rack, cell = cell, bottles = bottles, cellar = cellar, size = size,
+                                rack = rack, cell = cell, bottles = bottles, cellar = cellar, size = size, height = cellHeight,
                                 selectedCount = selectedByCell[cell]?.size ?: 0,
-                                isHighlighted = highlighted?.cell == cell,
+                                isHighlighted = highlighted?.cell == cell || selectedCell == cell,
+                                focusWine = focusWine,
                                 clickLabel = clickLabel(bottles),
                                 onClick = onCellClick?.let { { it(cell, bottles) } },
                                 onLongClick = onCellLongClick?.let { { it(cell, bottles) } },
+                                onDoubleClick = onCellDoubleClick?.let { { it(cell) } },
                             )
                         }
                     }
@@ -236,11 +286,14 @@ private fun RackCellView(
     bottles: List<Bottle>,
     cellar: Cellar,
     size: Dp,
+    height: Dp,
     selectedCount: Int,
     isHighlighted: Boolean,
+    focusWine: UUID?,
     clickLabel: String?,
     onClick: (() -> Unit)?,
     onLongClick: (() -> Unit)?,
+    onDoubleClick: (() -> Unit)?,
 ) {
     val resources = LocalResources.current
     val place = rack.displayLabel(cell, resources)
@@ -255,12 +308,20 @@ private fun RackCellView(
         isHighlighted -> stringResource(R.string.cell_highlighted, base)
         else -> base
     }
+    val isFocused = focusWine != null && bottles.any { it.wineId == focusWine }
+    val isDimmed = focusWine != null && !isFocused
     Box(
         Modifier
-            .size(size)
+            .size(size, height)
             .testTag("cell.${cell.row}.${cell.column}")
             .then(
-                if (onClick != null) Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick, onClickLabel = clickLabel) else Modifier,
+                if (onClick != null) {
+                    Modifier.combinedClickable(
+                        onClick = onClick, onLongClick = onLongClick, onDoubleClick = onDoubleClick, onClickLabel = clickLabel,
+                    )
+                } else {
+                    Modifier
+                },
             )
             .clearAndSetSemantics {
                 contentDescription = description
@@ -270,18 +331,19 @@ private fun RackCellView(
                     onClick(label = clickLabel) { onClick(); true }
                 }
                 if (onLongClick != null) onLongClick { onLongClick(); true }
-            },
+            }
+            .alpha(if (isDimmed) 0.25f else 1f),
         contentAlignment = Alignment.Center,
     ) {
         if (rack.kind == RackKind.Bins) {
-            Bin(rack, bottles, cellar, size, selectedCount, isHighlighted)
+            Bin(rack, bottles, cellar, size, selectedCount, isHighlighted || isFocused)
         } else {
-            Position(rack, cell, bottles, cellar, size, selectedCount, isHighlighted)
+            Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused)
         }
     }
 }
 
-/** One place (grid, honeycomb, shelf): the front bottle, or the one behind, faded. */
+/** One place (grid, honeycomb, shelf): the front bottle, or the one behind, faded; then the name when there is room. */
 @Composable
 private fun Position(
     rack: Rack,
@@ -289,40 +351,90 @@ private fun Position(
     bottles: List<Bottle>,
     cellar: Cellar,
     size: Dp,
+    height: Dp,
     selectedCount: Int,
     isHighlighted: Boolean,
+    isFocused: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val density = LocalDensity.current
     val front = bottles.firstOrNull { it.slot?.depth == 0 }
     val behind = bottles.firstOrNull { (it.slot?.depth ?: 0) > 0 }
-    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-        when (rack.kind) {
-            RackKind.Grid -> Box(
-                Modifier.size(size).background(scheme.surfaceContainerHighest, RoundedCornerShape(size * 0.16f))
-                    .border(1.dp, scheme.outlineVariant, RoundedCornerShape(size * 0.16f)),
-            )
-            RackKind.Staggered -> Box(Modifier.size(size).background(scheme.surfaceContainerHighest, CircleShape))
-            else -> Unit
-        }
-        when {
-            front != null -> BottleEnd(cellar.wines[front.wineId]?.color, size = size * 0.72f)
-            behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f)
-            else -> {
-                Box(Modifier.size(size * 0.72f).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
-                if (selectedCount == 0) {
-                    Text(
-                        rack.label(cell), color = scheme.onSurfaceVariant,
-                        fontSize = with(LocalDensity.current) { (size * 0.18f).toSp().value.coerceAtLeast(9f).sp },
-                    )
+    val shownWine = (front ?: bottles.firstOrNull())?.let { cellar.wines[it.wineId] }
+    val showsName = height > size
+    val shape = RoundedCornerShape(size * 0.16f)
+    Column(
+        Modifier
+            .size(size, height)
+            .then(
+                if (rack.kind == RackKind.Grid) {
+                    Modifier.background(scheme.surfaceContainerHighest, shape)
+                        .border(if (isFocused) 2.dp else 1.dp, if (isFocused) scheme.primary else scheme.outlineVariant, shape)
+                } else {
+                    Modifier
+                },
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(size * 0.03f),
+    ) {
+        Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+            if (rack.kind == RackKind.Staggered) Box(Modifier.size(size).background(scheme.surfaceContainerHighest, CircleShape))
+            val bottle = size * 0.72f
+            when {
+                front != null -> {
+                    val wine = cellar.wines[front.wineId]
+                    BottleEnd(wine?.color, size = bottle)
+                    if (RackLabels.showsVintage(rack, size)) VintageLabel(wine, bottle)
+                }
+                behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f)
+                else -> {
+                    Box(Modifier.size(bottle).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
+                    if (selectedCount == 0) {
+                        Text(
+                            rack.label(cell), color = scheme.onSurfaceVariant,
+                            fontSize = with(density) { (size * 0.18f).toSp().value.coerceAtLeast(9f).sp },
+                        )
+                    }
                 }
             }
+            if (isHighlighted || isFocused) {
+                Box(Modifier.size(size * 0.86f).border(if (isHighlighted) 3.dp else 2.dp, scheme.primary, CircleShape))
+            }
+            if (selectedCount > 0) SelectionBadge(rack, selectedCount, size)
+            if (rack.positionsPerCell > 1) {
+                val y = if (rack.kind == RackKind.Shelves && !showsName) size * 0.12f else -size * 0.02f
+                DepthDots(rack, bottles, cellar, size, Modifier.align(Alignment.BottomCenter).offset(y = y))
+            }
         }
-        if (isHighlighted) Box(Modifier.size(size * 0.86f).border(3.dp, scheme.primary, CircleShape))
-        if (selectedCount > 0) SelectionBadge(rack, selectedCount, size)
-        if (rack.positionsPerCell > 1) {
-            DepthDots(rack, bottles, cellar, size, Modifier.align(Alignment.BottomCenter).offset(y = if (rack.kind == RackKind.Shelves) size * 0.12f else -size * 0.02f))
+        if (showsName) {
+            val font = with(density) { maxOf(9.dp, size * 0.15f).toSp() }
+            Text(
+                shownWine?.name.orEmpty(),
+                modifier = Modifier.width(size * 0.96f),
+                color = if (isFocused) scheme.primary else scheme.onSurface,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = font, fontWeight = FontWeight.Medium, lineHeight = font * 1.15f),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = font * 0.7f, maxFontSize = font, stepSize = 0.5.sp),
+            )
         }
     }
+}
+
+/** The vintage on the bottle end ("2017", or "NV"), in a color readable on that wine's tint. */
+@Composable
+private fun VintageLabel(wine: Wine?, diameter: Dp) {
+    val font = with(LocalDensity.current) { maxOf(8.dp, diameter * 0.27f).toSp() }
+    Text(
+        wine?.vintage?.toString() ?: stringResource(R.string.rack_non_vintage),
+        modifier = Modifier.width(diameter * 0.82f),
+        color = if (wine?.color.prefersDarkLabel) Color.Black.copy(alpha = 0.78f) else Color.White,
+        style = TextStyle(fontSize = font, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum", lineHeight = font),
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        autoSize = TextAutoSize.StepBased(minFontSize = font * 0.5f, maxFontSize = font, stepSize = 0.5.sp),
+    )
 }
 
 /** One dot per place in the cell, front first: filled when a bottle is there. */

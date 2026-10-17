@@ -31,9 +31,6 @@
     <string name="action_reorder">Réorganiser les casiers</string>
     <string name="action_move_up">Monter %1$s</string>
     <string name="action_move_down">Descendre %1$s</string>
-    <string name="action_zoom_in">Zoom avant</string>
-    <string name="action_zoom_out">Zoom arrière</string>
-    <string name="action_zoom_reset">Réinitialiser le zoom</string>
     <string name="action_insights">Statistiques</string>
     <string name="action_surprise">Surprenez-moi</string>
     <string name="action_remove_from_rack">Sortir du casier</string>
@@ -408,6 +405,12 @@
     <string name="cell_bin">%1$s, %2$d sur %3$d bouteilles</string>
     <string name="rack_cell_full">Cet emplacement est plein.</string>
     <string name="rack_add_here">Ajouter une bouteille ici</string>
+    <string name="rack_non_vintage">NM</string>
+    <string name="rack_key_count">%1$d sur %2$d bouteilles</string>
+    <string name="action_bottle_list">Liste des bouteilles</string>
+    <string name="action_wine_page">Fiche du vin</string>
+    <string name="rack_list_empty_title">Vide</string>
+    <string name="rack_list_empty">Touchez un emplacement du casier pour y ajouter une bouteille.</string>
     <string name="sample_bins">Casiers en losange</string>
     <string name="sample_deep_rack">Casier double profondeur</string>
     <string name="sample_honeycomb">Casier nid d’abeille</string>
@@ -507,6 +510,10 @@
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez un casier pour voir son contenu.</string>
     <string name="help_racks_places_title">Emplacements</string>
     <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les cases numérotées depuis la gauche : **B3** est la deuxième rangée, troisième case. Quand une case contient plusieurs bouteilles, **B3-2** est la deuxième (derrière, ou dans la pile).</string>
+    <string name="help_racks_finding_title">Trouver une bouteille</string>
+    <string name="help_racks_finding">Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher.</string>
+    <string name="help_racks_zooming_title">Zoomer</string>
+    <string name="help_racks_zooming">Pincez pour zoomer, ou touchez deux fois un endroit ; touchez de nouveau deux fois pour revoir tout le casier. Faites glisser pour vous déplacer une fois zoomé. **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.</string>
     <string name="help_racks_moving_title">Déplacer des bouteilles</string>
     <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement (ou appuyez longuement sur une bouteille). Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place.</string>
     <string name="help_racks_irregular_title">Casiers irréguliers</string>
@@ -577,6 +584,11 @@
         <item quantity="one">%d bouteille ajoutée</item>
         <item quantity="many">%d bouteilles ajoutées</item>
         <item quantity="other">%d bouteilles ajoutées</item>
+    </plurals>
+    <plurals name="rack_key_wine">
+        <item quantity="one">%1$s, %2$d bouteille</item>
+        <item quantity="many">%1$s, %2$d bouteilles</item>
+        <item quantity="other">%1$s, %2$d bouteilles</item>
     </plurals>
     <plurals name="bottles_added_action">
         <item quantity="one">Ajouter %d bouteille</item>

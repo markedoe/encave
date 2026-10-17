@@ -32,9 +32,6 @@
     <string name="action_reorder">Reorder racks</string>
     <string name="action_move_up">Move %1$s up</string>
     <string name="action_move_down">Move %1$s down</string>
-    <string name="action_zoom_in">Zoom in</string>
-    <string name="action_zoom_out">Zoom out</string>
-    <string name="action_zoom_reset">Reset zoom</string>
     <string name="action_insights">Insights</string>
     <string name="action_surprise">Surprise me</string>
     <string name="action_remove_from_rack">Take out of the rack</string>
@@ -409,6 +406,12 @@
     <string name="cell_bin">%1$s, %2$d of %3$d bottles</string>
     <string name="rack_cell_full">This place is full.</string>
     <string name="rack_add_here">Add a bottle here</string>
+    <string name="rack_non_vintage">NV</string>
+    <string name="rack_key_count">%1$d of %2$d bottles</string>
+    <string name="action_bottle_list">Bottle list</string>
+    <string name="action_wine_page">Wine page</string>
+    <string name="rack_list_empty_title">Empty</string>
+    <string name="rack_list_empty">Tap a place in the rack to add a bottle there.</string>
     <string name="sample_bins">Diamond bins</string>
     <string name="sample_deep_rack">Double-depth rack</string>
     <string name="sample_honeycomb">Honeycomb rack</string>
@@ -508,6 +511,10 @@
     <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
     <string name="help_racks_places_title">Places</string>
     <string name="help_racks_places">Rows are lettered from the top and cells numbered from the left: **B3** is the second row, third cell. When a cell holds several bottles, **B3-2** is the second one (behind, or in the pile).</string>
+    <string name="help_racks_finding_title">Finding a bottle</string>
+    <string name="help_racks_finding">Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.</string>
+    <string name="help_racks_zooming_title">Zooming</string>
+    <string name="help_racks_zooming">Pinch to zoom in and out, or double-tap a spot; double-tap again to see the whole rack. Drag to look around once zoomed in. **Bottle list** lists the bottles of the rack place by place.</string>
     <string name="help_racks_moving_title">Moving bottles</string>
     <string name="help_racks_moving">Tap a bottle, then **Move**, then the new place (or press and hold a bottle). Tapping another bottle swaps them; a bin takes the bottle if it has room.</string>
     <string name="help_racks_irregular_title">Irregular racks</string>
@@ -576,6 +583,10 @@
     <plurals name="bottles_added">
         <item quantity="one">%d bottle added</item>
         <item quantity="other">%d bottles added</item>
+    </plurals>
+    <plurals name="rack_key_wine">
+        <item quantity="one">%1$s, %2$d bottle</item>
+        <item quantity="other">%1$s, %2$d bottles</item>
     </plurals>
     <plurals name="bottles_added_action">
         <item quantity="one">Add %d bottle</item>
