@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Share': 'Partager',
+    'Your year in wine %@': 'Votre année en vin %@',
+    'Shares this summary as an image. You choose where.': 'Partage ce résumé en image. Vous choisissez où.',
     'Adding…': 'Ajout…',
     'More photos': 'Autres photos',
     'Shows the photo large.': 'Affiche la photo en grand.',
