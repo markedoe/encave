@@ -15,8 +15,10 @@ import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.SdStorage
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.WineBar
+import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
 
@@ -76,6 +78,8 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_shelves, R.string.kind_shelves, Icons.Outlined.Kitchen),
                     HelpSection(R.string.help_racks_bins, R.string.kind_bins, Icons.Outlined.Diamond),
                     HelpSection(R.string.help_racks_places, R.string.help_racks_places_title),
+                    HelpSection(R.string.help_racks_finding, R.string.help_racks_finding_title, Icons.Outlined.Search),
+                    HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),
                     HelpSection(R.string.help_racks_moving, R.string.help_racks_moving_title),
                     HelpSection(R.string.help_racks_irregular, R.string.help_racks_irregular_title),
                 ),
