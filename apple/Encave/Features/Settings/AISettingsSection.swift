@@ -26,7 +26,12 @@ struct AISettingsSection: View {
                 }
                 Section {
                     Text(verbatim: AIProvider.openRouter.name).tag(AIProvider.openRouter)
-                    Text("Local server (Ollama, LM Studio…)").tag(AIProvider.local)
+                }
+                Section {
+                    Text(verbatim: AIProvider.ollama.name).tag(AIProvider.ollama)
+                    Text(verbatim: AIProvider.vllm.name).tag(AIProvider.vllm)
+                    Text(verbatim: AIProvider.lmStudio.name).tag(AIProvider.lmStudio)
+                    Text("Other server (OpenAI-compatible)").tag(AIProvider.local)
                 }
             }
             .fieldHelp("The AI service that reads label photos. You need an account and an API key with it.")
@@ -48,7 +53,11 @@ struct AISettingsSection: View {
                 .fieldHelp("Created on the provider's website. Stored in the Keychain on this device.")
                 HStack {
                     Button(action: checkKey) {
-                        Label("Check Key and Load Models", systemImage: "checkmark.shield")
+                        if settings.provider.isLocal {
+                            Label("Connect and Load Models", systemImage: "network")
+                        } else {
+                            Label("Check Key and Load Models", systemImage: "checkmark.shield")
+                        }
                     }
                     .disabled(check == .checking || (settings.provider.requiresKey && apiKey.isEmpty))
                     Spacer()
@@ -56,9 +65,14 @@ struct AISettingsSection: View {
                 }
                 if let page = settings.provider.keyPage {
                     Link(destination: page) {
-                        if settings.provider == .local {
-                            Label("Install a local server (Ollama)", systemImage: "arrow.up.right.square")
-                        } else {
+                        switch settings.provider {
+                        case .ollama:
+                            Label("Install Ollama", systemImage: "arrow.up.right.square")
+                        case .vllm:
+                            Label("vLLM quick start", systemImage: "arrow.up.right.square")
+                        case .lmStudio:
+                            Label("Download LM Studio", systemImage: "arrow.up.right.square")
+                        default:
                             let providerName = settings.provider.name
                             Label("Create an API key at \(providerName)", systemImage: "arrow.up.right.square")
                         }
@@ -144,13 +158,29 @@ struct AISettingsSection: View {
             }
             if !settings.isEnabled {
                 Text("Optional. Reads labels from a photo with the AI service you choose, using your own API key.")
-            } else if settings.provider == .local {
-                Text("On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.")
+            } else if settings.provider.isLocal {
+                localServerTips
             } else {
                 Text("Leave the server URL empty to use the provider’s usual address.")
                 Text("Only the label photo is sent, directly to this service, when you scan a label or tap “Complete with AI”. Your cellar is never sent. The key is stored in the Keychain on this device.")
             }
         }
+    }
+
+    /// How to make the chosen server reachable, and which models work.
+    @ViewBuilder
+    private var localServerTips: some View {
+        switch settings.provider {
+        case .ollama:
+            Text("Install a model that reads images, for example: ollama pull gemma3. To use it from iPhone or iPad, start Ollama with OLLAMA_HOST=0.0.0.0 on the computer.")
+        case .vllm:
+            Text("Start a vision model with: vllm serve <model> --host 0.0.0.0. If you set --api-key, enter the same key here.")
+        case .lmStudio:
+            Text("In LM Studio, load a vision model and start the server; turn on “Serve on Local Network” to use it from iPhone or iPad.")
+        default:
+            Text("Any server with an OpenAI-compatible /chat/completions API and a model that reads images.")
+        }
+        Text("Only the label photo is sent, to your own server. On iPhone and iPad, use the computer’s IP address or its name ending in .local instead of localhost.")
     }
 
     private func checkKey() {

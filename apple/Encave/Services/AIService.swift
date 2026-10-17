@@ -8,7 +8,9 @@ enum AIProvider: String, CaseIterable, Sendable {
     case openAI, anthropic, google, xai, mistral
     case deepseek, qwen, kimi, zhipu, minimax
     case openRouter
-    /// Ollama, LM Studio, OpenWebUI or any OpenAI-compatible server.
+    /// Servers on your own computer or network.
+    case ollama, vllm, lmStudio
+    /// Any other OpenAI-compatible server (OpenWebUI, llama.cpp…).
     case local
 
     /// Brand names are not translated.
@@ -26,9 +28,18 @@ enum AIProvider: String, CaseIterable, Sendable {
         case .zhipu: "GLM (Z.ai)"
         case .minimax: "MiniMax"
         case .openRouter: "OpenRouter"
+        case .ollama: "Ollama"
+        case .vllm: "vLLM"
+        case .lmStudio: "LM Studio"
         case .local: ""
         }
     }
+
+    /// Runs on the user's computer or network: no key needed, slower answers allowed.
+    var isLocal: Bool { [.ollama, .vllm, .lmStudio, .local].contains(self) }
+
+    /// Ollama has its own API (structured outputs, list of models that read images).
+    var usesOllamaAPI: Bool { self == .ollama }
 
     var usesAnthropicAPI: Bool { self == .anthropic }
 
@@ -46,12 +57,15 @@ enum AIProvider: String, CaseIterable, Sendable {
         case .zhipu: "https://api.z.ai/api/paas/v4"
         case .minimax: "https://api.minimax.io/v1"
         case .openRouter: "https://openrouter.ai/api/v1"
-        case .local: "http://localhost:11434/v1"
+        case .ollama: "http://localhost:11434"
+        case .vllm: "http://localhost:8000/v1"
+        case .lmStudio: "http://localhost:1234/v1"
+        case .local: "http://localhost:8080/v1"
         }
     }
 
     /// A key is optional only for a server of your own.
-    var requiresKey: Bool { self != .local && self != .off }
+    var requiresKey: Bool { !isLocal && self != .off }
 
     /// Model used until the list is loaded, when one is known to read images.
     var suggestedModel: String {
@@ -77,7 +91,10 @@ enum AIProvider: String, CaseIterable, Sendable {
         case .zhipu: URL(string: "https://z.ai/manage-apikey/apikey-list")
         case .minimax: URL(string: "https://platform.minimax.io/user-center/basic-information/interface-key")
         case .openRouter: URL(string: "https://openrouter.ai/keys")
-        case .local: URL(string: "https://ollama.com/download")
+        case .ollama: URL(string: "https://ollama.com/download")
+        case .vllm: URL(string: "https://docs.vllm.ai/en/latest/getting_started/quickstart.html")
+        case .lmStudio: URL(string: "https://lmstudio.ai/download")
+        case .local: nil
         }
     }
 
@@ -115,12 +132,22 @@ struct AISettings: Equatable, Sendable {
         case "claude": settings.provider = .anthropic
         case "openAICompatible":
             settings.provider = legacyURL.isEmpty || legacyURL.contains("api.openai.com") ? .openAI : .local
+        // The first "local" option pointed at Ollama by default.
+        case "local" where (defaults.string(forKey: "ai.baseURL.local") ?? legacyURL).isEmpty
+            || (defaults.string(forKey: "ai.baseURL.local") ?? legacyURL).contains(":11434"):
+            settings.provider = .ollama
         default: settings.provider = AIProvider(rawValue: raw) ?? .off
         }
         settings.model = defaults.string(forKey: "ai.model.\(settings.provider.rawValue)")
             ?? defaults.string(forKey: "ai.model") ?? ""
         settings.baseURL = defaults.string(forKey: "ai.baseURL.\(settings.provider.rawValue)")
             ?? (settings.provider == .local ? legacyURL : "")
+        if raw == "local", settings.provider == .ollama, settings.baseURL.isEmpty {
+            // Keep the address of a server set up with the first builds, without the "/v1".
+            var old = defaults.string(forKey: "ai.baseURL.local") ?? legacyURL
+            if old.hasSuffix("/v1") { old = String(old.dropLast(3)) }
+            settings.baseURL = old == AIProvider.ollama.defaultBaseURL ? "" : old
+        }
         return settings
     }
 
@@ -273,13 +300,22 @@ enum AIService {
         if settings.provider.usesAnthropicAPI {
             return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey ?? "")
         }
+        if settings.provider.usesOllamaAPI {
+            return try await ollama(jpeg: jpeg, settings: settings)
+        }
         return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey)
+    }
+
+    /// Local models can take a while, especially the first time they load.
+    private static func timeout(for settings: AISettings) -> TimeInterval {
+        settings.provider.isLocal ? 300 : 120
     }
 
     /// Checks the key by listing the models it can use. Returns their identifiers, sorted.
     static func models(settings: AISettings, apiKey: String?) async throws -> [String] {
         guard settings.isEnabled else { throw AIServiceError.notConfigured }
         if settings.provider.requiresKey, (apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
+        if settings.provider.usesOllamaAPI { return try await ollamaModels(settings: settings) }
         guard let url = URL(string: settings.effectiveBaseURL + "/models" + (settings.provider.usesAnthropicAPI ? "?limit=100" : "")) else {
             throw AIServiceError.notConfigured
         }
@@ -370,7 +406,7 @@ enum AIService {
         }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 120
+        request.timeoutInterval = timeout(for: settings)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let apiKey, !apiKey.isEmpty {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -397,6 +433,75 @@ enum AIService {
         return try decode(text)
     }
 
+    // MARK: Ollama (native API)
+
+    /// "http://host:11434", whether the user typed it with "/v1" or "/api" or not.
+    private static func ollamaBase(_ settings: AISettings) -> String {
+        var base = settings.effectiveBaseURL
+        for suffix in ["/v1", "/api"] where base.hasSuffix(suffix) { base = String(base.dropLast(suffix.count)) }
+        return base
+    }
+
+    /// Structured output with the label's JSON schema, and the photo in "images".
+    private static func ollama(jpeg: Data, settings: AISettings) async throws -> LabelAnalysis {
+        guard let url = URL(string: ollamaBase(settings) + "/api/chat") else { throw AIServiceError.notConfigured }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = timeout(for: settings)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: JSONObject = [
+            "model": settings.effectiveModel,
+            "stream": false,
+            "format": LabelAnalysis.schema,
+            // A photo needs more room than Ollama's default context.
+            "options": ["temperature": 0, "num_ctx": 8192] as JSONObject,
+            "messages": [[
+                "role": "user",
+                "content": LabelAnalysis.prompt,
+                "images": [jpeg.base64EncodedString()],
+            ] as JSONObject],
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let json = try await send(request)
+        guard let text = (json["message"] as? [String: Any])?["content"] as? String else {
+            throw AIServiceError.invalidResponse
+        }
+        return try decode(text)
+    }
+
+    /// Installed models, the ones that read images first (Ollama reports "vision" for them).
+    private static func ollamaModels(settings: AISettings) async throws -> [String] {
+        let base = ollamaBase(settings)
+        guard let url = URL(string: base + "/api/tags") else { throw AIServiceError.notConfigured }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 30
+        let json = try await send(request)
+        let names = ((json["models"] as? [[String: Any]]) ?? []).compactMap { ($0["name"] as? String) ?? ($0["model"] as? String) }
+        let capabilities = await withTaskGroup(of: (String, [String]?).self) { group in
+            for name in names {
+                group.addTask { (name, try? await ollamaCapabilities(of: name, base: base)) }
+            }
+            var result: [String: [String]] = [:]
+            for await (name, list) in group { if let list { result[name] = list } }
+            return result
+        }
+        let sorted = names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+        let vision = sorted.filter { capabilities[$0]?.contains("vision") == true }
+        // Older Ollama versions do not report capabilities: then every model is offered.
+        return vision.isEmpty ? sorted : vision
+    }
+
+    private static func ollamaCapabilities(of model: String, base: String) async throws -> [String] {
+        guard let url = URL(string: base + "/api/show") else { return [] }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": model])
+        let json = try await send(request)
+        return json["capabilities"] as? [String] ?? []
+    }
+
     // MARK: Helpers
 
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
@@ -404,8 +509,10 @@ enum AIService {
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {
-            let error = json?["error"] as? [String: Any]
-            throw AIServiceError.server(status: status, message: error?["message"] as? String ?? "")
+            // {"error": {"message": …}} (OpenAI, Anthropic) or {"error": "…"} (Ollama), or {"detail": …} (vLLM).
+            let message = ((json?["error"] as? [String: Any])?["message"] as? String)
+                ?? (json?["error"] as? String) ?? (json?["detail"] as? String) ?? (json?["message"] as? String) ?? ""
+            throw AIServiceError.server(status: status, message: message)
         }
         guard let json else { throw AIServiceError.invalidResponse }
         return json
@@ -414,6 +521,8 @@ enum AIService {
     /// Parses the JSONObject answer, tolerating a Markdown code fence from servers without strict schemas.
     static func decode(_ text: String) throws -> LabelAnalysis {
         var text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Reasoning models served locally may think aloud before answering.
+        if let close = text.range(of: "</think>") { text = String(text[close.upperBound...]) }
         if let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") {
             text = String(text[start...end])
         }
