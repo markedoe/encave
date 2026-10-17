@@ -14,8 +14,9 @@ class AiSettingsTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun baseUrlIsOnlyOverriddenForALocalServer() {
-        assertEquals("https://api.mistral.ai/v1", AiSettings(AiProvider.Mistral, baseUrl = "http://elsewhere/v1").effectiveBaseUrl)
+    fun emptyBaseUrlMeansTheDefault() {
+        assertEquals("https://api.mistral.ai/v1", AiSettings(AiProvider.Mistral).effectiveBaseUrl)
+        assertEquals("https://example.test/v1", AiSettings(AiProvider.Mistral, baseUrl = "https://example.test/v1").effectiveBaseUrl)
         assertEquals("http://example.test:11434/v1", AiSettings(AiProvider.Local, baseUrl = "http://example.test:11434/v1/").effectiveBaseUrl)
         assertEquals(AiProvider.Local.defaultBaseUrl, AiSettings(AiProvider.Local).effectiveBaseUrl)
         assertEquals("claude-opus-5-5", AiSettings(AiProvider.Anthropic).effectiveModel)
@@ -31,13 +32,16 @@ class AiSettingsTest {
     }
 
     @Test
-    fun eachProviderKeepsItsOwnModel() {
+    fun eachProviderKeepsItsOwnModelAndAddress() {
         val prefs = AiPreferences(context)
-        prefs.update(AiSettings(AiProvider.OpenAi, model = "gpt-x"))
+        prefs.update(AiSettings(AiProvider.OpenAi, model = "gpt-x", baseUrl = "https://example.test/v1"))
         prefs.select(AiProvider.Mistral)
         assertEquals("", prefs.settings.value.model)
+        assertEquals("", prefs.settings.value.baseUrl)
         prefs.select(AiProvider.OpenAi)
         assertEquals("gpt-x", prefs.settings.value.model)
+        assertEquals("https://example.test/v1", prefs.settings.value.baseUrl)
+        assertEquals(AiProvider.entries.filter { it != AiProvider.Off }, AiProvider.entries.filter { it.keyPage != null })
     }
 
     @Test

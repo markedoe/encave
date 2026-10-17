@@ -45,6 +45,7 @@ data class AddBottleRoute(
 @Serializable data object PairingRoute
 @Serializable data object InsightsRoute
 @Serializable data object SettingsRoute
+@Serializable data class HelpRoute(val topic: String? = null)
 
 /** The four sections, in navigation order. */
 enum class TopLevel(

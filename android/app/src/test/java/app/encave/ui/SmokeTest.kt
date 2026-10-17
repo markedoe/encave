@@ -121,4 +121,28 @@ class SmokeTest {
         compose.onAllNodesWithText("Honeycomb rack").onFirst().performClick()
         compose.onNode(hasText("Holds", substring = true)).assertExists()
     }
+
+    @Test
+    fun helpTopicsAndFormLinks() {
+        compose.onNodeWithContentDescription("Settings").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Encave Help"))
+        compose.onNodeWithText("Encave Help").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Setting up AI").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Install a local server", substring = true).or(hasText("Local server: install Ollama")))
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onAllNodesWithText("Describe your storage so every bottle has a place.").onFirst().assertExists()
+    }
+
+    @Test
+    fun addFormHelpOpensInASheet() {
+        compose.onNodeWithText("Add bottle", useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("Help with adding bottles"))
+        compose.onNodeWithText("Help with adding bottles").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Already in your cellar?").onFirst().assertExists()
+    }
 }

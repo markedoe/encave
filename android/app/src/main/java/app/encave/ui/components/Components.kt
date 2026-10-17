@@ -192,6 +192,12 @@ fun ConfirmDialog(
     )
 }
 
+/** A short explanation under a control or at the end of a group of fields. */
+@Composable
+fun Hint(text: String, modifier: Modifier = Modifier) {
+    Text(text, modifier, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
 /** − value + with 48dp buttons. */
 @Composable
 fun Stepper(

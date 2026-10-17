@@ -93,7 +93,7 @@ object AiService {
         if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
         if (settings.effectiveModel.isEmpty()) throw AiError.NoModel
         return if (settings.provider.usesAnthropicApi) {
-            claude(jpeg, settings.effectiveModel, apiKey.orEmpty())
+            claude(jpeg, settings.effectiveModel, apiKey.orEmpty(), settings.effectiveBaseUrl)
         } else {
             openAiCompatible(jpeg, settings, apiKey)
         }
@@ -134,7 +134,7 @@ object AiService {
     private fun base64(jpeg: ByteArray) = Base64.encodeToString(jpeg, Base64.NO_WRAP)
 
     /** Claude (Anthropic Messages API). */
-    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String): LabelAnalysis {
+    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String): LabelAnalysis {
         val body = buildJsonObject {
             put("model", model)
             put("max_tokens", 8000)
@@ -173,7 +173,7 @@ object AiService {
             "anthropic-beta" to "server-side-fallback-2026-07-01",
             "content-type" to "application/json",
         )
-        val response = send(URL("https://api.anthropic.com/v1/messages"), headers, body)
+        val response = send(URL("$baseUrl/messages"), headers, body)
         if (response["stop_reason"]?.jsonPrimitive?.contentOrNull == "refusal") throw AiError.Refused
         val text = (response["content"] as? JsonArray).orEmpty()
             .map { it.jsonObject }

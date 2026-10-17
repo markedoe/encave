@@ -42,6 +42,8 @@ import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.CellarRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
 import app.encave.ui.navigation.EditWineRoute
+import app.encave.ui.navigation.HelpRoute
+import app.encave.ui.help.HelpScreen
 import app.encave.ui.discoveries.DiscoveryEditorScreen
 import app.encave.ui.navigation.InsightsRoute
 import app.encave.ui.navigation.JournalRoute
@@ -145,6 +147,7 @@ fun EncaveApp(viewModel: AppViewModel) {
                 composable<PairingRoute> { PairingScreen(viewModel, navigator) }
                 composable<InsightsRoute> { InsightsScreen(viewModel, navigator) }
                 composable<SettingsRoute> { SettingsScreen(viewModel, navigator) }
+                composable<HelpRoute> { HelpScreen(navigator, it.toRoute<HelpRoute>().topic) }
                 composable<DiscoveryEditorRoute> {
                     DiscoveryEditorScreen(viewModel, navigator, it.toRoute<DiscoveryEditorRoute>().discoveryId)
                 }

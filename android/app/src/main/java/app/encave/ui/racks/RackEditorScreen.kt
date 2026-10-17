@@ -71,6 +71,9 @@ import app.encave.core.RackKind
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
+import app.encave.ui.components.Hint
+import app.encave.ui.help.HelpLink
+import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.Stepper
 import app.encave.ui.components.bodyRes
@@ -189,10 +192,8 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                 onValueChange = { name = it },
                 label = { Text(stringResource(R.string.field_name)) },
                 isError = showErrors && name.isBlank(),
-                supportingText = if (showErrors && name.isBlank()) {
-                    { Text(stringResource(R.string.rack_name_required)) }
-                } else {
-                    null
+                supportingText = {
+                    Text(stringResource(if (showErrors && name.isBlank()) R.string.rack_name_required else R.string.help_field_rack_name))
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -210,9 +211,15 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                 }
             }
 
+            Hint(stringResource(R.string.help_kind_footer))
+
             Header(R.string.rack_size_title)
             SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
-            if (!customRows) SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
+            Hint(stringResource(R.string.help_field_rows))
+            if (!customRows) {
+                SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
+                Hint(stringResource(R.string.help_field_columns))
+            }
             when (kind) {
                 RackKind.Grid -> {
                     Text(stringResource(R.string.rack_bottles_per_cell), style = MaterialTheme.typography.bodyLarge)
@@ -224,6 +231,7 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                             ) { Text(stringResource(label)) }
                         }
                     }
+                    Hint(stringResource(R.string.help_field_grid_depth))
                 }
                 RackKind.Shelves -> {
                     Text(stringResource(R.string.rack_rows_deep), style = MaterialTheme.typography.bodyLarge)
@@ -235,8 +243,12 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                             ) { Text("$value") }
                         }
                     }
+                    Hint(stringResource(R.string.help_field_shelf_depth))
                 }
-                RackKind.Bins -> SizeRow(stringResource(R.string.rack_bottles_per_bin), binCapacity, { binCapacity = it }, 2..40)
+                RackKind.Bins -> {
+                    SizeRow(stringResource(R.string.rack_bottles_per_bin), binCapacity, { binCapacity = it }, 2..40)
+                    Hint(stringResource(R.string.help_field_bin))
+                }
                 RackKind.Staggered -> Unit
             }
 
@@ -288,7 +300,7 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                     RackGrid(rack, previewCellar(cellar, rack), cellSize = 26.dp, showHeaders = false)
                 }
             }
-            Text(stringResource(R.string.rack_holds, rack.capacity), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.help_rack_holds, rack.capacity), style = MaterialTheme.typography.bodyMedium)
 
             if (existing != null) {
                 OutlinedButton(
@@ -300,6 +312,7 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                     Text(stringResource(R.string.rack_delete), Modifier.padding(start = Dimens.s))
                 }
             }
+            HelpLink(HelpTopic.Racks, R.string.help_link_racks)
         }
     }
     if (confirmDelete && existing != null) {

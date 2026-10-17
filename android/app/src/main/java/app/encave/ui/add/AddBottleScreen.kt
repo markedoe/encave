@@ -70,6 +70,9 @@ import app.encave.core.Wine
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.Formats
+import app.encave.ui.components.Hint
+import app.encave.ui.help.HelpLink
+import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.Stepper
 import app.encave.ui.components.WineColorDot
@@ -204,6 +207,7 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                         value = search,
                         onValueChange = { search = it },
                         label = { Text(stringResource(R.string.add_search_hint)) },
+                        supportingText = { Text(stringResource(R.string.help_field_search)) },
                         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -220,7 +224,10 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                             },
                         )
                     }
-                    if (suggestions.isNotEmpty()) HorizontalDivider()
+                    if (suggestions.isNotEmpty()) {
+                        Hint(stringResource(R.string.help_field_existing))
+                        HorizontalDivider()
+                    }
                 }
                 Header(R.string.photo_section)
                 PhotoSection(viewModel, form)
@@ -238,10 +245,8 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                     valueText = quantity.toString(),
                 )
             }
-            Text(
-                pluralStringResource(R.plurals.bottle_count, quantity, quantity),
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Hint("${pluralStringResource(R.plurals.bottle_count, quantity, quantity)} · ${stringResource(R.string.help_field_quantity)}")
+            Hint(stringResource(R.string.help_bottles_footer))
 
             LocationSection(
                 cellar = cellar,
@@ -282,6 +287,7 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                             value = price,
                             onValueChange = { text -> price = text.filter { it.isDigit() || it == '.' || it == ',' } },
                             label = { Text(stringResource(R.string.field_price)) },
+                            supportingText = { Text(stringResource(R.string.help_field_price)) },
                             singleLine = true,
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -295,14 +301,17 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                     )
                     OutlinedTextField(
                         value = place, onValueChange = { place = it }, label = { Text(stringResource(R.string.field_purchase_place)) },
+                        supportingText = { Text(stringResource(R.string.help_field_place)) },
                         singleLine = true, modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     )
                     OutlinedTextField(
                         value = receivedFrom, onValueChange = { receivedFrom = it }, label = { Text(stringResource(R.string.field_received_from)) },
+                        supportingText = { Text(stringResource(R.string.help_field_received)) },
                         singleLine = true, modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     )
+                    Hint(stringResource(R.string.help_purchase_footer))
                     if (existing == null) {
                         Header(R.string.detail_window)
                         DrinkingWindowField(form)
@@ -323,6 +332,7 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
             Button(onClick = ::save, modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l)) {
                 Text(pluralStringResource(R.plurals.bottles_added_action, quantity, quantity))
             }
+            HelpLink(HelpTopic.Adding, R.string.help_link_adding)
         }
     }
     if (pickingDate) {
@@ -365,6 +375,7 @@ private fun LocationSection(
     onStorage: (String) -> Unit,
 ) {
     Text(stringResource(R.string.field_location), style = MaterialTheme.typography.titleSmall)
+    Hint(stringResource(R.string.help_location_footer))
     if (cellar.racks.isEmpty()) {
         Text(stringResource(R.string.add_no_racks), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     } else {
@@ -408,6 +419,7 @@ private fun LocationSection(
         OutlinedTextField(
             value = storage, onValueChange = onStorage,
             label = { Text(stringResource(R.string.field_storage)) },
+            supportingText = { Text(stringResource(R.string.help_field_storage)) },
             placeholder = { Text(stringResource(R.string.field_storage_hint)) },
             singleLine = true, modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -423,6 +435,7 @@ private fun SizeField(sizeML: Int, onChange: (Int) -> Unit) {
             FilterChip(selected = sizeML == ml, onClick = { onChange(ml) }, label = { Text(stringResource(label)) })
         }
     }
+    Hint(stringResource(R.string.help_field_size))
 }
 
 @Composable
