@@ -25,7 +25,7 @@ jobs:
       - run: swift test --package-path apple/Packages/CaveKit
 
   apps:
-    name: Build${{ github.event_name == 'push' && ' and upload to TestFlight' || '' }}
+    name: Build${{ github.event_name != 'pull_request' && ' and upload to TestFlight' || '' }}
     needs: cavekit
     runs-on: macos-latest
     timeout-minutes: 60
@@ -36,8 +36,8 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      # Uploads only on push, and only when the secrets are available (never on forks).
-      UPLOAD: ${{ github.event_name == 'push' && secrets.ASC_KEY_ID != '' }}
+      # Uploads on push or manual run, only when the secrets are available (never on forks).
+      UPLOAD: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@v4
 
