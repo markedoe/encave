@@ -306,8 +306,8 @@ FR = {
     "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.":
         "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher.",
     "Zooming": "Zoomer",
-    "Pinch to zoom in and out, or double-tap a spot. On the Mac, pinch on the trackpad or use ⌘+ and ⌘–. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.":
-        "Pincez pour zoomer, ou touchez deux fois un endroit. Sur Mac, pincez sur le trackpad ou utilisez ⌘+ et ⌘–. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.",
+    "Pinch to zoom in and out, or double-tap a spot. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.":
+        "Pincez pour zoomer, ou touchez deux fois un endroit. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.",
     "Bottle List": "Liste des bouteilles",
     "Close": "Fermer",
     "NV": "NM",
