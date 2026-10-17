@@ -802,6 +802,25 @@ S = [
  ("insights_year_occasion", "Favorite occasion: %1$s", "Occasion préférée : %1$s"),
  ("insights_year_month", "Busiest month: %1$s", "Mois le plus actif : %1$s"),
 
+ # Reminders
+ ("reminders_title", "Reminders", "Rappels"),
+ ("reminders_footer", "On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak, and on the day bottles on order are expected. Worked out on this device.",
+  "Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, et le jour où des bouteilles en commande sont attendues. Calculé sur cet appareil."),
+ ("reminders_refused", "Notifications are off for Encave. Turn them on in the system settings.", "Les notifications sont désactivées pour Encave. Activez-les dans les réglages du système."),
+ ("reminders_channel_monthly", "Monthly reminder", "Rappel mensuel"),
+ ("reminders_channel_deliveries", "Deliveries", "Livraisons"),
+ ("reminders_monthly_title", "Your cellar this month", "Votre cave ce mois-ci"),
+ ("reminders_drink_soon", "To drink this year: %1$d", "À boire cette année : %1$d"),
+ ("reminders_now_ready", "Now ready: %1$d", "Désormais prêtes : %1$d"),
+ ("reminders_start_with", "Start with %1$s.", "Commencez par %1$s."),
+ ("reminders_delivery_title", "Delivery expected today", "Livraison prévue aujourd’hui"),
+ ("help_tonight_reminders", "Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.",
+  "Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil."),
+
+ # App shortcuts
+ ("shortcut_scan", "Scan a label", "Scanner une étiquette"),
+ ("shortcut_tonight", "What to open tonight", "Que boire ce soir"),
+
 ]
 
 P = [
@@ -809,6 +828,8 @@ P = [
  ("bottles_added", ("%d bottle added", "%d bottles added"), ("%d bouteille ajoutée", "%d bouteilles ajoutées")),
  ("rack_key_wine", ("%1$s, %2$d bottle", "%1$s, %2$d bottles"), ("%1$s, %2$d bouteille", "%1$s, %2$d bouteilles")),
  ("detail_on_order", ("%d bottle on order", "%d bottles on order"), ("%d bouteille en commande", "%d bouteilles en commande")),
+ ("reminders_delivery_body", ("%1$s: %2$d bottle. Mark it received when it arrives.", "%1$s: %2$d bottles. Mark them received when they arrive."),
+  ("%1$s : %2$d bouteille. Marquez-la comme reçue à son arrivée.", "%1$s : %2$d bouteilles. Marquez-les comme reçues à leur arrivée.")),
  ("bottles_added_action", ("Add %d bottle", "Add %d bottles"), ("Ajouter %d bouteille", "Ajouter %d bouteilles")),
 ]
 

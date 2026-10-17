@@ -739,6 +739,19 @@
     <string name="insights_year_style">Most opened style: %1$s</string>
     <string name="insights_year_occasion">Favorite occasion: %1$s</string>
     <string name="insights_year_month">Busiest month: %1$s</string>
+    <string name="reminders_title">Reminders</string>
+    <string name="reminders_footer">On the first of each month, if bottles should be drunk this year, have just become ready or are past their peak, and on the day bottles on order are expected. Worked out on this device.</string>
+    <string name="reminders_refused">Notifications are off for Encave. Turn them on in the system settings.</string>
+    <string name="reminders_channel_monthly">Monthly reminder</string>
+    <string name="reminders_channel_deliveries">Deliveries</string>
+    <string name="reminders_monthly_title">Your cellar this month</string>
+    <string name="reminders_drink_soon">To drink this year: %1$d</string>
+    <string name="reminders_now_ready">Now ready: %1$d</string>
+    <string name="reminders_start_with">Start with %1$s.</string>
+    <string name="reminders_delivery_title">Delivery expected today</string>
+    <string name="help_tonight_reminders">Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.</string>
+    <string name="shortcut_scan">Scan a label</string>
+    <string name="shortcut_tonight">What to open tonight</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
@@ -754,6 +767,10 @@
     <plurals name="detail_on_order">
         <item quantity="one">%d bottle on order</item>
         <item quantity="other">%d bottles on order</item>
+    </plurals>
+    <plurals name="reminders_delivery_body">
+        <item quantity="one">%1$s: %2$d bottle. Mark it received when it arrives.</item>
+        <item quantity="other">%1$s: %2$d bottles. Mark them received when they arrive.</item>
     </plurals>
     <plurals name="bottles_added_action">
         <item quantity="one">Add %d bottle</item>

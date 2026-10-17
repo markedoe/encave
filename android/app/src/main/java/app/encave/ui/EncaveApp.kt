@@ -30,7 +30,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import app.encave.MainActivity
 import app.encave.R
+import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.ui.add.AddBottleScreen
 import app.encave.ui.add.EditWineScreen
 import app.encave.ui.cellar.CellarScreen
@@ -89,9 +92,24 @@ class AppNavigator(private val nav: NavHostController) {
 }
 
 @Composable
-fun EncaveApp(viewModel: AppViewModel) {
+fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = MutableStateFlow(null)) {
     val nav = rememberNavController()
     val navigator = remember(nav) { AppNavigator(nav) }
+    val link by links.collectAsStateWithLifecycle()
+    val loaded by viewModel.loaded.collectAsStateWithLifecycle()
+    // Reminders and app shortcuts: open the section, the wine or the scanner once the cellar is loaded.
+    LaunchedEffect(link, loaded) {
+        val target = link ?: return@LaunchedEffect
+        if (!loaded) return@LaunchedEffect
+        links.value = null
+        val wineId = MainActivity.wineId(target)
+        when {
+            target == MainActivity.LINK_TONIGHT -> navigator.openTopLevel(TopLevel.Tonight)
+            target == MainActivity.LINK_SCAN -> navigator.open(AddBottleRoute(scan = true))
+            wineId != null && viewModel.cellar.value.wines.keys.any { it.toString().equals(wineId, ignoreCase = true) } ->
+                navigator.open(WineDetailRoute(wineId.lowercase()))
+        }
+    }
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
 

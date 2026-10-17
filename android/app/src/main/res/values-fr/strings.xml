@@ -738,6 +738,19 @@
     <string name="insights_year_style">Style le plus ouvert : %1$s</string>
     <string name="insights_year_occasion">Occasion préférée : %1$s</string>
     <string name="insights_year_month">Mois le plus actif : %1$s</string>
+    <string name="reminders_title">Rappels</string>
+    <string name="reminders_footer">Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, et le jour où des bouteilles en commande sont attendues. Calculé sur cet appareil.</string>
+    <string name="reminders_refused">Les notifications sont désactivées pour Encave. Activez-les dans les réglages du système.</string>
+    <string name="reminders_channel_monthly">Rappel mensuel</string>
+    <string name="reminders_channel_deliveries">Livraisons</string>
+    <string name="reminders_monthly_title">Votre cave ce mois-ci</string>
+    <string name="reminders_drink_soon">À boire cette année : %1$d</string>
+    <string name="reminders_now_ready">Désormais prêtes : %1$d</string>
+    <string name="reminders_start_with">Commencez par %1$s.</string>
+    <string name="reminders_delivery_title">Livraison prévue aujourd’hui</string>
+    <string name="help_tonight_reminders">Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil.</string>
+    <string name="shortcut_scan">Scanner une étiquette</string>
+    <string name="shortcut_tonight">Que boire ce soir</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>
@@ -757,6 +770,11 @@
         <item quantity="one">%d bouteille en commande</item>
         <item quantity="many">%d bouteilles en commande</item>
         <item quantity="other">%d bouteilles en commande</item>
+    </plurals>
+    <plurals name="reminders_delivery_body">
+        <item quantity="one">%1$s : %2$d bouteille. Marquez-la comme reçue à son arrivée.</item>
+        <item quantity="many">%1$s : %2$d bouteilles. Marquez-les comme reçues à leur arrivée.</item>
+        <item quantity="other">%1$s : %2$d bouteilles. Marquez-les comme reçues à leur arrivée.</item>
     </plurals>
     <plurals name="bottles_added_action">
         <item quantity="one">Ajouter %d bouteille</item>

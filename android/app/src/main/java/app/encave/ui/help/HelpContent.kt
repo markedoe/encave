@@ -96,6 +96,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_tonight_maturity, R.string.help_tonight_maturity_title),
                     HelpSection(R.string.help_tonight_suggestions, R.string.help_tonight_suggestions_title),
                     HelpSection(R.string.help_tonight_serving, R.string.detail_serving),
+                    HelpSection(R.string.help_tonight_reminders, R.string.reminders_title),
                 ),
             ),
             HelpArticle(
