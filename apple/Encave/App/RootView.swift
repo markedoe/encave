@@ -8,14 +8,8 @@ struct RootView: View {
 
     var body: some View {
         @Bindable var model = model
-        TabView(selection: $model.selectedTab) {
-            Tab("Cellar", systemImage: "wineglass", value: AppTab.cellar) { CellarView() }
-            Tab("Racks", systemImage: "square.grid.3x3", value: AppTab.racks) { RacksView() }
-            Tab("Tonight", systemImage: "moon.stars", value: AppTab.tonight) { TonightView() }
-            Tab("Journal", systemImage: "book.closed", value: AppTab.journal) { JournalView() }
-        }
-        .tabViewStyle(.sidebarAdaptable)
-        .overlay { ToastOverlay() }
+        sections
+            .overlay { ToastOverlay() }
         .sheet(item: $model.sheet) { sheet in
             SheetContent(sheet: sheet)
                 .environment(model)
@@ -30,7 +24,63 @@ struct RootView: View {
             Text(model.errorMessage ?? "")
         }
     }
+
+    @ViewBuilder
+    private var sections: some View {
+        #if os(macOS)
+        MacSidebarRoot()
+        #else
+        @Bindable var model = model
+        TabView(selection: $model.selectedTab) {
+            Tab("Cellar", systemImage: "wineglass", value: AppTab.cellar) { CellarView() }
+            Tab("Racks", systemImage: "square.grid.3x3", value: AppTab.racks) { RacksView() }
+            Tab("Tonight", systemImage: "moon.stars", value: AppTab.tonight) { TonightView() }
+            Tab("Journal", systemImage: "book.closed", value: AppTab.journal) { JournalView() }
+        }
+        .tabViewStyle(.sidebarAdaptable)
+        #endif
+    }
 }
+
+#if os(macOS)
+/// The Mac window: one sidebar with the four sections, the section on the right.
+private struct MacSidebarRoot: View {
+    @Environment(CellarModel.self) private var model
+
+    var body: some View {
+        let selection = Binding<AppTab?>(
+            get: { model.selectedTab },
+            set: { if let tab = $0 { model.selectedTab = tab } }
+        )
+        NavigationSplitView {
+            List(selection: selection) {
+                Section {
+                    Label("Cellar", systemImage: "wineglass")
+                        .badge(model.cellar.bottlesInCellar.count)
+                        .tag(AppTab.cellar)
+                    Label("Racks", systemImage: "square.grid.3x3")
+                        .badge(model.cellar.racks.count)
+                        .tag(AppTab.racks)
+                    Label("Tonight", systemImage: "moon.stars")
+                        .badge(model.cellar.statistics(year: model.currentYear).byMaturity[.drinkSoon, default: 0])
+                        .tag(AppTab.tonight)
+                    Label("Journal", systemImage: "book.closed")
+                        .badge(model.cellar.shoppingListCount)
+                        .tag(AppTab.journal)
+                }
+            }
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
+        } detail: {
+            switch model.selectedTab {
+            case .cellar: CellarView()
+            case .racks: RacksView()
+            case .tonight: TonightView()
+            case .journal: JournalView()
+            }
+        }
+    }
+}
+#endif
 
 private struct SheetContent: View {
     let sheet: AppSheet

@@ -8,20 +8,45 @@ struct CellarView: View {
     @State private var selection: UUID?
 
     var body: some View {
-        NavigationSplitView {
-            content
-                .navigationTitle("Cellar")
-                .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
-                .toolbar { toolbar }
-        } detail: {
-            if let selection {
-                NavigationStack { WineDetailView(wineID: selection) }
-            } else {
-                ContentUnavailableView("Select a wine", systemImage: "wineglass",
-                                       description: Text("Its bottles, drinking window and tastings appear here."))
+        #if os(macOS)
+        // The window already has a sidebar: the list and the wine sit side by side.
+        HSplitView {
+            NavigationStack {
+                list
             }
+            .frame(minWidth: 320, idealWidth: 400, maxWidth: 560)
+            NavigationStack { detail }
+                .frame(minWidth: 440, maxWidth: .infinity)
+        }
+        #else
+        NavigationSplitView {
+            list
+        } detail: {
+            detail
         }
         .navigationSplitViewStyle(.balanced)
+        #endif
+    }
+
+    private var list: some View {
+        content
+            .navigationTitle("Cellar")
+            .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
+            .toolbar { toolbar }
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        if let selection, model.cellar.wines[selection] != nil {
+            #if os(macOS)
+            WineDetailView(wineID: selection)
+            #else
+            NavigationStack { WineDetailView(wineID: selection) }
+            #endif
+        } else {
+            ContentUnavailableView("Select a wine", systemImage: "wineglass",
+                                   description: Text("Its bottles, drinking window and tastings appear here."))
+        }
     }
 
     @ViewBuilder
