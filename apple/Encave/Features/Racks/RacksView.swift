@@ -68,18 +68,24 @@ private struct RackCard: View {
         let used = model.cellar.occupancy(of: rack)
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text(rack.name)
-                    .font(.title3.weight(.semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(rack.name)
+                        .font(.title3.weight(.semibold))
+                    Text(rack.kind.title)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
-                Image(systemName: rack.layout == .diamond ? "diamond" : "square.grid.3x3")
+                Image(systemName: rack.kind.systemImage)
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
             }
             RackThumbnail(rack: rack)
                 .frame(maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .leading, spacing: 6) {
                 ProgressView(value: Double(used), total: Double(max(1, rack.capacity)))
                     .tint(Color.accentColor)
-                Text("\(used) of \(rack.capacity) positions used")
+                Text("\(used) of \(rack.capacity) bottles")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

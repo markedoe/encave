@@ -240,7 +240,7 @@ struct BottleRow: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.cellar.locationLabel(for: bottle) ?? String(localized: "No location"))
+                Text(model.locationLabel(for: bottle) ?? String(localized: "No location"))
                     .font(.body)
                 Text(details)
                     .font(.caption)

@@ -130,7 +130,7 @@ import Testing
 
     @Test func sampleDataIsConsistent() {
         let cellar = SampleData.cellar(year: 2026)
-        #expect(cellar.racks.count == 2)
+        #expect(cellar.racks.count == 3)
         #expect(cellar.consumedBottles.count == 2)
         let slots = cellar.bottlesInCellar.compactMap(\.slot)
         #expect(Set(slots).count == slots.count, "no two bottles share a slot")

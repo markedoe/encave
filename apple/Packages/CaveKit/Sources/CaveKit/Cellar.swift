@@ -151,14 +151,30 @@ public extension Cellar {
 
     func freeSlots(in rack: Rack) -> [Slot] {
         let taken = Set(bottlesInCellar.compactMap(\.slot))
-        var result: [Slot] = []
-        for row in 0..<rack.rows {
-            for column in 0..<rack.columns {
-                let slot = Slot(rackID: rack.id, row: row, column: column)
-                if !taken.contains(slot) { result.append(slot) }
-            }
+        return rack.allSlots.filter { !taken.contains($0) }
+    }
+
+    /// Bottles of a rack by cell, front first.
+    func bottlesByCell(in rack: Rack) -> [RackCell: [Bottle]] {
+        var result: [RackCell: [Bottle]] = [:]
+        for bottle in bottlesInCellar {
+            guard let slot = bottle.slot, slot.rackID == rack.id else { continue }
+            result[slot.cell, default: []].append(bottle)
         }
-        return result
+        return result.mapValues { $0.sorted { ($0.slot?.depth ?? 0) < ($1.slot?.depth ?? 0) } }
+    }
+
+    /// Bottles in one cell, front first.
+    func bottles(in cell: RackCell) -> [Bottle] {
+        bottlesInCellar.filter { $0.slot?.cell == cell }.sorted { ($0.slot?.depth ?? 0) < ($1.slot?.depth ?? 0) }
+    }
+
+    /// The first free place in a cell (the front, or the next place in a bin).
+    func freeSlot(in cell: RackCell) -> Slot? {
+        guard let rack = rack(cell.rackID), rack.contains(cell) else { return nil }
+        let taken = Set(bottles(in: cell).compactMap { $0.slot?.depth })
+        return (0..<rack.positionsPerCell).first { !taken.contains($0) }
+            .map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) }
     }
 
     func occupancy(of rack: Rack) -> Int {
@@ -333,7 +349,7 @@ public extension Cellar {
         guard let index = racks.firstIndex(where: { $0.id == rack.id }) else { throw CellarError.unknownRack }
         let outside = bottlesInCellar.contains {
             guard let slot = $0.slot, slot.rackID == rack.id else { return false }
-            return slot.row >= rack.rows || slot.column >= rack.columns
+            return !rack.contains(slot)
         }
         if outside { throw CellarError.rackNotEmpty }
         racks[index] = rack
@@ -361,9 +377,7 @@ public extension Cellar {
 
     private func validateInRange(_ slot: Slot) throws {
         guard let rack = racks.first(where: { $0.id == slot.rackID }) else { throw CellarError.unknownRack }
-        guard (0..<rack.rows).contains(slot.row), (0..<rack.columns).contains(slot.column) else {
-            throw CellarError.slotOutOfRange
-        }
+        guard rack.contains(slot) else { throw CellarError.slotOutOfRange }
     }
 
     private func validateFree(_ slot: Slot) throws {

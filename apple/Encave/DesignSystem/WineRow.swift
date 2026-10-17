@@ -11,7 +11,7 @@ struct WineRow: View {
     }
 
     private var location: String? {
-        let labels = group.bottles.compactMap { model.cellar.locationLabel(for: $0) }
+        let labels = group.bottles.compactMap { model.locationLabel(for: $0) }
         guard let first = labels.first else { return nil }
         return labels.count > 1 ? String(localized: "\(first) and \(labels.count - 1) more") : first
     }

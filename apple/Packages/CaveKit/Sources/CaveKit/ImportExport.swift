@@ -177,7 +177,8 @@ public extension Cellar {
                     bottle.status = .gone
                 } else if let rackName = value("rack"), let label = value("slot"),
                           let rack = racks.first(where: { $0.name.caseInsensitiveCompare(rackName) == .orderedSame }),
-                          let slot = rack.slot(forLabel: label), self.bottle(at: slot) == nil {
+                          let wanted = rack.slot(forLabel: label),
+                          let slot = self.bottle(at: wanted) == nil ? wanted : freeSlot(in: wanted.cell) {
                     bottle.slot = slot
                 } else if let rackName = value("rack") {
                     let label = [rackName, value("slot")].compactMap { $0 }.joined(separator: " · ")
@@ -192,9 +193,12 @@ public extension Cellar {
 }
 
 public extension Rack {
-    /// Parses "B3" back into a slot of this rack.
+    /// Parses "B3" or "B3-2" back into a slot of this rack.
     func slot(forLabel label: String) -> Slot? {
-        let upper = label.trimmingCharacters(in: .whitespaces).uppercased()
+        let parts = label.trimmingCharacters(in: .whitespaces).uppercased().split(separator: "-", maxSplits: 1)
+        guard let first = parts.first else { return nil }
+        let upper = String(first)
+        let depth = parts.count > 1 ? (Int(parts[1]) ?? 0) - 1 : 0
         let letters = upper.prefix { $0.isLetter }
         guard !letters.isEmpty, let column = Int(upper.dropFirst(letters.count)) else { return nil }
         var row = 0
@@ -202,8 +206,8 @@ public extension Rack {
             guard (65...90).contains(scalar.value) else { return nil }
             row = row * 26 + Int(scalar.value - 64)
         }
-        let slot = Slot(rackID: id, row: row - 1, column: column - 1)
-        guard (0..<rows).contains(slot.row), (0..<columns).contains(slot.column) else { return nil }
+        let slot = Slot(rackID: id, row: row - 1, column: column - 1, depth: depth)
+        guard contains(slot) else { return nil }
         return slot
     }
 }

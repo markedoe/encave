@@ -314,6 +314,58 @@ FR = {
     "The answer from the AI service could not be read.": "La réponse du service d’IA est illisible.",
     "The model declined to read this photo.": "Le modèle a refusé de lire cette photo.",
     "%lld min": "%lld min",
+    # Racks
+    "5 rows of 8": "5 rangées de 8",
+    "6 rows of 8": "6 rangées de 8",
+    "8 rows of 10": "8 rangées de 10",
+    "Add a Bottle Here": "Ajouter une bouteille ici",
+    "Add a Bottle to This Bin": "Ajouter une bouteille dans ce casier",
+    "Bin %@": "Casier %@",
+    "Bins or crates": "Casiers ou caisses",
+    "Bins per row": "Casiers par rangée",
+    "Bottles in the widest row": "Bouteilles dans la rangée la plus large",
+    "Bottles per bin": "Bouteilles par casier",
+    "Bottles per cell": "Bouteilles par case",
+    "Bottles per row": "Bouteilles par rangée",
+    "Bottles per shelf": "Bouteilles par clayette",
+    "Cabinet, 10 shelves of 8, 2 deep": "Armoire, 10 clayettes de 8, 2 en profondeur",
+    "Crates of 12, 2 × 4": "Caisses de 12, 2 × 4",
+    "Crates of 6, 3 × 4": "Caisses de 6, 3 × 4",
+    "Diamond bins or crates holding several bottles each": "Casiers en losange ou caisses de plusieurs bouteilles",
+    "Diamond bins, 2 × 3 of 10": "Losanges, 2 × 3 de 10",
+    "Double depth, 6 × 8": "Double profondeur, 6 × 8",
+    "Empty": "Vide",
+    "For a rack with a sloped top, a staircase or an irregular cellar wall.": "Pour un casier sous pente, sous un escalier ou contre un mur irrégulier.",
+    "Fridge, 2 deep, 6 shelves of 7": "Cave à vin, 2 en profondeur, 6 clayettes de 7",
+    "Fridge, 6 shelves of 6": "Cave à vin, 6 clayettes de 6",
+    "Grid rack": "Casier classique",
+    "Holds %lld bottles.": "Contient %lld bouteilles.",
+    "Honeycomb rack": "Casier nid d’abeille",
+    "Kind of storage": "Type de rangement",
+    "Large, 10 × 12": "Grand, 10 × 12",
+    "Offset rows, like metal or terracotta racks": "Rangées décalées, comme les casiers en métal ou en terre cuite",
+    "One": "Une",
+    "One bottle per cell, single or double depth": "Une bouteille par case, simple ou double profondeur",
+    "Row %@": "Rangée %@",
+    "Rows deep": "Rangs en profondeur",
+    "Rows of bins": "Rangées de casiers",
+    "Rows of different lengths": "Rangées de longueurs différentes",
+    "Shelf %@, %lld": "Clayette %@, %lld",
+    "Shelves": "Clayettes",
+    "Shelves holding a row of bottles, one to three deep": "Clayettes d’une rangée de bouteilles, sur un à trois rangs",
+    "Tap a place. Tapping another bottle swaps them; a bin takes the bottle if it has room.": "Touchez un emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place.",
+    "Tap where to put %@": "Touchez où mettre %@",
+    "This place is full.": "Cet emplacement est plein.",
+    "Two, one behind the other": "Deux, l’une derrière l’autre",
+    "Wine fridge or cabinet": "Cave à vin ou armoire",
+    "%lld of %lld bottles": "%lld sur %lld bouteilles",
+    "%@, %lld of %lld bottles": "%@, %lld sur %lld bouteilles",
+    "%@, empty": "%@, vide",
+    "Diamond bins": "Casiers en losange",
+    "front": "devant",
+    "back": "derrière",
+    "middle": "milieu",
+    "Kind of rack": "Type de rangement",
     # Discoveries and shopping list
     "Add a tag": "Ajouter un tag",
     "Add to Cellar": "Ajouter à la cave",
@@ -380,7 +432,7 @@ INFO_PLIST = {
 }
 
 UI_CALL = re.compile(r'(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
-                     r'DisclosureGroup|ContentUnavailableView|Tab|ChoiceChip\(title:|caption:|ChartCard\(title:|DatePicker|'
+                     r'DisclosureGroup|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
@@ -395,7 +447,8 @@ def to_key(literal):
         expr = match.group(1)
         if "count" in expr or any(op in expr for op in (" - ", " + ", " * ", "reduce")):
             return "%lld"
-        stringy = any(t in expr for t in ("name", "Name", "label", "first", "formatted", "location", "displayName"))
+        stringy = any(t in expr for t in ("name", "Name", "label", "first", "formatted", "location", "displayName",
+                                            "letters", "Letters", "place"))
         return "%@" if stringy else "%lld"
     return re.sub(r"\\\((.*?)\)(?=[^)]*(?:\\\(|$))", repl, literal) if "\\(" in literal else literal
 

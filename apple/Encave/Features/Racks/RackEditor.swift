@@ -1,24 +1,46 @@
 import CaveKit
 import SwiftUI
 
-/// Create or edit a rack, with a live preview.
+/// A ready-made size for a kind of storage.
+struct RackPreset: Identifiable {
+    let title: LocalizedStringKey
+    let kind: RackKind
+    let rows: Int
+    let columns: Int
+    var depth = 1
+    var binCapacity = 10
+    var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)" }
+
+    static let all: [RackPreset] = [
+        RackPreset(title: "6 rows of 8", kind: .grid, rows: 6, columns: 8),
+        RackPreset(title: "Double depth, 6 × 8", kind: .grid, rows: 6, columns: 8, depth: 2),
+        RackPreset(title: "Large, 10 × 12", kind: .grid, rows: 10, columns: 12),
+        RackPreset(title: "5 rows of 8", kind: .staggered, rows: 5, columns: 8),
+        RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
+        RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
+        RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
+        RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
+        RackPreset(title: "Diamond bins, 2 × 3 of 10", kind: .bins, rows: 2, columns: 3, binCapacity: 10),
+        RackPreset(title: "Crates of 6, 3 × 4", kind: .bins, rows: 3, columns: 4, binCapacity: 6),
+        RackPreset(title: "Crates of 12, 2 × 4", kind: .bins, rows: 2, columns: 4, binCapacity: 12),
+    ]
+}
+
+/// Create or edit a rack: choose the kind of storage, its size, and see it live.
 struct RackEditor: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     let rackID: UUID?
     @State private var name = ""
+    @State private var kind: RackKind = .grid
     @State private var rows = 6
     @State private var columns = 8
-    @State private var layout: RackLayout = .grid
+    @State private var depth = 1
+    @State private var binCapacity = 10
+    @State private var customRows = false
+    @State private var rowColumns: [Int] = []
     @State private var loaded = false
     @State private var confirmingDelete = false
-
-    private let presets: [(LocalizedStringKey, Int, Int, RackLayout)] = [
-        ("Wine fridge, 24", 4, 6, .grid),
-        ("Rack, 48", 6, 8, .grid),
-        ("Diamond bins, 36", 6, 6, .diamond),
-        ("Large cellar, 120", 10, 12, .grid),
-    ]
 
     var body: some View {
         NavigationStack {
@@ -26,29 +48,76 @@ struct RackEditor: View {
                 Section {
                     TextField("Name", text: $name, prompt: Text("Main rack"))
                         .font(.headline)
-                    Picker("Layout", selection: $layout) {
-                        Label("Grid", systemImage: "square.grid.3x3").tag(RackLayout.grid)
-                        Label("Diamond", systemImage: "diamond").tag(RackLayout.diamond)
+                }
+
+                Section("Kind of storage") {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                        ForEach(RackKind.allCases, id: \.self) { option in
+                            KindCard(kind: option, isSelected: kind == option) { choose(option) }
+                        }
                     }
-                    .pickerStyle(.segmented)
+                    .padding(.vertical, 4)
+                }
+
+                Section {
                     Stepper(value: $rows, in: 1...40) {
-                        LabeledContent("Rows") { Text(verbatim: "\(rows)").monospacedDigit() }
+                        LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
                     }
-                    Stepper(value: $columns, in: 1...40) {
-                        LabeledContent("Columns") { Text(verbatim: "\(columns)").monospacedDigit() }
+                    if !customRows {
+                        Stepper(value: $columns, in: 1...40) {
+                            LabeledContent { Text(verbatim: "\(columns)").monospacedDigit() } label: { Text(kind.columnTitle) }
+                        }
                     }
+                    switch kind {
+                    case .grid:
+                        Picker("Bottles per cell", selection: $depth) {
+                            Text("One").tag(1)
+                            Text("Two, one behind the other").tag(2)
+                        }
+                    case .shelves:
+                        Picker("Rows deep", selection: $depth) {
+                            Text(verbatim: "1").tag(1)
+                            Text(verbatim: "2").tag(2)
+                            Text(verbatim: "3").tag(3)
+                        }
+                        .pickerStyle(.segmented)
+                    case .bins:
+                        Stepper(value: $binCapacity, in: 2...40) {
+                            LabeledContent("Bottles per bin") { Text(verbatim: "\(binCapacity)").monospacedDigit() }
+                        }
+                    case .staggered:
+                        EmptyView()
+                    }
+                } header: {
+                    Text("Size")
                 } footer: {
-                    Text("\(rows * columns) positions")
+                    Text("Holds \(preview.capacity) bottles.")
+                }
+
+                if kind != .staggered {
+                    Section {
+                        Toggle("Rows of different lengths", isOn: $customRows.animation())
+                        if customRows {
+                            ForEach(0..<rows, id: \.self) { row in
+                                Stepper(value: rowBinding(row), in: 1...60) {
+                                    LabeledContent {
+                                        Text(verbatim: "\(rowBinding(row).wrappedValue)").monospacedDigit()
+                                    } label: {
+                                        Text("Row \(Rack.rowLetters(row))")
+                                    }
+                                }
+                            }
+                        }
+                    } footer: {
+                        Text("For a rack with a sloped top, a staircase or an irregular cellar wall.")
+                    }
                 }
 
                 if rackID == nil {
                     Section("Quick start") {
                         FlowLayout(spacing: 8) {
-                            ForEach(presets.indices, id: \.self) { index in
-                                let preset = presets[index]
-                                ChoiceChip(title: preset.0, isSelected: rows == preset.1 && columns == preset.2 && layout == preset.3) {
-                                    withAnimation { rows = preset.1; columns = preset.2; layout = preset.3 }
-                                }
+                            ForEach(RackPreset.all.filter { $0.kind == kind }) { preset in
+                                ChoiceChip(title: preset.title, isSelected: matches(preset)) { apply(preset) }
                             }
                         }
                         .padding(.vertical, 4)
@@ -57,11 +126,12 @@ struct RackEditor: View {
 
                 Section("Preview") {
                     ScrollView([.horizontal, .vertical]) {
-                        RackGrid(rack: preview, cellSize: 26)
+                        RackGrid(rack: preview, cellSize: 26, showsHeaders: false)
                             .allowsHitTesting(false)
-                            .padding(8)
+                            .padding(12)
                     }
-                    .frame(minHeight: 160, maxHeight: 280)
+                    .frame(minHeight: 160, maxHeight: 300)
+                    .accessibilityHidden(true)
                 }
 
                 if rackID != nil {
@@ -73,7 +143,7 @@ struct RackEditor: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle(rackID == nil ? "New Rack" : "Edit Rack")
+            .navigationTitle(rackID == nil ? Text("New Rack") : Text("Edit Rack"))
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -91,31 +161,115 @@ struct RackEditor: View {
                 }
             }
             .onAppear(perform: load)
+            .onChange(of: rows) { _, count in resizeRows(count) }
+            .onChange(of: customRows) { _, on in if on { rowColumns = Array(repeating: columns, count: rows) } }
         }
-        .macSheetFrame(width: 480, height: 640)
+        .macSheetFrame(width: 560, height: 760)
     }
 
     private var preview: Rack {
-        Rack(id: rackID ?? UUID(), name: name, rows: rows, columns: columns, layout: layout)
+        Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: rows, columns: customRows ? (rowColumns.max() ?? columns) : columns,
+             depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil)
+    }
+
+    private func rowBinding(_ row: Int) -> Binding<Int> {
+        Binding(
+            get: { rowColumns.indices.contains(row) ? rowColumns[row] : columns },
+            set: { value in
+                resizeRows(rows)
+                rowColumns[row] = value
+            }
+        )
+    }
+
+    private func resizeRows(_ count: Int) {
+        if rowColumns.count < count {
+            rowColumns += Array(repeating: rowColumns.last ?? columns, count: count - rowColumns.count)
+        } else if rowColumns.count > count {
+            rowColumns.removeLast(rowColumns.count - count)
+        }
+    }
+
+    private func choose(_ option: RackKind) {
+        withAnimation(.snappy) {
+            kind = option
+            if option == .staggered { customRows = false }
+            if rackID == nil, let preset = RackPreset.all.first(where: { $0.kind == option }) { apply(preset) }
+        }
+    }
+
+    private func matches(_ preset: RackPreset) -> Bool {
+        !customRows && rows == preset.rows && columns == preset.columns
+            && (kind == .bins ? binCapacity == preset.binCapacity : (kind == .staggered || depth == preset.depth))
+    }
+
+    private func apply(_ preset: RackPreset) {
+        withAnimation(.snappy) {
+            kind = preset.kind; rows = preset.rows; columns = preset.columns
+            depth = preset.depth; binCapacity = preset.binCapacity; customRows = false
+        }
     }
 
     private func load() {
         guard !loaded else { return }
         loaded = true
         if let rackID, let rack = model.cellar.rack(rackID) {
-            name = rack.name; rows = rack.rows; columns = rack.columns; layout = rack.layout
+            name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
+            depth = rack.depth; binCapacity = rack.binCapacity
+            if let custom = rack.rowColumns {
+                rowColumns = custom
+                customRows = true
+            }
         } else {
             name = model.cellar.racks.isEmpty ? String(localized: "Main rack") : ""
         }
     }
 
     private func save() {
-        let rack = Rack(id: rackID ?? UUID(), name: name.trimmingCharacters(in: .whitespaces),
-                        rows: rows, columns: columns, layout: layout)
+        var rack = preview
+        rack.name = name.trimmingCharacters(in: .whitespaces)
         let ok = model.update { cellar in
             if rackID == nil { cellar.addRack(rack) } else { try cellar.updateRack(rack) }
         }
         if ok { dismiss() }
+    }
+}
+
+/// A kind of storage to choose, with a small drawing.
+private struct KindCard: View {
+    let kind: RackKind
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: kind.systemImage)
+                    .font(.title2)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                Text(kind.title)
+                    .font(.subheadline.weight(.semibold))
+                    .multilineTextAlignment(.leading)
+                Text(kind.subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -129,16 +283,7 @@ struct SlotPickerView: View {
     var body: some View {
         NavigationStack {
             ScrollView([.horizontal, .vertical]) {
-                RackGrid(rack: rack, cellSize: 50, selected: Set(selection)) { slot, bottle in
-                    guard bottle == nil else { return }
-                    if let index = selection.firstIndex(of: slot) {
-                        selection.remove(at: index)
-                    } else if selection.count < limit {
-                        selection.append(slot)
-                    } else if limit == 1 {
-                        selection = [slot]
-                    }
-                }
+                RackGrid(rack: rack, cellSize: 50, selected: Set(selection)) { cell, _ in toggle(cell) }
                 .padding(24)
             }
             .defaultScrollAnchor(.center)
@@ -163,6 +308,21 @@ struct SlotPickerView: View {
         }
         .macSheetFrame(width: 560, height: 520)
     }
+
+    @Environment(CellarModel.self) private var model
+
+    /// Adds the next free place of a cell, or clears the cell when it is all chosen.
+    private func toggle(_ cell: RackCell) {
+        let free = model.cellar.freeSlots(in: rack).filter { $0.cell == cell }
+        let chosen = selection.filter { $0.cell == cell }
+        if let next = free.first(where: { !selection.contains($0) }), selection.count < limit {
+            selection.append(next)
+        } else if !chosen.isEmpty {
+            selection.removeAll { $0.cell == cell }
+        } else if limit == 1, let first = free.first {
+            selection = [first]
+        }
+    }
 }
 
 /// Move a bottle to another rack position, or out of the racks.
@@ -186,19 +346,23 @@ struct MoveBottleView: View {
                         .padding()
                         if let rack = rackID.flatMap({ model.cellar.rack($0) }) {
                             ScrollView([.horizontal, .vertical]) {
-                                RackGrid(rack: rack, cellSize: 50, highlighted: bottle.slot) { slot, occupant in
-                                    if occupant == nil || occupant?.id == bottle.id {
-                                        model.move(bottleID, to: slot)
+                                RackGrid(rack: rack, cellSize: 50, highlighted: bottle.slot) { cell, _ in
+                                    if bottle.slot?.cell == cell {
                                         dismiss()
-                                    } else if let from = bottle.slot {
-                                        model.swap(from, slot)
+                                    } else if let free = model.cellar.freeSlot(in: cell) {
+                                        model.move(bottleID, to: free)
                                         dismiss()
+                                    } else if rack.positionsPerCell == 1, let from = bottle.slot {
+                                        model.swap(from, Slot(rackID: cell.rackID, row: cell.row, column: cell.column))
+                                        dismiss()
+                                    } else {
+                                        model.showToast(String(localized: "This place is full."))
                                     }
                                 }
                                 .padding(24)
                             }
                             .defaultScrollAnchor(.center)
-                            Text("Tap a position. Tapping another bottle swaps them.")
+                            Text("Tap a place. Tapping another bottle swaps them; a bin takes the bottle if it has room.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .padding()

@@ -65,9 +65,9 @@ import Testing
         rack.rows = 2
         #expect(throws: CellarError.rackNotEmpty) { try cellar.updateRack(rack) }
         rack.rows = 3
-        rack.layout = .diamond
+        rack.kind = .shelves
         try cellar.updateRack(rack)
-        #expect(cellar.racks[0].layout == .diamond)
+        #expect(cellar.racks[0].kind == .shelves)
     }
 
     @Test func deletingLastBottleRemovesTheWine() throws {
@@ -184,7 +184,7 @@ import Testing
          "bottles":["\(bottleID)",{"id":"\(bottleID)","wineID":"\(wineID)","status":"inCellar","addedAt":700000000}]}
         """
         let cellar = try JSONDecoder().decode(Cellar.self, from: Data(json.utf8))
-        #expect(cellar.racks[0].layout == .grid)
+        #expect(cellar.racks[0].kind == .grid)
         #expect(cellar.bottles[bottleID]?.sizeML == 750)
         #expect(cellar.settings.currency == "EUR")
     }

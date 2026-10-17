@@ -20,7 +20,7 @@ struct DrinkSheet: View {
                                     Text(wine.displayName)
                                         .font(.title3.weight(.semibold))
                                         .fontDesign(.serif)
-                                    if let location = model.cellar.locationLabel(for: bottle) {
+                                    if let location = model.locationLabel(for: bottle) {
                                         Text(location).font(.subheadline).foregroundStyle(.secondary)
                                     }
                                 }

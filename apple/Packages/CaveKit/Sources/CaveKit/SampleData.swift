@@ -7,6 +7,7 @@ public enum SampleData {
     public struct Labels: Sendable {
         public var mainRack = "Main rack"
         public var wineFridge = "Wine fridge"
+        public var bins = "Diamond bins"
         public var tastingNote = "Silky, red fruit, long finish."
         public var kitchen = "Kitchen"
         public var occasion = "Dinner with friends"
@@ -28,9 +29,11 @@ public enum SampleData {
     ) -> Cellar {
         var cellar = Cellar()
         let main = Rack(name: labels.mainRack, rows: 6, columns: 8)
-        let small = Rack(name: labels.wineFridge, rows: 4, columns: 6, layout: .diamond)
+        let small = Rack(name: labels.wineFridge, kind: .shelves, rows: 4, columns: 6, depth: 2)
+        let bins = Rack(name: labels.bins, kind: .bins, rows: 2, columns: 3, binCapacity: 10)
         cellar.addRack(main)
         cellar.addRack(small)
+        cellar.addRack(bins)
 
         let entries: [(Wine, Int, Rack?)] = [
             (Wine(name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 9, color: .red,
@@ -44,7 +47,7 @@ public enum SampleData {
                   drinkFrom: year - 1, drinkUntil: year + 2), 4, small),
             (Wine(name: "Terrasses du Sud", producer: "Domaine Ferrand", vintage: year - 3, color: .red,
                   region: "Rhône", country: "France", appellation: "Gigondas", grapes: ["Grenache", "Syrah"],
-                  drinkFrom: year + 1, drinkUntil: year + 10), 6, main),
+                  drinkFrom: year + 1, drinkUntil: year + 10), 6, bins),
             (Wine(name: "Rosé de Provence", producer: "Château Lumière", vintage: year - 5, color: .rose,
                   region: "Provence", country: "France", grapes: ["Grenache", "Cinsault"],
                   drinkFrom: year - 4, drinkUntil: year - 2), 1, nil),

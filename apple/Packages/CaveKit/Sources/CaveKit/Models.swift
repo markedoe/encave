@@ -68,8 +68,33 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
-/// Where a bottle sits: rack, row and column (zero-based).
+/// Where a bottle sits: rack, row and column (zero-based), and how deep in the cell
+/// (front or back of a double-depth rack, or the place in a bin's pile).
 public struct Slot: Codable, Hashable, Sendable {
+    public var rackID: UUID
+    public var row: Int
+    public var column: Int
+    /// 0 is the front (or the first bottle of a bin).
+    public var depth: Int
+
+    public init(rackID: UUID, row: Int, column: Int, depth: Int = 0) {
+        self.rackID = rackID; self.row = row; self.column = column; self.depth = depth
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        rackID = try c.decode(UUID.self, forKey: .rackID)
+        row = try c.decode(Int.self, forKey: .row)
+        column = try c.decode(Int.self, forKey: .column)
+        depth = try c.decodeIfPresent(Int.self, forKey: .depth) ?? 0
+    }
+
+    /// The cell this slot belongs to, whatever its depth.
+    public var cell: RackCell { RackCell(rackID: rackID, row: row, column: column) }
+}
+
+/// One cell of a rack: a position in a grid, a place on a shelf or a whole bin.
+public struct RackCell: Hashable, Sendable {
     public var rackID: UUID
     public var row: Int
     public var column: Int
@@ -79,47 +104,138 @@ public struct Slot: Codable, Hashable, Sendable {
     }
 }
 
-/// How the positions of a rack are drawn. The slot grid is the same; only the shape differs.
-public enum RackLayout: String, Codable, CaseIterable, Sendable {
-    /// Square cells in rows and columns.
+/// The kind of storage, as it exists in real cellars.
+public enum RackKind: String, Codable, CaseIterable, Sendable {
+    /// Classic rack: one bottle per cell in rows and columns, possibly two deep.
     case grid
-    /// Diamond (X-shaped) bins, rows offset like a brick wall.
-    case diamond
+    /// Honeycomb rack: every other row is offset by half a bottle and holds one fewer.
+    case staggered
+    /// Wine fridge or cabinet: shelves holding a row of bottles, one or more deep.
+    case shelves
+    /// Diamond bins or crates: each bin holds several bottles in a pile.
+    case bins
 }
 
-/// A physical rack, modeled as a grid. Rows are lettered, columns numbered.
+/// A place where bottles are stored: a rack, a wine fridge, a set of bins.
+/// Rows (or shelves) are lettered from the top, cells numbered from the left.
 public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var id: UUID
     public var name: String
+    public var kind: RackKind
+    /// Rows, shelves, or rows of bins.
     public var rows: Int
+    /// Cells per row (the widest row for honeycomb racks).
     public var columns: Int
-    public var layout: RackLayout
+    /// Bottles one behind the other in a cell (grid and shelves).
+    public var depth: Int
+    /// Bottles per bin (bins only).
+    public var binCapacity: Int
+    /// Cells in each row when rows differ (a triangle top, an irregular cellar).
+    public var rowColumns: [Int]?
 
-    public init(id: UUID = UUID(), name: String, rows: Int, columns: Int, layout: RackLayout = .grid) {
-        self.id = id; self.name = name
+    public static let maxDepth = 3
+
+    public init(
+        id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
+        depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil
+    ) {
+        self.id = id; self.name = name; self.kind = kind
         self.rows = max(1, rows); self.columns = max(1, columns)
-        self.layout = layout
+        self.depth = min(Rack.maxDepth, max(1, depth)); self.binCapacity = max(1, binCapacity)
+        self.rowColumns = rowColumns.map { $0.map { max(1, $0) } }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, kind, rows, columns, depth, binCapacity, rowColumns
+        /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
+        case layout
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
+        kind = (try? c.decodeIfPresent(RackKind.self, forKey: .kind)) ?? .grid
         rows = max(1, try c.decode(Int.self, forKey: .rows))
         columns = max(1, try c.decode(Int.self, forKey: .columns))
-        layout = try c.decodeIfPresent(RackLayout.self, forKey: .layout) ?? .grid
+        depth = min(Rack.maxDepth, max(1, try c.decodeIfPresent(Int.self, forKey: .depth) ?? 1))
+        binCapacity = max(1, try c.decodeIfPresent(Int.self, forKey: .binCapacity) ?? 12)
+        rowColumns = try c.decodeIfPresent([Int].self, forKey: .rowColumns)?.map { max(1, $0) }
     }
 
-    public var capacity: Int { rows * columns }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(kind, forKey: .kind)
+        try c.encode(rows, forKey: .rows)
+        try c.encode(columns, forKey: .columns)
+        try c.encode(depth, forKey: .depth)
+        try c.encode(binCapacity, forKey: .binCapacity)
+        try c.encodeIfPresent(rowColumns, forKey: .rowColumns)
+    }
+
+    /// Cells in a row: custom widths first, then one fewer on offset honeycomb rows.
+    public func columns(inRow row: Int) -> Int {
+        if let rowColumns, rowColumns.indices.contains(row) { return rowColumns[row] }
+        if kind == .staggered, !row.isMultiple(of: 2) { return max(1, columns - 1) }
+        return columns
+    }
+
+    /// The widest row, for drawing.
+    public var maxColumns: Int { (0..<rows).map(columns(inRow:)).max() ?? columns }
+
+    /// Bottles that fit in one cell.
+    public var positionsPerCell: Int { kind == .bins ? binCapacity : (kind == .staggered ? 1 : depth) }
+
+    public var cellCount: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) } }
+
+    public var capacity: Int { cellCount * positionsPerCell }
+
+    public func contains(_ slot: Slot) -> Bool {
+        slot.rackID == id && (0..<rows).contains(slot.row)
+            && (0..<columns(inRow: slot.row)).contains(slot.column)
+            && (0..<positionsPerCell).contains(slot.depth)
+    }
+
+    public func contains(_ cell: RackCell) -> Bool {
+        cell.rackID == id && (0..<rows).contains(cell.row) && (0..<columns(inRow: cell.row)).contains(cell.column)
+    }
+
+    public var cells: [RackCell] {
+        (0..<rows).flatMap { row in (0..<columns(inRow: row)).map { RackCell(rackID: id, row: row, column: $0) } }
+    }
+
+    /// Every slot, in the order bottles are placed automatically: a bin is filled before
+    /// the next one; elsewhere the front of a row is filled before the back.
+    public var allSlots: [Slot] {
+        (0..<rows).flatMap { row -> [Slot] in
+            let width = columns(inRow: row)
+            if kind == .bins {
+                return (0..<width).flatMap { column in
+                    (0..<positionsPerCell).map { Slot(rackID: id, row: row, column: column, depth: $0) }
+                }
+            }
+            return (0..<positionsPerCell).flatMap { depth in
+                (0..<width).map { Slot(rackID: id, row: row, column: $0, depth: depth) }
+            }
+        }
+    }
 
     /// "B3" for row 1, column 2.
     public func label(row: Int, column: Int) -> String {
         "\(Rack.rowLetters(row))\(column + 1)"
     }
 
-    public func label(for slot: Slot) -> String { label(row: slot.row, column: slot.column) }
+    /// "B3", or "B3-2" for the second bottle of a cell that holds several.
+    public func label(for slot: Slot) -> String {
+        let base = label(row: slot.row, column: slot.column)
+        return positionsPerCell > 1 ? "\(base)-\(slot.depth + 1)" : base
+    }
 
-    static func rowLetters(_ index: Int) -> String {
+    public func label(for cell: RackCell) -> String { label(row: cell.row, column: cell.column) }
+
+    public static func rowLetters(_ index: Int) -> String {
         var n = index
         var letters = ""
         repeat {

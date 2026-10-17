@@ -1,42 +1,43 @@
 import CaveKit
 import SwiftUI
 
-/// A rack drawn as it looks. Tap a bottle for its actions, tap an empty
-/// position to add a bottle there. "Move" lets you pick the destination.
+/// A rack drawn as it looks. Tap a bottle or a bin for what is inside, tap an empty
+/// place to add a bottle there. "Move" lets you pick the destination.
 struct RackDetailView: View {
     @Environment(CellarModel.self) private var model
     let rackID: UUID
     @State private var zoom: CGFloat = 1
     @GestureState private var pinch: CGFloat = 1
-    @State private var selectedBottle: Bottle?
-    @State private var movingFrom: Slot?
-    @State private var filterWine: UUID?
+    @State private var openCell: OpenCell?
+    @State private var moving: Bottle?
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
             ScrollView([.horizontal, .vertical]) {
                 RackGrid(
-                    rack: rack, cellSize: 52 * min(2.2, max(0.6, zoom * pinch)),
-                    selected: movingFrom.map { [$0] } ?? [],
+                    rack: rack, cellSize: 52 * min(2.2, max(0.5, zoom * pinch)),
+                    selected: moving?.slot.map { [$0] } ?? [],
                     highlighted: model.highlightedSlot,
-                    onTap: { slot, bottle in tap(slot, bottle) }
+                    onTap: { cell, bottles in tap(rack, cell, bottles) }
                 )
-                .padding(24)
+                .padding(28)
                 .animation(.snappy, value: zoom)
             }
             .defaultScrollAnchor(.center)
             .gesture(
                 MagnifyGesture()
                     .updating($pinch) { value, state, _ in state = value.magnification }
-                    .onEnded { value in zoom = min(2.2, max(0.6, zoom * value.magnification)) }
+                    .onEnded { value in zoom = min(2.2, max(0.5, zoom * value.magnification)) }
             )
             .safeAreaInset(edge: .bottom) {
-                if movingFrom != nil {
+                if let moving {
+                    let displayName = model.cellar.wines[moving.wineID]?.displayName ?? ""
                     HStack {
-                        Label("Tap the new position", systemImage: "hand.tap")
+                        Label("Tap where to put \(displayName)", systemImage: "hand.tap")
                             .font(.subheadline.weight(.medium))
+                            .lineLimit(2)
                         Spacer()
-                        Button("Cancel") { movingFrom = nil }
+                        Button("Cancel") { self.moving = nil }
                     }
                     .padding()
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -49,24 +50,24 @@ struct RackDetailView: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
-                    Button { zoom = max(0.6, zoom - 0.2) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
+                    Button { zoom = max(0.5, zoom - 0.2) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
                         .keyboardShortcut("-")
                     Button { zoom = min(2.2, zoom + 0.2) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
                         .keyboardShortcut("+")
                     Button { model.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
                 }
             }
-            .sheet(item: $selectedBottle) { bottle in
-                SlotBottleSheet(bottle: bottle) { action in
-                    selectedBottle = nil
+            .sheet(item: $openCell) { open in
+                CellSheet(rack: rack, cell: open.cell) { action in
+                    openCell = nil
                     switch action {
-                    case .drink: model.sheet = .drink(bottleID: bottle.id)
-                    case .move: movingFrom = bottle.slot
-                    case .details: model.selectedTab = .cellar
-                    case .remove: model.markGone(bottle.id)
+                    case .drink(let bottle): model.sheet = .drink(bottleID: bottle.id)
+                    case .move(let bottle): moving = bottle
+                    case .remove(let bottle): model.markGone(bottle.id)
+                    case .add(let slot): model.sheet = .addBottle(AddBottleContext(slot: slot))
                     }
                 }
-                .presentationDetents([.height(320), .medium])
+                .presentationDetents([.medium, .large])
             }
             .task(id: model.highlightedSlot) {
                 guard model.highlightedSlot?.rackID == rackID else { return }
@@ -78,18 +79,30 @@ struct RackDetailView: View {
         }
     }
 
-    private func tap(_ slot: Slot, _ bottle: Bottle?) {
-        if let from = movingFrom {
-            movingFrom = nil
-            if from != slot { model.swap(from, slot) }
+    private func tap(_ rack: Rack, _ cell: RackCell, _ bottles: [Bottle]) {
+        if let bottle = moving {
+            moving = nil
+            guard let from = bottle.slot, from.cell != cell else { return }
+            if let free = model.cellar.freeSlot(in: cell) {
+                model.move(bottle.id, to: free)
+            } else if rack.positionsPerCell == 1 {
+                model.swap(from, Slot(rackID: cell.rackID, row: cell.row, column: cell.column))
+            } else {
+                model.showToast(String(localized: "This place is full."))
+            }
             return
         }
-        if let bottle {
-            selectedBottle = bottle
+        if bottles.isEmpty, let free = model.cellar.freeSlot(in: cell) {
+            model.sheet = .addBottle(AddBottleContext(slot: free))
         } else {
-            model.sheet = .addBottle(AddBottleContext(slot: slot))
+            openCell = OpenCell(cell: cell)
         }
     }
+}
+
+private struct OpenCell: Identifiable {
+    let cell: RackCell
+    var id: String { "\(cell.row)-\(cell.column)" }
 }
 
 /// Counts per wine style under the rack.
@@ -102,8 +115,12 @@ private struct RackLegend: View {
         let counts = Dictionary(grouping: bottles.compactMap { model.cellar.wines[$0.wineID]?.color }, by: { $0 }).mapValues(\.count)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 14) {
-                Text("\(bottles.count) of \(rack.capacity)")
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                Label {
+                    Text("\(bottles.count) of \(rack.capacity) bottles")
+                } icon: {
+                    Image(systemName: rack.kind.systemImage)
+                }
+                .font(.subheadline.weight(.semibold).monospacedDigit())
                 ForEach(WineColor.allCases.filter { counts[$0] != nil }, id: \.self) { color in
                     HStack(spacing: 5) {
                         BottleEnd(color: color, size: 14)
@@ -120,46 +137,107 @@ private struct RackLegend: View {
     }
 }
 
-enum SlotAction { case drink, move, details, remove }
+enum CellAction {
+    case drink(Bottle), move(Bottle), remove(Bottle), add(Slot)
+}
 
-/// Actions for the bottle at a position.
-private struct SlotBottleSheet: View {
+/// What is in one place of a rack: one bottle, front and back, or a whole bin.
+private struct CellSheet: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    let rack: Rack
+    let cell: RackCell
+    let onAction: (CellAction) -> Void
+
+    var body: some View {
+        let bottles = model.cellar.bottles(in: cell)
+        let free = model.cellar.freeSlot(in: cell)
+        NavigationStack {
+            List {
+                if bottles.isEmpty {
+                    ContentUnavailableView("Empty", systemImage: rack.kind.systemImage)
+                        .listRowBackground(Color.clear)
+                }
+                Section {
+                    ForEach(bottles) { bottle in
+                        BottleInCellRow(rack: rack, bottle: bottle, onAction: onAction)
+                    }
+                } header: {
+                    if rack.positionsPerCell > 1 {
+                        Text("\(bottles.count) of \(rack.positionsPerCell) bottles")
+                    }
+                }
+                if let free {
+                    Section {
+                        Button {
+                            onAction(.add(free))
+                        } label: {
+                            if rack.kind == .bins {
+                                Label("Add a Bottle to This Bin", systemImage: "plus.circle.fill")
+                            } else {
+                                Label("Add a Bottle Here", systemImage: "plus.circle.fill")
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(rack.displayLabel(for: cell))
+            .inlineTitle()
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .macSheetFrame(width: 440, height: 460)
+    }
+}
+
+/// A bottle in a cell, with its actions.
+private struct BottleInCellRow: View {
+    @Environment(CellarModel.self) private var model
+    let rack: Rack
     let bottle: Bottle
-    let onAction: (SlotAction) -> Void
+    let onAction: (CellAction) -> Void
 
     var body: some View {
         let wine = model.cellar.wines[bottle.wineID]
-        VStack(spacing: 16) {
-            HStack(spacing: 14) {
-                BottleEnd(color: wine?.color, size: 48)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(wine?.displayName ?? "").font(.title3.weight(.semibold)).fontDesign(.serif)
-                    if let producer = wine?.producer {
-                        Text(producer).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                BottleEnd(color: wine?.color, size: 40)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(wine?.displayName ?? String(localized: "Unknown wine"))
+                        .font(.headline)
+                    HStack(spacing: 6) {
+                        if let producer = wine?.producer { Text(producer) }
+                        if rack.kind != .bins, rack.positionsPerCell > 1, let slot = bottle.slot {
+                            Text(verbatim: "· \(rack.depthName(slot.depth))")
+                        }
                     }
-                    if let location = model.cellar.locationLabel(for: bottle) {
-                        Label(location, systemImage: "square.grid.3x3").font(.footnote).foregroundStyle(.secondary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    if let wine {
+                        MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                            .font(.caption)
                     }
                 }
-                Spacer()
             }
-            if let wine {
-                MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
-                    .font(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            HStack(spacing: 12) {
-                Button { onAction(.drink) } label: { Label("Drink", systemImage: "wineglass").frame(maxWidth: .infinity) }
+            HStack(spacing: 10) {
+                Button { onAction(.drink(bottle)) } label: { Label("Drink", systemImage: "wineglass") }
                     .buttonStyle(.borderedProminent)
-                Button { onAction(.move) } label: { Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right").frame(maxWidth: .infinity) }
+                Button { onAction(.move(bottle)) } label: { Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
                     .buttonStyle(.bordered)
+                Spacer()
+                Menu {
+                    Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { onAction(.remove(bottle)) }
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                        .labelStyle(.iconOnly)
+                }
+                .fixedSize()
             }
-            .controlSize(.large)
-            Button("Given away or broken", role: .destructive) { onAction(.remove) }
-                .font(.subheadline)
+            .controlSize(.regular)
         }
-        .padding(24)
-        .macSheetFrame(width: 420, height: 300)
+        .padding(.vertical, 4)
     }
 }

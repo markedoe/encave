@@ -143,8 +143,20 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight, one widget.
 | 4. Android MVP | Phones first, then tablets | Play internal testing |
 | 5. Launch | Store listings, documentation | App Store, Mac App Store, Google Play |
 
-Later: full tasting notes with photos, insights, wishlist, Mac menu bar
-extra, notifications for closing drinking windows.
+Later: Mac menu bar extra, notifications for closing drinking windows.
+
+### Next: Ask the AI
+
+Free questions about your own cellar, with the AI provider already set up for
+label recognition. Example: "Friends who love Beaujolais are coming tonight and
+we are having ratatouille: suggest a few wines from my cellar and the order to
+serve them." The answer cites only bottles you have (tapping one opens it), and
+can be refined in a short conversation.
+
+Privacy: this sends a summary of the cellar (wines, vintages, counts, drinking
+windows, not purchase prices, places or notes) to the chosen provider. It is
+off until enabled, the first use explains exactly what is sent, and the
+privacy rules in `CLAUDE.md` and `SECURITY.md` are updated with it.
 
 ## Open questions
 

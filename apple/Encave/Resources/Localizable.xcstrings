@@ -21,6 +21,16 @@
         }
       }
     },
+    "%@, %lld of %lld bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %lld sur %lld bouteilles"
+          }
+        }
+      }
+    },
     "%@, empty": {
       "localizations": {
         "fr": {
@@ -131,6 +141,16 @@
         }
       }
     },
+    "%lld of %lld bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sur %lld bouteilles"
+          }
+        }
+      }
+    },
     "%lld of %lld chosen": {
       "localizations": {
         "fr": {
@@ -197,6 +217,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld étoiles"
+          }
+        }
+      }
+    },
+    "5 rows of 8": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 rangées de 8"
+          }
+        }
+      }
+    },
+    "6 rows of 8": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6 rangées de 8"
+          }
+        }
+      }
+    },
+    "8 rows of 10": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 rangées de 10"
           }
         }
       }
@@ -287,6 +337,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une bouteille"
+          }
+        }
+      }
+    },
+    "Add a Bottle Here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une bouteille ici"
+          }
+        }
+      }
+    },
+    "Add a Bottle to This Bin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une bouteille dans ce casier"
           }
         }
       }
@@ -491,6 +561,36 @@
         }
       }
     },
+    "Bin %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier %@"
+          }
+        }
+      }
+    },
+    "Bins or crates": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casiers ou caisses"
+          }
+        }
+      }
+    },
+    "Bins per row": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casiers par rangée"
+          }
+        }
+      }
+    },
     "Bistro on the harbour, Lisbon": {
       "localizations": {
         "fr": {
@@ -541,6 +641,16 @@
         }
       }
     },
+    "Bottles in the widest row": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles dans la rangée la plus large"
+          }
+        }
+      }
+    },
     "Bottles in this rack stay in your cellar without a position.": {
       "localizations": {
         "fr": {
@@ -557,6 +667,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles ouvertes, 12 derniers mois"
+          }
+        }
+      }
+    },
+    "Bottles per bin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles par casier"
+          }
+        }
+      }
+    },
+    "Bottles per cell": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles par case"
+          }
+        }
+      }
+    },
+    "Bottles per row": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles par rangée"
+          }
+        }
+      }
+    },
+    "Bottles per shelf": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles par clayette"
           }
         }
       }
@@ -617,6 +767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par millésime"
+          }
+        }
+      }
+    },
+    "Cabinet, 10 shelves of 8, 2 deep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Armoire, 10 clayettes de 8, 2 en profondeur"
           }
         }
       }
@@ -781,6 +941,26 @@
         }
       }
     },
+    "Crates of 12, 2 × 4": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caisses de 12, 2 × 4"
+          }
+        }
+      }
+    },
+    "Crates of 6, 3 × 4": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caisses de 6, 3 × 4"
+          }
+        }
+      }
+    },
     "Currency": {
       "localizations": {
         "fr": {
@@ -921,6 +1101,36 @@
         }
       }
     },
+    "Diamond bins": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casiers en losange"
+          }
+        }
+      }
+    },
+    "Diamond bins or crates holding several bottles each": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casiers en losange ou caisses de plusieurs bouteilles"
+          }
+        }
+      }
+    },
+    "Diamond bins, 2 × 3 of 10": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Losanges, 2 × 3 de 10"
+          }
+        }
+      }
+    },
     "Diamond bins, 36": {
       "localizations": {
         "fr": {
@@ -987,6 +1197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        }
+      }
+    },
+    "Double depth, 6 × 8": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double profondeur, 6 × 8"
           }
         }
       }
@@ -1087,6 +1307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ailleurs"
+          }
+        }
+      }
+    },
+    "Empty": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vide"
           }
         }
       }
@@ -1201,6 +1431,16 @@
         }
       }
     },
+    "For a rack with a sloped top, a staircase or an irregular cellar wall.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour un casier sous pente, sous un escalier ou contre un mur irrégulier."
+          }
+        }
+      }
+    },
     "For summer": {
       "localizations": {
         "fr": {
@@ -1217,6 +1457,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muté"
+          }
+        }
+      }
+    },
+    "Fridge, 2 deep, 6 shelves of 7": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave à vin, 2 en profondeur, 6 clayettes de 7"
+          }
+        }
+      }
+    },
+    "Fridge, 6 shelves of 6": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave à vin, 6 clayettes de 6"
           }
         }
       }
@@ -1331,12 +1591,42 @@
         }
       }
     },
+    "Grid rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier classique"
+          }
+        }
+      }
+    },
     "Half bottle": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Demi-bouteille"
+          }
+        }
+      }
+    },
+    "Holds %lld bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %lld bouteilles."
+          }
+        }
+      }
+    },
+    "Honeycomb rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier nid d’abeille"
           }
         }
       }
@@ -1431,6 +1721,26 @@
         }
       }
     },
+    "Kind of rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type de rangement"
+          }
+        }
+      }
+    },
+    "Kind of storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type de rangement"
+          }
+        }
+      }
+    },
     "Kitchen": {
       "localizations": {
         "fr": {
@@ -1467,6 +1777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Grande cave, 120"
+          }
+        }
+      }
+    },
+    "Large, 10 × 12": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grand, 10 × 12"
           }
         }
       }
@@ -1807,6 +2127,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Désactivée"
+          }
+        }
+      }
+    },
+    "Offset rows, like metal or terracotta racks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangées décalées, comme les casiers en métal ou en terre cuite"
+          }
+        }
+      }
+    },
+    "One": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une"
+          }
+        }
+      }
+    },
+    "One bottle per cell, single or double depth": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille par case, simple ou double profondeur"
           }
         }
       }
@@ -2371,12 +2721,52 @@
         }
       }
     },
+    "Row %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangée %@"
+          }
+        }
+      }
+    },
     "Rows": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Rangées"
+          }
+        }
+      }
+    },
+    "Rows deep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangs en profondeur"
+          }
+        }
+      }
+    },
+    "Rows of bins": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangées de casiers"
+          }
+        }
+      }
+    },
+    "Rows of different lengths": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangées de longueurs différentes"
           }
         }
       }
@@ -2501,12 +2891,42 @@
         }
       }
     },
+    "Shelf %@, %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clayette %@, %lld"
+          }
+        }
+      }
+    },
     "Shellfish": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Fruits de mer"
+          }
+        }
+      }
+    },
+    "Shelves": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clayettes"
+          }
+        }
+      }
+    },
+    "Shelves holding a row of bottles, one to three deep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clayettes d’une rangée de bouteilles, sur un à trois rangs"
           }
         }
       }
@@ -2671,6 +3091,16 @@
         }
       }
     },
+    "Tap a place. Tapping another bottle swaps them; a bin takes the bottle if it has room.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez un emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
+          }
+        }
+      }
+    },
     "Tap a position. Tapping another bottle swaps them.": {
       "localizations": {
         "fr": {
@@ -2687,6 +3117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez le nouvel emplacement"
+          }
+        }
+      }
+    },
+    "Tap where to put %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez où mettre %@"
           }
         }
       }
@@ -2871,6 +3311,16 @@
         }
       }
     },
+    "This place is full.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet emplacement est plein."
+          }
+        }
+      }
+    },
     "This removes every bottle, rack and tasting from this device.": {
       "localizations": {
         "fr": {
@@ -2927,6 +3377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Voyage"
+          }
+        }
+      }
+    },
+    "Two, one behind the other": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deux, l’une derrière l’autre"
           }
         }
       }
@@ -3111,6 +3571,16 @@
         }
       }
     },
+    "Wine fridge or cabinet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave à vin ou armoire"
+          }
+        }
+      }
+    },
     "Wine fridge, 24": {
       "localizations": {
         "fr": {
@@ -3271,6 +3741,16 @@
         }
       }
     },
+    "back": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "derrière"
+          }
+        }
+      }
+    },
     "bottles": {
       "localizations": {
         "fr": {
@@ -3317,6 +3797,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "vins différents"
+          }
+        }
+      }
+    },
+    "front": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "devant"
+          }
+        }
+      }
+    },
+    "middle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "milieu"
           }
         }
       }

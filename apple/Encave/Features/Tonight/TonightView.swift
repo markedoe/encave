@@ -91,7 +91,7 @@ private struct TonightPick: View {
                         .font(.footnote.weight(.medium))
                 }
             }
-            if let location = group.bottles.first.flatMap({ model.cellar.locationLabel(for: $0) }) {
+            if let location = group.bottles.first.flatMap({ model.locationLabel(for: $0) }) {
                 Label(location, systemImage: "square.grid.3x3")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)

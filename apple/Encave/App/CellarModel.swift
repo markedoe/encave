@@ -235,6 +235,7 @@ extension SampleData.Labels {
         var labels = Self()
         labels.mainRack = String(localized: "Main rack")
         labels.wineFridge = String(localized: "Wine fridge")
+        labels.bins = String(localized: "Diamond bins")
         labels.tastingNote = String(localized: "Silky, red fruit, long finish.")
         labels.kitchen = String(localized: "Kitchen")
         labels.occasion = String(localized: "Dinner with friends")
