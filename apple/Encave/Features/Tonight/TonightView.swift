@@ -100,12 +100,12 @@ private struct TonightPick: View {
                 Button {
                     if let bottle = group.bottles.first { model.sheet = .drink(bottleID: bottle.id) }
                 } label: {
-                    Label("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
+                    ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("action.tonight.drink")
                 Button(action: next) {
-                    Label("Another idea", systemImage: "shuffle").frame(maxWidth: .infinity)
+                    ActionLabel("Another idea", systemImage: "shuffle").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("action.tonight.next")

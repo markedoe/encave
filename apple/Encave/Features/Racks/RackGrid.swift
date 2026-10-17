@@ -95,11 +95,60 @@ struct RackGrid: View {
                     Text(verbatim: "\(column + 1)")
                         .font(.system(size: max(10, cellSize * 0.22), weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
-                        .frame(width: max(44, size))
+                        .frame(width: size)
                 }
             }
         }
         .accessibilityHidden(true)
+    }
+}
+
+extension RackGrid {
+    /// The cell size at which the whole rack fits in a space, headers included.
+    static func fittingCellSize(for rack: Rack, in space: CGSize, showsHeaders: Bool = true) -> CGFloat {
+        let columns = CGFloat(rack.maxColumns), rows = CGFloat(rack.rows)
+        var width: CGFloat, height: CGFloat
+        switch rack.kind {
+        case .grid:
+            width = columns * 1.08
+            height = rows * 1.08 + (showsHeaders ? 0.4 : 0)
+        case .staggered:
+            width = (columns + 0.5) * 1.04 + 0.4
+            height = rows * 0.9 + 0.4
+        case .shelves:
+            width = columns * 1.1
+            height = rows * 1.45 + (showsHeaders ? 0.4 : 0)
+        case .bins:
+            width = (columns + 0.5) * 1.7
+            height = 1.7 + (rows - 1) * 0.92
+        }
+        if showsHeaders { width += 0.5 }
+        let fit = min(space.width / width, space.height / height)
+        return min(max(fit, 26), 80)
+    }
+}
+
+/// A rack drawn as large as the space allows, scrollable when zoomed in.
+struct FittedRackGrid: View {
+    let rack: Rack
+    /// 1 fits the whole rack; more zooms in.
+    var zoom: CGFloat = 1
+    var selected: Set<Slot> = []
+    var highlighted: Slot?
+    var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let padding: CGFloat = 16
+            let space = CGSize(width: proxy.size.width - padding * 2, height: proxy.size.height - padding * 2)
+            let base = RackGrid.fittingCellSize(for: rack, in: space)
+            ScrollView([.horizontal, .vertical]) {
+                RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted, onTap: onTap)
+                    .padding(padding)
+                    .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
+            }
+            .defaultScrollAnchor(.center)
+        }
     }
 }
 
@@ -136,11 +185,12 @@ struct RackCellView: View {
             Group {
                 if rack.kind == .bins { bin } else { position }
             }
-            .frame(width: max(44, size), height: max(44, size))
+            .frame(width: size, height: size)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityText)
+        .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)")
         .accessibilityAddTraits(selectedCount > 0 ? .isSelected : [])
     }
 

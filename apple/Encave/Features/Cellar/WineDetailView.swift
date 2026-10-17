@@ -22,7 +22,7 @@ struct WineDetailView: View {
                         Button {
                             if let bottle = bottles.first { model.sheet = .drink(bottleID: bottle.id) }
                         } label: {
-                            Label("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
+                            ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .accessibilityIdentifier("action.wine.drink")
@@ -30,7 +30,7 @@ struct WineDetailView: View {
                         Button {
                             model.sheet = .addBottle(AddBottleContext(wine: wine))
                         } label: {
-                            Label("Add", systemImage: "plus").frame(maxWidth: .infinity)
+                            ActionLabel("Add", systemImage: "plus").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                         .accessibilityIdentifier("action.wine.add")

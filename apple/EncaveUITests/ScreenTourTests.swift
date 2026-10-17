@@ -44,6 +44,15 @@ final class ScreenTourTests: XCTestCase {
         // Cellar, a wine, its drink sheet, adding bottles.
         openSection(0, "cellar")
         snapshot("cellar")
+        #if os(iOS)
+        // The swipe actions on a wine ("Drink" on the leading edge).
+        if element("wine.row").waitForExistence(timeout: 10) {
+            element("wine.row").swipeRight()
+            snapshot("cellar-swipe")
+            element("wine.row").swipeLeft()
+            sleep(1)
+        }
+        #endif
         if element("wine.row").waitForExistence(timeout: 10) {
             element("wine.row").press()
             snapshot("wine")
@@ -76,6 +85,16 @@ final class ScreenTourTests: XCTestCase {
             }
             card.press()
             snapshot("rack-\(index + 1)")
+            checkRackFits(screen: "rack \(index + 1)")
+            if index == 0 {
+                // The first place of the main rack holds a bottle: its sheet has Drink and Move.
+                let cell = element("rack.cell.0-0")
+                if cell.waitForExistence(timeout: 5) {
+                    cell.press()
+                    snapshot("rack-bottle-sheet")
+                    closeSheet()
+                }
+            }
             goBack()
         }
         if element("racks.add").exists {
@@ -207,7 +226,12 @@ final class ScreenTourTests: XCTestCase {
     private func snapshot(_ name: String) {
         sleep(1)
         step += 1
+        #if os(macOS)
+        // The whole screen: shows the window even if the app cannot be captured on its own.
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        #else
         let attachment = XCTAttachment(screenshot: app.screenshot())
+        #endif
         attachment.name = String(format: "%@-%02d-%@", language, step, name)
         attachment.lifetime = .keepAlways
         add(attachment)
@@ -254,7 +278,10 @@ final class ScreenTourTests: XCTestCase {
     /// Horizontal offset (points) between the center of what is drawn in a button
     /// (icon and text) and the center of the button. Nil if nothing stands out.
     private func contentOffset(of frame: CGRect, in image: CGImage, scale: CGFloat) -> CGFloat? {
-        let inset = frame.insetBy(dx: 6, dy: 6)
+        // Leave out the rounded ends: glass highlights there would count as content.
+        let inset = frame.insetBy(dx: max(8, frame.height / 2), dy: 6)
+        // Reference color: the button's fill just inside its left end.
+        let fillPoint = CGPoint(x: (frame.minX + max(4, frame.height / 4)) * scale, y: frame.midY * scale)
         let rect = CGRect(x: inset.minX * scale, y: inset.minY * scale,
                           width: inset.width * scale, height: inset.height * scale).integral
         guard rect.width > 4, rect.height > 4, let crop = image.cropping(to: rect) else { return nil }
@@ -264,26 +291,52 @@ final class ScreenTourTests: XCTestCase {
                                       bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
         context.draw(crop, in: CGRect(x: 0, y: 0, width: width, height: height))
-        // The button's own fill: the pixel at the middle of the left edge.
-        let mid = (height / 2) * width * 4
-        let background = (Int(pixels[mid]), Int(pixels[mid + 1]), Int(pixels[mid + 2]))
-        var minX = width, maxX = -1
+        guard let background = color(at: fillPoint, in: image) else { return nil }
+        // Columns holding at least two strongly contrasting pixels are content (icon, text).
+        var counts = [Int](repeating: 0, count: width)
         for y in stride(from: 0, to: height, by: 2) {
             for x in 0..<width {
                 let i = (y * width + x) * 4
                 let diff = abs(Int(pixels[i]) - background.0) + abs(Int(pixels[i + 1]) - background.1)
                     + abs(Int(pixels[i + 2]) - background.2)
-                if diff > 120 {
-                    minX = min(minX, x)
-                    maxX = max(maxX, x)
-                }
+                if diff > 120 { counts[x] += 1 }
             }
         }
-        guard maxX > minX else { return nil }
+        guard let minX = counts.firstIndex(where: { $0 >= 2 }),
+              let maxX = counts.lastIndex(where: { $0 >= 2 }), maxX > minX else { return nil }
+        // The crop is centered on the button, so its middle is the button's middle.
         let contentCenter = CGFloat(minX + maxX) / 2
         return (contentCenter - CGFloat(width) / 2) / scale
     }
+
+    private func color(at point: CGPoint, in image: CGImage) -> (Int, Int, Int)? {
+        guard let pixel = image.cropping(to: CGRect(x: Int(point.x), y: Int(point.y), width: 1, height: 1)) else { return nil }
+        var rgba = [UInt8](repeating: 0, count: 4)
+        guard let context = CGContext(data: &rgba, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        return (Int(rgba[0]), Int(rgba[1]), Int(rgba[2]))
+    }
     #endif
+
+    /// At the default zoom, the whole rack is visible: no place is cut off by the screen edges.
+    private func checkRackFits(screen: String) {
+        let cells = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "rack.cell."))
+        guard cells.count > 0 else {
+            XCTFail("\(screen): no rack places found")
+            return
+        }
+        let window = app.windows.firstMatch.frame
+        var outside: [String] = []
+        for index in 0..<cells.count {
+            let frame = cells.element(boundBy: index).frame
+            if frame.minX < window.minX - 1 || frame.maxX > window.maxX + 1 {
+                outside.append(cells.element(boundBy: index).identifier)
+            }
+        }
+        XCTAssertTrue(outside.isEmpty, "\(screen): \(outside.count) places are off screen, such as \(outside.prefix(3))")
+    }
 }
 
 private extension XCUIElement {

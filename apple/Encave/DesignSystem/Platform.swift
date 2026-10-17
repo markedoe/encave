@@ -50,4 +50,13 @@ extension View {
     func fieldHelp(_ text: LocalizedStringKey) -> some View {
         help(Text(text))
     }
+
+    /// Half-height sheets are see-through on iOS 26: give forms an opaque background.
+    func solidSheetBackground() -> some View {
+        #if os(iOS)
+        return presentationBackground(Color(uiColor: .systemGroupedBackground))
+        #else
+        return self
+        #endif
+    }
 }

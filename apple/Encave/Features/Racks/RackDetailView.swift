@@ -13,21 +13,17 @@ struct RackDetailView: View {
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
-            ScrollView([.horizontal, .vertical]) {
-                RackGrid(
-                    rack: rack, cellSize: 52 * min(2.2, max(0.5, zoom * pinch)),
-                    selected: moving?.slot.map { [$0] } ?? [],
-                    highlighted: model.highlightedSlot,
-                    onTap: { cell, bottles in tap(rack, cell, bottles) }
-                )
-                .padding(28)
-                .animation(.snappy, value: zoom)
-            }
-            .defaultScrollAnchor(.center)
+            FittedRackGrid(
+                rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
+                selected: moving?.slot.map { [$0] } ?? [],
+                highlighted: model.highlightedSlot,
+                onTap: { cell, bottles in tap(rack, cell, bottles) }
+            )
+            .animation(.snappy, value: zoom)
             .gesture(
                 MagnifyGesture()
                     .updating($pinch) { value, state, _ in state = value.magnification }
-                    .onEnded { value in zoom = min(2.2, max(0.5, zoom * value.magnification)) }
+                    .onEnded { value in zoom = min(3, max(0.6, zoom * value.magnification)) }
             )
             .safeAreaInset(edge: .bottom) {
                 if let moving {
@@ -51,10 +47,12 @@ struct RackDetailView: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
-                    Button { zoom = max(0.5, zoom - 0.2) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
+                    Button { zoom = max(0.6, zoom - 0.25) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
                         .keyboardShortcut("-")
-                    Button { zoom = min(2.2, zoom + 0.2) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
+                        .disabled(zoom <= 0.6)
+                    Button { zoom = min(3, zoom + 0.25) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
                         .keyboardShortcut("+")
+                        .disabled(zoom >= 3)
                     Button { model.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
                 }
             }
@@ -69,6 +67,7 @@ struct RackDetailView: View {
                     }
                 }
                 .presentationDetents([.medium, .large])
+                .solidSheetBackground()
             }
             .task(id: model.highlightedSlot) {
                 guard model.highlightedSlot?.rackID == rackID else { return }
@@ -225,9 +224,9 @@ private struct BottleInCellRow: View {
                 }
             }
             HStack(spacing: 10) {
-                Button { onAction(.drink(bottle)) } label: { Label("Drink", systemImage: "wineglass") }
+                Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
                     .buttonStyle(.borderedProminent)
-                Button { onAction(.move(bottle)) } label: { Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
+                Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
                     .buttonStyle(.bordered)
                 Spacer()
                 Menu {

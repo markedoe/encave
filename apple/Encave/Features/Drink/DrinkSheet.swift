@@ -54,6 +54,7 @@ struct DrinkSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .solidSheetBackground()
         .macSheetFrame(width: 480, height: 600)
     }
 }

@@ -619,7 +619,7 @@ INFO_PLIST = {
 }
 
 UI_CALL = re.compile(r'(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
-                     r'DisclosureGroup|SecureField|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
+                     r'DisclosureGroup|SecureField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 

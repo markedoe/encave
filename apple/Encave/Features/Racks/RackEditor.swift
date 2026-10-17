@@ -297,11 +297,7 @@ struct SlotPickerView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView([.horizontal, .vertical]) {
-                RackGrid(rack: rack, cellSize: 50, selected: Set(selection)) { cell, _ in toggle(cell) }
-                .padding(24)
-            }
-            .defaultScrollAnchor(.center)
+            FittedRackGrid(rack: rack, selected: Set(selection)) { cell, _ in toggle(cell) }
             .safeAreaInset(edge: .bottom) {
                 Text("\(selection.count) of \(limit) chosen")
                     .font(.subheadline.weight(.medium).monospacedDigit())
@@ -361,8 +357,7 @@ struct MoveBottleView: View {
                         .pickerStyle(.menu)
                         .padding()
                         if let rack = rackID.flatMap({ model.cellar.rack($0) }) {
-                            ScrollView([.horizontal, .vertical]) {
-                                RackGrid(rack: rack, cellSize: 50, highlighted: bottle.slot) { cell, _ in
+                            FittedRackGrid(rack: rack, highlighted: bottle.slot) { cell, _ in
                                     if bottle.slot?.cell == cell {
                                         dismiss()
                                     } else if let free = model.cellar.freeSlot(in: cell) {
@@ -374,10 +369,7 @@ struct MoveBottleView: View {
                                     } else {
                                         model.showToast(String(localized: "This place is full."))
                                     }
-                                }
-                                .padding(24)
                             }
-                            .defaultScrollAnchor(.center)
                             Text("Tap a place. Tapping another bottle swaps them; a bin takes the bottle if it has room.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
