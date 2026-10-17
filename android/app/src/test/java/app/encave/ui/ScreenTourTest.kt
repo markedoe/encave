@@ -20,6 +20,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
@@ -249,6 +250,34 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("add.expected")
         scrollTo("add.order.footer")
         capture("28-add-bottle-on-order")
+    }
+
+    @Test
+    fun bulkSelection() {
+        tap("cellar.sort")
+        tap("cellar.select")
+        val rows = compose.onAllNodesWithTag("wine.select.row")
+        rows[0].performClick()
+        rows[2].performClick()
+        compose.waitForIdle()
+        rows[0].assertIsOn()
+        capture("30-cellar-select")
+        tap("cellar.select.delete")
+        capture("31-cellar-select-delete")
+    }
+
+    @Test
+    fun rackCheck() {
+        tab("Racks")
+        tap("rack.row.0")
+        tap("rack.audit")
+        tap("cell.0.0")
+        tap("cell.0.1")
+        capture("32-rack-check")
+        tap("action.audit.finish")
+        capture("33-rack-check-missing")
+        tap("audit.take_out")
+        compose.onNodeWithTag("action.audit.finish").assertDoesNotExist()
     }
 
     @Test

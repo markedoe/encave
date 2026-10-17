@@ -821,6 +821,42 @@ S = [
  ("shortcut_scan", "Scan a label", "Scanner une étiquette"),
  ("shortcut_tonight", "What to open tonight", "Que boire ce soir"),
 
+ # Several wines at once
+ ("action_select_wines", "Select wines", "Sélectionner des vins"),
+ ("action_select", "Select", "Sélectionner"),
+ ("selection_count", "Selected: %1$d", "Sélection : %1$d"),
+ ("action_end_selection", "End selection", "Terminer la sélection"),
+ ("action_place_in_rack", "Place in a rack", "Ranger dans un casier"),
+ ("action_take_out_of_racks", "Take out of racks", "Sortir des casiers"),
+ ("confirm_delete_wines_title", "Delete these wines?", "Supprimer ces vins ?"),
+ ("confirm_delete_wines_body", "Their bottles and tastings are deleted too. You can undo right after.", "Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après."),
+ ("action_delete_wines", "Delete wines", "Supprimer les vins"),
+ ("msg_bottles_placed", "Bottles placed: %1$d", "Bouteilles rangées : %1$d"),
+ ("msg_no_free_place", "No free place in this rack for bottles without a place.", "Aucun emplacement libre dans ce casier pour les bouteilles sans emplacement."),
+ ("msg_bottles_taken_out", "Bottles taken out of their places: %1$d", "Bouteilles sorties de leur emplacement : %1$d"),
+ ("msg_bottles_gone", "Bottles removed from the cellar: %1$d", "Bouteilles retirées de la cave : %1$d"),
+ ("msg_wines_deleted", "Wines deleted: %1$d", "Vins supprimés : %1$d"),
+ ("help_racks_several_title", "Several wines at once", "Plusieurs vins à la fois"),
+ ("help_racks_several", "In the Cellar list, choose **Select wines** in the sort menu (or touch and hold a wine, then **Select**), tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.",
+  "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu de tri (ou maintenez un vin appuyé, puis **Sélectionner**), cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."),
+
+ # Rack check
+ ("action_check_rack", "Check this rack", "Vérifier ce casier"),
+ ("audit_hint", "Tap each bottle you find in the rack.", "Touchez chaque bouteille que vous trouvez dans le casier."),
+ ("audit_found", "Found: %1$d of %2$d", "Trouvées : %1$d sur %2$d"),
+ ("action_end_check", "End check", "Terminer la vérification"),
+ ("audit_missing_title", "Bottles not found: %1$d", "Bouteilles introuvables : %1$d"),
+ ("audit_missing_body", "Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.",
+  "Sorties, elles restent dans la cave sans emplacement. Parties, elles quittent la cave (offertes, bues ailleurs, cassées). Vous pouvez annuler juste après."),
+ ("action_take_them_out", "Take them out of the rack", "Les sortir du casier"),
+ ("action_mark_them_gone", "Mark them as gone", "Les marquer comme parties"),
+ ("action_keep_checking", "Keep checking", "Continuer la vérification"),
+ ("audit_all_found", "Every bottle is where it should be.", "Chaque bouteille est à sa place."),
+ ("audit_found_state", "Found", "Trouvée"),
+ ("help_racks_check_title", "Checking a rack", "Vérifier un casier"),
+ ("help_racks_check", "Choose **Check this rack**, tap each bottle you find, then **End check**. For the bottles not found, choose **Take them out of the rack** (they stay in the cellar without a place) or **Mark them as gone** (they leave the cellar). **Undo** puts everything back.",
+  "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."),
+
 ]
 
 P = [

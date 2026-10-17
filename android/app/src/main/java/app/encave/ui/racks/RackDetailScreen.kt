@@ -51,6 +51,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -123,6 +125,18 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var highlightId by rememberSaveable { mutableStateOf(route.highlightBottleId) }
     var showsList by rememberSaveable { mutableStateOf(false) }
     var drinking by remember { mutableStateOf<Bottle?>(null) }
+    // Checking the rack: the places whose bottles were found.
+    var auditing by rememberSaveable { mutableStateOf(false) }
+    var checked by remember { mutableStateOf(setOf<Slot>()) }
+    var confirmingAudit by remember { mutableStateOf(false) }
+    fun endAudit() {
+        auditing = false
+        checked = emptySet()
+        confirmingAudit = false
+    }
+    androidx.activity.compose.BackHandler(auditing) { endAudit() }
+    val inRack = rack?.let { r -> cellar.bottlesInCellar.filter { it.slot?.rackId == r.id } }.orEmpty()
+    val missing = inRack.filter { it.slot !in checked }
     val moving = movingId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
     val highlighted = highlightId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id }?.slot }
         ?.takeIf { it.rackId == rack?.id }
@@ -166,6 +180,18 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                 },
                 actions = {
                     if (rack != null) {
+                        IconButton(
+                            onClick = {
+                                selectedKey = null
+                                movingId = null
+                                checked = emptySet()
+                                auditing = true
+                            },
+                            enabled = !auditing,
+                            modifier = Modifier.testTag("rack.audit"),
+                        ) {
+                            Icon(Icons.Outlined.Checklist, contentDescription = stringResource(R.string.action_check_rack))
+                        }
                         IconButton(onClick = { showsList = true }, modifier = Modifier.testTag("action.bottle_list")) {
                             Icon(Icons.AutoMirrored.Filled.FormatListBulleted, contentDescription = stringResource(R.string.action_bottle_list))
                         }
@@ -205,19 +231,32 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             val moveHere = stringResource(R.string.rack_cell_move_here)
             val addHere = stringResource(R.string.rack_cell_add)
             val actions = stringResource(R.string.rack_cell_actions)
+            val foundLabel = stringResource(R.string.audit_found_state)
             ZoomableRack(rack, zoom, Modifier.weight(1f).fillMaxWidth()) { cellSize, zoomHere ->
                 RackGrid(
                     rack = rack,
                     cellar = cellar,
                     cellSize = cellSize,
                     highlighted = highlighted,
-                    selected = setOfNotNull(moving?.slot),
-                    selectedCell = selectedCell.takeIf { moving == null },
-                    focusWine = focusWine.takeIf { moving == null },
-                    clickLabel = { bottles -> if (moving != null) moveHere else if (bottles.isEmpty()) addHere else actions },
+                    selected = if (auditing) checked else setOfNotNull(moving?.slot),
+                    selectedCell = selectedCell.takeIf { moving == null && !auditing },
+                    focusWine = focusWine.takeIf { moving == null && !auditing },
+                    clickLabel = { bottles ->
+                        when {
+                            auditing -> foundLabel
+                            moving != null -> moveHere
+                            bottles.isEmpty() -> addHere
+                            else -> actions
+                        }
+                    },
                     onCellClick = { cell, bottles ->
                         val source = moving
                         when {
+                            // A tap says "the bottles of this place are here" (or undoes it).
+                            auditing -> {
+                                val slots = bottles.mapNotNull { it.slot }.toSet()
+                                if (slots.isNotEmpty()) checked = if (checked.containsAll(slots)) checked - slots else checked + slots
+                            }
                             source != null -> {
                                 movingId = null
                                 val from = source.slot
@@ -244,6 +283,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         }
                     },
                     onCellLongClick = { _, bottles ->
+                        if (auditing) return@RackGrid
                         bottles.firstOrNull()?.let {
                             selectedKey = null
                             movingId = it.id.toString()
@@ -252,7 +292,21 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     onCellDoubleClick = { zoomHere() },
                 )
             }
-            if (moving == null) {
+            if (auditing) {
+                AuditBar(
+                    checked = inRack.size - missing.size,
+                    total = inRack.size,
+                    onFinish = {
+                        if (missing.isEmpty()) {
+                            endAudit()
+                            viewModel.showMessage(UiText.Res(R.string.audit_all_found))
+                        } else {
+                            confirmingAudit = true
+                        }
+                    },
+                    onCancel = ::endAudit,
+                )
+            } else if (moving == null) {
                 AnimatedVisibility(selectedBottle != null, Modifier.align(Alignment.CenterHorizontally)) {
                     // Keep the last bottle while the card slides away.
                     val shown = remember { arrayOfNulls<Bottle>(1) }
@@ -317,6 +371,25 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             onMove = { movingId = actionBottle.id.toString() },
             onTakeOut = { viewModel.move(actionBottle.id, null) },
             onGone = { viewModel.markGone(actionBottle.id) },
+        )
+    }
+    if (confirmingAudit && missing.isNotEmpty()) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirmingAudit = false },
+            title = { Text(stringResource(R.string.audit_missing_title, missing.size)) },
+            text = { Text(stringResource(R.string.audit_missing_body)) },
+            confirmButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    TextButton(
+                        onClick = { viewModel.takeOut(missing.map { it.id }.toSet()); endAudit() },
+                        modifier = Modifier.testTag("audit.take_out"),
+                    ) { Text(stringResource(R.string.action_take_them_out)) }
+                    TextButton(onClick = { viewModel.markGone(missing.map { it.id }.toSet()); endAudit() }) {
+                        Text(stringResource(R.string.action_mark_them_gone), color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { confirmingAudit = false }) { Text(stringResource(R.string.action_keep_checking)) }
+                }
+            },
         )
     }
     drinking?.let { bottle ->
@@ -574,6 +647,43 @@ private fun CellSheet(
                     headlineContent = { Text(stringResource(R.string.rack_add_here)) },
                     modifier = Modifier.clickable { onDismiss(); onAdd() },
                 )
+            }
+        }
+    }
+}
+
+/** While checking a rack: how many bottles were found, and End check. */
+@Composable
+private fun AuditBar(checked: Int, total: Int, onFinish: () -> Unit, onCancel: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(Dimens.radiusCard),
+        modifier = Modifier.fillMaxWidth().padding(Dimens.l),
+    ) {
+        Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                Icon(Icons.Outlined.Checklist, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.audit_hint), style = MaterialTheme.typography.titleSmall)
+            }
+            androidx.compose.material3.LinearProgressIndicator(
+                progress = { checked.toFloat() / total.coerceAtLeast(1) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                stringResource(R.string.audit_found, checked, total),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.s, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(Dimens.s),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onCancel, modifier = Modifier.testTag("sheet.cancel")) { Text(stringResource(R.string.action_cancel)) }
+                androidx.compose.material3.Button(onClick = onFinish, modifier = Modifier.testTag("action.audit.finish")) {
+                    app.encave.ui.components.ActionContent(stringResource(R.string.action_end_check), Icons.Filled.Check)
+                }
             }
         }
     }

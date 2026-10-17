@@ -201,10 +201,67 @@ class AppViewModel(
         change<Unit>({ post(UiText.Res(R.string.msg_order_cancelled)) { restore(listOf(before)) } }) { it.markGone(bottleId) }
     }
 
-    /** Puts bottle records back as they were (undo of a bulk change). */
+    /**
+     * Puts bottle records back as they were (undo of a change to several bottles). Bottles
+     * without a place first, so the places they held are free again; a place taken in the
+     * meantime is left empty.
+     */
     private fun restore(bottles: List<Bottle>) = change<Unit> { c ->
-        bottles.forEach { bottle -> if (c.bottles[bottle.id] != null) c.updateBottle(bottle) }
+        bottles.sortedBy { it.slot != null }.forEach { bottle ->
+            if (c.bottles[bottle.id] != null) {
+                runCatching { c.updateBottle(bottle) }.onFailure { c.updateBottle(bottle.copy(slot = null)) }
+            }
+        }
     }
+
+    // region Several wines or bottles at once (one Undo for all)
+
+    private fun bottlesOfWines(wineIds: Set<UUID>) = cellar.value.bottles.values.filter { it.wineId in wineIds }
+
+    fun placeWines(wineIds: Set<UUID>, rackId: UUID) {
+        val before = bottlesOfWines(wineIds)
+        change<Int>({ placed ->
+            if (placed == 0) post(UiText.Res(R.string.msg_no_free_place))
+            else post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+        }) { it.place(wineIds, rackId) }
+    }
+
+    fun unplaceWines(wineIds: Set<UUID>) {
+        val before = bottlesOfWines(wineIds)
+        change<Int>({ moved ->
+            if (moved > 0) post(UiText.Res(R.string.msg_bottles_taken_out, listOf(moved))) { restore(before) }
+        }) { it.unplace(wineIds) }
+    }
+
+    fun deleteWines(wineIds: Set<UUID>) {
+        val before = cellar.value
+        val wines = wineIds.mapNotNull { before.wines[it] }
+        val bottles = before.bottles.values.filter { it.wineId in wineIds }
+        val discoveries = before.discoveries.values.filter { it.wineId in wineIds }
+        change<Unit>({
+            post(UiText.Res(R.string.msg_wines_deleted, listOf(wines.size))) {
+                change<Unit> { c -> c.merge(Cellar(wines, bottles, discoveries = discoveries)) }
+            }
+        }) { c -> wineIds.forEach { c.deleteWine(it) } }
+    }
+
+    /** Bottles not found where they should be: they stay in the cellar without a place. */
+    fun takeOut(bottleIds: Set<UUID>) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        change<Unit>({ post(UiText.Res(R.string.msg_bottles_taken_out, listOf(before.size))) { restore(before) } }) { c ->
+            before.forEach { c.move(it.id, null) }
+        }
+    }
+
+    /** Bottles no longer in the cellar (given away, drunk elsewhere, broken). */
+    fun markGone(bottleIds: Set<UUID>) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        change<Unit>({ post(UiText.Res(R.string.msg_bottles_gone, listOf(before.size))) { restore(before) } }) { c ->
+            before.forEach { c.markGone(it.id) }
+        }
+    }
+
+    // endregion
 
     fun deleteBottle(bottleId: UUID) {
         val snapshot = cellar.value.bottles[bottleId] ?: return

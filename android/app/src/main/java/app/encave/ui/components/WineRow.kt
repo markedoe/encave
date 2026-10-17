@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.ui.text.TextStyle
@@ -64,6 +67,8 @@ fun WineGroupRow(
     selected: Boolean = false,
     showMaturity: Boolean = true,
     extra: (@Composable () -> Unit)? = null,
+    /** Set while choosing several wines: a check box, and a tap ticks the wine. */
+    checked: Boolean? = null,
 ) {
     val wine = group.wine
     val maturity = Maturity.of(wine, year)
@@ -72,9 +77,22 @@ fun WineGroupRow(
     val style = stringResource(wine.color.labelRes)
     val origin = wine.origin()
     ListItem(
-        modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        colors = if (selected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
-        leadingContent = { WineColorDot(wine.color, size = 16.dp) },
+        modifier = if (checked != null) {
+            modifier.toggleable(checked, role = Role.Checkbox, onValueChange = { onClick() })
+        } else {
+            modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        },
+        colors = if (selected || checked == true) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
+        leadingContent = {
+            if (checked != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = checked, onCheckedChange = null)
+                    WineColorDot(wine.color, size = 16.dp)
+                }
+            } else {
+                WineColorDot(wine.color, size = 16.dp)
+            }
+        },
         headlineContent = { Text(wine.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

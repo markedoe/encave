@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Diamond
 import androidx.compose.material.icons.outlined.GridOn
@@ -86,6 +87,8 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_finding, R.string.help_racks_finding_title, Icons.Outlined.Search),
                     HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),
                     HelpSection(R.string.help_racks_moving, R.string.help_racks_moving_title),
+                    HelpSection(R.string.help_racks_several, R.string.help_racks_several_title),
+                    HelpSection(R.string.help_racks_check, R.string.help_racks_check_title, Icons.Outlined.Checklist),
                     HelpSection(R.string.help_racks_irregular, R.string.help_racks_irregular_title),
                 ),
             ),
