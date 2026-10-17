@@ -80,12 +80,49 @@ cd android
   `android/app/build/screens` (never commit them) and checks the layout:
   centered `action.*` buttons, equal side-by-side buttons, racks that fit.
 
+## Sync
+
+The protocol is specified in [SYNC.md](SYNC.md); the Swift implementation is in
+CaveKit (`SyncState.swift`, `SyncProtocol.swift`, `RemoteSync.swift`,
+`RelayMailbox.swift`) and the app layer in `apple/Encave/Services/Sync/`.
+
+- **Tests:** `swift test --package-path apple/Packages/CaveKit` covers merges,
+  pairing, handshakes, remote sync and the published test vectors.
+- **Relay:** `node --test relay/test/relay.test.mjs`. To sync through a running
+  relay, start `node relay/server.mjs` and run the CaveKit tests with
+  `ENCAVE_RELAY_URL=http://localhost:8787`.
+- **Two devices:** pairing needs two devices (or a device and a simulator) on
+  the same network. The simulator cannot scan QR codes; type the code instead.
+
+### Turning on iCloud sync (one-time setup)
+
+The app can sync away from home through the user's own iCloud (CloudKit private
+database, no server of ours). The option stays hidden until the build declares
+a container:
+
+1. In the Apple Developer account, create the iCloud container
+   `iCloud.app.encave` and enable iCloud (CloudKit) for the `app.encave` App ID.
+2. In `apple/project.yml`:
+   - set `ENCAVE_CLOUDKIT_CONTAINER: iCloud.app.encave`;
+   - add to the entitlements of both app targets:
+
+     ```yaml
+     com.apple.developer.icloud-container-identifiers: [iCloud.app.encave]
+     com.apple.developer.icloud-services: [CloudKit]
+     ```
+
+     The iOS target needs an `entitlements:` block like the Mac one.
+3. After the first sync from a development build, open the CloudKit Console and
+   deploy the schema (record type `EncaveFile` with an Asset field `data`) to
+   Production, so TestFlight and App Store builds can use it.
+
 ## Continuous integration
 
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks |
-| `apple.yml` | Model tests on Linux and macOS, builds both apps; on push, uploads to TestFlight |
+| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone and iPad (artifact `screens`), builds both apps; on push, uploads to TestFlight |
+| `relay.yml` | Relay HTTP tests, and two simulated devices syncing through a running relay |
 | `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`) |
 | `security.yml` | Weekly full-history secret scan |
 

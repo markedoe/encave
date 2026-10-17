@@ -8,7 +8,19 @@ on this repository. You should get an answer within 7 days.
 
 ## Data that leaves the device
 
-Your cellar stays on your devices. Sync, when available, is end-to-end encrypted.
+Your cellar stays on your devices.
+
+- **Sync between your devices** is end-to-end encrypted.
+  - On the same network, devices talk directly with no server.
+  - Away from home, they exchange encrypted files through a relay you choose,
+    which never has a key.
+- **Pairing:** each device has its own identity key (Keychain). Pairing is
+  confirmed by comparing a 6-digit code on both screens.
+- **Removing a device** shuts it out of the network handshake and rotates the key
+  of the remote files.
+
+The protocol and its threat model are in [docs/SYNC.md](docs/SYNC.md).
+
 The only exception is the optional AI label recognition, off by default: when
 you enable it with your own API key, the label photo (and nothing else) is sent
 directly to the provider you chose. The key is kept in the Keychain on the device.

@@ -6,9 +6,10 @@ Encave is a set of **local-first native apps** with end-to-end encrypted
 sync between devices and users (see `docs/ROADMAP.md`):
 
 - `apple/`: SwiftUI app (iPhone, iPad, native macOS); model in `apple/Packages/CaveKit`
-- `android/` (planned): Kotlin + Jetpack Compose app
-- `core/` (planned): Rust sync core (CRDT, encryption, storage) exposed through UniFFI
-- `relay/` (planned): relay that stores and forwards ciphertext only
+- `android/`: Kotlin + Jetpack Compose app (phones, tablets, foldables)
+- `relay/`: self-hostable relay that stores ciphertext only (Node, Cloudflare Workers)
+- Sync protocol: `docs/SYNC.md`, implemented in CaveKit and mirrored in Kotlin
+  with shared test vectors
 
 ## Product and design rules
 
@@ -26,7 +27,7 @@ sync between devices and users (see `docs/ROADMAP.md`):
 ## Privacy rules
 
 - User data stays on device; anything sent over the network is end-to-end
-  encrypted. The relay must never see plaintext.
+  encrypted. The relay must never see plaintext (protocol: `docs/SYNC.md`).
 - Exception: the optional AI label recognition, off by default, which sends
   only the label photo directly to the provider the user sets up with their
   own key. Never send the cellar or anything else to it.

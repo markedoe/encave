@@ -27,82 +27,80 @@ it with.
 ## Architecture
 
 ```
- iPhone / iPad / Mac (SwiftUI)        Android (Compose)
-            │                                │
-            └──────────┬─────────────────────┘
-                       │  UniFFI bindings
-              ┌────────▼────────┐
-              │  Sync core (Rust)│  CRDT documents, encryption,
-              │                  │  local storage, sync protocol
-              └────────┬────────┘
-                       │  encrypted blobs only
-              ┌────────▼────────┐
-              │      Relay       │  stores and forwards ciphertext;
-              │ (hosted or self- │  cannot read data
-              │     hosted)      │
-              └─────────────────┘
+ iPhone / iPad / Mac (SwiftUI)              Android (Compose)
+   CaveKit (Swift package)                  core (Kotlin module)
+   model, merge, sync protocol      ⇄       same model and protocol,
+                                            checked with shared test vectors
+            │  same Wi-Fi: Bonjour, direct, encrypted  │
+            └──────────────────────┬───────────────────┘
+                                   │  away from home: encrypted files only
+                          ┌────────▼────────┐
+                          │  Storage         │  relay (self-hosted, Node or
+                          │  (never has keys)│  Cloudflare), later iCloud,
+                          └─────────────────┘  Google Drive
 ```
 
-- **Sync core in Rust**, shared by both apps through
-  [UniFFI](https://github.com/mozilla/uniffi-rs) so merge logic and
-  cryptography are written once. CRDT engine candidates:
-  [Automerge](https://automerge.org) (Rust core) and
-  [Yrs](https://github.com/y-crdt/y-crdt) (Rust port of Yjs); a spike decides.
-- **One document per cellar.** Bottles, rack positions, consumption and
-  tasting notes are CRDT objects keyed by UUID, so offline edits on several
-  devices merge automatically. Each bottle is its own object with a status;
-  two people drinking "the last bottle" at once shows up as a visible
-  conflict, never a silently wrong count.
-- **Photos** (labels, bottles) are encrypted, content-addressed blobs stored
-  outside the CRDT document.
-- **Relay.** Phones are rarely online at the same moment, so a relay holds
-  encrypted changes until the other devices pick them up. It sees only
-  ciphertext and document IDs. No VPS is needed: the default relay is a
-  serverless function with per-cellar storage (for example Cloudflare
-  Workers with Durable Objects). The relay is a small open-source
-  service, so anyone can run their own and point the apps at it.
-- **Encryption.** Content is encrypted with XChaCha20-Poly1305; devices
-  exchange keys with X25519. Keys are kept in the Keychain or the
-  Android Keystore.
+- **One model, two native implementations.**
+  - The cellar model and the sync protocol are written in Swift (CaveKit, tested
+    on Linux) and in Kotlin (`android/core`).
+  - They read each other's files (interop tests on fixtures) and compute the
+    same bytes for the protocol (test vectors in [SYNC.md](SYNC.md)).
+  - A shared Rust core was the first plan. Two small, well-tested
+    implementations proved simpler than UniFFI bindings for a model of this
+    size; the decision can be revisited if the model grows.
+- **Merge without a CRDT library.**
+  - Wines, bottles, racks and discoveries are objects keyed by UUID, each with a
+    Lamport stamp: the latest change wins, deletions included.
+  - A deterministic repair step fixes what a merge can leave inconsistent: two
+    bottles in one place, a bottle in a removed rack.
+  - Each bottle is its own object with a status, so two people drinking "the last
+    bottle" never produce a wrong count.
+- **Photos** are content-addressed (named after their SHA-256), encrypted
+  when they leave the device.
+- **Sync without servers first.**
+  - Devices on the same network sync directly.
+  - Apart, they exchange encrypted files through a storage that never has a key.
+    [REMOTE_SYNC.md](REMOTE_SYNC.md) compares the options: CloudKit for Apple
+    devices, Google Drive across platforms, and a relay anyone can host for
+    mixed households.
+- **Encryption.**
+  - X25519 identity keys per device (Keychain, Android Keystore-protected
+    storage).
+  - Sessions follow the Noise KK pattern with ChaCha20-Poly1305.
+  - Remote files are encrypted with a cellar key that changes when a device is
+    removed.
 
 ### Pairing and sharing (QR code or 6-digit code)
 
-1. Device A shows a QR code containing an ephemeral public key, the cellar ID
-   and the relay address.
-2. Device B scans it; both devices derive a shared secret and display the
-   same short confirmation code, which the user compares (prevents a
-   man-in-the-middle).
-3. A sends the cellar key to B over that channel. From then on, every change
-   syncs automatically on both sides.
+**Built (iPhone, iPad, Mac; Android in progress):**
 
-The same flow adds your own Mac or iPad ("Add a device") or a household
-member ("Share cellar", with *can edit* or *view only*).
+1. Device A (Settings › Devices › Add a Device) shows a QR code and a 6-digit code,
+   valid two minutes, for one device.
+2. Device B scans the QR code or types the code. They find each other on the
+   network (Bonjour), run a commit-then-reveal key exchange, and both show the
+   same 6-digit confirmation code. The users compare them, which stops a device
+   in the middle.
+3. B joins A's cellar (combining or replacing its own bottles); from then on,
+   changes sync automatically when the devices are on the same Wi-Fi.
+4. Away from home: once a relay is set on one device, the key and address reach
+   the others at their next meeting, and they sync through encrypted files.
+5. **Removing a device** removes its identity key from the cellar (it can no
+   longer connect) and rotates the key of the remote files (it can no longer
+   read anything new). It keeps what it already had.
 
-**Without a camera (a Mac, or a phone far away): a 6-digit code.**
+The full protocol is in [SYNC.md](SYNC.md).
 
-1. Device A (for example the iPhone) shows a 6-digit code, valid for two
-   minutes and for one pairing only. The first digits pick a rendezvous on
-   the relay; the whole code is the password of a PAKE (CPace or SPAKE2,
-   as in Magic Wormhole).
-2. Device B (the Mac) types the code. The PAKE gives both devices the same
-   strong key only if the codes match: someone watching the relay cannot
-   guess the code offline, and gets a single online try before the code is
-   burned. The relay also limits attempts per rendezvous.
-3. Both devices show the same confirmation words (derived from the key) and
-   ask "Do they match?", then the cellar key is sent as with the QR code.
+**Planned:**
 
-On the same Wi-Fi, devices find each other directly (Bonjour / mDNS) and
-the relay is only a fallback. The QR code stays the fastest way between
-two phones; the code is offered next to it ("Can't scan? Enter a code").
-
-**Removing someone** rotates the cellar key: remaining devices receive the
-new key and re-encrypt; the removed device keeps what it already had but
-receives nothing new.
-
-**Losing a phone:** with a second paired device nothing is lost. Single-device
-users can export an encrypted backup (file, iCloud Drive / Google Drive),
-and the relay keeps an encrypted copy that a re-paired device can restore
-with the recovery key.
+- **Household sharing** ("Share cellar", *can edit* or *view only*): the same
+  pairing with roles in the device list, and files signed by each device so
+  view-only members cannot write.
+- **Remote pairing with a 6-digit code** (a phone far away): the code becomes
+  the password of a PAKE (CPace or SPAKE2, as in Magic Wormhole) through a
+  relay rendezvous, so someone watching the relay cannot guess it offline and
+  gets one try before the code is burned.
+- **Losing a phone:** with a second paired device nothing is lost. Single-device
+  users export an encrypted backup (Files, iCloud Drive, Google Drive).
 
 ## User experience
 
@@ -151,14 +149,16 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight, one widget.
 
 ## Phases
 
-| Phase | Content | Exit criteria |
-|-------|---------|---------------|
-| 0. Public release | Clean repository, CI, TestFlight pipeline | Repository public, first TestFlight build |
-| 1. Design in the app | The six journeys built directly in SwiftUI and reviewed on device through TestFlight; design tokens | Journeys validated on iPhone, iPad and Mac |
-| 2. Sync spike | Rust core with Automerge vs Yrs, UniFFI bindings, relay, QR pairing | Two phones and a Mac sync offline edits through the relay |
-| 3. Apple apps MVP | iPhone, iPad, Mac with sync and sharing | External TestFlight beta |
-| 4. Android MVP | Phones first, then tablets | Play internal testing |
-| 5. Launch | Store listings, documentation | App Store, Mac App Store, Google Play |
+| Phase | Content | Status |
+|-------|---------|--------|
+| 0. Public release | Clean repository, CI, TestFlight pipeline | Done |
+| 1. Design in the app | The six journeys built in SwiftUI and Compose, reviewed on device through TestFlight; design tokens | Done, refined continuously |
+| 2. Sync | Pairing, local network sync, relay, protocol spec and test vectors | Apple done; Android in progress |
+| 3. Apple apps MVP | iPhone, iPad, Mac with sync | Internal TestFlight; external beta next |
+| 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple except sync; Play internal testing next |
+| 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | Planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
+| 6. Household sharing | Roles, signed files, remote pairing | Planned |
+| 7. Launch | Store listings, documentation, privacy policy | Planned |
 
 Later: Mac menu bar extra, notifications for closing drinking windows.
 
@@ -185,16 +185,18 @@ privacy rules in `CLAUDE.md` and `SECURITY.md` are updated with it.
   export compliance questions in App Store Connect, and France requires a
   declaration for encryption products. To verify before the first store
   submission.
-- **CRDT engine.** Automerge and Yrs both have active Rust cores (releases in
-  September 2026); their Swift and Kotlin bindings are less mature, which is
-  why the plan uses one Rust core with UniFFI.
+- **Shared core.** The model and protocol are implemented twice (Swift, Kotlin)
+  with shared test vectors. If the model grows much, revisit a shared Rust core
+  (UniFFI) or a CRDT engine such as Automerge.
+- **Community relay.** Whether the project runs a capped public relay, or only
+  publishes the self-hosting template; see [REMOTE_SYNC.md](REMOTE_SYNC.md).
 
 ## Repository layout
 
 ```
-apple/     SwiftUI app (iOS, iPadOS, macOS) and the CaveKit model package
-android/   Kotlin / Compose app (planned)
-core/      Rust sync core + UniFFI bindings (planned)
-relay/     Relay service (planned)
+apple/     SwiftUI app (iOS, iPadOS, macOS) and the CaveKit package (model, sync)
+android/   Kotlin / Compose app and its core module (model, sync)
+relay/     Self-hostable relay (Node server, Cloudflare Worker)
 design/    Design tokens and asset generators
+docs/      Roadmap, sync protocol, remote sync analysis, development guide
 ```
