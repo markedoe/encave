@@ -194,9 +194,12 @@ jobs:
           set -o pipefail
           auth=(-allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH"
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          # Archive unsigned: signing with a development certificate would create a new
+          # certificate on every fresh runner. The export below signs with cloud signing.
           xcodebuild archive -project Encave.xcodeproj -scheme Encave \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
-            "${auth[@]}" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" | xcbeautify --renderer github-actions
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
@@ -207,9 +210,12 @@ jobs:
           set -o pipefail
           auth=(-allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH"
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          # Signed to run locally so the sandbox entitlements are in the archive;
+          # the export re-signs it with cloud signing (no new certificate).
           xcodebuild archive -project Encave.xcodeproj -scheme EncaveMac \
             -destination 'generic/platform=macOS' -archivePath "$RUNNER_TEMP/mac.xcarchive" \
-            "${auth[@]}" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" | xcbeautify --renderer github-actions
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
