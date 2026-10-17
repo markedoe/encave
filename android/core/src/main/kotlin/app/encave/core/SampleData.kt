@@ -15,6 +15,9 @@ object SampleData {
         val mainRack: String = "Main rack",
         val wineFridge: String = "Wine fridge",
         val bins: String = "Diamond bins",
+        val deepRack: String = "Double-depth rack",
+        val honeycomb: String = "Honeycomb rack",
+        val stairs: String = "Under the stairs",
         val tastingNote: String = "Silky, red fruit, long finish.",
         val kitchen: String = "Kitchen",
         val occasion: String = "Dinner with friends",
@@ -34,9 +37,11 @@ object SampleData {
         val main = Rack(name = labels.mainRack, rows = 6, columns = 8)
         val small = Rack(name = labels.wineFridge, kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
         val bins = Rack(name = labels.bins, kind = RackKind.Bins, rows = 2, columns = 3, binCapacity = 10)
-        cellar.addRack(main)
-        cellar.addRack(small)
-        cellar.addRack(bins)
+        // One rack of every kind, so the sample shows them all.
+        val deep = Rack(name = labels.deepRack, rows = 4, columns = 6, depth = 2)
+        val honeycomb = Rack(name = labels.honeycomb, kind = RackKind.Staggered, rows = 5, columns = 8)
+        val stairs = Rack(name = labels.stairs, rows = 5, columns = 6, rowColumns = listOf(2, 3, 4, 5, 6))
+        listOf(main, small, bins, deep, honeycomb, stairs).forEach { cellar.addRack(it) }
 
         val entries: List<Triple<Wine, Int, Rack?>> = listOf(
             Triple(
@@ -80,9 +85,33 @@ object SampleData {
                     drinkFrom = year - 6, drinkUntil = year + 15),
                 1, main,
             ),
+            Triple(
+                Wine(name = "Riserva Vigna Alta", producer = "Cascina Ferri", vintage = year - 10, color = WineColor.Red,
+                    region = "Piedmont", country = "Italy", appellation = "Barolo", grapes = listOf("Nebbiolo"),
+                    drinkFrom = year - 2, drinkUntil = year + 12),
+                8, deep,
+            ),
+            Triple(
+                Wine(name = "Savagnin Ouillé", producer = "Domaine des Granges", vintage = year - 5, color = WineColor.White,
+                    region = "Jura", country = "France", appellation = "Arbois", grapes = listOf("Savagnin"),
+                    drinkFrom = year - 2, drinkUntil = year + 6),
+                5, honeycomb,
+            ),
+            Triple(
+                Wine(name = "Qvevri Amber", producer = "Marani Tsiskari", vintage = year - 3, color = WineColor.Orange,
+                    region = "Kakheti", country = "Georgia", grapes = listOf("Rkatsiteli"),
+                    drinkFrom = year - 1, drinkUntil = year + 4),
+                3, honeycomb,
+            ),
+            Triple(
+                Wine(name = "Vintage Port", producer = "Quinta da Serra", vintage = year - 15, color = WineColor.Fortified,
+                    region = "Douro", country = "Portugal", appellation = "Porto", grapes = listOf("Touriga Nacional"),
+                    drinkFrom = year - 5, drinkUntil = year + 25),
+                4, stairs,
+            ),
         )
 
-        val prices = listOf(38, 54, 16, 24, 14, 36, 29).map { BigDecimal(it) }
+        val prices = listOf(38, 54, 16, 24, 14, 36, 29, 62, 27, 22, 48).map { BigDecimal(it) }
         entries.forEachIndexed { index, (wine, quantity, rack) ->
             val slots = rack?.let { cellar.freeSlots(it).take(quantity) } ?: emptyList()
             val date = now - Duration.ofDays(30L * (index + 1))

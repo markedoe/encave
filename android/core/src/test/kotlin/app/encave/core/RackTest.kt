@@ -113,4 +113,15 @@ class RackTest {
         cellar.importCsv("name,rack,slot,quantity\nW,Bins,A1,2\n")
         assertEquals(setOf(0, 1), cellar.bottlesInCellar.mapNotNull { it.slot?.depth }.toSet())
     }
+
+    @Test
+    fun sampleCellarShowsEveryKindOfRack() {
+        val cellar = SampleData.cellar(year = 2026)
+        val racks = cellar.racks
+        assertEquals(RackKind.entries.toSet(), racks.map { it.kind }.toSet())
+        assertTrue(racks.any { it.depth == 2 && it.kind == RackKind.Grid })
+        assertTrue(racks.any { it.rowColumns != null })
+        racks.forEach { assertTrue(cellar.occupancy(it) > 0, "${it.name} has bottles") }
+        assertTrue(cellar.bottlesInCellar.any { (it.slot?.depth ?: 0) > 0 }, "a bottle sits behind another")
+    }
 }
