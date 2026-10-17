@@ -285,7 +285,15 @@ final class CellarModel {
     }
 
     func showToast(_ message: String, undo: (@MainActor () -> Void)? = nil) {
-        toast = Toast(message: message, undo: undo)
+        var toast = Toast(message: message)
+        if let undo {
+            let id = toast.id
+            toast.undo = ToastUndo { [weak self] in
+                undo()
+                if self?.toast?.id == id { self?.toast = nil }
+            }
+        }
+        self.toast = toast
     }
 }
 
@@ -331,7 +339,24 @@ struct AddBottleContext: Identifiable {
 struct Toast: Identifiable {
     let id = UUID()
     var message: String
-    var undo: (@MainActor () -> Void)?
+    var undo: ToastUndo?
+}
+
+/// The Undo of a banner. It runs at most once, whether from the banner's button
+/// or from the window's undo manager (⌘Z, Edit ▸ Undo, shake to undo).
+@MainActor
+final class ToastUndo: NSObject {
+    private var action: (@MainActor () -> Void)?
+
+    init(_ action: @escaping @MainActor () -> Void) {
+        self.action = action
+    }
+
+    @objc func run() {
+        let action = self.action
+        self.action = nil
+        action?()
+    }
 }
 
 extension CellarError {

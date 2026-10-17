@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    '⌘Z': '⌘Z',
+    'Undo, while the banner with Undo shows': 'Annuler, tant que le bandeau Annuler est affiché',
     'Share': 'Partager',
     'Your year in wine %@': 'Votre année en vin %@',
     'Shares this summary as an image. You choose where.': 'Partage ce résumé en image. Vous choisissez où.',
