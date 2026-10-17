@@ -30,6 +30,7 @@ private struct RemoteDevice {
             snapshot.membership = merged.membership
         }
         if let newKey = result.newKey { self.key = newKey }
+        snapshot.state.clock = max(snapshot.state.clock, result.clock)
         progress = result.progress
     }
 }
@@ -213,6 +214,27 @@ private func household(_ count: Int = 3) -> [RemoteDevice] {
                                               photos: devices[0].photos.access)
         #expect(result.unreadable == [devices[2].identity.id])
         #expect(result.snapshot?.cellar.wines.values.contains { $0.name == "From B" } == true)
+    }
+
+    @Test func aChangeFromTheLocalNetworkIsUploadedEvenIfTheClockDidNotMove() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household(2)
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        for index in devices.indices { try await devices[index].sync(store) }
+        // A merge brings in a stamp with a lower counter: the clock stays, the content changes.
+        let before = devices[0].snapshot.state.clock
+        let wine = Wine(name: "From the network")
+        let bottle = Bottle(wineID: wine.id)
+        devices[0].snapshot.cellar.wines[wine.id] = wine
+        devices[0].snapshot.cellar.bottles[bottle.id] = bottle
+        let elsewhere = UUID()
+        devices[0].snapshot.state.stamps["wine:\(wine.id.uuidString.lowercased())"] = Stamp(counter: 1, device: elsewhere)
+        devices[0].snapshot.state.stamps["bottle:\(bottle.id.uuidString.lowercased())"] = Stamp(counter: 1, device: elsewhere)
+        #expect(devices[0].snapshot.state.clock == before)
+        try await devices[0].sync(store)
+        try await devices[1].sync(store)
+        #expect(devices[1].snapshot.cellar.wines[wine.id] != nil)
     }
 
     @Test func grantsFromStrangersAreIgnored() async throws {

@@ -349,8 +349,11 @@ later round); grants from removed devices are deleted.
    skipped for this round; the other devices still sync.
 3. Fetch the photos the merged cellar references and this device lacks (valid
    photo IDs only).
-4. If anything changed since this device's last upload: upload its missing
-   photos, then a snapshot of the merged state, then delete its older snapshots.
+4. If anything changed since this device's last upload (its clock, or any
+   stamp: a merge on the local network can change the cellar without moving
+   the clock): upload its missing photos, then a snapshot of the merged state,
+   then delete its older snapshots. If the clock did not move since the last
+   upload, it is raised by one first, so readers see a newer snapshot.
 
 Rounds run a few seconds after a change, every minute while the app is open,
 and when it comes back to the foreground.

@@ -188,6 +188,9 @@ public struct RemoteProgress: Codable, Equatable, Sendable {
     public var seen: [UUID: UInt64] = [:]
     /// Clock of the last snapshot this device wrote, in the current epoch.
     public var uploadedClock: UInt64?
+    /// Digest of the stamps of the last snapshot written: a merge on the local
+    /// network can change the cellar without moving the clock.
+    public var uploadedDigest: String?
     /// Photos already uploaded in the current epoch.
     public var uploadedPhotos: Set<String> = []
     /// Epoch the progress refers to; a new epoch starts afresh.
@@ -210,6 +213,10 @@ public enum RemoteSync {
         /// Devices whose newest snapshot could not be read (damaged, from a newer
         /// version of the app, out of bounds). Skipped; the others still sync.
         public var unreadable: [UUID] = []
+        /// This device's clock after the round: at least the one passed in. Raised
+        /// when the content changed without the clock moving (a merge on the local
+        /// network), so readers see a newer snapshot. Keep it.
+        public var clock: UInt64 = 0
     }
 
     /// One round: picks up key grants, reads the other devices' newest snapshots,
@@ -283,7 +290,12 @@ public enum RemoteSync {
         }
 
         // 4. This device's snapshot and photos, if something changed since the last upload.
-        if progress.uploadedClock != merged.state.clock || newKey != nil {
+        let digest = stampDigest(merged)
+        if progress.uploadedClock != merged.state.clock || progress.uploadedDigest != digest || newKey != nil {
+            // Other devices read a snapshot only if its clock is newer than the last one.
+            if let uploaded = progress.uploadedClock, merged.state.clock <= uploaded {
+                merged.state.clock = uploaded + 1
+            }
             for id in referenced.sorted() where PhotoID.isValid(id) && !progress.uploadedPhotos.contains(id) {
                 guard let data = photos.data(id) else { continue }
                 let path = photoPath(id)
@@ -292,9 +304,10 @@ public enum RemoteSync {
             }
             try await write(merged, to: mailbox, key: key, device: identity.id)
             progress.uploadedClock = merged.state.clock
+            progress.uploadedDigest = digest
         }
         return Result(snapshot: received ? merged : nil, progress: progress, newKey: newKey, storage: storage,
-                      unreadable: unreadable)
+                      unreadable: unreadable, clock: merged.state.clock)
     }
 
     /// The key left in this device's inbox by a current member that supersedes
@@ -367,6 +380,18 @@ public enum RemoteSync {
                 .sealed(by: identity, for: member.publicKey)
             try await store.inbox(id: inbox, token: "").create(sealed.path, data: sealed.data)
         }
+    }
+
+    /// Changes whenever any object or device stamp changes.
+    static func stampDigest(_ snapshot: SyncSnapshot) -> String {
+        var hash = SHA256()
+        for (key, stamp) in snapshot.state.stamps.sorted(by: { $0.key < $1.key }) {
+            hash.update(data: Data("\(key) \(stamp.counter) \(stamp.device.lowercased) \(stamp.deleted)\n".utf8))
+        }
+        for (id, stamp) in snapshot.membership.stamps.sorted(by: { $0.key.lowercased < $1.key.lowercased }) {
+            hash.update(data: Data("member \(id.lowercased) \(stamp.counter) \(stamp.device.lowercased) \(stamp.deleted)\n".utf8))
+        }
+        return Data(hash.finalize()).hexString
     }
 
     /// Photo IDs from before sync are UUIDs in uppercase; paths are lowercase.

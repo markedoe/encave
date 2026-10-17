@@ -447,6 +447,11 @@ final class SyncService {
             remoteProgress = result.progress
             files?.saveRemoteProgress(remoteProgress)
             if let snapshot = result.snapshot { apply(snapshot, from: nil) }
+            if var state, result.clock > state.clock {
+                state.clock = result.clock
+                self.state = state
+                save()
+            }
             if let storage = result.storage.flatMap(RemoteStorage.init), storage.isAcceptedFromPeer,
                storage != remoteStorage, result.newKey != nil {
                 // The device that gave the new key moved the files: follow it.
