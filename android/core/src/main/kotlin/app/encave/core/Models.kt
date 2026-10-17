@@ -48,6 +48,8 @@ data class Wine(
      * scan. Null rather than empty, so files of wines without barcodes stay as they were.
      */
     val barcodes: List<String>? = null,
+    /** The user's own labels ("gift", "for summer"), normalized; null rather than empty. */
+    val tags: List<String>? = null,
 ) {
     /** "Château X 2015" or "Château X" for non-vintage wines. */
     val displayName: String get() = if (vintage != null) "$name $vintage" else name
@@ -61,7 +63,7 @@ data class Wine(
     fun matches(needle: String): Boolean {
         val folded = fold(needle)
         val fields = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
-            barcodes.orEmpty()
+            barcodes.orEmpty() + tags.orEmpty()
         return fields.any { fold(it).contains(folded) }
     }
 
@@ -91,6 +93,13 @@ data class Wine(
     companion object {
         /** Digits only: "3 760 1234 5678 9" and "3760123456789" are the same barcode. */
         fun normalizedBarcode(code: String): String = code.filter { it in '0'..'9' }.take(20)
+
+        /** Trimmed, without empty ones or case-insensitive duplicates (the first spelling is kept); null if none. */
+        fun normalizedTags(tags: List<String>?): List<String>? {
+            val seen = HashSet<String>()
+            return tags.orEmpty().map { it.trim() }.filter { it.isNotEmpty() && seen.add(it.lowercase(Locale.ROOT)) }
+                .ifEmpty { null }
+        }
 
         private val marks = Regex("\\p{Mn}+")
         internal fun fold(text: String): String =

@@ -160,7 +160,7 @@ object CellarSerializer : KSerializer<Cellar> {
                 put("wines", buildJsonArray {
                     value.wines.forEach { (id, wine) ->
                         add(JsonPrimitive(id.toString().uppercase(Locale.ROOT)))
-                        add(json.encodeToJsonElement(Wine.serializer(), wine))
+                        add(encodeWine(json, wine))
                     }
                 })
             },
@@ -178,6 +178,13 @@ object CellarSerializer : KSerializer<Cellar> {
         val discoveries = entries(root["discoveries"]).map { json.decodeFromJsonElement(Discovery.serializer(), it) }
         // Older files are upgraded on load, like the Swift decoder does.
         return Cellar(wines, bottles, racks, settings, discoveries)
+    }
+
+    /** A wine as Swift writes it: optional lists ("barcodes", "tags") are left out when empty. */
+    internal fun encodeWine(json: Json, wine: Wine): JsonElement {
+        val element = json.encodeToJsonElement(Wine.serializer(), wine) as JsonObject
+        val empty = listOf("barcodes", "tags").filter { (element[it] as? JsonArray)?.isEmpty() == true }
+        return if (empty.isEmpty()) element else JsonObject(element - empty.toSet())
     }
 
     /** Values of a Swift dictionary: `[key, value, key, value]`, or a keyed object. */

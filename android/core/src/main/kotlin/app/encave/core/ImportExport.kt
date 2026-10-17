@@ -18,7 +18,7 @@ object CellarExport {
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
-        "rating", "tasted_on", "note", "expected_on",
+        "rating", "tasted_on", "note", "expected_on", "tags",
     )
 
     /** Pretty-printed JSON backup, readable by the Apple app. */
@@ -48,7 +48,7 @@ object CellarExport {
                 bottle.purchaseDate?.let(::day), bottle.purchasePrice?.let(DecimalSerializer::plain), bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, bottle.sizeML.toString(),
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
-                bottle.tasting?.note, bottle.expectedAt?.let(::day),
+                bottle.tasting?.note, bottle.expectedAt?.let(::day), wine.tags.orEmpty().joinToString("; "),
             )
             lines += fields.joinToString(",") { escape(it ?: "") }
         }
@@ -128,6 +128,7 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
             country = value("country"), appellation = value("appellation"),
             grapes = (value("grapes") ?: "").split(";").map { it.trim() }.filter { it.isNotEmpty() },
             drinkFrom = value("drink_from")?.toIntOrNull(), drinkUntil = value("drink_until")?.toIntOrNull(),
+            tags = Wine.normalizedTags(value("tags")?.split(";")),
         )
         val existing = winesByKey[wine.identityKey]
         if (existing != null) {

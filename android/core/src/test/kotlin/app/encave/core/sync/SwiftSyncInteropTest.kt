@@ -36,6 +36,8 @@ class SwiftSyncInteropTest {
         assertEquals(4L, state.clock)
         assertEquals(Stamp(1, iphone), state.stamps["wine:$wine"])
         assertEquals(listOf("3760123456789"), cellar.wines[wine]?.barcodes)
+        assertEquals(listOf("Gift", "for summer"), cellar.wines[wine]?.tags)
+        assertEquals(listOf("Gift", "x"), app.encave.core.Wine.normalizedTags(listOf(" Gift ", "", "gift", "x")))
         assertEquals("1/2 bottle", cellar.wines[wine]?.notes)
         assertEquals("Cave/left wall", cellar.racks.single().name)
         val ordered = cellar.bottles.values.single { it.status == app.encave.core.Bottle.Status.Ordered }

@@ -93,7 +93,11 @@ internal object SwiftJson {
         return out.toString().toByteArray(Charsets.UTF_8)
     }
 
-    fun wine(value: Wine) = bytes(Wine.serializer(), value)
+    fun wine(value: Wine): ByteArray {
+        val out = StringBuilder()
+        SyncJson.write(app.encave.core.CellarSerializer.encodeWine(SyncJson.json, value), out, swiftEscapes = true)
+        return out.toString().toByteArray(Charsets.UTF_8)
+    }
     fun bottle(value: Bottle) = bytes(Bottle.serializer(), value)
     fun discovery(value: Discovery) = bytes(Discovery.serializer(), value)
     fun rack(value: Rack) = bytes(Rack.serializer(), value)
