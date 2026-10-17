@@ -6191,12 +6191,12 @@
         }
       }
     },
-    "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted.": {
+    "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un appareil dans la liste et choisissez **Retirer**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée."
+            "value": "Balayez un appareil dans la liste et choisissez **Retirer**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil."
           }
         }
       }
