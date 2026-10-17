@@ -23,6 +23,32 @@ final class ScreenTourTests: XCTestCase {
         // French strings are longer: this catches truncation and wrapping.
         try tour(language: "fr")
     }
+
+    /// A few screens at a very large text size (Dynamic Type), on iPhone, where
+    /// space is tightest.
+    func testLargeText() throws {
+        language = "xl"
+        step = 0
+        continueAfterFailure = true
+        app = XCUIApplication()
+        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"]
+        app.launch()
+        guard app.horizontalSizeClassIsCompact else { return }
+        openSection(0, "cellar")
+        snapshot("cellar")
+        if element("wine.row").waitForExistence(timeout: 10) {
+            element("wine.row").press()
+            snapshot("wine")
+            goBack()
+        }
+        openSection(1, "racks")
+        snapshot("racks")
+        openSection(2, "tonight")
+        snapshot("tonight")
+        openSection(3, "journal")
+        snapshot("journal")
+    }
     #endif
 
     // MARK: Tour
