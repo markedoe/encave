@@ -23,10 +23,19 @@ struct CellarView: View {
             } else {
                 NavigationSplitView(columnVisibility: $columns) {
                     CellarList(selection: $selection)
+                        // Wide enough on iPad for names, producers and the figures.
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
                 } detail: {
                     NavigationStack { WinePane(wineID: selection) }
                 }
                 .navigationSplitViewStyle(.balanced)
+            }
+        }
+        // iPad: open on the first wine rather than an empty page (on iPhone the list
+        // stays in front).
+        .onAppear {
+            if isWide, selection == nil {
+                selection = model.cellar.groups(filter: CellarFilter(), sort: .name, year: model.currentYear).first?.wine.id
             }
         }
         // Opened from Spotlight, Shortcuts or a notification.
