@@ -63,12 +63,17 @@ jobs:
           app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
           reports="$HOME/Library/Logs/DiagnosticReports"
           status=0
-          for attempt in first second; do
-            "$app/Contents/MacOS/Encave" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
+          # Empty first and second launch, then every tab with the sample cellar.
+          for attempt in first second cellar racks tonight journal; do
+            case "$attempt" in
+              first|second) args=() ;;
+              *) args=(--sample-data --tab "$attempt") ;;
+            esac
+            "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
             pid=$!
-            sleep 25
+            sleep 20
             if kill -0 "$pid" 2>/dev/null; then
-              echo "$attempt launch: still running after 25 s"
+              echo "$attempt launch: still running after 20 s"
               kill "$pid"; wait "$pid" 2>/dev/null || true
             else
               wait "$pid"; code=$?

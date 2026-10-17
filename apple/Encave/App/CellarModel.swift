@@ -35,6 +35,16 @@ final class CellarModel {
     }
 
     static func live() -> CellarModel {
+        // Launch test in CI: sample data in memory, never written to disk.
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--sample-data") {
+            let model = preview()
+            if let index = arguments.firstIndex(of: "--tab"), arguments.indices.contains(index + 1),
+               let tab = AppTab(rawValue: arguments[index + 1]) {
+                model.selectedTab = tab
+            }
+            return model
+        }
         if let store = try? JSONFileCellarStore.defaultStore() {
             let model = CellarModel(store: store)
             // Photos of deleted wines are kept until the next launch so deleting can be undone.
@@ -163,7 +173,7 @@ final class CellarModel {
     }
 }
 
-enum AppTab: Hashable {
+enum AppTab: String, Hashable {
     case cellar, racks, tonight, journal
 }
 
