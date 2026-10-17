@@ -157,8 +157,41 @@ final class ScreenTourTests: XCTestCase {
         cell.press()
         XCTAssertTrue(element("rack.selection").waitForExistence(timeout: 3), "main rack: no card for the tapped bottle")
         snapshot("rack-bottle-card")
+        // From the card to the wine page and back.
+        let winePage = element("rack.selection.wine")
+        if winePage.exists, winePage.isHittable {
+            winePage.press()
+            XCTAssertTrue(element("action.wine.drink").waitForExistence(timeout: 3) || element("action.wine.add").exists,
+                          "main rack: the wine page did not open from the card")
+            snapshot("rack-wine-page")
+            goBack()
+        } else {
+            XCTFail("main rack: no wine page button on the card")
+        }
         let close = element("rack.selection.close")
-        if close.exists, close.isHittable { close.press() }
+        if close.waitForExistence(timeout: 2), close.isHittable { close.press() }
+
+        #if os(iOS)
+        // The bottle list: choosing a bottle closes it and shows that bottle's card.
+        let list = element("rack.list")
+        if list.waitForExistence(timeout: 2), list.isHittable {
+            list.press()
+            let row = element("rack.list.row")
+            if row.waitForExistence(timeout: 3) {
+                snapshot("rack-bottle-list")
+                row.press()
+                XCTAssertTrue(element("rack.selection").waitForExistence(timeout: 3),
+                              "main rack: choosing a bottle in the list did not show it")
+                let close = element("rack.selection.close")
+                if close.waitForExistence(timeout: 2), close.isHittable { close.press() }
+            } else {
+                XCTFail("main rack: the bottle list is empty")
+                closeSheet()
+            }
+        } else {
+            XCTFail("main rack: no bottle list button")
+        }
+        #endif
 
         // The key: choosing a wine highlights its bottles.
         let chip = element("rack.key.wine")

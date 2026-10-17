@@ -50,13 +50,19 @@ struct ZoomableRack: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.parent = self
         coordinator.model = model
-        if coordinator.base != baseCellSize || coordinator.rackShape != rack.shape {
-            // New space (rotation, split view) or new rack shape: start again from the fitted size.
-            coordinator.base = baseCellSize
+        if coordinator.rackShape != rack.shape {
+            // New rack shape: start again from the fitted size.
             coordinator.rackShape = rack.shape
+            coordinator.base = baseCellSize
             coordinator.level = 1
+            coordinator.render(keepingCenter: false)
+        } else if coordinator.base != baseCellSize {
+            // The space changed (card shown, rotation): keep the zoom and the spot in view.
+            coordinator.base = baseCellSize
+            coordinator.render(keepingCenter: true)
+        } else {
+            coordinator.render(keepingCenter: false)
         }
-        coordinator.render(keepingCenter: false)
     }
 
     @MainActor

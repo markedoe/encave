@@ -258,6 +258,7 @@ private struct SelectedBottleCard: View {
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel(Text("Wine Page"))
+                .accessibilityIdentifier("rack.selection.wine")
             }
         }
         .padding()

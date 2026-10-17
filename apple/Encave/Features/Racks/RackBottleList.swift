@@ -38,7 +38,7 @@ struct RackBottleList: View {
                 ForEach(rows.keys.sorted(), id: \.self) { row in
                     Section {
                         ForEach(rows[row] ?? []) { bottle in
-                            RackBottleRow(rack: rack, bottle: bottle)
+                            row(rack, bottle)
                                 .tag(bottle.id)
                                 .contextMenu {
                                     Button("Drink", systemImage: "wineglass") { open(.drink(bottleID: bottle.id)) }
@@ -69,6 +69,20 @@ struct RackBottleList: View {
 }
 
 extension RackBottleList {
+    /// iPhone and iPad: rows are buttons, as list selection needs edit mode there.
+    @ViewBuilder
+    private func row(_ rack: Rack, _ bottle: Bottle) -> some View {
+        #if os(iOS)
+        Button { selection = bottle.id } label: {
+            RackBottleRow(rack: rack, bottle: bottle).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("rack.list.row")
+        #else
+        RackBottleRow(rack: rack, bottle: bottle)
+        #endif
+    }
+
     private func open(_ sheet: AppSheet) {
         if let present { present(sheet) } else { model.sheet = sheet }
     }
