@@ -23,7 +23,7 @@ struct AddBottleView: View {
     @State private var receivedFrom = ""
     @State private var choosingSlots = false
     @State private var prepared = false
-    @State private var labelPhoto: Data?
+    @State private var scan = LabelScan()
 
     private var wineIsValid: Bool { existingWine != nil || draft.isValid }
 
@@ -50,7 +50,7 @@ struct AddBottleView: View {
                         Text("Wine")
                     }
                 } else {
-                    LabelScanSection(draft: $draft, labelPhoto: $labelPhoto)
+                    LabelScanSection(scan: scan, draft: $draft)
                     if !model.cellar.wines.isEmpty {
                         Section {
                             TextField("Search your wines", text: $search)
@@ -157,6 +157,7 @@ struct AddBottleView: View {
                 }
             }
             .formStyle(.grouped)
+            .labelScanner(scan, draft: $draft)
             .navigationTitle("Add Bottles")
             .inlineTitle()
             .toolbar {
@@ -200,7 +201,7 @@ struct AddBottleView: View {
 
     private func save() {
         var wine = existingWine ?? draft.makeWine()
-        if existingWine == nil, let labelPhoto {
+        if existingWine == nil, let labelPhoto = scan.photo {
             wine.photoID = PhotoStore.save(labelPhoto)
         }
         var slots = chosenSlots

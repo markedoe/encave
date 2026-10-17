@@ -9,7 +9,7 @@ struct DiscoveryEditor: View {
     let discoveryID: UUID?
 
     @State private var draft = WineDraft()
-    @State private var labelPhoto: Data?
+    @State private var scan = LabelScan()
     @State private var newPhoto: Data?
     @State private var photoRemoved = false
     @State private var date = Date.now
@@ -30,7 +30,7 @@ struct DiscoveryEditor: View {
         NavigationStack {
             Form {
                 if discoveryID == nil {
-                    LabelScanSection(draft: $draft, labelPhoto: $labelPhoto)
+                    LabelScanSection(scan: scan, draft: $draft)
                 }
                 WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false)
 
@@ -90,6 +90,7 @@ struct DiscoveryEditor: View {
                 }
             }
             .formStyle(.grouped)
+            .labelScanner(scan, draft: $draft)
             .navigationTitle(discoveryID == nil ? Text("Remember a Wine") : Text("Discovery"))
             .inlineTitle()
             .toolbar {
@@ -148,7 +149,7 @@ struct DiscoveryEditor: View {
         discovery.wantsToBuy = wantsToBuy
 
         if existing == nil {
-            if let labelPhoto { wine.photoID = PhotoStore.save(labelPhoto) }
+            if let labelPhoto = scan.photo { wine.photoID = PhotoStore.save(labelPhoto) }
             model.addDiscovery(discovery, wine: wine)
             dismiss()
             return
