@@ -29,9 +29,13 @@ description = "Templates and obvious placeholders"
 paths = [
   '''(^|/)\.env(\.[a-z]+)*\.example$''',
   '''(^|/)package-lock\.json$''',
+  # Published sync protocol test vectors (docs/SYNC.md): derived from fixed, public inputs.
+  '''(^|/)ProtocolVectorTests\.(swift|kt)$''',
 ]
 regexes = [
   '''(?i)(change[-_]?(this|me)|your[_-]|example|placeholder|dummy|sk-ant-\.\.\.|<[^>]+>|\$\{)''',
   '''[A-Za-z0-9_-]{8,}\.\.\.''',  # truncated examples in docs
   '''TestPassword123!''',
+  # Type names in code, not keys.
+  '''Curve25519\.(KeyAgreement|Signing)\.PrivateKey''',
 ]
