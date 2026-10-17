@@ -12,3 +12,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Label scanning on the device, wine photos, serving temperature and decanting
 - Optional AI label recognition (Claude or an OpenAI-compatible server) with
   your own key, stored in the Keychain; only the label photo is sent
+- Discoveries: remember wines tasted elsewhere with place, rating, notes and
+  tags, and a shopping list that adds bottles to the cellar once bought

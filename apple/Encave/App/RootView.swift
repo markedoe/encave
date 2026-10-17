@@ -49,6 +49,8 @@ private struct SheetContent: View {
             RackEditor(rackID: rackID)
         case .moveBottle(let bottleID):
             MoveBottleView(bottleID: bottleID)
+        case .discovery(let discoveryID):
+            DiscoveryEditor(discoveryID: discoveryID)
         case .settings:
             NavigationStack { SettingsView() }
         }

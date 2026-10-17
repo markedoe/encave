@@ -65,6 +65,8 @@ struct WineFormSections: View {
     @Binding var draft: WineDraft
     @FocusState private var nameFocused: Bool
     var focusName = false
+    /// Drinking window and wine notes, hidden when noting a wine found elsewhere.
+    var showsCellarDetails = true
 
     private let currentYear = Calendar.current.component(.year, from: .now)
 
@@ -106,6 +108,13 @@ struct WineFormSections: View {
             TextField("Grapes", text: $draft.grapes, prompt: Text("Pinot Noir, Gamay"))
         }
 
+        if showsCellarDetails {
+            cellarDetails
+        }
+    }
+
+    @ViewBuilder
+    private var cellarDetails: some View {
         Section {
             Toggle("Estimate automatically", isOn: $draft.windowIsAutomatic.animation())
             if draft.windowIsAutomatic {

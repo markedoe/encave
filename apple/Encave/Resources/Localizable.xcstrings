@@ -311,6 +311,16 @@
         }
       }
     },
+    "Add a tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un tag"
+          }
+        }
+      }
+    },
     "Add bottles with a drinking window to see what is ready tonight.": {
       "localizations": {
         "fr": {
@@ -327,6 +337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez les bouteilles que vous gardez chez vous pour savoir ce que vous avez, où elles sont et quand les ouvrir."
+          }
+        }
+      }
+    },
+    "Add to Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter à la cave"
           }
         }
       }
@@ -357,6 +377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouté : %1$lld × %2$@"
+          }
+        }
+      }
+    },
+    "Added to your shopping list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté à votre liste d’achats"
           }
         }
       }
@@ -421,6 +451,26 @@
         }
       }
     },
+    "At Julie and Marc's": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chez Julie et Marc"
+          }
+        }
+      }
+    },
+    "At friends'": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chez des amis"
+          }
+        }
+      }
+    },
     "Automatic": {
       "localizations": {
         "fr": {
@@ -437,6 +487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sauvegarder (JSON)"
+          }
+        }
+      }
+    },
+    "Bistro on the harbour, Lisbon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bistrot sur le port, Lisbonne"
           }
         }
       }
@@ -507,6 +567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les bouteilles ouvertes et vos notes apparaîtront ici."
+          }
+        }
+      }
+    },
+    "Bought": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acheté"
           }
         }
       }
@@ -741,6 +811,26 @@
         }
       }
     },
+    "Delete": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Delete Discovery": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la découverte"
+          }
+        }
+      }
+    },
     "Delete Rack": {
       "localizations": {
         "fr": {
@@ -757,6 +847,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer le vin"
+          }
+        }
+      }
+    },
+    "Delete this discovery?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer cette découverte ?"
           }
         }
       }
@@ -851,6 +951,36 @@
         }
       }
     },
+    "Discoveries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvertes"
+          }
+        }
+      }
+    },
+    "Discovery": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découverte"
+          }
+        }
+      }
+    },
+    "Discovery deleted": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découverte supprimée"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "fr": {
@@ -921,6 +1051,16 @@
         }
       }
     },
+    "Edit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier"
+          }
+        }
+      }
+    },
     "Edit Rack": {
       "localizations": {
         "fr": {
@@ -937,6 +1077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier le vin"
+          }
+        }
+      }
+    },
+    "Elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ailleurs"
           }
         }
       }
@@ -1051,6 +1201,16 @@
         }
       }
     },
+    "For summer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour l’été"
+          }
+        }
+      }
+    },
     "Fortified": {
       "localizations": {
         "fr": {
@@ -1117,6 +1277,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Offert par"
+          }
+        }
+      }
+    },
+    "Gift idea": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idée cadeau"
+          }
+        }
+      }
+    },
+    "Gift idea, for summer…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idée cadeau, pour l’été…"
           }
         }
       }
@@ -1301,6 +1481,16 @@
         }
       }
     },
+    "Liked a bottle at friends’ or in a restaurant? Scan it to remember it, add notes and tags, and put it on your shopping list.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille vous a plu chez des amis ou au restaurant ? Scannez-la pour vous en souvenir, ajoutez des notes et des tags, et mettez-la sur votre liste d’achats."
+          }
+        }
+      }
+    },
     "Load sample cellar": {
       "localizations": {
         "fr": {
@@ -1337,6 +1527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casier principal"
+          }
+        }
+      }
+    },
+    "Mineral and salty, great with grilled fish.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minéral et salin, parfait avec le poisson grillé."
           }
         }
       }
@@ -1447,6 +1647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune bouteille de votre cave ne correspond encore à ce plat."
+          }
+        }
+      }
+    },
+    "No discoveries yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune découverte"
           }
         }
       }
@@ -1721,6 +1931,16 @@
         }
       }
     },
+    "Place": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lieu"
+          }
+        }
+      }
+    },
     "Point the camera at the label": {
       "localizations": {
         "fr": {
@@ -1787,6 +2007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Prix par bouteille"
+          }
+        }
+      }
+    },
+    "Price seen": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix vu"
           }
         }
       }
@@ -2021,6 +2251,46 @@
         }
       }
     },
+    "Remember a Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin"
+          }
+        }
+      }
+    },
+    "Remember a Wine…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin…"
+          }
+        }
+      }
+    },
+    "Remember a wine tasted elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin goûté ailleurs"
+          }
+        }
+      }
+    },
+    "Remember a wine tasted or seen elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin goûté ou vu ailleurs"
+          }
+        }
+      }
+    },
     "Remove": {
       "localizations": {
         "fr": {
@@ -2041,6 +2311,16 @@
         }
       }
     },
+    "Remove from List": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer de la liste"
+          }
+        }
+      }
+    },
     "Replace Photo": {
       "localizations": {
         "fr": {
@@ -2057,6 +2337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restaurant"
+          }
+        }
+      }
+    },
+    "Restaurant, city, friends’ names…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurant, ville, prénoms des amis…"
           }
         }
       }
@@ -2107,6 +2397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrer"
+          }
+        }
+      }
+    },
+    "Saved to your discoveries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistré dans vos découvertes"
           }
         }
       }
@@ -2207,6 +2507,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fruits de mer"
+          }
+        }
+      }
+    },
+    "Shop": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caviste"
+          }
+        }
+      }
+    },
+    "Shopping list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste d’achats"
+          }
+        }
+      }
+    },
+    "Show": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher"
           }
         }
       }
@@ -2331,6 +2661,16 @@
         }
       }
     },
+    "Tags": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tags"
+          }
+        }
+      }
+    },
     "Tap a position. Tapping another bottle swaps them.": {
       "localizations": {
         "fr": {
@@ -2367,6 +2707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Note de dégustation"
+          }
+        }
+      }
+    },
+    "Tasting event": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salon, dégustation"
           }
         }
       }
@@ -2531,6 +2881,16 @@
         }
       }
     },
+    "To buy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À acheter"
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "fr": {
@@ -2557,6 +2917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce soir, ouvrez…"
+          }
+        }
+      }
+    },
+    "Travel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voyage"
           }
         }
       }
@@ -2661,12 +3031,42 @@
         }
       }
     },
+    "Very fresh, perfect with the cheese platter.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Très frais, parfait avec le plateau de fromages."
+          }
+        }
+      }
+    },
     "Vintage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Millésime"
+          }
+        }
+      }
+    },
+    "What you liked, the dish, the moment…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qui vous a plu, le plat, le moment…"
+          }
+        }
+      }
+    },
+    "Where": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où"
           }
         }
       }
@@ -2741,12 +3141,32 @@
         }
       }
     },
+    "Wine, place, note or tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vin, lieu, note ou tag"
+          }
+        }
+      }
+    },
     "Wine, producer, region, grape, vintage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Vin, producteur, région, cépage, millésime"
+          }
+        }
+      }
+    },
+    "Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les vins à acheter apparaissent dans la liste d’achats du Journal. Les découvertes ne comptent pas comme des bouteilles de votre cave."
           }
         }
       }
@@ -2807,6 +3227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vos données"
+          }
+        }
+      }
+    },
+    "Your impression": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre impression"
           }
         }
       }

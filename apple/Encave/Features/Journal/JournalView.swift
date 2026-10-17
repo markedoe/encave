@@ -1,61 +1,98 @@
 import CaveKit
 import SwiftUI
 
-/// Bottles you have opened, grouped by month, with access to insights.
+/// What you drank (tastings) and wines found elsewhere (discoveries), with insights.
 struct JournalView: View {
+    enum Page: Hashable { case tastings, discoveries }
+
     @Environment(CellarModel.self) private var model
     @State private var query = ""
 
     var body: some View {
+        @Bindable var model = model
         NavigationStack {
-            let bottles = model.cellar.consumedBottles.filter { bottle in
-                guard !query.isEmpty, let wine = model.cellar.wines[bottle.wineID] else { return true }
-                return wine.displayName.localizedCaseInsensitiveContains(query)
-                    || (bottle.tasting?.note ?? "").localizedCaseInsensitiveContains(query)
-            }
-            let months = Dictionary(grouping: bottles) { bottle in
-                Calendar.current.dateInterval(of: .month, for: bottle.tasting?.date ?? bottle.addedAt)?.start ?? .distantPast
-            }
             List {
                 Section {
-                    NavigationLink {
-                        InsightsView()
-                    } label: {
-                        Label {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Insights").font(.headline)
-                                Text("Your cellar in figures").font(.subheadline).foregroundStyle(.secondary)
-                            }
-                        } icon: {
-                            Image(systemName: "chart.pie").foregroundStyle(Color.accentColor)
-                        }
+                    Picker("Show", selection: $model.journalPage.animation()) {
+                        Text("Tastings").tag(Page.tastings)
+                        Text("Discoveries").tag(Page.discoveries)
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
-                if bottles.isEmpty {
-                    ContentUnavailableView(
-                        "No tastings yet",
-                        systemImage: "book.closed",
-                        description: Text("Bottles you open and your notes will appear here.")
-                    )
-                    .listRowBackground(Color.clear)
-                }
-                ForEach(months.keys.sorted(by: >), id: \.self) { month in
-                    Section {
-                        ForEach(months[month] ?? []) { bottle in
-                            Button {
-                                model.sheet = .editTasting(bottleID: bottle.id)
-                            } label: {
-                                TastingRow(bottle: bottle, showsWine: true)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    } header: {
-                        Text(month, format: .dateTime.month(.wide).year())
-                    }
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                .listRowBackground(Color.clear)
+
+                switch model.journalPage {
+                case .tastings: TastingSections(query: query)
+                case .discoveries: DiscoverySections(query: query)
                 }
             }
-            .searchable(text: $query, prompt: Text("Wine or note"))
+            .searchable(text: $query, prompt: Text("Wine, place, note or tag"))
             .navigationTitle("Journal")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        model.sheet = .discovery(discoveryID: nil)
+                    } label: {
+                        Label("Remember a Wine", systemImage: "plus")
+                    }
+                    .help(Text("Remember a wine tasted or seen elsewhere"))
+                }
+            }
+        }
+    }
+}
+
+/// Bottles you have opened, grouped by month, with access to insights.
+private struct TastingSections: View {
+    @Environment(CellarModel.self) private var model
+    let query: String
+
+    var body: some View {
+        let bottles = model.cellar.consumedBottles.filter { bottle in
+            guard !query.isEmpty, let wine = model.cellar.wines[bottle.wineID] else { return true }
+            return wine.displayName.localizedCaseInsensitiveContains(query)
+                || (bottle.tasting?.note ?? "").localizedCaseInsensitiveContains(query)
+        }
+        let months = Dictionary(grouping: bottles) { bottle in
+            Calendar.current.dateInterval(of: .month, for: bottle.tasting?.date ?? bottle.addedAt)?.start ?? .distantPast
+        }
+        Section {
+            NavigationLink {
+                InsightsView()
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Insights").font(.headline)
+                        Text("Your cellar in figures").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "chart.pie").foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+        if bottles.isEmpty {
+            ContentUnavailableView(
+                "No tastings yet",
+                systemImage: "book.closed",
+                description: Text("Bottles you open and your notes will appear here.")
+            )
+            .listRowBackground(Color.clear)
+        }
+        ForEach(months.keys.sorted(by: >), id: \.self) { month in
+            Section {
+                ForEach(months[month] ?? []) { bottle in
+                    Button {
+                        model.sheet = .editTasting(bottleID: bottle.id)
+                    } label: {
+                        TastingRow(bottle: bottle, showsWine: true)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } header: {
+                Text(month, format: .dateTime.month(.wide).year())
+            }
         }
     }
 }

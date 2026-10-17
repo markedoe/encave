@@ -35,6 +35,8 @@ struct CellarCommands: Commands {
                 .keyboardShortcut("n")
             Button("New Rack…") { model.sheet = .editRack(rackID: nil) }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
+            Button("Remember a Wine…") { model.sheet = .discovery(discoveryID: nil) }
+                .keyboardShortcut("n", modifiers: [.command, .option])
         }
         CommandMenu("Cellar") {
             Button("Cellar") { model.selectedTab = .cellar }.keyboardShortcut("1")

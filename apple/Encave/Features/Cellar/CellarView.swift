@@ -95,10 +95,13 @@ struct CellarView: View {
             } label: {
                 Label("Sort", systemImage: filter.isActive ? "line.3.horizontal.decrease.circle.fill" : "arrow.up.arrow.down")
             }
-            Button {
-                model.sheet = .addBottle(AddBottleContext())
+            Menu {
+                Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext()) }
+                Button("Remember a Wine", systemImage: "sparkles") { model.sheet = .discovery(discoveryID: nil) }
             } label: {
                 Label("Add Bottle", systemImage: "plus")
+            } primaryAction: {
+                model.sheet = .addBottle(AddBottleContext())
             }
         }
         #if os(iOS)
@@ -203,6 +206,7 @@ struct EmptyCellarView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            Button("Remember a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
             Button("Load sample cellar") { model.loadSample() }
         }
     }

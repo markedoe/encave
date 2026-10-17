@@ -116,6 +116,9 @@ public extension Cellar {
             bottles[id] = copy
             bottleCount += 1
         }
+        for (id, discovery) in other.discoveries where discoveries[id] == nil && wines[discovery.wineID] != nil {
+            discoveries[id] = discovery
+        }
         return ImportSummary(winesAdded: wineCount, bottlesAdded: bottleCount, rowsSkipped: 0)
     }
 

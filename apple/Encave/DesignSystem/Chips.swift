@@ -50,16 +50,27 @@ struct FlowLayout: Layout {
 
 /// A selectable capsule, used for filters and quick choices.
 struct ChoiceChip<Leading: View>: View {
-    let title: LocalizedStringKey
+    let title: Text
     let isSelected: Bool
     let action: () -> Void
     @ViewBuilder var leading: () -> Leading
+
+    init(title: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void,
+         @ViewBuilder leading: @escaping () -> Leading) {
+        self.title = Text(title); self.isSelected = isSelected; self.action = action; self.leading = leading
+    }
+
+    /// For text entered by the user, such as tags, which must not be translated.
+    init(verbatim: String, isSelected: Bool, action: @escaping () -> Void,
+         @ViewBuilder leading: @escaping () -> Leading) {
+        self.title = Text(verbatim: verbatim); self.isSelected = isSelected; self.action = action; self.leading = leading
+    }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
                 leading()
-                Text(title)
+                title
                     .font(.subheadline.weight(isSelected ? .semibold : .regular))
             }
             .padding(.horizontal, 12)
@@ -82,5 +93,9 @@ struct ChoiceChip<Leading: View>: View {
 extension ChoiceChip where Leading == EmptyView {
     init(title: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) {
         self.init(title: title, isSelected: isSelected, action: action, leading: { EmptyView() })
+    }
+
+    init(verbatim: String, isSelected: Bool, action: @escaping () -> Void) {
+        self.init(verbatim: verbatim, isSelected: isSelected, action: action, leading: { EmptyView() })
     }
 }

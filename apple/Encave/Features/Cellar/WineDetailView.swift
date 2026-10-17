@@ -99,6 +99,20 @@ struct WineDetailView: View {
                     Text("\(bottles.count) bottles in the cellar")
                 }
 
+                let discoveries = model.cellar.discoveries(of: wineID)
+                if !discoveries.isEmpty {
+                    Section("Discoveries") {
+                        ForEach(discoveries) { discovery in
+                            Button {
+                                model.sheet = .discovery(discoveryID: discovery.id)
+                            } label: {
+                                DiscoveryRow(discovery: discovery, showsWine: false)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
                 if !tastings.isEmpty {
                     Section("Tastings") {
                         ForEach(tastings) { bottle in

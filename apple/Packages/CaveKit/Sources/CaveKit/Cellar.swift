@@ -10,13 +10,19 @@ public struct Cellar: Codable, Equatable, Sendable {
     public var bottles: [UUID: Bottle]
     public var racks: [Rack]
     public var settings: CellarSettings
+    /// Wines tasted or seen elsewhere, to remember or buy.
+    public var discoveries: [UUID: Discovery]
 
-    public init(wines: [Wine] = [], bottles: [Bottle] = [], racks: [Rack] = [], settings: CellarSettings = CellarSettings()) {
+    public init(
+        wines: [Wine] = [], bottles: [Bottle] = [], racks: [Rack] = [], settings: CellarSettings = CellarSettings(),
+        discoveries: [Discovery] = []
+    ) {
         schemaVersion = Cellar.currentSchemaVersion
         self.wines = Dictionary(uniqueKeysWithValues: wines.map { ($0.id, $0) })
         self.bottles = Dictionary(uniqueKeysWithValues: bottles.map { ($0.id, $0) })
         self.racks = racks
         self.settings = settings
+        self.discoveries = Dictionary(uniqueKeysWithValues: discoveries.map { ($0.id, $0) })
     }
 
     public init(from decoder: Decoder) throws {
@@ -25,10 +31,11 @@ public struct Cellar: Codable, Equatable, Sendable {
         bottles = try c.decodeIfPresent([UUID: Bottle].self, forKey: .bottles) ?? [:]
         racks = try c.decodeIfPresent([Rack].self, forKey: .racks) ?? []
         settings = try c.decodeIfPresent(CellarSettings.self, forKey: .settings) ?? CellarSettings()
+        discoveries = try c.decodeIfPresent([UUID: Discovery].self, forKey: .discoveries) ?? [:]
         schemaVersion = Cellar.currentSchemaVersion
     }
 
-    public var isEmpty: Bool { wines.isEmpty && bottles.isEmpty && racks.isEmpty }
+    public var isEmpty: Bool { wines.isEmpty && bottles.isEmpty && racks.isEmpty && discoveries.isEmpty }
 }
 
 // MARK: - Queries
@@ -194,7 +201,7 @@ public extension Cellar {
 // MARK: - Commands
 
 public enum CellarError: Error, Equatable {
-    case unknownWine, unknownBottle, unknownRack, slotTaken, slotOutOfRange, alreadyConsumed, rackNotEmpty
+    case unknownWine, unknownBottle, unknownRack, unknownDiscovery, slotTaken, slotOutOfRange, alreadyConsumed, rackNotEmpty
 }
 
 /// Purchase details applied to every bottle added in one go.
@@ -312,10 +319,11 @@ public extension Cellar {
         wines[wine.id] = wine
     }
 
-    /// Deletes a wine and every bottle of it.
+    /// Deletes a wine with every bottle and discovery of it.
     mutating func deleteWine(_ wineID: UUID) {
         wines[wineID] = nil
         for (id, bottle) in bottles where bottle.wineID == wineID { bottles[id] = nil }
+        for (id, discovery) in discoveries where discovery.wineID == wineID { discoveries[id] = nil }
     }
 
     mutating func addRack(_ rack: Rack) { racks.append(rack) }
@@ -346,8 +354,8 @@ public extension Cellar {
         }
     }
 
-    private mutating func removeOrphanWines() {
-        let used = Set(bottles.values.map(\.wineID))
+    internal mutating func removeOrphanWines() {
+        let used = Set(bottles.values.map(\.wineID)).union(discoveries.values.map(\.wineID))
         for id in wines.keys where !used.contains(id) { wines[id] = nil }
     }
 

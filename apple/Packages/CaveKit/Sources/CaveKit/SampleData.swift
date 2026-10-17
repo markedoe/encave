@@ -13,6 +13,12 @@ public enum SampleData {
         public var nose = "Cherry, violet, a touch of undergrowth"
         public var palate = "Fine tannins, fresh acidity"
         public var pairing = "Roast duck"
+        public var friendsPlace = "At Julie and Marc's"
+        public var friendsNote = "Very fresh, perfect with the cheese platter."
+        public var restaurantPlace = "Bistro on the harbour, Lisbon"
+        public var restaurantNote = "Mineral and salty, great with grilled fish."
+        public var tagToBuy = "For summer"
+        public var tagGift = "Gift idea"
         public init() {}
     }
 
@@ -71,6 +77,19 @@ public enum SampleData {
                 palate: labels.palate, foodPairing: labels.pairing))
             try? cellar.drink(bottles[1].id, tasting: Tasting(date: .now - 40 * day, rating: 4))
         }
+
+        // Wines found elsewhere, one of them on the shopping list.
+        let atFriends = Wine(name: "Coteaux du Layon", producer: "Domaine des Sablons", vintage: year - 6,
+                             color: .dessert, region: "Loire", country: "France", grapes: ["Chenin Blanc"])
+        cellar.addDiscovery(Discovery(wineID: atFriends.id, date: .now - 9 * day, setting: .friends,
+                                      place: labels.friendsPlace, rating: 4, note: labels.friendsNote,
+                                      tags: [labels.tagGift], wantsToBuy: true), wine: atFriends)
+        let onTrip = Wine(name: "Alvarinho Reserva", producer: "Quinta do Mar", vintage: year - 2, color: .white,
+                          region: "Vinho Verde", country: "Portugal", grapes: ["Alvarinho"])
+        cellar.addDiscovery(Discovery(wineID: onTrip.id, date: .now - 25 * day, setting: .restaurant,
+                                      place: labels.restaurantPlace, rating: 5, note: labels.restaurantNote,
+                                      tags: [labels.tagToBuy], price: 32, currency: cellar.settings.currency,
+                                      wantsToBuy: true), wine: onTrip)
         return cellar
     }
 }

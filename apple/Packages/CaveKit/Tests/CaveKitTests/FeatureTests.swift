@@ -139,7 +139,8 @@ import Testing
         var target = Cellar(racks: original.racks)
         let summary = try target.importCSV(csv)
         #expect(summary.bottlesAdded == original.bottles.count)
-        #expect(target.wines.count == original.wines.count)
+        // The CSV lists bottles: wines only known from discoveries are not in it.
+        #expect(target.wines.count == Set(original.bottles.values.map(\.wineID)).count)
         #expect(target.bottlesInCellar.count == original.bottlesInCellar.count)
         #expect(target.consumedBottles.count == original.consumedBottles.count)
         #expect(Set(target.bottlesInCellar.compactMap(\.slot)) == Set(original.bottlesInCellar.compactMap(\.slot)))

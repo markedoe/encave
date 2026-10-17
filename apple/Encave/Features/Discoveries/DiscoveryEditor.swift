@@ -1,0 +1,155 @@
+import CaveKit
+import SwiftUI
+
+/// Remember a wine tasted or seen elsewhere: scan it, say where, add notes and tags,
+/// and put it on the shopping list. Also edits an existing discovery.
+struct DiscoveryEditor: View {
+    @Environment(CellarModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    let discoveryID: UUID?
+
+    @State private var draft = WineDraft()
+    @State private var labelPhoto: Data?
+    @State private var newPhoto: Data?
+    @State private var photoRemoved = false
+    @State private var date = Date.now
+    @State private var setting: Discovery.Setting?
+    @State private var place = ""
+    @State private var rating: Int?
+    @State private var note = ""
+    @State private var tags: [String] = []
+    @State private var pendingTag = ""
+    @State private var price: Decimal?
+    @State private var wantsToBuy = false
+    @State private var loaded = false
+    @State private var confirmingDelete = false
+
+    private var existing: Discovery? { discoveryID.flatMap { model.cellar.discoveries[$0] } }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if discoveryID == nil {
+                    LabelScanSection(draft: $draft, labelPhoto: $labelPhoto)
+                }
+                WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false)
+
+                Section("Where") {
+                    FlowLayout(spacing: 8) {
+                        ForEach(Discovery.Setting.allCases, id: \.self) { option in
+                            ChoiceChip(title: option.title, isSelected: setting == option) {
+                                withAnimation(.snappy) { setting = setting == option ? nil : option }
+                            } leading: {
+                                Image(systemName: option.systemImage)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    TextField("Place", text: $place, prompt: Text("Restaurant, city, friends’ names…"))
+                    DatePicker("Date", selection: $date, in: ...Date.now, displayedComponents: .date)
+                }
+
+                Section("Your impression") {
+                    RatingPicker(rating: $rating)
+                    TextField("Notes", text: $note, prompt: Text("What you liked, the dish, the moment…"), axis: .vertical)
+                        .lineLimit(3...8)
+                }
+
+                Section("Tags") {
+                    TagEditor(tags: $tags, suggestions: model.cellar.discoveryTags, newTag: $pendingTag)
+                }
+
+                Section {
+                    Toggle(isOn: $wantsToBuy.animation()) {
+                        Label("To buy", systemImage: "cart")
+                    }
+                    TextField("Price seen", value: $price, format: .currency(code: model.cellar.settings.currency))
+                        .numericKeyboard()
+                } footer: {
+                    Text("Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.")
+                }
+
+                if discoveryID != nil {
+                    PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
+                    Section {
+                        Button("Delete Discovery", role: .destructive) { confirmingDelete = true }
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle(discoveryID == nil ? Text("Remember a Wine") : Text("Discovery"))
+            .inlineTitle()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: save)
+                        .disabled(!draft.isValid)
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
+            .confirmationDialog("Delete this discovery?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                Button("Delete Discovery", role: .destructive) {
+                    if let discoveryID { model.deleteDiscovery(discoveryID) }
+                    dismiss()
+                }
+            }
+            .onAppear(perform: load)
+        }
+        .macSheetFrame(width: 520, height: 720)
+    }
+
+    private func load() {
+        guard !loaded else { return }
+        loaded = true
+        guard let discovery = existing, let wine = model.cellar.wines[discovery.wineID] else { return }
+        draft = WineDraft(wine)
+        date = discovery.date
+        setting = discovery.setting
+        place = discovery.place ?? ""
+        rating = discovery.rating
+        note = discovery.note ?? ""
+        tags = discovery.tags
+        price = discovery.price
+        wantsToBuy = discovery.wantsToBuy
+    }
+
+    private func save() {
+        func clean(_ text: String) -> String? {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        var wine = draft.makeWine()
+        var discovery = existing ?? Discovery(wineID: wine.id)
+        discovery.date = date
+        discovery.setting = setting
+        discovery.place = clean(place)
+        discovery.rating = rating
+        discovery.note = clean(note)
+        discovery.tags = Discovery.normalized(tags + pendingTag.split(separator: ",").map(String.init))
+        discovery.price = price
+        discovery.currency = price == nil ? nil : (discovery.currency ?? model.cellar.settings.currency)
+        if discovery.wantsToBuy != wantsToBuy, wantsToBuy { discovery.boughtAt = nil }
+        discovery.wantsToBuy = wantsToBuy
+
+        if existing == nil {
+            if let labelPhoto { wine.photoID = PhotoStore.save(labelPhoto) }
+            model.addDiscovery(discovery, wine: wine)
+            dismiss()
+            return
+        }
+        let oldPhoto = wine.photoID
+        if let newPhoto {
+            wine.photoID = PhotoStore.save(newPhoto) ?? oldPhoto
+        } else if photoRemoved {
+            wine.photoID = nil
+        }
+        guard model.update({ cellar in
+            try cellar.updateWine(wine)
+            try cellar.updateDiscovery(discovery)
+        }) else { return }
+        if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
+        dismiss()
+    }
+}

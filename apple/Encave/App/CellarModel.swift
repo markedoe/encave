@@ -19,6 +19,8 @@ final class CellarModel {
     var highlightedSlot: Slot?
     /// Selected tab, so other screens can jump between sections.
     var selectedTab: AppTab = .cellar
+    /// Page shown in Journal; set to Discoveries after remembering a wine.
+    var journalPage: JournalView.Page = .tastings
 
     private let store: any CellarStore
 
@@ -69,11 +71,13 @@ final class CellarModel {
 
     // MARK: - Actions with feedback
 
-    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo) {
+    @discardableResult
+    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo) -> Bool {
         let ok = update { try $0.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase) }
-        guard ok else { return }
+        guard ok else { return false }
         successCount += 1
         showToast(String(localized: "Added \(quantity) × \(wine.displayName)"))
+        return true
     }
 
     func drink(_ bottleID: UUID, tasting: Tasting) {
@@ -102,6 +106,29 @@ final class CellarModel {
         showToast(String(localized: "Deleted \(wine.displayName)")) { [weak self] in
             self?.update { $0 = snapshot }
         }
+    }
+
+    func addDiscovery(_ discovery: Discovery, wine: Wine) {
+        guard update({ $0.addDiscovery(discovery, wine: wine) }) else { return }
+        successCount += 1
+        journalPage = .discoveries
+        showToast(discovery.wantsToBuy
+                  ? String(localized: "Added to your shopping list")
+                  : String(localized: "Saved to your discoveries"))
+    }
+
+    func deleteDiscovery(_ id: UUID) {
+        let snapshot = cellar
+        guard update({ $0.deleteDiscovery(id) }) else { return }
+        showToast(String(localized: "Discovery deleted")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
+
+    /// Opens "Add Bottles" for a wine on the shopping list.
+    func buy(_ discovery: Discovery) {
+        guard let wine = cellar.wines[discovery.wineID] else { return }
+        sheet = .addBottle(AddBottleContext(wine: wine, discoveryID: discovery.id))
     }
 
     func move(_ bottleID: UUID, to slot: Slot?) {
@@ -148,6 +175,8 @@ enum AppSheet: Identifiable {
     case editTasting(bottleID: UUID)
     case editRack(rackID: UUID?)
     case moveBottle(bottleID: UUID)
+    /// Remember a wine found elsewhere (nil: a new one).
+    case discovery(discoveryID: UUID?)
     case settings
 
     var id: String {
@@ -158,6 +187,7 @@ enum AppSheet: Identifiable {
         case .editTasting(let id): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"
+        case .discovery(let id): "discovery-\(id?.uuidString ?? "new")"
         case .settings: "settings"
         }
     }
@@ -168,6 +198,8 @@ struct AddBottleContext: Identifiable {
     let id = UUID()
     var wine: Wine?
     var slot: Slot?
+    /// Set when buying a wine from the shopping list: it leaves the list once added.
+    var discoveryID: UUID?
 }
 
 struct Toast: Identifiable {
@@ -183,7 +215,7 @@ extension CellarError {
         case .slotOutOfRange: String(localized: "That position is outside the rack.")
         case .rackNotEmpty: String(localized: "Move the bottles out of the removed rows or columns first.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
-        case .unknownWine, .unknownBottle, .unknownRack: String(localized: "This item no longer exists.")
+        case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")
         }
     }
 }
@@ -199,6 +231,12 @@ extension SampleData.Labels {
         labels.nose = String(localized: "Cherry, violet, a touch of undergrowth")
         labels.palate = String(localized: "Fine tannins, fresh acidity")
         labels.pairing = String(localized: "Roast duck")
+        labels.friendsPlace = String(localized: "At Julie and Marc's")
+        labels.friendsNote = String(localized: "Very fresh, perfect with the cheese platter.")
+        labels.restaurantPlace = String(localized: "Bistro on the harbour, Lisbon")
+        labels.restaurantNote = String(localized: "Mineral and salty, great with grilled fish.")
+        labels.tagToBuy = String(localized: "For summer")
+        labels.tagGift = String(localized: "Gift idea")
         return labels
     }
 }
