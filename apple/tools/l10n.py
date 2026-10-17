@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Show as Table': 'Afficher en tableau',
     'Checking a rack': 'Vérifier un casier',
     'Choose **Check This Rack**, tap each bottle you find, then **End Check**. For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.': 'Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.',
     'On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.': 'Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées.',

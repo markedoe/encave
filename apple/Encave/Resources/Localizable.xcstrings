@@ -6201,6 +6201,16 @@
         }
       }
     },
+    "Show as Table": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher en tableau"
+          }
+        }
+      }
+    },
     "Show in Rack": {
       "localizations": {
         "fr": {

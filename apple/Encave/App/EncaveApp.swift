@@ -78,6 +78,8 @@ struct CellarCommands: Commands {
             Button("Racks") { model.selectedTab = .racks }.keyboardShortcut("2")
             Button("Tonight") { model.selectedTab = .tonight }.keyboardShortcut("3")
             Button("Journal") { model.selectedTab = .journal }.keyboardShortcut("4")
+            Divider()
+            CellarTableToggle()
         }
     }
 }
@@ -93,6 +95,16 @@ private struct HelpMenuButton: View {
     }
 }
 #endif
+
+/// Cellar › Show as Table (⌥⌘T): the same switch as in the Cellar toolbar.
+private struct CellarTableToggle: View {
+    @AppStorage(CellarLayout.key) private var showsTable = false
+
+    var body: some View {
+        Toggle("Show as Table", isOn: $showsTable)
+            .keyboardShortcut("t", modifiers: [.command, .option])
+    }
+}
 
 /// Mac: whether Encave shows "Tonight" in the menu bar.
 enum MenuBarSetting {
