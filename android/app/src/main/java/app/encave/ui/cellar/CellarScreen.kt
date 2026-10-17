@@ -58,6 +58,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.clip
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.Outbox
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -665,6 +666,8 @@ private fun SavedSearchChip(search: app.encave.core.SavedSearch, selected: Boole
             color = if (selected) scheme.secondaryContainer else scheme.surface,
             border = if (selected) null else BorderStroke(1.dp, scheme.outlineVariant),
             modifier = Modifier
+                // 32dp tall like the other chips, with a 48dp touch target.
+                .minimumInteractiveComponentSize()
                 .heightIn(min = 32.dp)
                 .clip(androidx.compose.material3.FilterChipDefaults.shape)
                 .combinedClickable(onClickLabel = hint, onLongClick = { menu = true }, onClick = onClick)

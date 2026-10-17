@@ -164,7 +164,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 @Composable
 private fun androidx.compose.foundation.layout.FlowRowScope.StatTile(label: String, value: String) {
     Card(
-        Modifier.weight(1f).fillMaxRowHeight().semantics(mergeDescendants = true) {},
+        Modifier.weight(1f).semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(Dimens.radiusCard),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {

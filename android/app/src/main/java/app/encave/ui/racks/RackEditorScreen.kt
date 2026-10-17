@@ -204,13 +204,13 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
             )
 
             Header(R.string.kind_title)
-            // Two cards a row, the same width and height, so the choices line up.
+            // Two cards a row, the same width, so the choices line up.
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s),
                 maxItemsInEachRow = 2,
             ) {
                 RackKind.entries.forEach { option ->
-                    KindCard(option, selected = kind == option, Modifier.weight(1f).fillMaxRowHeight()) {
+                    KindCard(option, selected = kind == option, Modifier.weight(1f)) {
                         kind = option
                         if (option == RackKind.Staggered) customRows = false
                         if (existing == null) presets.firstOrNull { it.kind == option }?.let(::apply)
@@ -351,7 +351,7 @@ private fun KindCard(kind: RackKind, selected: Boolean, modifier: Modifier = Mod
         border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) scheme.primary else scheme.outlineVariant),
         colors = CardDefaults.outlinedCardColors(containerColor = if (selected) scheme.primaryContainer else scheme.surface),
     ) {
-        Column(Modifier.padding(Dimens.m).heightIn(min = 96.dp), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+        Column(Modifier.padding(Dimens.m).heightIn(min = 128.dp), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
             Icon(kind.icon, contentDescription = null, tint = if (selected) scheme.primary else scheme.onSurfaceVariant)
             Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleSmall)
             Text(stringResource(kind.bodyRes), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
