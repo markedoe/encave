@@ -1,0 +1,192 @@
+package app.encave.ui.journal
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.outlined.Insights
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.encave.R
+import app.encave.ui.AppNavigator
+import app.encave.ui.AppViewModel
+import app.encave.ui.components.EmptyState
+import app.encave.ui.components.Formats
+import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.RatingStars
+import app.encave.ui.components.SectionHeader
+import app.encave.ui.components.StyleLabel
+import app.encave.ui.components.WineColorDot
+import app.encave.ui.drink.TastingFields
+import app.encave.ui.drink.TastingFormState
+import app.encave.ui.navigation.InsightsRoute
+import app.encave.ui.navigation.SettingsRoute
+import app.encave.ui.navigation.TastingRoute
+import app.encave.ui.navigation.WineDetailRoute
+import app.encave.ui.theme.Dimens
+import app.encave.ui.theme.SerifDisplay
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+/** Tastings grouped by month, most recent first. */
+@Composable
+fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    val cellar by viewModel.cellar.collectAsStateWithLifecycle()
+    val zone = ZoneId.systemDefault()
+    val months = remember(cellar) {
+        cellar.consumedBottles.filter { it.tasting != null }
+            .groupBy { YearMonth.from(it.tasting!!.date.atZone(zone)) }
+            .toList()
+    }
+    val locale = LocalConfiguration.current.locales[0]
+    val monthFormat = remember(locale) { DateTimeFormatter.ofPattern("LLLL yyyy", locale) }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeTopAppBar(
+                title = { Text(stringResource(R.string.nav_journal)) },
+                actions = {
+                    IconButton(onClick = { navigator.open(InsightsRoute) }) {
+                        Icon(Icons.Outlined.Insights, contentDescription = stringResource(R.string.action_insights))
+                    }
+                    IconButton(onClick = { navigator.open(SettingsRoute) }) {
+                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+    ) { padding ->
+        if (months.isEmpty()) {
+            EmptyState(
+                icon = Icons.Outlined.AutoStories,
+                title = stringResource(R.string.journal_empty_title),
+                body = stringResource(R.string.journal_empty_body),
+                modifier = Modifier.padding(padding),
+            ) {
+                if (cellar.bottlesInCellar.isNotEmpty()) {
+                    OutlinedButton(onClick = { navigator.open(InsightsRoute) }) { Text(stringResource(R.string.action_insights)) }
+                }
+            }
+            return@Scaffold
+        }
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = Dimens.xxl)) {
+            months.forEach { (month, bottles) ->
+                item(key = month.toString()) {
+                    SectionHeader(monthFormat.format(month).replaceFirstChar { it.titlecase(locale) })
+                }
+                items(bottles, key = { it.id.toString() }) { bottle ->
+                    val tasting = bottle.tasting!!
+                    val wine = cellar.wines[bottle.wineId]
+                    ListItem(
+                        modifier = Modifier.clickable { navigator.open(TastingRoute(bottle.id.toString())) },
+                        leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
+                        headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                        overlineContent = { Text(Formats.day(tasting.date)) },
+                        supportingContent = {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                RatingStars(tasting.rating)
+                                tasting.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                                tasting.occasion?.takeIf { it.isNotBlank() }?.let {
+                                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        },
+                    )
+                    HorizontalDivider(Modifier.padding(start = 56.dp))
+                }
+            }
+        }
+    }
+}
+
+/** View and edit a full tasting note; a bottle can also be put back if it was marked by mistake. */
+@Composable
+fun TastingScreen(viewModel: AppViewModel, navigator: AppNavigator, bottleId: String) {
+    val cellar by viewModel.cellar.collectAsStateWithLifecycle()
+    val bottle = cellar.bottles.values.firstOrNull { it.id.toString() == bottleId }
+    val tasting = bottle?.tasting
+    val wine = bottle?.let { cellar.wines[it.wineId] }
+    val form = remember(bottleId, tasting != null) { tasting?.let { TastingFormState(it) } }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.tasting_title)) },
+                navigationIcon = {
+                    IconButton(onClick = { navigator.back() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
+                },
+                actions = {
+                    if (bottle != null && form != null) {
+                        TextButton(onClick = {
+                            viewModel.updateTasting(bottle.id, form.toTasting())
+                            navigator.back()
+                        }) { Text(stringResource(R.string.action_save)) }
+                    }
+                },
+            )
+        },
+        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+    ) { padding ->
+        if (bottle == null || form == null) {
+            EmptyState(Icons.Outlined.AutoStories, stringResource(R.string.tasting_not_found), "", Modifier.padding(padding))
+            return@Scaffold
+        }
+        Column(
+            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(Dimens.l),
+            verticalArrangement = Arrangement.spacedBy(Dimens.m),
+        ) {
+            if (wine != null) {
+                StyleLabel(wine.color)
+                Text(
+                    wine.displayName, style = SerifDisplay,
+                    modifier = Modifier.clickable { navigator.open(WineDetailRoute(wine.id.toString())) },
+                )
+                wine.producer?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+            TastingFields(form)
+            TextButton(onClick = {
+                viewModel.putBack(bottle.id)
+                navigator.back()
+            }) { Text(stringResource(R.string.action_put_back)) }
+        }
+    }
+}

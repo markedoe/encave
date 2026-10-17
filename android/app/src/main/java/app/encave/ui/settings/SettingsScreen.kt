@@ -1,0 +1,208 @@
+package app.encave.ui.settings
+
+import android.content.Intent
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.FileUpload
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.TableChart
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.encave.BuildConfig
+import app.encave.R
+import app.encave.ui.AppNavigator
+import app.encave.ui.AppViewModel
+import app.encave.ui.components.ConfirmDialog
+import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.SectionHeader
+import app.encave.ui.components.commonCurrencies
+import app.encave.ui.components.sampleLabels
+import java.time.LocalDate
+
+private const val SOURCE_URL = "https://github.com/markedoe/encave"
+
+@Composable
+fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val cellar by viewModel.cellar.collectAsStateWithLifecycle()
+    val dynamicColor by viewModel.preferences.dynamicColor.collectAsStateWithLifecycle()
+    var currencyMenu by remember { mutableStateOf(false) }
+    var confirmSample by remember { mutableStateOf(false) }
+    var confirmErase by remember { mutableStateOf(false) }
+    val resolver = context.contentResolver
+    val today = LocalDate.now()
+
+    val exportJson = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let { viewModel.exportJson(resolver, it) }
+    }
+    val exportCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        uri?.let { viewModel.exportCsv(resolver, it) }
+    }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { viewModel.import(resolver, it) }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.action_settings)) },
+                navigationIcon = {
+                    IconButton(onClick = { navigator.back() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
+                },
+            )
+        },
+        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+    ) { padding ->
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+            SectionHeader(stringResource(R.string.settings_privacy))
+            ListItem(
+                leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                headlineContent = { Text(stringResource(R.string.settings_privacy_stored)) },
+                supportingContent = { Text(stringResource(R.string.settings_privacy_body)) },
+            )
+
+            SectionHeader(stringResource(R.string.settings_cellar))
+            ListItem(
+                modifier = Modifier.clickable { currencyMenu = true },
+                leadingContent = { Icon(Icons.Outlined.Payments, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_currency)) },
+                supportingContent = { Text(cellar.settings.currency) },
+                trailingContent = {
+                    DropdownMenu(expanded = currencyMenu, onDismissRequest = { currencyMenu = false }) {
+                        (listOf(cellar.settings.currency) + commonCurrencies).distinct().forEach { code ->
+                            DropdownMenuItem(text = { Text(code) }, onClick = { viewModel.setCurrency(code); currencyMenu = false })
+                        }
+                    }
+                },
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                SectionHeader(stringResource(R.string.settings_appearance))
+                ListItem(
+                    modifier = Modifier.toggleable(dynamicColor, role = Role.Switch) { viewModel.setDynamicColor(it) },
+                    leadingContent = { Icon(Icons.Outlined.Palette, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) },
+                    supportingContent = { Text(stringResource(R.string.settings_dynamic_color_body)) },
+                    trailingContent = { Switch(checked = dynamicColor, onCheckedChange = null) },
+                )
+            }
+
+            AiSettingsSection(viewModel)
+
+            SectionHeader(stringResource(R.string.settings_data))
+            ListItem(
+                modifier = Modifier.clickable { exportJson.launch("encave-$today.json") },
+                leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_export_json)) },
+                supportingContent = { Text(stringResource(R.string.settings_export_json_body)) },
+            )
+            ListItem(
+                modifier = Modifier.clickable { exportCsv.launch("encave-$today.csv") },
+                leadingContent = { Icon(Icons.Outlined.TableChart, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_export_csv)) },
+                supportingContent = { Text(stringResource(R.string.settings_export_csv_body)) },
+            )
+            ListItem(
+                modifier = Modifier.clickable {
+                    import.launch(arrayOf("application/json", "text/csv", "text/comma-separated-values", "text/plain", "application/octet-stream"))
+                },
+                leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_import)) },
+                supportingContent = { Text(stringResource(R.string.settings_import_body)) },
+            )
+
+            SectionHeader(stringResource(R.string.settings_test_data))
+            ListItem(
+                modifier = Modifier.clickable {
+                    if (cellar.isEmpty) viewModel.loadSample(sampleLabels(resources)) else confirmSample = true
+                },
+                leadingContent = { Icon(Icons.Outlined.Science, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.action_load_sample)) },
+            )
+            ListItem(
+                modifier = Modifier.clickable { confirmErase = true },
+                leadingContent = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                headlineContent = { Text(stringResource(R.string.settings_erase), color = MaterialTheme.colorScheme.error) },
+            )
+
+            SectionHeader(stringResource(R.string.settings_about))
+            ListItem(
+                leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_version)) },
+                supportingContent = { Text("${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})") },
+            )
+            ListItem(
+                modifier = Modifier.clickable {
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, SOURCE_URL.toUri())) }
+                },
+                leadingContent = { Icon(Icons.Outlined.Code, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_source)) },
+                supportingContent = { Text(stringResource(R.string.settings_source_body)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+            )
+            HorizontalDivider()
+        }
+    }
+
+    if (confirmSample) {
+        ConfirmDialog(
+            title = stringResource(R.string.settings_sample_confirm_title),
+            body = stringResource(R.string.settings_sample_confirm_body),
+            confirm = stringResource(R.string.action_replace),
+            onConfirm = { viewModel.loadSample(sampleLabels(resources)) },
+            onDismiss = { confirmSample = false },
+        )
+    }
+    if (confirmErase) {
+        ConfirmDialog(
+            title = stringResource(R.string.settings_erase_title),
+            body = stringResource(R.string.settings_erase_body),
+            confirm = stringResource(R.string.settings_erase),
+            onConfirm = { viewModel.eraseAll() },
+            onDismiss = { confirmErase = false },
+        )
+    }
+}
