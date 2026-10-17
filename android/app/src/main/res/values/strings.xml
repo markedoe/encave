@@ -219,6 +219,12 @@
     <string name="tasting_title">Tasting</string>
     <string name="tasting_not_found">Tasting not found</string>
     <string name="insights_bottles">Bottles</string>
+    <string name="cellar_stat_bottles">bottles</string>
+    <string name="cellar_stat_wines">wines</string>
+    <string name="cellar_stat_soon">to drink soon</string>
+    <string name="cellar_stat_bottles_hint">Shows your cellar in figures.</string>
+    <string name="cellar_stat_wines_hint">Shows all your wines.</string>
+    <string name="cellar_stat_soon_hint">Shows only the wines to drink soon.</string>
     <string name="insights_wines">Wines</string>
     <string name="insights_opened">Opened</string>
     <string name="insights_avg_rating">Average rating</string>
