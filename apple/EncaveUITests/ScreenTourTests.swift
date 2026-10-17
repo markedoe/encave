@@ -36,6 +36,10 @@ final class ScreenTourTests: XCTestCase {
                                "-AppleLocale", language == "fr" ? "fr_FR" : "en_US"]
         app.launch()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
+        #if os(macOS)
+        app.activate()
+        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 20), "The main window opens")
+        #endif
 
         // Cellar, a wine, its drink sheet, adding bottles.
         openSection(0, "cellar")
@@ -121,18 +125,36 @@ final class ScreenTourTests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
+    /// Tab titles as shown in each language.
+    private func title(of section: String) -> String {
+        let titles: [String: [String: String]] = [
+            "en": ["cellar": "Cellar", "racks": "Racks", "tonight": "Tonight", "journal": "Journal"],
+            "fr": ["cellar": "Cave", "racks": "Casiers", "tonight": "Ce soir", "journal": "Journal"],
+        ]
+        return titles[language]?[section] ?? section
+    }
+
     private func openSection(_ index: Int, _ name: String) {
         #if os(macOS)
         let item = element("section.\(name)")
-        if item.waitForExistence(timeout: 5) { item.press() }
-        #else
-        let tabBar = app.tabBars.firstMatch
-        if tabBar.waitForExistence(timeout: 5), tabBar.buttons.count > index {
-            tabBar.buttons.element(boundBy: index).press()
+        if item.waitForExistence(timeout: 5) {
+            item.press()
         } else {
-            // iPad shows the tabs at the top: they are plain buttons there.
-            let buttons = app.buttons.matching(NSPredicate(format: "identifier == %@", "section.\(name)"))
-            if buttons.count > 0 { buttons.firstMatch.press() }
+            app.outlines.staticTexts[title(of: name)].firstMatch.press()
+        }
+        #else
+        // iPhone: tab bar at the bottom. iPad: tabs at the top, which may also show a sidebar button.
+        let title = title(of: name)
+        let inTabBar = app.tabBars.buttons[title]
+        if inTabBar.waitForExistence(timeout: 5), inTabBar.isHittable {
+            inTabBar.press()
+        } else {
+            let button = app.buttons.matching(NSPredicate(format: "label == %@", title)).firstMatch
+            if button.exists, button.isHittable {
+                button.press()
+            } else {
+                XCTFail("Could not open the \(name) section")
+            }
         }
         #endif
         sleep(1)

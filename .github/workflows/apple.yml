@@ -185,11 +185,15 @@ jobs:
           import json, os, shutil, sys
           src, dst = sys.argv[1], sys.argv[2]
           os.makedirs(dst, exist_ok=True)
+          import re
           for test in json.load(open(os.path.join(src, "manifest.json"))):
               for item in test.get("attachments", []):
+                  ext = os.path.splitext(item["exportedFileName"])[1].lower()
+                  if ext not in (".png", ".jpg", ".jpeg", ".heic"):
+                      continue  # debug descriptions and logs
                   human = item.get("suggestedHumanReadableName") or item["exportedFileName"]
                   base = human.split("_")[0] if human.count("_") > 1 else os.path.splitext(human)[0]
-                  ext = os.path.splitext(item["exportedFileName"])[1] or ".png"
+                  base = re.sub(r"[^A-Za-z0-9.-]+", "-", base).strip("-") or "screen"
                   shutil.copy(os.path.join(src, item["exportedFileName"]), os.path.join(dst, base + ext))
           PY
           done
