@@ -155,11 +155,13 @@ during a sync session, or read from the cellar's mailbox.
 **Discovery (Bonjour).** Service type `_encave._tcp`.
 
 - A device that syncs advertises the name `Encave-<first 8 characters of its
-  device ID>` with TXT records `d` = its device ID (lowercase), `c` = the
-  cellar's `networkTag`, and `v` = `1`.
-- A device showing a pairing code advertises `Encave-pair-…` with TXT `p` =
-  `rendezvous(code)` = first 8 bytes, lowercase hex, of
-  `H("encave-pair-rendezvous-v1", [the 6 digits])`.
+  device ID>` (any case; the name only has to be unique and is never parsed)
+  with TXT records `d` = its device ID (lowercase), `c` = the cellar's
+  `networkTag`, and `v` = `1`. Devices are recognized by `d` and `c` only.
+- A device showing a pairing code advertises `Encave-pair-<first 6 characters
+  of the rendezvous>` with TXT `p` = `rendezvous(code)` = first 8 bytes,
+  lowercase hex, of `H("encave-pair-rendezvous-v1", [the 6 digits])`. The
+  joiner looks for `p` only.
 
 Device names are never advertised.
 
