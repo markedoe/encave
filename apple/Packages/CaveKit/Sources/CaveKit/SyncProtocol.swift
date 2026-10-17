@@ -467,7 +467,8 @@ public extension PairingHost {
         }
         // Name and platform as sent over the encrypted channel.
         let member = Member(id: claimed, name: reply.name ?? keys.peer.name, publicKey: identityKey,
-                            platform: reply.platform ?? keys.peer.platform, inbox: reply.inbox)
+                            platform: reply.platform ?? keys.peer.platform,
+                            inbox: reply.inbox.flatMap { RelayPath.isValidMailbox($0) && $0.hasPrefix("i") ? $0 : nil })
         return (channel, member)
     }
 }
