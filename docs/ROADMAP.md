@@ -189,7 +189,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Planned (tablets) |
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
-| Saved lists for occasions, several photos per wine | Planned | Planned |
+| Saved searches, several photos per wine | Planned | Planned |
 | Watch app | Later | Later (Wear OS tile) |
 
 ### Ask your cellar (on the device)
