@@ -32,6 +32,7 @@ struct BottleEnd: View {
                 Circle()
                     .strokeBorder(.white.opacity(0.18), lineWidth: max(0.5, size * 0.03))
                     .padding(size * 0.3)
+                if color == .sparkling { Bubbles(size: size) }
             }
             if isHighlighted {
                 Circle()
@@ -44,6 +45,30 @@ struct BottleEnd: View {
     }
 
     private var fill: Color { color?.tint ?? Color.gray }
+}
+
+/// Bubbles drawn on sparkling wine, so it differs from white by shape, not only color.
+private struct Bubbles: View {
+    let size: CGFloat
+
+    // Positions relative to the bottle end, radius as a fraction of its size.
+    private static let bubbles: [(x: CGFloat, y: CGFloat, r: CGFloat)] = [
+        (0.36, 0.62, 0.11), (0.60, 0.40, 0.085), (0.64, 0.68, 0.07), (0.44, 0.33, 0.06),
+    ]
+
+    var body: some View {
+        ZStack {
+            ForEach(Self.bubbles.indices, id: \.self) { index in
+                let bubble = Self.bubbles[index]
+                Circle()
+                    .strokeBorder(.black.opacity(0.35), lineWidth: max(0.75, size * 0.035))
+                    .background(Circle().fill(.white.opacity(0.7)))
+                    .frame(width: size * bubble.r * 2, height: size * bubble.r * 2)
+                    .position(x: size * bubble.x, y: size * bubble.y)
+            }
+        }
+        .frame(width: size, height: size)
+    }
 }
 
 #Preview {
