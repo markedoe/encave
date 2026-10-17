@@ -60,7 +60,9 @@ fi
 
 if [[ "${1:-}" == "--range" ]]; then
   status=0
-  for sha in $(git rev-list --no-merges "$2"); do
+  # Assigned first so an unknown range fails instead of checking nothing.
+  shas=$(git rev-list --no-merges "$2")
+  for sha in $shas; do
     check_message "commit ${sha:0:8}" "$(git log -1 --format=%B "$sha")" || status=1
   done
   exit $status
