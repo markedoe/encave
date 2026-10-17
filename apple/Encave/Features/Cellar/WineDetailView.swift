@@ -46,6 +46,7 @@ struct WineDetailView: View {
                     if let from = wine.drinkFrom, let until = wine.drinkUntil {
                         MaturityGauge(from: from, until: until, year: model.currentYear, maturity: maturity)
                             .padding(.vertical, 6)
+                        WindowExplanation(wine: wine)
                     } else {
                         Button("Set a drinking window") { model.sheet = .editWine(wineID: wineID) }
                     }
@@ -322,6 +323,41 @@ struct BottleRow: View {
         if let place = bottle.purchasePlace { parts.append(place) }
         if bottle.sizeML != 750 { parts.append(BottleSize.label(for: bottle.sizeML)) }
         return parts.isEmpty ? String(localized: "Added \(bottle.addedAt.formatted(date: .abbreviated, time: .omitted))") : parts.joined(separator: " · ")
+    }
+}
+
+/// Why the window is what it is, and a quick way to move its end.
+private struct WindowExplanation: View {
+    @Environment(CellarModel.self) private var model
+    let wine: Wine
+
+    var body: some View {
+        Group {
+            switch wine.windowSource {
+            case .estimated(let yearsAfterHarvest, let yearsAtBest):
+                Text("Estimated from the style and the vintage: ready \(yearsAfterHarvest) years after the harvest, then at its best for \(yearsAtBest) years. Adjust it if the producer or a guide says otherwise.")
+            case .entered, .missing:
+                Text("The years entered for this wine.")
+            }
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        HStack {
+            Button {
+                model.update { try $0.updateWine(wine.movingWindowEnd(by: -1)) }
+            } label: {
+                ActionLabel("Drink Sooner", systemImage: "minus.circle")
+            }
+            .accessibilityHint(Text("Ends the drinking window a year earlier."))
+            Spacer()
+            Button {
+                model.update { try $0.updateWine(wine.movingWindowEnd(by: 1)) }
+            } label: {
+                ActionLabel("Keep Longer", systemImage: "plus.circle")
+            }
+            .accessibilityHint(Text("Ends the drinking window a year later."))
+        }
+        .buttonStyle(.borderless)
     }
 }
 

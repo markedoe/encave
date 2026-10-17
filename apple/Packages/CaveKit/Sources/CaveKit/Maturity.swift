@@ -52,6 +52,33 @@ public extension Wine {
         }
         return (vintage + start, vintage + start + length)
     }
+
+    /// Where the window comes from, to explain it.
+    var windowSource: WindowSource {
+        guard let from = drinkFrom, let until = drinkUntil else { return .missing }
+        if let vintage, let estimate = estimatedWindow(), estimate.from == from, estimate.until == until {
+            return .estimated(yearsAfterHarvest: from - vintage, yearsAtBest: until - from)
+        }
+        return .entered
+    }
+
+    /// Moves the end of the window by `years` (never before its start), or the
+    /// whole window when only the end is known.
+    func movingWindowEnd(by years: Int) -> Wine {
+        var copy = self
+        guard let until = drinkUntil else { return copy }
+        copy.drinkUntil = max(drinkFrom ?? Int.min, until + years)
+        return copy
+    }
+}
+
+/// Why a wine has the drinking window it has.
+public enum WindowSource: Equatable, Sendable {
+    /// Worked out from the style and the vintage.
+    case estimated(yearsAfterHarvest: Int, yearsAtBest: Int)
+    /// Entered by the user or filled from the label.
+    case entered
+    case missing
 }
 
 /// What a monthly reminder says about the bottles in the cellar.

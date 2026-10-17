@@ -15,6 +15,14 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Why this window': 'Pourquoi cette fenêtre',
+    'Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year.': 'Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an.',
+    'Drink Sooner': 'Boire plus tôt',
+    'Keep Longer': 'Garder plus longtemps',
+    'Ends the drinking window a year earlier.': 'Termine la fenêtre de dégustation un an plus tôt.',
+    'Ends the drinking window a year later.': 'Termine la fenêtre de dégustation un an plus tard.',
+    'Estimated from the style and the vintage: ready %lld years after the harvest, then at its best for %lld years. Adjust it if the producer or a guide says otherwise.': 'Estimée d’après le style et le millésime : prêt %1$lld ans après la vendange, puis à son meilleur pendant %2$lld ans. Ajustez-la si le producteur ou un guide indique autre chose.',
+    'The years entered for this wine.': 'Les années saisies pour ce vin.',
     'About %@ bottles a month': 'Environ %@ bouteilles par mois',
     'Bottles without a drinking window are left out: %lld': 'Bouteilles sans fenêtre de dégustation non comptées : %lld',
     'Drink-down plan': 'Rythme de dégustation',

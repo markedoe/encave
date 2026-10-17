@@ -68,6 +68,7 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .tonight, title: "Tonight and drinking windows",
                         summary: "When each wine is at its best.", systemImage: "moon.stars", sections: [
+                HelpSection(title: "Why this window", body: "Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year."),
                 HelpSection(title: "Maturity", body: "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color."),
                 HelpSection(title: "Suggestions", body: "Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why."),
                 HelpSection(title: "Serving", body: "Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant."),

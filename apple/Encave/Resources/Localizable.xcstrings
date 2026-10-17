@@ -2381,6 +2381,16 @@
         }
       }
     },
+    "Drink Sooner": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boire plus tôt"
+          }
+        }
+      }
+    },
     "Drink a Bottle": {
       "localizations": {
         "fr": {
@@ -2581,6 +2591,26 @@
         }
       }
     },
+    "Ends the drinking window a year earlier.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Termine la fenêtre de dégustation un an plus tôt."
+          }
+        }
+      }
+    },
+    "Ends the drinking window a year later.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Termine la fenêtre de dégustation un an plus tard."
+          }
+        }
+      }
+    },
     "Enjoy your %@": {
       "localizations": {
         "fr": {
@@ -2627,6 +2657,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Estimer automatiquement"
+          }
+        }
+      }
+    },
+    "Estimated from the style and the vintage: ready %lld years after the harvest, then at its best for %lld years. Adjust it if the producer or a guide says otherwise.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimée d’après le style et le millésime : prêt %1$lld ans après la vendange, puis à son meilleur pendant %2$lld ans. Ajustez-la si le producteur ou un guide indique autre chose."
           }
         }
       }
@@ -3457,6 +3497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer la vérification"
+          }
+        }
+      }
+    },
+    "Keep Longer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder plus longtemps"
           }
         }
       }
@@ -6801,6 +6851,16 @@
         }
       }
     },
+    "The years entered for this wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les années saisies pour ce vin."
+          }
+        }
+      }
+    },
     "The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.": {
       "localizations": {
         "fr": {
@@ -7167,6 +7227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà."
+          }
+        }
+      }
+    },
+    "Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an."
           }
         }
       }
@@ -7547,6 +7617,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Qui vous a offert la bouteille."
+          }
+        }
+      }
+    },
+    "Why this window": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pourquoi cette fenêtre"
           }
         }
       }

@@ -391,3 +391,18 @@ import Testing
         #expect(Cellar().drinkDownPlan(year: 2026, month: 1).bottlesPerMonth == 0)
     }
 }
+
+@Suite struct WindowSourceTests {
+    @Test func explainsEstimatedAndEnteredWindows() {
+        var wine = Wine(name: "Red", vintage: 2020, color: .red)
+        #expect(wine.windowSource == .missing)
+        let estimate = wine.estimatedWindow()!
+        wine.drinkFrom = estimate.from
+        wine.drinkUntil = estimate.until
+        #expect(wine.windowSource == .estimated(yearsAfterHarvest: 3, yearsAtBest: 12))
+        let later = wine.movingWindowEnd(by: 2)
+        #expect(later.drinkUntil == estimate.until + 2)
+        #expect(later.windowSource == .entered)
+        #expect(wine.movingWindowEnd(by: -100).drinkUntil == estimate.from, "never ends before it starts")
+    }
+}
