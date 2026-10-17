@@ -31,11 +31,9 @@ struct AISettingsSection: View {
             }
 
             if settings.isEnabled {
-                if settings.provider == .local {
-                    TextField("Server URL", text: $settings.baseURL,
-                              prompt: Text(verbatim: AIProvider.local.defaultBaseURL))
-                        .urlField()
-                }
+                TextField("Server URL", text: $settings.baseURL,
+                          prompt: Text(verbatim: settings.provider.defaultBaseURL))
+                    .urlField()
                 Group {
                     if settings.provider.requiresKey {
                         SecureField("API key", text: $apiKey)
@@ -74,11 +72,14 @@ struct AISettingsSection: View {
         .onChange(of: settings.provider) { _, provider in
             apiKey = AISettings.apiKey(for: provider) ?? ""
             settings.model = AISettings.savedModel(for: provider)
+            settings.baseURL = AISettings.savedBaseURL(for: provider)
             models = []
             check = .idle
             customModel = !settings.model.isEmpty
         }
-        .onChange(of: settings) { _, new in new.save() }
+        .onChange(of: settings.provider) { _, _ in settings.saveProvider() }
+        .onChange(of: settings.model) { _, model in AISettings.saveModel(model, for: settings.provider) }
+        .onChange(of: settings.baseURL) { _, url in AISettings.saveBaseURL(url, for: settings.provider) }
         .onChange(of: apiKey) { _, key in
             AISettings.setAPIKey(key, for: settings.provider)
             if check != .checking { check = .idle }
@@ -136,6 +137,7 @@ struct AISettingsSection: View {
             } else if settings.provider == .local {
                 Text("On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.")
             } else {
+                Text("Leave the server URL empty to use the provider’s usual address.")
                 Text("Only the label photo is sent, directly to this service, when you scan a label or tap “Complete with AI”. Your cellar is never sent. The key is stored in the Keychain on this device.")
             }
         }

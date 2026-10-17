@@ -84,7 +84,7 @@ enum AIProvider: String, CaseIterable, Sendable {
 struct AISettings: Equatable, Sendable {
     var provider: AIProvider = .off
     var model = ""
-    /// Only for a local server (or to override a provider's address).
+    /// A local server's address, or a different address for a provider (empty: the default).
     var baseURL = ""
 
     var isEnabled: Bool { provider != .off }
@@ -96,35 +96,49 @@ struct AISettings: Equatable, Sendable {
 
     var effectiveBaseURL: String {
         let trimmed = baseURL.trimmingCharacters(in: .whitespaces)
-        let base = trimmed.isEmpty || provider != .local ? provider.defaultBaseURL : trimmed
+        let base = trimmed.isEmpty ? provider.defaultBaseURL : trimmed
         return base.hasSuffix("/") ? String(base.dropLast()) : base
     }
 
     static func load(from defaults: UserDefaults = .standard) -> AISettings {
         var settings = AISettings()
         let raw = defaults.string(forKey: "ai.provider") ?? "off"
-        settings.baseURL = defaults.string(forKey: "ai.baseURL") ?? ""
+        let legacyURL = defaults.string(forKey: "ai.baseURL") ?? ""
         switch raw {
         // Names used by the first test builds.
         case "claude": settings.provider = .anthropic
         case "openAICompatible":
-            settings.provider = settings.baseURL.isEmpty || settings.baseURL.contains("api.openai.com") ? .openAI : .local
+            settings.provider = legacyURL.isEmpty || legacyURL.contains("api.openai.com") ? .openAI : .local
         default: settings.provider = AIProvider(rawValue: raw) ?? .off
         }
         settings.model = defaults.string(forKey: "ai.model.\(settings.provider.rawValue)")
             ?? defaults.string(forKey: "ai.model") ?? ""
+        settings.baseURL = defaults.string(forKey: "ai.baseURL.\(settings.provider.rawValue)")
+            ?? (settings.provider == .local ? legacyURL : "")
         return settings
     }
 
-    func save(to defaults: UserDefaults = .standard) {
+    /// Saves the provider only. Model and address are saved per provider when they change,
+    /// so switching providers never copies one provider's model to another.
+    func saveProvider(to defaults: UserDefaults = .standard) {
         defaults.set(provider.rawValue, forKey: "ai.provider")
+    }
+
+    static func saveModel(_ model: String, for provider: AIProvider, defaults: UserDefaults = .standard) {
         defaults.set(model, forKey: "ai.model.\(provider.rawValue)")
-        defaults.set(baseURL, forKey: "ai.baseURL")
+    }
+
+    static func saveBaseURL(_ url: String, for provider: AIProvider, defaults: UserDefaults = .standard) {
+        defaults.set(url, forKey: "ai.baseURL.\(provider.rawValue)")
     }
 
     /// Model chosen earlier for a provider, so switching back keeps it.
     static func savedModel(for provider: AIProvider, defaults: UserDefaults = .standard) -> String {
         defaults.string(forKey: "ai.model.\(provider.rawValue)") ?? ""
+    }
+
+    static func savedBaseURL(for provider: AIProvider, defaults: UserDefaults = .standard) -> String {
+        defaults.string(forKey: "ai.baseURL.\(provider.rawValue)") ?? ""
     }
 
     /// One key per provider, in the Keychain on this device.

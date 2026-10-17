@@ -1891,6 +1891,16 @@
         }
       }
     },
+    "Leave the server URL empty to use the provider’s usual address.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez l’adresse du serveur vide pour utiliser l’adresse habituelle du fournisseur."
+          }
+        }
+      }
+    },
     "Liked a bottle at friends’ or in a restaurant? Scan it to remember it, add notes and tags, and put it on your shopping list.": {
       "localizations": {
         "fr": {

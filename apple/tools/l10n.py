@@ -325,6 +325,7 @@ FR = {
     "Get an API key": "Obtenir une clé d’API",
     "Local server (Ollama, LM Studio…)": "Serveur local (Ollama, LM Studio…)",
     "Not valid": "Non valide",
+    "Leave the server URL empty to use the provider’s usual address.": "Laissez l’adresse du serveur vide pour utiliser l’adresse habituelle du fournisseur.",
     "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": "Sur iPhone et iPad, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes.",
     "Optional. Reads labels from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
     "%lld models": "%lld modèles",
