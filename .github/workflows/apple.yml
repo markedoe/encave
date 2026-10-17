@@ -31,6 +31,81 @@ jobs:
       - uses: actions/checkout@v4
       - run: python3 apple/tools/l10n.py --check
 
+  mac-launch:
+    name: Mac launch test
+    needs: [cavekit, l10n]
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apple
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        working-directory: .
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+
+      - name: Build the Mac app (Release, signed to run locally)
+        run: |
+          set -o pipefail
+          brew install xcodegen xcbeautify
+          xcodegen generate
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            | xcbeautify --renderer github-actions
+
+      - name: Launch twice and report crashes
+        run: |
+          app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
+          reports="$HOME/Library/Logs/DiagnosticReports"
+          status=0
+          for attempt in first second; do
+            "$app/Contents/MacOS/Encave" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
+            pid=$!
+            sleep 25
+            if kill -0 "$pid" 2>/dev/null; then
+              echo "$attempt launch: still running after 25 s"
+              kill "$pid"; wait "$pid" 2>/dev/null || true
+            else
+              wait "$pid"; code=$?
+              echo "::error::$attempt launch: exited with code $code"
+              status=1
+            fi
+            echo "--- output ($attempt launch) ---"
+            tail -n 80 "$RUNNER_TEMP/launch-$attempt.log"
+          done
+          sleep 5
+          for report in "$reports"/Encave*; do
+            [ -e "$report" ] || continue
+            echo "--- $report ---"
+            # The crash report is JSON after a one-line header: print the useful part.
+            python3 - "$report" <<'PY'
+          import json, sys
+          text = open(sys.argv[1]).read()
+          header, _, body = text.partition("\n")
+          try:
+              data = json.loads(body)
+          except Exception:
+              print(text[:6000]); sys.exit()
+          print(json.dumps(data.get("exception"), indent=1))
+          print(json.dumps(data.get("termination"), indent=1))
+          print(json.dumps(data.get("asi"), indent=1))
+          images = data.get("usedImages", [])
+          for thread in data.get("threads", []):
+              if not thread.get("triggered"):
+                  continue
+              for frame in thread.get("frames", [])[:40]:
+                  image = images[frame.get("imageIndex", 0)] if images else {}
+                  print(image.get("name", "?"), frame.get("symbol", ""), frame.get("sourceFile", ""), frame.get("sourceLine", ""))
+          PY
+            status=1
+          done
+          exit $status
+
   apps:
     name: Build${{ github.event_name != 'pull_request' && ' and upload to TestFlight' || '' }}
     needs: [cavekit, l10n]
