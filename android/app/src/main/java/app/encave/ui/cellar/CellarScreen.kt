@@ -51,6 +51,7 @@ import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.Outbox
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -130,6 +131,14 @@ import kotlinx.coroutines.launch
 /** Cellar list and wine detail: one pane on phones, side by side on tablets and foldables. */
 @Composable
 fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    // Wide screens can show the cellar as a sortable table (remembered).
+    val wide = androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2().windowSizeClass
+        .isWidthAtLeastBreakpoint(androidx.window.core.layout.WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+    val table by viewModel.preferences.cellarTable.collectAsStateWithLifecycle()
+    if (wide && table) {
+        CellarTableScreen(viewModel, navigator, onShowList = { viewModel.preferences.setCellarTable(false) })
+        return
+    }
     val paneNavigator = rememberListDetailPaneScaffoldNavigator<String>()
     val scope = rememberCoroutineScope()
     val selectedId = paneNavigator.currentDestination?.contentKey
@@ -142,6 +151,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             AnimatedPane {
                 CellarList(
                     viewModel, navigator,
+                    onShowTable = if (wide) ({ viewModel.preferences.setCellarTable(true) }) else null,
                     selectedId = if (twoPane) selectedId else null,
                     onOpen = { id -> scope.launch { paneNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id) } },
                 )
@@ -173,6 +183,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 private fun CellarList(
     viewModel: AppViewModel,
     navigator: AppNavigator,
+    onShowTable: (() -> Unit)?,
     selectedId: String?,
     onOpen: (String) -> Unit,
 ) {
@@ -227,6 +238,7 @@ private fun CellarList(
                         onOpen(id)
                     },
                     onSettings = { navigator.open(SettingsRoute) },
+                    onShowTable = onShowTable,
                 )
             }
         },
@@ -411,6 +423,7 @@ private fun CellarSearchBar(
     onExpandedChange: (Boolean) -> Unit,
     onOpen: (String) -> Unit,
     onSettings: () -> Unit,
+    onShowTable: (() -> Unit)?,
 ) {
     val suggestions = remember(cellar, query) {
         cellar.wineSuggestions(query).filter { wine -> cellar.bottlesInCellar.any { it.wineId == wine.id } }
@@ -418,7 +431,7 @@ private fun CellarSearchBar(
     if (!expanded) {
         // Collapsed: a pill that opens the search. A focusable text field here would
         // expand the search as soon as it gets focus (keyboard navigation, launch).
-        CollapsedSearch(query, onOpen = { onExpandedChange(true) }, onClear = { onQueryChange("") }, onSettings = onSettings)
+        CollapsedSearch(query, onOpen = { onExpandedChange(true) }, onClear = { onQueryChange("") }, onSettings = onSettings, onShowTable = onShowTable)
         return
     }
     SearchBar(
@@ -470,7 +483,7 @@ private fun CellarSearchBar(
 }
 
 @Composable
-private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit) {
+private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit, onShowTable: (() -> Unit)?) {
     Surface(
         onClick = onOpen,
         shape = SearchBarDefaults.inputFieldShape,
@@ -493,6 +506,11 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
             if (query.isNotEmpty()) {
                 IconButton(onClick = onClear) {
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
+                }
+            }
+            if (onShowTable != null) {
+                IconButton(onClick = onShowTable, modifier = Modifier.testTag("cellar.layout")) {
+                    Icon(Icons.Outlined.TableChart, contentDescription = stringResource(R.string.action_show_table))
                 }
             }
             IconButton(onClick = onSettings, modifier = Modifier.testTag("action.settings")) {

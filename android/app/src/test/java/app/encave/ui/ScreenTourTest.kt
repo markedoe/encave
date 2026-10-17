@@ -315,6 +315,45 @@ class ScreenTourTest(private val device: String, private val language: String) {
     }
 
     @Test
+    fun cellarTable() {
+        // Wide screens only: the list or a sortable table.
+        if (device != "tablet") return
+        tap("cellar.layout")
+        compose.onNodeWithTag("cellar.table").assertExists()
+        tap("table.header.Vintage")
+        capture("37-cellar-table")
+        tap("table.row")
+        capture("37b-cellar-table-wine")
+        tap("cellar.layout")
+        compose.onNodeWithTag("cellar.table").assertDoesNotExist()
+    }
+
+    @Test
+    fun rackDragAndDrop() {
+        if (device != "tablet") return
+        tab("Racks")
+        tap("rack.row.0")
+        val from = bounds("cell.0.0")!!
+        val to = bounds("cell.2.3")!!
+        compose.onNodeWithTag("cell.0.0").performTouchInput {
+            down(center)
+            advanceEventTime(1_000)
+            val delta = to.center - from.center
+            for (step in 1..10) moveBy(delta / 10f)
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("rack.dragging").assertExists()
+        capture("38-rack-dragging")
+        compose.onNodeWithTag("cell.0.0").performTouchInput { up() }
+        compose.waitForIdle()
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val cellar = application.repository.cellar.value
+        val rack = cellar.racks.first()
+        assertTrue("$device-$language: the bottle did not move", cellar.bottleAt(app.encave.core.Slot(rack.id, 2, 3)) != null)
+        capture("39-rack-dropped")
+    }
+
+    @Test
     fun addBottle() {
         tap("action.fab_add")
         capture("04-add-bottle")

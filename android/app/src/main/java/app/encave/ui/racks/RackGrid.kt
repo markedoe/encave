@@ -30,6 +30,20 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.layout
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
@@ -185,8 +199,25 @@ fun RackGrid(
     onCellClick: ((RackCell, List<Bottle>) -> Unit)? = null,
     onCellLongClick: ((RackCell, List<Bottle>) -> Unit)? = null,
     onCellDoubleClick: ((RackCell) -> Unit)? = null,
+    /**
+     * Drag and drop (wide screens): touch and hold a bottle, then drag it to another place.
+     * Called with the bottle and the place it was dropped on (its own place when not moved).
+     */
+    onDrop: ((Bottle, RackCell) -> Unit)? = null,
 ) {
     val byCell = cellar.bottlesByCell(rack)
+    // Drag and drop: where each place is on screen, and the bottle being dragged.
+    val cellBounds = remember(rack.id) { mutableMapOf<RackCell, Rect>() }
+    var container by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var dragged by remember { mutableStateOf<Bottle?>(null) }
+    var dragAt by remember { mutableStateOf(Offset.Zero) }
+    fun cellAt(local: Offset): RackCell? {
+        val root = container?.takeIf { it.isAttached }?.localToRoot(local) ?: return null
+        return cellBounds.entries.firstOrNull { it.value.contains(root) }?.key
+    }
+    val dropTarget = dragged?.let { cellAt(dragAt) }
+    val currentByCell by rememberUpdatedState(byCell)
+    val currentOnDrop by rememberUpdatedState(onDrop)
     val selectedByCell = selected.filter { it.rackId == rack.id }.groupBy { it.cell }
     val size = if (rack.kind == RackKind.Bins) cellSize * 1.7f else cellSize
     val cellHeight = if (RackLabels.showsName(rack, cellSize)) size * RackLabels.NAME_HEIGHT_RATIO else size
@@ -212,68 +243,113 @@ fun RackGrid(
     // No touch-target minimum here: the rack screen fits the rack to the screen and zooms from there.
     val cellWidth = size
 
-    Column(
+    Box(
         modifier
+            .onGloballyPositioned { container = it }
             .then(
-                if (rack.kind == RackKind.Grid || rack.kind == RackKind.Staggered) {
-                    Modifier.background(scheme.surfaceContainer, RoundedCornerShape(cellSize * 0.22f)).padding(cellSize * 0.12f)
-                } else {
+                if (onDrop == null) {
                     Modifier
+                } else {
+                    Modifier.pointerInput(rack.id) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { offset ->
+                                dragAt = offset
+                                dragged = cellAt(offset)?.let { cell ->
+                                    currentByCell[cell].orEmpty().let { list -> list.firstOrNull { it.slot?.depth == 0 } ?: list.firstOrNull() }
+                                }
+                            },
+                            onDrag = { change, amount ->
+                                if (dragged != null) {
+                                    change.consume()
+                                    dragAt += amount
+                                }
+                            },
+                            onDragEnd = {
+                                val bottle = dragged
+                                val target = cellAt(dragAt)
+                                dragged = null
+                                if (bottle != null && target != null) currentOnDrop?.invoke(bottle, target)
+                            },
+                            onDragCancel = { dragged = null },
+                        )
+                    }
                 },
             ),
-        verticalArrangement = Arrangement.spacedBy(rowGap),
     ) {
-        if (showHeaders && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)) {
-            Row(Modifier.clearAndSetSemantics { }) {
-                Spacer(Modifier.width(headerWidth))
-                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                    for (column in 0 until rack.maxColumns) {
-                        Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
-                            Text("${column + 1}", style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
+        Column(
+            Modifier
+                .then(
+                    if (rack.kind == RackKind.Grid || rack.kind == RackKind.Staggered) {
+                        Modifier.background(scheme.surfaceContainer, RoundedCornerShape(cellSize * 0.22f)).padding(cellSize * 0.12f)
+                    } else {
+                        Modifier
+                    },
+                ),
+            verticalArrangement = Arrangement.spacedBy(rowGap),
+        ) {
+            if (showHeaders && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)) {
+                Row(Modifier.clearAndSetSemantics { }) {
+                    Spacer(Modifier.width(headerWidth))
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                        for (column in 0 until rack.maxColumns) {
+                            Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
+                                Text("${column + 1}", style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+            for (row in 0 until rack.rows) {
+                Column(if (row > 0 && overlap > 0.dp) Modifier.overlapUp(overlap) else Modifier) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (showHeaders) {
+                            Box(Modifier.width(headerWidth).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
+                                Text(Rack.rowLetters(row), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                            }
+                        }
+                        if (offsetsOddRows && row % 2 == 1) Spacer(Modifier.width((cellWidth + spacing) / 2))
+                        Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                            for (column in 0 until rack.columnsInRow(row)) {
+                                val cell = RackCell(rack.id, row, column)
+                                val bottles = byCell[cell].orEmpty()
+                                RackCellView(
+                                    rack = rack, cell = cell, bottles = bottles, cellar = cellar, size = size, height = cellHeight,
+                                    selectedCount = selectedByCell[cell]?.size ?: 0,
+                                    isHighlighted = highlighted?.cell == cell || selectedCell == cell || dropTarget == cell,
+                                    focusWine = focusWine,
+                                    clickLabel = clickLabel(bottles),
+                                    onClick = onCellClick?.let { { it(cell, bottles) } },
+                                    onLongClick = onCellLongClick?.let { { it(cell, bottles) } },
+                                    onDoubleClick = onCellDoubleClick?.let { { it(cell) } },
+                                    onPositioned = if (onDrop != null) ({ bounds -> cellBounds[cell] = bounds }) else null,
+                                )
+                            }
+                        }
+                    }
+                    if (rack.kind == RackKind.Shelves) {
+                        // The shelf under the row of bottles.
+                        Row {
+                            if (showHeaders) Spacer(Modifier.width(headerWidth))
+                            Box(
+                                Modifier
+                                    .width(cellWidth * rack.columnsInRow(row) + spacing * (rack.columnsInRow(row) - 1))
+                                    .height(maxOf(4.dp, cellSize * 0.09f))
+                                    .background(scheme.outlineVariant, CircleShape),
+                            )
                         }
                     }
                 }
             }
         }
-        for (row in 0 until rack.rows) {
-            Column(if (row > 0 && overlap > 0.dp) Modifier.overlapUp(overlap) else Modifier) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (showHeaders) {
-                        Box(Modifier.width(headerWidth).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
-                            Text(Rack.rowLetters(row), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
-                        }
-                    }
-                    if (offsetsOddRows && row % 2 == 1) Spacer(Modifier.width((cellWidth + spacing) / 2))
-                    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                        for (column in 0 until rack.columnsInRow(row)) {
-                            val cell = RackCell(rack.id, row, column)
-                            val bottles = byCell[cell].orEmpty()
-                            RackCellView(
-                                rack = rack, cell = cell, bottles = bottles, cellar = cellar, size = size, height = cellHeight,
-                                selectedCount = selectedByCell[cell]?.size ?: 0,
-                                isHighlighted = highlighted?.cell == cell || selectedCell == cell,
-                                focusWine = focusWine,
-                                clickLabel = clickLabel(bottles),
-                                onClick = onCellClick?.let { { it(cell, bottles) } },
-                                onLongClick = onCellLongClick?.let { { it(cell, bottles) } },
-                                onDoubleClick = onCellDoubleClick?.let { { it(cell) } },
-                            )
-                        }
-                    }
-                }
-                if (rack.kind == RackKind.Shelves) {
-                    // The shelf under the row of bottles.
-                    Row {
-                        if (showHeaders) Spacer(Modifier.width(headerWidth))
-                        Box(
-                            Modifier
-                                .width(cellWidth * rack.columnsInRow(row) + spacing * (rack.columnsInRow(row) - 1))
-                                .height(maxOf(4.dp, cellSize * 0.09f))
-                                .background(scheme.outlineVariant, CircleShape),
-                        )
-                    }
-                }
-            }
+        // The bottle being dragged follows the finger.
+        dragged?.let { bottle ->
+            val half = size / 2
+            BottleEnd(
+                cellar.wines[bottle.wineId]?.color,
+                Modifier.offset { IntOffset((dragAt.x - half.toPx()).roundToInt(), (dragAt.y - half.toPx()).roundToInt()) }
+                    .alpha(0.85f).testTag("rack.dragging"),
+                size = size,
+            )
         }
     }
 }
@@ -294,6 +370,7 @@ private fun RackCellView(
     onClick: (() -> Unit)?,
     onLongClick: (() -> Unit)?,
     onDoubleClick: (() -> Unit)?,
+    onPositioned: ((Rect) -> Unit)? = null,
 ) {
     val resources = LocalResources.current
     val place = rack.displayLabel(cell, resources)
@@ -314,6 +391,7 @@ private fun RackCellView(
         Modifier
             .size(size, height)
             .testTag("cell.${cell.row}.${cell.column}")
+            .then(if (onPositioned != null) Modifier.onGloballyPositioned { onPositioned(it.boundsInRoot()) } else Modifier)
             .then(
                 if (onClick != null) {
                     Modifier.combinedClickable(

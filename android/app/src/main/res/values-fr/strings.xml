@@ -806,6 +806,17 @@
     <string name="barcode_kept">Code-barres %1$s, gardé avec le vin</string>
     <string name="help_scanning_barcodes_title">Codes-barres</string>
     <string name="help_scanning_barcodes">En ajoutant des bouteilles, touchez le bouton code-barres : l’appareil photo lit le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne.</string>
+    <string name="action_show_table">Afficher en tableau</string>
+    <string name="action_show_list">Afficher en liste</string>
+    <string name="table_wine">Vin</string>
+    <string name="table_when">Quand boire</string>
+    <string name="table_sorted_up">Trié, croissant</string>
+    <string name="table_sorted_down">Trié, décroissant</string>
+    <string name="table_sort_hint">Trier par cette colonne</string>
+    <string name="help_start_table_title">Liste ou tableau</string>
+    <string name="help_start_table">Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.</string>
+    <string name="help_racks_drag_title">Glisser-déposer</string>
+    <string name="help_racks_drag">Sur tablette, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement).</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

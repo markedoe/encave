@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Devices
@@ -52,6 +53,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_racks, R.string.nav_racks, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
                     HelpSection(R.string.help_start_journal, R.string.nav_journal, Icons.Outlined.AutoStories),
+                    HelpSection(R.string.help_start_table, R.string.help_start_table_title, Icons.Outlined.TableChart),
                     HelpSection(R.string.help_start_try, R.string.help_start_try_title),
                 ),
             ),
@@ -89,6 +91,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_finding, R.string.help_racks_finding_title, Icons.Outlined.Search),
                     HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),
                     HelpSection(R.string.help_racks_moving, R.string.help_racks_moving_title),
+                    HelpSection(R.string.help_racks_drag, R.string.help_racks_drag_title),
                     HelpSection(R.string.help_racks_several, R.string.help_racks_several_title),
                     HelpSection(R.string.help_racks_check, R.string.help_racks_check_title, Icons.Outlined.Checklist),
                     HelpSection(R.string.help_racks_irregular, R.string.help_racks_irregular_title),

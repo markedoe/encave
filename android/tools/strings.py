@@ -890,6 +890,21 @@ S = [
  ("help_scanning_barcodes", "When adding bottles, tap the barcode button: the camera reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.",
   "En ajoutant des bouteilles, touchez le bouton code-barres : l’appareil photo lit le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."),
 
+ # Cellar table (wide screens) and drag and drop
+ ("action_show_table", "Show as a table", "Afficher en tableau"),
+ ("action_show_list", "Show as a list", "Afficher en liste"),
+ ("table_wine", "Wine", "Vin"),
+ ("table_when", "When to drink", "Quand boire"),
+ ("table_sorted_up", "Sorted, ascending", "Trié, croissant"),
+ ("table_sorted_down", "Sorted, descending", "Trié, décroissant"),
+ ("table_sort_hint", "Sort by this column", "Trier par cette colonne"),
+ ("help_start_table_title", "List or table", "Liste ou tableau"),
+ ("help_start_table", "On tablets and large screens, the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.",
+  "Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté."),
+ ("help_racks_drag_title", "Drag and drop", "Glisser-déposer"),
+ ("help_racks_drag", "On tablets, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).",
+  "Sur tablette, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement)."),
+
 ]
 
 P = [

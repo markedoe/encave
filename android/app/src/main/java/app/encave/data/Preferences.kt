@@ -19,7 +19,18 @@ class Preferences(context: Context) {
         dynamic.value = enabled
     }
 
+    private val table = MutableStateFlow(prefs.getBoolean(KEY_CELLAR_TABLE, false))
+
+    /** On wide screens, the cellar as a sortable table instead of a list. */
+    val cellarTable: StateFlow<Boolean> = table.asStateFlow()
+
+    fun setCellarTable(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_CELLAR_TABLE, enabled) }
+        table.value = enabled
+    }
+
     private companion object {
         const val KEY_DYNAMIC_COLOR = "dynamic_color"
+        const val KEY_CELLAR_TABLE = "cellar_table"
     }
 }

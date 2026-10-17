@@ -807,6 +807,17 @@
     <string name="barcode_kept">Barcode %1$s, kept with the wine</string>
     <string name="help_scanning_barcodes_title">Barcodes</string>
     <string name="help_scanning_barcodes">When adding bottles, tap the barcode button: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.</string>
+    <string name="action_show_table">Show as a table</string>
+    <string name="action_show_list">Show as a list</string>
+    <string name="table_wine">Wine</string>
+    <string name="table_when">When to drink</string>
+    <string name="table_sorted_up">Sorted, ascending</string>
+    <string name="table_sorted_down">Sorted, descending</string>
+    <string name="table_sort_hint">Sort by this column</string>
+    <string name="help_start_table_title">List or table</string>
+    <string name="help_start_table">On tablets and large screens, the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.</string>
+    <string name="help_racks_drag_title">Drag and drop</string>
+    <string name="help_racks_drag">On tablets, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>

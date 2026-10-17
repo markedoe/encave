@@ -143,6 +143,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     val selectedCell = rack?.cellFor(selectedKey)
     val selectedBottle = selectedCell?.let { cell -> cellar.bottlesIn(cell).firstOrNull() }
     val focusWine = focusWineId?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    // Tablets and large screens: drag a bottle to another place (touch and hold, then drag).
+    val dragAndDrop = androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2().windowSizeClass
+        .isWidthAtLeastBreakpoint(androidx.window.core.layout.WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
 
     // A bottle shown from elsewhere ("Show in rack") or picked in the list: select it, bring it
     // into view, and stop pointing to it after a moment.
@@ -282,7 +285,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             }
                         }
                     },
-                    onCellLongClick = { _, bottles ->
+                    onCellLongClick = if (dragAndDrop) null else { _, bottles ->
                         if (auditing) return@RackGrid
                         bottles.firstOrNull()?.let {
                             selectedKey = null
@@ -290,6 +293,26 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         }
                     },
                     onCellDoubleClick = { zoomHere() },
+                    onDrop = if (!dragAndDrop || auditing || moving != null) null else { bottle, cell ->
+                        val from = bottle.slot
+                        when {
+                            from == null -> Unit
+                            // Held without moving: tap where to put it, as on phones.
+                            from.cell == cell -> {
+                                selectedKey = null
+                                movingId = bottle.id.toString()
+                            }
+                            else -> {
+                                val free = cellar.freeSlot(cell)
+                                when {
+                                    free != null -> viewModel.move(bottle.id, free)
+                                    rack.positionsPerCell == 1 -> viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
+                                    else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
+                                }
+                                if (rack.positionsPerCell == 1) selectedKey = cell.key()
+                            }
+                        }
+                    },
                 )
             }
             if (auditing) {
