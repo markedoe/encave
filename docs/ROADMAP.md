@@ -160,7 +160,28 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight, one widget.
 | 6. Household sharing | Roles, signed files, remote pairing | Planned |
 | 7. Launch | Store listings, documentation, privacy policy | Planned |
 
-Later: Mac menu bar extra, notifications for closing drinking windows.
+### Features beyond the core journeys
+
+Chosen from a survey of cellar apps and collector forums (October 2026), and
+kept within the privacy rules: everything is worked out on the device.
+
+| Feature | Apple | Android |
+|---------|-------|---------|
+| Monthly reminder of bottles to drink, delivery-day reminder | Done | Planned (WorkManager) |
+| Siri, Shortcuts, Spotlight | Done | Planned (App Shortcuts) |
+| Barcode recognizes wines you already have (matched on the device) | Done | Planned (CameraX + zxing-cpp) |
+| Select several wines: place, take out, delete | Done | Planned |
+| Rack check (audit) | Done | Planned |
+| Drag and drop in racks | iPad and Mac | Planned (tablets) |
+| Import CellarTracker and Vivino CSV exports | Done | Planned |
+| Year in wine, drink-down plan | Done | Planned |
+| Bottles on order (en primeur, deliveries) | Done | Format supported; screens planned |
+| Tags on wines, filter chips | Done | Format supported; screens planned |
+| "Why this window", drink sooner or keep longer | Done | Planned |
+| Sortable table with an inspector | Mac and iPad | Planned (tablets) |
+| Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
+| Saved lists for occasions, several photos per wine, printing | Planned | Planned |
+| Watch app, menu bar extra | Later | Later (Wear OS tile) |
 
 ### Next: Ask the AI
 

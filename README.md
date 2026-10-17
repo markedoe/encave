@@ -9,8 +9,11 @@ where each bottle sits in your racks, and when it is ready to drink.
 
 ## What it does
 
-- **Cellar:** every bottle, searchable, with filters by style, maturity and rack.
-  Each wine shows its drinking window, serving temperature and decanting advice.
+- **Cellar:** every bottle, searchable, with filters by style, maturity, rack and
+  your own tags, as a list or (on Mac and iPad) a sortable table.
+  - Each wine shows its drinking window and why, serving temperature and
+    decanting advice.
+  - Bottles on order (deliveries, en primeur) wait apart until they arrive.
 - **Adding a bottle in seconds:**
   - Scan the label: the text is read on the device, and the barcode recognizes
     wines you already have.
@@ -22,7 +25,8 @@ where each bottle sits in your racks, and when it is ready to drink.
   - Pinch to zoom, and move bottles.
 - **Tonight:** what to open now, the most urgent first, and food pairings.
 - **Journal:**
-  - your tastings and insights;
+  - your tastings and insights, your year in wine, and the pace to drink your
+    cellar before windows close;
   - wines discovered elsewhere, with tags and a shopping list.
 - **Your devices:**
   - Pair them with a QR code or a 6-digit code.
