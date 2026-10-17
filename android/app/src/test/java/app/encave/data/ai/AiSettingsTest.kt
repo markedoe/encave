@@ -78,4 +78,11 @@ class AiSettingsTest {
         assertEquals("Clos X", analysis.name)
         assertEquals(2019, analysis.vintage)
     }
+
+    @Test
+    fun pastedKeysAreCleaned() {
+        assertEquals("sk-abc", AiPreferences.cleanKey(" “sk-abc”\n"))
+        assertEquals("sk-abc", AiPreferences.cleanKey("'sk-abc'\r\n"))
+        assertEquals("key-1", AiPreferences.cleanKey("  \"key-1\"\n"))
+    }
 }

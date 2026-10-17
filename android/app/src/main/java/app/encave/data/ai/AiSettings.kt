@@ -135,7 +135,13 @@ class AiPreferences(context: Context) {
     )
 
     fun apiKey(provider: AiProvider): String? =
-        secrets.get("ai.apiKey.${provider.raw}") ?: if (provider == AiProvider.Anthropic) secrets.get("ai.apiKey") else null
+        (secrets.get("ai.apiKey.${provider.raw}") ?: if (provider == AiProvider.Anthropic) secrets.get("ai.apiKey") else null)
+            ?.let(::cleanKey)
 
-    fun setApiKey(provider: AiProvider, key: String?) = secrets.set("ai.apiKey.${provider.raw}", key?.trim())
+    fun setApiKey(provider: AiProvider, key: String?) = secrets.set("ai.apiKey.${provider.raw}", key?.let(::cleanKey))
+
+    companion object {
+        /** Pasted keys often carry spaces, line breaks or quotes, which providers reject as invalid. */
+        fun cleanKey(key: String): String = key.trim { it.isWhitespace() || it in "\"'“”‘’" }
+    }
 }
