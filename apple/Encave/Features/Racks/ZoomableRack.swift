@@ -17,6 +17,7 @@ struct ZoomableRack: UIViewRepresentable {
     var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void
     var onDrop: ((UUID, RackCell) -> Bool)?
+    var zoomStep = RackZoomStep()
 
     static let maxZoom: CGFloat = 4
 
@@ -51,6 +52,14 @@ struct ZoomableRack: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.parent = self
         coordinator.model = model
+        defer {
+            // A zoom button was pressed: zoom around the middle, as a pinch would.
+            if zoomStep.id != coordinator.zoomStepID {
+                coordinator.zoomStepID = zoomStep.id
+                let target = min(ZoomableRack.maxZoom, max(1, coordinator.level * scroll.zoomScale * zoomStep.factor))
+                scroll.setZoomScale(target / coordinator.level, animated: true)
+            }
+        }
         if coordinator.rackShape != rack.shape {
             // New rack shape: start again from the fitted size.
             coordinator.rackShape = rack.shape
@@ -78,6 +87,8 @@ struct ZoomableRack: UIViewRepresentable {
         var rackShape = ""
         /// The zoom the rack is drawn at, 1 = fits the space.
         var level: CGFloat = 1
+        /// The last zoom button press handled.
+        var zoomStepID = 0
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { host?.view }
 

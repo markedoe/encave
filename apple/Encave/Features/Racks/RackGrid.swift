@@ -157,6 +157,8 @@ struct FittedRackGrid: View {
     var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
     var onDrop: ((UUID, RackCell) -> Bool)?
+    /// iPhone and iPad: a zoom step asked by a button.
+    var zoomStep = RackZoomStep()
 
     static let padding: CGFloat = 16
 
@@ -167,7 +169,8 @@ struct FittedRackGrid: View {
             let base = RackGrid.fittingCellSize(for: rack, in: space)
             #if os(iOS)
             ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
-                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
+                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                         zoomStep: zoomStep)
             #else
             if zoom <= 1, base > 26 {
                 // The whole rack fits (its cells are not at the smallest size): no scroll
@@ -189,6 +192,14 @@ struct FittedRackGrid: View {
             #endif
         }
     }
+}
+
+/// A request to zoom in or out by `factor`; a new `id` makes it a new request.
+struct RackZoomStep: Equatable {
+    var id = 0
+    var factor: CGFloat = 1
+
+    func next(factor: CGFloat) -> RackZoomStep { RackZoomStep(id: id + 1, factor: factor) }
 }
 
 /// A shelf under a row of bottles.

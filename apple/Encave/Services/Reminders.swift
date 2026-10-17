@@ -65,26 +65,30 @@ enum Reminders {
         try? await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
     }
 
-    /// One reminder per wine on order, at 10:00 on the expected day.
+    /// One reminder per wine and expected day, at 10:00 on that day, counting the
+    /// bottles due that day.
     private static func scheduleDeliveries(for cellar: Cellar, center: UNUserNotificationCenter) async {
         let calendar = Calendar.current
         var count = 0
         for group in cellar.orderGroups() {
-            guard count < maxDeliveries, let expected = group.bottles.first?.expectedAt,
-                  let day = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: expected),
-                  day > .now else { continue } // Past days are shown as late in the app instead.
-            let content = UNMutableNotificationContent()
-            content.title = String(localized: "Delivery expected today")
-            let wineName = group.wine.displayName
-            content.body = String(localized: "\(wineName): \(group.count) bottles. Mark them received when they arrive.")
-            content.sound = .default
-            content.userInfo = [tabKey: AppTab.cellar.rawValue, wineKey: group.wine.id.uuidString]
-            content.threadIdentifier = deliveryPrefix
-            let trigger = UNCalendarNotificationTrigger(
-                dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: day), repeats: false)
-            let id = deliveryPrefix + group.wine.id.uuidString
-            try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
-            count += 1
+            let byDay = Dictionary(grouping: group.bottles.compactMap(\.expectedAt)) { calendar.startOfDay(for: $0) }
+            for (start, dates) in byDay.sorted(by: { $0.key < $1.key }) {
+                guard count < maxDeliveries,
+                      let day = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: start),
+                      day > .now else { continue } // Past days are shown as late in the app instead.
+                let content = UNMutableNotificationContent()
+                content.title = String(localized: "Delivery expected today")
+                let wineName = group.wine.displayName
+                content.body = String(localized: "\(wineName): \(dates.count) bottles. Mark them received when they arrive.")
+                content.sound = .default
+                content.userInfo = [tabKey: AppTab.cellar.rawValue, wineKey: group.wine.id.uuidString]
+                content.threadIdentifier = deliveryPrefix
+                let trigger = UNCalendarNotificationTrigger(
+                    dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: day), repeats: false)
+                let id = deliveryPrefix + group.wine.id.uuidString + "." + String(Int(start.timeIntervalSinceReferenceDate))
+                try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+                count += 1
+            }
         }
     }
 

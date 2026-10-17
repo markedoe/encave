@@ -46,25 +46,37 @@ struct CloudKitMailboxStore: MailboxStore {
         }
 
         func list(prefix: String) async throws -> [String] {
-            var names: [String] = []
-            var token: CKServerChangeToken?
+            // Only the changes since the last listing are fetched; the names are kept
+            // in memory per zone.
+            let saved = await ZoneListing.shared.state(for: zone.zoneName)
+            var names = saved.names
+            var token = saved.token.flatMap {
+                try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: $0)
+            }
             var more = true
             do {
                 while more {
                     let changes = try await database.recordZoneChanges(inZoneWith: zone, since: token, desiredKeys: [])
                     for (id, result) in changes.modificationResultsByID where (try? result.get()) != nil {
-                        if id.recordName.hasPrefix(prefix) { names.append(id.recordName) }
+                        names.insert(id.recordName)
                     }
-                    names.removeAll { name in changes.deletions.contains { $0.recordID.recordName == name } }
+                    for deletion in changes.deletions { names.remove(deletion.recordID.recordName) }
                     token = changes.changeToken
                     more = changes.moreComing
                 }
             } catch let error as CKError where Self.isMissingZone(error) {
+                await ZoneListing.shared.reset(zone.zoneName)
                 return []
+            } catch let error as CKError where error.code == .changeTokenExpired {
+                // Start again from the whole zone next time.
+                await ZoneListing.shared.reset(zone.zoneName)
+                throw RemoteSyncError.unavailable("change token expired")
             } catch {
                 throw Self.map(error)
             }
-            return names.sorted()
+            let archived = token.flatMap { try? NSKeyedArchiver.archivedData(withRootObject: $0, requiringSecureCoding: true) }
+            await ZoneListing.shared.save(zone.zoneName, token: archived, names: names)
+            return names.filter { $0.hasPrefix(prefix) }.sorted()
         }
 
         func get(_ path: String) async throws -> Data? {
@@ -141,4 +153,21 @@ struct CloudKitMailboxStore: MailboxStore {
             }
         }
     }
+}
+
+/// What each zone (by name) held at the last listing, and the archived change
+/// token to continue from. In memory only: the first listing after launch is full.
+private actor ZoneListing {
+    static let shared = ZoneListing()
+    private var zones: [String: (token: Data?, names: Set<String>)] = [:]
+
+    func state(for zone: String) -> (token: Data?, names: Set<String>) {
+        zones[zone] ?? (nil, [])
+    }
+
+    func save(_ zone: String, token: Data?, names: Set<String>) {
+        zones[zone] = (token, names)
+    }
+
+    func reset(_ zone: String) { zones[zone] = nil }
 }

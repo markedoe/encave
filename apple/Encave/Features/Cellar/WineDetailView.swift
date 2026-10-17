@@ -260,6 +260,8 @@ private struct WineHeader: View {
 struct BottleRow: View {
     @Environment(CellarModel.self) private var model
     let bottle: Bottle
+    @State private var reserving = false
+    @State private var occasion = ""
 
     var body: some View {
         HStack(spacing: 12) {
@@ -272,6 +274,11 @@ struct BottleRow: View {
                 Text(details)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if let occasionName = bottle.reservedFor {
+                    Label("Kept for \(occasionName)", systemImage: "gift")
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
+                }
             }
             Spacer()
             if bottle.slot != nil {
@@ -309,11 +316,26 @@ struct BottleRow: View {
         .contextMenu {
             Button("Drink", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
             Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { model.sheet = .moveBottle(bottleID: bottle.id) }
+            if bottle.reservedFor == nil {
+                Button("Keep for an Occasion…", systemImage: "gift") {
+                    occasion = model.cellar.reservations.first ?? ""
+                    reserving = true
+                }
+            } else {
+                Button("Free This Bottle", systemImage: "gift.slash") { model.reserve([bottle.id], for: nil) }
+            }
             if bottle.slot != nil {
                 Button("Show in Rack", systemImage: "scope") { model.showInRack(bottle) }
             }
             Divider()
             Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { model.markGone(bottle.id) }
+        }
+        .alert("Keep for an Occasion", isPresented: $reserving) {
+            TextField("Occasion", text: $occasion)
+            Button("Keep Bottle") { model.reserve([bottle.id], for: occasion) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The bottle stays in its place but is no longer suggested for tonight.")
         }
     }
 

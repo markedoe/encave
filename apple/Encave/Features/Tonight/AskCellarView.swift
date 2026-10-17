@@ -52,10 +52,24 @@ private struct CellarReply {
 
 @available(iOS 26.0, macOS 26.0, *)
 private enum Generator {
+    /// The model's context is small: a large cellar is tried with fewer wines (the
+    /// most urgent first) before giving up.
     @MainActor
     static func ask(_ question: String, model: CellarModel) async throws -> CellarAssistant.Answer {
         guard case .available = SystemLanguageModel.default.availability else { throw CellarAssistant.Failure.unavailable }
-        let catalog = model.cellar.assistantCatalog(year: model.currentYear, limit: 60) { model.locationLabel(for: $0) }
+        for limit in [60, 30, 15] {
+            do {
+                return try await ask(question, model: model, limit: limit)
+            } catch CellarAssistant.Failure.tooLarge where limit > 15 {
+                continue
+            }
+        }
+        throw CellarAssistant.Failure.tooLarge
+    }
+
+    @MainActor
+    private static func ask(_ question: String, model: CellarModel, limit: Int) async throws -> CellarAssistant.Answer {
+        let catalog = model.cellar.assistantCatalog(year: model.currentYear, limit: limit) { model.locationLabel(for: $0) }
         let language = Locale.current.localizedString(forLanguageCode: Locale.current.language.languageCode?.identifier ?? "en")
             ?? "English"
         let prompt = """
@@ -104,8 +118,7 @@ struct AskCellarView: View {
     var body: some View {
         List {
             Section {
-                TextField("Ask about your cellar", text: $question, axis: .vertical)
-                    .lineLimit(1...4)
+                TextField("Ask about your cellar", text: $question)
                     .focused($focused)
                     .submitLabel(.send)
                     .onSubmit(send)
@@ -179,7 +192,7 @@ struct AskCellarView: View {
             } catch CellarAssistant.Failure.refused {
                 problem = String(localized: "This question cannot be answered. Try asking about a dish or an occasion.")
             } catch CellarAssistant.Failure.tooLarge {
-                problem = String(localized: "The question is too long. Try a shorter one.")
+                problem = String(localized: "Your cellar or the question is too large for the model on this device. Try a shorter question.")
             } catch CellarAssistant.Failure.unavailable {
                 problem = String(localized: "Apple Intelligence is not available on this device right now.")
             } catch {

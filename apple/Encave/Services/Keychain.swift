@@ -26,8 +26,10 @@ enum Keychain {
         var item = query
         item[kSecValueData as String] = value
         item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        // A failed write (device locked, a build without Keychain access) leaves the
+        // item missing: callers treat it as not set. Never a crash, even in Debug.
         let status = SecItemAdd(item as CFDictionary, nil)
-        assert(status == errSecSuccess, "Keychain write failed: \(status)")
+        if status != errSecSuccess { print("Keychain write failed: \(status)") }
     }
 
     static func getData(_ account: String) -> Data? {

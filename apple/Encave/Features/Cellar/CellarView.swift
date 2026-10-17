@@ -23,10 +23,19 @@ struct CellarView: View {
             } else {
                 NavigationSplitView(columnVisibility: $columns) {
                     CellarList(selection: $selection)
+                        // Wide enough on iPad for names, producers and the figures.
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
                 } detail: {
                     NavigationStack { WinePane(wineID: selection) }
                 }
                 .navigationSplitViewStyle(.balanced)
+            }
+        }
+        // iPad: open on the first wine rather than an empty page (on iPhone the list
+        // stays in front).
+        .onAppear {
+            if isWide, selection == nil {
+                selection = model.cellar.groups(filter: CellarFilter(), sort: .name, year: model.currentYear).first?.wine.id
             }
         }
         // Opened from Spotlight, Shortcuts or a notification.
@@ -64,6 +73,8 @@ struct CellarList: View {
     @State private var isSelecting = false
     @State private var picked: Set<UUID> = []
     @State private var confirmingDelete = false
+    @State private var namingSearch = false
+    @State private var searchName = ""
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     private var isWide: Bool { sizeClass == .regular }
@@ -84,6 +95,13 @@ struct CellarList: View {
             .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
             .toolbar {
                 if isSelecting { selectionToolbar } else { toolbar }
+            }
+            .alert("Save This Search", isPresented: $namingSearch) {
+                TextField("Name", text: $searchName)
+                Button("Save") { model.update { $0.saveSearch(searchName, filter: filter) } }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("It appears first among the filters, one tap away.")
             }
             .confirmationDialog("Delete these wines?", isPresented: $confirmingDelete, titleVisibility: .visible) {
                 Button("Delete Wines", role: .destructive) {
@@ -198,6 +216,12 @@ struct CellarList: View {
                         filter = CellarFilter(query: filter.query)
                     }
                 }
+                if filter.isActive || !filter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Button("Save This Search…", systemImage: "bookmark") {
+                        searchName = filter.query.trimmingCharacters(in: .whitespaces)
+                        namingSearch = true
+                    }
+                }
             } label: {
                 Label("Sort", systemImage: filter.isActive ? "line.3.horizontal.decrease.circle.fill" : "arrow.up.arrow.down")
             }
@@ -301,6 +325,7 @@ private struct CellarSummary: View {
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
         let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil && filter.tag == nil
+            && filter.reservation == nil
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Button(action: onBottles) {
@@ -327,6 +352,22 @@ private struct CellarSummary: View {
             .buttonStyle(.plain)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
+                    let saved = model.cellar.settings.savedSearches ?? []
+                    ForEach(saved) { search in
+                        let isOn = filter == search.filter
+                        ChoiceChip(verbatim: search.name, isSelected: isOn) {
+                            withAnimation(.snappy) { filter = isOn ? CellarFilter() : search.filter }
+                        } leading: {
+                            Image(systemName: isOn ? "bookmark.fill" : "bookmark")
+                        }
+                        .contextMenu {
+                            Button("Delete Search", systemImage: "trash", role: .destructive) {
+                                model.update { $0.deleteSearch(search.id) }
+                            }
+                        }
+                        .accessibilityHint(Text("Applies this saved search."))
+                    }
+                    if !saved.isEmpty { Divider().frame(height: 24) }
                     ForEach(WineColor.allCases, id: \.self) { color in
                         ChoiceChip(title: color.title, isSelected: filter.colors.contains(color)) {
                             toggle(color, in: \.colors)
@@ -340,6 +381,18 @@ private struct CellarSummary: View {
                             toggle(maturity, in: \.maturities)
                         } leading: {
                             Image(systemName: maturity.systemImage).foregroundStyle(maturity.tint)
+                        }
+                    }
+                    let reservations = model.cellar.reservations
+                    if !reservations.isEmpty {
+                        Divider().frame(height: 24)
+                        ForEach(reservations, id: \.self) { name in
+                            ChoiceChip(verbatim: name, isSelected: filter.reservation == name) {
+                                withAnimation(.snappy) { filter.reservation = filter.reservation == name ? nil : name }
+                            } leading: {
+                                Image(systemName: "gift")
+                            }
+                            .accessibilityHint(Text("Shows the bottles kept for this occasion."))
                         }
                     }
                     let tags = model.cellar.wineTags
@@ -404,6 +457,8 @@ struct OrdersSection: View {
                 ForEach(orders) { group in
                     WineRow(group: group)
                         .tag(group.wine.id)
+                        // Its own scroll identity: the same wine may also have a row below.
+                        .id("order-\(group.wine.id)")
                         .accessibilityIdentifier("order.row")
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {

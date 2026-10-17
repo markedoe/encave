@@ -131,6 +131,17 @@ final class CellarModel {
         return true
     }
 
+    /// Keeps bottles for an occasion (or frees them with nil), with Undo.
+    func reserve(_ bottleIDs: [UUID], for occasion: String?) {
+        let previous = bottleIDs.compactMap { cellar.bottles[$0] }
+        guard !previous.isEmpty, update({ try $0.reserve(bottleIDs, for: occasion) }) else { return }
+        let name = occasion?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        showToast(name.isEmpty ? String(localized: "Reservation removed")
+                               : String(localized: "Kept for \(name)")) { [weak self] in
+            self?.update { cellar in previous.forEach { cellar.bottles[$0.id]?.reservedFor = $0.reservedFor } }
+        }
+    }
+
     /// Ordered bottles that arrived. They join the cellar without a place.
     func receive(_ bottleIDs: [UUID]) {
         let previous = bottleIDs.compactMap { cellar.bottles[$0] }
@@ -359,6 +370,7 @@ extension SampleData.Labels {
         labels.tagGift = String(localized: "Gift idea")
         labels.merchant = String(localized: "Wine merchant")
         labels.tagBirthYear = String(localized: "Birth year")
+        labels.occasion2 = String(localized: "Christmas dinner")
         return labels
     }
 }

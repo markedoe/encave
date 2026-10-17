@@ -245,8 +245,9 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      # Uploads on push or manual run, only when the secrets are available (never on forks).
-      UPLOAD: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
+      # Uploads on a push to main or a manual run, only when the secrets are available
+      # (never on forks). Pushes to other branches only build, so testers get main.
+      UPLOAD: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 

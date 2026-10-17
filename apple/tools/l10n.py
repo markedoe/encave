@@ -15,6 +15,28 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Applies this saved search.': 'Applique cette recherche enregistrée.',
+    'Delete Search': 'Supprimer la recherche',
+    'It appears first among the filters, one tap away.': 'Elle apparaît en premier parmi les filtres, à portée d’un toucher.',
+    'Save This Search': 'Enregistrer cette recherche',
+    'Save This Search…': 'Enregistrer cette recherche…',
+    'Saved searches': 'Recherches enregistrées',
+    'Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.': 'Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils.',
+    'Keep Bottle': 'Garder la bouteille',
+    'Christmas dinner': 'Dîner de Noël',
+    'Keeping bottles for an occasion': 'Garder des bouteilles pour une occasion',
+    'On a bottle in a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back.': 'Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible.',
+    'Free This Bottle': 'Libérer cette bouteille',
+    'Keep for an Occasion': 'Garder pour une occasion',
+    'Keep for an Occasion…': 'Garder pour une occasion…',
+    'Kept for %@': 'Gardée pour %@',
+    'Reservation removed': 'Réservation retirée',
+    'Shows the bottles kept for this occasion.': 'Affiche les bouteilles gardées pour cette occasion.',
+    'The bottle stays in its place but is no longer suggested for tonight.': 'La bouteille reste à sa place mais n’est plus proposée pour ce soir.',
+    'Less than one bottle a month': 'Moins d’une bouteille par mois',
+    'About one bottle a month': 'Environ une bouteille par mois',
+    'Show the cellar as a table or a list (Mac)': 'Afficher la cave en tableau ou en liste (Mac)',
+    'Show as Table': 'Afficher en tableau',
     'Checking a rack': 'Vérifier un casier',
     'Choose **Check This Rack**, tap each bottle you find, then **End Check**. For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.': 'Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.',
     'On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.': 'Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées.',
@@ -30,7 +52,7 @@ FR = {
     'Ideas': 'Idées',
     'No answer this time. Try again.': 'Pas de réponse cette fois. Réessayez.',
     'Something light for a ratatouille': 'Quelque chose de léger pour une ratatouille',
-    'The question is too long. Try a shorter one.': 'La question est trop longue. Essayez plus court.',
+    'Your cellar or the question is too large for the model on this device. Try a shorter question.': 'Votre cave ou la question est trop grande pour le modèle de cet appareil. Essayez une question plus courte.',
     'Thinking…': 'Réflexion…',
     'This question cannot be answered. Try asking about a dish or an occasion.': 'Cette question ne peut pas recevoir de réponse. Essayez avec un plat ou une occasion.',
     'What goes with roast chicken tonight?': 'Qu’est-ce qui va avec un poulet rôti ce soir ?',
@@ -306,8 +328,8 @@ FR = {
     "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.":
         "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher.",
     "Zooming": "Zoomer",
-    "Pinch to zoom in and out, or double-tap a spot. On the Mac, pinch on the trackpad or use ⌘+ and ⌘–. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.":
-        "Pincez pour zoomer, ou touchez deux fois un endroit. Sur Mac, pincez sur le trackpad ou utilisez ⌘+ et ⌘–. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.",
+    "Pinch to zoom in and out, or double-tap a spot. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.":
+        "Pincez pour zoomer, ou touchez deux fois un endroit. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.",
     "Bottle List": "Liste des bouteilles",
     "Close": "Fermer",
     "NV": "NM",
@@ -770,6 +792,7 @@ FR = {
     '⌘1 – ⌘4': '⌘1 – ⌘4',
     '⌘N': '⌘N',
     '⌥⌘N': '⌥⌘N',
+    '⌥⌘T': '⌥⌘T',
     # AI providers
     "Other server (OpenAI-compatible)": "Autre serveur (compatible OpenAI)",
     "Connect and Load Models": "Se connecter et charger les modèles",

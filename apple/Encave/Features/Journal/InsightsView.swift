@@ -131,10 +131,21 @@ private struct DrinkDownCard: View {
         let plan = model.cellar.drinkDownPlan(year: model.currentYear, month: month)
         if !plan.isEmpty {
             ChartCard(title: "Drink-down plan") {
-                let paceLabel = plan.bottlesPerMonth.formatted(.number.precision(.fractionLength(plan.bottlesPerMonth < 10 ? 1 : 0)))
+                // "1.4", "3", "12": one decimal only for small paces that are not whole.
+                let pace = plan.bottlesPerMonth
+                let rounded = (pace * 10).rounded() / 10
+                let paceLabel = rounded.formatted(.number.precision(.fractionLength(rounded < 10 && rounded != rounded.rounded() ? 1 : 0)))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("About \(paceLabel) bottles a month")
-                        .font(.title3.weight(.semibold))
+                    Group {
+                        if rounded < 0.75 {
+                            Text("Less than one bottle a month")
+                        } else if rounded <= 1 {
+                            Text("About one bottle a month")
+                        } else {
+                            Text("About \(paceLabel) bottles a month")
+                        }
+                    }
+                    .font(.title3.weight(.semibold))
                     Text("to open every bottle before the end of its drinking window.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

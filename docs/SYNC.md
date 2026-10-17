@@ -52,7 +52,10 @@ implementations:
   (bought, not delivered yet; such a bottle has no place and may carry
   `expectedAt`, a date).
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
-  when empty.
+  when empty. `bottle.reservedFor` is an optional string (the occasion a bottle
+  is kept for). `settings.savedSearches` is an optional array of
+  `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
+  `colors` and `maturities` sorted by their string value.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status` or
   `rack.kind` fails decoding; readers never replace it with a default. A device
   that does not know a new value refuses the sync instead of rewriting the
@@ -83,7 +86,7 @@ compute the same result.
 3. **Revival.** A bottle or discovery whose wine was deleted, but whose own
    stamp is greater than the wine's deletion stamp (it was added or changed
    after the deletion, on another device), brings the wine back: its content
-   from whichever side has it, and as its stamp the greatest such stamp of
+   from whichever side has it (the local copy if both have it), and as its stamp the greatest such stamp of
    what refers to it, made a non-deletion.
 4. Rack order: the base is the list of the side with the greater `rack-order`
    stamp; on equal stamps, the list that is smaller when compared element by
@@ -99,8 +102,9 @@ compute the same result.
      (on equal stamps, the smaller lowercase ID) and the others lose their
      place (they stay in the cellar);
    - wines with no bottles and no discoveries are removed.
-6. The merged clock is the greatest of both clocks and of every merged stamp
-   and membership stamp counter; the device keeps its own ID.
+6. The merged clock is the greatest of both clocks and of every merged stamp.
+   After the memberships are merged (sections 7 and 8), the clock is raised
+   to at least every membership stamp counter. The device keeps its own ID.
 
 A device that applies a merge result while the user edited during the session
 merges again with its current state, so no local change is lost.
@@ -213,7 +217,8 @@ padding>`. A joiner that scanned it refuses a host whose commitment differs.
    its `inbox`; the joiner sets that record's public key to `identityKey`.
 7. Joiner → host: `{"type":"pair-member","identityKey":joinerIdentityPublic,
    "name":…,"platform":…,"inbox":…}`. The host records the name and platform
-   from this encrypted message, not from step 2.
+   from this encrypted message, not from step 2, and the inbox only if it is
+   `i` followed by 32 lowercase hex characters.
 8. The host refuses a joiner whose device ID is its own, belongs to a removed
    device, or belongs to a member with another identity key. Otherwise it adds
    the joiner to its membership; the joiner adopts the cellar ID and members
@@ -281,14 +286,17 @@ Photo IDs of new photos are `sha256-` + the lowercase hex SHA-256 of the JPEG,
 and a received photo that was not asked for, or whose content does not match
 its ID, is ignored. IDs from
 before sync (UUIDs) are accepted as they are. Photo IDs are restricted to
-letters, digits and dashes, at most 80 characters; a photo with any other ID is
+ASCII letters, digits and dashes, at most 80 characters; a photo with any other ID is
 never requested, sent, uploaded or downloaded.
 
 JSON uses the same structure as the cellar file shared with Android, with two
 details that matter for exact round trips:
 
 - dates are seconds since 1 January 2001 as a number (not ISO 8601 strings as
-  in backups), so they compare equal after a round trip;
+  in backups), so they compare equal after a round trip. Swift holds a date as
+  a double, so it is exact; another platform must keep the number it read (or
+  round new dates to a value a double holds exactly) so that it writes back the
+  same number;
 - UUIDs are strings (Swift writes them in uppercase; readers must accept either
   case), and a dictionary keyed by UUID (`wines`, `bottles`, `discoveries`,
   `members`, `stamps` of a membership) is an array alternating key and value:
@@ -327,7 +335,8 @@ without one gets keys only during network syncs.
 
 A key **supersedes** another of the same cellar if its epoch is greater, or, on
 the same epoch (two devices turned remote sync on, or rotated, at the same
-time), if the SHA-256 of its 32 key bytes is smaller, compared byte by byte.
+time), if the SHA-256 of its 32 key bytes is smaller, compared byte by byte as
+unsigned values.
 Devices always move to a superseding key, so they settle on one.
 
 ### Files

@@ -25,6 +25,7 @@ public enum SampleData {
         public var tagGift = "Gift idea"
         public var merchant = "Wine merchant"
         public var tagBirthYear = "Birth year"
+        public var occasion2 = "Christmas dinner"
         public init() {}
     }
 
@@ -87,6 +88,11 @@ public enum SampleData {
             )
             _ = try? cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase,
                                        addedAt: .now - Double(30 * (index + 1)) * day)
+        }
+
+        // Two bottles kept for an occasion.
+        if let barolo = cellar.wines.values.first(where: { $0.name == "Riserva Vigna Alta" }) {
+            try? cellar.reserve(Array(cellar.bottles(of: barolo.id).prefix(2).map(\.id)), for: labels.occasion2)
         }
 
         // Last year's vintage bought en primeur, not delivered yet.

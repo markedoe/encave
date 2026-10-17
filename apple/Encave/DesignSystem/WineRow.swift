@@ -90,7 +90,8 @@ struct ArrivalLabel: View {
 
     var body: some View {
         if let date {
-            let dayLabel = date.formatted(.dateTime.day().month())
+            let sameYear = Calendar.current.isDate(date, equalTo: .now, toGranularity: .year)
+            let dayLabel = sameYear ? date.formatted(.dateTime.day().month()) : date.formatted(.dateTime.day().month().year())
             if Calendar.current.startOfDay(for: date) < Calendar.current.startOfDay(for: .now) {
                 Label("Late: expected \(dayLabel)", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)

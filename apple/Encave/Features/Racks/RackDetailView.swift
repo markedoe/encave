@@ -13,6 +13,11 @@ struct RackDetailView: View {
     @Environment(CellarModel.self) private var model
     let rackID: UUID
     @State private var zoom: CGFloat = 1
+    /// iPad: the zoom buttons ask the native zooming view for a step in or out.
+    @State private var zoomStep = RackZoomStep()
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    #endif
     @GestureState private var pinch: CGFloat = 1
     @State private var openCell: OpenCell?
     @State private var moving: Bottle?
@@ -107,7 +112,8 @@ struct RackDetailView: View {
             highlighted: model.highlightedSlot,
             selectedCell: selectedCell, focusWine: focusWine,
             onTap: { cell, bottles in tap(rack, cell, bottles) },
-            onDrop: { bottleID, cell in drop(bottleID, on: cell, rack) }
+            onDrop: { bottleID, cell in drop(bottleID, on: cell, rack) },
+            zoomStep: zoomStep
         )
         #if os(macOS)
         grid
@@ -171,6 +177,19 @@ struct RackDetailView: View {
                 .keyboardShortcut("+")
                 .disabled(zoom >= 3)
             #else
+            if sizeClass == .regular {
+                // Besides pinching: buttons, and ⌘– / ⌘+ with a keyboard.
+                Button { zoomStep = zoomStep.next(factor: 1 / 1.5) } label: {
+                    Label("Zoom Out", systemImage: "minus.magnifyingglass")
+                }
+                .keyboardShortcut("-")
+                .accessibilityIdentifier("rack.zoom.out")
+                Button { zoomStep = zoomStep.next(factor: 1.5) } label: {
+                    Label("Zoom In", systemImage: "plus.magnifyingglass")
+                }
+                .keyboardShortcut("+")
+                .accessibilityIdentifier("rack.zoom.in")
+            }
             Button { listSelection = nil; showsList = true } label: { Label("Bottle List", systemImage: "list.bullet") }
                 .accessibilityIdentifier("rack.list")
             #endif
