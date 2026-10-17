@@ -314,6 +314,20 @@ FR = {
     "The answer from the AI service could not be read.": "La réponse du service d’IA est illisible.",
     "The model declined to read this photo.": "Le modèle a refusé de lire cette photo.",
     "%lld min": "%lld min",
+    # AI providers
+    "AI": "IA",
+    "API key (optional)": "Clé d’API (facultative)",
+    "Check Key and Load Models": "Vérifier la clé et charger les modèles",
+    "Choose a model in Settings.": "Choisissez un modèle dans les réglages.",
+    "Choose from the list": "Choisir dans la liste",
+    "Choose…": "Choisir…",
+    "Enter a model name": "Saisir un nom de modèle",
+    "Get an API key": "Obtenir une clé d’API",
+    "Local server (Ollama, LM Studio…)": "Serveur local (Ollama, LM Studio…)",
+    "Not valid": "Non valide",
+    "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": "Sur iPhone et iPad, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes.",
+    "Optional. Reads labels from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
+    "%lld models": "%lld modèles",
     # Racks
     "5 rows of 8": "5 rangées de 8",
     "6 rows of 8": "6 rangées de 8",
@@ -432,7 +446,7 @@ INFO_PLIST = {
 }
 
 UI_CALL = re.compile(r'(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
-                     r'DisclosureGroup|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
+                     r'DisclosureGroup|SecureField|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 

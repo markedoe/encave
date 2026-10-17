@@ -131,6 +131,16 @@
         }
       }
     },
+    "%lld models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld modèles"
+          }
+        }
+      }
+    },
     "%lld of %lld": {
       "localizations": {
         "fr": {
@@ -261,6 +271,16 @@
         }
       }
     },
+    "AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IA"
+          }
+        }
+      }
+    },
     "AI label recognition": {
       "localizations": {
         "fr": {
@@ -277,6 +297,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clé d’API"
+          }
+        }
+      }
+    },
+    "API key (optional)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé d’API (facultative)"
           }
         }
       }
@@ -821,6 +851,16 @@
         }
       }
     },
+    "Check Key and Load Models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier la clé et charger les modèles"
+          }
+        }
+      }
+    },
     "Cheese": {
       "localizations": {
         "fr": {
@@ -851,6 +891,16 @@
         }
       }
     },
+    "Choose a model in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un modèle dans les réglages."
+          }
+        }
+      }
+    },
     "Choose a photo of the label": {
       "localizations": {
         "fr": {
@@ -877,6 +927,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un service d’IA dans les réglages."
+          }
+        }
+      }
+    },
+    "Choose from the list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir dans la liste"
+          }
+        }
+      }
+    },
+    "Choose…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir…"
           }
         }
       }
@@ -1331,6 +1401,16 @@
         }
       }
     },
+    "Enter a model name": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisir un nom de modèle"
+          }
+        }
+      }
+    },
     "Erase all data": {
       "localizations": {
         "fr": {
@@ -1527,6 +1607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gibier"
+          }
+        }
+      }
+    },
+    "Get an API key": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtenir une clé d’API"
           }
         }
       }
@@ -1821,6 +1911,16 @@
         }
       }
     },
+    "Local server (Ollama, LM Studio…)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveur local (Ollama, LM Studio…)"
+          }
+        }
+      }
+    },
     "Location": {
       "localizations": {
         "fr": {
@@ -2071,6 +2171,16 @@
         }
       }
     },
+    "Not valid": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non valide"
+          }
+        }
+      }
+    },
     "Notes": {
       "localizations": {
         "fr": {
@@ -2141,6 +2251,16 @@
         }
       }
     },
+    "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur iPhone et iPad, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes."
+          }
+        }
+      }
+    },
     "One": {
       "localizations": {
         "fr": {
@@ -2187,6 +2307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compatible OpenAI"
+          }
+        }
+      }
+    },
+    "Optional. Reads labels from a photo with the AI service you choose, using your own API key.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API."
           }
         }
       }

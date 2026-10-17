@@ -1,55 +1,142 @@
 import CaveKit
 import Foundation
 
-/// Optional label recognition by an AI model the user chooses and pays for.
-/// Off by default. When on, only the label photo is sent, never the cellar.
-struct AISettings: Equatable, Sendable {
-    enum Provider: String, CaseIterable, Sendable {
-        case off
-        case claude
-        /// OpenAI, a local OpenWebUI or Ollama server, or any compatible API.
-        case openAICompatible
+/// AI services the user can connect with their own key, plus a server of their own.
+/// Most speak the OpenAI chat format; Claude has its own API.
+enum AIProvider: String, CaseIterable, Sendable {
+    case off
+    case openAI, anthropic, google, xai, mistral
+    case deepseek, qwen, kimi, zhipu, minimax
+    case openRouter
+    /// Ollama, LM Studio, OpenWebUI or any OpenAI-compatible server.
+    case local
+
+    /// Brand names are not translated.
+    var name: String {
+        switch self {
+        case .off: ""
+        case .openAI: "ChatGPT (OpenAI)"
+        case .anthropic: "Claude (Anthropic)"
+        case .google: "Gemini (Google)"
+        case .xai: "Grok (xAI)"
+        case .mistral: "Mistral AI"
+        case .deepseek: "DeepSeek"
+        case .qwen: "Qwen (Alibaba Cloud)"
+        case .kimi: "Kimi (Moonshot AI)"
+        case .zhipu: "GLM (Z.ai)"
+        case .minimax: "MiniMax"
+        case .openRouter: "OpenRouter"
+        case .local: ""
+        }
     }
 
-    var provider: Provider = .off
-    var model = ""
-    var baseURL = ""
+    var usesAnthropicAPI: Bool { self == .anthropic }
 
-    static let defaultClaudeModel = "claude-opus-5-5"
-    static let defaultOpenAIBaseURL = "https://api.openai.com/v1"
-    private static let keychainAccount = "ai.apiKey"
+    var defaultBaseURL: String {
+        switch self {
+        case .off: ""
+        case .openAI: "https://api.openai.com/v1"
+        case .anthropic: "https://api.anthropic.com/v1"
+        case .google: "https://generativelanguage.googleapis.com/v1beta/openai"
+        case .xai: "https://api.x.ai/v1"
+        case .mistral: "https://api.mistral.ai/v1"
+        case .deepseek: "https://api.deepseek.com/v1"
+        case .qwen: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        case .kimi: "https://api.moonshot.ai/v1"
+        case .zhipu: "https://api.z.ai/api/paas/v4"
+        case .minimax: "https://api.minimax.io/v1"
+        case .openRouter: "https://openrouter.ai/api/v1"
+        case .local: "http://localhost:11434/v1"
+        }
+    }
+
+    /// A key is optional only for a server of your own.
+    var requiresKey: Bool { self != .local && self != .off }
+
+    /// Model used until the list is loaded, when one is known to read images.
+    var suggestedModel: String {
+        switch self {
+        case .anthropic: "claude-opus-5-5"
+        default: ""
+        }
+    }
+
+    /// Where to create a key, for the providers whose page is stable.
+    var keyPage: URL? {
+        switch self {
+        case .openAI: URL(string: "https://platform.openai.com/api-keys")
+        case .anthropic: URL(string: "https://console.anthropic.com/settings/keys")
+        case .google: URL(string: "https://aistudio.google.com/apikey")
+        case .xai: URL(string: "https://console.x.ai")
+        case .mistral: URL(string: "https://console.mistral.ai/api-keys")
+        case .deepseek: URL(string: "https://platform.deepseek.com/api_keys")
+        case .openRouter: URL(string: "https://openrouter.ai/keys")
+        default: nil
+        }
+    }
+
+    static var global: [AIProvider] { [.openAI, .anthropic, .google, .xai, .mistral] }
+    static var chinese: [AIProvider] { [.deepseek, .qwen, .kimi, .zhipu, .minimax] }
+}
+
+/// Optional AI features, with a model and key the user chooses and pays for.
+/// Off by default. Label recognition sends only the label photo, never the cellar.
+struct AISettings: Equatable, Sendable {
+    var provider: AIProvider = .off
+    var model = ""
+    /// Only for a local server (or to override a provider's address).
+    var baseURL = ""
 
     var isEnabled: Bool { provider != .off }
 
     var effectiveModel: String {
         let trimmed = model.trimmingCharacters(in: .whitespaces)
-        if !trimmed.isEmpty { return trimmed }
-        return provider == .claude ? Self.defaultClaudeModel : ""
+        return trimmed.isEmpty ? provider.suggestedModel : trimmed
     }
 
     var effectiveBaseURL: String {
         let trimmed = baseURL.trimmingCharacters(in: .whitespaces)
-        return trimmed.isEmpty ? Self.defaultOpenAIBaseURL : trimmed
+        let base = trimmed.isEmpty || provider != .local ? provider.defaultBaseURL : trimmed
+        return base.hasSuffix("/") ? String(base.dropLast()) : base
     }
 
     static func load(from defaults: UserDefaults = .standard) -> AISettings {
         var settings = AISettings()
-        settings.provider = defaults.string(forKey: "ai.provider").flatMap(Provider.init(rawValue:)) ?? .off
-        settings.model = defaults.string(forKey: "ai.model") ?? ""
+        let raw = defaults.string(forKey: "ai.provider") ?? "off"
         settings.baseURL = defaults.string(forKey: "ai.baseURL") ?? ""
+        switch raw {
+        // Names used by the first test builds.
+        case "claude": settings.provider = .anthropic
+        case "openAICompatible":
+            settings.provider = settings.baseURL.isEmpty || settings.baseURL.contains("api.openai.com") ? .openAI : .local
+        default: settings.provider = AIProvider(rawValue: raw) ?? .off
+        }
+        settings.model = defaults.string(forKey: "ai.model.\(settings.provider.rawValue)")
+            ?? defaults.string(forKey: "ai.model") ?? ""
         return settings
     }
 
     func save(to defaults: UserDefaults = .standard) {
         defaults.set(provider.rawValue, forKey: "ai.provider")
-        defaults.set(model, forKey: "ai.model")
+        defaults.set(model, forKey: "ai.model.\(provider.rawValue)")
         defaults.set(baseURL, forKey: "ai.baseURL")
     }
 
-    static var apiKey: String? {
-        get { Keychain.get(keychainAccount) }
-        set { Keychain.set(newValue, for: keychainAccount) }
+    /// Model chosen earlier for a provider, so switching back keeps it.
+    static func savedModel(for provider: AIProvider, defaults: UserDefaults = .standard) -> String {
+        defaults.string(forKey: "ai.model.\(provider.rawValue)") ?? ""
     }
+
+    /// One key per provider, in the Keychain on this device.
+    static func apiKey(for provider: AIProvider) -> String? {
+        Keychain.get("ai.apiKey.\(provider.rawValue)") ?? (provider == .anthropic ? Keychain.get("ai.apiKey") : nil)
+    }
+
+    static func setAPIKey(_ key: String?, for provider: AIProvider) {
+        Keychain.set(key, for: "ai.apiKey.\(provider.rawValue)")
+    }
+
+    var apiKey: String? { AISettings.apiKey(for: provider) }
 }
 
 /// What the model read on the label. Empty strings and zeros mean "unknown".
@@ -138,6 +225,7 @@ typealias JSONObject = [String: Any]
 enum AIServiceError: LocalizedError {
     case notConfigured
     case missingKey
+    case noModel
     case refused
     case server(status: Int, message: String)
     case invalidResponse
@@ -146,6 +234,7 @@ enum AIServiceError: LocalizedError {
         switch self {
         case .notConfigured: String(localized: "Choose an AI provider in Settings.")
         case .missingKey: String(localized: "Add your API key in Settings.")
+        case .noModel: String(localized: "Choose a model in Settings.")
         case .refused: String(localized: "The model declined to read this photo.")
         case .server(let status, let message):
             message.isEmpty ? String(localized: "The AI service returned error \(status).") : message
@@ -156,17 +245,41 @@ enum AIServiceError: LocalizedError {
 
 enum AIService {
     /// Sends the label photo (a resized JPEG) to the configured provider.
-    static func analyzeLabel(jpeg: Data, settings: AISettings = .load(), apiKey: String? = AISettings.apiKey) async throws -> LabelAnalysis {
-        switch settings.provider {
-        case .off:
-            throw AIServiceError.notConfigured
-        case .claude:
-            guard let apiKey, !apiKey.isEmpty else { throw AIServiceError.missingKey }
-            return try await claude(jpeg: jpeg, model: settings.effectiveModel, apiKey: apiKey)
-        case .openAICompatible:
-            guard !settings.effectiveModel.isEmpty else { throw AIServiceError.notConfigured }
-            return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey)
+    static func analyzeLabel(jpeg: Data, settings: AISettings = .load()) async throws -> LabelAnalysis {
+        let apiKey = settings.apiKey
+        guard settings.isEnabled else { throw AIServiceError.notConfigured }
+        if settings.provider.requiresKey, (apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
+        guard !settings.effectiveModel.isEmpty else { throw AIServiceError.noModel }
+        if settings.provider.usesAnthropicAPI {
+            return try await claude(jpeg: jpeg, model: settings.effectiveModel, apiKey: apiKey ?? "")
         }
+        return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey)
+    }
+
+    /// Checks the key by listing the models it can use. Returns their identifiers, sorted.
+    static func models(settings: AISettings, apiKey: String?) async throws -> [String] {
+        guard settings.isEnabled else { throw AIServiceError.notConfigured }
+        if settings.provider.requiresKey, (apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
+        guard let url = URL(string: settings.effectiveBaseURL + "/models" + (settings.provider.usesAnthropicAPI ? "?limit=100" : "")) else {
+            throw AIServiceError.notConfigured
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 30
+        if settings.provider.usesAnthropicAPI {
+            request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        } else if let apiKey, !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        let json = try await send(request)
+        let items = (json["data"] as? [[String: Any]]) ?? (json["models"] as? [[String: Any]]) ?? []
+        // Gemini lists "models/gemini-…"; chat requests take the bare name.
+        let ids = items.compactMap { (($0["id"] as? String) ?? ($0["name"] as? String))?.replacingOccurrences(of: "models/", with: "") }
+        // Leave out models that cannot chat: embeddings, speech, image generation, moderation.
+        let excluded = ["embed", "tts", "whisper", "dall-e", "audio", "realtime", "moderation", "transcribe",
+                        "gpt-image", "imagen", "rerank", "speech", "sora", "veo"]
+        let chat = ids.filter { id in !excluded.contains { id.lowercased().contains($0) } }
+        return Array(Set(chat)).sorted { $0.localizedStandardCompare($1) == .orderedDescending }
     }
 
     // MARK: Claude (Anthropic Messages API)
@@ -211,8 +324,26 @@ enum AIService {
     // MARK: OpenAI-compatible (Chat Completions)
 
     private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?) async throws -> LabelAnalysis {
-        let base = settings.effectiveBaseURL.hasSuffix("/") ? String(settings.effectiveBaseURL.dropLast()) : settings.effectiveBaseURL
-        guard let url = URL(string: base + "/chat/completions"), url.scheme == "https" || url.scheme == "http" else {
+        // Not every service supports a JSON schema: fall back to plain JSON, then to no format.
+        let formats: [JSONObject?] = [
+            ["type": "json_schema",
+             "json_schema": ["name": "wine_label", "strict": true, "schema": LabelAnalysis.schema] as JSONObject],
+            ["type": "json_object"],
+            nil,
+        ]
+        var lastError: Error = AIServiceError.invalidResponse
+        for format in formats {
+            do {
+                return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey, format: format)
+            } catch AIServiceError.server(let status, let message) where status == 400 || status == 422 {
+                lastError = AIServiceError.server(status: status, message: message)
+            }
+        }
+        throw lastError
+    }
+
+    private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?, format: JSONObject?) async throws -> LabelAnalysis {
+        guard let url = URL(string: settings.effectiveBaseURL + "/chat/completions"), url.scheme == "https" || url.scheme == "http" else {
             throw AIServiceError.notConfigured
         }
         var request = URLRequest(url: url)
@@ -222,12 +353,8 @@ enum AIService {
         if let apiKey, !apiKey.isEmpty {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
-        let body: JSONObject = [
+        var body: JSONObject = [
             "model": settings.effectiveModel,
-            "response_format": [
-                "type": "json_schema",
-                "json_schema": ["name": "wine_label", "strict": true, "schema": LabelAnalysis.schema] as JSONObject,
-            ] as JSONObject,
             "messages": [[
                 "role": "user",
                 "content": [
@@ -237,6 +364,7 @@ enum AIService {
                 ] as [JSONObject],
             ] as JSONObject],
         ]
+        if let format { body["response_format"] = format }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let json = try await send(request)
