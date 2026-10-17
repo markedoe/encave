@@ -1071,6 +1071,16 @@
         }
       }
     },
+    "Check what was read on the label. Tap Edit Details to correct or complete it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez ce qui a été lu sur l’étiquette. Touchez Modifier les détails pour corriger ou compléter."
+          }
+        }
+      }
+    },
     "Cheese": {
       "localizations": {
         "fr": {
@@ -1817,6 +1827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier"
+          }
+        }
+      }
+    },
+    "Edit Details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier les détails"
           }
         }
       }
@@ -2921,6 +2941,16 @@
         }
       }
     },
+    "Name not found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom non trouvé"
+          }
+        }
+      }
+    },
     "New Bottle…": {
       "localizations": {
         "fr": {
@@ -3047,6 +3077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nez"
+          }
+        }
+      }
+    },
+    "Not found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non trouvé"
           }
         }
       }

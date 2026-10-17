@@ -77,7 +77,7 @@ struct WineFormSections: View {
                 .fieldHelp("The name on the label, without the vintage. Required.")
                 .focused($nameFocused)
                 .submitLabel(.next)
-            TextField("Producer", text: $draft.producer)
+            LabeledField("Producer", text: $draft.producer)
                 .fieldHelp("The estate, domaine or house that made the wine.")
             Picker("Vintage", selection: $draft.vintage) {
                 Text("Non-vintage").tag(Int?.none)
@@ -111,12 +111,12 @@ struct WineFormSections: View {
         }
 
         Section {
-            TextField("Appellation", text: $draft.appellation)
+            LabeledField("Appellation", text: $draft.appellation)
                 .fieldHelp("The protected name of origin, such as Pauillac or Chablis.")
-            TextField("Region", text: $draft.region)
+            LabeledField("Region", text: $draft.region)
                 .fieldHelp("The wine region, such as Bordeaux or Tuscany.")
-            TextField("Country", text: $draft.country)
-            TextField("Grapes", text: $draft.grapes, prompt: Text("Pinot Noir, Gamay"))
+            LabeledField("Country", text: $draft.country)
+            LabeledField("Grapes", text: $draft.grapes, prompt: Text("Pinot Noir, Gamay"))
                 .fieldHelp("Grape varieties, separated by commas.")
         } header: {
             Text("Origin")
@@ -231,5 +231,32 @@ struct EditWineView: View {
         guard model.update({ try $0.updateWine(wine) }) else { return }
         if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
         dismiss()
+    }
+}
+
+/// A text field that keeps its title visible next to the value, as in Contacts.
+/// On iPhone and iPad a plain TextField shows its title only while it is empty.
+struct LabeledField: View {
+    let title: LocalizedStringKey
+    @Binding var text: String
+    var prompt: Text?
+
+    init(_ title: LocalizedStringKey, text: Binding<String>, prompt: Text? = nil) {
+        self.title = title
+        self._text = text
+        self.prompt = prompt
+    }
+
+    var body: some View {
+        #if os(iOS)
+        LabeledContent {
+            TextField(title, text: $text, prompt: prompt ?? Text(title))
+                .multilineTextAlignment(.trailing)
+        } label: {
+            Text(title)
+        }
+        #else
+        TextField(title, text: $text, prompt: prompt)
+        #endif
     }
 }

@@ -51,6 +51,9 @@ struct AddBottleView: View {
                     }
                 } else {
                     LabelScanSection(scan: scan, draft: $draft)
+                    if scan.showsSummary {
+                        WineSummarySections(draft: $draft, scan: scan)
+                    } else {
                     if !model.cellar.wines.isEmpty {
                         Section {
                             TextField("Search your wines", text: $search)
@@ -76,6 +79,7 @@ struct AddBottleView: View {
                         }
                     }
                     WineFormSections(draft: $draft, focusName: context.wine == nil && model.cellar.wines.isEmpty)
+                    }
                 }
 
                 Section {

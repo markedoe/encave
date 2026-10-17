@@ -13,11 +13,17 @@ final class LabelScan {
     let aiEnabled = AISettings.load().isEnabled
     var isAnalyzing = false
     var aiError: String?
+    /// A scan filled the form: show the wine as a card, until the user wants to edit it.
+    var scanned = false
+    var editingDetails = false
+
+    var showsSummary: Bool { scanned && !editingDetails }
 
     /// Result of the scanner: fill the form now, then let the AI complete it.
     func handle(_ result: LabelScanResult, image: Data?, draft: Binding<WineDraft>) {
         showsScanner = false
         apply(result, to: draft)
+        withAnimation { scanned = true }
         guard let image else { return }
         Task {
             photo = await PhotoStore.resized(image)
@@ -130,6 +136,107 @@ struct LabelScanSection: View {
             }
             .animation(.default, value: scan.photo)
             .animation(.default, value: scan.aiError)
+        }
+    }
+}
+
+/// What the scan (and the AI) found, laid out like the wine page: a clear card and
+/// labeled details, with an Edit button that brings back the form fields.
+struct WineSummarySections: View {
+    @Binding var draft: WineDraft
+    let scan: LabelScan
+
+    var body: some View {
+        Section {
+            HStack(alignment: .top, spacing: 14) {
+                if let photo = scan.photo {
+                    WinePhoto(data: photo, maxPixelSize: 300)
+                        .frame(width: 64, height: 84)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .accessibilityHidden(true)
+                } else {
+                    BottleEnd(color: draft.color, size: 56)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    if draft.name.isEmpty {
+                        Text("Name not found").font(.title3.weight(.semibold)).foregroundStyle(.secondary)
+                    } else {
+                        Text(draft.name).font(.title3.weight(.semibold)).fontDesign(.serif)
+                    }
+                    HStack(spacing: 8) {
+                        if let vintage = draft.vintage {
+                            Text(verbatim: "\(vintage)").font(.headline.monospacedDigit())
+                        } else {
+                            Text("Non-vintage").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        if let color = draft.color {
+                            HStack(spacing: 4) {
+                                BottleEnd(color: color, size: 12)
+                                Text(color.title)
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(color.tint.opacity(0.18), in: Capsule())
+                        }
+                    }
+                    if !draft.producer.isEmpty {
+                        Text(draft.producer).font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
+        } header: {
+            Text("Wine")
+        }
+
+        Section {
+            row("Appellation", draft.appellation)
+            row("Region", draft.region)
+            row("Country", draft.country)
+            row("Grapes", draft.grapes)
+            LabeledContent("Drinking window") {
+                if let window {
+                    Text(verbatim: "\(window.0) – \(window.1)").monospacedDigit()
+                } else {
+                    Text("Not found").foregroundStyle(.tertiary)
+                }
+            }
+        } header: {
+            Text("Details")
+        } footer: {
+            if scan.isAnalyzing {
+                Label("Reading the label…", systemImage: "sparkles")
+            } else {
+                Text("Check what was read on the label. Tap Edit Details to correct or complete it.")
+            }
+        }
+
+        Section {
+            Button {
+                withAnimation { scan.editingDetails = true }
+            } label: {
+                Label("Edit Details", systemImage: "pencil")
+            }
+        }
+    }
+
+    /// Years when the wine is at its best: entered, or estimated from style and vintage.
+    private var window: (Int, Int)? {
+        if draft.windowIsAutomatic { return draft.estimatedWindow.map { ($0.from, $0.until) } }
+        guard let from = draft.drinkFrom, let until = draft.drinkUntil else { return nil }
+        return (from, until)
+    }
+
+    private func row(_ title: LocalizedStringKey, _ value: String) -> some View {
+        LabeledContent(title) {
+            if value.trimmingCharacters(in: .whitespaces).isEmpty {
+                Text("Not found").foregroundStyle(.tertiary)
+            } else {
+                Text(value).multilineTextAlignment(.trailing)
+            }
         }
     }
 }

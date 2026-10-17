@@ -499,6 +499,11 @@ FR = {
     "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": "Sur iPhone et iPad, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes.",
     "Optional. Reads labels from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
     "%lld models": "%lld modèles",
+    # Scan summary
+    "Name not found": "Nom non trouvé",
+    "Not found": "Non trouvé",
+    "Check what was read on the label. Tap Edit Details to correct or complete it.": "Vérifiez ce qui a été lu sur l’étiquette. Touchez Modifier les détails pour corriger ou compléter.",
+    "Edit Details": "Modifier les détails",
     # Racks
     "Click a place in the rack to add a bottle there.": "Cliquez sur un emplacement du casier pour y ajouter une bouteille.",
     "Library": "Bibliothèque",
@@ -622,7 +627,7 @@ INFO_PLIST = {
 }
 
 UI_CALL = re.compile(r'(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
-                     r'DisclosureGroup|SecureField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
+                     r'DisclosureGroup|SecureField|LabeledField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 

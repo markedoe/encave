@@ -32,7 +32,11 @@ struct DiscoveryEditor: View {
                 if discoveryID == nil {
                     LabelScanSection(scan: scan, draft: $draft)
                 }
-                WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false)
+                if scan.showsSummary {
+                    WineSummarySections(draft: $draft, scan: scan)
+                } else {
+                    WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false)
+                }
 
                 Section {
                     FlowLayout(spacing: 8) {
