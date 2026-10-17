@@ -102,7 +102,7 @@ struct CellarTable: View {
 }
 
 /// One wine in the table, with values that sort.
-struct CellarTableRow: Identifiable {
+struct CellarTableRow: Identifiable, Sendable {
     let group: WineGroup
     let name: String
     let vintage: Int
