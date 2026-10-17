@@ -54,7 +54,9 @@ final class ScreenTourTests: XCTestCase {
         if element("wine.row").waitForExistence(timeout: 10), element("wine.row").isHittable {
             element("wine.row").swipeRight()
             snapshot("cellar-swipe")
-            element("wine.row").swipeLeft()
+            // Close the actions again; the revealed button can cover the row on iPad.
+            let row = element("wine.row")
+            if row.isHittable { row.swipeLeft() } else { app.swipeLeft() }
             sleep(1)
         }
         #endif

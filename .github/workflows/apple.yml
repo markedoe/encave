@@ -169,6 +169,9 @@ jobs:
           for device in iPhone iPad; do
             udid=$(pick "$device")
             echo "Using $device simulator $udid"
+            # Boot first: a cold simulator can time out launching the app under test.
+            xcrun simctl boot "$udid" 2>/dev/null || true
+            xcrun simctl bootstatus "$udid" -b
             xcodebuild test -project Encave.xcodeproj -scheme Encave -destination "id=$udid" \
               -resultBundlePath "$RUNNER_TEMP/$device.xcresult" CODE_SIGNING_ALLOWED=NO \
               | xcbeautify --renderer github-actions || status=1
