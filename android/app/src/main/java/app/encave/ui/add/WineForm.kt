@@ -42,6 +42,7 @@ import app.encave.R
 import app.encave.core.Wine
 import app.encave.core.WineColor
 import app.encave.data.ai.LabelAnalysis
+import app.encave.ui.components.Hint
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.labelRes
 import app.encave.ui.theme.Dimens
@@ -154,10 +155,8 @@ fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier =
             onValueChange = { form.name = it },
             label = { Text(stringResource(R.string.field_name)) },
             isError = form.showErrors && form.nameMissing,
-            supportingText = if (form.showErrors && form.nameMissing) {
-                { Text(stringResource(R.string.add_name_required)) }
-            } else {
-                null
+            supportingText = {
+                Text(stringResource(if (form.showErrors && form.nameMissing) R.string.add_name_required else R.string.help_field_name))
             },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -167,16 +166,15 @@ fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier =
             AutoCompleteField(
                 value = form.producer, onValueChange = { form.producer = it }, label = stringResource(R.string.field_producer),
                 options = known.producers, modifier = Modifier.weight(1.6f),
+                supporting = stringResource(R.string.help_field_producer),
             )
             OutlinedTextField(
                 value = form.vintageText,
                 onValueChange = { text -> form.vintageText = text.filter { it.isDigit() }.take(4) },
                 label = { Text(stringResource(R.string.field_vintage)) },
                 isError = form.vintageInvalid,
-                supportingText = if (form.vintageInvalid) {
-                    { Text(stringResource(R.string.add_vintage_invalid)) }
-                } else {
-                    null
+                supportingText = {
+                    Text(stringResource(if (form.vintageInvalid) R.string.add_vintage_invalid else R.string.help_field_vintage))
                 },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
@@ -194,6 +192,7 @@ fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier =
                 )
             }
         }
+        Hint(stringResource(R.string.help_style_footer))
     }
 }
 
@@ -203,6 +202,7 @@ fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
             AutoCompleteField(
                 form.region, { form.region = it }, stringResource(R.string.field_region), known.regions, Modifier.weight(1f),
+                supporting = stringResource(R.string.help_field_region),
             )
             AutoCompleteField(
                 form.country, { form.country = it }, stringResource(R.string.field_country), known.countries, Modifier.weight(1f),
@@ -210,11 +210,14 @@ fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier 
         }
         AutoCompleteField(
             form.appellation, { form.appellation = it }, stringResource(R.string.field_appellation), known.appellations, Modifier.fillMaxWidth(),
+            supporting = stringResource(R.string.help_field_appellation),
         )
         GrapesField(form, known.grapes)
+        Hint(stringResource(R.string.help_origin_footer))
         OutlinedTextField(
             value = form.notes, onValueChange = { form.notes = it },
             label = { Text(stringResource(R.string.field_notes)) }, minLines = 2, modifier = Modifier.fillMaxWidth(),
+            supportingText = { Text(stringResource(R.string.help_notes_footer)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         )
     }
@@ -244,6 +247,7 @@ private fun GrapesField(form: WineFormState, suggestions: List<String>) {
             onPick = { form.grapeInput = it; form.addGrape() },
             imeAction = ImeAction.Done,
             onImeAction = { form.addGrape() },
+            supporting = stringResource(R.string.help_field_grapes),
             trailing = {
                 if (form.grapeInput.isNotBlank()) {
                     IconButton(onClick = { form.addGrape() }) {
@@ -291,10 +295,9 @@ fun DrinkingWindowField(form: WineFormState, modifier: Modifier = Modifier) {
                 valueRange = bounds.first.toFloat()..bounds.last.toFloat(),
                 steps = (bounds.last - bounds.first - 1).coerceAtLeast(0),
             )
-            if (form.isEstimated) {
-                Text(stringResource(R.string.add_window_auto), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            if (form.isEstimated) Hint(stringResource(R.string.add_window_auto))
         }
+        Hint(stringResource(R.string.help_window_footer))
     }
 }
 
@@ -319,6 +322,7 @@ fun AutoCompleteField(
     imeAction: ImeAction = ImeAction.Next,
     onImeAction: () -> Unit = {},
     trailing: (@Composable () -> Unit)? = null,
+    supporting: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val matches = remember(value, options) {
@@ -333,6 +337,7 @@ fun AutoCompleteField(
             label = { Text(label) },
             singleLine = true,
             trailingIcon = trailing,
+            supportingText = supporting?.let { { Text(it) } },
             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = imeAction),
             keyboardActions = KeyboardActions(onDone = { onImeAction() }),

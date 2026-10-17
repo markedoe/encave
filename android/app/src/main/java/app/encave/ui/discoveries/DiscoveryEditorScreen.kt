@@ -64,6 +64,9 @@ import app.encave.ui.add.WineFormState
 import app.encave.ui.add.WineMoreDetails
 import app.encave.ui.add.knownValues
 import app.encave.ui.components.ConfirmDialog
+import app.encave.ui.components.Hint
+import app.encave.ui.help.HelpLink
+import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.RatingInput
@@ -164,6 +167,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
                 value = place, onValueChange = { place = it },
                 label = { Text(stringResource(R.string.discovery_place)) },
                 placeholder = { Text(stringResource(R.string.discovery_place_hint)) },
+                supportingText = { Text(stringResource(R.string.help_field_discovery_place)) },
                 singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             )
@@ -172,6 +176,8 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
                 label = { Text(Formats.day(date)) },
                 leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = stringResource(R.string.field_date)) },
             )
+
+            Hint(stringResource(R.string.help_where_footer))
 
             Header(R.string.discovery_impression)
             RatingInput(rating, onChange = { rating = it })
@@ -209,6 +215,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
                 singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.Sentences),
                 keyboardActions = KeyboardActions(onDone = { addTags() }),
+                supportingText = { Text(stringResource(R.string.help_tags_footer)) },
             )
 
             Row(
@@ -223,6 +230,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
                 value = price,
                 onValueChange = { text -> price = text.filter { it.isDigit() || it == '.' || it == ',' } },
                 label = { Text(stringResource(R.string.discovery_price_seen)) },
+                supportingText = { Text(stringResource(R.string.help_field_price_seen)) },
                 suffix = { Text(existing?.currency ?: cellar.settings.currency) },
                 singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -241,6 +249,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
                     Text(stringResource(R.string.discovery_delete), Modifier.padding(start = Dimens.s))
                 }
             }
+            HelpLink(HelpTopic.Discoveries, R.string.help_link_discoveries)
         }
     }
     if (pickingDate) {

@@ -61,6 +61,8 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.resolve
 import app.encave.ui.theme.Dimens
+import app.encave.ui.help.HelpLink
+import app.encave.ui.help.HelpTopic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -124,17 +126,16 @@ fun AiSettingsSection(viewModel: AppViewModel) {
     ProviderField(provider) { viewModel.ai.select(it) }
     Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
         if (provider.isEnabledProvider()) {
-            if (provider == AiProvider.Local) {
-                OutlinedTextField(
-                    value = settings.baseUrl,
-                    onValueChange = { viewModel.ai.update(settings.copy(baseUrl = it)) },
-                    label = { Text(stringResource(R.string.ai_server_url)) },
-                    placeholder = { Text(AiProvider.Local.defaultBaseUrl) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false),
-                )
-            }
+            OutlinedTextField(
+                value = settings.baseUrl,
+                onValueChange = { viewModel.ai.update(settings.copy(baseUrl = it)) },
+                label = { Text(stringResource(R.string.ai_server_url)) },
+                placeholder = { Text(provider.defaultBaseUrl) },
+                supportingText = { Text(stringResource(R.string.help_field_ai_url)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false),
+            )
             OutlinedTextField(
                 value = apiKey,
                 onValueChange = { key ->
@@ -143,6 +144,7 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                     scope.launch(Dispatchers.IO) { viewModel.ai.setApiKey(provider, key) }
                 },
                 label = { Text(stringResource(if (provider.requiresKey) R.string.ai_key else R.string.ai_key_optional)) },
+                supportingText = { Text(stringResource(R.string.help_field_ai_key)) },
                 singleLine = true,
                 visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -184,11 +186,16 @@ fun AiSettingsSection(viewModel: AppViewModel) {
             provider.keyPage?.let { page ->
                 TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page.toUri())) } }) {
                     Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null)
-                    Text(stringResource(R.string.ai_get_key), Modifier.padding(start = Dimens.s))
+                    Text(
+                        if (provider == AiProvider.Local) stringResource(R.string.ai_install_local)
+                        else stringResource(R.string.ai_create_key_at, provider.brand.orEmpty()),
+                        Modifier.padding(start = Dimens.s),
+                    )
                 }
             }
             if (models.isNotEmpty() && !customModel) {
                 ModelMenu(settings.model, models) { viewModel.ai.update(settings.copy(model = it)) }
+                Text(stringResource(R.string.help_field_ai_model), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = { customModel = true }) { Text(stringResource(R.string.ai_enter_model)) }
             } else {
                 OutlinedTextField(
@@ -196,6 +203,7 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                     onValueChange = { viewModel.ai.update(settings.copy(model = it)) },
                     label = { Text(stringResource(R.string.ai_model)) },
                     placeholder = { Text(provider.suggestedModel.ifEmpty { "model-name" }) },
+                    supportingText = { Text(stringResource(R.string.help_field_ai_model)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
@@ -214,6 +222,7 @@ fun AiSettingsSection(viewModel: AppViewModel) {
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+    HelpLink(HelpTopic.Ai, R.string.help_link_ai)
 }
 
 private fun AiProvider.isEnabledProvider() = this != AiProvider.Off
@@ -232,6 +241,7 @@ private fun ProviderField(selected: AiProvider, onSelect: (AiProvider) -> Unit) 
                     readOnly = true,
                     singleLine = true,
                     label = { Text(stringResource(R.string.ai_provider)) },
+                    supportingText = { Text(stringResource(R.string.help_field_ai_provider)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 )

@@ -13,6 +13,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.DeleteForever
@@ -55,6 +56,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.SectionHeader
+import app.encave.ui.navigation.HelpRoute
 import app.encave.ui.components.commonCurrencies
 import app.encave.ui.components.sampleLabels
 import java.time.LocalDate
@@ -169,6 +171,12 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             )
 
             SectionHeader(stringResource(R.string.settings_about))
+            ListItem(
+                modifier = Modifier.clickable { navigator.open(HelpRoute()) },
+                leadingContent = { Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.help_title)) },
+                supportingContent = { Text(stringResource(R.string.help_encave)) },
+            )
             ListItem(
                 leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_version)) },

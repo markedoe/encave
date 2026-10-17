@@ -48,6 +48,9 @@ import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Tasting
 import app.encave.ui.components.Formats
+import app.encave.ui.components.Hint
+import app.encave.ui.help.HelpLink
+import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.RatingInput
 import app.encave.ui.theme.Dimens
 import java.time.Instant
@@ -92,9 +95,11 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
         Text(stringResource(R.string.drink_rating), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
         RatingInput(state.rating, onChange = { state.rating = it })
+        Hint(stringResource(R.string.help_field_rating))
         OutlinedTextField(
             value = state.note, onValueChange = { state.note = it },
             label = { Text(stringResource(R.string.drink_note)) },
+            supportingText = { Text(stringResource(R.string.help_field_note)) },
             modifier = Modifier.fillMaxWidth(), minLines = 2,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         )
@@ -120,6 +125,7 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
             label = { Text(Formats.day(state.date)) },
             leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = stringResource(R.string.field_date)) },
         )
+        Hint(stringResource(R.string.help_tasting_footer))
         Row(
             Modifier
                 .fillMaxWidth()
@@ -131,15 +137,17 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
             Switch(checked = state.detailed, onCheckedChange = null)
         }
         if (state.detailed) {
+            Hint(stringResource(R.string.help_full_note_footer))
             listOf(
-                Triple(R.string.field_appearance, state.appearance) { v: String -> state.appearance = v },
-                Triple(R.string.field_nose, state.nose) { v: String -> state.nose = v },
-                Triple(R.string.field_palate, state.palate) { v: String -> state.palate = v },
-                Triple(R.string.field_finish, state.finish) { v: String -> state.finish = v },
-                Triple(R.string.field_food, state.food) { v: String -> state.food = v },
-            ).forEach { (label, value, onChange) ->
+                Triple(R.string.field_appearance to R.string.help_field_appearance, state.appearance) { v: String -> state.appearance = v },
+                Triple(R.string.field_nose to R.string.help_field_nose, state.nose) { v: String -> state.nose = v },
+                Triple(R.string.field_palate to R.string.help_field_palate, state.palate) { v: String -> state.palate = v },
+                Triple(R.string.field_finish to R.string.help_field_finish, state.finish) { v: String -> state.finish = v },
+                Triple(R.string.field_food to R.string.help_field_food, state.food) { v: String -> state.food = v },
+            ).forEach { (labels, value, onChange) ->
                 OutlinedTextField(
-                    value = value, onValueChange = onChange, label = { Text(stringResource(label)) },
+                    value = value, onValueChange = onChange, label = { Text(stringResource(labels.first)) },
+                    supportingText = { Text(stringResource(labels.second)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 )
@@ -246,6 +254,7 @@ fun DrinkSheet(
                 Icon(Icons.Outlined.LocalBar, contentDescription = null)
                 Text(stringResource(R.string.action_drink), Modifier.padding(start = Dimens.s))
             }
+            HelpLink(HelpTopic.Drinking, R.string.help_link_tasting)
         }
     }
 }
