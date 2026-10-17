@@ -23,8 +23,13 @@ final class CellarModel {
     var journalPage: JournalView.Page = .tastings
 
     private let store: any CellarStore
+    /// Sync with the user's other devices.
+    @ObservationIgnored private(set) var sync: SyncService!
+    /// Told about every local change (old and new cellar), to record it for sync.
+    @ObservationIgnored var onLocalChange: ((Cellar, Cellar) -> Void)?
 
-    init(store: any CellarStore) {
+    /// `demo`: screen tour and previews, where sync never touches the network or files.
+    init(store: any CellarStore, demo: Bool = true) {
         self.store = store
         do {
             cellar = try store.load()
@@ -32,6 +37,7 @@ final class CellarModel {
             cellar = Cellar()
             errorMessage = String(localized: "Your cellar could not be loaded.")
         }
+        sync = SyncService(model: self, demo: demo)
     }
 
     static func live() -> CellarModel {
@@ -46,7 +52,7 @@ final class CellarModel {
             return model
         }
         if let store = try? JSONFileCellarStore.defaultStore() {
-            let model = CellarModel(store: store)
+            let model = CellarModel(store: store, demo: false)
             // Photos of deleted wines are kept until the next launch so deleting can be undone.
             if model.errorMessage == nil {
                 PhotoStore.removeOrphans(keeping: Set(model.cellar.wines.values.compactMap(\.photoID)))
@@ -68,8 +74,11 @@ final class CellarModel {
         var copy = cellar
         do {
             try change(&copy)
+            guard copy != cellar else { return true }
             try store.save(copy)
+            let old = cellar
             cellar = copy
+            onLocalChange?(old, copy)
             return true
         } catch let error as CellarError {
             errorMessage = error.localizedMessage
@@ -77,6 +86,17 @@ final class CellarModel {
             errorMessage = String(localized: "The change could not be saved.")
         }
         return false
+    }
+
+    /// Replaces the cellar with the result of a sync. Not recorded as a local change.
+    func applySynced(_ synced: Cellar) {
+        guard synced != cellar else { return }
+        do {
+            try store.save(synced)
+            cellar = synced
+        } catch {
+            errorMessage = String(localized: "The change could not be saved.")
+        }
     }
 
     // MARK: - Actions with feedback

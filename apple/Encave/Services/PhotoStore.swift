@@ -1,3 +1,4 @@
+import CaveKit
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -17,12 +18,14 @@ enum PhotoStore {
     }
 
     static func url(for id: String) -> URL? {
-        folder?.appendingPathComponent("\(id).jpg")
+        guard isSafe(id) else { return nil }
+        return folder?.appendingPathComponent("\(id).jpg")
     }
 
-    /// Downscales and saves image data; returns the new photo identifier.
+    /// Downscales and saves image data; returns the new photo identifier, a hash of
+    /// the JPEG, so synced devices can check they received the right photo.
     static func save(_ data: Data) -> String? {
-        guard let jpeg = jpegData(from: data), let url = url(for: UUID().uuidString) else { return nil }
+        guard let jpeg = jpegData(from: data), let url = url(for: PhotoID.make(for: jpeg)) else { return nil }
         do {
             try jpeg.write(to: url, options: [.atomic])
             return url.deletingPathExtension().lastPathComponent
@@ -50,6 +53,18 @@ enum PhotoStore {
         for file in files where file.pathExtension == "jpg" && !ids.contains(file.deletingPathExtension().lastPathComponent) {
             try? FileManager.default.removeItem(at: file)
         }
+    }
+
+    /// Saves a photo received from another device, as is.
+    static func store(_ data: Data, id: String) {
+        guard isSafe(id), let url = url(for: id) else { return }
+        try? data.write(to: url, options: [.atomic])
+    }
+
+    /// Photo IDs come from other devices too: only letters, digits and dashes,
+    /// so an ID can never point outside the photo folder.
+    static func isSafe(_ id: String) -> Bool {
+        !id.isEmpty && id.count <= 80 && id.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-") }
     }
 
     static func data(for id: String?) -> Data? {

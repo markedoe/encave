@@ -166,12 +166,12 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         var clock: UInt64 = 10
         membership.remove(b.id, clock: &clock, by: a.id)
         let (endB, endA) = Pipe.pair()
-        async let attempt: Void = { _ = try await SyncHandshake.initiate(over: endB, identity: b, membership: original) }()
+        let attempt = Task { _ = try await SyncHandshake.initiate(over: endB, identity: b, membership: original) }
         await #expect(throws: SyncError.unknownDevice) {
             _ = try await SyncHandshake.respond(over: endA, identity: a, membership: membership)
         }
-        endA.close()
-        _ = try? await attempt
+        // The removed device is told why.
+        await #expect(throws: SyncError.unknownDevice) { try await attempt.value }
     }
 
     @Test func aDeviceWithAnotherKeyIsRefused() async throws {

@@ -5,6 +5,7 @@ import SwiftUI
 /// Sheets and the undo banner live here so every screen can use them.
 struct RootView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         @Bindable var model = model
@@ -15,6 +16,14 @@ struct RootView: View {
                 .environment(model)
         }
         .sensoryFeedback(.success, trigger: model.successCount)
+        // Sync runs while the app is open; iOS suspends it in the background anyway.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            switch phase {
+            case .active: model.sync.resume()
+            case .background: model.sync.pause()
+            default: break
+            }
+        }
         .alert(
             "Something went wrong",
             isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })

@@ -81,6 +81,13 @@ public struct Membership: Codable, Equatable, Sendable {
         self.cellarID = cellarID; self.members = members; self.stamps = stamps
     }
 
+    /// Advertised on the local network so devices of the same cellar find each other
+    /// without showing the cellar ID.
+    public var networkTag: String {
+        KeySchedule.hash("encave-cellar-tag-v1", [Data(cellarID.uuidString.lowercased().utf8)]).prefix(6)
+            .map { String(format: "%02x", $0) }.joined()
+    }
+
     /// Devices that may sync.
     public var active: [Member] { members.values.sorted { $0.addedAt < $1.addedAt } }
 
@@ -167,7 +174,14 @@ public struct WireMessage: Codable, Sendable, Equatable {
     }
 
     func require(_ type: String) throws -> WireMessage {
-        if self.type == "error" { throw SyncError.protocolViolation(reason ?? "the other device stopped") }
+        if self.type == "error" {
+            switch reason {
+            case "unknown-device": throw SyncError.unknownDevice
+            case "other-cellar": throw SyncError.otherCellar
+            case "rejected": throw SyncError.rejected
+            default: throw SyncError.protocolViolation(reason ?? "the other device stopped")
+            }
+        }
         guard self.type == type else { throw SyncError.protocolViolation("expected \(type), got \(self.type)") }
         return self
     }
@@ -506,11 +520,20 @@ public enum SyncHandshake {
     public static func respond(over transport: FrameTransport, identity: DeviceIdentity,
                                membership: Membership) async throws -> (SecureChannel, Member) {
         let hello = try WireMessage.decode(try await transport.receive()).require("sync-hello")
-        guard hello.version == SyncProtocol.version else { throw SyncError.unsupportedVersion(hello.version ?? 0) }
-        guard hello.cellar == membership.cellarID else { throw SyncError.otherCellar }
+        // Refusals are told to the other device, so it can say why (for example "removed").
+        func refuse(_ reason: String, _ error: SyncError) async -> SyncError {
+            try? await transport.send(WireMessage.make("error") { $0.reason = reason }.encoded())
+            return error
+        }
+        guard hello.version == SyncProtocol.version else {
+            throw await refuse("unsupported-version", .unsupportedVersion(hello.version ?? 0))
+        }
+        guard hello.cellar == membership.cellarID else { throw await refuse("other-cellar", .otherCellar) }
         guard let device = hello.device, let otherKey = hello.key, let otherNonce = hello.nonce, otherNonce.count == 32
         else { throw SyncError.protocolViolation("incomplete sync-hello") }
-        guard let peer = membership.members[device], device != identity.id else { throw SyncError.unknownDevice }
+        guard let peer = membership.members[device], device != identity.id else {
+            throw await refuse("unknown-device", .unknownDevice)
+        }
         let ephemeral = Curve25519.KeyAgreement.PrivateKey()
         let nonce = KeySchedule.randomNonce()
         let keys = try sessionKeys(

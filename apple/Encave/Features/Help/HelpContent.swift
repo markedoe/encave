@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Topics of the in-app help. Screens open the topic that matches them.
 enum HelpTopic: String, CaseIterable, Identifiable, Hashable {
-    case start, adding, scanning, racks, tonight, drinking, discoveries, ai, data, privacy, shortcuts
+    case start, adding, scanning, racks, tonight, drinking, discoveries, devices, ai, data, privacy, shortcuts
     var id: String { rawValue }
 }
 
@@ -79,6 +79,15 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Tags", body: "Tags group discoveries your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested."),
                 HelpSection(title: "Shopping list", body: "Turn on **To buy** to add the wine to your shopping list, with the price you saw. When you buy it, swipe it and choose **Add to Cellar**: it leaves the list once the bottles are added."),
                 HelpSection(title: "Not in the cellar", body: "Discoveries are not counted as bottles in your cellar and do not appear in racks or Tonight."),
+            ]),
+            HelpArticle(topic: .devices, title: "Your devices",
+                        summary: "The same cellar on your iPhone, iPad and Mac.", systemImage: "laptopcomputer.and.iphone", sections: [
+                HelpSection(title: "Add a device", body: "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar** and scan the QR code, or type the code (on a Mac). Both devices must be on the same Wi-Fi."),
+                HelpSection(title: "Compare the codes", body: "Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network."),
+                HelpSection(title: "Staying in sync", body: "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins."),
+                HelpSection(title: "Bottles already on the new device", body: "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar)."),
+                HelpSection(title: "Removing a device", body: "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted."),
+                HelpSection(title: "Privacy", body: "Devices talk directly on your network; no server is involved. Every exchange is encrypted from end to end with a new key each time. The 6-digit code only helps the devices find each other: the comparison is what protects you."),
             ]),
             HelpArticle(topic: .ai, title: "Setting up AI",
                         summary: "Use your own AI service for label recognition.", systemImage: "cpu", sections: [

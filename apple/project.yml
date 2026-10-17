@@ -58,7 +58,8 @@ targets:
         CFBundleLocalizations: [en, fr]
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Encave uses the camera to read wine labels. Images stay on this device.
-        NSLocalNetworkUsageDescription: Encave connects to the AI server on your network that you set in Settings.
+        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
+        NSBonjourServices: [_encave._tcp]
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
@@ -82,6 +83,8 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        # Sync: other devices connect to this Mac on the local network.
+        com.apple.security.network.server: true
         com.apple.security.files.user-selected.read-only: true
     settings:
       base:
@@ -96,6 +99,8 @@ targets:
         CFBundleLocalizations: [en, fr]
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
+        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
+        NSBonjourServices: [_encave._tcp]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)

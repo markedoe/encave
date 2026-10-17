@@ -144,9 +144,41 @@ final class ScreenTourTests: XCTestCase {
                 snapshot("help")
                 goBack()
             }
+            checkDevices()
             closeSheet()
         }
         #endif
+    }
+
+    // MARK: Devices
+
+    /// Settings › Devices: inviting shows a code and a QR code; joining asks for the code.
+    private func checkDevices() {
+        let devices = element("settings.devices")
+        scrollIntoView(devices)
+        guard devices.exists, devices.isHittable else {
+            XCTFail("settings: no Devices entry")
+            return
+        }
+        devices.press()
+        snapshot("devices")
+        let add = element("devices.add")
+        if add.waitForExistence(timeout: 3) {
+            add.press()
+            XCTAssertTrue(element("devices.code").waitForExistence(timeout: 3), "devices: no code to show")
+            snapshot("devices-invite")
+            closeSheet()
+        } else {
+            XCTFail("devices: no Add a Device button")
+        }
+        let join = element("devices.join")
+        if join.waitForExistence(timeout: 3) {
+            join.press()
+            XCTAssertTrue(element("devices.codeField").waitForExistence(timeout: 3), "devices: no code field")
+            snapshot("devices-join")
+            closeSheet()
+        }
+        goBack()
     }
 
     // MARK: Cellar

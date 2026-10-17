@@ -19,6 +19,11 @@ struct SettingsView: View {
         return "\(short) (\(build))"
     }
 
+    private var devicesSummary: String {
+        let count = model.sync.otherDevices.count
+        return count == 0 ? String(localized: "This device only") : String(localized: "\(count + 1) devices")
+    }
+
     var body: some View {
         Form {
             Section {
@@ -28,6 +33,21 @@ struct SettingsView: View {
                     Label("Help", systemImage: "questionmark.circle")
                 }
                 .accessibilityIdentifier("settings.help")
+            }
+
+            Section {
+                NavigationLink {
+                    DevicesView()
+                } label: {
+                    LabeledContent {
+                        Text(devicesSummary)
+                    } label: {
+                        Label("Devices", systemImage: "laptopcomputer.and.iphone")
+                    }
+                }
+                .accessibilityIdentifier("settings.devices")
+            } footer: {
+                Text("Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.")
             }
 
             Section {
@@ -67,11 +87,15 @@ struct SettingsView: View {
             AISettingsSection()
 
             Section {
-                Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
+                if model.sync.otherDevices.isEmpty {
+                    Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
+                } else {
+                    Label("Your cellar is stored only on your devices.", systemImage: "lock.shield")
+                }
             } header: {
                 Text("Privacy")
             } footer: {
-                Text("Sync between your devices and with the people you share a cellar with will be end-to-end encrypted.")
+                Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
             }
 
             Section("Test data") {

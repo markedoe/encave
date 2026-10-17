@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ added": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ajouté"
+          }
+        }
+      }
+    },
     "%@ and %lld more": {
       "localizations": {
         "fr": {
@@ -127,6 +137,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld appareils"
           }
         }
       }
@@ -297,6 +317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une sauvegarde contient tout et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel."
+          }
+        }
+      }
+    },
+    "A device could not prove it belongs to this cellar. Nothing was exchanged.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un appareil n’a pas pu prouver qu’il fait partie de cette cave. Rien n’a été échangé."
           }
         }
       }
@@ -491,6 +521,16 @@
         }
       }
     },
+    "Add a Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un appareil"
+          }
+        }
+      }
+    },
     "Add a Photo": {
       "localizations": {
         "fr": {
@@ -507,6 +547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter un casier"
+          }
+        }
+      }
+    },
+    "Add a device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un appareil"
           }
         }
       }
@@ -601,6 +651,16 @@
         }
       }
     },
+    "Add your iPad or Mac to have the same cellar on each, kept in sync.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez votre iPad ou votre Mac pour avoir la même cave sur chacun, toujours à jour."
+          }
+        }
+      }
+    },
     "Added %@": {
       "localizations": {
         "fr": {
@@ -631,6 +691,16 @@
         }
       }
     },
+    "Adding a device shows a code on this one; type or scan it on the other. Both must be on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un appareil affiche un code sur celui-ci ; saisissez-le ou scannez-le sur l’autre. Les deux doivent être sur le même Wi-Fi."
+          }
+        }
+      }
+    },
     "Adding bottles": {
       "localizations": {
         "fr": {
@@ -657,6 +727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déjà dans votre cave ?"
+          }
+        }
+      }
+    },
+    "Another device runs a different version of Encave. Update both devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre appareil utilise une version différente d’Encave. Mettez les deux à jour."
           }
         }
       }
@@ -831,6 +911,26 @@
         }
       }
     },
+    "Both cellars are put together. Choose Replace if this device only has the sample cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les deux caves sont réunies. Choisissez Remplacer si cet appareil n’a que la cave d’exemple."
+          }
+        }
+      }
+    },
+    "Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les deux appareils affichent alors les mêmes 6 chiffres et demandent s’ils sont identiques. Vérifiez-les avant de répondre **Ils sont identiques** : des codes différents signifient qu’un autre appareil s’est glissé entre les deux, répondez alors **Non**. C’est ce qui protège votre cave, même sur un réseau partagé."
+          }
+        }
+      }
+    },
     "Bottle": {
       "localizations": {
         "fr": {
@@ -877,6 +977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles"
+          }
+        }
+      }
+    },
+    "Bottles already on the new device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles déjà sur le nouvel appareil"
           }
         }
       }
@@ -1291,6 +1401,26 @@
         }
       }
     },
+    "Code": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
+          }
+        }
+      }
+    },
+    "Code shown on the other device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code affiché sur l’autre appareil"
+          }
+        }
+      }
+    },
     "Color, intensity, clarity.": {
       "localizations": {
         "fr": {
@@ -1311,12 +1441,42 @@
         }
       }
     },
+    "Combine with the other cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réunir avec l’autre cave"
+          }
+        }
+      }
+    },
+    "Compare the codes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer les codes"
+          }
+        }
+      }
+    },
     "Complete with AI": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Compléter avec l’IA"
+          }
+        }
+      }
+    },
+    "Confirm the code on the other device too.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmez aussi le code sur l’autre appareil."
           }
         }
       }
@@ -1581,6 +1741,76 @@
         }
       }
     },
+    "Devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareils"
+          }
+        }
+      }
+    },
+    "Devices sharing this cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareils partageant cette cave"
+          }
+        }
+      }
+    },
+    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification. Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte."
+          }
+        }
+      }
+    },
+    "Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave."
+          }
+        }
+      }
+    },
+    "Devices sync when they are on the same Wi-Fi and Encave is open. Changes made apart merge without losing anything.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils se synchronisent quand ils sont sur le même Wi-Fi et qu’Encave est ouvert. Les modifications faites séparément se réunissent sans rien perdre."
+          }
+        }
+      }
+    },
+    "Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient."
+          }
+        }
+      }
+    },
+    "Devices talk directly on your network; no server is involved. Every exchange is encrypted from end to end with a new key each time. The 6-digit code only helps the devices find each other: the comparison is what protects you.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils communiquent directement sur votre réseau ; aucun serveur n’intervient. Chaque échange est chiffré de bout en bout avec une nouvelle clé à chaque fois. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
+          }
+        }
+      }
+    },
     "Diamond": {
       "localizations": {
         "fr": {
@@ -1707,6 +1937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Découverte supprimée"
+          }
+        }
+      }
+    },
+    "Does %@ show the same code?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ affiche-t-il le même code ?"
           }
         }
       }
@@ -1947,6 +2187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Encave est open source : chacun peut vérifier ce que fait l’app."
+          }
+        }
+      }
+    },
+    "Encrypted from end to end": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiffré de bout en bout"
           }
         }
       }
@@ -2381,6 +2631,16 @@
         }
       }
     },
+    "Help with devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide sur les appareils"
+          }
+        }
+      }
+    },
     "Help with discoveries": {
       "localizations": {
         "fr": {
@@ -2611,12 +2871,52 @@
         }
       }
     },
+    "It keeps what it already has, but can no longer sync with your other devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il garde ce qu’il a déjà, mais ne peut plus se synchroniser avec vos autres appareils."
+          }
+        }
+      }
+    },
     "Its bottles, drinking window and tastings appear here.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ses bouteilles, sa fenêtre de dégustation et vos dégustations apparaissent ici."
+          }
+        }
+      }
+    },
+    "Join": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoindre"
+          }
+        }
+      }
+    },
+    "Join Another Device’s Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoindre la cave d’un autre appareil"
+          }
+        }
+      }
+    },
+    "Join a Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoindre une cave"
           }
         }
       }
@@ -2871,6 +3171,16 @@
         }
       }
     },
+    "Looking for the device showing %@…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche de l’appareil qui affiche %@…"
+          }
+        }
+      }
+    },
     "Magnum": {
       "localizations": {
         "fr": {
@@ -3041,12 +3351,32 @@
         }
       }
     },
+    "No": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non"
+          }
+        }
+      }
+    },
     "No bottle in your cellar matches this dish yet.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Aucune bouteille de votre cave ne correspond encore à ce plat."
+          }
+        }
+      }
+    },
+    "No device shows this code on this network. Check the code, and that both devices are on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun appareil n’affiche ce code sur ce réseau. Vérifiez le code et que les deux appareils sont sur le même Wi-Fi."
           }
         }
       }
@@ -3141,6 +3471,16 @@
         }
       }
     },
+    "Not added": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non ajouté"
+          }
+        }
+      }
+    },
     "Not found": {
       "localizations": {
         "fr": {
@@ -3167,6 +3507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inutile"
+          }
+        }
+      }
+    },
+    "Not synced yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore synchronisé"
           }
         }
       }
@@ -3271,12 +3621,52 @@
         }
       }
     },
+    "On the device that already has your cellar: Settings › Devices › Add a Device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’appareil qui a déjà votre cave : Réglages › Appareils › Ajouter un appareil."
+          }
+        }
+      }
+    },
+    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar** and scan the QR code, or type the code (on a Mac). Both devices must be on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un code QR et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil** et scannez le code QR, ou saisissez le code (sur un Mac). Les deux appareils doivent être sur le même Wi-Fi."
+          }
+        }
+      }
+    },
+    "On the other device, open Settings › Devices › Join Another Device’s Cellar, then scan this code or type the numbers.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’autre appareil, ouvrez Réglages › Appareils › Rejoindre la cave d’un autre appareil, puis scannez ce code ou saisissez les chiffres."
+          }
+        }
+      }
+    },
     "On this device": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Sur cet appareil"
+          }
+        }
+      }
+    },
+    "On this network": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur ce réseau"
           }
         }
       }
@@ -3571,6 +3961,16 @@
         }
       }
     },
+    "Point the camera at the code on the other device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visez le code affiché sur l’autre appareil"
+          }
+        }
+      }
+    },
     "Point the camera at the label": {
       "localizations": {
         "fr": {
@@ -3727,6 +4127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remettre en cave"
+          }
+        }
+      }
+    },
+    "QR code to scan with the other device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code QR à scanner avec l’autre appareil"
           }
         }
       }
@@ -3981,6 +4391,26 @@
         }
       }
     },
+    "Remove %@?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer %@ ?"
+          }
+        }
+      }
+    },
+    "Remove Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer l’appareil"
+          }
+        }
+      }
+    },
     "Remove Photo": {
       "localizations": {
         "fr": {
@@ -4001,12 +4431,32 @@
         }
       }
     },
+    "Removing a device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer un appareil"
+          }
+        }
+      }
+    },
     "Replace Photo": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Remplacer la photo"
+          }
+        }
+      }
+    },
+    "Replace with the other cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer par l’autre cave"
           }
         }
       }
@@ -4171,6 +4621,16 @@
         }
       }
     },
+    "Scan the QR Code": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner le code QR"
+          }
+        }
+      }
+    },
     "Scanning a label": {
       "localizations": {
         "fr": {
@@ -4217,6 +4677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un vin"
+          }
+        }
+      }
+    },
+    "Sending the cellar and its photos. Keep both devices open.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoi de la cave et de ses photos. Gardez les deux appareils ouverts."
           }
         }
       }
@@ -4521,6 +4991,46 @@
         }
       }
     },
+    "Staying in sync": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rester synchronisé"
+          }
+        }
+      }
+    },
+    "Stop Syncing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la synchronisation"
+          }
+        }
+      }
+    },
+    "Stop Syncing on This Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la synchronisation sur cet appareil"
+          }
+        }
+      }
+    },
+    "Stop syncing on this device?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la synchronisation sur cet appareil ?"
+          }
+        }
+      }
+    },
     "Style": {
       "localizations": {
         "fr": {
@@ -4561,12 +5071,32 @@
         }
       }
     },
+    "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balayez un appareil dans la liste et choisissez **Retirer**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée."
+          }
+        }
+      }
+    },
     "Swipe a wine to the right, or use **Drink** on its page. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Balayez un vin vers la droite, ou utilisez **Boire** sur sa fiche. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
+          }
+        }
+      }
+    },
+    "Sync Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser"
           }
         }
       }
@@ -4587,6 +5117,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "La synchronisation entre vos appareils et avec les personnes qui partagent votre cave sera chiffrée de bout en bout : le serveur qui relaie les changements ne pourra jamais les lire."
+          }
+        }
+      }
+    },
+    "Sync could not start on this network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation n’a pas pu démarrer sur ce réseau."
+          }
+        }
+      }
+    },
+    "Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisez votre cave entre iPhone, iPad et Mac, chiffrée de bout en bout."
+          }
+        }
+      }
+    },
+    "Synced %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisé %@"
+          }
+        }
+      }
+    },
+    "Syncing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation"
+          }
+        }
+      }
+    },
+    "Syncing…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation…"
           }
         }
       }
@@ -4811,12 +5391,52 @@
         }
       }
     },
+    "The cellar stays on this device as it is. Other devices keep syncing together.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave reste telle quelle sur cet appareil. Les autres appareils continuent de se synchroniser entre eux."
+          }
+        }
+      }
+    },
     "The change could not be saved.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La modification n’a pas pu être enregistrée."
+          }
+        }
+      }
+    },
+    "The code expired. Show a new code.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le code a expiré. Affichez un nouveau code."
+          }
+        }
+      }
+    },
+    "The codes were not confirmed on both devices. Nothing was shared.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes n’ont pas été confirmés sur les deux appareils. Rien n’a été partagé."
+          }
+        }
+      }
+    },
+    "The connection was lost. Try again with a new code.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion a été perdue. Réessayez avec un nouveau code."
           }
         }
       }
@@ -4891,6 +5511,16 @@
         }
       }
     },
+    "The last sync did not finish. It will try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La dernière synchronisation n’a pas abouti. Elle sera retentée."
+          }
+        }
+      }
+    },
     "The model declined to read this photo.": {
       "localizations": {
         "fr": {
@@ -4921,6 +5551,26 @@
         }
       }
     },
+    "The other device could not be verified. Nothing was shared. Try again with a new code.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’autre appareil n’a pas pu être vérifié. Rien n’a été partagé. Réessayez avec un nouveau code."
+          }
+        }
+      }
+    },
+    "The other device runs a different version of Encave. Update both devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’autre appareil utilise une version différente d’Encave. Mettez les deux à jour."
+          }
+        }
+      }
+    },
     "The photo": {
       "localizations": {
         "fr": {
@@ -4947,6 +5597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’appellation d’origine, comme Pauillac ou Chablis."
+          }
+        }
+      }
+    },
+    "The same cellar on your iPhone, iPad and Mac.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La même cave sur votre iPhone, iPad et Mac."
           }
         }
       }
@@ -5001,12 +5661,92 @@
         }
       }
     },
+    "They Match": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ils sont identiques"
+          }
+        }
+      }
+    },
     "This bottle has already been opened.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Cette bouteille a déjà été ouverte."
+          }
+        }
+      }
+    },
+    "This device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil"
+          }
+        }
+      }
+    },
+    "This device already has bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil a déjà des bouteilles"
+          }
+        }
+      }
+    },
+    "This device could not wait for the other one on the network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’a pas pu attendre l’autre sur le réseau."
+          }
+        }
+      }
+    },
+    "This device only": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil seulement"
+          }
+        }
+      }
+    },
+    "This device was removed from the cellar on another device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil a été retiré de la cave depuis un autre appareil."
+          }
+        }
+      }
+    },
+    "This device will show only the other device’s cellar. Make a backup first if you may need these bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’affichera que la cave de l’autre appareil. Faites d’abord une sauvegarde si vous pourriez avoir besoin de ces bouteilles."
+          }
+        }
+      }
+    },
+    "This device’s bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles de cet appareil"
           }
         }
       }
@@ -5027,6 +5767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cet élément n’existe plus."
+          }
+        }
+      }
+    },
+    "This makes sure no one else is in between. Different codes: answer No and start again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela garantit que personne ne s’est glissé entre les deux. Codes différents : répondez Non et recommencez."
           }
         }
       }
@@ -5117,6 +5867,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Voyage"
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayer"
           }
         }
       }
@@ -5301,6 +6061,16 @@
         }
       }
     },
+    "Valid for 2 minutes, for one device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valable 2 minutes, pour un seul appareil."
+          }
+        }
+      }
+    },
     "Vegetarian": {
       "localizations": {
         "fr": {
@@ -5337,6 +6107,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Millésime"
+          }
+        }
+      }
+    },
+    "Waiting for the other device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de l’autre appareil"
+          }
+        }
+      }
+    },
+    "Waiting for the other device…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de l’autre appareil…"
           }
         }
       }
@@ -5397,6 +6187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quand chaque vin est à son meilleur."
+          }
+        }
+      }
+    },
+    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar).": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil (par exemple après avoir essayé la cave d’exemple)."
           }
         }
       }
@@ -5611,12 +6411,32 @@
         }
       }
     },
+    "Your cellar is now on both devices and stays in sync when they are on the same Wi-Fi.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est maintenant sur les deux appareils et reste synchronisée quand ils sont sur le même Wi-Fi."
+          }
+        }
+      }
+    },
     "Your cellar is stored only on this device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave est enregistrée uniquement sur cet appareil."
+          }
+        }
+      }
+    },
+    "Your cellar is stored only on your devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est enregistrée uniquement sur vos appareils."
           }
         }
       }
@@ -5647,6 +6467,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vos données"
+          }
+        }
+      }
+    },
+    "Your devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos appareils"
           }
         }
       }

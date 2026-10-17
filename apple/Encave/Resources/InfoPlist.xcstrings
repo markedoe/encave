@@ -22,13 +22,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave connects to the AI server on your network that you set in Settings."
+            "value": "Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave se connecte au serveur d’IA de votre réseau choisi dans les réglages."
+            "value": "Encave trouve vos autres appareils sur ce réseau pour synchroniser votre cave, chiffrée de bout en bout. Il joint aussi le serveur d’IA que vous pouvez choisir dans les réglages."
           }
         }
       }
