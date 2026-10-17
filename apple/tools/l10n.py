@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Menu bar (Mac)': 'Barre des menus (Mac)',
+    'The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.': 'Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**.',
     'A glass in the menu bar lists the bottles to open now; click one to open it.': 'Un verre dans la barre des menus liste les bouteilles à ouvrir maintenant ; cliquez sur l’une d’elles pour l’ouvrir.',
     'Encave': 'Encave',
     'Open Encave': 'Ouvrir Encave',

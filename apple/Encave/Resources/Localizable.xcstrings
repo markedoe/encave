@@ -3991,6 +3991,16 @@
         }
       }
     },
+    "Menu bar (Mac)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barre des menus (Mac)"
+          }
+        }
+      }
+    },
     "Mineral and salty, great with grilled fish.": {
       "localizations": {
         "fr": {
@@ -6827,6 +6837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les quatre sections et comment elles fonctionnent ensemble."
+          }
+        }
+      }
+    },
+    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**."
           }
         }
       }
