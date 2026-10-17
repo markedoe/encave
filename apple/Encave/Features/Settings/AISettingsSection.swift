@@ -186,7 +186,7 @@ struct AISettingsSection: View {
     private func checkKey() {
         check = .checking
         let settings = settings
-        let key = apiKey
+        let key = AISettings.cleanKey(apiKey)
         Task {
             do {
                 let list = try await AIService.models(settings: settings, apiKey: key)

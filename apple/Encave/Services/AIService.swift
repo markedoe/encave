@@ -176,11 +176,17 @@ struct AISettings: Equatable, Sendable {
 
     /// One key per provider, in the Keychain on this device.
     static func apiKey(for provider: AIProvider) -> String? {
-        Keychain.get("ai.apiKey.\(provider.rawValue)") ?? (provider == .anthropic ? Keychain.get("ai.apiKey") : nil)
+        let key = Keychain.get("ai.apiKey.\(provider.rawValue)") ?? (provider == .anthropic ? Keychain.get("ai.apiKey") : nil)
+        return key.map(cleanKey)
     }
 
     static func setAPIKey(_ key: String?, for provider: AIProvider) {
-        Keychain.set(key, for: "ai.apiKey.\(provider.rawValue)")
+        Keychain.set(key.map(cleanKey), for: "ai.apiKey.\(provider.rawValue)")
+    }
+
+    /// Pasted keys often carry spaces, line breaks or quotes, which providers reject as invalid.
+    static func cleanKey(_ key: String) -> String {
+        key.trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\"'“”‘’")))
     }
 
     var apiKey: String? { AISettings.apiKey(for: provider) }
