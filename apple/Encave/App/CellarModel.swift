@@ -330,6 +330,7 @@ extension CellarError {
         case .slotOutOfRange: String(localized: "That position is outside the rack.")
         case .rackNotEmpty: String(localized: "Move the bottles out of the removed rows or columns first.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
+        case .notReceived: String(localized: "This bottle is on order: mark it received first.")
         case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")
         }
     }

@@ -6941,6 +6941,16 @@
         }
       }
     },
+    "This bottle is on order: mark it received first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette bouteille est en commande : marquez-la d’abord comme reçue."
+          }
+        }
+      }
+    },
     "This device": {
       "localizations": {
         "fr": {
