@@ -179,7 +179,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Rack check (audit) | Done | Done |
 | Drag and drop in racks | iPad and Mac | Tablets |
 | Import CellarTracker and Vivino CSV exports | Done | Done |
-| Year in wine, drink-down plan | Done | Done |
+| Year in wine, drink-down plan | Done (year shared as an image) | Done |
 | Bottles on order (en primeur, deliveries) | Done | Done |
 | Bottles kept for an occasion (not suggested for tonight) | Done | Done |
 | Tags on wines, filter chips | Done | Done |
@@ -191,6 +191,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
 | Saved searches | Done | Planned |
 | Several photos per wine | Done | Planned |
+| Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Watch app | Later | Later (Wear OS tile) |
 
 ### Ask your cellar (on the device)
