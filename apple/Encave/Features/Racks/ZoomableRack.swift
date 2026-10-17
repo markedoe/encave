@@ -174,22 +174,8 @@ struct ZoomableRack: UIViewRepresentable {
 }
 
 /// A scroll view that keeps its content centered while it is smaller than the screen.
-/// For VoiceOver it is adjustable: swipe up or down to zoom in or out.
 final class CenteringScrollView: UIScrollView {
     weak var zoomedView: UIView?
-
-    override var accessibilityTraits: UIAccessibilityTraits {
-        get { super.accessibilityTraits.union(.adjustable) }
-        set { super.accessibilityTraits = newValue }
-    }
-
-    override func accessibilityIncrement() { zoomStep(by: 1.5) }
-    override func accessibilityDecrement() { zoomStep(by: 1 / 1.5) }
-
-    private func zoomStep(by factor: CGFloat) {
-        let target = min(maximumZoomScale, max(minimumZoomScale, zoomScale * factor))
-        setZoomScale(target, animated: true)
-    }
 
     override func layoutSubviews() {
         super.layoutSubviews()
