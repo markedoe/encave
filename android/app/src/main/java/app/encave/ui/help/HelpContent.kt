@@ -13,6 +13,8 @@ import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Hive
 import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.LocalBar
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.SdStorage
@@ -60,6 +62,8 @@ data class HelpArticle(
                     HelpSection(R.string.help_adding_window, R.string.detail_window),
                     HelpSection(R.string.help_adding_quantity, R.string.help_adding_quantity_title),
                     HelpSection(R.string.help_adding_purchase, R.string.help_adding_purchase_title),
+                    HelpSection(R.string.help_adding_tags, R.string.field_tags, Icons.Outlined.Tag),
+                    HelpSection(R.string.help_adding_orders, R.string.help_adding_orders_title, Icons.Outlined.LocalShipping),
                 ),
             ),
             HelpArticle(
@@ -88,6 +92,7 @@ data class HelpArticle(
             HelpArticle(
                 HelpTopic.Tonight, R.string.help_tonight_title, R.string.help_tonight_summary, Icons.Outlined.Bedtime,
                 listOf(
+                    HelpSection(R.string.help_tonight_why, R.string.help_tonight_why_title),
                     HelpSection(R.string.help_tonight_maturity, R.string.help_tonight_maturity_title),
                     HelpSection(R.string.help_tonight_suggestions, R.string.help_tonight_suggestions_title),
                     HelpSection(R.string.help_tonight_serving, R.string.detail_serving),

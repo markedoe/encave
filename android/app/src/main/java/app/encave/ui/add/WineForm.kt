@@ -10,7 +10,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Tag
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import app.encave.core.Discovery
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -50,7 +56,7 @@ import java.util.UUID
 import kotlin.math.roundToInt
 
 /** Editable copy of a wine. The drinking window follows the estimate until the user changes it. */
-class WineFormState(initial: Wine?, private val year: Int) {
+class WineFormState(private val initial: Wine?, private val year: Int) {
     val id: UUID = initial?.id ?: UUID.randomUUID()
     var name by mutableStateOf(initial?.name.orEmpty())
     var producer by mutableStateOf(initial?.producer.orEmpty())
@@ -62,6 +68,9 @@ class WineFormState(initial: Wine?, private val year: Int) {
     val grapes = mutableStateListOf<String>().apply { initial?.grapes?.let { addAll(it) } }
     var grapeInput by mutableStateOf("")
     var notes by mutableStateOf(initial?.notes.orEmpty())
+    val tags = mutableStateListOf<String>().apply { initial?.tags?.let { addAll(it) } }
+    /** Tag being typed; added on save so nothing is lost. */
+    var tagInput by mutableStateOf("")
     var showErrors by mutableStateOf(false)
 
     /** Photo already stored for this wine, a new prepared JPEG, or removal. */
@@ -134,14 +143,24 @@ class WineFormState(initial: Wine?, private val year: Int) {
         grapeInput = ""
     }
 
+    fun addTags() {
+        val all = Discovery.normalized(tags + tagInput.split(","))
+        tags.clear()
+        tags.addAll(all)
+        tagInput = ""
+    }
+
     fun build(): Wine {
         addGrape()
+        addTags()
         fun String.orNull() = trim().ifEmpty { null }
-        return Wine(
+        // Starts from the stored record so fields the form does not show (barcodes) are kept.
+        return (initial ?: Wine(name = "")).copy(
             id = id, name = name.trim(), producer = producer.orNull(), vintage = vintage, color = color,
             region = region.orNull(), country = country.orNull(), appellation = appellation.orNull(),
             grapes = grapes.toList(), drinkFrom = window?.first, drinkUntil = window?.last, notes = notes.orNull(),
             photoId = if (photoRemoved) null else storedPhotoId,
+            tags = tags.toList().ifEmpty { null },
         )
     }
 }
@@ -214,11 +233,47 @@ fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier 
         )
         GrapesField(form, known.grapes)
         Hint(stringResource(R.string.help_origin_footer))
+        WineTagsField(form, known.tags)
         OutlinedTextField(
             value = form.notes, onValueChange = { form.notes = it },
             label = { Text(stringResource(R.string.field_notes)) }, minLines = 2, modifier = Modifier.fillMaxWidth(),
             supportingText = { Text(stringResource(R.string.help_notes_footer)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        )
+    }
+}
+
+/** Tags chosen, then tags used in the cellar, plus a field to add one. */
+@Composable
+fun WineTagsField(form: WineFormState, suggestions: List<String>) {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+        Text(stringResource(R.string.field_tags), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+        val chosen = form.tags.map { it.lowercase() }.toSet()
+        val shown = form.tags.toList() + suggestions.filter { it.lowercase() !in chosen }.take(12)
+        if (shown.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                shown.forEach { tag ->
+                    val selected = tag in form.tags
+                    FilterChip(
+                        selected = selected,
+                        onClick = { if (selected) form.tags.remove(tag) else form.tags.add(tag) },
+                        label = { Text(tag) },
+                        leadingIcon = {
+                            Icon(if (selected) Icons.Filled.Check else Icons.Outlined.Tag, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                    )
+                }
+            }
+        }
+        OutlinedTextField(
+            value = form.tagInput,
+            onValueChange = { text -> form.tagInput = text; if (text.contains(",")) form.addTags() },
+            label = { Text(stringResource(R.string.discovery_add_tag)) },
+            placeholder = { Text(stringResource(R.string.tag_hint)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth().testTag("field.tags"),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.Sentences),
+            keyboardActions = KeyboardActions(onDone = { form.addTags() }),
+            supportingText = { Text(stringResource(R.string.help_wine_tags_footer)) },
         )
     }
 }
@@ -308,6 +363,7 @@ data class KnownValues(
     val countries: List<String> = emptyList(),
     val appellations: List<String> = emptyList(),
     val grapes: List<String> = emptyList(),
+    val tags: List<String> = emptyList(),
 )
 
 /** Text field with a menu of matching known values (exposed dropdown). */

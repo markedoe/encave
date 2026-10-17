@@ -2,6 +2,10 @@ package app.encave.ui.add
 
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material3.Switch
+import androidx.compose.ui.semantics.Role
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -96,6 +100,7 @@ fun Cellar.knownValues() = KnownValues(
     countries = knownValues { it.country },
     appellations = knownValues { it.appellation },
     grapes = wines.values.flatMap { it.grapes }.distinct().sortedWith(Cellar.collator()),
+    tags = wineTags,
 )
 
 /**
@@ -135,10 +140,15 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     var pickingDate by remember { mutableStateOf(false) }
     var place by rememberSaveable { mutableStateOf("") }
     var receivedFrom by rememberSaveable { mutableStateOf("") }
+    // Bought but not delivered yet (en primeur, or an order on its way).
+    var ordered by rememberSaveable { mutableStateOf(false) }
+    var hasExpectedDate by rememberSaveable { mutableStateOf(false) }
+    var expectedAt by remember { mutableStateOf<Instant?>(null) }
+    var pickingExpected by remember { mutableStateOf(false) }
 
     val freeSlots = rack?.let { cellar.freeSlots(it) } ?: emptyList()
     val slots: List<Slot> = when {
-        !inRack || rack == null -> emptyList()
+        ordered || !inRack || rack == null -> emptyList()
         slotsTouched -> pickedSlots.filter { it.rackId == rack.id && it in freeSlots }.take(quantity)
         else -> freeSlots.take(quantity)
     }
@@ -155,8 +165,10 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
             currency = currency,
             place = place.trim().ifEmpty { null },
             receivedFrom = receivedFrom.trim().ifEmpty { null },
-            storageNote = if (!inRack || rack == null) storage.trim().ifEmpty { null } else null,
+            storageNote = if (!ordered && (!inRack || rack == null)) storage.trim().ifEmpty { null } else null,
             sizeML = sizeML,
+            isOrdered = ordered,
+            expectedAt = if (ordered && hasExpectedDate) expectedAt else null,
         )
         viewModel.addBottles(
             wine, quantity, slots, purchase,
@@ -250,7 +262,19 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
             Hint("${pluralStringResource(R.plurals.bottle_count, quantity, quantity)} · ${stringResource(R.string.help_field_quantity)}")
             Hint(stringResource(R.string.help_bottles_footer))
 
-            LocationSection(
+            OrderSection(
+                ordered = ordered,
+                onOrdered = { ordered = it },
+                hasDate = hasExpectedDate,
+                onHasDate = { on ->
+                    hasExpectedDate = on
+                    if (on && expectedAt == null) expectedAt = Instant.now().plus(java.time.Duration.ofDays(14))
+                },
+                date = expectedAt,
+                onPickDate = { pickingExpected = true },
+            )
+
+            if (!ordered) LocationSection(
                 cellar = cellar,
                 inRack = inRack && cellar.racks.isNotEmpty(),
                 onInRack = { inRack = it },
@@ -339,6 +363,56 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     }
     if (pickingDate) {
         DateDialog(initial = purchaseDate ?: Instant.now(), onPick = { purchaseDate = it }, onDismiss = { pickingDate = false })
+    }
+    if (pickingExpected) {
+        DateDialog(
+            initial = expectedAt ?: Instant.now(), onPick = { if (it != null) expectedAt = it },
+            onDismiss = { pickingExpected = false }, allowClear = false,
+        )
+    }
+}
+
+/** "Not delivered yet" and, when known, the expected delivery date. Bottles on order get no place. */
+@Composable
+private fun OrderSection(
+    ordered: Boolean,
+    onOrdered: (Boolean) -> Unit,
+    hasDate: Boolean,
+    onHasDate: (Boolean) -> Unit,
+    date: Instant?,
+    onPickDate: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().toggleable(ordered, role = Role.Switch, onValueChange = onOrdered).testTag("add.ordered"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.LocalShipping, contentDescription = null)
+        Column(Modifier.weight(1f).padding(horizontal = Dimens.l)) {
+            Text(stringResource(R.string.add_not_delivered), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(R.string.add_not_delivered_help),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = ordered, onCheckedChange = null)
+    }
+    if (ordered) {
+        Row(
+            Modifier.fillMaxWidth().toggleable(hasDate, role = Role.Switch, onValueChange = onHasDate).testTag("add.expected"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.add_expected_delivery), Modifier.weight(1f).padding(start = 40.dp), style = MaterialTheme.typography.bodyLarge)
+            Switch(checked = hasDate, onCheckedChange = null)
+        }
+        if (hasDate && date != null) {
+            AssistChip(
+                onClick = onPickDate,
+                label = { Text(Formats.day(date)) },
+                leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
+                modifier = Modifier.padding(start = 40.dp),
+            )
+        }
+        Hint(stringResource(R.string.add_order_footer), Modifier.testTag("add.order.footer"))
     }
 }
 

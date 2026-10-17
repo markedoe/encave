@@ -30,6 +30,8 @@ object SampleData {
         val restaurantNote: String = "Mineral and salty, great with grilled fish.",
         val tagToBuy: String = "For summer",
         val tagGift: String = "Gift idea",
+        val merchant: String = "Wine merchant",
+        val tagBirthYear: String = "Birth year",
     )
 
     fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = ReferenceDates.now()): Cellar {
@@ -106,7 +108,7 @@ object SampleData {
             Triple(
                 Wine(name = "Vintage Port", producer = "Quinta da Serra", vintage = year - 15, color = WineColor.Fortified,
                     region = "Douro", country = "Portugal", appellation = "Porto", grapes = listOf("Touriga Nacional"),
-                    drinkFrom = year - 5, drinkUntil = year + 25),
+                    drinkFrom = year - 5, drinkUntil = year + 25, tags = listOf(labels.tagBirthYear)),
                 4, stairs,
             ),
         )
@@ -121,6 +123,18 @@ object SampleData {
             )
             runCatching { cellar.addBottles(wine, quantity, slots, purchase, addedAt = date) }
         }
+
+        // Last year's vintage bought en primeur, not delivered yet.
+        val primeur = Wine(name = "Clos des Tilleuls", producer = "Domaine Arnaud", vintage = year - 1, color = WineColor.Red,
+            region = "Bordeaux", country = "France", appellation = "Pauillac",
+            grapes = listOf("Cabernet Sauvignon", "Merlot"), drinkFrom = year + 6, drinkUntil = year + 20)
+        cellar.addBottles(
+            primeur, quantity = 6, addedAt = now,
+            purchase = PurchaseInfo(
+                date = now - Duration.ofDays(60), price = BigDecimal(41), currency = cellar.settings.currency,
+                place = labels.merchant, isOrdered = true, expectedAt = now + Duration.ofDays(75),
+            ),
+        )
 
         // A few past tastings for the journal.
         val tasted = Wine(name = "Vieilles Vignes", producer = "Domaine Arnaud", vintage = year - 7, color = WineColor.Red,

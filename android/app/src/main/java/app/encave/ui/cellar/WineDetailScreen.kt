@@ -63,6 +63,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import app.encave.core.WindowSource
+import app.encave.ui.components.ArrivalLabel
 import app.encave.ui.components.displayLocation
 import app.encave.core.Bottle
 import app.encave.core.Cellar
@@ -158,8 +169,10 @@ fun WineDetailScreen(
             return@Scaffold
         }
         val bottles = cellar.bottlesOf(wine.id)
+        val orders = cellar.bottlesOnOrder.filter { it.wineId == wine.id }
+            .sortedWith(compareBy<Bottle>({ it.expectedAt ?: java.time.Instant.MAX }, { it.addedAt }))
         val tastings = cellar.tastingsOf(wine.id)
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
+        LazyColumn(Modifier.fillMaxSize().testTag("wine.detail"), contentPadding = padding) {
             item {
                 if (viewModel.photos.exists(wine.photoId)) {
                     app.encave.ui.add.WinePhoto(
@@ -171,7 +184,12 @@ fun WineDetailScreen(
                 }
                 Hero(wine)
             }
-            item { WindowCard(wine, viewModel.year) }
+            item {
+                WindowCard(
+                    wine, viewModel.year,
+                    onMoveEnd = { years -> viewModel.updateWine(wine.movingWindowEnd(years), quiet = true) },
+                )
+            }
             item {
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
@@ -187,8 +205,32 @@ fun WineDetailScreen(
                     ) { ActionContent(stringResource(R.string.action_add_bottles), Icons.Filled.Add) }
                 }
             }
-            item { SectionHeader("${stringResource(R.string.detail_bottles)} (${bottles.size})") }
-            if (bottles.isEmpty()) {
+            if (orders.isNotEmpty()) {
+                item { SectionHeader(pluralStringResource(R.plurals.detail_on_order, orders.size, orders.size), Modifier.testTag("detail.orders")) }
+                items(orders, key = { "o" + it.id }) { bottle ->
+                    OrderedBottleRow(
+                        cellar, bottle,
+                        onReceive = { viewModel.receive(listOf(bottle.id)) },
+                        onCancel = { viewModel.cancelOrder(bottle.id) },
+                    )
+                }
+                item {
+                    Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                        OutlinedButton(
+                            onClick = { viewModel.receive(orders.map { it.id }) },
+                            modifier = Modifier.testTag("action.order.receive"),
+                        ) { ActionContent(stringResource(R.string.action_mark_all_received), Icons.Outlined.LocalShipping) }
+                        Text(
+                            stringResource(R.string.detail_orders_footer),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            if (bottles.isNotEmpty() || orders.isEmpty()) {
+                item { SectionHeader("${stringResource(R.string.detail_bottles)} (${bottles.size})") }
+            }
+            if (bottles.isEmpty() && orders.isEmpty()) {
                 item {
                     Text(
                         stringResource(R.string.detail_no_bottles),
@@ -293,7 +335,7 @@ private fun Hero(wine: Wine) {
 }
 
 @Composable
-private fun WindowCard(wine: Wine, year: Int) {
+private fun WindowCard(wine: Wine, year: Int, onMoveEnd: (Int) -> Unit) {
     val maturity = Maturity.of(wine, year)
     Card(
         Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
@@ -309,6 +351,7 @@ private fun WindowCard(wine: Wine, year: Int) {
             val until = wine.drinkUntil
             if (from != null && until != null && from <= until) {
                 DrinkingWindowGauge(from, until, year, maturity)
+                WindowExplanation(wine, onMoveEnd)
             } else {
                 Text(stringResource(R.string.detail_window_missing), style = MaterialTheme.typography.bodyMedium)
             }
@@ -353,6 +396,69 @@ fun DrinkingWindowGauge(from: Int, until: Int, year: Int, maturity: Maturity, mo
             Text(until.toString(), style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End)
         }
     }
+}
+
+/** Why the window is what it is, and a quick way to move its end. */
+@Composable
+private fun WindowExplanation(wine: Wine, onMoveEnd: (Int) -> Unit) {
+    val text = when (val source = wine.windowSource) {
+        is WindowSource.Estimated -> stringResource(R.string.window_estimated, source.yearsAfterHarvest, source.yearsAtBest)
+        else -> stringResource(R.string.window_entered)
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        TextButton(
+            onClick = { onMoveEnd(-1) },
+            enabled = (wine.drinkUntil ?: 0) > (wine.drinkFrom ?: 0),
+            modifier = Modifier.testTag("action.window.sooner"),
+        ) { ActionContent(stringResource(R.string.action_drink_sooner), Icons.Outlined.RemoveCircleOutline) }
+        TextButton(
+            onClick = { onMoveEnd(1) },
+            modifier = Modifier.testTag("action.window.longer"),
+        ) { ActionContent(stringResource(R.string.action_keep_longer), Icons.Outlined.AddCircleOutline) }
+    }
+}
+
+/** A bottle bought but not delivered yet. */
+@Composable
+private fun OrderedBottleRow(cellar: Cellar, bottle: Bottle, onReceive: () -> Unit, onCancel: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    val markLabel = stringResource(R.string.action_mark_received)
+    val cancelLabel = stringResource(R.string.action_cancel_order)
+    val details = listOfNotNull(
+        bottle.purchasePrice?.let { Formats.money(it, bottle.currency ?: cellar.settings.currency) },
+        bottle.purchasePlace?.takeIf { it.isNotBlank() },
+        if (bottle.sizeML != 750) sizeLabel(bottle.sizeML) else null,
+    )
+    ListItem(
+        modifier = Modifier.semantics {
+            customActions = listOf(
+                CustomAccessibilityAction(markLabel) { onReceive(); true },
+                CustomAccessibilityAction(cancelLabel) { onCancel(); true },
+            )
+        },
+        headlineContent = { ArrivalLabel(bottle.expectedAt, style = MaterialTheme.typography.bodyLarge) },
+        supportingContent = if (details.isEmpty()) null else ({ Text(details.joinToString(" · ")) }),
+        trailingContent = {
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(markLabel) },
+                        leadingIcon = { Icon(Icons.Outlined.LocalShipping, contentDescription = null) },
+                        onClick = { menu = false; onReceive() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(cancelLabel, color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = { Icon(Icons.Outlined.Cancel, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        onClick = { menu = false; onCancel() },
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -433,6 +539,7 @@ private fun Details(wine: Wine) {
         wine.region?.let { R.string.field_region to it },
         wine.country?.let { R.string.field_country to it },
         wine.grapes.takeIf { it.isNotEmpty() }?.let { R.string.field_grapes to it.joinToString(", ") },
+        wine.tags?.takeIf { it.isNotEmpty() }?.let { R.string.field_tags to it.joinToString(", ") },
         R.string.field_style to stringResource(wine.color.labelRes),
         wine.notes?.takeIf { it.isNotBlank() }?.let { R.string.field_notes to it },
     ).filter { it.second.isNotBlank() }

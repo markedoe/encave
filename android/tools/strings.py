@@ -395,6 +395,8 @@ S = [
  ("sample_restaurant_note", "Mineral and salty, great with grilled fish.", "Minéral et salin, parfait avec le poisson grillé."),
  ("sample_tag_to_buy", "For summer", "Pour l’été"),
  ("sample_tag_gift", "Gift idea", "Idée cadeau"),
+ ("sample_merchant", "Wine merchant", "Caviste"),
+ ("sample_tag_birth_year", "Birth year", "Année de naissance"),
 
  ("kind_title", "Kind of storage", "Type de rangement"),
  ("kind_grid", "Grid rack", "Casier classique"),
@@ -739,12 +741,74 @@ S = [
  ("sample_nose", "Cherry, violet, a touch of undergrowth", "Cerise, violette, une touche de sous-bois"),
  ("sample_palate", "Fine tannins, fresh acidity", "Tanins fins, acidité fraîche"),
  ("sample_pairing", "Roast duck", "Canard rôti"),
+ # Bottles on order
+ ("section_on_order", "On order", "En commande"),
+ ("action_received", "Received", "Reçues"),
+ ("action_mark_received", "Mark received", "Marquer comme reçu"),
+ ("action_mark_all_received", "Mark all received", "Tout marquer comme reçu"),
+ ("action_cancel_order", "Cancel order", "Annuler la commande"),
+ ("msg_order_cancelled", "Order cancelled", "Commande annulée"),
+ ("msg_on_order", "On order: %1$d × %2$s", "En commande : %1$d × %2$s"),
+ ("msg_received", "Bottles received: %1$d", "Bouteilles reçues : %1$d"),
+ ("arrival_expected", "Expected %1$s", "Prévue le %1$s"),
+ ("arrival_late", "Late: expected %1$s", "En retard : prévue le %1$s"),
+ ("arrival_unknown", "Delivery date unknown", "Date de livraison inconnue"),
+ ("add_not_delivered", "Not delivered yet", "Pas encore livrées"),
+ ("add_not_delivered_help", "Bought or ordered en primeur. The bottles join the cellar when you mark them received.",
+  "Achetées ou commandées en primeur. Les bouteilles rejoignent la cave quand vous les marquez comme reçues."),
+ ("add_expected_delivery", "Expected delivery", "Livraison prévue"),
+ ("add_order_footer", "Bottles on order are listed apart and are not suggested for tonight until they arrive.",
+  "Les bouteilles en commande sont listées à part et ne sont pas proposées pour ce soir avant leur arrivée."),
+ ("detail_orders_footer", "Received bottles join the cellar without a place; move them to a rack from here.",
+  "Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page."),
+ ("err_not_received", "This bottle is on order: mark it received first.", "Cette bouteille est en commande : marquez-la d’abord comme reçue."),
+ ("help_adding_orders_title", "Bottles on order", "Bouteilles en commande"),
+ ("help_adding_orders", "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right (or touch and hold) and choose **Received**. They then join the cellar without a place, ready to be put in a rack.",
+  "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite (ou maintenues appuyées) pour choisir **Reçues**. Elles rejoignent alors la cave sans emplacement, prêtes à être rangées dans un casier."),
+
+ # Wine tags
+ ("field_tags", "Tags", "Tags"),
+ ("help_wine_tags_footer", "Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.",
+  "Vos propres groupes, comme cadeau, année de naissance ou pour un ami. Filtrez la Cave par tag."),
+ ("tag_hint", "Gift, birth year…", "Cadeau, année de naissance…"),
+ ("help_adding_tags", "Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag after the styles: tap it to see only those wines. Search finds tags too.",
+  "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag après les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."),
+
+ # Why this window
+ ("window_estimated", "Estimated from the style and the vintage: ready %1$d years after the harvest, then at its best for %2$d years. Adjust it if the producer or a guide says otherwise.",
+  "Estimée d’après le style et le millésime : prêt %1$d ans après la vendange, puis à son meilleur pendant %2$d ans. Ajustez-la si le producteur ou un guide indique autre chose."),
+ ("window_entered", "The years entered for this wine.", "Les années saisies pour ce vin."),
+ ("action_drink_sooner", "Drink sooner", "Boire plus tôt"),
+ ("action_keep_longer", "Keep longer", "Garder plus longtemps"),
+ ("help_tonight_why_title", "Why this window", "Pourquoi cette fenêtre"),
+ ("help_tonight_why", "Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink sooner** and **Keep longer** move its end by a year.",
+  "Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an."),
+
+ # Insights: drink-down plan and year in wine
+ ("insights_drink_down", "Drink-down plan", "Rythme de dégustation"),
+ ("insights_pace", "About %1$s bottles a month", "Environ %1$s bouteilles par mois"),
+ ("insights_pace_detail", "to open every bottle before the end of its drinking window.", "pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation."),
+ ("insights_past_peak", "Past their peak: %1$d", "Après leur apogée : %1$d"),
+ ("insights_windows_ending", "Windows ending each year", "Fins de fenêtre par année"),
+ ("insights_without_window", "Bottles without a drinking window are left out: %1$d", "Bouteilles sans fenêtre de dégustation non comptées : %1$d"),
+ ("insights_year_title", "Your year in wine", "Votre année en vin"),
+ ("insights_year_choose", "Choose the year", "Choisir l’année"),
+ ("insights_year_opened", "bottles opened", "bouteilles ouvertes"),
+ ("insights_year_wines", "different wines", "vins différents"),
+ ("insights_year_discoveries", "discoveries", "découvertes"),
+ ("insights_year_favorite", "Favorite: %1$s, %2$d stars", "Préféré : %1$s, %2$d étoiles"),
+ ("insights_year_region", "Most opened region: %1$s", "Région la plus ouverte : %1$s"),
+ ("insights_year_style", "Most opened style: %1$s", "Style le plus ouvert : %1$s"),
+ ("insights_year_occasion", "Favorite occasion: %1$s", "Occasion préférée : %1$s"),
+ ("insights_year_month", "Busiest month: %1$s", "Mois le plus actif : %1$s"),
+
 ]
 
 P = [
  ("bottle_count", ("%d bottle", "%d bottles"), ("%d bouteille", "%d bouteilles")),
  ("bottles_added", ("%d bottle added", "%d bottles added"), ("%d bouteille ajoutée", "%d bouteilles ajoutées")),
  ("rack_key_wine", ("%1$s, %2$d bottle", "%1$s, %2$d bottles"), ("%1$s, %2$d bouteille", "%1$s, %2$d bouteilles")),
+ ("detail_on_order", ("%d bottle on order", "%d bottles on order"), ("%d bouteille en commande", "%d bouteilles en commande")),
  ("bottles_added_action", ("Add %d bottle", "Add %d bottles"), ("Ajouter %d bouteille", "Ajouter %d bouteilles")),
 ]
 

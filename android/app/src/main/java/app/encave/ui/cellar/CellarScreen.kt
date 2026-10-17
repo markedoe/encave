@@ -48,6 +48,8 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material3.Button
@@ -182,7 +184,10 @@ private fun CellarList(
     var drinking by remember { mutableStateOf<WineGroup?>(null) }
     var deleting by remember { mutableStateOf<WineGroup?>(null) }
     val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
-    val isEmpty = cellar.bottlesInCellar.isEmpty()
+    val isEmpty = cellar.bottlesInCellar.isEmpty() && cellar.bottlesOnOrder.isEmpty()
+    val orders = remember(cellar) { cellar.orderGroups() }
+    val showOrders = orders.isNotEmpty() && !filter.isActive && filter.query.isEmpty()
+    val wineTags = remember(cellar) { cellar.wineTags }
 
     Scaffold(
         topBar = {
@@ -239,6 +244,8 @@ private fun CellarList(
                 FilterBar(
                     colors = filter.colors,
                     maturities = filter.maturities,
+                    tags = wineTags,
+                    tag = filter.tag,
                     sort = sort,
                     onToggleColor = { c ->
                         viewModel.filter.value = filter.copy(colors = if (c in filter.colors) filter.colors - c else filter.colors + c)
@@ -248,9 +255,10 @@ private fun CellarList(
                             maturities = if (m in filter.maturities) filter.maturities - m else filter.maturities + m,
                         )
                     },
+                    onToggleTag = { t -> viewModel.filter.value = filter.copy(tag = if (filter.tag == t) null else t) },
                     onSort = { viewModel.sort.value = it },
                 )
-                if (groups.isEmpty()) {
+                if (groups.isEmpty() && !showOrders) {
                     EmptyState(
                         icon = Icons.Filled.Search,
                         title = stringResource(R.string.cellar_no_match),
@@ -266,7 +274,7 @@ private fun CellarList(
                     LazyColumn(
                         state = listState,
                         contentPadding = PaddingValues(bottom = 88.dp),
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().testTag("cellar.list"),
                     ) {
                         if (showsSummary) {
                             item(key = "summary") {
@@ -282,6 +290,22 @@ private fun CellarList(
                                     },
                                     onSoon = { viewModel.filter.value = it },
                                 )
+                            }
+                        }
+                        if (showOrders) {
+                            item(key = "orders.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.section_on_order)) }
+                            items(orders, key = { "order." + it.id }) { group ->
+                                OrderRow(
+                                    group = group, cellar = cellar, year = viewModel.year,
+                                    selected = group.id.toString() == selectedId,
+                                    onOpen = { onOpen(group.id.toString()) },
+                                    onReceive = { viewModel.receive(group.bottles.map { it.id }) },
+                                    modifier = Modifier.animateItem().testTag("order.row"),
+                                )
+                                HorizontalDivider(Modifier.padding(start = 56.dp))
+                            }
+                            if (groups.isNotEmpty()) {
+                                item(key = "cellar.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.nav_cellar)) }
                             }
                         }
                         items(groups, key = { it.id.toString() }) { group ->
@@ -430,9 +454,12 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
 private fun FilterBar(
     colors: Set<WineColor>,
     maturities: Set<Maturity>,
+    tags: List<String>,
+    tag: String?,
     sort: CellarSort,
     onToggleColor: (WineColor) -> Unit,
     onToggleMaturity: (Maturity) -> Unit,
+    onToggleTag: (String) -> Unit,
     onSort: (CellarSort) -> Unit,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
@@ -472,6 +499,16 @@ private fun FilterBar(
                 onClick = { onToggleMaturity(maturity) },
                 label = { Text(stringResource(maturity.labelRes)) },
                 leadingIcon = { Icon(maturity.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            )
+        }
+        // A tag no longer used by a wine in the cellar stays visible while it filters the list.
+        (tags + listOfNotNull(tag?.takeIf { t -> tags.none { it.equals(t, ignoreCase = true) } })).forEach { option ->
+            FilterChip(
+                selected = tag.equals(option, ignoreCase = true),
+                onClick = { onToggleTag(option) },
+                label = { Text(option) },
+                leadingIcon = { Icon(Icons.Outlined.Tag, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.testTag("filter.tag"),
             )
         }
     }
@@ -554,6 +591,56 @@ private fun CellarRow(
     }
 }
 
+/** Bottles on order: swipe right (or touch and hold, or a TalkBack action) when they arrive. */
+@Composable
+private fun OrderRow(
+    group: WineGroup,
+    cellar: Cellar,
+    year: Int,
+    selected: Boolean,
+    onOpen: () -> Unit,
+    onReceive: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val receivedLabel = stringResource(R.string.action_received)
+    val markLabel = stringResource(R.string.action_mark_received)
+    val swipe = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.StartToEnd) onReceive()
+            false
+        },
+    )
+    Box(modifier) {
+        SwipeToDismissBox(
+            state = swipe,
+            enableDismissFromEndToStart = false,
+            backgroundContent = {
+                Row(
+                    Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = Dimens.xl),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+                ) {
+                    Icon(Icons.Outlined.LocalShipping, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(receivedLabel, color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.labelLarge)
+                }
+            },
+        ) {
+            WineGroupRow(
+                group = group, cellar = cellar, year = year, selected = selected,
+                onClick = onOpen, onLongClick = { menu = true },
+                modifier = Modifier.semantics { customActions = listOf(CustomAccessibilityAction(markLabel) { onReceive(); true }) },
+            )
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(markLabel) }, onClick = { menu = false; onReceive() },
+                leadingIcon = { Icon(Icons.Outlined.LocalShipping, contentDescription = null) },
+            )
+        }
+    }
+}
+
 /**
  * The three figures at the top of the cellar, each a shortcut: bottles opens the cellar
  * in figures, wines shows the whole list, and "to drink soon" filters the list (tap again
@@ -569,7 +656,7 @@ private fun CellarSummary(
     onSoon: (app.encave.core.CellarFilter) -> Unit,
 ) {
     val stats = remember(cellar, year) { cellar.statistics(year) }
-    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null
+    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
         horizontalArrangement = Arrangement.spacedBy(Dimens.s),

@@ -108,6 +108,7 @@ class AppViewModel(
                 CellarError.SlotOutOfRange -> R.string.err_slot_range
                 CellarError.RackNotEmpty -> R.string.err_rack_not_empty
                 CellarError.AlreadyConsumed -> R.string.err_already_consumed
+                CellarError.NotReceived -> R.string.err_not_received
                 else -> R.string.err_generic
             }
             is ImportException -> when (error.error) {
@@ -151,7 +152,10 @@ class AppViewModel(
                     if (boughtDiscoveryId != null && cellar.discoveries[boughtDiscoveryId] != null) cellar.markBought(boughtDiscoveryId)
                 }
             }
-                .onSuccess { post(UiText.Plural(R.plurals.bottles_added, it.size)) }
+                .onSuccess {
+                    if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
+                    else post(UiText.Plural(R.plurals.bottles_added, it.size))
+                }
                 .onFailure {
                     deleteUnusedPhoto(photoId)
                     post(errorText(it))
@@ -180,6 +184,26 @@ class AppViewModel(
             it.markGone(bottleId)
             nameOf(it, bottleId)
         }
+    }
+
+    /** Bottles on order arrive: they join the cellar without a place. Undo puts the orders back. */
+    fun receive(bottleIds: List<UUID>) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        if (before.isEmpty()) return
+        change<Unit>({ post(UiText.Res(R.string.msg_received, listOf(before.size))) { restore(before) } }) {
+            it.receive(before.map(Bottle::id))
+        }
+    }
+
+    /** An order that will not come. Undo puts it back on order. */
+    fun cancelOrder(bottleId: UUID) {
+        val before = cellar.value.bottles[bottleId] ?: return
+        change<Unit>({ post(UiText.Res(R.string.msg_order_cancelled)) { restore(listOf(before)) } }) { it.markGone(bottleId) }
+    }
+
+    /** Puts bottle records back as they were (undo of a bulk change). */
+    private fun restore(bottles: List<Bottle>) = change<Unit> { c ->
+        bottles.forEach { bottle -> if (c.bottles[bottle.id] != null) c.updateBottle(bottle) }
     }
 
     fun deleteBottle(bottleId: UUID) {
@@ -213,7 +237,7 @@ class AppViewModel(
     }
 
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
-    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false) {
+    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false) {
         viewModelScope.launch {
             val previous = cellar.value.wines[wine.id]?.photoId
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
@@ -225,7 +249,7 @@ class AppViewModel(
             repository.update { it.updateWine(record) }
                 .onSuccess {
                     if (record.photoId != previous) deleteUnusedPhoto(previous)
-                    post(UiText.Res(R.string.msg_saved))
+                    if (!quiet) post(UiText.Res(R.string.msg_saved))
                 }
                 .onFailure {
                     deleteUnusedPhoto(newId)

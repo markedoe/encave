@@ -20,6 +20,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
@@ -113,6 +114,12 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     private fun scrollTo(tag: String) {
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasTestTag(tag))
+        compose.waitForIdle()
+    }
+
+    /** Scrolls the list tagged [list] until [tag] shows. */
+    private fun scrollIn(list: String, tag: String) {
+        compose.onNodeWithTag(list).performScrollToNode(hasTestTag(tag))
         compose.waitForIdle()
     }
 
@@ -211,6 +218,37 @@ class ScreenTourTest(private val device: String, private val language: String) {
         val insights = RuntimeEnvironment.getApplication().getString(app.encave.R.string.action_insights)
         compose.onAllNodesWithText(insights).onFirst().assertExists()
         capture("21-insights")
+        scrollTo("insights.drinkdown.chart")
+        capture("29-insights-drink-down")
+    }
+
+    @Test
+    fun bottlesOnOrder() {
+        scrollIn("cellar.list", "order.row")
+        capture("25-cellar-on-order")
+        tap("order.row")
+        scrollIn("wine.detail", "detail.orders")
+        capture("26-wine-on-order")
+    }
+
+    @Test
+    fun tagFilter() {
+        val all = wineRows()
+        compose.onAllNodesWithTag("filter.tag").onFirst().performScrollTo().performClick()
+        compose.waitForIdle()
+        val tagged = wineRows()
+        assertTrue("$device-$language: the tag did not filter the list ($all to $tagged)", tagged in 1 until all)
+        capture("27-cellar-tag")
+    }
+
+    @Test
+    fun addBottleOnOrder() {
+        tap("action.fab_add")
+        scrollTo("add.ordered")
+        tap("add.ordered")
+        tap("add.expected")
+        scrollTo("add.order.footer")
+        capture("28-add-bottle-on-order")
     }
 
     @Test
