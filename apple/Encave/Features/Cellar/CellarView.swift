@@ -134,7 +134,7 @@ struct CellarList: View {
                     }
                 }
                 Section {
-                    if groups.isEmpty {
+                    if groups.isEmpty, filter.isActive || !filter.query.isEmpty {
                         ContentUnavailableView.search(text: filter.query)
                             .listRowBackground(Color.clear)
                     }
