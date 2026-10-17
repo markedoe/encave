@@ -15,6 +15,23 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.': 'Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées.',
+    'A bottle to bring to friends who love Burgundy': 'Une bouteille à apporter à des amis qui aiment la Bourgogne',
+    'A question, answered with your bottles, on this device': 'Une question, avec vos bouteilles pour réponse, sur cet appareil',
+    'Answer': 'Réponse',
+    'Answered on this device by Apple Intelligence, from the bottles in your cellar. Nothing is sent anywhere.': 'Réponse donnée sur cet appareil par Apple Intelligence, à partir des bouteilles de votre cave. Rien n’est envoyé nulle part.',
+    'Apple Intelligence is not available on this device right now.': 'Apple Intelligence n’est pas disponible sur cet appareil pour le moment.',
+    'Ask': 'Demander',
+    'Ask Your Cellar': 'Demander à votre cave',
+    'Ask about your cellar': 'Posez une question sur votre cave',
+    'Ask your cellar': 'Demander à votre cave',
+    'Ideas': 'Idées',
+    'No answer this time. Try again.': 'Pas de réponse cette fois. Réessayez.',
+    'Something light for a ratatouille': 'Quelque chose de léger pour une ratatouille',
+    'The question is too long. Try a shorter one.': 'La question est trop longue. Essayez plus court.',
+    'Thinking…': 'Réflexion…',
+    'This question cannot be answered. Try asking about a dish or an occasion.': 'Cette question ne peut pas recevoir de réponse. Essayez avec un plat ou une occasion.',
+    'What goes with roast chicken tonight?': 'Qu’est-ce qui va avec un poulet rôti ce soir ?',
     'Menu bar (Mac)': 'Barre des menus (Mac)',
     'The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.': 'Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**.',
     'A glass in the menu bar lists the bottles to open now; click one to open it.': 'Un verre dans la barre des menus liste les bouteilles à ouvrir maintenant ; cliquez sur l’une d’elles pour l’ouvrir.',

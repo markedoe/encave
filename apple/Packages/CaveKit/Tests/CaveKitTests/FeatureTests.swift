@@ -425,3 +425,18 @@ import Testing
         #expect(!String(decoding: plain, as: UTF8.self).contains("tags"))
     }
 }
+
+@Suite struct AssistantCatalogTests {
+    @Test func listsTheMostUrgentWinesWithNumbers() throws {
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "Young", vintage: 2024, color: .red, drinkFrom: 2030, drinkUntil: 2040), quantity: 2)
+        try cellar.addBottles(of: Wine(name: "Soon", vintage: 2018, color: .white, region: "Loire", drinkFrom: 2020, drinkUntil: 2026))
+        try cellar.addBottles(of: Wine(name: "Ordered", drinkUntil: 2026), purchase: PurchaseInfo(isOrdered: true))
+        let catalog = cellar.assistantCatalog(year: 2026, limit: 1)
+        #expect(catalog.entries.count == 1)
+        #expect(catalog.omitted == 1)
+        #expect(catalog.text == "1. Soon 2018 | white | Loire | drink soon | 1 bottle")
+        #expect(catalog.wineID(number: 1) == cellar.wines.values.first { $0.name == "Soon" }?.id)
+        #expect(catalog.wineID(number: 2) == nil)
+    }
+}

@@ -72,6 +72,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Why this window", body: "Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year."),
                 HelpSection(title: "Maturity", body: "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color."),
                 HelpSection(title: "Suggestions", body: "Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why."),
+                HelpSection(title: "Ask your cellar", body: "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.", systemImage: "sparkles"),
                 HelpSection(title: "Serving", body: "Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant."),
                 HelpSection(title: "Reminders", body: "Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device."),
             ]),

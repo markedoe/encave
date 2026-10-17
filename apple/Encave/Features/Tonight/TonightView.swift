@@ -13,12 +13,14 @@ struct TonightView: View {
             list(selection: selection)
                 .navigationTitle("Tonight")
                 .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
+                .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView(selection: selection) }
         } else {
             NavigationStack {
                 list(selection: nil)
                     .navigationTitle("Tonight")
                     .navigationDestination(for: UUID.self) { WineDetailView(wineID: $0) }
                     .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
+                    .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView() }
             }
         }
     }
@@ -61,6 +63,19 @@ struct TonightView: View {
                         } icon: {
                             Image(systemName: "fork.knife").foregroundStyle(Color.accentColor)
                         }
+                    }
+                    if CellarAssistant.isAvailable {
+                        NavigationLink(value: AskCellarRoute()) {
+                            Label {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Ask your cellar").font(.headline)
+                                    Text("A question, answered with your bottles, on this device").font(.subheadline).foregroundStyle(.secondary)
+                                }
+                            } icon: {
+                                Image(systemName: "sparkles").foregroundStyle(Color.accentColor)
+                            }
+                        }
+                        .accessibilityIdentifier("tonight.ask")
                     }
                 }
                 ForEach(sections) { section in

@@ -178,23 +178,28 @@ kept within the privacy rules: everything is worked out on the device.
 | Bottles on order (en primeur, deliveries) | Done | Format supported; screens planned |
 | Tags on wines, filter chips | Done | Format supported; screens planned |
 | "Why this window", drink sooner or keep longer | Done | Planned |
+| Ask your cellar (on-device language model) | Done (Apple Intelligence devices) | Later |
+| Printable PDF inventory | Done | Planned |
+| Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Planned (tablets) |
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
 | Saved lists for occasions, several photos per wine, printing | Planned | Planned |
 | Watch app, menu bar extra | Later | Later (Wear OS tile) |
 
-### Next: Ask the AI
+### Ask your cellar (on the device)
 
-Free questions about your own cellar, with the AI provider already set up for
-label recognition. Example: "Friends who love Beaujolais are coming tonight and
-we are having ratatouille: suggest a few wines from my cellar and the order to
-serve them." The answer cites only bottles you have (tapping one opens it), and
-can be refined in a short conversation.
+Free questions about your own cellar, such as "Friends who love Beaujolais are
+coming and we are having ratatouille: what should I open?". The answer names
+only bottles you have, and tapping one opens it.
 
-Privacy: this sends a summary of the cellar (wines, vintages, counts, drinking
-windows, not purchase prices, places or notes) to the chosen provider. It is
-off until enabled, the first use explains exactly what is sent, and the
-privacy rules in `CLAUDE.md` and `SECURITY.md` are updated with it.
+Done on Apple devices with Apple Intelligence (iOS, iPadOS and macOS 26), with
+the Foundation Models framework: the question and a compact list of the cellar
+stay on the device, so no privacy exception is needed. It is hidden where the
+on-device model is unavailable. Android may follow with an on-device model once
+one is available without sending usage data to a third party.
+
+A cloud version (sending a summary of the cellar to the AI provider set up for
+labels) is not planned: `CLAUDE.md` allows only the label photo to be sent.
 
 ## Open questions
 

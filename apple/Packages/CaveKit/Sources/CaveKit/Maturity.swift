@@ -169,3 +169,48 @@ public extension Cellar {
         return DrinkDownPlan(years: years, pastPeak: pastPeak, withoutWindow: withoutWindow, bottlesPerMonth: pace)
     }
 }
+
+/// A numbered, compact description of the cellar for an on-device language model
+/// ("Ask your cellar"): one line per wine, the most urgent first, cut to fit the
+/// model's small context. The numbers link the model's answer back to wines.
+public struct AssistantCatalog: Sendable {
+    public struct Entry: Sendable, Equatable {
+        public var number: Int
+        public var wineID: UUID
+        public var line: String
+    }
+
+    public var entries: [Entry]
+    /// Wines left out to stay within `limit`.
+    public var omitted: Int
+
+    public var text: String { entries.map(\.line).joined(separator: "\n") }
+
+    public func wineID(number: Int) -> UUID? { entries.first { $0.number == number }?.wineID }
+}
+
+public extension Cellar {
+    func assistantCatalog(year: Int, limit: Int = 60, place: (Bottle) -> String? = { _ in nil }) -> AssistantCatalog {
+        let groups = groupsByMaturity(year: year).flatMap(\.groups)
+        var entries: [AssistantCatalog.Entry] = []
+        for (index, group) in groups.prefix(limit).enumerated() {
+            let wine = group.wine
+            let maturity: String = switch Maturity.of(wine, year: year) {
+            case .drinkSoon: "drink soon"
+            case .ready: "ready"
+            case .young: "too young"
+            case .pastPeak: "past its peak"
+            case .unknown: "window unknown"
+            }
+            let origin = [wine.appellation, wine.region, wine.country].compactMap { $0 }.joined(separator: ", ")
+            let parts: [String?] = [
+                wine.displayName, wine.producer, wine.color?.rawValue, origin.isEmpty ? nil : origin,
+                wine.grapes.isEmpty ? nil : wine.grapes.joined(separator: ", "), maturity,
+                "\(group.count) bottle\(group.count == 1 ? "" : "s")", group.bottles.first.flatMap(place),
+            ]
+            entries.append(.init(number: index + 1, wineID: wine.id,
+                                 line: "\(index + 1). " + parts.compactMap { $0 }.joined(separator: " | ")))
+        }
+        return AssistantCatalog(entries: entries, omitted: max(0, groups.count - limit))
+    }
+}

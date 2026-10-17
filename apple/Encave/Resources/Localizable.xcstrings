@@ -411,6 +411,16 @@
         }
       }
     },
+    "A bottle to bring to friends who love Burgundy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille à apporter à des amis qui aiment la Bourgogne"
+          }
+        }
+      }
+    },
     "A device could not prove it belongs to this cellar. Nothing was exchanged.": {
       "localizations": {
         "fr": {
@@ -477,6 +487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un nouveau vin, ou d’autres bouteilles d’un vin que vous avez déjà."
+          }
+        }
+      }
+    },
+    "A question, answered with your bottles, on this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une question, avec vos bouteilles pour réponse, sur cet appareil"
           }
         }
       }
@@ -891,6 +911,26 @@
         }
       }
     },
+    "Answer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réponse"
+          }
+        }
+      }
+    },
+    "Answered on this device by Apple Intelligence, from the bottles in your cellar. Nothing is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réponse donnée sur cet appareil par Apple Intelligence, à partir des bouteilles de votre cave. Rien n’est envoyé nulle part."
+          }
+        }
+      }
+    },
     "Any server with an OpenAI-compatible /chat/completions API and a model that reads images.": {
       "localizations": {
         "fr": {
@@ -931,6 +971,16 @@
         }
       }
     },
+    "Apple Intelligence is not available on this device right now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence n’est pas disponible sur cet appareil pour le moment."
+          }
+        }
+      }
+    },
     "Aromas: fruit, flowers, spices, wood…": {
       "localizations": {
         "fr": {
@@ -941,12 +991,52 @@
         }
       }
     },
+    "Ask": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander"
+          }
+        }
+      }
+    },
     "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
+          }
+        }
+      }
+    },
+    "Ask Your Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à votre cave"
+          }
+        }
+      }
+    },
+    "Ask about your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posez une question sur votre cave"
+          }
+        }
+      }
+    },
+    "Ask your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à votre cave"
           }
         }
       }
@@ -3381,6 +3471,16 @@
         }
       }
     },
+    "Ideas": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idées"
+          }
+        }
+      }
+    },
     "If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar.": {
       "localizations": {
         "fr": {
@@ -4181,6 +4281,16 @@
         }
       }
     },
+    "No answer this time. Try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de réponse cette fois. Réessayez."
+          }
+        }
+      }
+    },
     "No bottle in your cellar matches this dish yet.": {
       "localizations": {
         "fr": {
@@ -4487,6 +4597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activé"
+          }
+        }
+      }
+    },
+    "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées."
           }
         }
       }
@@ -6141,6 +6261,16 @@
         }
       }
     },
+    "Something light for a ratatouille": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quelque chose de léger pour une ratatouille"
+          }
+        }
+      }
+    },
     "Something went wrong": {
       "localizations": {
         "fr": {
@@ -6961,6 +7091,16 @@
         }
       }
     },
+    "The question is too long. Try a shorter one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La question est trop longue. Essayez plus court."
+          }
+        }
+      }
+    },
     "The relay cannot be reached. Syncing will resume when it can.": {
       "localizations": {
         "fr": {
@@ -7121,6 +7261,16 @@
         }
       }
     },
+    "Thinking…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réflexion…"
+          }
+        }
+      }
+    },
     "This address does not answer as an Encave relay.": {
       "localizations": {
         "fr": {
@@ -7257,6 +7407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cet emplacement est plein."
+          }
+        }
+      }
+    },
+    "This question cannot be answered. Try asking about a dish or an occasion.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette question ne peut pas recevoir de réponse. Essayez avec un plat ou une occasion."
           }
         }
       }
@@ -7697,6 +7857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En attente de l’autre appareil…"
+          }
+        }
+      }
+    },
+    "What goes with roast chicken tonight?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qu’est-ce qui va avec un poulet rôti ce soir ?"
           }
         }
       }
