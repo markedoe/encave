@@ -818,7 +818,7 @@ S = [
   "Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil."),
 
  # App shortcuts
- ("shortcut_scan", "Scan a label", "Scanner une étiquette"),
+ ("shortcut_scan", "Scan a bottle", "Scanner une bouteille"),
  ("shortcut_tonight", "What to open tonight", "Que boire ce soir"),
 
  # Several wines at once
@@ -877,6 +877,18 @@ S = [
  ("help_data_other_title", "Coming from another app", "Venir d’une autre app"),
  ("help_data_other", "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import from another app**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.",
   "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil."),
+
+ # Barcodes
+ ("action_scan_barcode", "Scan the barcode", "Scanner le code-barres"),
+ ("barcode_hint", "Point the camera at the barcode on the bottle", "Visez le code-barres de la bouteille"),
+ ("barcode_no_camera", "Allow the camera to scan the barcode, or type the digits under it.", "Autorisez l’appareil photo pour scanner le code-barres, ou saisissez les chiffres en dessous."),
+ ("barcode_digits", "Barcode digits", "Chiffres du code-barres"),
+ ("barcode_match_title", "Already in your cellar", "Déjà dans votre cave"),
+ ("action_use_this_wine", "Use this wine", "Utiliser ce vin"),
+ ("barcode_kept", "Barcode %1$s, kept with the wine", "Code-barres %1$s, gardé avec le vin"),
+ ("help_scanning_barcodes_title", "Barcodes", "Codes-barres"),
+ ("help_scanning_barcodes", "When adding bottles, tap the barcode button: the camera reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.",
+  "En ajoutant des bouteilles, touchez le bouton code-barres : l’appareil photo lit le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."),
 
 ]
 

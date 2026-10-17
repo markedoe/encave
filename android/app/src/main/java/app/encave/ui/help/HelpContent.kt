@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Diamond
@@ -74,6 +75,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_scanning_ai, R.string.help_scanning_ai_title),
                     HelpSection(R.string.help_scanning_typed, R.string.help_scanning_typed_title),
                     HelpSection(R.string.help_scanning_photo, R.string.help_scanning_photo_title),
+                    HelpSection(R.string.help_scanning_barcodes, R.string.help_scanning_barcodes_title, Icons.Outlined.QrCodeScanner),
                 ),
             ),
             HelpArticle(

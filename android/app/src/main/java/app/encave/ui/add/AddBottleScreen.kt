@@ -4,6 +4,8 @@ import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Switch
 import androidx.compose.ui.semantics.Role
 import androidx.compose.animation.AnimatedVisibility
@@ -145,6 +147,10 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     var hasExpectedDate by rememberSaveable { mutableStateOf(false) }
     var expectedAt by remember { mutableStateOf<Instant?>(null) }
     var pickingExpected by remember { mutableStateOf(false) }
+    // Barcode read on the bottle: recognizes a wine already in the cellar, or is kept with the new one.
+    var scanning by rememberSaveable { mutableStateOf(route.scan) }
+    var barcode by rememberSaveable { mutableStateOf<String?>(null) }
+    val barcodeMatch = barcode?.let { cellar.wine(it) }
 
     val freeSlots = rack?.let { cellar.freeSlots(it) } ?: emptyList()
     val slots: List<Slot> = when {
@@ -154,11 +160,12 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     }
 
     fun save() {
-        val wine = existing ?: run {
+        val chosen = existing ?: run {
             form.showErrors = true
             if (form.nameMissing || form.vintageInvalid) return
             form.build()
         }
+        val wine = barcode?.let { chosen.addingBarcode(it) } ?: chosen
         val purchase = PurchaseInfo(
             date = purchaseDate,
             price = price.replace(",", ".").trim().toBigDecimalOrNull(),
@@ -194,9 +201,11 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                     }
                 },
                 actions = {
-                    // TODO(scan): on-device label scanning (camera + text recognition with no network
-                    // or reporting SDK) would prefill the form here with app.encave.core.LabelTextParser.
-                    // Until then a label photo is read only by the optional AI recognition.
+                    // Barcodes are read and matched on the device (zxing-cpp); a label photo is read
+                    // only by the optional AI recognition.
+                    IconButton(onClick = { scanning = true }, modifier = Modifier.testTag("action.scan_barcode")) {
+                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = stringResource(R.string.action_scan_barcode))
+                    }
                     TextButton(onClick = ::save) { Text(stringResource(R.string.action_add)) }
                 },
             )
@@ -212,6 +221,22 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                 .padding(horizontal = Dimens.l, vertical = Dimens.s),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
+            barcode?.let { code ->
+                if (barcodeMatch != null && existing?.id != barcodeMatch.id) {
+                    BarcodeMatchCard(barcodeMatch, onUse = { existingId = barcodeMatch.id.toString() })
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Text(
+                            stringResource(R.string.barcode_kept, code), style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f).testTag("barcode.kept"),
+                        )
+                        IconButton(onClick = { barcode = null }) {
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
+                        }
+                    }
+                }
+            }
             // Wine: existing one, or search + new wine form.
             if (existing != null) {
                 ExistingWineCard(existing, onChange = if (routeWine == null) ({ existingId = null }) else null)
@@ -364,6 +389,15 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     if (pickingDate) {
         DateDialog(initial = purchaseDate ?: Instant.now(), onPick = { purchaseDate = it }, onDismiss = { pickingDate = false })
     }
+    if (scanning) {
+        BarcodeScannerDialog(
+            onScan = { code ->
+                scanning = false
+                barcode = code
+            },
+            onDismiss = { scanning = false },
+        )
+    }
     if (pickingExpected) {
         DateDialog(
             initial = expectedAt ?: Instant.now(), onPick = { if (it != null) expectedAt = it },
@@ -422,6 +456,29 @@ private fun Header(id: Int) {
         stringResource(id), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(top = Dimens.s).semantics { heading() },
     )
+}
+
+/** A scanned barcode belongs to a wine of the cellar: offer to add bottles of it. */
+@Composable
+private fun BarcodeMatchCard(wine: Wine, onUse: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        modifier = Modifier.testTag("barcode.match"),
+    ) {
+        Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Text(stringResource(R.string.barcode_match_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                WineColorDot(wine.color, size = 20.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(wine.displayName, style = MaterialTheme.typography.titleMedium)
+                    Text(wine.origin(), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Button(onClick = onUse, modifier = Modifier.testTag("action.use_wine")) {
+                ActionContent(stringResource(R.string.action_use_this_wine), Icons.Filled.Check)
+            }
+        }
+    }
 }
 
 @Composable

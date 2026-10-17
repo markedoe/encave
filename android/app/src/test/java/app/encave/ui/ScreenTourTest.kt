@@ -20,6 +20,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -290,6 +291,27 @@ class ScreenTourTest(private val device: String, private val language: String) {
         app.encave.ui.settings.InventoryPdf.drawPage(application.repository.cellar.value, application.resources, java.time.LocalDate.now().year, 0, canvas)
         outDir.mkdirs()
         File(outDir, "34-inventory-pdf.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
+    @Test
+    fun addBottleBarcode() {
+        // A barcode seen before on a bottle of the Port.
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        runBlocking {
+            application.repository.update { cellar ->
+                val port = cellar.wines.values.first { it.name == "Vintage Port" }
+                cellar.updateWine(port.addingBarcode("5601234567897"))
+            }
+        }
+        tap("action.fab_add")
+        tap("action.scan_barcode")
+        capture("35-barcode-scanner")
+        compose.onNodeWithTag("barcode.field").performTextInput("5601234567897")
+        tap("barcode.use")
+        compose.onNodeWithTag("barcode.match").assertExists()
+        capture("36-barcode-match")
+        tap("action.use_wine")
+        compose.onNodeWithTag("barcode.match").assertDoesNotExist()
     }
 
     @Test

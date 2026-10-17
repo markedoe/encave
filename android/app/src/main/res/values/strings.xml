@@ -750,7 +750,7 @@
     <string name="reminders_start_with">Start with %1$s.</string>
     <string name="reminders_delivery_title">Delivery expected today</string>
     <string name="help_tonight_reminders">Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.</string>
-    <string name="shortcut_scan">Scan a label</string>
+    <string name="shortcut_scan">Scan a bottle</string>
     <string name="shortcut_tonight">What to open tonight</string>
     <string name="action_select_wines">Select wines</string>
     <string name="action_select">Select</string>
@@ -798,6 +798,15 @@
     <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.</string>
     <string name="help_data_other_title">Coming from another app</string>
     <string name="help_data_other">Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import from another app**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.</string>
+    <string name="action_scan_barcode">Scan the barcode</string>
+    <string name="barcode_hint">Point the camera at the barcode on the bottle</string>
+    <string name="barcode_no_camera">Allow the camera to scan the barcode, or type the digits under it.</string>
+    <string name="barcode_digits">Barcode digits</string>
+    <string name="barcode_match_title">Already in your cellar</string>
+    <string name="action_use_this_wine">Use this wine</string>
+    <string name="barcode_kept">Barcode %1$s, kept with the wine</string>
+    <string name="help_scanning_barcodes_title">Barcodes</string>
+    <string name="help_scanning_barcodes">When adding bottles, tap the barcode button: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>

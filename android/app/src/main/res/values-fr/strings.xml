@@ -749,7 +749,7 @@
     <string name="reminders_start_with">Commencez par %1$s.</string>
     <string name="reminders_delivery_title">Livraison prévue aujourd’hui</string>
     <string name="help_tonight_reminders">Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil.</string>
-    <string name="shortcut_scan">Scanner une étiquette</string>
+    <string name="shortcut_scan">Scanner une bouteille</string>
     <string name="shortcut_tonight">Que boire ce soir</string>
     <string name="action_select_wines">Sélectionner des vins</string>
     <string name="action_select">Sélectionner</string>
@@ -797,6 +797,15 @@
     <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché.</string>
     <string name="help_data_other_title">Venir d’une autre app</string>
     <string name="help_data_other">Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil.</string>
+    <string name="action_scan_barcode">Scanner le code-barres</string>
+    <string name="barcode_hint">Visez le code-barres de la bouteille</string>
+    <string name="barcode_no_camera">Autorisez l’appareil photo pour scanner le code-barres, ou saisissez les chiffres en dessous.</string>
+    <string name="barcode_digits">Chiffres du code-barres</string>
+    <string name="barcode_match_title">Déjà dans votre cave</string>
+    <string name="action_use_this_wine">Utiliser ce vin</string>
+    <string name="barcode_kept">Code-barres %1$s, gardé avec le vin</string>
+    <string name="help_scanning_barcodes_title">Codes-barres</string>
+    <string name="help_scanning_barcodes">En ajoutant des bouteilles, touchez le bouton code-barres : l’appareil photo lit le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>
