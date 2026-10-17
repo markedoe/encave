@@ -169,13 +169,23 @@ struct FittedRackGrid: View {
             ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
                          selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
             #else
-            ScrollView([.horizontal, .vertical]) {
+            if zoom <= 1, base > 26 {
+                // The whole rack fits (its cells are not at the smallest size): no scroll
+                // view, whose bars (always shown without a trackpad) would take room and
+                // make the fitted rack scroll.
                 RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
                          selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
                     .padding(padding)
-                    .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+            } else {
+                ScrollView([.horizontal, .vertical]) {
+                    RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
+                             selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
+                        .padding(padding)
+                        .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
+                }
+                .defaultScrollAnchor(.center)
             }
-            .defaultScrollAnchor(.center)
             #endif
         }
     }
