@@ -830,6 +830,13 @@
     <string name="msg_reservation_removed">Réservation retirée</string>
     <string name="help_tonight_occasion_title">Garder des bouteilles pour une occasion</string>
     <string name="help_tonight_occasion">Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible.</string>
+    <string name="action_save_search">Enregistrer cette recherche…</string>
+    <string name="save_search_title">Enregistrer cette recherche</string>
+    <string name="save_search_body">Elle apparaît en premier parmi les filtres, à portée d’un toucher.</string>
+    <string name="action_delete_search">Supprimer la recherche</string>
+    <string name="saved_search_hint">Applique cette recherche enregistrée.</string>
+    <string name="help_start_saved_title">Recherches enregistrées</string>
+    <string name="help_start_saved">Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

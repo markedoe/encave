@@ -299,3 +299,36 @@ class ReservationTest {
         assertEquals("Party", CellarJson.decode(json).bottles[bottles[0].id]?.reservedFor)
     }
 }
+
+class SavedSearchTest {
+    @Test
+    fun aSearchIsSavedRestoredAndReplacedByName() {
+        val cellar = Cellar()
+        val filter = CellarFilter(query = " Bourgogne ", colors = setOf(WineColor.White, WineColor.Red), maturities = setOf(Maturity.Ready), tag = "Gift")
+        cellar.saveSearch(" Ready burgundy ", filter)
+        val saved = cellar.settings.savedSearches!!.first()
+        assertEquals("Ready burgundy", saved.name)
+        assertEquals(listOf(WineColor.Red, WineColor.White), saved.colors)
+        assertEquals(CellarFilter(query = "Bourgogne", colors = setOf(WineColor.White, WineColor.Red), maturities = setOf(Maturity.Ready), tag = "Gift"), saved.filter)
+        cellar.saveSearch("ready BURGUNDY", CellarFilter(query = "Beaune"))
+        assertEquals(1, cellar.settings.savedSearches?.size)
+        assertEquals("Beaune", cellar.settings.savedSearches?.first()?.query)
+        cellar.deleteSearch(cellar.settings.savedSearches!!.first().id)
+        assertNull(cellar.settings.savedSearches)
+        // Older files without saved searches still read.
+        val old = CellarJson.json.decodeFromString(CellarSettings.serializer(), """{"currency":"CHF"}""")
+        assertTrue(old.savedSearches == null && old.currency == "CHF")
+    }
+
+    @Test
+    fun savedSearchesRoundTripInTheSwiftShape() {
+        val cellar = Cellar()
+        cellar.saveSearch("Ready", CellarFilter(maturities = setOf(Maturity.Ready, Maturity.DrinkSoon)))
+        val json = CellarJson.encode(cellar)
+        // Swift needs every non-optional field, empty arrays included, and sorted values.
+        assertTrue(json.contains("\"colors\" : [\n\n") || Regex("\"colors\"\\s*:\\s*\\[\\s*]").containsMatchIn(json), json)
+        assertTrue(Regex("\"maturities\"\\s*:\\s*\\[\\s*\"drinkSoon\",\\s*\"ready\"\\s*]").containsMatchIn(json), json)
+        assertTrue(Regex("\"query\"\\s*:\\s*\"\"").containsMatchIn(json), json)
+        assertEquals(cellar.settings, CellarJson.decode(json).settings)
+    }
+}

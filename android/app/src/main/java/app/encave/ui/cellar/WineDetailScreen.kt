@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -414,8 +415,11 @@ fun DrinkingWindowGauge(from: Int, until: Int, year: Int, maturity: Maturity, mo
 @Composable
 private fun ReserveDialog(initial: String, onKeep: (String) -> Unit, onDismiss: () -> Unit) {
     var occasion by remember { mutableStateOf(initial) }
+    // Full width with margins: a text field in a default-width dialog never settles in tests.
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.padding(horizontal = Dimens.xl).widthIn(max = 560.dp),
         title = { Text(stringResource(R.string.reserve_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.m)) {

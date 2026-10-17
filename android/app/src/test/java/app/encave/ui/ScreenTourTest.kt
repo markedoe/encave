@@ -378,6 +378,19 @@ class ScreenTourTest(private val device: String, private val language: String) {
     }
 
     @Test
+    fun savedSearch() {
+        tap("cellar.stat.soon")
+        tap("cellar.sort")
+        tap("cellar.save_search")
+        compose.onNodeWithTag("save_search.field").performTextInput("Soon")
+        capture("43-save-search")
+        tap("save_search.save")
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("filter.saved").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("filter.saved").assertIsSelected()
+        capture("44-saved-search")
+    }
+
+    @Test
     fun addBottle() {
         tap("action.fab_add")
         capture("04-add-bottle")

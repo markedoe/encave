@@ -924,6 +924,16 @@ S = [
  ("help_tonight_occasion", "On a bottle in a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back.",
   "Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible."),
 
+ # Saved searches
+ ("action_save_search", "Save this search…", "Enregistrer cette recherche…"),
+ ("save_search_title", "Save this search", "Enregistrer cette recherche"),
+ ("save_search_body", "It appears first among the filters, one tap away.", "Elle apparaît en premier parmi les filtres, à portée d’un toucher."),
+ ("action_delete_search", "Delete search", "Supprimer la recherche"),
+ ("saved_search_hint", "Applies this saved search.", "Applique cette recherche enregistrée."),
+ ("help_start_saved_title", "Saved searches", "Recherches enregistrées"),
+ ("help_start_saved", "Search or choose filters, then **Save this search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.",
+  "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."),
+
 ]
 
 P = [

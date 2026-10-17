@@ -367,4 +367,31 @@ data class Bottle(
 data class CellarSettings(
     /** ISO 4217 code used by default for prices ("EUR", "CHF"...). */
     val currency: String = "EUR",
+    /** Searches the user named, shown as chips in the Cellar. Null when there are none. */
+    val savedSearches: List<SavedSearch>? = null,
 )
+
+/** A search and filters kept under a name ("Burgundy, ready"). */
+@Serializable
+data class SavedSearch(
+    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    val name: String,
+    val query: String,
+    val colors: List<WineColor>,
+    val maturities: List<Maturity>,
+    @SerialName("rackID") @Serializable(with = UuidSerializer::class) val rackId: UUID? = null,
+    val tag: String? = null,
+    val reservation: String? = null,
+) {
+    val filter: CellarFilter
+        get() = CellarFilter(query, colors.toSet(), maturities.toSet(), rackId, tag, reservation)
+
+    companion object {
+        /** Trimmed; colors and maturities sorted by their string value, so the same filters always encode the same way. */
+        fun of(name: String, filter: CellarFilter, id: UUID = UUID.randomUUID()) = SavedSearch(
+            id = id, name = name.trim(), query = filter.query.trim(),
+            colors = filter.colors.sortedBy { it.raw }, maturities = filter.maturities.sortedBy { it.raw },
+            rackId = filter.rackId, tag = filter.tag, reservation = filter.reservation,
+        )
+    }
+}

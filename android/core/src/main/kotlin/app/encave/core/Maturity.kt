@@ -6,21 +6,22 @@ package app.encave.core
  * Declared in urgency order (most urgent first), so the natural enum order
  * matches the Swift `Comparable` conformance used by "Tonight".
  */
+@kotlinx.serialization.Serializable
 enum class Maturity(val raw: String) {
     /** Last year of the window: drink soon. */
-    DrinkSoon("drinkSoon"),
+    @kotlinx.serialization.SerialName("drinkSoon") DrinkSoon("drinkSoon"),
 
     /** Inside the window, not in its last year. */
-    Ready("ready"),
+    @kotlinx.serialization.SerialName("ready") Ready("ready"),
 
     /** Window has passed. */
-    PastPeak("pastPeak"),
+    @kotlinx.serialization.SerialName("pastPeak") PastPeak("pastPeak"),
 
     /** Window not reached yet. */
-    Young("young"),
+    @kotlinx.serialization.SerialName("young") Young("young"),
 
     /** No window known. */
-    Unknown("unknown");
+    @kotlinx.serialization.SerialName("unknown") Unknown("unknown");
 
     companion object {
         fun of(wine: Wine, year: Int): Maturity {

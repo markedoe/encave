@@ -225,6 +225,10 @@ class AppViewModel(
         }) { it.reserve(before.map(Bottle::id), occasion) }
     }
 
+    fun saveSearch(name: String, filter: CellarFilter) = change<Unit> { it.saveSearch(name, filter) }
+
+    fun deleteSearch(id: UUID) = change<Unit> { it.deleteSearch(id) }
+
     // region Several wines or bottles at once (one Undo for all)
 
     private fun bottlesOfWines(wineIds: Set<UUID>) = cellar.value.bottles.values.filter { it.wineId in wineIds }

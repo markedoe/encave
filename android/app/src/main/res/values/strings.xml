@@ -831,6 +831,13 @@
     <string name="msg_reservation_removed">Reservation removed</string>
     <string name="help_tonight_occasion_title">Keeping bottles for an occasion</string>
     <string name="help_tonight_occasion">On a bottle in a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back.</string>
+    <string name="action_save_search">Save this search…</string>
+    <string name="save_search_title">Save this search</string>
+    <string name="save_search_body">It appears first among the filters, one tap away.</string>
+    <string name="action_delete_search">Delete search</string>
+    <string name="saved_search_hint">Applies this saved search.</string>
+    <string name="help_start_saved_title">Saved searches</string>
+    <string name="help_start_saved">Search or choose filters, then **Save this search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
