@@ -271,7 +271,7 @@ enum AIService {
         if settings.provider.requiresKey, (apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
         guard !settings.effectiveModel.isEmpty else { throw AIServiceError.noModel }
         if settings.provider.usesAnthropicAPI {
-            return try await claude(jpeg: jpeg, model: settings.effectiveModel, apiKey: apiKey ?? "")
+            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey ?? "")
         }
         return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey)
     }
@@ -304,8 +304,10 @@ enum AIService {
 
     // MARK: Claude (Anthropic Messages API)
 
-    private static func claude(jpeg: Data, model: String, apiKey: String) async throws -> LabelAnalysis {
-        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
+    private static func claude(jpeg: Data, settings: AISettings, apiKey: String) async throws -> LabelAnalysis {
+        let model = settings.effectiveModel
+        guard let url = URL(string: settings.effectiveBaseURL + "/messages") else { throw AIServiceError.notConfigured }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = 120
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
