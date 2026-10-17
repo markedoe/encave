@@ -7,13 +7,53 @@ struct WineDetailView: View {
 
     var body: some View {
         if let wine = model.cellar.wines[wineID] {
-            let bottles = model.cellar.bottlesInCellar.filter { $0.wineID == wineID }
-            Form {
+            let bottles = model.cellar.bottles(of: wineID)
+            let tastings = model.cellar.tastings(of: wineID)
+            let maturity = Maturity.of(wine, year: model.currentYear)
+            List {
                 Section {
+                    WineHeader(wine: wine, count: bottles.count)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    HStack(spacing: 12) {
+                        Button {
+                            if let bottle = bottles.first { model.sheet = .drink(bottleID: bottle.id) }
+                        } label: {
+                            Label("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(bottles.isEmpty)
+                        Button {
+                            model.sheet = .addBottle(AddBottleContext(wine: wine))
+                        } label: {
+                            Label("Add", systemImage: "plus").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .controlSize(.large)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                }
+
+                Section("Drinking window") {
+                    MaturityLabel(maturity: maturity)
+                        .font(.headline)
+                    if let from = wine.drinkFrom, let until = wine.drinkUntil {
+                        MaturityGauge(from: from, until: until, year: model.currentYear, maturity: maturity)
+                            .padding(.vertical, 6)
+                    } else {
+                        Button("Set a drinking window") { model.sheet = .editWine(wineID: wineID) }
+                    }
+                }
+
+                Section("Details") {
                     if let color = wine.color {
                         LabeledContent("Style") {
                             HStack(spacing: 6) {
-                                WineColorDot(color: color)
+                                BottleEnd(color: color, size: 16)
                                 Text(color.title)
                             }
                         }
@@ -25,30 +65,50 @@ struct WineDetailView: View {
                     if !wine.grapes.isEmpty {
                         LabeledContent("Grapes", value: wine.grapes.formatted(.list(type: .and)))
                     }
-                }
-
-                Section("Drinking window") {
-                    MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
-                    if let from = wine.drinkFrom, let until = wine.drinkUntil {
-                        LabeledContent("From – until") {
-                            Text(verbatim: "\(from) – \(until)")
-                        }
+                    if let notes = wine.notes, !notes.isEmpty {
+                        Text(notes)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
                 Section {
                     ForEach(bottles) { bottle in
-                        Label(
-                            model.cellar.locationLabel(for: bottle) ?? String(localized: "Not placed in a rack"),
-                            systemImage: bottle.slot == nil ? "tray" : "square.grid.3x3"
-                        )
+                        BottleRow(bottle: bottle)
                     }
                 } header: {
-                    Text("\(bottles.count) bottles")
+                    Text("\(bottles.count) bottles in the cellar")
+                }
+
+                if !tastings.isEmpty {
+                    Section("Tastings") {
+                        ForEach(tastings) { bottle in
+                            Button {
+                                model.sheet = .editTasting(bottleID: bottle.id)
+                            } label: {
+                                TastingRow(bottle: bottle, showsWine: false)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
-            .formStyle(.grouped)
             .navigationTitle(wine.displayName)
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: wineID) }
+                        Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
+                        Divider()
+                        Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(wineID) }
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
+                    }
+                }
+            }
         } else {
             ContentUnavailableView("Wine not found", systemImage: "questionmark")
         }
@@ -58,6 +118,151 @@ struct WineDetailView: View {
     private func optionalRow(_ title: LocalizedStringKey, _ value: String?) -> some View {
         if let value, !value.isEmpty {
             LabeledContent(title, value: value)
+        }
+    }
+}
+
+/// Large header: bottle end, name in serif, vintage and origin.
+private struct WineHeader: View {
+    let wine: Wine
+    let count: Int
+
+    var body: some View {
+        VStack(spacing: 12) {
+            BottleEnd(color: wine.color, size: 72)
+                .padding(.top, 8)
+            Text(wine.name)
+                .font(.largeTitle.weight(.semibold))
+                .fontDesign(.serif)
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.7)
+            HStack(spacing: 8) {
+                if let vintage = wine.vintage {
+                    Text(verbatim: "\(vintage)")
+                        .font(.title3.monospacedDigit())
+                }
+                if let color = wine.color {
+                    Text(color.title)
+                        .font(.subheadline.weight(.medium))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(color.tint.opacity(0.18), in: Capsule())
+                }
+            }
+            if let producer = wine.producer {
+                Text(producer)
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
+            let origin = [wine.appellation, wine.region, wine.country].compactMap { $0 }.joined(separator: " · ")
+            if !origin.isEmpty {
+                Text(origin)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal)
+        .background(
+            LinearGradient(
+                colors: [(wine.color?.tint ?? .gray).opacity(0.22), .clear],
+                startPoint: .top, endPoint: .bottom
+            ),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// One bottle in the cellar with its location and quick actions.
+struct BottleRow: View {
+    @Environment(CellarModel.self) private var model
+    let bottle: Bottle
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: bottle.slot == nil ? "shippingbox" : "square.grid.3x3.topleft.filled")
+                .foregroundStyle(.secondary)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.cellar.locationLabel(for: bottle) ?? String(localized: "No location"))
+                    .font(.body)
+                Text(details)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if bottle.slot != nil {
+                Button {
+                    model.showInRack(bottle)
+                } label: {
+                    Image(systemName: "scope")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(Text("Show in Rack"))
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button {
+                model.sheet = .drink(bottleID: bottle.id)
+            } label: {
+                Label("Drink", systemImage: "wineglass")
+            }
+            .tint(.accentColor)
+        }
+        .swipeActions(edge: .trailing) {
+            Button {
+                model.markGone(bottle.id)
+            } label: {
+                Label("Remove", systemImage: "minus.circle")
+            }
+            .tint(.red)
+            Button {
+                model.sheet = .moveBottle(bottleID: bottle.id)
+            } label: {
+                Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
+            }
+            .tint(.indigo)
+        }
+        .contextMenu {
+            Button("Drink", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
+            Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { model.sheet = .moveBottle(bottleID: bottle.id) }
+            if bottle.slot != nil {
+                Button("Show in Rack", systemImage: "scope") { model.showInRack(bottle) }
+            }
+            Divider()
+            Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { model.markGone(bottle.id) }
+        }
+    }
+
+    private var details: String {
+        var parts: [String] = []
+        if let price = bottle.purchasePrice {
+            parts.append(price.formatted(.currency(code: bottle.currency ?? model.cellar.settings.currency)))
+        }
+        if let date = bottle.purchaseDate {
+            parts.append(date.formatted(date: .abbreviated, time: .omitted))
+        }
+        if let place = bottle.purchasePlace { parts.append(place) }
+        if bottle.sizeML != 750 { parts.append(BottleSize.label(for: bottle.sizeML)) }
+        return parts.isEmpty ? String(localized: "Added \(bottle.addedAt.formatted(date: .abbreviated, time: .omitted))") : parts.joined(separator: " · ")
+    }
+}
+
+/// Common bottle sizes.
+enum BottleSize {
+    static let all = [375, 750, 1500, 3000]
+
+    static func label(for ml: Int) -> String {
+        switch ml {
+        case 375: String(localized: "Half bottle")
+        case 750: String(localized: "Bottle")
+        case 1500: String(localized: "Magnum")
+        case 3000: String(localized: "Double magnum")
+        default: "\(ml) ml"
         }
     }
 }

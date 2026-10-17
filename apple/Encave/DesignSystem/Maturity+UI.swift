@@ -12,10 +12,21 @@ extension Maturity {
         }
     }
 
+    /// Compact form for list rows.
+    var shortTitle: LocalizedStringKey {
+        switch self {
+        case .drinkSoon: "Drink soon"
+        case .ready: "Ready"
+        case .pastPeak: "Past peak"
+        case .young: "Keep"
+        case .unknown: "Unknown"
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .drinkSoon: "hourglass"
-        case .ready: "checkmark.circle"
+        case .ready: "checkmark.seal"
         case .pastPeak: "exclamationmark.triangle"
         case .young: "leaf"
         case .unknown: "questionmark.circle"
@@ -28,7 +39,7 @@ extension Maturity {
         case .drinkSoon: .orange
         case .ready: .green
         case .pastPeak: .red
-        case .young: .blue
+        case .young: .teal
         case .unknown: .secondary
         }
     }

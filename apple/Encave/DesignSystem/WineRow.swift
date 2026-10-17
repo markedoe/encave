@@ -1,0 +1,78 @@
+import CaveKit
+import SwiftUI
+
+/// List row for a wine with bottles in the cellar: "Clos des Tilleuls 2017 ×3".
+struct WineRow: View {
+    @Environment(CellarModel.self) private var model
+    let group: WineGroup
+
+    private var subtitle: String {
+        [group.wine.producer, group.wine.appellation ?? group.wine.region].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    private var location: String? {
+        let labels = group.bottles.compactMap { model.cellar.locationLabel(for: $0) }
+        guard let first = labels.first else { return nil }
+        return labels.count > 1 ? String(localized: "\(first) and \(labels.count - 1) more") : first
+    }
+
+    var body: some View {
+        let maturity = Maturity.of(group.wine, year: model.currentYear)
+        HStack(spacing: 14) {
+            BottleEnd(color: group.wine.color, size: 34)
+            VStack(alignment: .leading, spacing: 3) {
+                (Text(group.wine.name).font(.body.weight(.semibold))
+                    + Text(verbatim: group.wine.vintage.map { " \($0)" } ?? "").foregroundStyle(.secondary))
+                    .lineLimit(2)
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                HStack(spacing: 10) {
+                    if maturity != .unknown {
+                        Label(maturity.shortTitle, systemImage: maturity.systemImage)
+                            .foregroundStyle(maturity.tint)
+                    }
+                    if let location {
+                        Label(location, systemImage: "square.grid.3x3")
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+                .font(.caption)
+                .labelStyle(CompactLabelStyle())
+            }
+            Spacer(minLength: 8)
+            CountBadge(count: group.count)
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// "×3" in a soft capsule.
+struct CountBadge: View {
+    let count: Int
+
+    var body: some View {
+        Text(verbatim: "×\(count)")
+            .font(.subheadline.weight(.semibold).monospacedDigit())
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(Color.secondary.opacity(0.12), in: Capsule())
+            .accessibilityLabel(Text("\(count) bottles"))
+    }
+}
+
+/// Icon and title close together, for dense metadata lines.
+struct CompactLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 3) {
+            configuration.icon.imageScale(.small)
+            configuration.title
+        }
+    }
+}

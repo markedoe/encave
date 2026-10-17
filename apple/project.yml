@@ -57,6 +57,7 @@ targets:
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, fr]
         ITSAppUsesNonExemptEncryption: false
+        NSCameraUsageDescription: Encave uses the camera to read wine labels. Images stay on this device.
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
         UISupportedInterfaceOrientations:

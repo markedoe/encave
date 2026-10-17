@@ -3,9 +3,10 @@ import SwiftUI
 
 struct RacksView: View {
     @Environment(CellarModel.self) private var model
+    @State private var path: [UUID] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if model.cellar.racks.isEmpty {
                     ContentUnavailableView {
@@ -13,76 +14,79 @@ struct RacksView: View {
                     } description: {
                         Text("Describe your racks to see exactly where each bottle is.")
                     } actions: {
-                        Button("Load sample cellar") { model.loadSample() }
+                        Button {
+                            model.sheet = .editRack(rackID: nil)
+                        } label: {
+                            Text("Add a Rack").frame(minWidth: 200)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
                 } else {
-                    List(model.cellar.racks) { rack in
-                        NavigationLink(value: rack.id) {
-                            let used = rack.capacity - model.cellar.freeSlots(in: rack).count
-                            LabeledContent {
-                                Text("\(used) of \(rack.capacity)")
-                            } label: {
-                                Label(rack.name, systemImage: "square.grid.3x3")
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 16)], spacing: 16) {
+                            ForEach(model.cellar.racks) { rack in
+                                NavigationLink(value: rack.id) {
+                                    RackCard(rack: rack)
+                                }
+                                .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button("Edit Rack", systemImage: "pencil") { model.sheet = .editRack(rackID: rack.id) }
+                                    Button("Delete Rack", systemImage: "trash", role: .destructive) {
+                                        model.update { $0.removeRack(rack.id) }
+                                    }
+                                }
                             }
                         }
+                        .padding()
                     }
                 }
             }
             .navigationTitle("Racks")
             .navigationDestination(for: UUID.self) { RackDetailView(rackID: $0) }
-        }
-    }
-}
-
-struct RackDetailView: View {
-    @Environment(CellarModel.self) private var model
-    let rackID: UUID
-
-    var body: some View {
-        if let rack = model.cellar.racks.first(where: { $0.id == rackID }) {
-            ScrollView([.horizontal, .vertical]) {
-                Grid(horizontalSpacing: 6, verticalSpacing: 6) {
-                    ForEach(0..<rack.rows, id: \.self) { row in
-                        GridRow {
-                            ForEach(0..<rack.columns, id: \.self) { column in
-                                SlotCell(rack: rack, slot: Slot(rackID: rack.id, row: row, column: column))
-                            }
-                        }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        model.sheet = .editRack(rackID: nil)
+                    } label: {
+                        Label("Add Rack", systemImage: "plus")
                     }
                 }
-                .padding()
             }
-            .navigationTitle(rack.name)
-        } else {
-            ContentUnavailableView("Rack not found", systemImage: "questionmark")
+            .onChange(of: model.highlightedSlot, initial: true) { _, slot in
+                if let slot, path.last != slot.rackID { path = [slot.rackID] }
+            }
         }
     }
 }
 
-/// One position in a rack. At least 44 points so it is easy to tap.
-struct SlotCell: View {
+private struct RackCard: View {
     @Environment(CellarModel.self) private var model
     let rack: Rack
-    let slot: Slot
 
     var body: some View {
-        let bottle = model.cellar.bottle(at: slot)
-        let wine = bottle.flatMap { model.cellar.wines[$0.wineID] }
-        let label = rack.label(row: slot.row, column: slot.column)
-
-        VStack(spacing: 2) {
-            // Bottle end seen from the front: filled when a bottle is there.
-            Circle()
-                .fill(wine.map { $0.color?.tint ?? Color.secondary } ?? Color.clear)
-                .overlay(Circle().strokeBorder(Color.secondary.opacity(wine == nil ? 0.5 : 0.25), lineWidth: 1))
-                .frame(width: 26, height: 26)
-            Text(verbatim: label)
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(.secondary)
+        let used = model.cellar.occupancy(of: rack)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(rack.name)
+                    .font(.title3.weight(.semibold))
+                Spacer()
+                Image(systemName: rack.layout == .diamond ? "diamond" : "square.grid.3x3")
+                    .foregroundStyle(.secondary)
+            }
+            RackThumbnail(rack: rack)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 6) {
+                ProgressView(value: Double(used), total: Double(max(1, rack.capacity)))
+                    .tint(Color.accentColor)
+                Text("\(used) of \(rack.capacity) positions used")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .frame(width: 48, height: 48)
-        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .accessibilityElement()
-        .accessibilityLabel(wine.map { Text("\(label), \($0.displayName)") } ?? Text("\(label), empty"))
+        .padding(18)
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

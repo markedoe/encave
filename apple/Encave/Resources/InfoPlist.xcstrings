@@ -1,0 +1,22 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSCameraUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave uses the camera to read wine labels. Images stay on this device."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave utilise l’appareil photo pour lire les étiquettes. Les images restent sur cet appareil."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

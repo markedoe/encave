@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ and %lld more": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ et %2$lld autres"
+          }
+        }
+      }
+    },
     "%@, %@": {
       "localizations": {
         "fr": {
@@ -61,6 +71,46 @@
         }
       }
     },
+    "%lld bottles in the cellar": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle in the cellar"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles in the cellar"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille en cave"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles en cave"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld of %lld": {
       "localizations": {
         "fr": {
@@ -71,12 +121,152 @@
         }
       }
     },
+    "%lld of %lld chosen": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld sur %2$lld choisis"
+          }
+        }
+      }
+    },
+    "%lld of %lld positions used": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld sur %2$lld emplacements occupés"
+          }
+        }
+      }
+    },
+    "%lld positions": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld position"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld positions"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld emplacement"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld emplacements"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld stars": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld étoiles"
+          }
+        }
+      }
+    },
+    "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une sauvegarde contient tout et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel."
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "À propos"
+          }
+        }
+      }
+    },
+    "Add": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter"
+          }
+        }
+      }
+    },
+    "Add Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une bouteille"
+          }
+        }
+      }
+    },
+    "Add Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
+    "Add Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un casier"
+          }
+        }
+      }
+    },
+    "Add a Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une bouteille"
+          }
+        }
+      }
+    },
+    "Add a Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un casier"
           }
         }
       }
@@ -101,12 +291,162 @@
         }
       }
     },
+    "Added %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutée le %@"
+          }
+        }
+      }
+    },
+    "Added %lld × %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté : %1$lld × %2$@"
+          }
+        }
+      }
+    },
+    "All data erased": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les données ont été effacées"
+          }
+        }
+      }
+    },
+    "Already in your cellar?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà dans votre cave ?"
+          }
+        }
+      }
+    },
+    "Another idea": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre idée"
+          }
+        }
+      }
+    },
+    "Aperitif": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apéritif"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Robe"
+          }
+        }
+      }
+    },
     "Appellation": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Appellation"
+          }
+        }
+      }
+    },
+    "Automatic": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatique"
+          }
+        }
+      }
+    },
+    "Back Up (JSON)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarder (JSON)"
+          }
+        }
+      }
+    },
+    "Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille"
+          }
+        }
+      }
+    },
+    "Bottle not found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille introuvable"
+          }
+        }
+      }
+    },
+    "Bottle removed from the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille retirée de la cave"
+          }
+        }
+      }
+    },
+    "Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles"
+          }
+        }
+      }
+    },
+    "Bottles in this rack stay in your cellar without a position.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles de ce casier restent dans votre cave, sans emplacement."
+          }
+        }
+      }
+    },
+    "Bottles opened, last 12 months": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles ouvertes, 12 derniers mois"
           }
         }
       }
@@ -121,6 +461,66 @@
         }
       }
     },
+    "Bought at": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acheté chez"
+          }
+        }
+      }
+    },
+    "By country": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par pays"
+          }
+        }
+      }
+    },
+    "By style": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par style"
+          }
+        }
+      }
+    },
+    "By vintage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par millésime"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Celebration": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fête"
+          }
+        }
+      }
+    },
     "Cellar": {
       "localizations": {
         "fr": {
@@ -131,12 +531,172 @@
         }
       }
     },
+    "Change": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer"
+          }
+        }
+      }
+    },
+    "Cheese": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fromage"
+          }
+        }
+      }
+    },
+    "Cherry, violet, a touch of undergrowth": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerise, violette, une touche de sous-bois"
+          }
+        }
+      }
+    },
+    "Choose a Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir une photo"
+          }
+        }
+      }
+    },
+    "Choose a photo of the label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez une photo de l’étiquette"
+          }
+        }
+      }
+    },
+    "Choose a vintage to estimate the window.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un millésime pour estimer la fenêtre."
+          }
+        }
+      }
+    },
+    "Château, cuvée…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Château, cuvée…"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer"
+          }
+        }
+      }
+    },
+    "Clear filters": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer les filtres"
+          }
+        }
+      }
+    },
+    "Columns": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colonnes"
+          }
+        }
+      }
+    },
     "Country": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pays"
+          }
+        }
+      }
+    },
+    "Currency": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devise"
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    },
+    "Delete Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le casier"
+          }
+        }
+      }
+    },
+    "Delete Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le vin"
+          }
+        }
+      }
+    },
+    "Delete this rack?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer ce casier ?"
+          }
+        }
+      }
+    },
+    "Deleted %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ supprimé"
           }
         }
       }
@@ -161,12 +721,92 @@
         }
       }
     },
+    "Details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails"
+          }
+        }
+      }
+    },
+    "Diamond": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Losange"
+          }
+        }
+      }
+    },
+    "Diamond bins, 36": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Losanges, 36"
+          }
+        }
+      }
+    },
+    "Dinner at home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dîner à la maison"
+          }
+        }
+      }
+    },
+    "Dinner with friends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dîner entre amis"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        }
+      }
+    },
+    "Double magnum": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double magnum"
+          }
+        }
+      }
+    },
+    "Drink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boire"
+          }
+        }
+      }
+    },
+    "Drink a Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boire une bouteille"
           }
         }
       }
@@ -191,6 +831,46 @@
         }
       }
     },
+    "Drinking window from %lld to %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fenêtre de dégustation de %1$lld à %2$lld"
+          }
+        }
+      }
+    },
+    "Edit Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le casier"
+          }
+        }
+      }
+    },
+    "Edit Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le vin"
+          }
+        }
+      }
+    },
+    "Enjoy your %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bonne dégustation : %@"
+          }
+        }
+      }
+    },
     "Erase all data": {
       "localizations": {
         "fr": {
@@ -211,6 +891,86 @@
         }
       }
     },
+    "Estimate automatically": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimer automatiquement"
+          }
+        }
+      }
+    },
+    "Export Spreadsheet (CSV)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter en tableur (CSV)"
+          }
+        }
+      }
+    },
+    "Find the right bottle for your dish": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvez la bonne bouteille pour votre plat"
+          }
+        }
+      }
+    },
+    "Fine tannins, fresh acidity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tanins fins, acidité fraîche"
+          }
+        }
+      }
+    },
+    "Finish": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finale"
+          }
+        }
+      }
+    },
+    "Fish": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poisson"
+          }
+        }
+      }
+    },
+    "Food pairing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accords mets-vins"
+          }
+        }
+      }
+    },
+    "Food served": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plat servi"
+          }
+        }
+      }
+    },
     "Fortified": {
       "localizations": {
         "fr": {
@@ -221,12 +981,72 @@
         }
       }
     },
-    "From – until": {
+    "From": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "De – à"
+            "value": "De"
+          }
+        }
+      }
+    },
+    "From your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans votre cave"
+          }
+        }
+      }
+    },
+    "Full note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note complète"
+          }
+        }
+      }
+    },
+    "Full tasting note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note de dégustation complète"
+          }
+        }
+      }
+    },
+    "Game": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gibier"
+          }
+        }
+      }
+    },
+    "Gift from": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offert par"
+          }
+        }
+      }
+    },
+    "Given away or broken": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Donnée ou cassée"
           }
         }
       }
@@ -241,12 +1061,102 @@
         }
       }
     },
+    "Grid": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grille"
+          }
+        }
+      }
+    },
+    "Half bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demi-bouteille"
+          }
+        }
+      }
+    },
+    "How was it?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’était comment ?"
+          }
+        }
+      }
+    },
+    "Import": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer"
+          }
+        }
+      }
+    },
+    "Imported %lld bottles of %lld new wines.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld bouteilles importées, dont %2$lld nouveaux vins."
+          }
+        }
+      }
+    },
+    "Import…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer…"
+          }
+        }
+      }
+    },
+    "Insights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statistiques"
+          }
+        }
+      }
+    },
+    "Its bottles, drinking window and tastings appear here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses bouteilles, sa fenêtre de dégustation et vos dégustations apparaissent ici."
+          }
+        }
+      }
+    },
     "Journal": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Journal"
+          }
+        }
+      }
+    },
+    "Keep": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À garder"
           }
         }
       }
@@ -261,12 +1171,72 @@
         }
       }
     },
+    "Kitchen": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuisine"
+          }
+        }
+      }
+    },
+    "Kitchen, box in the garage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuisine, carton au garage…"
+          }
+        }
+      }
+    },
+    "Large cellar, 120": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grande cave, 120"
+          }
+        }
+      }
+    },
+    "Layout": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disposition"
+          }
+        }
+      }
+    },
     "Load sample cellar": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Charger une cave d’exemple"
+          }
+        }
+      }
+    },
+    "Location": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emplacement"
+          }
+        }
+      }
+    },
+    "Magnum": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magnum"
           }
         }
       }
@@ -281,12 +1251,132 @@
         }
       }
     },
+    "More": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus"
+          }
+        }
+      }
+    },
+    "Move": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacer"
+          }
+        }
+      }
+    },
+    "Move Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacer la bouteille"
+          }
+        }
+      }
+    },
+    "Move the bottles out of the removed rows or columns first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacez d’abord les bouteilles des rangées ou colonnes supprimées."
+          }
+        }
+      }
+    },
+    "Move…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacer…"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom"
+          }
+        }
+      }
+    },
+    "New Bottle…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelle bouteille…"
+          }
+        }
+      }
+    },
+    "New Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau casier"
+          }
+        }
+      }
+    },
+    "New Rack…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau casier…"
+          }
+        }
+      }
+    },
+    "No bottle in your cellar matches this dish yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille de votre cave ne correspond encore à ce plat."
+          }
+        }
+      }
+    },
     "No drinking window": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pas de fenêtre de dégustation"
+          }
+        }
+      }
+    },
+    "No location": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans emplacement"
+          }
+        }
+      }
+    },
+    "No rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun casier"
           }
         }
       }
@@ -311,12 +1401,52 @@
         }
       }
     },
-    "Not placed in a rack": {
+    "No text found. Try a sharper photo.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pas rangée dans un casier"
+            "value": "Aucun texte trouvé. Essayez une photo plus nette."
+          }
+        }
+      }
+    },
+    "Non-vintage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non millésimé"
+          }
+        }
+      }
+    },
+    "Nose": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nez"
+          }
+        }
+      }
+    },
+    "Notes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes"
+          }
+        }
+      }
+    },
+    "Notes about this wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes sur ce vin"
           }
         }
       }
@@ -341,6 +1471,26 @@
         }
       }
     },
+    "Occasion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Occasion"
+          }
+        }
+      }
+    },
+    "Only %lld free positions: the other bottles will have no position.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
+          }
+        }
+      }
+    },
     "Orange": {
       "localizations": {
         "fr": {
@@ -351,12 +1501,132 @@
         }
       }
     },
+    "Origin": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Origine"
+          }
+        }
+      }
+    },
+    "Palate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouche"
+          }
+        }
+      }
+    },
     "Past its peak": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Après l’apogée"
+          }
+        }
+      }
+    },
+    "Past peak": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après l’apogée"
+          }
+        }
+      }
+    },
+    "Pasta, pizza": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pâtes, pizza"
+          }
+        }
+      }
+    },
+    "Pinot Noir, Gamay": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pinot noir, Gamay"
+          }
+        }
+      }
+    },
+    "Point the camera at the label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visez l’étiquette avec l’appareil photo"
+          }
+        }
+      }
+    },
+    "Pork": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porc"
+          }
+        }
+      }
+    },
+    "Positions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emplacements"
+          }
+        }
+      }
+    },
+    "Poultry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volaille"
+          }
+        }
+      }
+    },
+    "Preferences": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préférences"
+          }
+        }
+      }
+    },
+    "Preview": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu"
+          }
+        }
+      }
+    },
+    "Price per bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix par bouteille"
           }
         }
       }
@@ -381,12 +1651,82 @@
         }
       }
     },
+    "Purchase date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date d’achat"
+          }
+        }
+      }
+    },
+    "Purchase details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails d’achat"
+          }
+        }
+      }
+    },
+    "Put Back in the Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remettre en cave"
+          }
+        }
+      }
+    },
+    "Quantity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quantité"
+          }
+        }
+      }
+    },
+    "Quick start": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrage rapide"
+          }
+        }
+      }
+    },
+    "Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier"
+          }
+        }
+      }
+    },
     "Rack not found": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Casier introuvable"
+          }
+        }
+      }
+    },
+    "Rack, 48": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casier, 48"
           }
         }
       }
@@ -411,12 +1751,52 @@
         }
       }
     },
+    "Reads the label on this device to fill in the name and vintage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lit l’étiquette sur cet appareil pour remplir le nom et le millésime."
+          }
+        }
+      }
+    },
+    "Ready": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt"
+          }
+        }
+      }
+    },
+    "Ready first": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêts d’abord"
+          }
+        }
+      }
+    },
     "Ready to drink": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Prêt à boire"
+          }
+        }
+      }
+    },
+    "Recently added": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutés récemment"
           }
         }
       }
@@ -431,12 +1811,52 @@
         }
       }
     },
+    "Red meat": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viande rouge"
+          }
+        }
+      }
+    },
     "Region": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Région"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer"
+          }
+        }
+      }
+    },
+    "Restaurant": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurant"
+          }
+        }
+      }
+    },
+    "Roast duck": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canard rôti"
           }
         }
       }
@@ -451,12 +1871,102 @@
         }
       }
     },
+    "Rows": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangées"
+          }
+        }
+      }
+    },
+    "Sample cellar loaded": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave d’exemple chargée"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer"
+          }
+        }
+      }
+    },
+    "Scan the Label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner l’étiquette"
+          }
+        }
+      }
+    },
+    "Search your wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher dans vos vins"
+          }
+        }
+      }
+    },
+    "Select a wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un vin"
+          }
+        }
+      }
+    },
+    "Set a drinking window": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définir une fenêtre de dégustation"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Shellfish": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fruits de mer"
+          }
+        }
+      }
+    },
+    "Show in Rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir dans le casier"
           }
         }
       }
@@ -471,12 +1981,42 @@
         }
       }
     },
+    "Size": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format"
+          }
+        }
+      }
+    },
     "Something went wrong": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Une erreur est survenue"
+          }
+        }
+      }
+    },
+    "Sort": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trier"
+          }
+        }
+      }
+    },
+    "Sort by": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trier par"
           }
         }
       }
@@ -501,12 +2041,32 @@
         }
       }
     },
+    "Spicy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Épicé"
+          }
+        }
+      }
+    },
     "Style": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Style"
+          }
+        }
+      }
+    },
+    "Suggested": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggérée"
           }
         }
       }
@@ -521,12 +2081,82 @@
         }
       }
     },
+    "Tap a position. Tapping another bottle swaps them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez un emplacement. Toucher une autre bouteille les échange."
+          }
+        }
+      }
+    },
+    "Tap the new position": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez le nouvel emplacement"
+          }
+        }
+      }
+    },
+    "Tasting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégustation"
+          }
+        }
+      }
+    },
+    "Tasting Note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note de dégustation"
+          }
+        }
+      }
+    },
+    "Tastings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégustations"
+          }
+        }
+      }
+    },
     "Test data": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Données de test"
+          }
+        }
+      }
+    },
+    "That position is already taken.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet emplacement est déjà occupé."
+          }
+        }
+      }
+    },
+    "That position is outside the rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet emplacement est hors du casier."
           }
         }
       }
@@ -541,12 +2171,82 @@
         }
       }
     },
+    "The file could not be read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier n’a pas pu être lu."
+          }
+        }
+      }
+    },
+    "The first free positions are used unless you choose them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez."
+          }
+        }
+      }
+    },
+    "The text is read on this device to fill in the name, producer and vintage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le texte est lu sur cet appareil pour remplir le nom, le producteur et le millésime."
+          }
+        }
+      }
+    },
+    "This bottle has already been opened.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette bouteille a déjà été ouverte."
+          }
+        }
+      }
+    },
+    "This file is not an Encave backup or a CSV with a name column.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name »."
+          }
+        }
+      }
+    },
+    "This item no longer exists.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet élément n’existe plus."
+          }
+        }
+      }
+    },
     "This removes every bottle, rack and tasting from this device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil."
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aujourd’hui"
           }
         }
       }
@@ -561,12 +2261,102 @@
         }
       }
     },
+    "Tonight, open…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce soir, ouvrez…"
+          }
+        }
+      }
+    },
+    "Undo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Unknown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inconnue"
+          }
+        }
+      }
+    },
     "Unknown wine": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Vin inconnu"
+          }
+        }
+      }
+    },
+    "Until": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À"
+          }
+        }
+      }
+    },
+    "Use This Label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser cette étiquette"
+          }
+        }
+      }
+    },
+    "Use this if the bottle was logged by mistake.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À utiliser si la bouteille a été notée par erreur."
+          }
+        }
+      }
+    },
+    "Used by Tonight to suggest what to open. You can adjust it anytime.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment."
+          }
+        }
+      }
+    },
+    "Used for new purchases. Prices already entered keep their currency.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisée pour les nouveaux achats. Les prix déjà saisis gardent leur devise."
+          }
+        }
+      }
+    },
+    "Vegetarian": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Végétarien"
           }
         }
       }
@@ -581,12 +2371,42 @@
         }
       }
     },
+    "Vintage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millésime"
+          }
+        }
+      }
+    },
+    "Where is it?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où est-elle ?"
+          }
+        }
+      }
+    },
     "White": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Blanc"
+          }
+        }
+      }
+    },
+    "Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vin"
           }
         }
       }
@@ -601,6 +2421,16 @@
         }
       }
     },
+    "Wine fridge, 24": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave à vin, 24"
+          }
+        }
+      }
+    },
     "Wine not found": {
       "localizations": {
         "fr": {
@@ -611,12 +2441,32 @@
         }
       }
     },
-    "Wine, producer, region, vintage": {
+    "Wine or note": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vin, producteur, région, millésime"
+            "value": "Vin ou note"
+          }
+        }
+      }
+    },
+    "Wine, producer, region, grape, vintage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vin, producteur, région, cépage, millésime"
+          }
+        }
+      }
+    },
+    "With friends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entre amis"
           }
         }
       }
@@ -627,6 +2477,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible de charger votre cave."
+          }
+        }
+      }
+    },
+    "Your cellar in figures": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave en chiffres"
           }
         }
       }
@@ -647,6 +2507,156 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave est enregistrée uniquement sur cet appareil."
+          }
+        }
+      }
+    },
+    "Your data": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos données"
+          }
+        }
+      }
+    },
+    "Zoom In": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrandir"
+          }
+        }
+      }
+    },
+    "Zoom Out": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réduire"
+          }
+        }
+      }
+    },
+    "average rating": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "note moyenne"
+          }
+        }
+      }
+    },
+    "bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles"
+          }
+        }
+      }
+    },
+    "bottles in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles en cave"
+          }
+        }
+      }
+    },
+    "bottles opened": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles ouvertes"
+          }
+        }
+      }
+    },
+    "classic style for this dish": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "style classique pour ce plat"
+          }
+        }
+      }
+    },
+    "different wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vins différents"
+          }
+        }
+      }
+    },
+    "purchase value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "valeur d’achat"
+          }
+        }
+      }
+    },
+    "ready to drink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "prêt à boire"
+          }
+        }
+      }
+    },
+    "region known for it": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "région réputée pour ça"
+          }
+        }
+      }
+    },
+    "suited grape": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cépage adapté"
+          }
+        }
+      }
+    },
+    "to drink soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "à boire bientôt"
+          }
+        }
+      }
+    },
+    "wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vins"
           }
         }
       }
