@@ -209,8 +209,7 @@ public enum CellarMerge {
         }
     }
 
-    /// The version that changed last, and its stamp. Equal stamps with different
-    /// content (two devices that never synced, same object) fall back to the content.
+    /// The version that changed last, and its stamp. On equal stamps, see `preferred`.
     private static func choose<T>(_ a: T?, _ sa: Stamp?, _ b: T?, _ sb: Stamp?) -> (T?, Stamp?) {
         switch (sa, sb) {
         case (nil, nil): return (nil, nil)

@@ -941,6 +941,16 @@
         }
       }
     },
+    "Apart from sync, the only data that can leave the device is the label photo, and only if you set up an AI service yourself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En dehors de la synchronisation, la seule donnée qui peut quitter l’appareil est la photo de l’étiquette, et seulement si vous configurez vous-même un service d’IA."
+          }
+        }
+      }
+    },
     "Aperitif": {
       "localizations": {
         "fr": {
@@ -1671,6 +1681,16 @@
         }
       }
     },
+    "Checking a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier un casier"
+          }
+        }
+      }
+    },
     "Cheese": {
       "localizations": {
         "fr": {
@@ -1687,6 +1707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cerise, violette, une touche de sous-bois"
+          }
+        }
+      }
+    },
+    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
           }
         }
       }
@@ -2771,6 +2801,16 @@
         }
       }
     },
+    "End Check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminer la vérification"
+          }
+        }
+      }
+    },
     "Ends the drinking window a year earlier.": {
       "localizations": {
         "fr": {
@@ -3051,16 +3091,6 @@
         }
       }
     },
-    "For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
-          }
-        }
-      }
-    },
     "For bottles that are not in a rack.": {
       "localizations": {
         "fr": {
@@ -3077,6 +3107,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés."
+          }
+        }
+      }
+    },
+    "For iPhone, iPad and Mac today, and Android later. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour iPhone, iPad et Mac aujourd’hui, et Android plus tard. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
           }
         }
       }
@@ -3551,12 +3591,12 @@
         }
       }
     },
-    "In the Cellar, choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
+    "In the Cellar list (not the table), choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la Cave, choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."
+            "value": "Dans la liste de la Cave (pas le tableau), choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."
           }
         }
       }
@@ -4611,12 +4651,12 @@
         }
       }
     },
-    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle to swap them.": {
+    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille pour les échanger."
+            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement)."
           }
         }
       }
@@ -6481,12 +6521,12 @@
         }
       }
     },
-    "Swipe a device in the list and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device.": {
+    "Swipe a device in the list and choose **Remove**, or on the Mac, right-click it and choose **Remove Device**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un appareil dans la liste et choisissez **Retirer**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil."
+            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil."
           }
         }
       }
@@ -6531,12 +6571,12 @@
         }
       }
     },
-    "Sync between your devices and with the people you share a cellar with will be end-to-end encrypted: the server that relays changes will never be able to read them.": {
+    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud or a relay, only encrypted files are stored, and nobody else can read them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation entre vos appareils et avec les personnes qui partagent votre cave sera chiffrée de bout en bout : le serveur qui relaie les changements ne pourra jamais les lire."
+            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via iCloud ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire."
           }
         }
       }
@@ -6661,12 +6701,12 @@
         }
       }
     },
-    "Tap a bottle, then **Move**, then the new place. Tapping another bottle swaps them; a bin takes the bottle if it has room.": {
+    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
+            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange."
           }
         }
       }
@@ -7027,16 +7067,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le nom sur l’étiquette, sans le millésime. Obligatoire."
-          }
-        }
-      }
-    },
-    "The only data that can leave the device is the label photo, and only if you set up an AI service yourself.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La seule donnée qui peut quitter l’appareil est la photo de l’étiquette, et seulement si vous configurez vous-même un service d’IA."
           }
         }
       }
@@ -7451,12 +7481,12 @@
         }
       }
     },
-    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home** and enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi.": {
+    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), or enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi, or when you enter the same relay on them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison** et saisissez l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi."
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), ou saisissez l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, ou quand vous y saisissez le même relais."
           }
         }
       }

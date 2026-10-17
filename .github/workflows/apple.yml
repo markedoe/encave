@@ -209,6 +209,12 @@ jobs:
           for test in json.load(open(os.path.join(src, "manifest.json"))):
               for item in test.get("attachments", []):
                   ext = os.path.splitext(item["exportedFileName"])[1].lower()
+                  if ext == ".ips":
+                      # Crash reports of the app under test: kept to find the cause.
+                      os.makedirs(os.path.join(dst, "crashes"), exist_ok=True)
+                      shutil.copy(os.path.join(src, item["exportedFileName"]),
+                                  os.path.join(dst, "crashes", item["exportedFileName"]))
+                      continue
                   if ext not in (".png", ".jpg", ".jpeg", ".heic"):
                       continue  # debug descriptions and logs
                   human = item.get("suggestedHumanReadableName") or item["exportedFileName"]

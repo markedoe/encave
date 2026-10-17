@@ -1,7 +1,7 @@
 import Foundation
 
 /// The whole cellar: wines, bottles, racks and settings. A value type, so the UI
-/// layer can observe it and a sync engine can later replace how it is stored.
+/// layer can observe it and sync can merge copies of it.
 public struct Cellar: Codable, Equatable, Sendable {
     public static let currentSchemaVersion = 2
 

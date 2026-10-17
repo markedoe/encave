@@ -557,7 +557,7 @@ private struct AuditBar: View {
                 Spacer()
                 Button("Cancel", action: cancel)
                     .accessibilityIdentifier("sheet.cancel")
-                Button(action: finish) { ActionLabel("Finish", systemImage: "checkmark") }
+                Button(action: finish) { ActionLabel("End Check", systemImage: "checkmark") }
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("action.audit.finish")
             }

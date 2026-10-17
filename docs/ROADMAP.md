@@ -29,22 +29,25 @@ it with.
 ```
  iPhone / iPad / Mac (SwiftUI)              Android (Compose)
    CaveKit (Swift package)                  core (Kotlin module)
-   model, merge, sync protocol      ⇄       same model and protocol,
-                                            checked with shared test vectors
+   model, merge, sync protocol      ⇄       same model; protocol port in
+                                            progress, checked with shared
+                                            test vectors
             │  same Wi-Fi: Bonjour, direct, encrypted  │
             └──────────────────────┬───────────────────┘
                                    │  away from home: encrypted files only
                           ┌────────▼────────┐
                           │  Storage         │  relay (self-hosted, Node or
-                          │  (never has keys)│  Cloudflare), later iCloud,
-                          └─────────────────┘  Google Drive
+                          │  (never has keys)│  Cloudflare); iCloud (built, off
+                          └─────────────────┘  until the container is set up);
+                                               later Google Drive
 ```
 
 - **One model, two native implementations.**
-  - The cellar model and the sync protocol are written in Swift (CaveKit, tested
-    on Linux) and in Kotlin (`android/core`).
-  - They read each other's files (interop tests on fixtures) and compute the
-    same bytes for the protocol (test vectors in [SYNC.md](SYNC.md)).
+  - The cellar model is written in Swift (CaveKit, tested on Linux) and in
+    Kotlin (`android/core`). They read each other's files (interop tests on
+    fixtures).
+  - The sync protocol is in CaveKit. The Kotlin port, checked against the test
+    vectors in [SYNC.md](SYNC.md), is in progress.
   - A shared Rust core was the first plan. Two small, well-tested
     implementations proved simpler than UniFFI bindings for a model of this
     size; the decision can be revisited if the model grows.
@@ -106,14 +109,15 @@ The full protocol is in [SYNC.md](SYNC.md).
 
 ### Information architecture
 
-| iPhone (tab bar) | iPad and Mac (sidebar) | Android |
+| iPhone and iPad (tab bar) | Mac (sidebar) | Android |
 |------------------|------------------------|---------|
-| **Cellar**: all bottles, searchable | Library: All, Ready, Drink soon, Recently added | Navigation bar on phones, |
-| **Racks**: physical layout | Racks (one row per rack) | navigation rail on tablets, |
-| **Tonight**: ready to drink | Journal, Insights | list-detail on foldables |
-| **Journal**: history and notes | Shared: members and sync status | |
+| **Cellar**: all bottles, searchable | Library: Cellar, Tonight, Journal | Navigation bar on phones, |
+| **Racks**: physical layout | Racks: one row per rack, and Add a Rack | navigation rail on tablets, |
+| **Tonight**: ready to drink | | list-detail on foldables |
+| **Journal**: history and notes | | |
 
-Settings open as a sheet (iPhone) or a Settings window (Mac). The interface
+On iPad, the tab bar can turn into a sidebar. Settings open as a sheet (iPhone)
+or a Settings window (Mac); devices and sync are in Settings. The interface
 talks about **bottles**; the underlying "wine" record is an invisible
 grouping ("Château X 2015 ×3").
 
@@ -128,14 +132,14 @@ grouping ("Château X 2015 ×3").
 3. **Drink a bottle:** swipe or context menu, then a short sheet (rating,
    one-line note, occasion). A full tasting note can be added later.
 4. **What to drink tonight:** bottles grouped by maturity (at peak, drink
-   soon, past peak, young), with a drinking-window gauge and a widget.
+   soon, past peak, young), with a drinking-window gauge.
 5. **Share a cellar** with a QR code (see above).
-6. **Work offline:** everything is local; label recognition queues scans
-   that need the network and resumes later.
+6. **Work offline:** everything is local. The label is read on the device;
+   only the optional AI recognition needs the network.
 
 Also in v1: onboarding (create a rack or scan a first bottle, or join a
 shared cellar), import and export as JSON/CSV, App Intents /
-Siri Shortcuts ("What should I drink tonight?"), Spotlight, one widget.
+Siri Shortcuts ("What should I drink tonight?"), Spotlight.
 
 ### Visual language
 
@@ -144,8 +148,9 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight, one widget.
 - Native lists, forms and sheets instead of custom cards and modals.
 - Wine color and maturity always shown with a label or symbol, never by
   color alone.
-- Shared design tokens (`design/tokens.json`, W3C format) compiled to Swift
-  and Compose with Style Dictionary, mirrored in a Figma library.
+- Shared design tokens (`design/tokens.json`, W3C format), turned into the
+  Apple asset catalog by `design/generate_apple_assets.py` and mirrored in
+  `DesignTokens.kt` on Android, checked by a test.
 
 ## Phases
 
@@ -156,7 +161,7 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight, one widget.
 | 2. Sync | Pairing, local network sync, relay, protocol spec and test vectors | Apple done; Android in progress |
 | 3. Apple apps MVP | iPhone, iPad, Mac with sync | Internal TestFlight; external beta next |
 | 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple except sync; Play internal testing next |
-| 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | Planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
+| 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | CloudKit built (needs the iCloud container); Google Drive planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
 | 6. Household sharing | Roles, signed files, remote pairing | Planned |
 | 7. Launch | Store listings, documentation, privacy policy | Planned |
 
@@ -183,8 +188,8 @@ kept within the privacy rules: everything is worked out on the device.
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Planned (tablets) |
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
-| Saved lists for occasions, several photos per wine, printing | Planned | Planned |
-| Watch app, menu bar extra | Later | Later (Wear OS tile) |
+| Saved lists for occasions, several photos per wine | Planned | Planned |
+| Watch app | Later | Later (Wear OS tile) |
 
 ### Ask your cellar (on the device)
 
@@ -211,8 +216,8 @@ labels) is not planned: `CLAUDE.md` allows only the label photo to be sent.
   export compliance questions in App Store Connect, and France requires a
   declaration for encryption products. To verify before the first store
   submission.
-- **Shared core.** The model and protocol are implemented twice (Swift, Kotlin)
-  with shared test vectors. If the model grows much, revisit a shared Rust core
+- **Shared core.** The model is implemented twice (Swift, Kotlin), and the
+  protocol's Kotlin port is in progress, with shared test vectors. If the model grows much, revisit a shared Rust core
   (UniFFI) or a CRDT engine such as Automerge.
 - **Community relay.** Whether the project runs a capped public relay, or only
   publishes the self-hosting template; see [REMOTE_SYNC.md](REMOTE_SYNC.md).
@@ -221,7 +226,7 @@ labels) is not planned: `CLAUDE.md` allows only the label photo to be sent.
 
 ```
 apple/     SwiftUI app (iOS, iPadOS, macOS) and the CaveKit package (model, sync)
-android/   Kotlin / Compose app and its core module (model, sync)
+android/   Kotlin / Compose app and its core module (model; sync in progress)
 relay/     Self-hostable relay (Node server, Cloudflare Worker)
 design/    Design tokens and asset generators
 docs/      Roadmap, sync protocol, remote sync analysis, development guide

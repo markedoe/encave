@@ -247,7 +247,7 @@ struct RemoteSyncView: View {
                 } header: {
                     Text("Relay")
                 } footer: {
-                    Text("For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.")
+                    Text("For iPhone, iPad and Mac today, and Android later. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.")
                 }
                 if let error {
                     Section {

@@ -12,7 +12,8 @@ Sync away from home**.
 
 ## What the relay sees
 
-- Random mailbox IDs, which change when a device is removed.
+- Mailbox IDs, which look random. The cellar's mailbox ID changes when a device
+  is removed; each device's inbox ID stays the same.
 - Encrypted files: their number, sizes and when they are written, and their
   names: random device IDs and change counters, and hashes of photos (see
   [docs/SYNC.md](../docs/SYNC.md) §9).
@@ -30,6 +31,9 @@ It never sees cellar contents, device names, photos or keys.
 | `GET /v1/m/{mailbox}/{path}` | the file, or 404 |
 | `PUT /v1/m/{mailbox}/{path}` | 201, or 412 if the file exists (files are never replaced) |
 | `DELETE /v1/m/{mailbox}/{path}` | 204 |
+
+Errors: 401 wrong or missing token, 400 invalid path, 413 file too large, 507
+mailbox or inbox full, 429 too many requests.
 
 - Mailbox IDs are `c` (a cellar) or `i` (a device's inbox) followed by 32
   lowercase hex characters.
@@ -51,7 +55,7 @@ backup. Keep backups with **Settings › Back Up**.
 
 ## Run it on your own server (Node)
 
-Node 18 or later, no dependencies:
+Node 20 or later, no dependencies:
 
 ```sh
 PORT=8787 DATA_DIR=/var/lib/encave-relay node relay/server.mjs
@@ -85,9 +89,11 @@ docker run -d --restart unless-stopped -p 8787:8787 -v encave-relay:/data encave
 1. Install Wrangler and sign in: `npx wrangler login`.
 2. Create the bucket: `npx wrangler r2 bucket create encave-relay`.
 3. Deploy: `npx wrangler deploy --config relay/cloudflare/wrangler.toml`.
-4. In the Cloudflare dashboard, add a lifecycle rule to the bucket that deletes
-   objects after 365 days.
-5. Optionally enable the rate limiter in `wrangler.toml`.
+4. Optionally enable the rate limiter in `wrangler.toml`.
+
+A daily scheduled run (the cron trigger in `wrangler.toml`) deletes mailboxes
+not written to for `TTL_DAYS` (365). Do not add an R2 lifecycle rule: it would
+delete each file a year after it was written, including photos still in use.
 
 The free tier covers a household many times over: as of October 2026 it includes
 100,000 requests a day and 10 GB of R2 storage. See the cost analysis in
@@ -96,7 +102,7 @@ The free tier covers a household many times over: as of October 2026 it includes
 ## Tests
 
 ```sh
-node --test relay/test/relay.test.mjs
+node --test relay/test/relay.test.mjs relay/test/worker.test.mjs
 ```
 
 The CI also syncs two simulated devices through a running relay

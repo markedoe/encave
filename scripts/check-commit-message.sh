@@ -20,7 +20,8 @@ check_message() {
     echo "$label: contains a link to an AI chat session; remove it"; errors=1
   fi
   # Drop comment lines; in the body, also drop git trailers
-  # (Co-Authored-By, Signed-off-by, Claude-Session...).
+  # (Co-Authored-By, Signed-off-by...) from the line count. Session links fail
+  # above, trailers included.
   local nocomment subject body clean
   nocomment=$(printf '%s\n' "$msg" | grep -v '^#' || true)
   subject=$(printf '%s\n' "$nocomment" | sed -n '1p')

@@ -12,8 +12,9 @@ Your cellar stays on your devices.
 
 - **Sync between your devices** is end-to-end encrypted.
   - On the same network, devices talk directly with no server.
-  - Away from home, they exchange encrypted files through your iCloud (Apple
-    devices) or a relay you choose, which never has a key.
+  - Away from home, they exchange encrypted files through a relay you choose,
+    which never has a key (iCloud too, in builds set up with an iCloud
+    container).
 - **Pairing:** each device has its own identity key (Keychain). Pairing is
   confirmed by comparing a 6-digit code on both screens.
 - **Removing a device** shuts it out of the network handshake and rotates the key
@@ -35,7 +36,9 @@ This repository is public. A few rules keep secrets and internal details out of 
 - **No machine identities in commits.** Set a real or GitHub noreply address:
   `git config user.email "<id>+<user>@users.noreply.github.com"`.
 - **No infrastructure details.** No server hostnames, home paths or private IPs
-  in code or docs; use placeholders such as `/path/to/encave`.
+  in code or docs; use placeholders such as `/path/to/encave`. Private IPs and
+  common home paths are checked automatically; hostnames are not, so check them
+  yourself.
 
 These rules are enforced by:
 
@@ -43,6 +46,7 @@ These rules are enforced by:
 |-----------|-------|
 | `gitleaks` with `.gitleaks.toml` | pre-commit and CI (`secrets` job) |
 | `scripts/check-public-safety.sh` | pre-commit and CI (`secrets` job) |
+| `scripts/check-commit-message.sh` | commit-msg hook and CI (`secrets` job) |
 | GitHub secret scanning + push protection | repository settings |
 
 Set up the local hooks once:

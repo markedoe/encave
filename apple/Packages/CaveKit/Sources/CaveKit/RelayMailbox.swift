@@ -11,8 +11,9 @@ import FoundationNetworking
 ///     PUT    /v1/m/{mailbox}/{path}             If-None-Match: *  → 201, or 412 if it exists
 ///     DELETE /v1/m/{mailbox}/{path}             → 204
 ///
-/// Requests carry `Authorization: Bearer <token>`; the relay keeps only a hash of the
-/// first token used with a mailbox and refuses others. Anyone may create a
+/// Requests carry `Authorization: Bearer <token>`. A mailbox ID is derived from its
+/// token (`RelayAuth.mailboxID`), so the relay checks the token without storing
+/// anything. Anyone may create a
 /// `grant/…` file in an inbox (that is how a device receives a key), only the
 /// inbox's owner may read or delete.
 public struct RelayMailboxStore: MailboxStore {

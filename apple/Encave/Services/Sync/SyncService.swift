@@ -7,7 +7,8 @@ import UIKit
 #endif
 
 /// Keeps this device's cellar in step with the user's other devices on the same
-/// network. Devices find each other with Bonjour; every session is authenticated
+/// network, and away from home through iCloud or a relay (`RemoteSync`). On the
+/// network, devices find each other with Bonjour; every session is authenticated
 /// with the devices' identity keys and encrypted (see CaveKit `SyncProtocol`).
 ///
 /// Nothing runs until the user adds or joins a device: before that the app never

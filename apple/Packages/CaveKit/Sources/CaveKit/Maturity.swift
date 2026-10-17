@@ -62,8 +62,7 @@ public extension Wine {
         return .entered
     }
 
-    /// Moves the end of the window by `years` (never before its start), or the
-    /// whole window when only the end is known.
+    /// Moves the end of the window by `years`, never before its start.
     func movingWindowEnd(by years: Int) -> Wine {
         var copy = self
         guard let until = drinkUntil else { return copy }

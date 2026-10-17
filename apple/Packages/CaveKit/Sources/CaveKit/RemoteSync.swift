@@ -24,7 +24,7 @@ public protocol Mailbox: Sendable {
 
 /// Opens mailboxes on one storage (one relay, one iCloud account…).
 public protocol MailboxStore: Sendable {
-    /// `token` proves the right to read and write (the relay stores only its hash).
+    /// `token` proves the right to read and write; the mailbox ID is derived from it.
     func mailbox(id: String, token: String) -> Mailbox
     /// A device's inbox: anyone may drop a key grant in it, only its owner reads it.
     func inbox(id: String, token: String) -> Mailbox

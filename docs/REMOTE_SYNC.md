@@ -24,7 +24,7 @@ from a primary source and should be tested before anything depends on them.
 > - Pairing on the local network uses a commit-then-reveal key exchange with a
 >   confirmation code (as in Bluetooth numeric comparison), not a PAKE.
 > - A PAKE is needed only for remote 6-digit pairing through the relay rendezvous
->   (Phase 3).
+>   (Phase 3 below; phase 6 in the roadmap).
 > - V1 sends whole snapshots instead of per-device logs; logs remain an
 >   optimisation for large cellars.
 

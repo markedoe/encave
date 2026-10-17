@@ -1,7 +1,7 @@
 import Foundation
 
-/// Persistence for a cellar. The JSON file store is the first implementation;
-/// the encrypted sync core will provide another one behind the same protocol.
+/// Persistence for a cellar. Sync does not change it: its metadata is kept next
+/// to the cellar (`SyncStateFile`).
 public protocol CellarStore: Sendable {
     func load() throws -> Cellar
     func save(_ cellar: Cellar) throws

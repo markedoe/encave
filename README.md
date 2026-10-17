@@ -30,11 +30,15 @@ where each bottle sits in your racks, and when it is ready to drink.
   - wines discovered elsewhere, with tags and a shopping list.
 - **Your devices:**
   - Pair them with a QR code or a 6-digit code.
-  - They sync directly on the same Wi-Fi, or away from home through iCloud or a
-    relay you choose. Everything is encrypted from end to end.
+  - They sync directly on the same Wi-Fi, or away from home through a relay you
+    choose (iCloud too, in builds set up with an iCloud container). Everything
+    is encrypted from end to end.
 - **Reminders and Siri:** a monthly reminder of the bottles to drink, "What should
   I open tonight?", wines in Spotlight. Everything is worked out on the device.
 - French and English, light and dark mode, Dynamic Type, VoiceOver and TalkBack.
+
+Android has the cellar, racks, Tonight, Journal and AI recognition. Sync and the
+newer features are in progress (see the [roadmap](docs/ROADMAP.md)).
 
 ## Principles
 

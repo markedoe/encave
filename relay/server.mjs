@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Self-hosted Encave relay: Node 18 or later, no dependencies. Files are kept in
+// Self-hosted Encave relay: Node 20 or later, no dependencies. Files are kept in
 // DATA_DIR (default ./data). Put it behind HTTPS (a reverse proxy such as Caddy).
 //
 //   PORT=8787 DATA_DIR=/var/lib/encave-relay node relay/server.mjs
