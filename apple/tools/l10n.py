@@ -15,6 +15,17 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Keep Bottle': 'Garder la bouteille',
+    'Christmas dinner': 'Dîner de Noël',
+    'Keeping bottles for an occasion': 'Garder des bouteilles pour une occasion',
+    'On a bottle in a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back.': 'Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible.',
+    'Free This Bottle': 'Libérer cette bouteille',
+    'Keep for an Occasion': 'Garder pour une occasion',
+    'Keep for an Occasion…': 'Garder pour une occasion…',
+    'Kept for %@': 'Gardée pour %@',
+    'Reservation removed': 'Réservation retirée',
+    'Shows the bottles kept for this occasion.': 'Affiche les bouteilles gardées pour cette occasion.',
+    'The bottle stays in its place but is no longer suggested for tonight.': 'La bouteille reste à sa place mais n’est plus proposée pour ce soir.',
     'Less than one bottle a month': 'Moins d’une bouteille par mois',
     'About one bottle a month': 'Environ une bouteille par mois',
     'Show the cellar as a table or a list (Mac)': 'Afficher la cave en tableau ou en liste (Mac)',

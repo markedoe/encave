@@ -440,3 +440,24 @@ import Testing
         #expect(catalog.wineID(number: 2) == nil)
     }
 }
+
+@Suite struct ReservationTests {
+    @Test func reservedBottlesAreKeptForTheirOccasion() throws {
+        var cellar = Cellar()
+        let wine = Wine(name: "Party", vintage: 2018, drinkFrom: 2020, drinkUntil: 2030)
+        let bottles = try cellar.addBottles(of: wine, quantity: 3)
+        try cellar.reserve([bottles[0].id, bottles[1].id], for: "  Paul's 40th ")
+        #expect(cellar.reservations == ["Paul's 40th"])
+        // Tonight offers only the free bottle.
+        #expect(cellar.groupsByMaturity(year: 2026).flatMap(\.groups).map(\.count) == [1])
+        #expect(cellar.groups(filter: CellarFilter(reservation: "paul's 40th"), sort: .name, year: 2026).map(\.count) == [2])
+        try cellar.reserve([bottles[0].id], for: " ")
+        #expect(cellar.bottles[bottles[0].id]?.reservedFor == nil)
+        // All reserved: the wine is not suggested at all.
+        try cellar.reserve(bottles.map(\.id), for: "Wedding")
+        #expect(cellar.groupsByMaturity(year: 2026).isEmpty)
+        var copy = Cellar()
+        try copy.importCSV(CellarExport.csv(cellar))
+        #expect(copy.reservations == ["Wedding"])
+    }
+}

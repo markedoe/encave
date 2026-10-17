@@ -342,6 +342,8 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
     public var tasting: Tasting?
     /// When an ordered bottle should arrive. Only meaningful for `.ordered`.
     public var expectedAt: Date?
+    /// Kept for an occasion ("Paul's 40th"): not suggested for tonight.
+    public var reservedFor: String?
 
     public init(
         id: UUID = UUID(), wineID: UUID, status: Status = .inCellar, slot: Slot? = nil,
@@ -372,6 +374,7 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
         sizeML = try c.decodeIfPresent(Int.self, forKey: .sizeML) ?? 750
         tasting = try c.decodeIfPresent(Tasting.self, forKey: .tasting)
         expectedAt = try c.decodeIfPresent(Date.self, forKey: .expectedAt)
+        reservedFor = try c.decodeIfPresent(String.self, forKey: .reservedFor)
     }
 }
 

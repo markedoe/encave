@@ -52,7 +52,8 @@ implementations:
   (bought, not delivered yet; such a bottle has no place and may carry
   `expectedAt`, a date).
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
-  when empty.
+  when empty. `bottle.reservedFor` is an optional string (the occasion a bottle
+  is kept for).
 - Readers are strict: an unknown value of `wine.color`, `bottle.status` or
   `rack.kind` fails decoding; readers never replace it with a default. A device
   that does not know a new value refuses the sync instead of rewriting the

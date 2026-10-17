@@ -1851,6 +1851,16 @@
         }
       }
     },
+    "Christmas dinner": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dîner de Noël"
+          }
+        }
+      }
+    },
     "Château, cuvée…": {
       "localizations": {
         "fr": {
@@ -3161,6 +3171,16 @@
         }
       }
     },
+    "Free This Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libérer cette bouteille"
+          }
+        }
+      }
+    },
     "Fridge, 2 deep, 6 shelves of 7": {
       "localizations": {
         "fr": {
@@ -3751,6 +3771,16 @@
         }
       }
     },
+    "Keep Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder la bouteille"
+          }
+        }
+      }
+    },
     "Keep Checking": {
       "localizations": {
         "fr": {
@@ -3781,6 +3811,26 @@
         }
       }
     },
+    "Keep for an Occasion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder pour une occasion"
+          }
+        }
+      }
+    },
+    "Keep for an Occasion…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder pour une occasion…"
+          }
+        }
+      }
+    },
     "Keep for later": {
       "localizations": {
         "fr": {
@@ -3801,12 +3851,32 @@
         }
       }
     },
+    "Keeping bottles for an occasion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder des bouteilles pour une occasion"
+          }
+        }
+      }
+    },
     "Keeps devices in sync when they are not on the same Wi-Fi, through a relay that only stores encrypted data.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un relais qui ne stocke que des données chiffrées."
+          }
+        }
+      }
+    },
+    "Kept for %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardée pour %@"
           }
         }
       }
@@ -4657,6 +4727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activé"
+          }
+        }
+      }
+    },
+    "On a bottle in a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible."
           }
         }
       }
@@ -5781,6 +5861,16 @@
         }
       }
     },
+    "Reservation removed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réservation retirée"
+          }
+        }
+      }
+    },
     "Restaurant": {
       "localizations": {
         "fr": {
@@ -6287,6 +6377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "N’affiche que les vins à boire bientôt."
+          }
+        }
+      }
+    },
+    "Shows the bottles kept for this occasion.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les bouteilles gardées pour cette occasion."
           }
         }
       }
@@ -6927,6 +7027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La réponse du service d’IA est illisible."
+          }
+        }
+      }
+    },
+    "The bottle stays in its place but is no longer suggested for tonight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La bouteille reste à sa place mais n’est plus proposée pour ce soir."
           }
         }
       }

@@ -181,6 +181,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Import CellarTracker and Vivino CSV exports | Done | Planned |
 | Year in wine, drink-down plan | Done | Planned |
 | Bottles on order (en primeur, deliveries) | Done | Format supported; screens planned |
+| Bottles kept for an occasion (not suggested for tonight) | Done | Planned |
 | Tags on wines, filter chips | Done | Format supported; screens planned |
 | "Why this window", drink sooner or keep longer | Done | Planned |
 | Ask your cellar (on-device language model) | Done (Apple Intelligence devices) | Later |

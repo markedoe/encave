@@ -53,7 +53,7 @@ public enum CellarExport {
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
-        "rating", "tasted_on", "note", "expected_on", "tags",
+        "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
     ]
 
     /// One row per bottle, including bottles on order. Includes consumed and
@@ -80,6 +80,7 @@ public enum CellarExport {
                 bottle.purchasePlace, bottle.receivedFrom, String(bottle.sizeML),
                 bottle.tasting?.rating.map(String.init), bottle.tasting.map { day.string(from: $0.date) },
                 bottle.tasting?.note, bottle.expectedAt.map(day.string(from:)), wine.tags?.joined(separator: "; "),
+                bottle.reservedFor,
             ]
             lines.append(fields.map { escape($0 ?? "") }.joined(separator: ","))
         }
@@ -169,6 +170,7 @@ public extension Cellar {
                     currency: value("currency") ?? settings.currency, purchasePlace: value("purchase_place"),
                     receivedFrom: value("received_from"), sizeML: value("size_ml").flatMap { Int($0) } ?? 750
                 )
+                bottle.reservedFor = value("reserved_for")
                 let status = value("status").flatMap { Bottle.Status(rawValue: $0) } ?? .inCellar
                 if status == .consumed {
                     bottle.status = .consumed
@@ -246,7 +248,7 @@ enum CSVColumns {
         "receivedfrom": "received_from", "sizeml": "size_ml", "tastedon": "tasted_on",
         "rating": "rating", "yourrating": "rating", "note": "note", "notes": "note", "yourreview": "note",
         "personalnote": "note", "commentaire": "note",
-        "tags": "tags", "tag": "tags",
+        "tags": "tags", "tag": "tags", "reservedfor": "reserved_for", "reserved": "reserved_for",
         "expectedon": "expected_on", "deliverydate": "expected_on", "livraison": "expected_on",
         "scandate": "scan_date", "scanreviewlocation": "place", "place": "place", "lieu": "place",
     ]
