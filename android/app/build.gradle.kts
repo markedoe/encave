@@ -53,6 +53,9 @@ android {
             it.systemProperty("encave.tokens", rootProject.file("../design/tokens.json").absolutePath)
             // Robolectric intercepts FileDescriptor.sync(), used by the atomic cellar save.
             it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+            // Screen tour screenshots (uploaded by CI, never committed).
+            it.systemProperty("encave.screens", layout.buildDirectory.dir("screens").get().asFile.absolutePath)
+            it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
         }
     }
 }

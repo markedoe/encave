@@ -1,5 +1,7 @@
 package app.encave.ui
 
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -127,6 +129,7 @@ fun EncaveApp(viewModel: AppViewModel) {
                         onClick = { navigator.openTopLevel(destination) },
                         icon = { Icon(if (isSelected) destination.selectedIcon else destination.icon, contentDescription = null) },
                         label = { Text(stringResource(destination.label)) },
+                        modifier = Modifier.testTag("nav.${destination.name}"),
                     )
                 }
             },

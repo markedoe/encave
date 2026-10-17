@@ -1,5 +1,6 @@
 package app.encave.ui.settings
 
+import androidx.compose.ui.platform.testTag
 import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -172,7 +173,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 
             SectionHeader(stringResource(R.string.settings_about))
             ListItem(
-                modifier = Modifier.clickable { navigator.open(HelpRoute()) },
+                modifier = Modifier.testTag("settings.help").clickable { navigator.open(HelpRoute()) },
                 leadingContent = { Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.help_title)) },
                 supportingContent = { Text(stringResource(R.string.help_encave)) },

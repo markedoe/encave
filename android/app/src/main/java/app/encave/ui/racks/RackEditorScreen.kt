@@ -1,5 +1,7 @@
 package app.encave.ui.racks
 
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -306,10 +308,9 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                 OutlinedButton(
                     onClick = { confirmDelete = true },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("action.delete_rack"),
                 ) {
-                    Icon(Icons.Outlined.Delete, contentDescription = null)
-                    Text(stringResource(R.string.rack_delete), Modifier.padding(start = Dimens.s))
+                    ActionContent(stringResource(R.string.rack_delete), Icons.Outlined.Delete)
                 }
             }
             HelpLink(HelpTopic.Racks, R.string.help_link_racks)

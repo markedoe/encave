@@ -1,5 +1,7 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -189,6 +191,7 @@ private fun CellarList(
                         Icon(Icons.Outlined.AutoAwesome, contentDescription = stringResource(R.string.discovery_new_long))
                     }
                     ExtendedFloatingActionButton(
+                        modifier = Modifier.testTag("action.fab_add"),
                         onClick = { navigator.open(AddBottleRoute()) },
                         expanded = fabExpanded,
                         icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -207,9 +210,8 @@ private fun CellarList(
                 body = stringResource(R.string.cellar_empty_body),
                 modifier = Modifier.padding(padding),
             ) {
-                Button(onClick = { navigator.open(AddBottleRoute()) }) {
-                    Icon(Icons.Filled.Add, contentDescription = null)
-                    Text(stringResource(R.string.action_add_bottle), Modifier.padding(start = Dimens.s))
+                Button(onClick = { navigator.open(AddBottleRoute()) }, modifier = Modifier.testTag("action.empty_add")) {
+                    ActionContent(stringResource(R.string.action_add_bottle), Icons.Filled.Add)
                 }
                 OutlinedButton(onClick = { viewModel.loadSample(sampleLabels(resources)) }) {
                     Text(stringResource(R.string.action_load_sample))
@@ -262,7 +264,7 @@ private fun CellarList(
                                 },
                                 onEdit = { navigator.open(EditWineRoute(group.id.toString())) },
                                 onDelete = { deleting = group },
-                                modifier = Modifier.animateItem(),
+                                modifier = Modifier.animateItem().testTag("wine.row"),
                             )
                             HorizontalDivider(Modifier.padding(start = 56.dp))
                         }
@@ -384,7 +386,7 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
                 }
             }
-            IconButton(onClick = onSettings) {
+            IconButton(onClick = onSettings, modifier = Modifier.testTag("action.settings")) {
                 Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
             }
         }

@@ -1,5 +1,6 @@
 package app.encave.ui.journal
 
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.filled.Add
@@ -110,6 +111,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         floatingActionButton = {
             ExtendedFloatingActionButton(
+                modifier = Modifier.testTag("action.remember"),
                 onClick = { navigator.open(DiscoveryEditorRoute()) },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.discovery_new)) },
@@ -136,7 +138,10 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 SegmentedButton(selected = !showDiscoveries, onClick = { showDiscoveries = false }, shape = SegmentedButtonDefaults.itemShape(0, 2)) {
                     Text(stringResource(R.string.journal_tastings))
                 }
-                SegmentedButton(selected = showDiscoveries, onClick = { showDiscoveries = true }, shape = SegmentedButtonDefaults.itemShape(1, 2)) {
+                SegmentedButton(
+                    selected = showDiscoveries, onClick = { showDiscoveries = true }, shape = SegmentedButtonDefaults.itemShape(1, 2),
+                    modifier = Modifier.testTag("journal.discoveries"),
+                ) {
                     Text(stringResource(R.string.journal_discoveries))
                 }
             }

@@ -1,5 +1,7 @@
 package app.encave.ui.discoveries
 
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -243,10 +245,9 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
                 OutlinedButton(
                     onClick = { confirmDelete = true },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l).testTag("action.delete_discovery"),
                 ) {
-                    Icon(Icons.Outlined.Delete, contentDescription = null)
-                    Text(stringResource(R.string.discovery_delete), Modifier.padding(start = Dimens.s))
+                    ActionContent(stringResource(R.string.discovery_delete), Icons.Outlined.Delete)
                 }
             }
             HelpLink(HelpTopic.Discoveries, R.string.help_link_discoveries)

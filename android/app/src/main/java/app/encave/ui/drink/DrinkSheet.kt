@@ -1,5 +1,7 @@
 package app.encave.ui.drink
 
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -249,11 +251,8 @@ fun DrinkSheet(
             TastingFields(form)
             Button(
                 onClick = { onDrink(chosen, form.toTasting()); onDismiss() },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Outlined.LocalBar, contentDescription = null)
-                Text(stringResource(R.string.action_drink), Modifier.padding(start = Dimens.s))
-            }
+                modifier = Modifier.fillMaxWidth().testTag("action.drink_confirm"),
+            ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
             HelpLink(HelpTopic.Drinking, R.string.help_link_tasting)
         }
     }

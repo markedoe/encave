@@ -28,7 +28,7 @@ S = [
  ("action_undo", "Undo", "Annuler"),
  ("action_drink", "Drink", "Boire"),
  ("action_add_bottle", "Add bottle", "Ajouter une bouteille"),
- ("action_add_bottles", "Add bottles", "Ajouter des bouteilles"),
+ ("action_add_bottles", "Add bottles", "Ajouter"),
  ("action_show_in_rack", "Show in rack", "Voir dans le casier"),
  ("action_move", "Move", "Déplacer"),
  ("action_mark_gone", "Given away, sold or broken", "Donnée, vendue ou cassée"),

@@ -1,5 +1,6 @@
 package app.encave.ui.racks
 
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -108,7 +109,7 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             itemsIndexed(cellar.racks, key = { _, rack -> rack.id.toString() }) { index, rack ->
                 val used = cellar.occupancy(rack)
                 ListItem(
-                    modifier = Modifier.animateItem().clickable(enabled = !reordering) {
+                    modifier = Modifier.animateItem().testTag("rack.row.$index").clickable(enabled = !reordering) {
                         navigator.open(RackDetailRoute(rack.id.toString()))
                     },
                     leadingContent = { RackThumbnail(rack, cellar, Modifier.padding(vertical = Dimens.xs)) },
