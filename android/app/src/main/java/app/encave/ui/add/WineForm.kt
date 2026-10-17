@@ -216,7 +216,7 @@ fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier =
 }
 
 @Composable
-fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier = Modifier) {
+fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier = Modifier, showsTags: Boolean = true) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
             AutoCompleteField(
@@ -233,7 +233,8 @@ fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier 
         )
         GrapesField(form, known.grapes)
         Hint(stringResource(R.string.help_origin_footer))
-        WineTagsField(form, known.tags)
+        // Discoveries have tags of their own.
+        if (showsTags) WineTagsField(form, known.tags)
         OutlinedTextField(
             value = form.notes, onValueChange = { form.notes = it },
             label = { Text(stringResource(R.string.field_notes)) }, minLines = 2, modifier = Modifier.fillMaxWidth(),

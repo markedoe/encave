@@ -333,6 +333,9 @@ class ScreenTourTest(private val device: String, private val language: String) {
         if (device != "tablet") return
         tab("Racks")
         tap("rack.row.0")
+        // Let the rack settle (fitted to the screen) before measuring places.
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.waitForIdle()
         val from = bounds("cell.0.0")!!
         val to = bounds("cell.2.3")!!
         compose.onNodeWithTag("cell.0.0").performTouchInput {
@@ -346,10 +349,12 @@ class ScreenTourTest(private val device: String, private val language: String) {
         capture("38-rack-dragging")
         compose.onNodeWithTag("cell.0.0").performTouchInput { up() }
         compose.waitForIdle()
-        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
-        val cellar = application.repository.cellar.value
-        val rack = cellar.racks.first()
-        assertTrue("$device-$language: the bottle did not move", cellar.bottleAt(app.encave.core.Slot(rack.id, 2, 3)) != null)
+        // The move is saved in the background: wait for it.
+        val repository = ApplicationProvider.getApplicationContext<EncaveApplication>().repository
+        compose.waitUntil(10_000) {
+            val cellar = repository.cellar.value
+            cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
+        }
         capture("39-rack-dropped")
     }
 
