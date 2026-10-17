@@ -3651,6 +3651,26 @@
         }
       }
     },
+    "List": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste"
+          }
+        }
+      }
+    },
+    "List or table": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste ou tableau"
+          }
+        }
+      }
+    },
     "Load sample cellar": {
       "localizations": {
         "fr": {
@@ -3971,6 +3991,16 @@
         }
       }
     },
+    "No bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille"
+          }
+        }
+      }
+    },
     "No device shows this code on this network. Check the code, and that both devices are on the same Wi-Fi.": {
       "localizations": {
         "fr": {
@@ -4287,6 +4317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En commande : %1$lld × %2$@"
+          }
+        }
+      }
+    },
+    "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté."
           }
         }
       }
@@ -5711,12 +5751,42 @@
         }
       }
     },
+    "Show Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le vin"
+          }
+        }
+      }
+    },
     "Show in Rack": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Voir dans le casier"
+          }
+        }
+      }
+    },
+    "Show or hide the selected wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher ou masquer le vin sélectionné"
+          }
+        }
+      }
+    },
+    "Show the cellar as a list or a table": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la cave en liste ou en tableau"
           }
         }
       }
@@ -6107,6 +6177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Synchronisation…"
+          }
+        }
+      }
+    },
+    "Table": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tableau"
           }
         }
       }
@@ -7251,6 +7331,16 @@
         }
       }
     },
+    "View": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichage"
+          }
+        }
+      }
+    },
     "Vintage": {
       "localizations": {
         "fr": {
@@ -7357,6 +7447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil (par exemple après avoir essayé la cave d’exemple)."
+          }
+        }
+      }
+    },
+    "When to drink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand boire"
           }
         }
       }

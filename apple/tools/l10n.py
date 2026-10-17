@@ -15,6 +15,16 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'List or table': 'Liste ou tableau',
+    'On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.': 'Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.',
+    'List': 'Liste',
+    'Table': 'Tableau',
+    'View': 'Affichage',
+    'No bottles': 'Aucune bouteille',
+    'Show Wine': 'Afficher le vin',
+    'Show or hide the selected wine': 'Afficher ou masquer le vin sélectionné',
+    'Show the cellar as a list or a table': 'Afficher la cave en liste ou en tableau',
+    'When to drink': 'Quand boire',
     'Bottles on order': 'Bouteilles en commande',
     'Bottles on order are listed apart and are not suggested for tonight until they arrive.': 'Les bouteilles en commande sont listées à part et ne sont pas proposées pour ce soir avant leur arrivée.',
     'Bottles received: %lld': 'Bouteilles reçues : %lld',
@@ -875,7 +885,7 @@ APP_SHORTCUTS = {
 UI_CALL = re.compile(r'(?<![A-Za-z0-9_])(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
                      r'DisclosureGroup|SecureField|LabeledField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text|LocalizedStringResource =|TypeDisplayRepresentation =|'
-                     r'IntentDescription|dialog:|shortTitle:)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
+                     r'IntentDescription|dialog:|shortTitle:|TableColumn)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
 

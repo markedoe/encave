@@ -8,14 +8,27 @@ struct CellarView: View {
     @State private var selection: UUID?
     /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
     @State private var columns: NavigationSplitViewVisibility = .all
+    @AppStorage(CellarLayout.key) private var showsTable = false
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var isWide: Bool { sizeClass == .regular }
+    #else
+    private let isWide = true
+    #endif
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
-            CellarList(selection: $selection)
-        } detail: {
-            NavigationStack { WinePane(wineID: selection) }
+        Group {
+            if showsTable && isWide {
+                NavigationStack { CellarTable(selection: $selection) }
+            } else {
+                NavigationSplitView(columnVisibility: $columns) {
+                    CellarList(selection: $selection)
+                } detail: {
+                    NavigationStack { WinePane(wineID: selection) }
+                }
+                .navigationSplitViewStyle(.balanced)
+            }
         }
-        .navigationSplitViewStyle(.balanced)
         // Opened from Spotlight, Shortcuts or a notification.
         .onChange(of: model.openWineRequest, initial: true) { _, id in
             guard let id else { return }
@@ -51,6 +64,12 @@ struct CellarList: View {
     @State private var isSelecting = false
     @State private var picked: Set<UUID> = []
     @State private var confirmingDelete = false
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var isWide: Bool { sizeClass == .regular }
+    #else
+    private let isWide = true
+    #endif
 
     var body: some View {
         Group {
@@ -157,6 +176,9 @@ struct CellarList: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
+            if isWide {
+                CellarLayoutPicker()
+            }
             Menu {
                 Button("Select Wines", systemImage: "checkmark.circle") {
                     picked = []

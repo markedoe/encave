@@ -31,6 +31,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Racks", body: "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.", systemImage: "square.grid.3x3"),
                 HelpSection(title: "Tonight", body: "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.", systemImage: "moon.stars"),
                 HelpSection(title: "Journal", body: "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.", systemImage: "book.closed"),
+                HelpSection(title: "List or table", body: "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.", systemImage: "tablecells"),
                 HelpSection(title: "Try it", body: "In **Settings**, load the sample cellar to explore every screen, then erase it when you are ready to add your own bottles."),
             ]),
             HelpArticle(topic: .adding, title: "Adding bottles",

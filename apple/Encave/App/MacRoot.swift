@@ -16,16 +16,30 @@ struct MacRoot: View {
     @State private var wine: UUID?
     @State private var bottle: UUID?
     @State private var columns: NavigationSplitViewVisibility = .all
+    @AppStorage(CellarLayout.key) private var showsTable = false
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
-            sidebar
-                .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 300)
-        } content: {
-            middle
-                .navigationSplitViewColumnWidth(min: 300, ideal: 360, max: 520)
-        } detail: {
-            NavigationStack { detail }
+        Group {
+            if destination == .cellar && showsTable {
+                // The table needs the width: sidebar, then the table with the wine
+                // in an inspector.
+                NavigationSplitView(columnVisibility: $columns) {
+                    sidebar
+                        .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 300)
+                } detail: {
+                    NavigationStack { CellarTable(selection: $wine) }
+                }
+            } else {
+                NavigationSplitView(columnVisibility: $columns) {
+                    sidebar
+                        .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 300)
+                } content: {
+                    middle
+                        .navigationSplitViewColumnWidth(min: 300, ideal: 360, max: 520)
+                } detail: {
+                    NavigationStack { detail }
+                }
+            }
         }
         // Like Mail: open on the first wine rather than an empty page.
         .onAppear {
