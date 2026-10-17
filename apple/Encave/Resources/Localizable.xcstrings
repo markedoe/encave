@@ -41,6 +41,16 @@
         }
       }
     },
+    "%@ · %lld bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$lld bouteilles"
+          }
+        }
+      }
+    },
     "%@, %@": {
       "localizations": {
         "fr": {
@@ -341,6 +351,16 @@
         }
       }
     },
+    "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché."
+          }
+        }
+      }
+    },
     "5 rows of 8": {
       "localizations": {
         "fr": {
@@ -377,6 +397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une sauvegarde contient tout et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel."
+          }
+        }
+      }
+    },
+    "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une sauvegarde contient tout et s’importe sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -1447,6 +1477,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cave"
+          }
+        }
+      }
+    },
+    "Cellar inventory": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inventaire de la cave"
           }
         }
       }
@@ -3441,6 +3481,16 @@
         }
       }
     },
+    "Inventory for Printing (PDF)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inventaire à imprimer (PDF)"
+          }
+        }
+      }
+    },
     "Irregular racks": {
       "localizations": {
         "fr": {
@@ -3847,6 +3897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche de l’appareil qui affiche %@…"
+          }
+        }
+      }
+    },
+    "Made with Encave": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réalisé avec Encave"
           }
         }
       }
@@ -4771,6 +4831,16 @@
         }
       }
     },
+    "Page %lld of %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
     "Palate": {
       "localizations": {
         "fr": {
@@ -4991,6 +5061,16 @@
         }
       }
     },
+    "Printed inventory": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inventaire imprimé"
+          }
+        }
+      }
+    },
     "Privacy": {
       "localizations": {
         "fr": {
@@ -5047,6 +5127,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Détails d’achat"
+          }
+        }
+      }
+    },
+    "Purchase value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur d’achat"
+          }
+        }
+      }
+    },
+    "Purchase value: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur d’achat : %@"
           }
         }
       }

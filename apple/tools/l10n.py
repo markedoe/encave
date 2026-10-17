@@ -15,6 +15,16 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Printed inventory': 'Inventaire imprimé',
+    '**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.': '**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché.',
+    'A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.': 'Une sauvegarde contient tout et s’importe sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement.',
+    'Cellar inventory': 'Inventaire de la cave',
+    'Inventory for Printing (PDF)': 'Inventaire à imprimer (PDF)',
+    'Made with Encave': 'Réalisé avec Encave',
+    'Page %lld of %lld': 'Page %1$lld sur %2$lld',
+    'Purchase value': 'Valeur d’achat',
+    'Purchase value: %@': 'Valeur d’achat : %@',
+    '%@ · %lld bottles': '%1$@ · %2$lld bouteilles',
     'The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.': 'La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.',
     'Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.': 'Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.',
     'Changes from another device could not be read. Update Encave on all your devices.': 'Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.',

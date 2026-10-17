@@ -107,6 +107,12 @@ struct SettingsView: View {
                     Label("Export Spreadsheet (CSV)", systemImage: "tablecells")
                 }
                 Button {
+                    exportInventory()
+                } label: {
+                    Label("Inventory for Printing (PDF)", systemImage: "doc.richtext")
+                }
+                .disabled(model.cellar.bottlesInCellar.isEmpty)
+                Button {
                     importing = true
                 } label: {
                     Label("Import…", systemImage: "square.and.arrow.down")
@@ -114,7 +120,7 @@ struct SettingsView: View {
             } header: {
                 Text("Your data")
             } footer: {
-                Text("A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.")
+                Text("A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
             }
 
             AISettingsSection()
@@ -195,6 +201,12 @@ struct SettingsView: View {
         }
     }
 
+    private func exportInventory() {
+        let date = Date.now.formatted(.iso8601.year().month().day())
+        guard let data = InventoryPDF.make(for: model) else { return }
+        exportDocument = ExportDocument(data: data, contentType: .pdf, filename: "Encave inventory \(date).pdf")
+    }
+
     private func handleImport(_ result: Result<URL, Error>) {
         guard case .success(let url) = result else { return }
         let accessing = url.startAccessingSecurityScopedResource()
@@ -223,7 +235,7 @@ struct SettingsView: View {
 
 /// In-memory file for the exporter.
 struct ExportDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.json, .commaSeparatedText] }
+    static var readableContentTypes: [UTType] { [.json, .commaSeparatedText, .pdf] }
     var data: Data
     var contentType: UTType
     var filename: String
