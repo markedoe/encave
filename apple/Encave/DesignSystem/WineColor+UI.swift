@@ -14,6 +14,14 @@ extension WineColor {
         }
     }
 
+    /// Light wine colors need dark text written on them; red and fortified need light text.
+    var prefersDarkLabel: Bool {
+        switch self {
+        case .red, .fortified: false
+        case .white, .rose, .sparkling, .dessert, .orange: true
+        }
+    }
+
     /// Colors come from the asset catalog (see design/tokens.json), with light and dark variants.
     var tint: Color {
         switch self {

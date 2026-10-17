@@ -21,6 +21,16 @@
         }
       }
     },
+    "%@, %lld bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$lld bouteilles"
+          }
+        }
+      }
+    },
     "%@, %lld of %lld bottles": {
       "localizations": {
         "fr": {
@@ -831,6 +841,16 @@
         }
       }
     },
+    "Bottle List": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste des bouteilles"
+          }
+        }
+      }
+    },
     "Bottle not found": {
       "localizations": {
         "fr": {
@@ -1257,6 +1277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cliquez sur un emplacement du casier pour y ajouter une bouteille."
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
           }
         }
       }
@@ -1801,6 +1831,16 @@
         }
       }
     },
+    "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher."
+          }
+        }
+      }
+    },
     "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color.": {
       "localizations": {
         "fr": {
@@ -2017,6 +2057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trouvez la bonne bouteille pour votre plat"
+          }
+        }
+      }
+    },
+    "Finding a bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver une bouteille"
           }
         }
       }
@@ -2931,6 +2981,16 @@
         }
       }
     },
+    "NV": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NM"
+          }
+        }
+      }
+    },
     "Name": {
       "localizations": {
         "fr": {
@@ -3467,6 +3527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photos"
+          }
+        }
+      }
+    },
+    "Pinch to zoom in and out, or double-tap a spot. On the Mac, pinch on the trackpad or use ⌘+ and ⌘–. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pincez pour zoomer, ou touchez deux fois un endroit. Sur Mac, pincez sur le trackpad ou utilisez ⌘+ et ⌘–. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement."
           }
         }
       }
@@ -4301,6 +4371,16 @@
         }
       }
     },
+    "Shows where its bottles are in the rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Montre où sont ses bouteilles dans le casier."
+          }
+        }
+      }
+    },
     "Silky, red fruit, long finish.": {
       "localizations": {
         "fr": {
@@ -4517,6 +4597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
+          }
+        }
+      }
+    },
+    "Tap a place in the rack to add a bottle there.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez un emplacement du casier pour y ajouter une bouteille."
           }
         }
       }
@@ -5341,6 +5431,16 @@
         }
       }
     },
+    "Wine Page": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fiche du vin"
+          }
+        }
+      }
+    },
     "Wine fridge": {
       "localizations": {
         "fr": {
@@ -5587,6 +5687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zoomer sur un casier"
+          }
+        }
+      }
+    },
+    "Zooming": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoomer"
           }
         }
       }

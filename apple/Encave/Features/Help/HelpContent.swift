@@ -56,6 +56,8 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Wine fridge or cabinet", body: "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.", systemImage: "refrigerator"),
                 HelpSection(title: "Bins or crates", body: "Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.", systemImage: "diamond"),
                 HelpSection(title: "Places", body: "Rows are lettered from the top and cells numbered from the left: **B3** is the second row, third cell. When a cell holds several bottles, **B3-2** is the second one (behind, or in the pile)."),
+                HelpSection(title: "Finding a bottle", body: "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.", systemImage: "magnifyingglass"),
+                HelpSection(title: "Zooming", body: "Pinch to zoom in and out, or double-tap a spot. On the Mac, pinch on the trackpad or use ⌘+ and ⌘–. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.", systemImage: "plus.magnifyingglass"),
                 HelpSection(title: "Moving bottles", body: "Tap a bottle, then **Move**, then the new place. Tapping another bottle swaps them; a bin takes the bottle if it has room."),
                 HelpSection(title: "Irregular racks", body: "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row."),
             ]),

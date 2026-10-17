@@ -15,6 +15,19 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    "Finding a bottle": "Trouver une bouteille",
+    "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.":
+        "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher.",
+    "Zooming": "Zoomer",
+    "Pinch to zoom in and out, or double-tap a spot. On the Mac, pinch on the trackpad or use ⌘+ and ⌘–. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.":
+        "Pincez pour zoomer, ou touchez deux fois un endroit. Sur Mac, pincez sur le trackpad ou utilisez ⌘+ et ⌘–. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.",
+    "Bottle List": "Liste des bouteilles",
+    "Close": "Fermer",
+    "NV": "NM",
+    "Shows where its bottles are in the rack.": "Montre où sont ses bouteilles dans le casier.",
+    "Tap a place in the rack to add a bottle there.": "Touchez un emplacement du casier pour y ajouter une bouteille.",
+    "Wine Page": "Fiche du vin",
+    "%@, %lld bottles": "%1$@, %2$lld bouteilles",
     "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.":
         "Une sauvegarde contient tout et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel.",
     "About": "À propos",

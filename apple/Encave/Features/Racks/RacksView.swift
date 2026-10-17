@@ -3,7 +3,7 @@ import SwiftUI
 
 struct RacksView: View {
     @Environment(CellarModel.self) private var model
-    @State private var path: [UUID] = []
+    @State private var path = NavigationPath()
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -56,7 +56,9 @@ struct RacksView: View {
                 }
             }
             .onChange(of: model.highlightedSlot, initial: true) { _, slot in
-                if let slot, path.last != slot.rackID { path = [slot.rackID] }
+                guard let slot else { return }
+                let rack = NavigationPath([slot.rackID])
+                if path != rack { path = rack }
             }
         }
     }

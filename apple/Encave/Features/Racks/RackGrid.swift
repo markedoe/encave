@@ -13,6 +13,10 @@ struct RackGrid: View {
     /// Slots chosen in a picker, shown with a check mark.
     var selected: Set<Slot> = []
     var highlighted: Slot?
+    /// The bottle shown in the card under the rack.
+    var selectedCell: RackCell?
+    /// A wine chosen in the key: its bottles stand out, the others fade.
+    var focusWine: UUID?
     var showsHeaders = true
     var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
 
@@ -55,7 +59,8 @@ struct RackGrid: View {
                             RackCellView(
                                 rack: rack, cell: cell, bottles: bottlesByCell[cell] ?? [],
                                 size: size, selectedCount: selectedByCell[cell]?.count ?? 0,
-                                isHighlighted: highlighted?.cell == cell, onTap: onTap
+                                isHighlighted: highlighted?.cell == cell || selectedCell == cell,
+                                focusWine: focusWine, onTap: onTap
                             )
                         }
                     }
@@ -124,30 +129,47 @@ extension RackGrid {
         }
         if showsHeaders { width += 0.5 }
         let fit = min(space.width / width, space.height / height)
-        return min(max(fit, 26), 80)
+        // From this size, grid and shelf cells also show the wine's name, so rows get taller.
+        if fit >= RackCellView.nameSize, rack.kind == .grid || rack.kind == .shelves {
+            let taller = height + rows * (RackCellView.nameHeightRatio - 1)
+            let withNames = min(space.width / width, space.height / taller)
+            return min(max(withNames >= RackCellView.nameSize ? withNames : min(fit, RackCellView.nameSize - 0.5), 26), 84)
+        }
+        return min(max(fit, 26), 84)
     }
 }
 
-/// A rack drawn as large as the space allows, scrollable when zoomed in.
+/// A rack drawn as large as the space allows. Pinch to zoom (and double-tap on iPhone
+/// and iPad); on the Mac, trackpad pinch and the zoom buttons set `zoom`.
 struct FittedRackGrid: View {
     let rack: Rack
-    /// 1 fits the whole rack; more zooms in.
+    /// Mac: 1 fits the whole rack; more zooms in. iPhone and iPad zoom natively.
     var zoom: CGFloat = 1
     var selected: Set<Slot> = []
     var highlighted: Slot?
+    var selectedCell: RackCell?
+    var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
+
+    static let padding: CGFloat = 16
 
     var body: some View {
         GeometryReader { proxy in
-            let padding: CGFloat = 16
+            let padding = Self.padding
             let space = CGSize(width: proxy.size.width - padding * 2, height: proxy.size.height - padding * 2)
             let base = RackGrid.fittingCellSize(for: rack, in: space)
+            #if os(iOS)
+            ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
+                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap)
+            #else
             ScrollView([.horizontal, .vertical]) {
-                RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted, onTap: onTap)
+                RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
+                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap)
                     .padding(padding)
                     .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
             }
             .defaultScrollAnchor(.center)
+            #endif
         }
     }
 }
@@ -174,9 +196,24 @@ struct RackCellView: View {
     let size: CGFloat
     var selectedCount = 0
     var isHighlighted = false
+    var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void
 
+    /// From this cell size the vintage is written on the bottle; from `nameSize`, the name below it.
+    static let vintageSize: CGFloat = 34
+    static let nameSize: CGFloat = 56
+    /// Cells showing a name are this much taller than wide.
+    static let nameHeightRatio: CGFloat = 1.3
+
     private func color(_ bottle: Bottle) -> WineColor? { model.cellar.wines[bottle.wineID]?.color }
+
+    private var showsName: Bool { size >= Self.nameSize && (rack.kind == .grid || rack.kind == .shelves) }
+    private var showsVintage: Bool { size >= Self.vintageSize && rack.kind != .bins }
+    private var cellHeight: CGFloat { showsName ? size * Self.nameHeightRatio : size }
+
+    /// With a wine chosen in the key: does this cell hold it?
+    private var isFocused: Bool { focusWine.map { id in bottles.contains { $0.wineID == id } } ?? false }
+    private var isDimmed: Bool { focusWine != nil && !isFocused }
 
     var body: some View {
         Button {
@@ -185,10 +222,12 @@ struct RackCellView: View {
             Group {
                 if rack.kind == .bins { bin } else { position }
             }
-            .frame(width: size, height: size)
+            .frame(width: size, height: cellHeight)
             .contentShape(Rectangle())
+            .opacity(isDimmed ? 0.25 : 1)
         }
         .buttonStyle(.plain)
+        .help(Text(verbatim: bottles.compactMap { model.cellar.wines[$0.wineID]?.displayName }.joined(separator: ", ")))
         .accessibilityLabel(accessibilityText)
         .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)")
         .accessibilityAddTraits(selectedCount > 0 ? .isSelected : [])
@@ -198,23 +237,44 @@ struct RackCellView: View {
 
     private var position: some View {
         let front = bottles.first { $0.slot?.depth == 0 }
-        let behind = bottles.filter { ($0.slot?.depth ?? 0) > 0 }
-        return ZStack {
-            switch rack.kind {
-            case .grid:
+        let shown = front ?? bottles.first
+        let wine = shown.flatMap { model.cellar.wines[$0.wineID] }
+        return VStack(spacing: size * 0.03) {
+            bottleSquare
+                .frame(width: size, height: size)
+            if showsName {
+                Text(verbatim: wine?.name ?? "")
+                    .font(.system(size: max(9, size * 0.15), weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: size * 0.96)
+                    .foregroundStyle(isFocused ? Color.accentColor : Color.primary)
+            }
+        }
+        .background {
+            if rack.kind == .grid {
                 RoundedRectangle(cornerRadius: size * 0.16, style: .continuous)
                     .fill(Color.secondary.opacity(0.08))
                     .overlay(
                         RoundedRectangle(cornerRadius: size * 0.16, style: .continuous)
-                            .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 1)
+                            .strokeBorder(isFocused ? Color.accentColor : Color.secondary.opacity(0.18),
+                                          lineWidth: isFocused ? 2 : 1)
                     )
-            case .staggered:
+            }
+        }
+    }
+
+    /// The bottle end, with the vintage written on it when there is room.
+    private var bottleSquare: some View {
+        let front = bottles.first { $0.slot?.depth == 0 }
+        let behind = bottles.filter { ($0.slot?.depth ?? 0) > 0 }
+        return ZStack {
+            if rack.kind == .staggered {
                 Circle().fill(Color.secondary.opacity(0.1))
-            default:
-                EmptyView()
             }
             if let front {
-                BottleEnd(color: color(front), size: size * 0.72, isHighlighted: isHighlighted)
+                BottleEnd(color: color(front), size: size * 0.72, isHighlighted: isHighlighted || isFocused)
+                if showsVintage { vintageLabel(front, diameter: size * 0.72) }
             } else if let back = behind.first {
                 // Nothing in front: show the bottle behind, smaller and faded.
                 BottleEnd(color: color(back), size: size * 0.52, isHighlighted: isHighlighted)
@@ -230,8 +290,27 @@ struct RackCellView: View {
             if selectedCount > 0 { selectionBadge }
         }
         .overlay(alignment: .bottom) {
-            if rack.positionsPerCell > 1 { depthDots.offset(y: rack.kind == .shelves ? size * 0.16 : -size * 0.02) }
+            if rack.positionsPerCell > 1 { depthDots.offset(y: rack.kind == .shelves && !showsName ? size * 0.16 : size * 0.02) }
         }
+    }
+
+    /// The vintage on the bottle end ("2017", or "NV"), in a color readable on that wine's tint.
+    private func vintageLabel(_ bottle: Bottle, diameter: CGFloat) -> some View {
+        let wine = model.cellar.wines[bottle.wineID]
+        let dark = wine?.color?.prefersDarkLabel ?? true
+        return Group {
+            if let vintage = wine?.vintage {
+                Text(verbatim: "\(vintage)")
+            } else {
+                Text("NV")
+            }
+        }
+        .font(.system(size: max(8, diameter * 0.27), weight: .bold).monospacedDigit())
+        .minimumScaleFactor(0.5)
+        .lineLimit(1)
+        .frame(width: diameter * 0.82)
+        .foregroundStyle(dark ? Color.black.opacity(0.78) : Color.white)
+        .accessibilityHidden(true)
     }
 
     /// One dot per place in the cell, front first: filled when a bottle is there.
@@ -258,8 +337,8 @@ struct RackCellView: View {
                 .fill(Color.secondary.opacity(0.08))
                 .overlay(
                     RoundedRectangle(cornerRadius: size * 0.08, style: .continuous)
-                        .strokeBorder(isHighlighted ? Color.accentColor : Color.secondary.opacity(0.3),
-                                      lineWidth: isHighlighted ? 3 : 1.5)
+                        .strokeBorder(isHighlighted || isFocused ? Color.accentColor : Color.secondary.opacity(0.3),
+                                      lineWidth: isHighlighted || isFocused ? 3 : 1.5)
                 )
                 .rotationEffect(.degrees(45))
                 .scaleEffect(0.7)

@@ -1,8 +1,14 @@
 import CaveKit
 import SwiftUI
 
-/// A rack drawn as it looks. Tap a bottle or a bin for what is inside, tap an empty
-/// place to add a bottle there. "Move" lets you pick the destination.
+/// Opens a wine's page from a rack.
+struct WineRoute: Hashable {
+    let id: UUID
+}
+
+/// A rack drawn as it looks. Tap a bottle to see what it is, a place with several
+/// bottles for the list, an empty place to add one there. "Move" picks the destination.
+/// The key at the bottom lists the wines of the rack: tap one to see where its bottles are.
 struct RackDetailView: View {
     @Environment(CellarModel.self) private var model
     let rackID: UUID
@@ -10,72 +16,158 @@ struct RackDetailView: View {
     @GestureState private var pinch: CGFloat = 1
     @State private var openCell: OpenCell?
     @State private var moving: Bottle?
+    @State private var selectedCell: RackCell?
+    @State private var focusWine: UUID?
+    @State private var showsList = false
+    @State private var listSelection: UUID?
+    @State private var afterList: AppSheet?
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
-            FittedRackGrid(
-                rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
-                selected: moving?.slot.map { [$0] } ?? [],
-                highlighted: model.highlightedSlot,
-                onTap: { cell, bottles in tap(rack, cell, bottles) }
-            )
+            canvas(rack)
+                .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar(rack) }
+                .navigationTitle(rack.name)
+                .inlineTitle()
+                .toolbar { toolbar }
+                .navigationDestination(for: WineRoute.self) { WineDetailView(wineID: $0.id) }
+                .sheet(item: $openCell) { open in
+                    CellSheet(rack: rack, cell: open.cell) { action in
+                        openCell = nil
+                        perform(action)
+                    }
+                    .presentationDetents([.medium, .large])
+                    .solidSheetBackground()
+                }
+                .sheet(isPresented: $showsList, onDismiss: {
+                    if let afterList { model.sheet = afterList }
+                    afterList = nil
+                }) {
+                    NavigationStack {
+                        RackBottleList(rackID: rackID, selection: $listSelection, present: { sheet in
+                            afterList = sheet
+                            showsList = false
+                        })
+                        .inlineTitle()
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") { showsList = false }
+                                    .accessibilityIdentifier("sheet.done")
+                            }
+                        }
+                    }
+                    .presentationDetents([.medium, .large])
+                    .solidSheetBackground()
+                }
+                .onChange(of: listSelection) { _, id in
+                    // Chosen in the list: close it and point to the bottle in the drawing.
+                    if id != nil { showsList = false }
+                }
+                .onChange(of: model.highlightedSlot, initial: true) { _, slot in
+                    guard let slot, slot.rackID == rackID else { return }
+                    withAnimation(.snappy) { select(slot.cell, in: rack) }
+                }
+                .onChange(of: selectedCell.map { model.cellar.bottles(in: $0) } ?? []) { _, bottles in
+                    if bottles.isEmpty { selectedCell = nil }
+                }
+                .task(id: model.highlightedSlot) {
+                    guard model.highlightedSlot?.rackID == rackID else { return }
+                    try? await Task.sleep(for: .seconds(4))
+                    withAnimation { model.highlightedSlot = nil }
+                }
+        } else {
+            ContentUnavailableView("Rack not found", systemImage: "questionmark")
+        }
+    }
+
+    @ViewBuilder
+    private func canvas(_ rack: Rack) -> some View {
+        let grid = FittedRackGrid(
+            rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
+            selected: moving?.slot.map { [$0] } ?? [],
+            highlighted: model.highlightedSlot,
+            selectedCell: selectedCell, focusWine: focusWine,
+            onTap: { cell, bottles in tap(rack, cell, bottles) }
+        )
+        #if os(macOS)
+        grid
             .animation(.snappy, value: zoom)
             .gesture(
                 MagnifyGesture()
                     .updating($pinch) { value, state, _ in state = value.magnification }
                     .onEnded { value in zoom = min(3, max(0.6, zoom * value.magnification)) }
             )
-            .safeAreaInset(edge: .bottom) {
-                if let moving {
-                    let displayName = model.cellar.wines[moving.wineID]?.displayName ?? ""
-                    HStack {
-                        Label("Tap where to put \(displayName)", systemImage: "hand.tap")
-                            .font(.subheadline.weight(.medium))
-                            .lineLimit(2)
-                        Spacer()
-                        Button("Cancel") { self.moving = nil }
+        #else
+        grid
+        #endif
+    }
+
+    @ViewBuilder
+    private func bottomBar(_ rack: Rack) -> some View {
+        VStack(spacing: 0) {
+            if let moving {
+                let displayName = model.cellar.wines[moving.wineID]?.displayName ?? ""
+                HStack {
+                    Label("Tap where to put \(displayName)", systemImage: "hand.tap")
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(2)
+                    Spacer()
+                    Button("Cancel") { self.moving = nil }
                         .accessibilityIdentifier("sheet.cancel")
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding()
+            } else {
+                if let cell = selectedCell, let bottle = model.cellar.bottles(in: cell).first {
+                    SelectedBottleCard(rack: rack, bottle: bottle) { action in
+                        perform(action)
+                    } onClose: {
+                        withAnimation(.snappy) { selectedCell = nil }
                     }
-                    .padding()
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .padding()
-                } else {
-                    RackLegend(rack: rack)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                RackKey(rack: rack, focusWine: $focusWine)
             }
-            .navigationTitle(rack.name)
-            .inlineTitle()
-            .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button { zoom = max(0.6, zoom - 0.25) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
-                        .keyboardShortcut("-")
-                        .disabled(zoom <= 0.6)
-                    Button { zoom = min(3, zoom + 0.25) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
-                        .keyboardShortcut("+")
-                        .disabled(zoom >= 3)
-                    Button { model.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
-                }
-            }
-            .sheet(item: $openCell) { open in
-                CellSheet(rack: rack, cell: open.cell) { action in
-                    openCell = nil
-                    switch action {
-                    case .drink(let bottle): model.sheet = .drink(bottleID: bottle.id)
-                    case .move(let bottle): moving = bottle
-                    case .remove(let bottle): model.markGone(bottle.id)
-                    case .add(let slot): model.sheet = .addBottle(AddBottleContext(slot: slot))
-                    }
-                }
-                .presentationDetents([.medium, .large])
-                .solidSheetBackground()
-            }
-            .task(id: model.highlightedSlot) {
-                guard model.highlightedSlot?.rackID == rackID else { return }
-                try? await Task.sleep(for: .seconds(4))
-                withAnimation { model.highlightedSlot = nil }
-            }
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            #if os(macOS)
+            Button { zoom = max(0.6, zoom - 0.25) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
+                .keyboardShortcut("-")
+                .disabled(zoom <= 0.6)
+            Button { zoom = min(3, zoom + 0.25) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
+                .keyboardShortcut("+")
+                .disabled(zoom >= 3)
+            #else
+            Button { listSelection = nil; showsList = true } label: { Label("Bottle List", systemImage: "list.bullet") }
+                .accessibilityIdentifier("rack.list")
+            #endif
+            Button { model.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
+        }
+    }
+
+    private func perform(_ action: CellAction) {
+        switch action {
+        case .drink(let bottle): model.sheet = .drink(bottleID: bottle.id)
+        case .move(let bottle):
+            selectedCell = nil
+            moving = bottle
+        case .remove(let bottle): model.markGone(bottle.id)
+        case .add(let slot): model.sheet = .addBottle(AddBottleContext(slot: slot))
+        }
+    }
+
+    /// One bottle per place: show it in the card. Several: open the list of the place.
+    private func select(_ cell: RackCell, in rack: Rack) {
+        if rack.positionsPerCell == 1 {
+            selectedCell = cell
         } else {
-            ContentUnavailableView("Rack not found", systemImage: "questionmark")
+            selectedCell = nil
         }
     }
 
@@ -93,8 +185,12 @@ struct RackDetailView: View {
             return
         }
         if bottles.isEmpty, let free = model.cellar.freeSlot(in: cell) {
+            selectedCell = nil
             model.sheet = .addBottle(AddBottleContext(slot: free))
+        } else if rack.positionsPerCell == 1, !bottles.isEmpty {
+            withAnimation(.snappy) { selectedCell = cell }
         } else {
+            selectedCell = nil
             openCell = OpenCell(cell: cell)
         }
     }
@@ -105,35 +201,144 @@ private struct OpenCell: Identifiable {
     var id: String { "\(cell.row)-\(cell.column)" }
 }
 
-/// Counts per wine style under the rack.
-private struct RackLegend: View {
+/// The bottle tapped in the rack: what it is and where, with its actions.
+private struct SelectedBottleCard: View {
     @Environment(CellarModel.self) private var model
     let rack: Rack
+    let bottle: Bottle
+    let onAction: (CellAction) -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        let wine = model.cellar.wines[bottle.wineID]
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                BottleEnd(color: wine?.color, size: 40)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(wine?.displayName ?? String(localized: "Unknown wine"))
+                        .font(.headline)
+                        .lineLimit(2)
+                    if let producer = wine?.producer {
+                        Text(producer).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    HStack(spacing: 8) {
+                        if let slot = bottle.slot {
+                            Label(rack.displayLabel(for: slot), systemImage: "mappin.and.ellipse")
+                        }
+                        if let wine {
+                            MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Close"))
+                .accessibilityIdentifier("rack.selection.close")
+            }
+            HStack(spacing: 10) {
+                Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("action.rack.drink")
+                Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("action.rack.move")
+                Spacer(minLength: 0)
+                NavigationLink(value: WineRoute(id: bottle.wineID)) {
+                    Label("Wine Page", systemImage: "info.circle")
+                        .labelStyle(.iconOnly)
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel(Text("Wine Page"))
+            }
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("rack.selection")
+    }
+}
+
+/// The wines of the rack, most bottles first. Tap one to see where its bottles are:
+/// they stand out and the others fade. Tap it again to show all.
+private struct RackKey: View {
+    @Environment(CellarModel.self) private var model
+    let rack: Rack
+    @Binding var focusWine: UUID?
+
+    private struct Entry: Identifiable {
+        let wine: Wine
+        let count: Int
+        var id: UUID { wine.id }
+    }
 
     var body: some View {
         let bottles = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
-        let counts = Dictionary(grouping: bottles.compactMap { model.cellar.wines[$0.wineID]?.color }, by: { $0 }).mapValues(\.count)
+        let counts = Dictionary(grouping: bottles, by: \.wineID).mapValues(\.count)
+        let entries = counts.compactMap { id, count in model.cellar.wines[id].map { Entry(wine: $0, count: count) } }
+            .sorted { ($0.count, $1.wine.displayName) > ($1.count, $0.wine.displayName) }
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
+            HStack(spacing: 8) {
                 Label {
                     Text("\(bottles.count) of \(rack.capacity) bottles")
                 } icon: {
                     Image(systemName: rack.kind.systemImage)
                 }
                 .font(.subheadline.weight(.semibold).monospacedDigit())
-                ForEach(WineColor.allCases.filter { counts[$0] != nil }, id: \.self) { color in
-                    HStack(spacing: 5) {
-                        BottleEnd(color: color, size: 14)
-                        Text(color.title)
-                        Text(verbatim: "\(counts[color] ?? 0)").monospacedDigit().foregroundStyle(.secondary)
-                    }
-                    .font(.subheadline)
+                .padding(.trailing, 6)
+                ForEach(entries) { entry in
+                    chip(entry)
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
         }
         .background(.bar)
+        .accessibilityIdentifier("rack.key")
+    }
+
+    private func chip(_ entry: Entry) -> some View {
+        let isOn = focusWine == entry.wine.id
+        return Button {
+            withAnimation(.snappy) { focusWine = isOn ? nil : entry.wine.id }
+        } label: {
+            HStack(spacing: 6) {
+                BottleEnd(color: entry.wine.color, size: 16)
+                Text(verbatim: entry.wine.displayName)
+                    .lineLimit(1)
+                Text(verbatim: "×\(entry.count)")
+                    .monospacedDigit()
+                    .foregroundStyle(isOn ? Color.primary : Color.secondary)
+                if isOn {
+                    Image(systemName: "xmark")
+                        .font(.caption2.weight(.bold))
+                        .accessibilityHidden(true)
+                }
+            }
+            .font(.subheadline)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background {
+                Capsule().fill(isOn ? Color.accentColor.opacity(0.22) : Color.secondary.opacity(0.12))
+            }
+            .overlay {
+                Capsule().strokeBorder(isOn ? Color.accentColor : Color.clear, lineWidth: 1.5)
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("\(entry.wine.displayName), \(entry.count) bottles"))
+        .accessibilityHint(Text("Shows where its bottles are in the rack."))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityIdentifier("rack.key.wine")
     }
 }
 

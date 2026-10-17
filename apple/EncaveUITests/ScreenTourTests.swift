@@ -91,12 +91,13 @@ final class ScreenTourTests: XCTestCase {
             card.press()
             snapshot("rack-\(index + 1)")
             checkRackFits(screen: "rack \(index + 1)")
-            if index == 0 {
-                // The first place of the main rack holds a bottle: its sheet has Drink and Move.
+            if index == 0 { exploreMainRack() }
+            if index == 1 {
+                // The wine fridge holds two bottles per place: tapping one lists both.
                 let cell = element("rack.cell.0-0")
                 if cell.waitForExistence(timeout: 5) {
                     cell.press()
-                    snapshot("rack-bottle-sheet")
+                    snapshot("rack-place-sheet")
                     closeSheet()
                 }
             }
@@ -140,6 +141,48 @@ final class ScreenTourTests: XCTestCase {
             }
             closeSheet()
         }
+        #endif
+    }
+
+    // MARK: Racks
+
+    /// The main rack: a bottle's card, the wine key, and pinch to zoom.
+    private func exploreMainRack() {
+        // The first place holds one bottle: tapping it shows its card with Drink and Move.
+        let cell = element("rack.cell.0-0")
+        guard cell.waitForExistence(timeout: 5) else {
+            XCTFail("main rack: no first place")
+            return
+        }
+        cell.press()
+        XCTAssertTrue(element("rack.selection").waitForExistence(timeout: 3), "main rack: no card for the tapped bottle")
+        snapshot("rack-bottle-card")
+        let close = element("rack.selection.close")
+        if close.exists, close.isHittable { close.press() }
+
+        // The key: choosing a wine highlights its bottles.
+        let chip = element("rack.key.wine")
+        if chip.waitForExistence(timeout: 3), chip.isHittable {
+            chip.press()
+            snapshot("rack-wine-focus")
+            chip.press()
+        } else {
+            XCTFail("main rack: no wine in the key")
+        }
+
+        #if os(iOS)
+        // Pinch to zoom: places get larger and stay readable.
+        let canvas = element("rack.canvas")
+        guard canvas.waitForExistence(timeout: 3) else {
+            XCTFail("main rack: no zoomable canvas")
+            return
+        }
+        let before = cell.frame.width
+        canvas.pinch(withScale: 2.2, velocity: 1.5)
+        sleep(2)
+        let after = cell.frame.width
+        XCTAssertGreaterThan(after, before * 1.3, "main rack: pinching did not zoom (\(before) → \(after) pt)")
+        snapshot("rack-zoomed")
         #endif
     }
 
