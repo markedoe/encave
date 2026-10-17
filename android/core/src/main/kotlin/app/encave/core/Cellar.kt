@@ -24,7 +24,7 @@ class Cellar(
 
     // The first object of each ID, as Swift's initializer keeps: data from another device
     // or a backup must not break the assumptions of the merge and the UI.
-    private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { putIfAbsent(it.id, it) } }
+    private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { putIfAbsent(it.id, it.normalized()) } }
     private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { putIfAbsent(it.id, it) } }
     private val rackList = racks.distinctBy { it.id }.map { it.normalized() }.toMutableList()
     private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { putIfAbsent(it.id, it.normalized()) } }
@@ -56,6 +56,40 @@ class Cellar(
 
     val bottlesInCellar: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.InCellar }
 
+    /** Bottles bought but not delivered yet. */
+    val bottlesOnOrder: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.Ordered }
+
+    /** Wines with bottles on order, the soonest expected first (unknown dates last). */
+    fun orderGroups(): List<WineGroup> {
+        val collator = collator()
+        val far = Instant.MAX
+        return bottlesOnOrder.groupBy { it.wineId }.mapNotNull { (wineId, bottles) ->
+            val wine = wineMap[wineId] ?: return@mapNotNull null
+            WineGroup(wine, bottles.sortedWith(compareBy<Bottle>({ it.expectedAt ?: far }, { it.addedAt })))
+        }.sortedWith { a, b ->
+            val da = a.bottles.first().expectedAt ?: far
+            val db = b.bottles.first().expectedAt ?: far
+            if (da != db) da.compareTo(db) else nameOrder(a.wine, b.wine, collator)
+        }
+    }
+
+    /** Tags of wines with bottles in the cellar, most used first. */
+    val wineTags: List<String>
+        get() {
+            val inCellar = bottlesInCellar.map { it.wineId }.toSet()
+            val counts = LinkedHashMap<String, Pair<String, Int>>()
+            for (wine in wineMap.values) {
+                if (wine.id !in inCellar) continue
+                for (tag in wine.tags.orEmpty()) {
+                    val key = tag.lowercase(java.util.Locale.ROOT)
+                    counts[key] = (counts[key]?.first ?: tag) to ((counts[key]?.second ?: 0) + 1)
+                }
+            }
+            val collator = collator()
+            return counts.values.sortedWith { a, b -> if (a.second != b.second) b.second - a.second else collator.compare(a.first, b.first) }
+                .map { it.first }
+        }
+
     val consumedBottles: List<Bottle>
         get() = bottleMap.values
             .filter { it.status == Bottle.Status.Consumed }
@@ -72,6 +106,7 @@ class Cellar(
             if (needle.isNotEmpty() && !wine.matches(needle)) return@mapNotNull null
             if (filter.colors.isNotEmpty() && (wine.color == null || wine.color !in filter.colors)) return@mapNotNull null
             if (filter.maturities.isNotEmpty() && Maturity.of(wine, year) !in filter.maturities) return@mapNotNull null
+            if (filter.tag != null && !wine.hasTag(filter.tag)) return@mapNotNull null
             var kept = bottles
             if (filter.rackId != null) {
                 kept = bottles.filter { it.slot?.rackId == filter.rackId }
@@ -188,21 +223,69 @@ class Cellar(
         addedAt: Instant = ReferenceDates.now(),
     ): List<Bottle> {
         if (quantity <= 0) return emptyList()
+        if (purchase.isOrdered && slots.isNotEmpty()) throw CellarException(CellarError.NotReceived)
         slots.forEach { validateFree(it) }
         if (slots.toSet().size != slots.size) throw CellarException(CellarError.SlotTaken)
-        wineMap[wine.id] = wine
+        wineMap[wine.id] = wine.normalized()
         return (0 until quantity).map { index ->
             Bottle(
                 wineId = wine.id, slot = slots.getOrNull(index),
                 storageNote = purchase.storageNote, addedAt = addedAt, purchaseDate = purchase.date,
                 purchasePrice = purchase.price, currency = purchase.currency ?: settings.currency,
                 purchasePlace = purchase.place, receivedFrom = purchase.receivedFrom, sizeML = purchase.sizeML,
+                status = if (purchase.isOrdered) Bottle.Status.Ordered else Bottle.Status.InCellar,
+                expectedAt = if (purchase.isOrdered) purchase.expectedAt else null,
             ).also { bottleMap[it.id] = it }
         }
     }
 
+    /**
+     * Marks ordered bottles as delivered, placing them in the given slots (in order) when
+     * provided. They count as added on [at].
+     */
+    fun receive(bottleIds: List<UUID>, slots: List<Slot> = emptyList(), at: Instant = ReferenceDates.now()) {
+        if (bottleIds.any { bottleMap[it]?.status != Bottle.Status.Ordered }) throw CellarException(CellarError.UnknownBottle)
+        slots.forEach { validateFree(it) }
+        if (slots.toSet().size != slots.size) throw CellarException(CellarError.SlotTaken)
+        bottleIds.forEachIndexed { index, id ->
+            val bottle = bottleMap[id] ?: return@forEachIndexed
+            bottleMap[id] = bottle.copy(status = Bottle.Status.InCellar, expectedAt = null, addedAt = at, slot = slots.getOrNull(index))
+        }
+    }
+
+    /**
+     * Puts the bottles of these wines that have no place into the free places of a rack, in
+     * order. Returns how many were placed.
+     */
+    fun place(wineIds: Set<UUID>, rackId: UUID): Int {
+        val rack = rack(rackId) ?: throw CellarException(CellarError.UnknownRack)
+        val collator = collator()
+        val waiting = bottlesInCellar.filter { it.wineId in wineIds && it.slot == null }.sortedWith { a, b ->
+            val wa = wineMap[a.wineId]
+            val wb = wineMap[b.wineId]
+            if (a.wineId != b.wineId && wa != null && wb != null) nameOrder(wa, wb, collator) else a.addedAt.compareTo(b.addedAt)
+        }
+        val free = freeSlots(rack)
+        waiting.zip(free).forEach { (bottle, slot) -> bottleMap[bottle.id] = bottle.copy(slot = slot, storageNote = null) }
+        return minOf(waiting.size, free.size)
+    }
+
+    /** Takes the bottles of these wines out of their places (they stay in the cellar). Returns how many moved. */
+    fun unplace(wineIds: Set<UUID>): Int {
+        var count = 0
+        bottleMap.entries.forEach { entry ->
+            val bottle = entry.value
+            if (bottle.wineId in wineIds && bottle.status == Bottle.Status.InCellar && bottle.slot != null) {
+                entry.setValue(bottle.copy(slot = null))
+                count++
+            }
+        }
+        return count
+    }
+
     fun drink(bottleId: UUID, tasting: Tasting) {
         val bottle = bottleMap[bottleId] ?: throw CellarException(CellarError.UnknownBottle)
+        if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)
         if (bottle.status != Bottle.Status.InCellar) throw CellarException(CellarError.AlreadyConsumed)
         bottleMap[bottleId] = bottle.copy(status = Bottle.Status.Consumed, slot = null, tasting = tasting.normalized())
     }
@@ -237,6 +320,7 @@ class Cellar(
     fun updateBottle(bottle: Bottle) {
         if (bottleMap[bottle.id] == null) throw CellarException(CellarError.UnknownBottle)
         bottle.slot?.let { slot ->
+            if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)
             validateInRange(slot)
             val occupant = bottleAt(slot)
             if (occupant != null && occupant.id != bottle.id) throw CellarException(CellarError.SlotTaken)
@@ -266,7 +350,7 @@ class Cellar(
 
     fun updateWine(wine: Wine) {
         if (wineMap[wine.id] == null) throw CellarException(CellarError.UnknownWine)
-        wineMap[wine.id] = wine
+        wineMap[wine.id] = wine.normalized()
     }
 
     /** Deletes a wine with every bottle and discovery of it. */
@@ -330,7 +414,7 @@ class Cellar(
     // region Import support (used by ImportExport.kt)
 
     internal fun putWine(wine: Wine) {
-        wineMap[wine.id] = wine
+        wineMap[wine.id] = wine.normalized()
     }
 
     internal fun putBottle(bottle: Bottle) {
@@ -384,11 +468,18 @@ data class CellarFilter(
     val colors: Set<WineColor> = emptySet(),
     val maturities: Set<Maturity> = emptySet(),
     val rackId: UUID? = null,
+    /** Only wines with this tag (ignoring case). */
+    val tag: String? = null,
 ) {
-    val isActive: Boolean get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null
+    val isActive: Boolean get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null || tag != null
 }
 
-enum class CellarError { UnknownWine, UnknownBottle, UnknownRack, UnknownDiscovery, SlotTaken, SlotOutOfRange, AlreadyConsumed, RackNotEmpty }
+enum class CellarError {
+    UnknownWine, UnknownBottle, UnknownRack, UnknownDiscovery, SlotTaken, SlotOutOfRange, AlreadyConsumed, RackNotEmpty,
+
+    /** The bottle is on order: receive it before placing or drinking it. */
+    NotReceived,
+}
 
 class CellarException(val error: CellarError) : Exception(error.name)
 
@@ -401,4 +492,8 @@ data class PurchaseInfo(
     val receivedFrom: String? = null,
     val storageNote: String? = null,
     val sizeML: Int = 750,
+    /** The bottles are bought but not delivered yet. */
+    val isOrdered: Boolean = false,
+    /** When ordered bottles should arrive, if known. */
+    val expectedAt: Instant? = null,
 )

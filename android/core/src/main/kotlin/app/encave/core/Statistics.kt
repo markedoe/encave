@@ -90,3 +90,48 @@ fun Cellar.statistics(year: Int, now: Instant = Instant.now(), zone: ZoneId = Zo
         topGrapes = slices(winesInCellar.flatMap { it.grapes }, limit = 8),
     )
 }
+
+/** "Your year in wine": what was opened in a year, from the journal. */
+data class YearInWine(
+    val year: Int,
+    val bottlesOpened: Int,
+    val differentWines: Int,
+    /** Best rated bottle of the year (highest rating, then the latest): its name and rating. */
+    val favorite: Pair<String, Int>?,
+    val topRegion: String?,
+    val topColor: WineColor?,
+    val topOccasion: String?,
+    /** Wines discovered elsewhere that year. */
+    val discoveries: Int,
+    /** Month with the most bottles opened (1–12). */
+    val busiestMonth: Int?,
+) {
+    val isEmpty: Boolean get() = bottlesOpened == 0 && discoveries == 0
+}
+
+fun Cellar.yearInWine(year: Int, zone: ZoneId = ZoneId.systemDefault()): YearInWine {
+    fun yearOf(instant: Instant) = instant.atZone(zone).year
+    val opened = consumedBottles.filter { bottle -> bottle.tasting?.date?.let { yearOf(it) == year } == true }
+    val openedWines = opened.mapNotNull { wines[it.wineId] }
+
+    // The most frequent value; on a tie, the smallest as text (as CaveKit picks).
+    fun <T> top(values: List<T>, text: (T) -> String = { it.toString() }): T? =
+        values.groupBy { it }.entries.sortedWith(compareByDescending<Map.Entry<T, List<T>>> { it.value.size }.thenBy { text(it.key) })
+            .firstOrNull()?.key
+
+    val favorite = opened.mapNotNull { bottle -> bottle.tasting?.rating?.let { bottle to it } }
+        .maxWithOrNull(compareBy<Pair<Bottle, Int>>({ it.second }, { it.first.tasting?.date ?: Instant.MIN }))
+        ?.let { (bottle, rating) -> wines[bottle.wineId]?.let { it.displayName to rating } }
+    val months = opened.mapNotNull { it.tasting?.date }.map { it.atZone(zone).monthValue }
+    return YearInWine(
+        year = year,
+        bottlesOpened = opened.size,
+        differentWines = opened.map { it.wineId }.toSet().size,
+        favorite = favorite,
+        topRegion = top(openedWines.mapNotNull { it.region ?: it.country }),
+        topColor = top(openedWines.mapNotNull { it.color }) { it.raw },
+        topOccasion = top(opened.mapNotNull { it.tasting?.occasion }.filter { it.isNotEmpty() }),
+        discoveries = discoveries.values.count { yearOf(it.date) == year },
+        busiestMonth = top(months),
+    )
+}
