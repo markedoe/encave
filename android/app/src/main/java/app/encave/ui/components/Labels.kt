@@ -225,6 +225,9 @@ fun sampleLabels(resources: Resources) = SampleData.Labels(
     restaurantNote = resources.getString(R.string.sample_restaurant_note),
     tagToBuy = resources.getString(R.string.sample_tag_to_buy),
     tagGift = resources.getString(R.string.sample_tag_gift),
+    merchant = resources.getString(R.string.sample_merchant),
+    tagBirthYear = resources.getString(R.string.sample_tag_birth_year),
+    occasion2 = resources.getString(R.string.sample_occasion2),
 )
 
 val Discovery.Setting.labelRes: Int
@@ -252,6 +255,12 @@ object Formats {
 
     fun day(instant: Instant): String =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale()).format(instant.atZone(ZoneId.systemDefault()))
+
+    /** "12 Oct" or "Oct 12", without the year. */
+    fun dayMonth(instant: Instant): String {
+        val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale(), "dMMM")
+        return DateTimeFormatter.ofPattern(pattern, locale()).format(instant.atZone(ZoneId.systemDefault()))
+    }
 
     fun money(amount: BigDecimal, code: String?): String {
         val format = NumberFormat.getCurrencyInstance(locale())

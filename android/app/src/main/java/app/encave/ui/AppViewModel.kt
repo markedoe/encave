@@ -108,6 +108,7 @@ class AppViewModel(
                 CellarError.SlotOutOfRange -> R.string.err_slot_range
                 CellarError.RackNotEmpty -> R.string.err_rack_not_empty
                 CellarError.AlreadyConsumed -> R.string.err_already_consumed
+                CellarError.NotReceived -> R.string.err_not_received
                 else -> R.string.err_generic
             }
             is ImportException -> when (error.error) {
@@ -151,7 +152,10 @@ class AppViewModel(
                     if (boughtDiscoveryId != null && cellar.discoveries[boughtDiscoveryId] != null) cellar.markBought(boughtDiscoveryId)
                 }
             }
-                .onSuccess { post(UiText.Plural(R.plurals.bottles_added, it.size)) }
+                .onSuccess {
+                    if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
+                    else post(UiText.Plural(R.plurals.bottles_added, it.size))
+                }
                 .onFailure {
                     deleteUnusedPhoto(photoId)
                     post(errorText(it))
@@ -181,6 +185,94 @@ class AppViewModel(
             nameOf(it, bottleId)
         }
     }
+
+    /** Bottles on order arrive: they join the cellar without a place. Undo puts the orders back. */
+    fun receive(bottleIds: List<UUID>) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        if (before.isEmpty()) return
+        change<Unit>({ post(UiText.Res(R.string.msg_received, listOf(before.size))) { restore(before) } }) {
+            it.receive(before.map(Bottle::id))
+        }
+    }
+
+    /** An order that will not come. Undo puts it back on order. */
+    fun cancelOrder(bottleId: UUID) {
+        val before = cellar.value.bottles[bottleId] ?: return
+        change<Unit>({ post(UiText.Res(R.string.msg_order_cancelled)) { restore(listOf(before)) } }) { it.markGone(bottleId) }
+    }
+
+    /**
+     * Puts bottle records back as they were (undo of a change to several bottles). Bottles
+     * without a place first, so the places they held are free again; a place taken in the
+     * meantime is left empty.
+     */
+    private fun restore(bottles: List<Bottle>) = change<Unit> { c ->
+        bottles.sortedBy { it.slot != null }.forEach { bottle ->
+            if (c.bottles[bottle.id] != null) {
+                runCatching { c.updateBottle(bottle) }.onFailure { c.updateBottle(bottle.copy(slot = null)) }
+            }
+        }
+    }
+
+    /** Keeps bottles for an occasion, or frees them (null or blank), with Undo. */
+    fun reserve(bottleIds: List<UUID>, occasion: String?) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        if (before.isEmpty()) return
+        val name = occasion?.trim().orEmpty()
+        change<Unit>({
+            val text = if (name.isEmpty()) UiText.Res(R.string.msg_reservation_removed) else UiText.Res(R.string.reserved_for, listOf(name))
+            post(text) { change<Unit> { c -> before.forEach { b -> c.bottles[b.id]?.let { c.updateBottle(it.copy(reservedFor = b.reservedFor)) } } } }
+        }) { it.reserve(before.map(Bottle::id), occasion) }
+    }
+
+    // region Several wines or bottles at once (one Undo for all)
+
+    private fun bottlesOfWines(wineIds: Set<UUID>) = cellar.value.bottles.values.filter { it.wineId in wineIds }
+
+    fun placeWines(wineIds: Set<UUID>, rackId: UUID) {
+        val before = bottlesOfWines(wineIds)
+        change<Int>({ placed ->
+            if (placed == 0) post(UiText.Res(R.string.msg_no_free_place))
+            else post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+        }) { it.place(wineIds, rackId) }
+    }
+
+    fun unplaceWines(wineIds: Set<UUID>) {
+        val before = bottlesOfWines(wineIds)
+        change<Int>({ moved ->
+            if (moved > 0) post(UiText.Res(R.string.msg_bottles_taken_out, listOf(moved))) { restore(before) }
+        }) { it.unplace(wineIds) }
+    }
+
+    fun deleteWines(wineIds: Set<UUID>) {
+        val before = cellar.value
+        val wines = wineIds.mapNotNull { before.wines[it] }
+        val bottles = before.bottles.values.filter { it.wineId in wineIds }
+        val discoveries = before.discoveries.values.filter { it.wineId in wineIds }
+        change<Unit>({
+            post(UiText.Res(R.string.msg_wines_deleted, listOf(wines.size))) {
+                change<Unit> { c -> c.merge(Cellar(wines, bottles, discoveries = discoveries)) }
+            }
+        }) { c -> wineIds.forEach { c.deleteWine(it) } }
+    }
+
+    /** Bottles not found where they should be: they stay in the cellar without a place. */
+    fun takeOut(bottleIds: Set<UUID>) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        change<Unit>({ post(UiText.Res(R.string.msg_bottles_taken_out, listOf(before.size))) { restore(before) } }) { c ->
+            before.forEach { c.move(it.id, null) }
+        }
+    }
+
+    /** Bottles no longer in the cellar (given away, drunk elsewhere, broken). */
+    fun markGone(bottleIds: Set<UUID>) {
+        val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
+        change<Unit>({ post(UiText.Res(R.string.msg_bottles_gone, listOf(before.size))) { restore(before) } }) { c ->
+            before.forEach { c.markGone(it.id) }
+        }
+    }
+
+    // endregion
 
     fun deleteBottle(bottleId: UUID) {
         val snapshot = cellar.value.bottles[bottleId] ?: return
@@ -213,7 +305,7 @@ class AppViewModel(
     }
 
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
-    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false) {
+    fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false) {
         viewModelScope.launch {
             val previous = cellar.value.wines[wine.id]?.photoId
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
@@ -225,7 +317,7 @@ class AppViewModel(
             repository.update { it.updateWine(record) }
                 .onSuccess {
                     if (record.photoId != previous) deleteUnusedPhoto(previous)
-                    post(UiText.Res(R.string.msg_saved))
+                    if (!quiet) post(UiText.Res(R.string.msg_saved))
                 }
                 .onFailure {
                     deleteUnusedPhoto(newId)
@@ -377,6 +469,21 @@ class AppViewModel(
 
     fun exportCsv(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.csv(it) }
 
+    /** The printable inventory (PDF, A4); labels come from [resources]. */
+    fun exportPdf(resolver: ContentResolver, uri: Uri, resources: android.content.res.Resources) {
+        val snapshot = cellar.value
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    requireNotNull(resolver.openOutputStream(uri, "wt")).use {
+                        app.encave.ui.settings.InventoryPdf.write(snapshot, resources, year, it)
+                    }
+                }
+            }
+            post(UiText.Res(if (result.isSuccess) R.string.msg_exported else R.string.msg_export_failed))
+        }
+    }
+
     private fun export(resolver: ContentResolver, uri: Uri, render: (Cellar) -> String) {
         val snapshot = cellar.value
         viewModelScope.launch {
@@ -414,7 +521,9 @@ class AppViewModel(
         }
     }
 
-    private fun importText(summary: ImportSummary): UiText = if (summary.rowsSkipped > 0) {
+    private fun importText(summary: ImportSummary): UiText = if (summary.discoveriesAdded > 0) {
+        UiText.Res(R.string.msg_imported_discoveries, listOf(summary.discoveriesAdded))
+    } else if (summary.rowsSkipped > 0) {
         UiText.Res(R.string.msg_imported_skipped, listOf(summary.winesAdded, summary.bottlesAdded, summary.rowsSkipped))
     } else {
         UiText.Res(R.string.msg_imported, listOf(summary.winesAdded, summary.bottlesAdded))

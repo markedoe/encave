@@ -60,6 +60,26 @@ import app.encave.ui.components.labelRes
 import app.encave.ui.theme.Dimens
 import app.encave.ui.theme.LocalWinePalette
 import java.time.format.TextStyle
+import java.time.ZoneId
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.WineBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.testTag
+import app.encave.core.Cellar
+import app.encave.core.DrinkDownPlan
+import app.encave.core.drinkDownPlan
+import app.encave.core.yearInWine
+import app.encave.ui.components.tint
 
 /**
  * Cellar figures. Every chart shows its numbers as text next to the marks and
@@ -89,6 +109,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Dimens.l),
             verticalArrangement = Arrangement.spacedBy(Dimens.l),
         ) {
+            YearInWineCard(cellar)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
                 StatTile(stringResource(R.string.insights_bottles), stats.bottleCount.toString())
                 StatTile(stringResource(R.string.insights_wines), stats.wineCount.toString())
@@ -107,6 +128,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     }
                 }
             }
+            DrinkDownCard(cellar, viewModel.year)
             if (stats.byColor.isNotEmpty()) ChartCard(stringResource(R.string.insights_by_style)) { StyleDonut(stats) }
             if (stats.byMaturity.isNotEmpty()) {
                 ChartCard(stringResource(R.string.insights_by_maturity)) {
@@ -267,5 +289,155 @@ private fun MonthColumns(months: List<CellarStatistics.MonthCount>) {
                 )
             }
         }
+    }
+}
+
+/** How many bottles a month to open so none passes its window, and when windows end. */
+@Composable
+private fun DrinkDownCard(cellar: Cellar, year: Int) {
+    val month = remember { java.time.LocalDate.now().monthValue }
+    val plan = remember(cellar, year) { cellar.drinkDownPlan(year, month) }
+    if (plan.isEmpty) return
+    ChartCard(stringResource(R.string.insights_drink_down)) {
+        val pace = Formats.decimal(plan.bottlesPerMonth, if (plan.bottlesPerMonth < 10) 1 else 0)
+        Column(Modifier.semantics(mergeDescendants = true) {}.testTag("insights.drinkdown")) {
+            Text(stringResource(R.string.insights_pace, pace), style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(R.string.insights_pace_detail),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (plan.pastPeak > 0) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                Icon(Maturity.PastPeak.icon, contentDescription = null, tint = Maturity.PastPeak.tint, modifier = Modifier.size(18.dp))
+                Text(stringResource(R.string.insights_past_peak, plan.pastPeak), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        if (plan.years.size > 1 || (plan.years.firstOrNull()?.leaving ?: 0) > 0) {
+            Text(stringResource(R.string.insights_windows_ending), style = MaterialTheme.typography.titleSmall)
+            YearColumns(plan.years)
+        }
+        if (plan.withoutWindow > 0) {
+            Text(
+                stringResource(R.string.insights_without_window, plan.withoutWindow),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** One column per year with its value; read by TalkBack as "year: bottles". */
+@Composable
+private fun YearColumns(years: List<DrinkDownPlan.Year>) {
+    val max = years.maxOfOrNull { it.leaving }?.coerceAtLeast(1) ?: 1
+    val bar = MaterialTheme.colorScheme.primary
+    val baseline = MaterialTheme.colorScheme.outlineVariant
+    val short = years.size > 8
+    val description = years.joinToString(", ") { "${it.year}: ${it.leaving}" }
+    Row(
+        Modifier.fillMaxWidth().testTag("insights.drinkdown.chart").clearAndSetSemantics { contentDescription = description },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        years.forEach { item ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Text(if (item.leaving > 0) item.leaving.toString() else "", style = MaterialTheme.typography.labelSmall)
+                Box(Modifier.height(120.dp).width(16.dp), contentAlignment = Alignment.BottomCenter) {
+                    Canvas(Modifier.fillMaxSize()) {
+                        val height = size.height * item.leaving / max
+                        if (height > 0f) {
+                            drawRoundRect(
+                                bar, topLeft = Offset(0f, size.height - height), size = Size(size.width, height),
+                                cornerRadius = CornerRadius(3.dp.toPx()),
+                            )
+                        } else {
+                            drawLine(baseline, Offset(0f, size.height), Offset(size.width, size.height), 2.dp.toPx())
+                        }
+                    }
+                }
+                Text(
+                    if (short) "’" + (item.year % 100).toString().padStart(2, '0') else item.year.toString(),
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+/** "Your year in wine": what was opened in a year, with a choice of year. */
+@Composable
+private fun YearInWineCard(cellar: Cellar) {
+    val zone = ZoneId.systemDefault()
+    val years = remember(cellar) {
+        (cellar.consumedBottles.mapNotNull { it.tasting?.date } + cellar.discoveries.values.map { it.date })
+            .map { it.atZone(zone).year }.distinct().sortedDescending()
+    }
+    if (years.isEmpty()) return
+    var chosen by rememberSaveable { mutableStateOf<Int?>(null) }
+    val shown = chosen?.takeIf { it in years } ?: years.first()
+    val recap = remember(cellar, shown) { cellar.yearInWine(shown, zone) }
+    val locale = LocalConfiguration.current.locales[0]
+    var menu by remember { mutableStateOf(false) }
+    Card(
+        Modifier.fillMaxWidth().testTag("insights.year"),
+        shape = RoundedCornerShape(Dimens.radiusCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    ) {
+        Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.insights_year_title), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f).padding(start = Dimens.s).semantics { heading() },
+                )
+                if (years.size > 1) {
+                    Box {
+                        val chooseLabel = stringResource(R.string.insights_year_choose)
+                        TextButton(onClick = { menu = true }, modifier = Modifier.semantics { contentDescription = "$chooseLabel, $shown" }) {
+                            Text(shown.toString())
+                            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                        }
+                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                            years.forEach { option ->
+                                DropdownMenuItem(text = { Text(option.toString()) }, onClick = { chosen = option; menu = false })
+                            }
+                        }
+                    }
+                } else {
+                    Text(shown.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
+                YearFigure(recap.bottlesOpened, stringResource(R.string.insights_year_opened))
+                YearFigure(recap.differentWines, stringResource(R.string.insights_year_wines))
+                if (recap.discoveries > 0) YearFigure(recap.discoveries, stringResource(R.string.insights_year_discoveries))
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, stringResource(R.string.insights_year_favorite, name, rating)) }
+                recap.topRegion?.let { YearFact(Icons.Outlined.Map, stringResource(R.string.insights_year_region, it)) }
+                recap.topColor?.let { YearFact(Icons.Outlined.WineBar, stringResource(R.string.insights_year_style, stringResource(it.labelRes))) }
+                recap.topOccasion?.let { YearFact(Icons.Outlined.Group, stringResource(R.string.insights_year_occasion, it)) }
+                recap.busiestMonth?.let { month ->
+                    val name = java.time.Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale)
+                    YearFact(Icons.Outlined.CalendarMonth, stringResource(R.string.insights_year_month, name))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun YearFigure(value: Int, caption: String) {
+    Column(Modifier.semantics(mergeDescendants = true) {}) {
+        Text(value.toString(), style = MaterialTheme.typography.headlineMedium)
+        Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun YearFact(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+        Text(text, style = MaterialTheme.typography.bodyMedium)
     }
 }

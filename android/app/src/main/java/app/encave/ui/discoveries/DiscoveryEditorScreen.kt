@@ -152,7 +152,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
             PhotoSection(viewModel, form)
             Header(R.string.add_section_wine)
             WineEssentials(form, known)
-            WineMoreDetails(form, known)
+            WineMoreDetails(form, known, showsTags = false)
 
             Header(R.string.discovery_where)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {

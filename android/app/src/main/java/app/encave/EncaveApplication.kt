@@ -33,6 +33,7 @@ class EncaveApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         sync.start()
+        if (app.encave.reminders.Reminders.isEnabled(this)) app.encave.reminders.Reminders.schedule(this)
         // Photos no wine refers to any more (deleted or replaced) are removed at launch.
         scope.launch(Dispatchers.IO) {
             repository.loaded.first { it }

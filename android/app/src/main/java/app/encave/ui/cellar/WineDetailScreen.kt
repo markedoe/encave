@@ -63,6 +63,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import app.encave.core.WindowSource
+import app.encave.ui.components.ArrivalLabel
 import app.encave.ui.components.displayLocation
 import app.encave.core.Bottle
 import app.encave.core.Cellar
@@ -111,6 +124,7 @@ fun WineDetailScreen(
     var confirmDelete by remember { mutableStateOf(false) }
     var drinking by remember { mutableStateOf<Bottle?>(null) }
     var deletingBottle by remember { mutableStateOf<Bottle?>(null) }
+    var reserving by remember { mutableStateOf<Bottle?>(null) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -126,7 +140,7 @@ fun WineDetailScreen(
                 },
                 actions = {
                     if (wine != null) {
-                        IconButton(onClick = { navigator.open(EditWineRoute(wineId)) }) {
+                        IconButton(onClick = { navigator.open(EditWineRoute(wineId)) }, modifier = Modifier.testTag("action.edit_wine")) {
                             Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.action_edit))
                         }
                         Box {
@@ -158,8 +172,10 @@ fun WineDetailScreen(
             return@Scaffold
         }
         val bottles = cellar.bottlesOf(wine.id)
+        val orders = cellar.bottlesOnOrder.filter { it.wineId == wine.id }
+            .sortedWith(compareBy<Bottle>({ it.expectedAt ?: java.time.Instant.MAX }, { it.addedAt }))
         val tastings = cellar.tastingsOf(wine.id)
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
+        LazyColumn(Modifier.fillMaxSize().testTag("wine.detail"), contentPadding = padding) {
             item {
                 if (viewModel.photos.exists(wine.photoId)) {
                     app.encave.ui.add.WinePhoto(
@@ -171,7 +187,12 @@ fun WineDetailScreen(
                 }
                 Hero(wine)
             }
-            item { WindowCard(wine, viewModel.year) }
+            item {
+                WindowCard(
+                    wine, viewModel.year,
+                    onMoveEnd = { years -> viewModel.updateWine(wine.movingWindowEnd(years), quiet = true) },
+                )
+            }
             item {
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
@@ -187,8 +208,32 @@ fun WineDetailScreen(
                     ) { ActionContent(stringResource(R.string.action_add_bottles), Icons.Filled.Add) }
                 }
             }
-            item { SectionHeader("${stringResource(R.string.detail_bottles)} (${bottles.size})") }
-            if (bottles.isEmpty()) {
+            if (orders.isNotEmpty()) {
+                item { SectionHeader(pluralStringResource(R.plurals.detail_on_order, orders.size, orders.size), Modifier.testTag("detail.orders")) }
+                items(orders, key = { "o" + it.id }) { bottle ->
+                    OrderedBottleRow(
+                        cellar, bottle,
+                        onReceive = { viewModel.receive(listOf(bottle.id)) },
+                        onCancel = { viewModel.cancelOrder(bottle.id) },
+                    )
+                }
+                item {
+                    Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                        OutlinedButton(
+                            onClick = { viewModel.receive(orders.map { it.id }) },
+                            modifier = Modifier.testTag("action.order.receive"),
+                        ) { ActionContent(stringResource(R.string.action_mark_all_received), Icons.Outlined.LocalShipping) }
+                        Text(
+                            stringResource(R.string.detail_orders_footer),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            if (bottles.isNotEmpty() || orders.isEmpty()) {
+                item { SectionHeader("${stringResource(R.string.detail_bottles)} (${bottles.size})") }
+            }
+            if (bottles.isEmpty() && orders.isEmpty()) {
                 item {
                     Text(
                         stringResource(R.string.detail_no_bottles),
@@ -206,6 +251,8 @@ fun WineDetailScreen(
                     },
                     onGone = { viewModel.markGone(bottle.id) },
                     onDelete = { deletingBottle = bottle },
+                    onReserve = { reserving = bottle },
+                    onFree = { viewModel.reserve(listOf(bottle.id), null) },
                 )
             }
             ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice) } }
@@ -258,6 +305,13 @@ fun WineDetailScreen(
             onDismiss = { confirmDelete = false },
         )
     }
+    reserving?.let { bottle ->
+        ReserveDialog(
+            initial = cellar.reservations.firstOrNull().orEmpty(),
+            onKeep = { occasion -> viewModel.reserve(listOf(bottle.id), occasion) },
+            onDismiss = { reserving = null },
+        )
+    }
     deletingBottle?.let { bottle ->
         ConfirmDialog(
             title = stringResource(R.string.confirm_delete_bottle_title),
@@ -293,7 +347,7 @@ private fun Hero(wine: Wine) {
 }
 
 @Composable
-private fun WindowCard(wine: Wine, year: Int) {
+private fun WindowCard(wine: Wine, year: Int, onMoveEnd: (Int) -> Unit) {
     val maturity = Maturity.of(wine, year)
     Card(
         Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
@@ -309,6 +363,7 @@ private fun WindowCard(wine: Wine, year: Int) {
             val until = wine.drinkUntil
             if (from != null && until != null && from <= until) {
                 DrinkingWindowGauge(from, until, year, maturity)
+                WindowExplanation(wine, onMoveEnd)
             } else {
                 Text(stringResource(R.string.detail_window_missing), style = MaterialTheme.typography.bodyMedium)
             }
@@ -355,6 +410,99 @@ fun DrinkingWindowGauge(from: Int, until: Int, year: Int, maturity: Maturity, mo
     }
 }
 
+/** Names the occasion a bottle is kept for. */
+@Composable
+private fun ReserveDialog(initial: String, onKeep: (String) -> Unit, onDismiss: () -> Unit) {
+    var occasion by remember { mutableStateOf(initial) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.reserve_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                Text(stringResource(R.string.reserve_body))
+                androidx.compose.material3.OutlinedTextField(
+                    value = occasion, onValueChange = { occasion = it },
+                    label = { Text(stringResource(R.string.field_occasion)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth().testTag("reserve.field"),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences,
+                    ),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onKeep(occasion); onDismiss() }, enabled = occasion.isNotBlank(),
+                modifier = Modifier.testTag("reserve.keep"),
+            ) { Text(stringResource(R.string.action_keep_bottle)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
+/** Why the window is what it is, and a quick way to move its end. */
+@Composable
+private fun WindowExplanation(wine: Wine, onMoveEnd: (Int) -> Unit) {
+    val text = when (val source = wine.windowSource) {
+        is WindowSource.Estimated -> stringResource(R.string.window_estimated, source.yearsAfterHarvest, source.yearsAtBest)
+        else -> stringResource(R.string.window_entered)
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        TextButton(
+            onClick = { onMoveEnd(-1) },
+            enabled = (wine.drinkUntil ?: 0) > (wine.drinkFrom ?: 0),
+            modifier = Modifier.testTag("action.window.sooner"),
+        ) { ActionContent(stringResource(R.string.action_drink_sooner), Icons.Outlined.RemoveCircleOutline) }
+        TextButton(
+            onClick = { onMoveEnd(1) },
+            modifier = Modifier.testTag("action.window.longer"),
+        ) { ActionContent(stringResource(R.string.action_keep_longer), Icons.Outlined.AddCircleOutline) }
+    }
+}
+
+/** A bottle bought but not delivered yet. */
+@Composable
+private fun OrderedBottleRow(cellar: Cellar, bottle: Bottle, onReceive: () -> Unit, onCancel: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    val markLabel = stringResource(R.string.action_mark_received)
+    val cancelLabel = stringResource(R.string.action_cancel_order)
+    val details = listOfNotNull(
+        bottle.purchasePrice?.let { Formats.money(it, bottle.currency ?: cellar.settings.currency) },
+        bottle.purchasePlace?.takeIf { it.isNotBlank() },
+        if (bottle.sizeML != 750) sizeLabel(bottle.sizeML) else null,
+    )
+    ListItem(
+        modifier = Modifier.semantics {
+            customActions = listOf(
+                CustomAccessibilityAction(markLabel) { onReceive(); true },
+                CustomAccessibilityAction(cancelLabel) { onCancel(); true },
+            )
+        },
+        headlineContent = { ArrivalLabel(bottle.expectedAt, style = MaterialTheme.typography.bodyLarge) },
+        supportingContent = if (details.isEmpty()) null else ({ Text(details.joinToString(" · ")) }),
+        trailingContent = {
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(markLabel) },
+                        leadingIcon = { Icon(Icons.Outlined.LocalShipping, contentDescription = null) },
+                        onClick = { menu = false; onReceive() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(cancelLabel, color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = { Icon(Icons.Outlined.Cancel, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        onClick = { menu = false; onCancel() },
+                    )
+                }
+            }
+        },
+    )
+}
+
 @Composable
 private fun BottleRow(
     cellar: Cellar,
@@ -363,6 +511,8 @@ private fun BottleRow(
     onShowInRack: (() -> Unit)?,
     onGone: () -> Unit,
     onDelete: () -> Unit,
+    onReserve: () -> Unit,
+    onFree: () -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
     val details = buildList {
@@ -372,8 +522,22 @@ private fun BottleRow(
         add(stringResource(R.string.detail_added, Formats.day(bottle.addedAt)))
     }
     ListItem(
+        modifier = if (bottle.reservedFor != null) Modifier.testTag("bottle.reserved") else Modifier,
         headlineContent = { Text(cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)) },
-        supportingContent = { Text(details.joinToString(" · ")) },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(details.joinToString(" · "))
+                bottle.reservedFor?.let { occasion ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Outlined.CardGiftcard, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                        Text(
+                            stringResource(R.string.reserved_for, occasion), color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
+        },
         trailingContent = {
             Box {
                 IconButton(onClick = { menu = true }) {
@@ -390,6 +554,20 @@ private fun BottleRow(
                             text = { Text(stringResource(R.string.action_show_in_rack)) },
                             leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
                             onClick = { menu = false; onShowInRack() },
+                        )
+                    }
+                    if (bottle.reservedFor == null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_keep_for_occasion)) },
+                            leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                            onClick = { menu = false; onReserve() },
+                            modifier = Modifier.testTag("action.reserve"),
+                        )
+                    } else {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_free_bottle)) },
+                            leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                            onClick = { menu = false; onFree() },
                         )
                     }
                     DropdownMenuItem(
@@ -433,6 +611,7 @@ private fun Details(wine: Wine) {
         wine.region?.let { R.string.field_region to it },
         wine.country?.let { R.string.field_country to it },
         wine.grapes.takeIf { it.isNotEmpty() }?.let { R.string.field_grapes to it.joinToString(", ") },
+        wine.tags?.takeIf { it.isNotEmpty() }?.let { R.string.field_tags to it.joinToString(", ") },
         R.string.field_style to stringResource(wine.color.labelRes),
         wine.notes?.takeIf { it.isNotBlank() }?.let { R.string.field_notes to it },
     ).filter { it.second.isNotBlank() }

@@ -48,6 +48,14 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Tag
+import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.TableChart
+import androidx.compose.material.icons.outlined.Outbox
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material3.Button
@@ -124,6 +132,14 @@ import kotlinx.coroutines.launch
 /** Cellar list and wine detail: one pane on phones, side by side on tablets and foldables. */
 @Composable
 fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    // Wide screens can show the cellar as a sortable table (remembered).
+    val wide = androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2().windowSizeClass
+        .isWidthAtLeastBreakpoint(androidx.window.core.layout.WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+    val table by viewModel.preferences.cellarTable.collectAsStateWithLifecycle()
+    if (wide && table) {
+        CellarTableScreen(viewModel, navigator, onShowList = { viewModel.preferences.setCellarTable(false) })
+        return
+    }
     val paneNavigator = rememberListDetailPaneScaffoldNavigator<String>()
     val scope = rememberCoroutineScope()
     val selectedId = paneNavigator.currentDestination?.contentKey
@@ -136,6 +152,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             AnimatedPane {
                 CellarList(
                     viewModel, navigator,
+                    onShowTable = if (wide) ({ viewModel.preferences.setCellarTable(true) }) else null,
                     selectedId = if (twoPane) selectedId else null,
                     onOpen = { id -> scope.launch { paneNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id) } },
                 )
@@ -167,6 +184,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 private fun CellarList(
     viewModel: AppViewModel,
     navigator: AppNavigator,
+    onShowTable: (() -> Unit)?,
     selectedId: String?,
     onOpen: (String) -> Unit,
 ) {
@@ -182,25 +200,52 @@ private fun CellarList(
     var drinking by remember { mutableStateOf<WineGroup?>(null) }
     var deleting by remember { mutableStateOf<WineGroup?>(null) }
     val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
-    val isEmpty = cellar.bottlesInCellar.isEmpty()
+    val isEmpty = cellar.bottlesInCellar.isEmpty() && cellar.bottlesOnOrder.isEmpty()
+    val orders = remember(cellar) { cellar.orderGroups() }
+    val showOrders = orders.isNotEmpty() && !filter.isActive && filter.query.isEmpty()
+    val wineTags = remember(cellar) { cellar.wineTags }
+    val reservations = remember(cellar) { cellar.reservations }
+    // Choosing several wines: a contextual top bar acts on all of them, with one Undo.
+    var selecting by rememberSaveable { mutableStateOf(false) }
+    var picked by remember { mutableStateOf(setOf<java.util.UUID>()) }
+    var confirmBulkDelete by remember { mutableStateOf(false) }
+    fun endSelection() {
+        selecting = false
+        picked = emptySet()
+    }
+    androidx.activity.compose.BackHandler(selecting) { endSelection() }
+    // Wines that left the list (filter, deleted elsewhere) are no longer ticked.
+    val shownPicked = picked.filter { id -> groups.any { it.id == id } }.toSet()
 
     Scaffold(
         topBar = {
-            CellarSearchBar(
-                cellar = cellar,
-                query = filter.query,
-                onQueryChange = { viewModel.filter.value = filter.copy(query = it) },
-                expanded = searchExpanded,
-                onExpandedChange = { searchExpanded = it },
-                onOpen = { id ->
-                    searchExpanded = false
-                    onOpen(id)
-                },
-                onSettings = { navigator.open(SettingsRoute) },
-            )
+            if (selecting) {
+                SelectionTopBar(
+                    count = shownPicked.size,
+                    racks = cellar.racks,
+                    onClose = ::endSelection,
+                    onPlace = { rack -> viewModel.placeWines(shownPicked, rack.id); endSelection() },
+                    onTakeOut = { viewModel.unplaceWines(shownPicked); endSelection() },
+                    onDelete = { confirmBulkDelete = true },
+                )
+            } else {
+                CellarSearchBar(
+                    cellar = cellar,
+                    query = filter.query,
+                    onQueryChange = { viewModel.filter.value = filter.copy(query = it) },
+                    expanded = searchExpanded,
+                    onExpandedChange = { searchExpanded = it },
+                    onOpen = { id ->
+                        searchExpanded = false
+                        onOpen(id)
+                    },
+                    onSettings = { navigator.open(SettingsRoute) },
+                    onShowTable = onShowTable,
+                )
+            }
         },
         floatingActionButton = {
-            if (!isEmpty) {
+            if (!isEmpty && !selecting) {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
                     SmallFloatingActionButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
                         Icon(Icons.Outlined.AutoAwesome, contentDescription = stringResource(R.string.discovery_new_long))
@@ -239,6 +284,13 @@ private fun CellarList(
                 FilterBar(
                     colors = filter.colors,
                     maturities = filter.maturities,
+                    tags = wineTags,
+                    tag = filter.tag,
+                    reservations = reservations,
+                    reservation = filter.reservation,
+                    onToggleReservation = { r ->
+                        viewModel.filter.value = filter.copy(reservation = if (filter.reservation.equals(r, ignoreCase = true)) null else r)
+                    },
                     sort = sort,
                     onToggleColor = { c ->
                         viewModel.filter.value = filter.copy(colors = if (c in filter.colors) filter.colors - c else filter.colors + c)
@@ -248,9 +300,11 @@ private fun CellarList(
                             maturities = if (m in filter.maturities) filter.maturities - m else filter.maturities + m,
                         )
                     },
+                    onToggleTag = { t -> viewModel.filter.value = filter.copy(tag = if (filter.tag == t) null else t) },
                     onSort = { viewModel.sort.value = it },
+                    onSelect = { selecting = true },
                 )
-                if (groups.isEmpty()) {
+                if (groups.isEmpty() && !showOrders) {
                     EmptyState(
                         icon = Icons.Filled.Search,
                         title = stringResource(R.string.cellar_no_match),
@@ -262,11 +316,11 @@ private fun CellarList(
                     }
                 } else {
                     val scope = rememberCoroutineScope()
-                    val showsSummary = filter.query.isEmpty()
+                    val showsSummary = filter.query.isEmpty() && !selecting
                     LazyColumn(
                         state = listState,
                         contentPadding = PaddingValues(bottom = 88.dp),
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().testTag("cellar.list"),
                     ) {
                         if (showsSummary) {
                             item(key = "summary") {
@@ -284,6 +338,34 @@ private fun CellarList(
                                 )
                             }
                         }
+                        if (showOrders && !selecting) {
+                            item(key = "orders.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.section_on_order)) }
+                            items(orders, key = { "order." + it.id }) { group ->
+                                OrderRow(
+                                    group = group, cellar = cellar, year = viewModel.year,
+                                    selected = group.id.toString() == selectedId,
+                                    onOpen = { onOpen(group.id.toString()) },
+                                    onReceive = { viewModel.receive(group.bottles.map { it.id }) },
+                                    modifier = Modifier.animateItem().testTag("order.row"),
+                                )
+                                HorizontalDivider(Modifier.padding(start = 56.dp))
+                            }
+                            if (groups.isNotEmpty()) {
+                                item(key = "cellar.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.nav_cellar)) }
+                            }
+                        }
+                        if (selecting) {
+                            items(groups, key = { "select." + it.id }) { group ->
+                                WineGroupRow(
+                                    group = group, cellar = cellar, year = viewModel.year,
+                                    checked = group.id in shownPicked,
+                                    onClick = { picked = if (group.id in picked) picked - group.id else picked + group.id },
+                                    modifier = Modifier.testTag("wine.select.row"),
+                                )
+                                HorizontalDivider(Modifier.padding(start = 56.dp))
+                            }
+                            return@LazyColumn
+                        }
                         items(groups, key = { it.id.toString() }) { group ->
                             CellarRow(
                                 group = group,
@@ -297,6 +379,10 @@ private fun CellarList(
                                 },
                                 onEdit = { navigator.open(EditWineRoute(group.id.toString())) },
                                 onDelete = { deleting = group },
+                                onSelect = {
+                                    selecting = true
+                                    picked = setOf(group.id)
+                                },
                                 modifier = Modifier.animateItem().testTag("wine.row"),
                             )
                             HorizontalDivider(Modifier.padding(start = 56.dp))
@@ -313,6 +399,15 @@ private fun CellarList(
             bottles = group.bottles,
             onDismiss = { drinking = null },
             onDrink = { bottle, tasting -> viewModel.drink(bottle.id, tasting) },
+        )
+    }
+    if (confirmBulkDelete) {
+        ConfirmDialog(
+            title = stringResource(R.string.confirm_delete_wines_title),
+            body = stringResource(R.string.confirm_delete_wines_body),
+            confirm = stringResource(R.string.action_delete_wines),
+            onConfirm = { viewModel.deleteWines(shownPicked); endSelection() },
+            onDismiss = { confirmBulkDelete = false },
         )
     }
     deleting?.let { group ->
@@ -335,6 +430,7 @@ private fun CellarSearchBar(
     onExpandedChange: (Boolean) -> Unit,
     onOpen: (String) -> Unit,
     onSettings: () -> Unit,
+    onShowTable: (() -> Unit)?,
 ) {
     val suggestions = remember(cellar, query) {
         cellar.wineSuggestions(query).filter { wine -> cellar.bottlesInCellar.any { it.wineId == wine.id } }
@@ -342,7 +438,7 @@ private fun CellarSearchBar(
     if (!expanded) {
         // Collapsed: a pill that opens the search. A focusable text field here would
         // expand the search as soon as it gets focus (keyboard navigation, launch).
-        CollapsedSearch(query, onOpen = { onExpandedChange(true) }, onClear = { onQueryChange("") }, onSettings = onSettings)
+        CollapsedSearch(query, onOpen = { onExpandedChange(true) }, onClear = { onQueryChange("") }, onSettings = onSettings, onShowTable = onShowTable)
         return
     }
     SearchBar(
@@ -394,7 +490,7 @@ private fun CellarSearchBar(
 }
 
 @Composable
-private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit) {
+private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Unit, onSettings: () -> Unit, onShowTable: (() -> Unit)?) {
     Surface(
         onClick = onOpen,
         shape = SearchBarDefaults.inputFieldShape,
@@ -419,6 +515,11 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
                 }
             }
+            if (onShowTable != null) {
+                IconButton(onClick = onShowTable, modifier = Modifier.testTag("cellar.layout")) {
+                    Icon(Icons.Outlined.TableChart, contentDescription = stringResource(R.string.action_show_table))
+                }
+            }
             IconButton(onClick = onSettings, modifier = Modifier.testTag("action.settings")) {
                 Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
             }
@@ -430,10 +531,17 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
 private fun FilterBar(
     colors: Set<WineColor>,
     maturities: Set<Maturity>,
+    tags: List<String>,
+    tag: String?,
+    reservations: List<String>,
+    reservation: String?,
+    onToggleReservation: (String) -> Unit,
     sort: CellarSort,
     onToggleColor: (WineColor) -> Unit,
     onToggleMaturity: (Maturity) -> Unit,
+    onToggleTag: (String) -> Unit,
     onSort: (CellarSort) -> Unit,
+    onSelect: () -> Unit,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     Row(
@@ -445,6 +553,7 @@ private fun FilterBar(
             FilterChip(
                 selected = sort != CellarSort.Name,
                 onClick = { sortMenu = true },
+                modifier = Modifier.testTag("cellar.sort"),
                 label = { Text(stringResource(sort.labelRes)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.action_sort)) },
             )
@@ -456,6 +565,13 @@ private fun FilterBar(
                         leadingIcon = { if (option == sort) Icon(Icons.Filled.Check, contentDescription = null) else Spacer(Modifier.size(24.dp)) },
                     )
                 }
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_select_wines)) },
+                    onClick = { sortMenu = false; onSelect() },
+                    leadingIcon = { Icon(Icons.Outlined.Checklist, contentDescription = null) },
+                    modifier = Modifier.testTag("cellar.select"),
+                )
             }
         }
         WineColor.entries.forEach { color ->
@@ -474,6 +590,25 @@ private fun FilterBar(
                 leadingIcon = { Icon(maturity.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
             )
         }
+        // A tag no longer used by a wine in the cellar stays visible while it filters the list.
+        (tags + listOfNotNull(tag?.takeIf { t -> tags.none { it.equals(t, ignoreCase = true) } })).forEach { option ->
+            FilterChip(
+                selected = tag.equals(option, ignoreCase = true),
+                onClick = { onToggleTag(option) },
+                label = { Text(option) },
+                leadingIcon = { Icon(Icons.Outlined.Tag, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.testTag("filter.tag"),
+            )
+        }
+        (reservations + listOfNotNull(reservation?.takeIf { r -> reservations.none { it.equals(r, ignoreCase = true) } })).forEach { option ->
+            FilterChip(
+                selected = reservation.equals(option, ignoreCase = true),
+                onClick = { onToggleReservation(option) },
+                label = { Text(option) },
+                leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.testTag("filter.reservation"),
+            )
+        }
     }
     Spacer(Modifier.height(Dimens.xs))
 }
@@ -490,6 +625,7 @@ private fun CellarRow(
     onShowInRack: (() -> Unit)?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onSelect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -547,8 +683,103 @@ private fun CellarRow(
                 leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
             )
             DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_select)) }, onClick = { menu = false; onSelect() },
+                leadingIcon = { Icon(Icons.Outlined.Checklist, contentDescription = null) },
+            )
+            DropdownMenuItem(
                 text = { Text(deleteLabel, color = MaterialTheme.colorScheme.error) }, onClick = { menu = false; onDelete() },
                 leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            )
+        }
+    }
+}
+
+/** Contextual top bar while choosing several wines: place in a rack, take out, delete. */
+@Composable
+private fun SelectionTopBar(
+    count: Int,
+    racks: List<app.encave.core.Rack>,
+    onClose: () -> Unit,
+    onPlace: (app.encave.core.Rack) -> Unit,
+    onTakeOut: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var rackMenu by remember { mutableStateOf(false) }
+    androidx.compose.material3.TopAppBar(
+        title = { Text(stringResource(R.string.selection_count, count), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) },
+        navigationIcon = {
+            IconButton(onClick = onClose, modifier = Modifier.testTag("cellar.select.done")) {
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_end_selection))
+            }
+        },
+        actions = {
+            Box {
+                IconButton(
+                    onClick = { rackMenu = true }, enabled = count > 0 && racks.isNotEmpty(),
+                    modifier = Modifier.testTag("cellar.select.place"),
+                ) { Icon(Icons.Outlined.GridView, contentDescription = stringResource(R.string.action_place_in_rack)) }
+                DropdownMenu(expanded = rackMenu, onDismissRequest = { rackMenu = false }) {
+                    racks.forEach { rack ->
+                        DropdownMenuItem(text = { Text(rack.name) }, onClick = { rackMenu = false; onPlace(rack) })
+                    }
+                }
+            }
+            IconButton(onClick = onTakeOut, enabled = count > 0) {
+                Icon(Icons.Outlined.Outbox, contentDescription = stringResource(R.string.action_take_out_of_racks))
+            }
+            IconButton(onClick = onDelete, enabled = count > 0, modifier = Modifier.testTag("cellar.select.delete")) {
+                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_delete))
+            }
+        },
+        colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    )
+}
+
+/** Bottles on order: swipe right (or touch and hold, or a TalkBack action) when they arrive. */
+@Composable
+private fun OrderRow(
+    group: WineGroup,
+    cellar: Cellar,
+    year: Int,
+    selected: Boolean,
+    onOpen: () -> Unit,
+    onReceive: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val receivedLabel = stringResource(R.string.action_received)
+    val markLabel = stringResource(R.string.action_mark_received)
+    val swipe = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.StartToEnd) onReceive()
+            false
+        },
+    )
+    Box(modifier) {
+        SwipeToDismissBox(
+            state = swipe,
+            enableDismissFromEndToStart = false,
+            backgroundContent = {
+                Row(
+                    Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = Dimens.xl),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+                ) {
+                    Icon(Icons.Outlined.LocalShipping, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(receivedLabel, color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.labelLarge)
+                }
+            },
+        ) {
+            WineGroupRow(
+                group = group, cellar = cellar, year = year, selected = selected,
+                onClick = onOpen, onLongClick = { menu = true },
+                modifier = Modifier.semantics { customActions = listOf(CustomAccessibilityAction(markLabel) { onReceive(); true }) },
+            )
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(markLabel) }, onClick = { menu = false; onReceive() },
+                leadingIcon = { Icon(Icons.Outlined.LocalShipping, contentDescription = null) },
             )
         }
     }
@@ -569,7 +800,8 @@ private fun CellarSummary(
     onSoon: (app.encave.core.CellarFilter) -> Unit,
 ) {
     val stats = remember(cellar, year) { cellar.statistics(year) }
-    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null
+    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null &&
+        filter.reservation == null
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
         horizontalArrangement = Arrangement.spacedBy(Dimens.s),

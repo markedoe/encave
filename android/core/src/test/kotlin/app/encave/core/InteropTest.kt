@@ -26,8 +26,14 @@ class InteropTest {
         val cellar = backup.cellar
         val sample = SampleData.cellar(year = 2026)
         assertEquals(sample.racks.map { it.name to it.kind }, cellar.racks.map { it.name to it.kind })
-        assertEquals(sample.bottles.size, cellar.bottles.size)
-        assertEquals(sample.wines.values.map { it.displayName }.toSet(), cellar.wines.values.map { it.displayName }.toSet())
+        // The backup was made before the sample had bottles on order.
+        val received = sample.bottles.values.filter { it.status != Bottle.Status.Ordered }
+        assertEquals(received.size, cellar.bottles.size)
+        val onOrderOnly = sample.bottlesOnOrder.map { it.wineId }.toSet() - received.map { it.wineId }.toSet()
+        assertEquals(
+            sample.wines.values.filter { it.id !in onOrderOnly }.map { it.displayName }.toSet(),
+            cellar.wines.values.map { it.displayName }.toSet(),
+        )
         assertEquals(2, cellar.consumedBottles.size)
         assertEquals(2, cellar.discoveries.size)
         assertEquals(2, cellar.shoppingListCount)

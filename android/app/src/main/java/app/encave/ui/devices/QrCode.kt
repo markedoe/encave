@@ -71,7 +71,30 @@ fun QrCodeImage(payload: String, description: String, modifier: Modifier = Modif
  * leaves the device. Calls [onScan] with the first Encave pairing code seen.
  */
 @Composable
-fun CameraQrReader(onScan: (String) -> Unit, modifier: Modifier = Modifier) {
+fun CameraQrReader(onScan: (String) -> Unit, modifier: Modifier = Modifier) =
+    CameraCodeReader(
+        formats = setOf(BarcodeReader.Format.QR_CODE),
+        accept = { PairingCode.parse(it) != null },
+        onScan = onScan,
+        modifier = modifier,
+        denied = { Text(stringResource(R.string.scan_no_camera), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+    )
+
+/**
+ * The camera, reading codes of the given [formats] on the device with zxing-cpp. No image
+ * leaves the device. Calls [onScan] once, with the first code that [accept] takes. Shows
+ * [denied] when the camera permission is refused.
+ */
+@Composable
+fun CameraCodeReader(
+    formats: Set<BarcodeReader.Format>,
+    accept: (String) -> Boolean,
+    onScan: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    /** Also shows [denied] while the permission is being asked (it offers another way). */
+    deniedWhileAsking: Boolean = false,
+    denied: @Composable () -> Unit,
+) {
     val context = LocalContext.current
     var granted by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
@@ -84,7 +107,7 @@ fun CameraQrReader(onScan: (String) -> Unit, modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) { if (!granted) launcher.launch(Manifest.permission.CAMERA) }
     if (!granted) {
         Box(modifier.padding(Dimens.xl), contentAlignment = Alignment.Center) {
-            if (asked) Text(stringResource(R.string.scan_no_camera), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (asked || deniedWhileAsking) denied()
         }
         return
     }
@@ -100,14 +123,15 @@ fun CameraQrReader(onScan: (String) -> Unit, modifier: Modifier = Modifier) {
             future.addListener({
                 val provider = runCatching { future.get() }.getOrNull() ?: return@addListener
                 val preview = Preview.Builder().build().also { it.surfaceProvider = view.surfaceProvider }
-                val reader = BarcodeReader().apply { options.formats = setOf(BarcodeReader.Format.QR_CODE) }
+                val reader = BarcodeReader().apply { options.formats = formats }
                 val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                 analysis.setAnalyzer(executor) { image ->
                     image.use {
-                        val text = runCatching { reader.read(it) }.getOrNull().orEmpty().firstNotNullOfOrNull { result -> result.text }
-                        if (text != null && !done && PairingCode.parse(text) != null) {
+                        val text = runCatching { reader.read(it) }.getOrNull().orEmpty()
+                            .firstNotNullOfOrNull { result -> result.text?.takeIf(accept) }
+                        if (text != null && !done) {
                             done = true
                             ContextCompat.getMainExecutor(viewContext).execute { onScan(text) }
                         }

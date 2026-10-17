@@ -20,6 +20,9 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
@@ -113,6 +116,12 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     private fun scrollTo(tag: String) {
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasTestTag(tag))
+        compose.waitForIdle()
+    }
+
+    /** Scrolls the list tagged [list] until [tag] shows. */
+    private fun scrollIn(list: String, tag: String) {
+        compose.onNodeWithTag(list).performScrollToNode(hasTestTag(tag))
         compose.waitForIdle()
     }
 
@@ -211,6 +220,161 @@ class ScreenTourTest(private val device: String, private val language: String) {
         val insights = RuntimeEnvironment.getApplication().getString(app.encave.R.string.action_insights)
         compose.onAllNodesWithText(insights).onFirst().assertExists()
         capture("21-insights")
+        scrollTo("insights.drinkdown.chart")
+        capture("29-insights-drink-down")
+    }
+
+    @Test
+    fun bottlesOnOrder() {
+        scrollIn("cellar.list", "order.row")
+        capture("25-cellar-on-order")
+        tap("order.row")
+        scrollIn("wine.detail", "detail.orders")
+        capture("26-wine-on-order")
+    }
+
+    @Test
+    fun tagFilter() {
+        val all = wineRows()
+        compose.onAllNodesWithTag("filter.tag").onFirst().performScrollTo().performClick()
+        compose.waitForIdle()
+        val tagged = wineRows()
+        assertTrue("$device-$language: the tag did not filter the list ($all to $tagged)", tagged in 1 until all)
+        capture("27-cellar-tag")
+    }
+
+    @Test
+    fun addBottleOnOrder() {
+        tap("action.fab_add")
+        scrollTo("add.ordered")
+        tap("add.ordered")
+        tap("add.expected")
+        scrollTo("add.order.footer")
+        capture("28-add-bottle-on-order")
+    }
+
+    @Test
+    fun bulkSelection() {
+        tap("cellar.sort")
+        tap("cellar.select")
+        val rows = compose.onAllNodesWithTag("wine.select.row")
+        rows[0].performClick()
+        rows[2].performClick()
+        compose.waitForIdle()
+        rows[0].assertIsOn()
+        capture("30-cellar-select")
+        tap("cellar.select.delete")
+        capture("31-cellar-select-delete")
+    }
+
+    @Test
+    fun rackCheck() {
+        tab("Racks")
+        tap("rack.row.0")
+        tap("rack.audit")
+        tap("cell.0.0")
+        tap("cell.0.1")
+        capture("32-rack-check")
+        tap("action.audit.finish")
+        capture("33-rack-check-missing")
+        tap("audit.take_out")
+        compose.onNodeWithTag("action.audit.finish").assertDoesNotExist()
+    }
+
+    /** The first page of the printed inventory, drawn as in the PDF (at twice the size). */
+    @Test
+    fun inventoryPdf() {
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val image = Bitmap.createBitmap(595 * 2, 842 * 2, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(image)
+        canvas.scale(2f, 2f)
+        app.encave.ui.settings.InventoryPdf.drawPage(application.repository.cellar.value, application.resources, java.time.LocalDate.now().year, 0, canvas)
+        outDir.mkdirs()
+        File(outDir, "34-inventory-pdf.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
+    @Test
+    fun addBottleBarcode() {
+        // A barcode seen before on a bottle of the Port.
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        runBlocking {
+            application.repository.update { cellar ->
+                val port = cellar.wines.values.first { it.name == "Vintage Port" }
+                cellar.updateWine(port.addingBarcode("5601234567897"))
+            }
+        }
+        tap("action.fab_add")
+        tap("action.scan_barcode")
+        capture("35-barcode-scanner")
+        compose.onNodeWithTag("barcode.field").performTextInput("5601234567897")
+        tap("barcode.use")
+        compose.onNodeWithTag("barcode.match").assertExists()
+        capture("36-barcode-match")
+        tap("action.use_wine")
+        compose.onNodeWithTag("barcode.match").assertDoesNotExist()
+    }
+
+    @Test
+    fun cellarTable() {
+        // Wide screens only: the list or a sortable table.
+        if (device != "tablet") return
+        tap("cellar.layout")
+        compose.onNodeWithTag("cellar.table").assertExists()
+        tap("table.header.Vintage")
+        capture("37-cellar-table")
+        tap("table.row")
+        capture("37b-cellar-table-wine")
+        tap("cellar.layout")
+        compose.onNodeWithTag("cellar.table").assertDoesNotExist()
+    }
+
+    @Test
+    fun rackDragAndDrop() {
+        if (device != "tablet") return
+        tab("Racks")
+        tap("rack.row.0")
+        // Let the rack settle (fitted to the screen) before measuring places.
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.waitForIdle()
+        val from = bounds("cell.0.0")!!
+        val to = bounds("cell.2.3")!!
+        compose.onNodeWithTag("cell.0.0").performTouchInput {
+            down(center)
+            advanceEventTime(1_000)
+            val delta = to.center - from.center
+            for (step in 1..10) moveBy(delta / 10f)
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("rack.dragging").assertExists()
+        capture("38-rack-dragging")
+        compose.onNodeWithTag("cell.0.0").performTouchInput { up() }
+        compose.waitForIdle()
+        // The move is saved in the background: wait for it.
+        val repository = ApplicationProvider.getApplicationContext<EncaveApplication>().repository
+        compose.waitUntil(10_000) {
+            val cellar = repository.cellar.value
+            cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
+        }
+        capture("39-rack-dropped")
+    }
+
+    @Test
+    fun wineTags() {
+        tap("wine.row")
+        tap("action.edit_wine")
+        scrollTo("field.tags")
+        capture("40-wine-tags")
+    }
+
+    @Test
+    fun occasion() {
+        compose.onAllNodesWithTag("filter.reservation").onFirst().performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals("$device-$language: one wine kept for the occasion", 1, wineRows())
+        capture("41-cellar-occasion")
+        tap("wine.row")
+        scrollIn("wine.detail", "bottle.reserved")
+        capture("42-wine-occasion")
     }
 
     @Test

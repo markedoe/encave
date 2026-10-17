@@ -67,6 +67,34 @@ data class Wine(
         return fields.any { fold(it).contains(folded) }
     }
 
+    /** True if the wine has this tag, ignoring case. */
+    fun hasTag(tag: String): Boolean = tags.orEmpty().any { it.equals(tag, ignoreCase = true) }
+
+    /** Tags normalized and empty lists left out, as Swift's initializer keeps them. */
+    fun normalized(): Wine {
+        val cleanTags = normalizedTags(tags)
+        val cleanBarcodes = barcodes?.ifEmpty { null }
+        return if (cleanTags == tags && cleanBarcodes == barcodes) this else copy(tags = cleanTags, barcodes = cleanBarcodes)
+    }
+
+    /** Where the window comes from, to explain it. */
+    val windowSource: WindowSource
+        get() {
+            val from = drinkFrom ?: return WindowSource.Missing
+            val until = drinkUntil ?: return WindowSource.Missing
+            val estimate = estimatedWindow()
+            if (vintage != null && estimate != null && estimate.first == from && estimate.last == until) {
+                return WindowSource.Estimated(from - vintage, until - from)
+            }
+            return WindowSource.Entered
+        }
+
+    /** Moves the end of the window by [years], never before its start. */
+    fun movingWindowEnd(years: Int): Wine {
+        val until = drinkUntil ?: return this
+        return copy(drinkUntil = maxOf(drinkFrom ?: Int.MIN_VALUE, until + years))
+    }
+
     /** Adds a barcode if it is new (at least 6 digits). The wine is unchanged otherwise. */
     fun addingBarcode(code: String): Wine {
         val normalized = normalizedBarcode(code)
@@ -95,11 +123,7 @@ data class Wine(
         fun normalizedBarcode(code: String): String = code.filter { it in '0'..'9' }.take(20)
 
         /** Trimmed, without empty ones or case-insensitive duplicates (the first spelling is kept); null if none. */
-        fun normalizedTags(tags: List<String>?): List<String>? {
-            val seen = HashSet<String>()
-            return tags.orEmpty().map { it.trim() }.filter { it.isNotEmpty() && seen.add(it.lowercase(Locale.ROOT)) }
-                .ifEmpty { null }
-        }
+        fun normalizedTags(tags: List<String>?): List<String>? = Discovery.normalized(tags.orEmpty()).ifEmpty { null }
 
         private val marks = Regex("\\p{Mn}+")
         internal fun fold(text: String): String =
@@ -111,6 +135,16 @@ data class Wine(
  * Where a bottle sits: rack, row and column (zero-based), and how deep in the cell
  * (front or back of a double-depth rack, or the place in a bin's pile).
  */
+/** Why a wine has the drinking window it has. */
+sealed class WindowSource {
+    /** Worked out from the style and the vintage. */
+    data class Estimated(val yearsAfterHarvest: Int, val yearsAtBest: Int) : WindowSource()
+
+    /** Entered by the user or filled from the label. */
+    data object Entered : WindowSource()
+    data object Missing : WindowSource()
+}
+
 @Serializable
 data class Slot(
     @SerialName("rackID") @Serializable(with = UuidSerializer::class) val rackId: UUID,
@@ -308,6 +342,8 @@ data class Bottle(
     val tasting: Tasting? = null,
     /** For an ordered bottle: when it should arrive. */
     @Serializable(with = InstantSerializer::class) val expectedAt: Instant? = null,
+    /** Kept for an occasion ("Paul's 40th"): not suggested for tonight. */
+    val reservedFor: String? = null,
 ) {
     @Serializable
     enum class Status(val raw: String) {

@@ -34,6 +34,8 @@ data class AddBottleRoute(
     val depth: Int = 0,
     /** Set when buying a wine from the shopping list: it is marked bought once saved. */
     val discoveryId: String? = null,
+    /** Opens the scanner first (app shortcut). */
+    val scan: Boolean = false,
 )
 
 /** Remember a wine tasted elsewhere (new), or edit a discovery. */

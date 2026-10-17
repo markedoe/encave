@@ -7,12 +7,18 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material.icons.outlined.TableChart
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Diamond
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Hive
 import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.LocalBar
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.SdStorage
@@ -48,6 +54,8 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_racks, R.string.nav_racks, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
                     HelpSection(R.string.help_start_journal, R.string.nav_journal, Icons.Outlined.AutoStories),
+                    HelpSection(R.string.help_start_table, R.string.help_start_table_title, Icons.Outlined.TableChart),
+                    HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
                     HelpSection(R.string.help_start_try, R.string.help_start_try_title),
                 ),
             ),
@@ -60,6 +68,8 @@ data class HelpArticle(
                     HelpSection(R.string.help_adding_window, R.string.detail_window),
                     HelpSection(R.string.help_adding_quantity, R.string.help_adding_quantity_title),
                     HelpSection(R.string.help_adding_purchase, R.string.help_adding_purchase_title),
+                    HelpSection(R.string.help_adding_tags, R.string.field_tags, Icons.Outlined.Tag),
+                    HelpSection(R.string.help_adding_orders, R.string.help_adding_orders_title, Icons.Outlined.LocalShipping),
                 ),
             ),
             HelpArticle(
@@ -69,6 +79,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_scanning_ai, R.string.help_scanning_ai_title),
                     HelpSection(R.string.help_scanning_typed, R.string.help_scanning_typed_title),
                     HelpSection(R.string.help_scanning_photo, R.string.help_scanning_photo_title),
+                    HelpSection(R.string.help_scanning_barcodes, R.string.help_scanning_barcodes_title, Icons.Outlined.QrCodeScanner),
                 ),
             ),
             HelpArticle(
@@ -82,15 +93,21 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_finding, R.string.help_racks_finding_title, Icons.Outlined.Search),
                     HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),
                     HelpSection(R.string.help_racks_moving, R.string.help_racks_moving_title),
+                    HelpSection(R.string.help_racks_drag, R.string.help_racks_drag_title),
+                    HelpSection(R.string.help_racks_several, R.string.help_racks_several_title),
+                    HelpSection(R.string.help_racks_check, R.string.help_racks_check_title, Icons.Outlined.Checklist),
                     HelpSection(R.string.help_racks_irregular, R.string.help_racks_irregular_title),
                 ),
             ),
             HelpArticle(
                 HelpTopic.Tonight, R.string.help_tonight_title, R.string.help_tonight_summary, Icons.Outlined.Bedtime,
                 listOf(
+                    HelpSection(R.string.help_tonight_why, R.string.help_tonight_why_title),
+                    HelpSection(R.string.help_tonight_occasion, R.string.help_tonight_occasion_title, Icons.Outlined.CardGiftcard),
                     HelpSection(R.string.help_tonight_maturity, R.string.help_tonight_maturity_title),
                     HelpSection(R.string.help_tonight_suggestions, R.string.help_tonight_suggestions_title),
                     HelpSection(R.string.help_tonight_serving, R.string.detail_serving),
+                    HelpSection(R.string.help_tonight_reminders, R.string.reminders_title),
                 ),
             ),
             HelpArticle(
@@ -138,6 +155,8 @@ data class HelpArticle(
                 listOf(
                     HelpSection(R.string.help_data_backup, R.string.help_data_backup_title),
                     HelpSection(R.string.help_data_csv, R.string.help_data_csv_title),
+                    HelpSection(R.string.help_data_pdf, R.string.help_data_pdf_title),
+                    HelpSection(R.string.help_data_other, R.string.help_data_other_title),
                     HelpSection(R.string.help_data_photos, R.string.help_data_photos_title),
                 ),
             ),

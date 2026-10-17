@@ -4,6 +4,17 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.ui.text.TextStyle
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -56,23 +67,44 @@ fun WineGroupRow(
     selected: Boolean = false,
     showMaturity: Boolean = true,
     extra: (@Composable () -> Unit)? = null,
+    /** Set while choosing several wines: a check box, and a tap ticks the wine. */
+    checked: Boolean? = null,
 ) {
     val wine = group.wine
     val maturity = Maturity.of(wine, year)
+    // Bottles on order: when they should arrive, instead of maturity and place.
+    val isOrder = group.bottles.firstOrNull()?.status == Bottle.Status.Ordered
     val style = stringResource(wine.color.labelRes)
     val origin = wine.origin()
     ListItem(
-        modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        colors = if (selected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
-        leadingContent = { WineColorDot(wine.color, size = 16.dp) },
+        modifier = if (checked != null) {
+            modifier.toggleable(checked, role = Role.Checkbox, onValueChange = { onClick() })
+        } else {
+            modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        },
+        colors = if (selected || checked == true) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
+        leadingContent = {
+            if (checked != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = checked, onCheckedChange = null)
+                    WineColorDot(wine.color, size = 16.dp)
+                }
+            } else {
+                WineColorDot(wine.color, size = 16.dp)
+            }
+        },
         headlineContent = { Text(wine.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(listOf(style, origin).filter { it.isNotEmpty() }.joinToString(" · "), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(
-                    locationsText(cellar, group.bottles), maxLines = 2, overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall,
-                )
+                if (isOrder) {
+                    ArrivalLabel(group.bottles.first().expectedAt)
+                } else {
+                    Text(
+                        locationsText(cellar, group.bottles), maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 extra?.invoke()
             }
         },
@@ -84,7 +116,7 @@ fun WineGroupRow(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.semantics { contentDescription = countDescription },
                 )
-                if (showMaturity && maturity != Maturity.Unknown) {
+                if (showMaturity && !isOrder && maturity != Maturity.Unknown) {
                     Icon(
                         maturity.icon, contentDescription = stringResource(maturity.labelRes),
                         tint = maturity.tint, modifier = Modifier.size(20.dp),
@@ -93,4 +125,24 @@ fun WineGroupRow(
             }
         },
     )
+}
+
+/** When bottles on order should arrive; a late delivery has a warning icon, not only a color. */
+@Composable
+fun ArrivalLabel(date: Instant?, modifier: Modifier = Modifier, style: TextStyle = MaterialTheme.typography.bodySmall) {
+    val zone = ZoneId.systemDefault()
+    val late = date != null && date.atZone(zone).toLocalDate().isBefore(LocalDate.now(zone))
+    val text = when {
+        date == null -> stringResource(R.string.arrival_unknown)
+        late -> stringResource(R.string.arrival_late, Formats.dayMonth(date))
+        else -> stringResource(R.string.arrival_expected, Formats.dayMonth(date))
+    }
+    val color = if (late) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            if (late) Icons.Outlined.WarningAmber else Icons.Outlined.LocalShipping,
+            contentDescription = null, tint = color, modifier = Modifier.size(16.dp),
+        )
+        Text(text, color = color, style = style)
+    }
 }
