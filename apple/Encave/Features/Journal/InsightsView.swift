@@ -137,7 +137,9 @@ private struct DrinkDownCard: View {
                 let paceLabel = rounded.formatted(.number.precision(.fractionLength(rounded < 10 && rounded != rounded.rounded() ? 1 : 0)))
                 VStack(alignment: .leading, spacing: 4) {
                     Group {
-                        if rounded <= 1 {
+                        if rounded < 0.75 {
+                            Text("Less than one bottle a month")
+                        } else if rounded <= 1 {
                             Text("About one bottle a month")
                         } else {
                             Text("About \(paceLabel) bottles a month")

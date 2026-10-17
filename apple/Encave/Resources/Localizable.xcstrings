@@ -3971,6 +3971,16 @@
         }
       }
     },
+    "Less than one bottle a month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moins d’une bouteille par mois"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "fr": {
