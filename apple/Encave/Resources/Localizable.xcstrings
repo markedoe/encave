@@ -1001,6 +1001,16 @@
         }
       }
     },
+    "Applies this saved search.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applique cette recherche enregistrée."
+          }
+        }
+      }
+    },
     "Aromas: fruit, flowers, spices, wood…": {
       "localizations": {
         "fr": {
@@ -2177,6 +2187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer le casier"
+          }
+        }
+      }
+    },
+    "Delete Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la recherche"
           }
         }
       }
@@ -3687,6 +3707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Casiers irréguliers"
+          }
+        }
+      }
+    },
+    "It appears first among the filters, one tap away.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elle apparaît en premier parmi les filtres, à portée d’un toucher."
           }
         }
       }
@@ -5991,6 +6021,36 @@
         }
       }
     },
+    "Save This Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer cette recherche"
+          }
+        }
+      }
+    },
+    "Save This Search…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer cette recherche…"
+          }
+        }
+      }
+    },
+    "Saved searches": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherches enregistrées"
+          }
+        }
+      }
+    },
     "Saved to your discoveries": {
       "localizations": {
         "fr": {
@@ -6067,6 +6127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La recherche du Journal cherche aussi dans le lieu, les notes et les tags."
+          }
+        }
+      }
+    },
+    "Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
           }
         }
       }

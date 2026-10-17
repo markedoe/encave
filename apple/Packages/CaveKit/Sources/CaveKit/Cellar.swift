@@ -119,6 +119,20 @@ public extension Cellar {
         }
     }
 
+    /// Saves the current search under a name, replacing one with the same name.
+    mutating func saveSearch(_ name: String, filter: CellarFilter) {
+        let search = SavedSearch(name: name, filter: filter)
+        guard !search.name.isEmpty else { return }
+        var list = (settings.savedSearches ?? []).filter { $0.name.caseInsensitiveCompare(search.name) != .orderedSame }
+        list.append(search)
+        settings.savedSearches = list
+    }
+
+    mutating func deleteSearch(_ id: UUID) {
+        let list = (settings.savedSearches ?? []).filter { $0.id != id }
+        settings.savedSearches = list.isEmpty ? nil : list
+    }
+
     /// Tags of wines with bottles in the cellar, most used first.
     var wineTags: [String] {
         var counts: [String: (name: String, count: Int)] = [:]

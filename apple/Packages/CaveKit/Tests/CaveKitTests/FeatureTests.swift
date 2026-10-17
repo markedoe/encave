@@ -461,3 +461,23 @@ import Testing
         #expect(copy.reservations == ["Wedding"])
     }
 }
+
+@Suite struct SavedSearchTests {
+    @Test func aSearchIsSavedRestoredAndReplacedByName() throws {
+        var cellar = Cellar()
+        let filter = CellarFilter(query: " Bourgogne ", colors: [.white, .red], maturities: [.ready], tag: "Gift")
+        cellar.saveSearch(" Ready burgundy ", filter: filter)
+        let saved = try #require(cellar.settings.savedSearches?.first)
+        #expect(saved.name == "Ready burgundy")
+        #expect(saved.colors == [.red, .white])
+        #expect(saved.filter == CellarFilter(query: "Bourgogne", colors: [.white, .red], maturities: [.ready], tag: "Gift"))
+        cellar.saveSearch("ready BURGUNDY", filter: CellarFilter(query: "Beaune"))
+        #expect(cellar.settings.savedSearches?.count == 1)
+        #expect(cellar.settings.savedSearches?.first?.query == "Beaune")
+        cellar.deleteSearch(try #require(cellar.settings.savedSearches?.first?.id))
+        #expect(cellar.settings.savedSearches == nil)
+        // Older files without saved searches still read.
+        let old = try JSONDecoder().decode(CellarSettings.self, from: Data(#"{"currency":"CHF"}"#.utf8))
+        #expect(old.savedSearches == nil && old.currency == "CHF")
+    }
+}

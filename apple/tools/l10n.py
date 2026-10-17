@@ -15,6 +15,13 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Applies this saved search.': 'Applique cette recherche enregistrée.',
+    'Delete Search': 'Supprimer la recherche',
+    'It appears first among the filters, one tap away.': 'Elle apparaît en premier parmi les filtres, à portée d’un toucher.',
+    'Save This Search': 'Enregistrer cette recherche',
+    'Save This Search…': 'Enregistrer cette recherche…',
+    'Saved searches': 'Recherches enregistrées',
+    'Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.': 'Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils.',
     'Keep Bottle': 'Garder la bouteille',
     'Christmas dinner': 'Dîner de Noël',
     'Keeping bottles for an occasion': 'Garder des bouteilles pour une occasion',

@@ -73,6 +73,8 @@ struct CellarList: View {
     @State private var isSelecting = false
     @State private var picked: Set<UUID> = []
     @State private var confirmingDelete = false
+    @State private var namingSearch = false
+    @State private var searchName = ""
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     private var isWide: Bool { sizeClass == .regular }
@@ -93,6 +95,13 @@ struct CellarList: View {
             .searchable(text: $filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
             .toolbar {
                 if isSelecting { selectionToolbar } else { toolbar }
+            }
+            .alert("Save This Search", isPresented: $namingSearch) {
+                TextField("Name", text: $searchName)
+                Button("Save") { model.update { $0.saveSearch(searchName, filter: filter) } }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("It appears first among the filters, one tap away.")
             }
             .confirmationDialog("Delete these wines?", isPresented: $confirmingDelete, titleVisibility: .visible) {
                 Button("Delete Wines", role: .destructive) {
@@ -205,6 +214,12 @@ struct CellarList: View {
                 if filter.isActive {
                     Button("Clear filters", systemImage: "line.3.horizontal.decrease.circle") {
                         filter = CellarFilter(query: filter.query)
+                    }
+                }
+                if filter.isActive || !filter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Button("Save This Search…", systemImage: "bookmark") {
+                        searchName = filter.query.trimmingCharacters(in: .whitespaces)
+                        namingSearch = true
                     }
                 }
             } label: {
@@ -337,6 +352,22 @@ private struct CellarSummary: View {
             .buttonStyle(.plain)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
+                    let saved = model.cellar.settings.savedSearches ?? []
+                    ForEach(saved) { search in
+                        let isOn = filter == search.filter
+                        ChoiceChip(verbatim: search.name, isSelected: isOn) {
+                            withAnimation(.snappy) { filter = isOn ? CellarFilter() : search.filter }
+                        } leading: {
+                            Image(systemName: isOn ? "bookmark.fill" : "bookmark")
+                        }
+                        .contextMenu {
+                            Button("Delete Search", systemImage: "trash", role: .destructive) {
+                                model.update { $0.deleteSearch(search.id) }
+                            }
+                        }
+                        .accessibilityHint(Text("Applies this saved search."))
+                    }
+                    if !saved.isEmpty { Divider().frame(height: 24) }
                     ForEach(WineColor.allCases, id: \.self) { color in
                         ChoiceChip(title: color.title, isSelected: filter.colors.contains(color)) {
                             toggle(color, in: \.colors)

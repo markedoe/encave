@@ -53,7 +53,9 @@ implementations:
   `expectedAt`, a date).
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
   when empty. `bottle.reservedFor` is an optional string (the occasion a bottle
-  is kept for).
+  is kept for). `settings.savedSearches` is an optional array of
+  `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
+  `colors` and `maturities` sorted by their string value.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status` or
   `rack.kind` fails decoding; readers never replace it with a default. A device
   that does not know a new value refuses the sync instead of rewriting the
