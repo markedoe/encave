@@ -330,6 +330,7 @@
     <string name="discovery_deleted">Discovery deleted</string>
     <string name="discovery_saved">Saved to your discoveries</string>
     <string name="discovery_added_to_list">Added to your shopping list</string>
+    <string name="discovery_search_hint">Wine, place, note or tag</string>
     <string name="discovery_none_match">No discoveries match</string>
     <string name="discovery_where">Where</string>
     <string name="discovery_place">Place</string>

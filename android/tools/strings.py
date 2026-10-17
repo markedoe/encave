@@ -359,6 +359,7 @@ S = [
  ("discovery_deleted", "Discovery deleted", "Découverte supprimée"),
  ("discovery_saved", "Saved to your discoveries", "Enregistré dans vos découvertes"),
  ("discovery_added_to_list", "Added to your shopping list", "Ajouté à votre liste d’achats"),
+ ("discovery_search_hint", "Wine, place, note or tag", "Vin, lieu, note ou tag"),
  ("discovery_none_match", "No discoveries match", "Aucune découverte ne correspond"),
  ("discovery_where", "Where", "Où"),
  ("discovery_place", "Place", "Lieu"),

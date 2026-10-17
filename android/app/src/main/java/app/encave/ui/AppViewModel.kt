@@ -233,9 +233,10 @@ class AppViewModel(
         val before = cellar.value
         val wine = before.wines[wineId] ?: return
         val bottles = before.bottles.values.filter { it.wineId == wineId }
+        val discoveries = before.discoveries.values.filter { it.wineId == wineId }
         change<Unit>({
             post(UiText.Res(R.string.msg_wine_deleted, listOf(wine.displayName))) {
-                change<Unit> { c -> c.merge(Cellar(listOf(wine), bottles)) }
+                change<Unit> { c -> c.merge(Cellar(listOf(wine), bottles, discoveries = discoveries)) }
             }
         }) { it.deleteWine(wineId) }
     }

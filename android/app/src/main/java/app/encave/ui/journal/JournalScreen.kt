@@ -3,6 +3,10 @@ package app.encave.ui.journal
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -146,6 +150,22 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         Button(onClick = { navigator.open(DiscoveryEditorRoute()) }) { Text(stringResource(R.string.discovery_new)) }
                     }
                 } else {
+                    OutlinedTextField(
+                        value = discoveryFilter.query,
+                        onValueChange = { discoveryFilter = discoveryFilter.copy(query = it) },
+                        placeholder = { Text(stringResource(R.string.discovery_search_hint)) },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (discoveryFilter.query.isNotEmpty()) {
+                                IconButton(onClick = { discoveryFilter = discoveryFilter.copy(query = "") }) {
+                                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = CircleShape,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.xs),
+                    )
                     DiscoveryFilterBar(cellar, discoveryFilter) { discoveryFilter = it }
                     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
                         discoveryItems(cellar, viewModel.photos, discoveryFilter, actions)

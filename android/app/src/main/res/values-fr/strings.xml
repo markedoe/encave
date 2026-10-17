@@ -329,6 +329,7 @@
     <string name="discovery_deleted">Découverte supprimée</string>
     <string name="discovery_saved">Enregistré dans vos découvertes</string>
     <string name="discovery_added_to_list">Ajouté à votre liste d’achats</string>
+    <string name="discovery_search_hint">Vin, lieu, note ou tag</string>
     <string name="discovery_none_match">Aucune découverte ne correspond</string>
     <string name="discovery_where">Où</string>
     <string name="discovery_place">Lieu</string>

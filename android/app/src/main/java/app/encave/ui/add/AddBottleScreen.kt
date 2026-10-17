@@ -177,8 +177,9 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                     }
                 },
                 actions = {
-                    // TODO(scan): label scanning (camera + on-device text recognition) prefills the
-                    // form here through LabelScan.parse(); see ui/scan/LabelScan.kt.
+                    // TODO(scan): on-device label scanning (camera + text recognition with no network
+                    // or reporting SDK) would prefill the form here with app.encave.core.LabelTextParser.
+                    // Until then a label photo is read only by the optional AI recognition.
                     TextButton(onClick = ::save) { Text(stringResource(R.string.action_add)) }
                 },
             )
