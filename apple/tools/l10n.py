@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Show the cellar as a table or a list (Mac)': 'Afficher la cave en tableau ou en liste (Mac)',
     'Show as Table': 'Afficher en tableau',
     'Checking a rack': 'Vérifier un casier',
     'Choose **Check This Rack**, tap each bottle you find, then **End Check**. For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.': 'Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.',
@@ -771,6 +772,7 @@ FR = {
     '⌘1 – ⌘4': '⌘1 – ⌘4',
     '⌘N': '⌘N',
     '⌥⌘N': '⌥⌘N',
+    '⌥⌘T': '⌥⌘T',
     # AI providers
     "Other server (OpenAI-compatible)": "Autre serveur (compatible OpenAI)",
     "Connect and Load Models": "Se connecter et charger les modèles",

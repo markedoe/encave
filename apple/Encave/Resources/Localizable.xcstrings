@@ -6241,6 +6241,16 @@
         }
       }
     },
+    "Show the cellar as a table or a list (Mac)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la cave en tableau ou en liste (Mac)"
+          }
+        }
+      }
+    },
     "Shows all your wines.": {
       "localizations": {
         "fr": {
@@ -8737,6 +8747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌥⌘N"
+          }
+        }
+      }
+    },
+    "⌥⌘T": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌥⌘T"
           }
         }
       }
