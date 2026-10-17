@@ -12,12 +12,12 @@ Your cellar stays on your devices.
 
 - **Sync between your devices** is end-to-end encrypted.
   - On the same network, devices talk directly with no server.
-  - Away from home, they exchange encrypted files through a relay you choose,
-    which never has a key.
+  - Away from home, they exchange encrypted files through your iCloud (Apple
+    devices) or a relay you choose, which never has a key.
 - **Pairing:** each device has its own identity key (Keychain). Pairing is
   confirmed by comparing a 6-digit code on both screens.
 - **Removing a device** shuts it out of the network handshake and rotates the key
-  of the remote files.
+  of the remote files. A removal is final: the device cannot add itself back.
 
 The protocol and its threat model are in [docs/SYNC.md](docs/SYNC.md).
 

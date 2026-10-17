@@ -13,10 +13,12 @@ from a primary source and should be tested before anything depends on them.
 > - Implemented:
 >   - the storage-agnostic file protocol (snapshots, photo blobs, key grants,
 >     key rotation): `RemoteSync.swift`, specified in [SYNC.md](SYNC.md), section 8;
->   - the self-hostable relay (Node and Cloudflare Workers + R2, `relay/`);
->   - its client in the Apple app.
-> - Planned: CloudKit, Google Drive, the community relay decision, and
->   signatures on files.
+>   - the self-hostable relay (Node and Cloudflare Workers + R2, `relay/`),
+>     which keeps no tokens: a mailbox ID is derived from its token;
+>   - its client in the Apple app;
+>   - CloudKit (the user's private database, one zone per mailbox) in the Apple
+>     app, shown only in builds that declare an iCloud container.
+> - Planned: Google Drive, the community relay decision, and signatures on files.
 >
 > **Corrections to the analysis below:**
 > - Pairing on the local network uses a commit-then-reveal key exchange with a
