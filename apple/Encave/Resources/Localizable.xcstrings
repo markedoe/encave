@@ -581,6 +581,16 @@
         }
       }
     },
+    "About one bottle a month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environ une bouteille par mois"
+          }
+        }
+      }
+    },
     "About the wine itself. Notes on a bottle you opened go in its tasting.": {
       "localizations": {
         "fr": {

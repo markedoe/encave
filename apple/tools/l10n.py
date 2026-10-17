@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'About one bottle a month': 'Environ une bouteille par mois',
     'Show the cellar as a table or a list (Mac)': 'Afficher la cave en tableau ou en liste (Mac)',
     'Show as Table': 'Afficher en tableau',
     'Checking a rack': 'Vérifier un casier',
