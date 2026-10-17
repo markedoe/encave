@@ -29,6 +29,8 @@ class InteropTest {
         assertEquals(sample.bottles.size, cellar.bottles.size)
         assertEquals(sample.wines.values.map { it.displayName }.toSet(), cellar.wines.values.map { it.displayName }.toSet())
         assertEquals(2, cellar.consumedBottles.size)
+        assertEquals(2, cellar.discoveries.size)
+        assertEquals(2, cellar.shoppingListCount)
         assertEquals(4.5, cellar.statistics(2026).averageRating)
         assertTrue(cellar.bottlesInCellar.all { it.purchasePrice != null })
     }
@@ -67,7 +69,7 @@ class InteropTest {
         val target = Cellar(racks = apple.racks)
         val summary = target.importCsv(resource("apple-export.csv"))
         assertEquals(apple.bottles.size, summary.bottlesAdded)
-        assertEquals(apple.wines.size, summary.winesAdded)
+        assertEquals(apple.bottles.values.map { it.wineId }.toSet().size, summary.winesAdded)
         assertEquals(apple.bottlesInCellar.mapNotNull { it.slot }.toSet(), target.bottlesInCellar.mapNotNull { it.slot }.toSet())
     }
 }

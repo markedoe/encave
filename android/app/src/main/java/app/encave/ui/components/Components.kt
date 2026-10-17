@@ -58,12 +58,11 @@ val LocalSnackbarHostState = staticCompositionLocalOf { SnackbarHostState() }
 /** Small dot showing the wine style. Decorative: the style is always also given as text. */
 @Composable
 fun WineColorDot(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 12.dp) {
-    Box(
-        modifier
-            .size(size)
-            .background(LocalWinePalette.current[color], CircleShape)
-            .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), CircleShape),
-    )
+    if (color != null) {
+        BottleEnd(color, modifier, size)
+    } else {
+        Box(modifier.size(size).border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape))
+    }
 }
 
 /** Style shown as a dot plus its name. */

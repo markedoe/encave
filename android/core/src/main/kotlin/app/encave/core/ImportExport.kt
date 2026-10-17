@@ -89,6 +89,9 @@ fun Cellar.merge(other: Cellar): ImportSummary {
             bottleCount++
         }
     }
+    for ((id, discovery) in other.discoveries) {
+        if (discoveries[id] == null && wines[discovery.wineId] != null) putDiscovery(discovery)
+    }
     return ImportSummary(wineCount, bottleCount, 0)
 }
 

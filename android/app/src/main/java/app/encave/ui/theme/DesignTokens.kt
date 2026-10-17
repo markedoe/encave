@@ -13,9 +13,9 @@ object DesignTokens {
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
         "wine-red" to ThemedColor(light = 0xFF8C1C2B, dark = 0xFFC8454F),
-        "wine-white" to ThemedColor(light = 0xFFE6D27C, dark = 0xFFD9C46A),
+        "wine-white" to ThemedColor(light = 0xFFC9BE4E, dark = 0xFFC7BD55),
         "wine-rose" to ThemedColor(light = 0xFFF0A0AA, dark = 0xFFE58A95),
-        "wine-sparkling" to ThemedColor(light = 0xFFF2E2A0, dark = 0xFFE6D27C),
+        "wine-sparkling" to ThemedColor(light = 0xFFF3E6C4, dark = 0xFFEFE3C2),
         "wine-dessert" to ThemedColor(light = 0xFFC8902E, dark = 0xFFD9A441),
         "wine-fortified" to ThemedColor(light = 0xFF6B2D2D, dark = 0xFFA2524A),
         "wine-orange" to ThemedColor(light = 0xFFE39B4C, dark = 0xFFEBA35A),

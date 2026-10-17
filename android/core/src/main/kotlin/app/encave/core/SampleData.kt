@@ -20,6 +20,12 @@ object SampleData {
         val nose: String = "Cherry, violet, a touch of undergrowth",
         val palate: String = "Fine tannins, fresh acidity",
         val pairing: String = "Roast duck",
+        val friendsPlace: String = "At Julie and Marc's",
+        val friendsNote: String = "Very fresh, perfect with the cheese platter.",
+        val restaurantPlace: String = "Bistro on the harbour, Lisbon",
+        val restaurantNote: String = "Mineral and salty, great with grilled fish.",
+        val tagToBuy: String = "For summer",
+        val tagGift: String = "Gift idea",
     )
 
     fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = Instant.now()): Cellar {
@@ -93,6 +99,23 @@ object SampleData {
             note = labels.tastingNote, occasion = labels.occasion, nose = labels.nose,
             palate = labels.palate, foodPairing = labels.pairing))
         cellar.drink(bottles[1].id, Tasting(date = now - Duration.ofDays(40), rating = 4))
+
+        // Wines found elsewhere, one of them on the shopping list.
+        val atFriends = Wine(name = "Coteaux du Layon", producer = "Domaine des Sablons", vintage = year - 6,
+            color = WineColor.Dessert, region = "Loire", country = "France", grapes = listOf("Chenin Blanc"))
+        cellar.addDiscovery(
+            Discovery(wineId = atFriends.id, date = now - Duration.ofDays(9), setting = Discovery.Setting.Friends,
+                place = labels.friendsPlace, rating = 4, note = labels.friendsNote, tags = listOf(labels.tagGift), wantsToBuy = true),
+            atFriends,
+        )
+        val onTrip = Wine(name = "Alvarinho Reserva", producer = "Quinta do Mar", vintage = year - 2, color = WineColor.White,
+            region = "Vinho Verde", country = "Portugal", grapes = listOf("Alvarinho"))
+        cellar.addDiscovery(
+            Discovery(wineId = onTrip.id, date = now - Duration.ofDays(25), setting = Discovery.Setting.Restaurant,
+                place = labels.restaurantPlace, rating = 5, note = labels.restaurantNote, tags = listOf(labels.tagToBuy),
+                price = BigDecimal(32), currency = cellar.settings.currency, wantsToBuy = true),
+            onTrip,
+        )
         return cellar
     }
 }

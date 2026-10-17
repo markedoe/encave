@@ -17,6 +17,7 @@ class Cellar(
     bottles: Collection<Bottle> = emptyList(),
     racks: Collection<Rack> = emptyList(),
     var settings: CellarSettings = CellarSettings(),
+    discoveries: Collection<Discovery> = emptyList(),
 ) {
     var schemaVersion: Int = CURRENT_SCHEMA_VERSION
         internal set
@@ -24,23 +25,28 @@ class Cellar(
     private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { put(it.id, it) } }
     private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { put(it.id, it) } }
     private val rackList = racks.map { it.normalized() }.toMutableList()
+    private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { put(it.id, it.normalized()) } }
 
     val wines: Map<UUID, Wine> get() = wineMap
     val bottles: Map<UUID, Bottle> get() = bottleMap
     val racks: List<Rack> get() = rackList
 
-    val isEmpty: Boolean get() = wineMap.isEmpty() && bottleMap.isEmpty() && rackList.isEmpty()
+    /** Wines tasted or seen elsewhere, to remember or buy. */
+    val discoveries: Map<UUID, Discovery> get() = discoveryMap
+
+    val isEmpty: Boolean get() = wineMap.isEmpty() && bottleMap.isEmpty() && rackList.isEmpty() && discoveryMap.isEmpty()
 
     /** An independent copy: changes to it never affect this cellar. */
-    fun copy(): Cellar = Cellar(wineMap.values, bottleMap.values, rackList, settings).also {
+    fun copy(): Cellar = Cellar(wineMap.values, bottleMap.values, rackList, settings, discoveryMap.values).also {
         it.schemaVersion = schemaVersion
     }
 
     override fun equals(other: Any?): Boolean =
         other is Cellar && schemaVersion == other.schemaVersion && wineMap == other.wineMap &&
-            bottleMap == other.bottleMap && rackList == other.rackList && settings == other.settings
+            bottleMap == other.bottleMap && rackList == other.rackList && settings == other.settings &&
+            discoveryMap == other.discoveryMap
 
-    override fun hashCode(): Int = listOf(schemaVersion, wineMap, bottleMap, rackList, settings).hashCode()
+    override fun hashCode(): Int = listOf(schemaVersion, wineMap, bottleMap, rackList, settings, discoveryMap).hashCode()
 
     override fun toString(): String = "Cellar(wines=${wineMap.size}, bottles=${bottleMap.size}, racks=${rackList.size})"
 
@@ -241,10 +247,11 @@ class Cellar(
         wineMap[wine.id] = wine
     }
 
-    /** Deletes a wine and every bottle of it. */
+    /** Deletes a wine with every bottle and discovery of it. */
     fun deleteWine(wineId: UUID) {
         wineMap.remove(wineId)
         bottleMap.values.removeAll { it.wineId == wineId }
+        discoveryMap.values.removeAll { it.wineId == wineId }
     }
 
     fun addRack(rack: Rack) {
@@ -281,8 +288,8 @@ class Cellar(
         }
     }
 
-    private fun removeOrphanWines() {
-        val used = bottleMap.values.map { it.wineId }.toSet()
+    internal fun removeOrphanWines() {
+        val used = bottleMap.values.map { it.wineId }.toSet() + discoveryMap.values.map { it.wineId }
         wineMap.keys.retainAll(used)
     }
 
@@ -308,6 +315,14 @@ class Cellar(
 
     internal fun putBottle(bottle: Bottle) {
         bottleMap[bottle.id] = bottle
+    }
+
+    internal fun putDiscovery(discovery: Discovery) {
+        discoveryMap[discovery.id] = discovery.normalized()
+    }
+
+    internal fun removeDiscovery(id: UUID) {
+        discoveryMap.remove(id)
     }
 
     internal fun appendRack(rack: Rack) {
@@ -353,7 +368,7 @@ data class CellarFilter(
     val isActive: Boolean get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null
 }
 
-enum class CellarError { UnknownWine, UnknownBottle, UnknownRack, SlotTaken, SlotOutOfRange, AlreadyConsumed, RackNotEmpty }
+enum class CellarError { UnknownWine, UnknownBottle, UnknownRack, UnknownDiscovery, SlotTaken, SlotOutOfRange, AlreadyConsumed, RackNotEmpty }
 
 class CellarException(val error: CellarError) : Exception(error.name)
 

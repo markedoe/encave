@@ -106,6 +106,12 @@ object CellarSerializer : KSerializer<Cellar> {
                         add(json.encodeToJsonElement(Bottle.serializer(), bottle))
                     }
                 })
+                put("discoveries", buildJsonArray {
+                    value.discoveries.forEach { (id, discovery) ->
+                        add(JsonPrimitive(id.toString().uppercase(Locale.ROOT)))
+                        add(json.encodeToJsonElement(Discovery.serializer(), discovery))
+                    }
+                })
                 put("racks", json.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(Rack.serializer()), value.racks))
                 put("schemaVersion", JsonPrimitive(value.schemaVersion))
                 put("settings", json.encodeToJsonElement(CellarSettings.serializer(), value.settings))
@@ -127,8 +133,9 @@ object CellarSerializer : KSerializer<Cellar> {
         val bottles = entries(root["bottles"]).map { json.decodeFromJsonElement(Bottle.serializer(), it) }
         val racks = (root["racks"] as? JsonArray).orEmpty().map { json.decodeFromJsonElement(Rack.serializer(), it) }
         val settings = root["settings"]?.let { json.decodeFromJsonElement(CellarSettings.serializer(), it) } ?: CellarSettings()
+        val discoveries = entries(root["discoveries"]).map { json.decodeFromJsonElement(Discovery.serializer(), it) }
         // Older files are upgraded on load, like the Swift decoder does.
-        return Cellar(wines, bottles, racks, settings)
+        return Cellar(wines, bottles, racks, settings, discoveries)
     }
 
     /** Values of a Swift dictionary: `[key, value, key, value]`, or a keyed object. */

@@ -169,17 +169,7 @@ private fun RackCell(
     ) {
         when {
             isSelected -> Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.onPrimaryContainer)
-            wine != null -> {
-                // Bottle end seen from the front: wine-colored disc with a darker punt.
-                val color = LocalWinePalette.current[wine.color]
-                Box(
-                    Modifier.size(size * if (diamond) 0.42f else 0.62f).background(color, CircleShape)
-                        .border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(Modifier.size(size * if (diamond) 0.14f else 0.2f).background(scheme.scrim.copy(alpha = 0.25f), CircleShape))
-                }
-            }
+            wine != null -> app.encave.ui.components.BottleEnd(wine.color, size = size * if (diamond) 0.46f else 0.66f)
             else -> Box(
                 Modifier.size(size * if (diamond) 0.36f else 0.5f).border(1.dp, scheme.outlineVariant, CircleShape),
             )

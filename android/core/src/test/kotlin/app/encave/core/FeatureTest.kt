@@ -228,7 +228,8 @@ class ImportExportTest {
         val target = Cellar(racks = original.racks)
         val summary = target.importCsv(csv)
         assertEquals(original.bottles.size, summary.bottlesAdded)
-        assertEquals(original.wines.size, target.wines.size)
+        // The CSV lists bottles: wines only known from discoveries are not in it.
+        assertEquals(original.bottles.values.map { it.wineId }.toSet().size, target.wines.size)
         assertEquals(original.bottlesInCellar.size, target.bottlesInCellar.size)
         assertEquals(original.consumedBottles.size, target.consumedBottles.size)
         assertEquals(original.bottlesInCellar.mapNotNull { it.slot }.toSet(), target.bottlesInCellar.mapNotNull { it.slot }.toSet())
