@@ -45,7 +45,9 @@ class InteropTest {
     fun writesWholeSecondsAndUppercaseIds() {
         val ours = CellarExport.json(SampleData.cellar(year = 2026), Instant.parse("2026-10-17T08:58:49.123Z"))
         assertTrue(ours.contains("\"exportedAt\": \"2026-10-17T08:58:49Z\""), "no fractional seconds")
-        assertFalse(Regex("[0-9a-f]{8}-[0-9a-f]{4}").containsMatchIn(ours), "UUIDs are uppercase")
+        val ids = Regex("(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}").findAll(ours).map { it.value }.toList()
+        assertFalse(ids.isEmpty())
+        assertTrue(ids.all { it == it.uppercase() }, "UUIDs are uppercase")
         assertTrue(Regex("\"purchasePrice\": [0-9]+[,\n]").containsMatchIn(ours), "prices are bare numbers")
     }
 

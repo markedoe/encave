@@ -41,6 +41,8 @@ data class Wine(
     val drinkUntil: Int? = null,
     /** Free-form notes about the wine itself (not a tasting). */
     val notes: String? = null,
+    /** Identifier of a photo (label or bottle) stored by the app next to the cellar. */
+    @SerialName("photoID") val photoId: String? = null,
 ) {
     /** "Château X 2015" or "Château X" for non-vintage wines. */
     val displayName: String get() = if (vintage != null) "$name $vintage" else name
