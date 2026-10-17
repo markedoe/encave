@@ -52,7 +52,8 @@ implementations:
   (bought, not delivered yet; such a bottle has no place and may carry
   `expectedAt`, a date).
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
-  when empty. `bottle.reservedFor` is an optional string (the occasion a bottle
+  when empty, and so is `wine.extraPhotoIDs` (more photos; they are synced like
+  `photoID`). `bottle.reservedFor` is an optional string (the occasion a bottle
   is kept for). `settings.savedSearches` is an optional array of
   `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
   `colors` and `maturities` sorted by their string value.
@@ -268,7 +269,8 @@ neither side waits on a full buffer.
    with another cellar ID. Both check the bounds, merge (section 1) and merge
    memberships.
 2. `{"type":"photos-want","photos":[ids]}` each way: the photos referenced by
-   the merged cellar that the device does not have.
+   the merged cellar (`photoID` and `extraPhotoIDs` of every wine) that the
+   device does not have.
 3. The initiator sends `{"type":"photo","photoID":…,"photoData":…}` for each
    requested photo that the merged cellar references, then
    `{"type":"photos-end"}`; then the responder does the same.

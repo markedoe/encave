@@ -104,6 +104,8 @@ struct WinePhoto: View {
     var photoID: String?
     var data: Data?
     var maxPixelSize = 900
+    /// Show the whole photo (a viewer) instead of filling the frame.
+    var fits = false
 
     @State private var image: CGImage?
 
@@ -112,7 +114,7 @@ struct WinePhoto: View {
             if let image {
                 Image(decorative: image, scale: 1)
                     .resizable()
-                    .scaledToFill()
+                    .aspectRatio(contentMode: fits ? .fit : .fill)
             } else {
                 Color.secondary.opacity(0.08)
             }

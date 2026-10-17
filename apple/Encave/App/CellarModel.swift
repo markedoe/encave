@@ -74,7 +74,7 @@ final class CellarModel {
             let model = CellarModel(store: store, demo: false)
             // Photos of deleted wines are kept until the next launch so deleting can be undone.
             if model.errorMessage == nil {
-                PhotoStore.removeOrphans(keeping: Set(model.cellar.wines.values.compactMap(\.photoID)))
+                PhotoStore.removeOrphans(keeping: model.cellar.photoIDs)
             }
             return model
         }

@@ -19,6 +19,8 @@ struct WineDraft: Equatable {
     var photoID: String?
     var barcodes: [String] = []
     var tags: [String] = []
+    /// Not edited in the form, but kept.
+    var extraPhotoIDs: [String]?
     /// A tag being typed, kept on save.
     var pendingTag = ""
 
@@ -41,6 +43,7 @@ struct WineDraft: Equatable {
         photoID = wine.photoID
         barcodes = wine.barcodes ?? []
         tags = wine.tags ?? []
+        extraPhotoIDs = wine.extraPhotoIDs
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -56,7 +59,7 @@ struct WineDraft: Equatable {
             return trimmed.isEmpty ? nil : trimmed
         }
         let window = windowIsAutomatic ? estimatedWindow : drinkFrom.flatMap { from in drinkUntil.map { (from, max(from, $0)) } }
-        return Wine(
+        var wine = Wine(
             id: id, name: clean(name) ?? name, producer: clean(producer), vintage: vintage, color: color,
             region: clean(region), country: clean(country), appellation: clean(appellation),
             grapes: grapes.split(whereSeparator: { $0 == "," || $0 == ";" })
@@ -64,6 +67,8 @@ struct WineDraft: Equatable {
             drinkFrom: window?.0, drinkUntil: window?.1, notes: clean(notes), photoID: photoID, barcodes: barcodes,
             tags: tags + pendingTag.split(separator: ",").map(String.init)
         )
+        wine.extraPhotoIDs = extraPhotoIDs
+        return wine
     }
 }
 

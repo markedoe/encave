@@ -119,6 +119,9 @@ public extension Cellar {
         }
     }
 
+    /// Every photo a wine refers to (to sync, and to keep when cleaning up).
+    var photoIDs: Set<String> { Set(wines.values.flatMap(\.allPhotoIDs)) }
+
     /// Saves the current search under a name, replacing one with the same name.
     mutating func saveSearch(_ name: String, filter: CellarFilter) {
         let search = SavedSearch(name: name, filter: filter)

@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Adding…': 'Ajout…',
+    'More photos': 'Autres photos',
+    'Shows the photo large.': 'Affiche la photo en grand.',
+    'The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.': 'La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées.',
     'Applies this saved search.': 'Applique cette recherche enregistrée.',
     'Delete Search': 'Supprimer la recherche',
     'It appears first among the filters, one tap away.': 'Elle apparaît en premier parmi les filtres, à portée d’un toucher.',

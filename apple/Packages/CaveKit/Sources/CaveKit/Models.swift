@@ -28,6 +28,8 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var barcodes: [String]?
     /// The user's own groups ("Gift", "Birth year"). Nil rather than empty, like barcodes.
     public var tags: [String]?
+    /// More photos (back label, receipt, the bottle in its rack). Nil rather than empty.
+    public var extraPhotoIDs: [String]?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -61,7 +63,11 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         photoID = try c.decodeIfPresent(String.self, forKey: .photoID)
         barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes)
         tags = try c.decodeIfPresent([String].self, forKey: .tags)
+        extraPhotoIDs = try c.decodeIfPresent([String].self, forKey: .extraPhotoIDs)
     }
+
+    /// The label photo first, then the others.
+    public var allPhotoIDs: [String] { [photoID].compactMap { $0 } + (extraPhotoIDs ?? []) }
 
     /// Trimmed, without empty or duplicate tags (ignoring case); nil when none are left.
     public static func normalizedTags(_ tags: [String]?) -> [String]? {

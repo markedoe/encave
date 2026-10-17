@@ -861,6 +861,16 @@
         }
       }
     },
+    "Adding…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajout…"
+          }
+        }
+      }
+    },
     "All data erased": {
       "localizations": {
         "fr": {
@@ -4311,6 +4321,16 @@
         }
       }
     },
+    "More photos": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres photos"
+          }
+        }
+      }
+    },
     "Most opened region: %@": {
       "localizations": {
         "fr": {
@@ -6461,6 +6481,16 @@
         }
       }
     },
+    "Shows the photo large.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche la photo en grand."
+          }
+        }
+      }
+    },
     "Shows where its bottles are in the rack.": {
       "localizations": {
         "fr": {
@@ -7097,6 +7127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La réponse du service d’IA est illisible."
+          }
+        }
+      }
+    },
+    "The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées."
           }
         }
       }

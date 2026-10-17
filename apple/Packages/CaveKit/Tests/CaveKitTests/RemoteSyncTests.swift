@@ -237,6 +237,22 @@ private func household(_ count: Int = 3) -> [RemoteDevice] {
         #expect(devices[1].snapshot.cellar.wines[wine.id] != nil)
     }
 
+    @Test func extraPhotosTravelToo() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household(2)
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        let back = Data("back label".utf8)
+        let id = PhotoID.make(for: back)
+        devices[0].photos.access.save(id, back)
+        var wine = Wine(name: "With a back label")
+        wine.extraPhotoIDs = [id]
+        try devices[0].edit { try $0.addBottles(of: wine, quantity: 1) }
+        try await devices[0].sync(store)
+        try await devices[1].sync(store)
+        #expect(devices[1].photos.stored[id] == back)
+    }
+
     @Test func grantsFromStrangersAreIgnored() async throws {
         let store = MemoryMailboxStore()
         let devices = household(2)
