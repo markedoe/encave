@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,7 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -81,20 +82,9 @@ import app.encave.ui.navigation.WineDetailRoute
 import app.encave.ui.theme.Dimens
 import kotlin.math.roundToInt
 
-private const val MIN_ZOOM = 0.5f
-private const val MAX_ZOOM = 3f
-
-/** Lays the content out at its natural size times [scale], so scrolling covers the zoomed rack. */
-private fun Modifier.scaled(scale: Float) = layout { measurable, _ ->
-    val placeable = measurable.measure(Constraints())
-    layout((placeable.width * scale).roundToInt(), (placeable.height * scale).roundToInt()) {
-        placeable.placeWithLayer(0, 0) {
-            scaleX = scale
-            scaleY = scale
-            transformOrigin = TransformOrigin(0f, 0f)
-        }
-    }
-}
+/** 1 fits the whole rack on screen; more zooms in. */
+private const val MIN_ZOOM = 1f
+private const val MAX_ZOOM = 4f
 
 /** Two-finger pinch only, so one finger still scrolls and taps cells. */
 private fun Modifier.pinchToZoom(onZoom: (Float) -> Unit) = pointerInput(Unit) {
@@ -135,7 +125,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     // "Show in rack": bring the highlighted slot into view.
     LaunchedEffect(highlighted, rack) {
         if (highlighted == null || rack == null) return@LaunchedEffect
-        val step = with(density) { (Dimens.touchTarget + 12.dp).toPx() }
+        val step = with(density) { (Dimens.touchTarget * scale).toPx() }
         horizontal.animateScrollTo((highlighted.column * step - step).roundToInt().coerceAtLeast(0))
         vertical.animateScrollTo((highlighted.row * step - step).roundToInt().coerceAtLeast(0))
     }
@@ -161,7 +151,16 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                 },
                 actions = {
                     if (rack != null) {
-                        IconButton(onClick = { navigator.open(RackEditorRoute(rack.id.toString())) }) {
+                        IconButton(onClick = { scale = (scale / 1.25f).coerceAtLeast(MIN_ZOOM) }, enabled = scale > MIN_ZOOM) {
+                            Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.action_zoom_out))
+                        }
+                        IconButton(onClick = { scale = (scale * 1.25f).coerceAtMost(MAX_ZOOM) }, enabled = scale < MAX_ZOOM) {
+                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_zoom_in))
+                        }
+                        IconButton(
+                            onClick = { navigator.open(RackEditorRoute(rack.id.toString())) },
+                            modifier = Modifier.testTag("action.edit_rack"),
+                        ) {
                             Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.rack_editor_edit))
                         }
                     }
@@ -191,20 +190,26 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     }
                 }
             }
-            Box(
+            BoxWithConstraints(
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .pinchToZoom { zoom -> scale = (scale * zoom).coerceIn(MIN_ZOOM, MAX_ZOOM) },
             ) {
-                Box(Modifier.fillMaxSize().verticalScroll(vertical).horizontalScroll(horizontal).padding(Dimens.l)) {
+                // The rack fits the screen at zoom 1, whatever its size; zoom is relative to that.
+                val labelHeight = with(density) { (MaterialTheme.typography.labelSmall.lineHeight * 1.25f).toDp() }
+                val base = fittingCellSize(rack, maxWidth - Dimens.l * 2, maxHeight - Dimens.l * 2, labelHeight = labelHeight)
+                Box(
+                    Modifier.fillMaxSize().verticalScroll(vertical).horizontalScroll(horizontal).padding(Dimens.l),
+                    contentAlignment = Alignment.Center,
+                ) {
                     val moveHere = stringResource(R.string.rack_cell_move_here)
                     val addHere = stringResource(R.string.rack_cell_add)
                     val actions = stringResource(R.string.rack_cell_actions)
                     RackGrid(
                         rack = rack,
                         cellar = cellar,
-                        modifier = Modifier.scaled(scale),
+                        cellSize = base * scale,
                         highlighted = highlighted,
                         selected = setOfNotNull(moving?.slot),
                         clickLabel = { bottles -> if (moving != null) moveHere else if (bottles.isEmpty()) addHere else actions },
@@ -233,12 +238,6 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         onCellLongClick = { _, bottles -> bottles.firstOrNull()?.let { movingId = it.id.toString() } },
                     )
                 }
-                ZoomControls(
-                    onZoomIn = { scale = (scale * 1.25f).coerceAtMost(MAX_ZOOM) },
-                    onZoomOut = { scale = (scale / 1.25f).coerceAtLeast(MIN_ZOOM) },
-                    onReset = { scale = 1f },
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(Dimens.l).navigationBarsPadding(),
-                )
             }
         }
     }
@@ -277,17 +276,6 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             onDismiss = { drinking = null },
             onDrink = { chosen, tasting -> viewModel.drink(chosen.id, tasting) },
         )
-    }
-}
-
-@Composable
-private fun ZoomControls(onZoomIn: () -> Unit, onZoomOut: () -> Unit, onReset: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-        FilledTonalIconButton(onClick = onZoomIn) { Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_zoom_in)) }
-        FilledTonalIconButton(onClick = onZoomOut) { Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.action_zoom_out)) }
-        FilledTonalIconButton(onClick = onReset) {
-            Icon(Icons.Outlined.CenterFocusStrong, contentDescription = stringResource(R.string.action_zoom_reset))
-        }
     }
 }
 

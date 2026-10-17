@@ -1,5 +1,7 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -175,14 +177,14 @@ fun WineDetailScreen(
                     Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
                     horizontalArrangement = Arrangement.spacedBy(Dimens.s),
                 ) {
-                    Button(onClick = { drinking = bottles.first() }, enabled = bottles.isNotEmpty(), modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Outlined.LocalBar, contentDescription = null)
-                        Text(stringResource(R.string.action_drink), Modifier.padding(start = Dimens.s))
-                    }
-                    FilledTonalButton(onClick = { navigator.open(AddBottleRoute(wineId = wineId)) }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Filled.Add, contentDescription = null)
-                        Text(stringResource(R.string.action_add_bottles), Modifier.padding(start = Dimens.s), maxLines = 1)
-                    }
+                    Button(
+                        onClick = { drinking = bottles.first() }, enabled = bottles.isNotEmpty(),
+                        modifier = Modifier.weight(1f).testTag("action.drink"),
+                    ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
+                    FilledTonalButton(
+                        onClick = { navigator.open(AddBottleRoute(wineId = wineId)) },
+                        modifier = Modifier.weight(1f).testTag("action.add_bottles"),
+                    ) { ActionContent(stringResource(R.string.action_add_bottles), Icons.Filled.Add) }
                 }
             }
             item { SectionHeader("${stringResource(R.string.detail_bottles)} (${bottles.size})") }

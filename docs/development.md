@@ -75,6 +75,10 @@ cd android
   run `python3 android/tools/strings.py` to write both `strings.xml` files.
 - AI label recognition works as on Apple; the key is encrypted with the
   Android Keystore and excluded from backups.
+- `ScreenTourTest` opens every main screen with the sample cellar on a phone
+  and a tablet, in English and French, saves screenshots to
+  `android/app/build/screens` (never commit them) and checks the layout:
+  centered `action.*` buttons, equal side-by-side buttons, racks that fit.
 
 ## Continuous integration
 
@@ -82,7 +86,7 @@ cd android
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks |
 | `apple.yml` | Model tests on Linux and macOS, builds both apps; on push, uploads to TestFlight |
-| `android.yml` | Core and app unit tests, lint, debug APK (artifact `encave-debug-apk`) |
+| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`) |
 | `security.yml` | Weekly full-history secret scan |
 
 TestFlight uploads need these repository secrets: `APPLE_TEAM_ID`,

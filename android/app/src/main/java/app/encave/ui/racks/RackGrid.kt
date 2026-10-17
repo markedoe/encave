@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -51,6 +52,55 @@ import app.encave.core.Slot
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.displayLabel
 import app.encave.ui.theme.LocalWinePalette
+
+/**
+ * Width and height of [RackGrid] for a cell size, following its layout (cells, gaps,
+ * offset rows, nesting, headers, shelf bars, padding). [labelHeight] is the height of
+ * the column-number row, which follows the font size.
+ */
+fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): Pair<Dp, Dp> {
+    val size = if (rack.kind == RackKind.Bins) cell * 1.7f else cell
+    val spacing = when (rack.kind) {
+        RackKind.Grid -> cell * 0.08f
+        RackKind.Staggered -> cell * 0.04f
+        RackKind.Shelves -> cell * 0.1f
+        RackKind.Bins -> 0.dp
+    }
+    val pad = if (rack.kind == RackKind.Grid || rack.kind == RackKind.Staggered) cell * 0.12f else 0.dp
+    val header = if (showHeaders) maxOf(18.dp, cell * 0.42f) else 0.dp
+    val offsets = rack.kind == RackKind.Staggered || rack.kind == RackKind.Bins
+    val width = (0 until rack.rows).maxOf { row ->
+        val n = rack.columnsInRow(row)
+        val offset = if (offsets && row % 2 == 1) (size + spacing) / 2 else 0.dp
+        header + offset + size * n + spacing * (n - 1)
+    } + pad * 2
+    val overlap = when (rack.kind) {
+        RackKind.Staggered -> (size + spacing) * 0.134f
+        RackKind.Bins -> size / 2 - cell * 0.06f
+        else -> 0.dp
+    }
+    val gap = when (rack.kind) {
+        RackKind.Grid -> spacing
+        RackKind.Shelves -> cell * 0.42f
+        else -> 0.dp
+    }
+    val shelf = if (rack.kind == RackKind.Shelves) maxOf(4.dp, cell * 0.09f) else 0.dp
+    val headerRow = if (showHeaders && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)) labelHeight + gap else 0.dp
+    val height = headerRow + (size + shelf) * rack.rows - overlap * (rack.rows - 1) + gap * (rack.rows - 1) + pad * 2
+    return width to height
+}
+
+/** The largest cell size (16–80dp) at which the whole rack fits in [width] × [height]. */
+fun fittingCellSize(rack: Rack, width: Dp, height: Dp, showHeaders: Boolean = true, labelHeight: Dp = 20.dp): Dp {
+    var low = 16f
+    var high = 80f
+    repeat(24) {
+        val mid = (low + high) / 2
+        val (w, h) = rackGridSize(rack, mid.dp, showHeaders, labelHeight)
+        if (w <= width && h <= height) low = mid else high = mid
+    }
+    return low.dp
+}
 
 /** A rhombus, for diamond bins. */
 val DiamondShape: Shape = GenericShape { size, _ ->
@@ -111,7 +161,8 @@ fun RackGrid(
     val offsetsOddRows = rack.kind == RackKind.Staggered || rack.kind == RackKind.Bins
     val headerWidth = maxOf(18.dp, cellSize * 0.42f)
     val scheme = MaterialTheme.colorScheme
-    val cellWidth = maxOf(48.dp, size)
+    // No touch-target minimum here: the rack screen fits the rack to the screen and zooms from there.
+    val cellWidth = size
 
     Column(
         modifier
@@ -204,10 +255,10 @@ private fun RackCellView(
         isHighlighted -> stringResource(R.string.cell_highlighted, base)
         else -> base
     }
-    val boxSize = maxOf(48.dp, size)
     Box(
         Modifier
-            .size(boxSize)
+            .size(size)
+            .testTag("cell.${cell.row}.${cell.column}")
             .then(
                 if (onClick != null) Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick, onClickLabel = clickLabel) else Modifier,
             )

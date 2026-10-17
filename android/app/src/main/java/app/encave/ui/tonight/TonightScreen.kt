@@ -1,5 +1,8 @@
 package app.encave.ui.tonight
 
+import androidx.compose.material3.OutlinedButton
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.outlined.Casino
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -199,14 +203,13 @@ private fun SurpriseCard(group: WineGroup, cellar: Cellar, year: Int, onOpen: ()
                 )
                 MaturityLabel(Maturity.of(group.wine, year), Modifier.padding(top = Dimens.xs))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
-                FilledTonalButton(onClick = onDrink) {
-                    Icon(Icons.Outlined.LocalBar, contentDescription = null)
-                    Text(stringResource(R.string.action_drink), Modifier.padding(start = Dimens.s))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                // A filled button: a tonal one is hardly visible on the card's own container color.
+                Button(onClick = onDrink, modifier = Modifier.weight(1f).testTag("action.surprise_drink")) {
+                    ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar)
                 }
-                TextButton(onClick = onShuffle) {
-                    Icon(Icons.Outlined.Casino, contentDescription = null)
-                    Text(stringResource(R.string.action_surprise), Modifier.padding(start = Dimens.s))
+                OutlinedButton(onClick = onShuffle, modifier = Modifier.weight(1f).testTag("action.surprise_next")) {
+                    ActionContent(stringResource(R.string.action_surprise), Icons.Outlined.Casino)
                 }
             }
         }

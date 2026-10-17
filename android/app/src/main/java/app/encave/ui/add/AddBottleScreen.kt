@@ -1,5 +1,7 @@
 package app.encave.ui.add
 
+import app.encave.ui.components.ActionContent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -329,8 +331,8 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
                     )
                 }
             }
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l)) {
-                Text(pluralStringResource(R.plurals.bottles_added_action, quantity, quantity))
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l).testTag("action.add_confirm")) {
+                ActionContent(pluralStringResource(R.plurals.bottles_added_action, quantity, quantity))
             }
             HelpLink(HelpTopic.Adding, R.string.help_link_adding)
         }

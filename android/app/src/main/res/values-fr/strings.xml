@@ -19,7 +19,7 @@
     <string name="action_undo">Annuler</string>
     <string name="action_drink">Boire</string>
     <string name="action_add_bottle">Ajouter une bouteille</string>
-    <string name="action_add_bottles">Ajouter des bouteilles</string>
+    <string name="action_add_bottles">Ajouter</string>
     <string name="action_show_in_rack">Voir dans le casier</string>
     <string name="action_move">Déplacer</string>
     <string name="action_mark_gone">Donnée, vendue ou cassée</string>
