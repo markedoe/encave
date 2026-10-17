@@ -99,6 +99,8 @@ struct WineDetailView: View {
                     }
                 }
 
+                MorePhotosSection(wine: wine)
+
                 let orders = model.cellar.bottlesOnOrder.filter { $0.wineID == wineID }
                     .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
                 if !bottles.isEmpty || orders.isEmpty {

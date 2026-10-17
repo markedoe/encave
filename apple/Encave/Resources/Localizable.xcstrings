@@ -861,6 +861,16 @@
         }
       }
     },
+    "Adding…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajout…"
+          }
+        }
+      }
+    },
     "All data erased": {
       "localizations": {
         "fr": {
@@ -4311,6 +4321,16 @@
         }
       }
     },
+    "More photos": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres photos"
+          }
+        }
+      }
+    },
     "Most opened region: %@": {
       "localizations": {
         "fr": {
@@ -6261,6 +6281,26 @@
         }
       }
     },
+    "Share": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager"
+          }
+        }
+      }
+    },
+    "Shares this summary as an image. You choose where.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partage ce résumé en image. Vous choisissez où."
+          }
+        }
+      }
+    },
     "Shelf %@, %lld": {
       "localizations": {
         "fr": {
@@ -6457,6 +6497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affiche les bouteilles gardées pour cette occasion."
+          }
+        }
+      }
+    },
+    "Shows the photo large.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche la photo en grand."
           }
         }
       }
@@ -7097,6 +7147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La réponse du service d’IA est illisible."
+          }
+        }
+      }
+    },
+    "The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées."
           }
         }
       }
@@ -7891,6 +7951,16 @@
         }
       }
     },
+    "Undo, while the banner with Undo shows": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler, tant que le bandeau Annuler est affiché"
+          }
+        }
+      }
+    },
     "Unknown": {
       "localizations": {
         "fr": {
@@ -8661,6 +8731,16 @@
         }
       }
     },
+    "Your year in wine %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre année en vin %@"
+          }
+        }
+      }
+    },
     "Zoom In": {
       "localizations": {
         "fr": {
@@ -8937,6 +9017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌘N"
+          }
+        }
+      }
+    },
+    "⌘Z": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘Z"
           }
         }
       }

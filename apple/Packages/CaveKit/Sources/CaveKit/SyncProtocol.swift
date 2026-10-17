@@ -716,7 +716,7 @@ public enum SyncExchange {
         let result = SyncSnapshot(cellar: merge.cellar, state: state, membership: membership)
 
         // Photos: each side asks for the ones it is missing.
-        let wanted = Set(merge.cellar.wines.values.compactMap(\.photoID))
+        let wanted = merge.cellar.photoIDs
             .filter { PhotoID.isValid($0) && photos.data($0) == nil }.sorted()
         let ask = WireMessage.make("photos-want") { $0.photos = wanted }
         let request: WireMessage
@@ -728,7 +728,7 @@ public enum SyncExchange {
             try await channel.send(ask)
         }
         // Only photos of the merged cellar are sent, whatever is asked.
-        let known = Set(merge.cellar.wines.values.compactMap(\.photoID))
+        let known = merge.cellar.photoIDs
         let toSend = (request.photos ?? []).filter { known.contains($0) && PhotoID.isValid($0) }
 
         func sendPhotos() async throws {

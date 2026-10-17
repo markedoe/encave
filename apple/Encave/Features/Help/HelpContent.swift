@@ -133,6 +133,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "⇧⌘N", body: "Add a rack"),
                 HelpSection(title: "⌘1 – ⌘4", body: "Cellar, Racks, Tonight, Journal"),
                 HelpSection(title: "⌘+ / ⌘–", body: "Zoom a rack in and out"),
+                HelpSection(title: "⌘Z", body: "Undo, while the banner with Undo shows"),
                 HelpSection(title: "⌥⌘T", body: "Show the cellar as a table or a list (Mac)"),
                 HelpSection(title: "Menu bar (Mac)", body: "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.", systemImage: "menubar.arrow.up.rectangle"),
                 HelpSection(title: "Siri and Shortcuts", body: "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device."),

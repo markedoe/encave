@@ -281,7 +281,7 @@ public enum RemoteSync {
         }
 
         // 3. Missing photos.
-        let referenced = Set(merged.cellar.wines.values.compactMap(\.photoID))
+        let referenced = merged.cellar.photoIDs
         for id in referenced.sorted() where PhotoID.isValid(id) && photos.data(id) == nil {
             let path = photoPath(id)
             guard let file = try? await mailbox.get(path),

@@ -204,42 +204,48 @@ private struct YearInWineCard: View {
                     } else {
                         Text(verbatim: String(shown)).foregroundStyle(.secondary)
                     }
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 18) {
-                    figure("\(recap.bottlesOpened)", caption: "bottles opened")
-                    figure("\(recap.differentWines)", caption: "different wines")
-                    if recap.discoveries > 0 {
-                        figure("\(recap.discoveries)", caption: "discoveries")
+                    if let image = shareImage(recap: recap, year: shown) {
+                        ShareLink(item: image, preview: SharePreview(Text("Your year in wine"), image: image)) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                                .labelStyle(.iconOnly)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityHint(Text("Shares this summary as an image. You choose where."))
                     }
                 }
-                VStack(alignment: .leading, spacing: 8) {
-                    if let favorite = recap.favorite {
-                        fact("star.fill", Text("Favorite: \(favorite.name), \(favorite.rating) stars"))
-                    }
-                    if let regionName = recap.topRegion {
-                        fact("map", Text("Most opened region: \(regionName)"))
-                    }
-                    if let color = recap.topColor {
-                        fact("wineglass", Text("Most opened style: ") + Text(color.title))
-                    }
-                    if let occasionName = recap.topOccasion {
-                        fact("person.2", Text("Favorite occasion: \(occasionName)"))
-                    }
-                    if let month = recap.busiestMonth {
-                        let monthName = Calendar.current.monthSymbols[month - 1]
-                        fact("calendar", Text("Busiest month: \(monthName)"))
-                    }
-                }
-                .font(.subheadline)
+                YearInWineFacts(recap: recap)
+                    .accessibilityElement(children: .combine)
             }
             .padding(16)
             .background {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color.accentColor.opacity(0.1))
             }
-            .accessibilityElement(children: .combine)
             .accessibilityIdentifier("insights.year")
         }
+    }
+
+    /// The summary drawn as an image, in the light appearance, to share.
+    private func shareImage(recap: YearInWine, year: Int) -> Image? {
+        let yearLabel = String(year)
+        let card = VStack(alignment: .leading, spacing: 14) {
+            Label {
+                Text("Your year in wine \(yearLabel)").font(.headline)
+            } icon: {
+                Image(systemName: "sparkles").foregroundStyle(Color.accentColor)
+            }
+            YearInWineFacts(recap: recap)
+            Text("Made with Encave").font(.caption2).foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .frame(width: 360, alignment: .leading)
+        .background(Color.accentColor.opacity(0.1))
+        .background(.background)
+        .environment(\.colorScheme, .light)
+        .dynamicTypeSize(.large)
+        let renderer = ImageRenderer(content: card)
+        renderer.scale = 3
+        return renderer.cgImage.map { Image(decorative: $0, scale: 3) }
     }
 
     /// Years with tastings or discoveries, most recent first.
@@ -247,6 +253,43 @@ private struct YearInWineCard: View {
         let calendar = Calendar.current
         let dates = model.cellar.consumedBottles.compactMap { $0.tasting?.date } + model.cellar.discoveries.values.map(\.date)
         return Set(dates.map { calendar.component(.year, from: $0) }).sorted(by: >)
+    }
+
+}
+
+/// The figures and facts of a year in wine, on screen and in the shared image.
+private struct YearInWineFacts: View {
+    let recap: YearInWine
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 18) {
+                figure("\(recap.bottlesOpened)", caption: "bottles opened")
+                figure("\(recap.differentWines)", caption: "different wines")
+                if recap.discoveries > 0 {
+                    figure("\(recap.discoveries)", caption: "discoveries")
+                }
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                if let favorite = recap.favorite {
+                    fact("star.fill", Text("Favorite: \(favorite.name), \(favorite.rating) stars"))
+                }
+                if let regionName = recap.topRegion {
+                    fact("map", Text("Most opened region: \(regionName)"))
+                }
+                if let color = recap.topColor {
+                    fact("wineglass", Text("Most opened style: ") + Text(color.title))
+                }
+                if let occasionName = recap.topOccasion {
+                    fact("person.2", Text("Favorite occasion: \(occasionName)"))
+                }
+                if let month = recap.busiestMonth {
+                    let monthName = Calendar.current.monthSymbols[month - 1]
+                    fact("calendar", Text("Busiest month: \(monthName)"))
+                }
+            }
+            .font(.subheadline)
+        }
     }
 
     private func figure(_ value: String, caption: LocalizedStringKey) -> some View {
