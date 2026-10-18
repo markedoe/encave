@@ -17,8 +17,9 @@ pre-commit install
 ```
 
 The hooks run the same checks as CI: secret scanning (gitleaks), a
-public-safety check (no `.env` files, keys, test reports or server details)
-and a commit message check.
+public-safety check (no `.env` files, keys, certificates, test reports, home
+paths or server details) and a commit message check (short, no pasted
+conversation; see [SECURITY.md](SECURITY.md)).
 
 ## Guidelines
 
