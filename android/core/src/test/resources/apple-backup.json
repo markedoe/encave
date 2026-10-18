@@ -873,6 +873,9 @@
       {
         "color" : "sparkling",
         "country" : "France",
+        "currentPrice" : 42.5,
+        "currentPriceCurrency" : "EUR",
+        "currentPriceDate" : "2026-10-17T00:00:00Z",
         "grapes" : [
           "Chardonnay",
           "Pinot Noir"

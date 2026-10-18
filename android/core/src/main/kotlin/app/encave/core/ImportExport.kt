@@ -20,6 +20,7 @@ object CellarExport {
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
         "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
+        "current_price", "current_price_currency", "current_price_date",
     )
 
     /** Pretty-printed JSON backup, readable by the Apple app. */
@@ -51,6 +52,9 @@ object CellarExport {
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
                 bottle.tasting?.note, bottle.expectedAt?.let(::day), wine.tags.orEmpty().joinToString("; "),
                 bottle.reservedFor,
+                wine.currentPrice?.let(DecimalSerializer::plain),
+                if (wine.currentPrice == null) null else wine.currentPriceCurrency,
+                if (wine.currentPrice == null) null else wine.currentPriceDate?.let(::day),
             )
             lines += fields.joinToString(",") { escape(it ?: "") }
         }
@@ -232,6 +236,9 @@ internal object CsvColumns {
         "receivedfrom" to "received_from", "sizeml" to "size_ml", "tastedon" to "tasted_on",
         "rating" to "rating", "yourrating" to "rating", "note" to "note", "notes" to "note", "yourreview" to "note",
         "personalnote" to "note", "commentaire" to "note",
+        "currentprice" to "current_price", "currentvalue" to "current_price", "prixactuel" to "current_price",
+        "valeuractuelle" to "current_price", "currentpricecurrency" to "current_price_currency",
+        "currentpricedate" to "current_price_date",
         "tags" to "tags", "tag" to "tags", "reservedfor" to "reserved_for", "reserved" to "reserved_for",
         "expectedon" to "expected_on", "deliverydate" to "expected_on", "livraison" to "expected_on",
         "scandate" to "scan_date", "scanreviewlocation" to "place", "place" to "place", "lieu" to "place",
@@ -262,7 +269,15 @@ internal object CsvColumns {
             grapes = (value("grapes") ?: "").split(';', ',').map { it.trim() }.filter { it.isNotEmpty() },
             drinkFrom = from, drinkUntil = until,
             tags = Wine.normalizedTags(value("tags")?.split(';', ',')),
-        )
+        ).let { wine ->
+            val price = value("current_price")?.replace(",", ".")?.toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
+                ?: return@let wine
+            wine.copy(
+                currentPrice = price,
+                currentPriceCurrency = value("current_price_currency") ?: value("currency"),
+                currentPriceDate = value("current_price_date")?.let(CellarExport::parseDay),
+            )
+        }
     }
 
     /** "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage). */

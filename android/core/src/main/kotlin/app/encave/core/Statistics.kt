@@ -22,6 +22,10 @@ data class CellarStatistics(
     /** Bottles opened per month over the last 12 months, oldest first. */
     val consumptionByMonth: List<MonthCount>,
     val topGrapes: List<Slice>,
+    /** Sum of the current prices of bottles in the cellar, per currency, for wines that have one. */
+    val estimatedValueByCurrency: Map<String, BigDecimal> = emptyMap(),
+    /** How many bottles [estimatedValueByCurrency] covers. */
+    val pricedBottleCount: Int = 0,
 ) {
     data class Slice(val label: String, val count: Int)
     data class ColorSlice(val color: WineColor?, val count: Int)
@@ -49,6 +53,16 @@ fun Cellar.statistics(year: Int, now: Instant = Instant.now(), zone: ZoneId = Zo
         val price = bottle.purchasePrice ?: continue
         val currency = bottle.currency ?: settings.currency
         value[currency] = (value[currency] ?: BigDecimal.ZERO) + price
+    }
+
+    val estimated = linkedMapOf<String, BigDecimal>()
+    var priced = 0
+    for (bottle in inCellar) {
+        val wine = wines[bottle.wineId] ?: continue
+        val price = wine.currentPrice ?: continue
+        val currency = wine.currentPriceCurrency ?: settings.currency
+        estimated[currency] = (estimated[currency] ?: BigDecimal.ZERO) + price
+        priced += 1
     }
 
     val byColor = winesInCellar.groupingBy { it.color }.eachCount()
@@ -88,6 +102,8 @@ fun Cellar.statistics(year: Int, now: Instant = Instant.now(), zone: ZoneId = Zo
         byMaturity = byMaturity,
         consumptionByMonth = monthly,
         topGrapes = slices(winesInCellar.flatMap { it.grapes }, limit = 8),
+        estimatedValueByCurrency = estimated,
+        pricedBottleCount = priced,
     )
 }
 
