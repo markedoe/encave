@@ -128,7 +128,8 @@ jobs:
     name: Screen tour (iPhone, iPad, Mac)
     needs: [cavekit, l10n]
     runs-on: macos-latest
-    timeout-minutes: 60
+    # Two simulators and the Mac in one job: about 65 minutes now.
+    timeout-minutes: 100
     defaults:
       run:
         working-directory: apple
