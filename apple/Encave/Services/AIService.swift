@@ -346,7 +346,32 @@ enum AIService {
 
     // MARK: Claude (Anthropic Messages API)
 
+    /// Models documented to accept `output_config.effort` (dated snapshots of them too).
+    static let effortModelPrefixes = [
+        "claude-fable-5", "claude-mythos-5", "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6",
+        "claude-opus-4-5", "claude-sonnet-5", "claude-sonnet-4-6", "claude-haiku-5",
+    ]
+    /// Models documented to accept the server-side `fallbacks: "default"` field.
+    static let fallbackModels: Set<String> = [
+        "claude-fable-5-1", "claude-mythos-5-1", "claude-fable-5", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5",
+    ]
+
+    static func supportsEffort(_ model: String) -> Bool { effortModelPrefixes.contains { model.hasPrefix($0) } }
+    static func supportsFallbacks(_ model: String) -> Bool { fallbackModels.contains(model) }
+
     private static func claude(jpeg: Data, settings: AISettings, apiKey: String) async throws -> LabelAnalysis {
+        let model = settings.effectiveModel
+        let options = supportsEffort(model) || supportsFallbacks(model)
+        do {
+            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey, withOptions: options)
+        } catch AIServiceError.server(let status, _) where status == 400 && options {
+            // A model or server that does not take these options yet: once more without them.
+            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey, withOptions: false)
+        }
+    }
+
+    private static func claude(jpeg: Data, settings: AISettings, apiKey: String,
+                               withOptions: Bool) async throws -> LabelAnalysis {
         let model = settings.effectiveModel
         guard let url = URL(string: settings.effectiveBaseURL + "/messages") else { throw AIServiceError.notConfigured }
         var request = URLRequest(url: url)
@@ -354,17 +379,11 @@ enum AIService {
         request.timeoutInterval = 120
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        // Re-runs a declined request on another model instead of returning a refusal.
-        request.setValue("server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
-        let body: JSONObject = [
+        var output: JSONObject = ["format": ["type": "json_schema", "schema": LabelAnalysis.schema] as JSONObject]
+        var body: JSONObject = [
             "model": model,
             "max_tokens": 8000,
-            "fallbacks": "default",
-            "output_config": [
-                "effort": "low",
-                "format": ["type": "json_schema", "schema": LabelAnalysis.schema] as JSONObject,
-            ] as JSONObject,
             "messages": [[
                 "role": "user",
                 "content": [
@@ -374,6 +393,16 @@ enum AIService {
                 ] as [JSONObject],
             ] as JSONObject],
         ]
+        if withOptions, supportsEffort(model) {
+            // Reading a label is a simple task.
+            output["effort"] = "low"
+        }
+        if withOptions, supportsFallbacks(model) {
+            // Re-runs a declined request on another model instead of returning a refusal.
+            request.setValue("server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
+            body["fallbacks"] = "default"
+        }
+        body["output_config"] = output
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let json = try await send(request)
