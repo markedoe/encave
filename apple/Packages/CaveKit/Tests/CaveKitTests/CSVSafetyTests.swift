@@ -73,6 +73,13 @@ import Testing
         #expect(date == ISO8601DateFormatter().date(from: "2024-03-09T23:00:00Z"), "the start of 10 March in Paris")
     }
 
+    @Test func otherAppsDatesAreRead() throws {
+        var cellar = Cellar()
+        try cellar.importCSV("name,purchase_date\nA,10/03/2024\nB,2024-03-10 18:30:00\nC,2024-03-10\n")
+        let days = cellar.bottles.values.compactMap(\.purchaseDate).map(CellarExport.dayFormatter().string(from:))
+        #expect(days == ["2024-03-10", "2024-03-10", "2024-03-10"])
+    }
+
     @Test func formulasAreNotRunBySpreadsheets() throws {
         var cellar = Cellar()
         var wine = Wine(name: "=HYPERLINK(\"http://x\")", producer: "+33 Domaine")

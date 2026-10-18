@@ -84,6 +84,14 @@ class CsvSafetyTest {
     }
 
     @Test
+    fun otherAppsDatesAreRead() {
+        val cellar = Cellar()
+        cellar.importCsv("name,purchase_date\nA,10/03/2024\nB,2024-03-10 18:30:00\nC,2024-03-10\n")
+        val days = cellar.bottles.values.mapNotNull { it.purchaseDate }.map { CellarExport.day(it) }
+        assertEquals(listOf("2024-03-10", "2024-03-10", "2024-03-10"), days)
+    }
+
+    @Test
     fun formulasAreNotRunBySpreadsheets() {
         val cellar = Cellar()
         val wine = Wine(name = "=HYPERLINK(\"http://x\")", producer = "+33 Domaine")

@@ -173,7 +173,7 @@ public extension Cellar {
             for _ in 0..<quantity {
                 var bottle = Bottle(
                     wineID: wine.id, storageNote: value("storage"), addedAt: now,
-                    purchaseDate: value("purchase_date").flatMap(day.date(from:)),
+                    purchaseDate: value("purchase_date").flatMap { CSVColumns.day($0, day) },
                     purchasePrice: value("price").flatMap(PriceExtractor.decimal),
                     currency: value("currency") ?? settings.currency, purchasePlace: value("purchase_place"),
                     receivedFrom: value("received_from"), sizeML: value("size_ml").flatMap(CSVColumns.size) ?? 750
@@ -182,13 +182,13 @@ public extension Cellar {
                 let status = value("status").flatMap { Bottle.Status(rawValue: $0) } ?? .inCellar
                 if status == .consumed {
                     bottle.status = .consumed
-                    bottle.tasting = Tasting(date: value("tasted_on").flatMap(day.date(from:)) ?? now,
+                    bottle.tasting = Tasting(date: value("tasted_on").flatMap { CSVColumns.day($0, day) } ?? now,
                                              rating: value("rating").flatMap(CSVColumns.rating), note: value("note"))
                 } else if status == .gone {
                     bottle.status = .gone
                 } else if status == .ordered {
                     bottle.status = .ordered
-                    bottle.expectedAt = value("expected_on").flatMap(day.date(from:))
+                    bottle.expectedAt = value("expected_on").flatMap { CSVColumns.day($0, day) }
                 } else if let rackName = value("rack"), let label = value("slot"),
                           let rack = racks.first(where: { $0.name.caseInsensitiveCompare(rackName) == .orderedSame }),
                           let wanted = rack.slot(forLabel: label),
@@ -316,7 +316,7 @@ enum CSVColumns {
         if let price = value("current_price").flatMap(PriceExtractor.decimal), price > 0 {
             wine.currentPrice = price
             wine.currentPriceCurrency = value("current_price_currency") ?? value("currency")
-            wine.currentPriceDate = value("current_price_date").flatMap(day.date(from:))
+            wine.currentPriceDate = value("current_price_date").flatMap { CSVColumns.day($0, day) }
         }
         return wine
     }
@@ -347,6 +347,12 @@ enum CSVColumns {
             ("orange", .orange), ("red", .red), ("rouge", .red), ("white", .white), ("blanc", .white),
         ]
         return table.first { folded.contains($0.0) }?.1
+    }
+
+    /// "2024-03-10" as Encave writes it, or a date with a time or in another order
+    /// ("10/03/2024"), as other apps write them.
+    static func day(_ text: String, _ formatter: DateFormatter) -> Date? {
+        formatter.date(from: text) ?? date(text)
     }
 
     static func date(_ text: String) -> Date? {

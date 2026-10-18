@@ -124,8 +124,9 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: Zo
     val columns = header.map(CsvColumns::canonical)
     val nameIndex = columns.indexOf("name")
     if (nameIndex < 0) throw ImportException(ImportError.MissingNameColumn)
-    // Dates ("2024-03-10") are days of [zone], as the export writes them.
-    val day = { text: String -> CellarExport.parseDay(text, zone) }
+    // Dates ("2024-03-10") are days of [zone], as the export writes them; other apps' dates
+    // (with a time, or "10/03/2024") are read too.
+    val day = { text: String -> CellarExport.parseDay(text, zone) ?: CsvColumns.date(text) }
     if ("scan_date" in columns && "quantity" !in columns) return importDiscoveries(rows, columns, nameIndex, now, day)
     val winesByKey = HashMap<String, Wine>()
     wines.values.forEach { winesByKey.putIfAbsent(it.identityKey, it) }
