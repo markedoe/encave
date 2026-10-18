@@ -22,8 +22,9 @@ devices in `devices.json` (`Membership`).
 ### Objects and stamps
 
 Each object has a key: `wine:<uuid>`, `bottle:<uuid>`, `rack:<uuid>`,
-`discovery:<uuid>`, plus `settings` (the cellar settings) and `rack-order` (the
-order of the racks). UUIDs in keys are lowercase.
+`discovery:<uuid>`, `search:<uuid>` (a saved search), plus `settings` (the
+cellar settings without the saved searches) and `rack-order` (the order of the
+racks). UUIDs in keys are lowercase.
 
 A **stamp** is a Lamport time: `{counter: UInt64, device: UUID, deleted: Bool}`.
 Stamps are ordered by counter, then by the device UUID's uppercase string,
@@ -36,7 +37,8 @@ stands for objects that exist but were never stamped.
   after: every object that was added or differs gets `clock += 1` and a stamp
   `(clock, device)`; every removed object gets a stamp with `deleted: true`.
   A change to the rack sequence stamps `rack-order`; a change to settings
-  stamps `settings`.
+  other than `savedSearches` stamps `settings`; each saved search added,
+  changed or removed stamps its own `search:<uuid>`.
 - **Starting.** When sync is set up on a cellar that already has data, every
   object gets a first stamp (`SyncState.starting`).
 
@@ -86,7 +88,12 @@ compute the same result.
    Equal stamps come from the same change on the same device, so the content
    is the same except where repair changed it: for a bottle, the version
    without a place wins; otherwise the local version is kept.
-2. Settings: same rule with the `settings` stamp.
+2. Settings: same rule with the `settings` stamp, then `savedSearches` is
+   replaced by the saved searches merged one by one like objects (rule 1 with
+   their `search:` stamps), sorted by lowercased name, then lowercase ID; nil
+   when none are left. So searches saved on two devices are all kept. A
+   device from before this rule stamps only `settings`: its searches have no
+   stamps of their own and count as `Stamp.zero`.
 3. **Revival.** A bottle or discovery whose wine was deleted, but whose own
    stamp is greater than the wine's deletion stamp (it was added or changed
    after the deletion, on another device), brings the wine back: its content

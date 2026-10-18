@@ -65,7 +65,8 @@ public struct SyncState: Codable, Equatable, Sendable {
         compare(.bottle, old.bottles, new.bottles)
         compare(.discovery, old.discoveries, new.discoveries)
         compare(.rack, CellarMerge.byID(old.racks), CellarMerge.byID(new.racks))
-        if old.settings != new.settings { stamp(SyncKey.settings, deleted: false) }
+        compare(.search, CellarMerge.byID(old.settings.savedSearches), CellarMerge.byID(new.settings.savedSearches))
+        if old.settings.withoutSearches != new.settings.withoutSearches { stamp(SyncKey.settings, deleted: false) }
         if old.racks.map(\.id) != new.racks.map(\.id) { stamp(SyncKey.rackOrder, deleted: false) }
     }
 
@@ -101,7 +102,7 @@ public struct SyncState: Codable, Equatable, Sendable {
 
 /// Identifies an object in the stamps.
 struct SyncKey {
-    enum Kind: String { case wine, bottle, rack, discovery }
+    enum Kind: String { case wine, bottle, rack, discovery, search }
     static let settings = "settings"
     static let rackOrder = "rack-order"
 
@@ -153,11 +154,14 @@ public enum CellarMerge {
         let racks = pick(.rack, byID(local.racks), byID(remote.racks))
         revive(&merged, stamps: &stamps, local: local, remote: remote)
 
-        // Settings: one object.
+        // Settings: one object, except saved searches, merged one by one so searches
+        // saved on two devices at the same time are all kept.
         let settings = choose(local.settings, localState.stamps[SyncKey.settings] ?? .zero,
                               remote.settings, remoteState.stamps[SyncKey.settings] ?? .zero)
         merged.settings = settings.0 ?? local.settings
         if let stamp = settings.1 { stamps[SyncKey.settings] = stamp }
+        let searches = pick(.search, byID(local.settings.savedSearches), byID(remote.settings.savedSearches))
+        merged.settings.savedSearches = searches.isEmpty ? nil : SavedSearch.ordered(Array(searches.values))
 
         // Rack order: the order of the copy that reordered last (on equal stamps, the
         // list that is smaller compared as lowercase IDs), then the other racks by ID.
@@ -188,6 +192,10 @@ public enum CellarMerge {
 
     static func byID(_ racks: [Rack]) -> [UUID: Rack] {
         Dictionary(racks.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    static func byID(_ searches: [SavedSearch]?) -> [UUID: SavedSearch] {
+        Dictionary((searches ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     /// A bottle or discovery changed after its wine was deleted on another device

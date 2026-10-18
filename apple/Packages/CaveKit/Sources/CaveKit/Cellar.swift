@@ -128,7 +128,7 @@ public extension Cellar {
         guard !search.name.isEmpty else { return }
         var list = (settings.savedSearches ?? []).filter { $0.name.caseInsensitiveCompare(search.name) != .orderedSame }
         list.append(search)
-        settings.savedSearches = list
+        settings.savedSearches = SavedSearch.ordered(list)
     }
 
     mutating func deleteSearch(_ id: UUID) {

@@ -310,7 +310,7 @@ class Cellar(
         val search = SavedSearch.of(name, filter)
         if (search.name.isEmpty()) return
         val list = settings.savedSearches.orEmpty().filterNot { it.name.equals(search.name, ignoreCase = true) } + search
-        settings = settings.copy(savedSearches = list)
+        settings = settings.copy(savedSearches = SavedSearch.ordered(list))
     }
 
     fun deleteSearch(id: UUID) {

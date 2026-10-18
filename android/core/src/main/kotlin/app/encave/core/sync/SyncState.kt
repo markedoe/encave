@@ -2,6 +2,7 @@ package app.encave.core.sync
 
 import app.encave.core.Cellar
 import app.encave.core.Rack
+import app.encave.core.SavedSearch
 import app.encave.core.UuidSerializer
 import java.util.Locale
 import java.util.UUID
@@ -71,7 +72,8 @@ data class SyncState(
         compare(SyncKey.Kind.Bottle, old.bottles, new.bottles)
         compare(SyncKey.Kind.Discovery, old.discoveries, new.discoveries)
         compare(SyncKey.Kind.Rack, CellarMerge.byId(old.racks), CellarMerge.byId(new.racks))
-        if (old.settings != new.settings) stamp(SyncKey.SETTINGS, false)
+        compare(SyncKey.Kind.Search, CellarMerge.searchesById(old.settings.savedSearches), CellarMerge.searchesById(new.settings.savedSearches))
+        if (old.settings.copy(savedSearches = null) != new.settings.copy(savedSearches = null)) stamp(SyncKey.SETTINGS, false)
         if (old.racks.map { it.id } != new.racks.map { it.id }) stamp(SyncKey.RACK_ORDER, false)
         return copy(clock = clock, stamps = stamps)
     }
@@ -109,7 +111,7 @@ data class SyncState(
 
 /** Identifies an object in the stamps. UUIDs are lowercase. */
 object SyncKey {
-    enum class Kind(val raw: String) { Wine("wine"), Bottle("bottle"), Rack("rack"), Discovery("discovery") }
+    enum class Kind(val raw: String) { Wine("wine"), Bottle("bottle"), Rack("rack"), Discovery("discovery"), Search("search") }
 
     const val SETTINGS = "settings"
     const val RACK_ORDER = "rack-order"
@@ -126,6 +128,8 @@ object CellarMerge {
 
     /** Racks by ID, the first of each ID. */
     internal fun byId(racks: List<Rack>): Map<UUID, Rack> = LinkedHashMap<UUID, Rack>().apply { racks.forEach { putIfAbsent(it.id, it) } }
+    internal fun searchesById(searches: List<SavedSearch>?): Map<UUID, SavedSearch> =
+        LinkedHashMap<UUID, SavedSearch>().apply { searches.orEmpty().forEach { putIfAbsent(it.id, it) } }
 
     /** Merges a remote copy into a local one. The local device stays the device. */
     fun merge(local: Cellar, localState: SyncState, remote: Cellar, remoteState: SyncState): Result {
@@ -164,8 +168,13 @@ object CellarMerge {
             local.settings, localState.stamps[SyncKey.SETTINGS] ?: Stamp.ZERO,
             remote.settings, remoteState.stamps[SyncKey.SETTINGS] ?: Stamp.ZERO, local(),
         )
-        val settings = chosenSettings ?: local.settings
         if (settingsStamp != null) stamps[SyncKey.SETTINGS] = settingsStamp
+        // Saved searches are merged one by one, so searches saved on two devices are all kept.
+        val searches = pick(
+            SyncKey.Kind.Search, searchesById(local.settings.savedSearches), searchesById(remote.settings.savedSearches), local(),
+        )
+        val settings = (chosenSettings ?: local.settings)
+            .copy(savedSearches = SavedSearch.ordered(searches.values.toList()).ifEmpty { null })
 
         // Rack order: the order of the copy that reordered last (on equal stamps, the list
         // that is smaller compared as lowercase IDs), then the other racks by lowercase ID.

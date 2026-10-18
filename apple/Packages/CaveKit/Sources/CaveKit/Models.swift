@@ -413,6 +413,25 @@ public struct CellarSettings: Codable, Hashable, Sendable {
 }
 
 /// A search and filters kept under a name ("Burgundy, ready").
+public extension CellarSettings {
+    /// The settings that sync as one object; saved searches sync one by one.
+    var withoutSearches: CellarSettings {
+        var copy = self
+        copy.savedSearches = nil
+        return copy
+    }
+}
+
+public extension SavedSearch {
+    /// By name (ignoring case), then by ID: the same order on every device.
+    static func ordered(_ searches: [SavedSearch]) -> [SavedSearch] {
+        searches.sorted { a, b in
+            let na = a.name.lowercased(), nb = b.name.lowercased()
+            return na != nb ? na < nb : a.id.uuidString.lowercased() < b.id.uuidString.lowercased()
+        }
+    }
+}
+
 public struct SavedSearch: Codable, Hashable, Sendable, Identifiable {
     public var id: UUID
     public var name: String

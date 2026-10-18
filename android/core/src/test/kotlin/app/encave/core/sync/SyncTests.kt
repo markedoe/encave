@@ -346,6 +346,23 @@ class SyncHardeningTests {
         assertNull(one.cellar.bottles.values.single().slot)
         assertNull(two.cellar.bottles.values.single().slot)
     }
+
+    @Test
+    fun searchesSavedOnTwoDevicesAreAllKept() {
+        val (a, b) = pair(Cellar())
+        a.edit { it.saveSearch("Soon", app.encave.core.CellarFilter(maturities = setOf(app.encave.core.Maturity.DrinkSoon))) }
+        b.edit { it.saveSearch("Reds", app.encave.core.CellarFilter(colors = setOf(app.encave.core.WineColor.Red))) }
+        b.edit { it.settings = it.settings.copy(currency = "CHF") }
+        syncBoth(a, b)
+        assertEquals(listOf("Reds", "Soon"), a.cellar.settings.savedSearches?.map { it.name })
+        assertEquals(a.cellar.settings, b.cellar.settings)
+        assertEquals("CHF", a.cellar.settings.currency)
+
+        val reds = a.cellar.settings.savedSearches!!.first { it.name == "Reds" }
+        a.edit { it.deleteSearch(reds.id) }
+        syncBoth(a, b)
+        assertEquals(listOf("Soon"), b.cellar.settings.savedSearches?.map { it.name })
+    }
 }
 
 private fun syncErrorOfBlocking(block: () -> Unit): SyncError? = try {
@@ -353,4 +370,5 @@ private fun syncErrorOfBlocking(block: () -> Unit): SyncError? = try {
     null
 } catch (error: SyncException) {
     error.error
+
 }

@@ -409,6 +409,10 @@ data class SavedSearch(
         get() = CellarFilter(query, colors.toSet(), maturities.toSet(), rackId, tag, reservation)
 
     companion object {
+        /** By name (ignoring case), then by ID: the same order on every device, as in Swift. */
+        fun ordered(searches: List<SavedSearch>): List<SavedSearch> =
+            searches.sortedWith(compareBy<SavedSearch> { it.name.lowercase(java.util.Locale.ROOT) }.thenBy { it.id.toString().lowercase(java.util.Locale.ROOT) })
+
         /** Trimmed; colors and maturities sorted by their string value, so the same filters always encode the same way. */
         fun of(name: String, filter: CellarFilter, id: UUID = UUID.randomUUID()) = SavedSearch(
             id = id, name = name.trim(), query = filter.query.trim(),

@@ -299,3 +299,22 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(onA.cellar.bottles.count == 1)
     }
 }
+
+@Suite struct SavedSearchSyncTests {
+    @Test func searchesSavedOnTwoDevicesAreAllKept() throws {
+        var (a, b) = pair(Cellar())
+        a.edit { $0.saveSearch("Soon", filter: CellarFilter(maturities: [.drinkSoon])) }
+        b.edit { $0.saveSearch("Reds", filter: CellarFilter(colors: [.red])) }
+        b.edit { $0.settings.currency = "CHF" }
+        syncBoth(&a, &b)
+        #expect(a.cellar.settings.savedSearches?.map(\.name) == ["Reds", "Soon"])
+        #expect(a.cellar == b.cellar)
+        #expect(a.cellar.settings.currency == "CHF")
+
+        let reds = try #require(a.cellar.settings.savedSearches?.first { $0.name == "Reds" })
+        a.edit { $0.deleteSearch(reds.id) }
+        syncBoth(&a, &b)
+        #expect(b.cellar.settings.savedSearches?.map(\.name) == ["Soon"])
+        #expect(a.cellar == b.cellar)
+    }
+}
