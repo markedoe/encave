@@ -198,16 +198,30 @@ struct WineDetailView: View {
 private struct WineHeader: View {
     let wine: Wine
     let count: Int
+    @AppStorage(StudioPhoto.settingKey) private var studio = true
+    @State private var asTaken = false
 
     var body: some View {
         VStack(spacing: 12) {
-            if PhotoStore.exists(wine.photoID) {
-                WinePhoto(photoID: wine.photoID)
-                    .frame(maxWidth: 360)
-                    .frame(height: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .padding(.top, 4)
-                    .accessibilityHidden(true)
+            if let photoID = wine.photoID, PhotoStore.exists(photoID) {
+                Group {
+                    if asTaken {
+                        WinePhoto(photoID: photoID)
+                    } else {
+                        LabelPhoto(photoID: photoID, color: wine.color, inset: 18)
+                    }
+                }
+                .frame(maxWidth: 360)
+                .frame(height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .padding(.top, 4)
+                .accessibilityHidden(true)
+                .contextMenu {
+                    if studio {
+                        Button(asTaken ? LocalizedStringKey("Show Studio Look") : LocalizedStringKey("Show Photo as Taken"),
+                               systemImage: asTaken ? "wand.and.stars" : "photo") { asTaken.toggle() }
+                    }
+                }
             } else {
                 BottleEnd(color: wine.color, size: 72)
                     .padding(.top, 8)

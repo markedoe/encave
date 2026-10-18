@@ -15,6 +15,11 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": 'La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**.',
+    'Studio Look for Label Photos': 'Aspect studio pour les photos d’étiquette',
+    'Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.': 'Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise.',
+    'Show Studio Look': 'Afficher l’aspect studio',
+    'Show Photo as Taken': 'Afficher la photo telle que prise',
     'Photo %lld of %lld': 'Photo %lld sur %lld',
     'Photo removed': 'Photo retirée',
     'Other apps and AI assistants': 'Autres apps et assistants IA',

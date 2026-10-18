@@ -127,8 +127,8 @@ struct DiscoveryRow: View {
         let wine = model.cellar.wines[discovery.wineID]
         HStack(alignment: .top, spacing: 12) {
             if showsWine {
-                if PhotoStore.exists(wine?.photoID) {
-                    WinePhoto(photoID: wine?.photoID, maxPixelSize: 200)
+                if let photoID = wine?.photoID, PhotoStore.exists(photoID) {
+                    LabelPhoto(photoID: photoID, color: wine?.color, maxPixelSize: 200, inset: 3)
                         .frame(width: 44, height: 56)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .accessibilityHidden(true)

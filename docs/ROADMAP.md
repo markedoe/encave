@@ -190,8 +190,9 @@ kept within the privacy rules: everything is worked out on the device.
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Tablets |
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
-| Saved searches | Done | Planned |
-| Several photos per wine | Done | Planned |
+| Saved searches | Done | Done |
+| Several photos per wine | Done | Done |
+| Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Later (no ML Kit: needs another way) |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Watch app | Later | Later (Wear OS tile) |
 | More places to sync through: Google Drive, Dropbox, pCloud, Proton Drive (depends on its API), a NAS over WebDAV (Synology, QNAP, Nextcloud). Each is a thin adapter of the same encrypted mailbox protocol | Later | Later |

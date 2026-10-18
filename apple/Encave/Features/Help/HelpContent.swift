@@ -51,7 +51,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "On this device", body: "Point the camera at the label and tap **Use This Label**, or choose a photo. The text is read on the device and fills in the name, producer, vintage and appellation. Nothing is sent anywhere."),
                 HelpSection(title: "With AI (optional)", body: "If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar."),
                 HelpSection(title: "What you typed stays", body: "A new scan or the AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept."),
-                HelpSection(title: "The photo", body: "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine."),
+                HelpSection(title: "The photo", body: "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**."),
                 HelpSection(title: "Barcodes", body: "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online."),
             ]),
             HelpArticle(topic: .racks, title: "Racks",

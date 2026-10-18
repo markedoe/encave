@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var remindersOn = Reminders.isEnabled
     #if os(macOS)
     @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
+    @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     #endif
     @State private var remindersRefused = false
 
@@ -93,6 +94,14 @@ struct SettingsView: View {
                 Text("A glass in the menu bar lists the bottles to open now; click one to open it.")
             }
             #endif
+
+            Section {
+                Toggle(isOn: $studioPhotos) {
+                    Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
+                }
+            } footer: {
+                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+            }
 
             Section {
                 Picker("Currency", selection: currencyBinding) {
