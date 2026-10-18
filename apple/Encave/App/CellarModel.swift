@@ -27,10 +27,13 @@ final class CellarModel {
     @ObservationIgnored private(set) var sync: SyncService!
     /// Told about every local change (old and new cellar), to record it for sync.
     @ObservationIgnored var onLocalChange: ((Cellar, Cellar) -> Void)?
+    /// Summary for the widgets, written after each save (never for the demo cellar).
+    private let widgets: WidgetPublisher?
 
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     init(store: any CellarStore, demo: Bool = true) {
         self.store = store
+        widgets = demo ? nil : WidgetPublisher()
         do {
             cellar = try store.load()
         } catch {
@@ -38,6 +41,7 @@ final class CellarModel {
             errorMessage = String(localized: "Your cellar could not be loaded.")
         }
         sync = SyncService(model: self, demo: demo)
+        if errorMessage == nil { refreshWidgets() }
     }
 
     /// The app's model, for Siri and Shortcuts (App Intents) while the app runs.
@@ -51,6 +55,26 @@ final class CellarModel {
         sheet = nil
         selectedTab = .cellar
         openWineRequest = id
+    }
+
+    /// Opens what a widget link or the Control Center control asks for.
+    func handle(_ link: EncaveLink) {
+        switch link {
+        case .wine(let id):
+            open(wine: id)
+        case .addBottles:
+            selectedTab = .cellar
+            sheet = .addBottle(AddBottleContext())
+        case .tonight:
+            sheet = nil
+            selectedTab = .tonight
+        }
+    }
+
+    /// Brings the widgets up to date (after a save, and when the app becomes active,
+    /// since maturity depends on the year).
+    func refreshWidgets() {
+        widgets?.publish(cellar, year: currentYear)
     }
 
     static func live() -> CellarModel {
@@ -98,6 +122,7 @@ final class CellarModel {
             let old = cellar
             cellar = copy
             onLocalChange?(old, copy)
+            refreshWidgets()
             return true
         } catch let error as CellarError {
             errorMessage = error.localizedMessage
@@ -113,6 +138,7 @@ final class CellarModel {
         do {
             try store.save(synced)
             cellar = synced
+            refreshWidgets()
         } catch {
             errorMessage = String(localized: "The change could not be saved.")
         }

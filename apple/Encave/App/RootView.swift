@@ -29,10 +29,15 @@ struct RootView: View {
             switch phase {
             case .active:
                 model.sync.resume()
+                model.refreshWidgets()
                 Task { await Reminders.schedule(for: model.cellar) }
             case .background: model.sync.pause()
             default: break
             }
+        }
+        // Widgets and the Control Center control: encave://wine/<id>, encave://add, encave://tonight.
+        .onOpenURL { url in
+            if let link = EncaveLink(url: url) { model.handle(link) }
         }
         .alert(
             "Something went wrong",
