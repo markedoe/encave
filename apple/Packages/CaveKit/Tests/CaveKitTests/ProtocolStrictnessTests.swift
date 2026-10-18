@@ -219,6 +219,21 @@ final class CountingPhotos: @unchecked Sendable {
         #expect(throws: DecodingError.self) { _ = try JSONDecoder.sync.decode(Discovery.self, from: Data(unknown.utf8)) }
     }
 
+    @Test func winesAreNormalizedLikeInKotlin() throws {
+        var wine = Wine(name: "W")
+        wine.extraPhotoIDs = ["sha256-a", "sha256-b", "sha256-a"]
+        #expect(wine.extraPhotoIDs == ["sha256-a", "sha256-b"])
+        wine.extraPhotoIDs = []
+        #expect(wine.extraPhotoIDs == nil)
+        let json = #"{"id":"\#(id)","name":"W","grapes":[],"barcodes":[],"tags":[" Gift ","gift",""],"extraPhotoIDs":["x","y","x"]}"#
+        let read = try JSONDecoder.sync.decode(Wine.self, from: Data(json.utf8))
+        #expect(read.extraPhotoIDs == ["x", "y"])
+        #expect(read.tags == ["Gift"])
+        #expect(read.barcodes == nil)
+        let empty = try JSONDecoder.sync.decode(Wine.self, from: Data(#"{"id":"\#(id)","name":"W","extraPhotoIDs":[]}"#.utf8))
+        #expect(empty.extraPhotoIDs == nil)
+    }
+
     @Test func missingDatesAreNotToday() {
         let discovery = #"{"id":"\#(id)","wineID":"\#(wine)"}"#
         #expect(throws: DecodingError.self) { _ = try JSONDecoder.sync.decode(Discovery.self, from: Data(discovery.utf8)) }

@@ -28,8 +28,12 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var barcodes: [String]?
     /// The user's own groups ("Gift", "Birth year"). Nil rather than empty, like barcodes.
     public var tags: [String]?
-    /// More photos (back label, receipt, the bottle in its rack). Nil rather than empty.
-    public var extraPhotoIDs: [String]?
+    /// More photos (back label, receipt, the bottle in its rack). Nil rather than empty,
+    /// and each once: photos are named after their content, so the same picture added
+    /// twice is kept once (as in the Kotlin core).
+    public var extraPhotoIDs: [String]? {
+        didSet { extraPhotoIDs = Wine.uniquePhotoIDs(extraPhotoIDs) }
+    }
     /// What a 75 cl bottle (or the wine's usual size) sells for today, accepted by the user
     /// from a web search or typed: the amount, its currency code and the day it was set.
     public var currentPrice: Decimal?
@@ -69,9 +73,11 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         drinkUntil = try c.decodeIfPresent(Int.self, forKey: .drinkUntil)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         photoID = try c.decodeIfPresent(String.self, forKey: .photoID)
-        barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes)
-        tags = try c.decodeIfPresent([String].self, forKey: .tags)
-        extraPhotoIDs = try c.decodeIfPresent([String].self, forKey: .extraPhotoIDs)
+        // Normalized as the initializer does, and as the Kotlin core reads them, so both
+        // platforms hold and write back the same wine.
+        barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes).flatMap { $0.isEmpty ? nil : $0 }
+        tags = Wine.normalizedTags(try c.decodeIfPresent([String].self, forKey: .tags))
+        extraPhotoIDs = Wine.uniquePhotoIDs(try c.decodeIfPresent([String].self, forKey: .extraPhotoIDs))
         currentPrice = try c.decodeIfPresent(Decimal.self, forKey: .currentPrice)
         currentPriceCurrency = try c.decodeIfPresent(String.self, forKey: .currentPriceCurrency)
         currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
@@ -88,6 +94,13 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public static func normalizedTags(_ tags: [String]?) -> [String]? {
         let clean = Discovery.normalized(tags ?? [])
         return clean.isEmpty ? nil : clean
+    }
+
+    /// Each ID once, in the order given; nil when none are left.
+    public static func uniquePhotoIDs(_ ids: [String]?) -> [String]? {
+        var seen = Set<String>()
+        let unique = (ids ?? []).filter { seen.insert($0).inserted }
+        return unique.isEmpty ? nil : unique
     }
 
     /// True if the wine has this tag, ignoring case.
