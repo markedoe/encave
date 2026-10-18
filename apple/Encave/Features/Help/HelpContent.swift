@@ -127,7 +127,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",
-                        summary: "Keyboard shortcuts, Siri, Shortcuts and Spotlight.", systemImage: "keyboard", sections: [
+                        summary: "Keyboard shortcuts, Siri, Shortcuts, Spotlight and widgets.", systemImage: "keyboard", sections: [
                 HelpSection(title: "⌘N", body: "Add bottles"),
                 HelpSection(title: "⌥⌘N", body: "Remember a wine tasted elsewhere"),
                 HelpSection(title: "⇧⌘N", body: "Add a rack"),
@@ -138,6 +138,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Menu bar (Mac)", body: "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.", systemImage: "menubar.arrow.up.rectangle"),
                 HelpSection(title: "Other apps and AI assistants", body: "In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.", systemImage: "square.stack.3d.up"),
                 HelpSection(title: "Siri and Shortcuts", body: "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device."),
+                HelpSection(title: "Widgets and Control Center", body: "On the Home Screen and the Lock Screen of an iPhone or iPad, add the **Tonight** widget to see the bottles to open and where they are (tap one to open it), or the **Cellar** widget for the number of bottles and those to drink soon. In Control Center, the **Add Bottles** control opens Encave ready to scan a label. Widgets show a summary kept on this device.", systemImage: "square.grid.2x2"),
             ]),
         ]
     }

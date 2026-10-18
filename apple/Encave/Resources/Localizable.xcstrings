@@ -751,6 +751,16 @@
         }
       }
     },
+    "Add bottles in Encave": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des bouteilles dans Encave"
+          }
+        }
+      }
+    },
     "Add bottles with a drinking window to see what is ready tonight.": {
       "localizations": {
         "fr": {
@@ -2681,6 +2691,16 @@
         }
       }
     },
+    "Drink soon: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À boire bientôt : %lld"
+          }
+        }
+      }
+    },
     "Drink-down plan": {
       "localizations": {
         "fr": {
@@ -3581,6 +3601,16 @@
         }
       }
     },
+    "How many bottles you have, and how many to drink soon.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Combien de bouteilles vous avez, et combien boire bientôt."
+          }
+        }
+      }
+    },
     "How many identical bottles you add.": {
       "localizations": {
         "fr": {
@@ -4017,6 +4047,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Raccourcis clavier, Siri, Raccourcis et Spotlight."
+          }
+        }
+      }
+    },
+    "Keyboard shortcuts, Siri, Shortcuts, Spotlight and widgets.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis clavier, Siri, Raccourcis, Spotlight et widgets."
           }
         }
       }
@@ -4921,12 +4961,32 @@
         }
       }
     },
+    "On order: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En commande : %lld"
+          }
+        }
+      }
+    },
     "On order: %lld × %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "En commande : %1$lld × %2$@"
+          }
+        }
+      }
+    },
+    "On the Home Screen and the Lock Screen of an iPhone or iPad, add the **Tonight** widget to see the bottles to open and where they are (tap one to open it), or the **Cellar** widget for the number of bottles and those to drink soon. In Control Center, the **Add Bottles** control opens Encave ready to scan a label. Widgets show a summary kept on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’écran d’accueil et l’écran verrouillé d’un iPhone ou d’un iPad, ajoutez le widget **Ce soir** pour voir les bouteilles à ouvrir et où elles sont (touchez-en une pour l’ouvrir), ou le widget **Cave** pour le nombre de bouteilles et celles à boire bientôt. Dans le centre de contrôle, la commande **Ajouter des bouteilles** ouvre Encave, prêt à scanner une étiquette. Les widgets affichent un résumé gardé sur cet appareil."
           }
         }
       }
@@ -5791,6 +5851,16 @@
         }
       }
     },
+    "Ready: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêtes à boire : %lld"
+          }
+        }
+      }
+    },
     "Received": {
       "localizations": {
         "fr": {
@@ -6247,6 +6317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scanner à nouveau"
+          }
+        }
+      }
+    },
+    "Scan a label or type a name.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scannez une étiquette ou tapez un nom."
           }
         }
       }
@@ -7317,6 +7397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La bouteille reste à sa place mais n’est plus proposée pour ce soir."
+          }
+        }
+      }
+    },
+    "The bottles to open now, the most urgent first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles à ouvrir maintenant, les plus urgentes d’abord."
           }
         }
       }
@@ -8517,6 +8607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pourquoi cette fenêtre"
+          }
+        }
+      }
+    },
+    "Widgets and Control Center": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets et centre de contrôle"
           }
         }
       }

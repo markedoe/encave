@@ -47,6 +47,14 @@ targets:
   Encave:
     templates: [App]
     platform: iOS
+    dependencies:
+      # Embedded in the app (PlugIns).
+      - target: EncaveWidgets
+    # The App Group holds the summary the widgets read (docs/development.md).
+    entitlements:
+      path: Generated/Encave.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.encave]
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -70,6 +78,10 @@ targets:
           NSAllowsLocalNetworking: true
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
+        # Links from the widgets: encave://wine/<id>, encave://add, encave://tonight.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.encave
+            CFBundleURLSchemes: [encave]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -79,6 +91,42 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+
+  # Home screen and lock screen widgets and the Control Center control (iPhone, iPad).
+  EncaveWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: EncaveWidgets
+      # Shared with the app: links, the snapshot file, the Add Bottles intent.
+      - path: Encave/Shared
+      - path: Encave/DesignSystem/Maturity+UI.swift
+      - path: Encave/Resources/Localizable.xcstrings
+    dependencies:
+      - package: CaveKit
+    entitlements:
+      path: Generated/EncaveWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.encave]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.encave.widgets
+        PRODUCT_NAME: EncaveWidgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        # Its catalog has the accent only (design/generate_apple_assets.py), no app icon.
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ENCAVE_WIDGETS"
+    info:
+      path: Generated/Info-Widgets.plist
+      properties:
+        CFBundleDisplayName: Encave
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, fr]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   EncaveMac:
     templates: [App]

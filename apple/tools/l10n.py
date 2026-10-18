@@ -2,6 +2,8 @@
 """French translations for the Apple app.
 
 Writes apple/Encave/Resources/Localizable.xcstrings and InfoPlist.xcstrings.
+Strings come from the app (apple/Encave) and the widgets (apple/EncaveWidgets),
+which share Localizable.xcstrings.
   python3 apple/tools/l10n.py           # regenerate catalogs
   python3 apple/tools/l10n.py --check   # fail if a UI string has no translation
 """
@@ -15,6 +17,16 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Keyboard shortcuts, Siri, Shortcuts, Spotlight and widgets.': 'Raccourcis clavier, Siri, Raccourcis, Spotlight et widgets.',
+    'Widgets and Control Center': 'Widgets et centre de contrôle',
+    'On the Home Screen and the Lock Screen of an iPhone or iPad, add the **Tonight** widget to see the bottles to open and where they are (tap one to open it), or the **Cellar** widget for the number of bottles and those to drink soon. In Control Center, the **Add Bottles** control opens Encave ready to scan a label. Widgets show a summary kept on this device.': 'Sur l’écran d’accueil et l’écran verrouillé d’un iPhone ou d’un iPad, ajoutez le widget **Ce soir** pour voir les bouteilles à ouvrir et où elles sont (touchez-en une pour l’ouvrir), ou le widget **Cave** pour le nombre de bouteilles et celles à boire bientôt. Dans le centre de contrôle, la commande **Ajouter des bouteilles** ouvre Encave, prêt à scanner une étiquette. Les widgets affichent un résumé gardé sur cet appareil.',
+    'Add bottles in Encave': 'Ajoutez des bouteilles dans Encave',
+    'Scan a label or type a name.': 'Scannez une étiquette ou tapez un nom.',
+    'The bottles to open now, the most urgent first.': 'Les bouteilles à ouvrir maintenant, les plus urgentes d’abord.',
+    'How many bottles you have, and how many to drink soon.': 'Combien de bouteilles vous avez, et combien boire bientôt.',
+    'Drink soon: %lld': 'À boire bientôt : %lld',
+    'Ready: %lld': 'Prêtes à boire : %lld',
+    'On order: %lld': 'En commande : %lld',
     'Other apps and AI assistants': 'Autres apps et assistants IA',
     'In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.': 'Dans Raccourcis, **Obtenir le contenu de la cave** donne vos bouteilles en texte ou en JSON (toutes, celles à ouvrir maintenant, en commande…), et **Obtenir la fiche d’un vin** donne un vin avec ses notes de dégustation. Une app de cet appareil qui lance des raccourcis, comme un assistant IA local, peut s’en servir pour répondre à vos questions sur votre cave. Encave n’envoie rien.',
     'Bottles': 'Bouteilles',
@@ -992,7 +1004,7 @@ APP_SHORTCUTS = {
 UI_CALL = re.compile(r'(?<![A-Za-z0-9_])(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
                      r'DisclosureGroup|SecureField|LabeledField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text|LocalizedStringResource =|TypeDisplayRepresentation =|'
-                     r'IntentDescription|dialog:|shortTitle:|TableColumn)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
+                     r'IntentDescription|dialog:|shortTitle:|TableColumn|configurationDisplayName|displayName|description)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
 
@@ -1014,7 +1026,9 @@ def to_key(literal):
 
 def extract():
     keys = set()
-    for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
+    paths = [p for folder in ("Encave", "EncaveWidgets")
+             for p in glob.glob(str(ROOT / folder / "**" / "*.swift"), recursive=True)]
+    for path in paths:
         source = Path(path).read_text()
         keys.update(UI_CALL.findall(source))
         if "LocalizedStringKey" in source:

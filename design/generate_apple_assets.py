@@ -9,6 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TOKENS = ROOT / "design" / "tokens.json"
 ASSETS = ROOT / "apple" / "Encave" / "Resources" / "Assets.xcassets"
+# The widget extension only needs the accent (its own catalog, without the app icon).
+WIDGET_ASSETS = ROOT / "apple" / "EncaveWidgets" / "Assets.xcassets"
+WIDGET_NAMES = ["accent"]
 
 # token name -> asset name used in Swift (Color("WineRed")); accent uses Xcode's AccentColor.
 NAMES = {
@@ -47,15 +50,20 @@ def colorset(light: str, dark: str) -> dict:
     }
 
 
-def main() -> None:
-    tokens = json.loads(TOKENS.read_text())["color"]
-    for token, asset in NAMES.items():
+def write_catalog(catalog: Path, tokens: dict, names: dict) -> None:
+    for token, asset in names.items():
         value = tokens[token]["$value"]
-        folder = ASSETS / f"{asset}.colorset"
+        folder = catalog / f"{asset}.colorset"
         folder.mkdir(parents=True, exist_ok=True)
         (folder / "Contents.json").write_text(json.dumps(colorset(value["light"], value["dark"]), indent=2) + "\n")
-    (ASSETS / "Contents.json").write_text(json.dumps({"info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
-    print(f"Wrote {len(NAMES)} colors to {ASSETS.relative_to(ROOT)}")
+    (catalog / "Contents.json").write_text(json.dumps({"info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
+    print(f"Wrote {len(names)} colors to {catalog.relative_to(ROOT)}")
+
+
+def main() -> None:
+    tokens = json.loads(TOKENS.read_text())["color"]
+    write_catalog(ASSETS, tokens, NAMES)
+    write_catalog(WIDGET_ASSETS, tokens, {token: NAMES[token] for token in WIDGET_NAMES})
 
 
 if __name__ == "__main__":
