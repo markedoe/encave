@@ -490,8 +490,9 @@ class SyncManager(
                 val (channel, member) = SyncHandshake.respond(transport, identity, membership)
                 handshake.cancel()
                 transport.allowLargeFrames()
-                peer = member.id
+                // Already syncing with it: leave that session's mark alone.
                 if (!markSyncing(member.id)) return@launch
+                peer = member.id
                 exchange(channel, false, member.id)
             } catch (error: CancellationException) {
                 throw error

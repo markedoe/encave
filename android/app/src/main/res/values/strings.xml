@@ -36,7 +36,6 @@
     <string name="action_surprise">Surprise me</string>
     <string name="action_remove_from_rack">Take out of the rack</string>
     <string name="action_clear_filters">Clear filters</string>
-    <string name="action_replace">Replace</string>
     <string name="action_change">Change</string>
     <string name="action_put_back">Put back in the cellar</string>
     <string name="search_hint">Wine, producer, region, vintage</string>
@@ -277,8 +276,8 @@
     <string name="settings_source_body">github.com/markedoe/encave</string>
     <string name="msg_exported">Export saved</string>
     <string name="msg_export_failed">The export failed.</string>
-    <string name="msg_imported">Imported: %1$d wines, %2$d bottles</string>
-    <string name="msg_imported_skipped">Imported: %1$d wines, %2$d bottles (%3$d rows skipped)</string>
+    <string name="msg_imported">Imported. Wines: %1$d, bottles: %2$d</string>
+    <string name="msg_imported_skipped">Imported. Wines: %1$d, bottles: %2$d, rows skipped: %3$d</string>
     <string name="msg_sample_loaded">Sample cellar loaded</string>
     <string name="msg_erased">All data erased</string>
     <string name="settings_ai">AI label recognition</string>
@@ -298,7 +297,6 @@
     <string name="ai_server_url">Server URL</string>
     <string name="ai_key_optional">API key (optional)</string>
     <string name="ai_check">Check key and load models</string>
-    <string name="ai_models_count">%1$d models</string>
     <string name="ai_not_valid">Not valid</string>
     <string name="ai_choose_model">Choose…</string>
     <string name="ai_enter_model">Enter a model name</string>
@@ -401,7 +399,6 @@
     <string name="rack_custom_rows">Rows of different lengths</string>
     <string name="rack_custom_rows_body">For a rack with a sloped top, a staircase or an irregular cellar wall.</string>
     <string name="rack_row">Row %1$s</string>
-    <string name="rack_holds">Holds %1$d bottles.</string>
     <string name="rack_quick_start">Quick start</string>
     <string name="rack_size_title">Size</string>
     <string name="preset_grid_6x8">6 rows of 8</string>
@@ -618,7 +615,6 @@
     <string name="devices_status_synced">Synced %1$s</string>
     <string name="devices_status_nearby">On this network</string>
     <string name="devices_status_never">Not synced yet</string>
-    <string name="devices_local_network">Encave needs access to the local network to find your other devices.</string>
     <string name="sync_problem_removed">This device was removed from the cellar on another device.</string>
     <string name="sync_problem_says_removed">Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.</string>
     <string name="sync_problem_not_verified">A device could not prove it belongs to this cellar. Nothing was exchanged.</string>
@@ -643,7 +639,7 @@
     <string name="remote_webdav_footer">Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays on this device, encrypted with the Android Keystore. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.</string>
     <string name="remote_webdav_invalid">Use an https:// address (http only on the local network).</string>
     <string name="remote_webdav_refused">The server refused this username or password. With two-step verification, use an app password.</string>
-    <string name="remote_webdav_not_webdav">This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.</string>
+    <string name="remote_webdav_not_webdav">This address does not answer as a WebDAV folder. Check the address and that the server has WebDAV turned on.</string>
     <string name="remote_webdav_full">The WebDAV folder is full. Free some space on the server.</string>
     <string name="remote_webdav_sign_in">Check and sign in</string>
     <string name="remote_webdav_sign_in_footer">Each device signs in with its own username and password, kept on that device. An app password is recommended.</string>
@@ -767,7 +763,6 @@
     <string name="insights_year_opened">bottles opened</string>
     <string name="insights_year_wines">different wines</string>
     <string name="insights_year_discoveries">discoveries</string>
-    <string name="insights_year_favorite">Favorite: %1$s, %2$d stars</string>
     <string name="insights_year_region">Most opened region: %1$s</string>
     <string name="insights_year_style">Most opened style: %1$s</string>
     <string name="insights_year_occasion">Favorite occasion: %1$s</string>
@@ -819,14 +814,13 @@
     <string name="settings_import_other">Import from another app</string>
     <string name="settings_import_other_body">A CSV from CellarTracker, Vivino or a spreadsheet, read on this device</string>
     <string name="pdf_title">Cellar inventory</string>
-    <string name="pdf_subtitle">%1$s · %2$d bottles</string>
     <string name="pdf_value">Purchase value: %1$s</string>
     <string name="pdf_wine">Wine</string>
     <string name="pdf_bottles">Bottles</string>
     <string name="pdf_purchase_value">Purchase value</string>
     <string name="pdf_made_with">Made with Encave</string>
     <string name="pdf_page">Page %1$d of %2$d</string>
-    <string name="msg_imported_discoveries">Imported: %1$d discoveries</string>
+    <string name="msg_imported_discoveries">Discoveries imported: %1$d</string>
     <string name="help_data_pdf_title">Printed inventory</string>
     <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.</string>
     <string name="help_data_other_title">Coming from another app</string>
@@ -996,5 +990,21 @@
     <plurals name="widget_bottles_in_cellar">
         <item quantity="one">%d bottle in the cellar</item>
         <item quantity="other">%d bottles in the cellar</item>
+    </plurals>
+    <plurals name="ai_models_count">
+        <item quantity="one">%d model</item>
+        <item quantity="other">%d models</item>
+    </plurals>
+    <plurals name="rack_holds">
+        <item quantity="one">Holds %d bottle.</item>
+        <item quantity="other">Holds %d bottles.</item>
+    </plurals>
+    <plurals name="insights_year_favorite">
+        <item quantity="one">Favorite: %1$s, %2$d star</item>
+        <item quantity="other">Favorite: %1$s, %2$d stars</item>
+    </plurals>
+    <plurals name="pdf_subtitle">
+        <item quantity="one">%1$s · %2$d bottle</item>
+        <item quantity="other">%1$s · %2$d bottles</item>
     </plurals>
 </resources>

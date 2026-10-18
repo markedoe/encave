@@ -92,7 +92,10 @@ fun MorePhotosSection(viewModel: AppViewModel, wine: Wine) {
                         Thumbnail(
                             viewModel.photos, id,
                             Modifier.size(96.dp, 128.dp).clip(RoundedCornerShape(Dimens.radiusCell))
-                                .combinedClickable(onClickLabel = largeLabel, onLongClick = { menu = true }, onClick = { shown = id })
+                                .combinedClickable(
+                                    onClickLabel = largeLabel, onLongClickLabel = removeLabel,
+                                    onLongClick = { menu = true }, onClick = { shown = id },
+                                )
                                 .semantics {
                                     customActions = listOf(CustomAccessibilityAction(removeLabel) { viewModel.removeExtraPhoto(wine.id, id); true })
                                 }

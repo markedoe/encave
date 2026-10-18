@@ -57,11 +57,17 @@ class SecretStore(context: Context) {
         prefs.edit { putString(name, Base64.encodeToString(encrypted, Base64.NO_WRAP)) }
     }
 
-    private companion object {
-        const val FILE = "secrets"
-        const val KEYSTORE = "AndroidKeyStore"
-        const val ALIAS = "encave.secrets"
-        const val TRANSFORMATION = "AES/GCM/NoPadding"
-        const val IV_SIZE = 12
+    companion object {
+        /**
+         * Saves made while typing a key run here, one after the other and in order, so the
+         * last key typed is the one kept (and leaving the screen does not drop it).
+         */
+        val writes: java.util.concurrent.Executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+        private const val FILE = "secrets"
+        private const val KEYSTORE = "AndroidKeyStore"
+        private const val ALIAS = "encave.secrets"
+        private const val TRANSFORMATION = "AES/GCM/NoPadding"
+        private const val IV_SIZE = 12
     }
 }

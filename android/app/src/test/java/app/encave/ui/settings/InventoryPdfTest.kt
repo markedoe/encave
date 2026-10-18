@@ -29,4 +29,12 @@ class InventoryPdfTest {
         assertEquals("€114", tilleuls.value)
         assertEquals("Kitchen", rows.single { it.wine.startsWith("Rosé") }.places)
     }
+
+    @Test
+    fun theFirstPageLeavesRoomForTheTitleAndTheFooter() {
+        assertEquals(listOf(emptyList<Int>()), InventoryPdf.paged(emptyList<Int>()))
+        val pages = InventoryPdf.paged((1..60).toList())
+        assertEquals(listOf(InventoryPdf.ROWS_ON_FIRST_PAGE, InventoryPdf.ROWS_PER_PAGE, 60 - InventoryPdf.ROWS_ON_FIRST_PAGE - InventoryPdf.ROWS_PER_PAGE), pages.map { it.size })
+        assertEquals(1, InventoryPdf.paged((1..InventoryPdf.ROWS_ON_FIRST_PAGE).toList()).size)
+    }
 }

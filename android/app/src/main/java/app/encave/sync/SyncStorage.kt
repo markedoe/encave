@@ -41,7 +41,10 @@ class SyncStorage(private val context: Context) {
         if (identityUnreadable) return
         folder.mkdirs()
         val temp = File(folder, "$name.tmp")
-        temp.writeBytes(bytes)
+        temp.outputStream().use { stream ->
+            stream.write(bytes)
+            stream.fd.sync()
+        }
         if (!temp.renameTo(file(name))) {
             file(name).delete()
             temp.renameTo(file(name))
