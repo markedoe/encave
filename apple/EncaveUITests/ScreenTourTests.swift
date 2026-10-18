@@ -499,21 +499,23 @@ final class ScreenTourTests: XCTestCase {
         step += 1
         #if os(macOS)
         // The whole screen: shows the window even if the app cannot be captured on its own.
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        let screenshot = XCUIScreen.main.screenshot()
         #else
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        let screenshot = app.screenshot()
         #endif
+        let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = String(format: "%@-%02d-%@", language, step, name)
         attachment.lifetime = .keepAlways
         add(attachment)
-        checkActionButtons(screen: name)
+        // The same screenshot: each one is a request a slow simulator may time out on.
+        checkActionButtons(screen: name, in: screenshot)
     }
 
     /// Every "action.…" button must have its icon and text centered.
-    private func checkActionButtons(screen: String) {
+    private func checkActionButtons(screen: String, in screenshot: XCUIScreenshot) {
         #if os(iOS)
         let buttons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "action."))
-        guard buttons.count > 0, let image = app.screenshot().image.cgImage else { return }
+        guard buttons.count > 0, let image = screenshot.image.cgImage else { return }
         let scale = CGFloat(image.width) / app.frame.width
         for index in 0..<buttons.count {
             let button = buttons.element(boundBy: index)
