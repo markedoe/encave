@@ -312,6 +312,10 @@ class RemoteSyncTests {
         assertFalse(RelayMailboxStore.isAllowed("http://relay.example"))
         assertFalse(RelayMailboxStore.isAllowed("ftp://relay.example"))
         assertFalse(RelayMailboxStore.isAllowed("relay"))
+        // Hosts java.net.URI does not read.
+        assertTrue(RelayMailboxStore.isAllowed("https://my_relay.example"))
+        assertTrue(RelayMailboxStore.isAllowed("https://cave.exemple.fr"))
+        assertTrue(RelayMailboxStore.isAllowed("https://relais.café.example"))
     }
 
     /** Runs against a real relay when ENCAVE_RELAY_URL is set (the CI starts relay/server.mjs). */

@@ -170,19 +170,20 @@ private class WebDavMailbox(val store: WebDavMailboxStore, val id: String) : Mai
     override suspend fun list(prefix: String): List<String> {
         var start = prefix.substringBeforeLast("/", "")
         if (start.isNotEmpty() && !RelayPath.isValid(start)) start = ""
-        val files = mutableListOf<String>()
+        val files = HashSet<String>()
         val folders = ArrayDeque(listOf(start))
-        var visited = 0
+        // Each folder once, even if a server lists a parent among the children.
+        val visited = hashSetOf(start)
         while (folders.isNotEmpty()) {
             val folder = folders.removeLast()
             // A mailbox holds a few folders and at most a few thousand files.
-            if (++visited > 1_000 || files.size > 10_000) throw RemoteSyncException(RemoteSyncError.Unavailable("bad list"))
+            if (visited.size > 1_000 || files.size > 10_000) throw RemoteSyncException(RemoteSyncError.Unavailable("bad list"))
             val entries = entries(folder) ?: continue
             for (entry in entries) {
                 if (entry.path == folder || !RelayPath.isValid(entry.path)) continue
                 if (entry.isFolder) {
                     val inside = entry.path + "/"
-                    if (inside.startsWith(prefix) || prefix.startsWith(inside)) folders.addLast(entry.path)
+                    if ((inside.startsWith(prefix) || prefix.startsWith(inside)) && visited.add(entry.path)) folders.addLast(entry.path)
                 } else if (entry.path.startsWith(prefix)) {
                     files += entry.path
                 }
@@ -274,7 +275,9 @@ internal object WebDavMultistatus {
     data class Response(val href: String, val isCollection: Boolean)
 
     fun parse(data: ByteArray): List<Response>? {
-        // A multistatus never has a DTD; refusing one rules out entity tricks.
+        // A multistatus never has a DTD; refusing one rules out entity tricks. A NUL byte means
+        // UTF-16 or UTF-32, where the text check below would not see one: refused too.
+        if (data.any { it == 0.toByte() }) return null
         val text = data.toString(Charsets.UTF_8)
         if (text.contains("<!DOCTYPE") || text.contains("<!ENTITY")) return null
         val factory = SAXParserFactory.newInstance().apply { isNamespaceAware = true }

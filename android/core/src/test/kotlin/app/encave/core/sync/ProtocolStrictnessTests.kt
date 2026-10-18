@@ -151,6 +151,32 @@ class ProtocolStrictnessTests {
     }
 
     @Test
+    fun aKeyGrantedWithAnotherStorageEndsTheRound() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household(2)
+        val old = devices[0].key!!
+        val new = CellarKey.random(old.cellarId, 2)
+        RemoteSync.grant(new, devices[0].snapshot.membership.active, store, devices[0].identity, "https://new.example/")
+        val result = RemoteSync.run(store, devices[1].identity, old, devices[1].snapshot, RemoteProgress(), PhotoAccess.NONE, "https://old.example/")
+        assertEquals(new, result.newKey)
+        assertEquals("https://new.example/", result.storage)
+        assertNull(result.progress.uploadedClock)
+        assertEquals(2L, result.progress.epoch)
+        assertNull(store.allFiles[new.mailboxId], "nothing written under the new key on the old storage")
+        val same = RemoteSync.run(store, devices[1].identity, old, devices[1].snapshot, RemoteProgress(), PhotoAccess.NONE, "https://new.example/")
+        assertEquals(new, same.newKey)
+        assertNotNull(same.progress.uploadedClock)
+    }
+
+    @Test
+    fun aMultistatusInUtf16IsRefused() {
+        val xml = """<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE d [<!ENTITY x "y">]>""" +
+            """<d:multistatus xmlns:d="DAV:"><d:response><d:href>/a/</d:href></d:response></d:multistatus>"""
+        assertNull(WebDavMultistatus.parse(xml.toByteArray(Charsets.UTF_16)))
+        assertNotNull(WebDavMultistatus.parse(xml.replace(Regex("<!DOCTYPE[^]]*]>"), "").replace("UTF-16", "UTF-8").toByteArray()))
+    }
+
+    @Test
     fun aCellarKeyIsThirtyTwoBytes() {
         val cellar = UUID.randomUUID().toString().uppercase()
         val short = """{"cellarID":"$cellar","epoch":1,"key":"${Base64.getEncoder().encodeToString(ByteArray(16))}"}"""

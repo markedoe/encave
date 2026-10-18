@@ -245,10 +245,15 @@ object RemoteSync {
      * One round: picks up key grants, reads the other devices' newest snapshots,
      * merges them, fetches missing photos, then writes this device's snapshot and
      * photos if anything changed.
+     *
+     * [currentStorage] is where [store] keeps the files, if the caller knows it: a new key
+     * granted with another storage then ends the round, so nothing is read from or written
+     * to the old storage under the new key (the result has the key, the storage and a fresh
+     * progress for the next round).
      */
     suspend fun run(
         store: MailboxStore, identity: DeviceIdentity, key: CellarKey, local: SyncSnapshot,
-        progress: RemoteProgress, photos: PhotoAccess,
+        progress: RemoteProgress, photos: PhotoAccess, currentStorage: String? = null,
     ): Result {
         var currentKey = key
         var current = progress
@@ -264,6 +269,10 @@ object RemoteSync {
             storage = grant.storage
         }
         if (current.epoch != currentKey.epoch || newKey != null) current = RemoteProgress(epoch = currentKey.epoch)
+        val granted = storage
+        if (newKey != null && granted != null && currentStorage != null && granted != currentStorage) {
+            return Result(null, current, newKey, granted, emptyList(), local.state.clock)
+        }
 
         // 2. Other devices' newest snapshots.
         val mailbox = store.mailbox(currentKey.mailboxId, currentKey.token)

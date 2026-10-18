@@ -147,6 +147,27 @@ final class CountingPhotos: @unchecked Sendable {
         #expect(Set(mine.map(\.clock)).count == mine.count)
     }
 
+    @Test func aKeyGrantedWithAnotherStorageEndsTheRound() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household(2)
+        let old = try #require(devices[0].key)
+        devices[1].key = old
+        let new = CellarKey.random(cellarID: old.cellarID, epoch: 2)
+        try await RemoteSync.grant(new, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: "https://new.example/")
+        let result = try await RemoteSync.run(store: store, identity: devices[1].identity, key: old,
+                                              local: devices[1].snapshot, progress: RemoteProgress(), photos: .none,
+                                              storage: "https://old.example/")
+        #expect(result.newKey == new && result.storage == "https://new.example/")
+        #expect(result.progress.uploadedClock == nil && result.progress.epoch == 2)
+        #expect(store.allFiles[new.mailboxID] == nil, "nothing written under the new key on the old storage")
+        // On the same storage, the round goes on with the new key.
+        let same = try await RemoteSync.run(store: store, identity: devices[1].identity, key: old,
+                                            local: devices[1].snapshot, progress: RemoteProgress(), photos: .none,
+                                            storage: "https://new.example/")
+        #expect(same.newKey == new && same.progress.uploadedClock != nil)
+    }
+
     @Test func aCellarKeyIsThirtyTwoBytes() throws {
         let cellar = UUID().uuidString
         let short = Data(#"{"cellarID":"\#(cellar)","epoch":1,"key":"\#(Data(count: 16).base64EncodedString())"}"#.utf8)

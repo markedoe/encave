@@ -240,9 +240,14 @@ public enum RemoteSync {
     /// One round: picks up key grants, reads the other devices' newest snapshots,
     /// merges them, fetches missing photos, then writes this device's snapshot and
     /// photos if anything changed.
+    ///
+    /// `storage` is where `store` keeps the files, if the caller knows it: a new key
+    /// granted with another storage then ends the round, so nothing is read from or
+    /// written to the old storage under the new key (the result has the key, the
+    /// storage and a fresh progress for the next round).
     public static func run(store: MailboxStore, identity: DeviceIdentity, key currentKey: CellarKey,
                            local: SyncSnapshot, progress currentProgress: RemoteProgress,
-                           photos: PhotoAccess) async throws -> Result {
+                           photos: PhotoAccess, storage currentStorage: String? = nil) async throws -> Result {
         var key = currentKey
         var progress = currentProgress
         var storage: String?
@@ -260,6 +265,9 @@ public enum RemoteSync {
         if progress.epoch != key.epoch || newKey != nil {
             progress = RemoteProgress()
             progress.epoch = key.epoch
+        }
+        if newKey != nil, let storage, let currentStorage, storage != currentStorage {
+            return Result(snapshot: nil, progress: progress, newKey: newKey, storage: storage, clock: local.state.clock)
         }
 
         // 2. Other devices' newest snapshots.

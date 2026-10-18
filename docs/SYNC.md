@@ -441,7 +441,10 @@ Each storage keeps the files of a mailbox or inbox under its ID:
 ### One round
 
 1. Read the inbox; adopt a granted key that supersedes the current one (and
-   start reading the new mailbox from scratch).
+   start reading the new mailbox from scratch). If the grant names another
+   storage than the one the round runs on, the round ends there, so nothing is
+   read or written under the new key on the old storage; the next round runs on
+   the grant's storage.
 2. List `snap/`; for each other current member (a device of the membership,
    not removed; files of other device IDs are ignored), read its newest
    snapshot if newer than the last one read, check the bounds (section 1) and
