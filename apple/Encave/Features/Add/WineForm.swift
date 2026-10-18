@@ -215,12 +215,38 @@ struct EditWineView: View {
     @State private var loaded = false
     @State private var newPhoto: Data?
     @State private var photoRemoved = false
+    @State private var analyzing = false
+    @State private var aiProblem: String?
+    private let aiEnabled = AISettings.load().isEnabled
+
+    /// A label photo for the AI: a new one, or the one kept with the wine.
+    private var hasLabelPhoto: Bool {
+        newPhoto != nil || (!photoRemoved && PhotoStore.exists(draft.photoID))
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 WineFormSections(draft: $draft)
                 PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
+                if aiEnabled, hasLabelPhoto {
+                    Section {
+                        Button(action: completeWithAI) {
+                            if analyzing {
+                                HStack { ProgressView(); Text("Reading the label…") }
+                            } else {
+                                Label("Complete with AI", systemImage: "sparkles")
+                            }
+                        }
+                        .disabled(analyzing)
+                        if let aiProblem {
+                            Label(aiProblem, systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.secondary)
+                        }
+                    } footer: {
+                        Text("Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.")
+                    }
+                }
             }
             .formStyle(.grouped)
             .navigationTitle("Edit Wine")
@@ -242,6 +268,24 @@ struct EditWineView: View {
             }
         }
         .macSheetFrame()
+    }
+
+    private func completeWithAI() {
+        guard !analyzing, let photo = newPhoto ?? (photoRemoved ? nil : PhotoStore.data(for: draft.photoID)) else { return }
+        analyzing = true
+        aiProblem = nil
+        Task {
+            defer { analyzing = false }
+            do {
+                let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                var value = draft
+                var filled = WineDraft()
+                analysis.apply(to: &value, replacing: &filled)
+                withAnimation { draft = value }
+            } catch {
+                aiProblem = error.localizedDescription
+            }
+        }
     }
 
     private func save() {

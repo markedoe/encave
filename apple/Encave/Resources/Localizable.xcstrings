@@ -6461,6 +6461,16 @@
         }
       }
     },
+    "Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment."
+          }
+        }
+      }
+    },
     "Server URL": {
       "localizations": {
         "fr": {
