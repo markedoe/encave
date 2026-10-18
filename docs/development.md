@@ -26,8 +26,8 @@ Both `app.encave` and `app.encave.widgets` carry the App Group entitlement.
 In the Apple Developer account, create the App Group `group.app.encave`,
 register the App ID `app.encave.widgets`, and enable App Groups with that group
 on both App IDs, unless automatic signing in the TestFlight export does it.
-The CI signs the iOS archive ad hoc with the entitlements (Xcode itself would
-not), so the export keeps the App Group when it re-signs with cloud signing.
+The CI signs the iOS archive ad hoc with the entitlements (with `codesign`),
+so the export keeps the App Group when it re-signs with cloud signing.
 
 ### Model tests
 

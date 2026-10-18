@@ -7,6 +7,10 @@ struct AddBottleIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Bottles"
     static let description = IntentDescription("Opens Encave to add bottles, by scanning the label or typing.")
     static let openAppWhenRun = true
+    #if ENCAVE_WIDGETS
+    /// Listed in Shortcuts once, from the app.
+    static var isDiscoverable: Bool { false }
+    #endif
 
     @MainActor
     func perform() async throws -> some IntentResult {

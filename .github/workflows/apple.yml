@@ -327,7 +327,8 @@ jobs:
           # An unsigned archive carries no entitlements, so the export would drop the App
           # Group the widgets share with the app. Sign it ad hoc with the entitlements
           # (nested code first); the export re-signs everything with cloud signing.
-          # Xcode refuses ad-hoc signing of an iOS app with an App Group, hence codesign.
+          # Signed with codesign rather than Xcode's ad-hoc build settings, so the step does
+          # not depend on which entitlements Xcode accepts ad hoc for iOS.
           app="$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
           sign=(codesign --force --sign - --timestamp=none --generate-entitlement-der)
           find "$app" -depth \( -name '*.framework' -o -name '*.dylib' \) -print0 \
