@@ -6,6 +6,7 @@ import java.time.Instant
 import java.util.Locale
 import java.util.UUID
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
 /** Style of wine. Always shown with a label, never by color alone. */
@@ -27,7 +28,7 @@ enum class WineColor(val raw: String) {
 /** A wine: the invisible grouping behind bottles ("Château X 2015"). */
 @Serializable
 data class Wine(
-    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
     val producer: String? = null,
     val vintage: Int? = null,
@@ -208,7 +209,7 @@ enum class RackKind(val raw: String) {
  */
 @Serializable
 data class Rack(
-    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
     val kind: RackKind = RackKind.Grid,
     /** Rows, shelves, or rows of bins. */
@@ -282,10 +283,17 @@ data class Rack(
     fun slotForLabel(label: String): Slot? {
         val parts = label.trim().uppercase(Locale.ROOT).split("-", limit = 2)
         val upper = parts.first()
-        val depth = if (parts.size > 1) (parts[1].toIntOrNull() ?: 0) - 1 else 0
         val letters = upper.takeWhile { it.isLetter() }
-        if (letters.isEmpty()) return null
-        val column = upper.drop(letters.length).toIntOrNull() ?: return null
+        val digits = upper.drop(letters.length)
+        // Short labels only ("AB12-3"): longer ones are no place of a rack, and would overflow.
+        if (letters.length !in 1..3 || digits.length !in 1..4 || !digits.all { it in '0'..'9' }) return null
+        val column = digits.toInt()
+        var depth = 0
+        if (parts.size > 1) {
+            val text = parts[1]
+            if (text.length !in 1..4 || !text.all { it in '0'..'9' }) return null
+            depth = text.toInt() - 1
+        }
         var row = 0
         for (char in letters) {
             if (char !in 'A'..'Z') return null
@@ -298,15 +306,22 @@ data class Rack(
     /** Limits applied by the Swift initializer and decoder. */
     fun normalized(): Rack {
         val fixed = copy(
-            rows = rows.coerceAtLeast(1), columns = columns.coerceAtLeast(1),
-            depth = depth.coerceIn(1, MAX_DEPTH), binCapacity = binCapacity.coerceAtLeast(1),
-            rowColumns = rowColumns?.map { it.coerceAtLeast(1) },
+            rows = rows.coerceIn(1, MAX_SIZE), columns = columns.coerceIn(1, MAX_SIZE),
+            depth = depth.coerceIn(1, MAX_DEPTH), binCapacity = binCapacity.coerceIn(1, MAX_SIZE),
+            rowColumns = rowColumns?.take(MAX_SIZE)?.map { it.coerceIn(1, MAX_SIZE) },
         )
         return if (fixed == this) this else fixed
     }
 
     companion object {
         const val MAX_DEPTH = 3
+
+        /**
+         * Largest number of rows, of cells in a row and of bottles in a bin. The editor
+         * stays well below; a rack from another device or a file is cut to it, so a damaged
+         * or hostile one cannot make every device allocate millions of cells.
+         */
+        const val MAX_SIZE = 100
 
         fun rowLetters(index: Int): String {
             var n = index
@@ -323,7 +338,7 @@ data class Rack(
 /** A record of drinking a bottle, from a quick rating to a full tasting note. */
 @Serializable
 data class Tasting(
-    @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
+    @Required @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
     /** 1 to 5, optional. Clamped when stored in a cellar. */
     val rating: Int? = null,
     val note: String? = null,
@@ -350,13 +365,13 @@ data class Tasting(
  */
 @Serializable
 data class Bottle(
-    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     @SerialName("wineID") @Serializable(with = UuidSerializer::class) val wineId: UUID,
     val status: Status = Status.InCellar,
     val slot: Slot? = null,
     /** Where the bottle is when it is not in a rack ("Kitchen", "Box in garage"). */
     val storageNote: String? = null,
-    @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
+    @Required @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
     @Serializable(with = InstantSerializer::class) val purchaseDate: Instant? = null,
     @Serializable(with = DecimalSerializer::class) val purchasePrice: BigDecimal? = null,
     val currency: String? = null,
@@ -391,7 +406,7 @@ data class Bottle(
 @Serializable
 data class CellarSettings(
     /** ISO 4217 code used by default for prices ("EUR", "CHF"...). */
-    val currency: String = "EUR",
+    @Required val currency: String = "EUR",
     /** Searches the user named, shown as chips in the Cellar. Null when there are none. */
     val savedSearches: List<SavedSearch>? = null,
 )
@@ -399,7 +414,7 @@ data class CellarSettings(
 /** A search and filters kept under a name ("Burgundy, ready"). */
 @Serializable
 data class SavedSearch(
-    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
     val query: String,
     val colors: List<WineColor>,

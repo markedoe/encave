@@ -424,7 +424,10 @@ public extension Cellar {
         guard var bottle = bottles[bottleID], bottle.status != .inCellar else { return }
         bottle.status = .inCellar
         bottle.tasting = nil
-        if let previousSlot, self.bottle(at: previousSlot) == nil { bottle.slot = previousSlot }
+        // Back in its place if it is still free and still exists (the rack may be gone or smaller).
+        if let previousSlot, self.bottle(at: previousSlot) == nil, rack(previousSlot.rackID)?.contains(previousSlot) == true {
+            bottle.slot = previousSlot
+        }
         bottles[bottleID] = bottle
     }
 

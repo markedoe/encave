@@ -348,7 +348,8 @@ final class SyncService {
     }
 
     nonisolated static var photos: PhotoAccess {
-        PhotoAccess(data: { PhotoStore.data(for: $0) }, save: { PhotoStore.store($1, id: $0) })
+        PhotoAccess(data: { PhotoStore.data(for: $0) }, save: { PhotoStore.store($1, id: $0) },
+                    exists: { PhotoStore.exists($0) })
     }
 
     // MARK: Away from home
@@ -479,7 +480,7 @@ final class SyncService {
                 return
             }
             let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: local,
-                                                  progress: remoteProgress, photos: Self.photos)
+                                                  progress: remoteProgress, photos: Self.photos, storage: remoteStorage?.string)
             // The device left or joined another cellar meanwhile: drop the result.
             guard round == generation else { return }
             if let newKey = result.newKey { storeRemoteKey(newKey) }

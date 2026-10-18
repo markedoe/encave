@@ -36,6 +36,7 @@ object AutoLevels {
         val gain = (255f / range).coerceAtMost(maxGain)
         // With a capped gain, the stretched range stays centred where it was.
         val offset = if (gain * range >= 255f) 0f else (low + high) / 2f - range * gain / 2f
-        return IntArray(256) { value -> ((value - low) * gain + offset).toInt().coerceIn(0, 255) }
+        // Rounded, not truncated: truncating darkens every channel by up to one level.
+        return IntArray(256) { value -> Math.round((value - low) * gain + offset).coerceIn(0, 255) }
     }
 }

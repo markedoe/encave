@@ -3,9 +3,11 @@ package app.encave.core.sync
 import app.encave.core.InstantSerializer
 import app.encave.core.ReferenceDates
 import app.encave.core.UuidSerializer
+import app.encave.core.parseUuid
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -29,7 +31,7 @@ data class Member(
     @Serializable(with = Base64Serializer::class) val publicKey: ByteArray,
     /** "ios", "ipados", "macos" or "android". */
     val platform: String,
-    @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
+    @Required @Serializable(with = InstantSerializer::class) val addedAt: Instant = ReferenceDates.now(),
     /**
      * The device's inbox on a relay, where others leave it new cellar keys
      * ([DeviceIdentity.inboxId]). Set by the device itself; null for records from before
@@ -142,25 +144,22 @@ object MembershipSerializer : KSerializer<Membership> {
         val root = input.decodeJsonElement() as? JsonObject ?: throw SerializationException("Membership must be an object")
         val cellar = root["cellarID"]?.jsonPrimitive?.content ?: throw SerializationException("Missing cellarID")
         return Membership(
-            cellarId = UUID.fromString(cellar),
+            cellarId = uuid(cellar),
             members = pairs(root["members"]) { json.decodeFromJsonElement(Member.serializer(), it) },
             stamps = pairs(root["stamps"]) { json.decodeFromJsonElement(Stamp.serializer(), it) },
         )
     }
 
     private fun <T> pairs(element: kotlinx.serialization.json.JsonElement?, decode: (kotlinx.serialization.json.JsonElement) -> T): Map<UUID, T> {
+        // Required, and in Swift's encoding of a dictionary keyed by UUID only, like CaveKit's decoder.
+        val array = element as? JsonArray ?: throw SerializationException("Expected a dictionary array")
+        if (array.size % 2 != 0) throw SerializationException("Odd dictionary array")
         val result = LinkedHashMap<UUID, T>()
-        when (element) {
-            null -> Unit
-            is JsonArray -> {
-                if (element.size % 2 != 0) throw SerializationException("Odd dictionary array")
-                for (index in element.indices step 2) {
-                    result[UUID.fromString(element[index].jsonPrimitive.content)] = decode(element[index + 1])
-                }
-            }
-            is JsonObject -> element.forEach { (key, value) -> result[UUID.fromString(key)] = decode(value) }
-            else -> throw SerializationException("Unexpected dictionary encoding")
+        for (index in array.indices step 2) {
+            result[uuid(array[index].jsonPrimitive.content)] = decode(array[index + 1])
         }
         return result
     }
+
+    private fun uuid(text: String): UUID = parseUuid(text) ?: throw SerializationException("Invalid UUID: $text")
 }

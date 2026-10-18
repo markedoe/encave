@@ -1,8 +1,11 @@
 package app.encave.core.sync
 
 import app.encave.core.UuidSerializer
+import app.encave.core.parseUuid
 import java.io.File
+import java.util.Locale
 import java.util.UUID
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.Serializable
 
 // Remote sync (docs/SYNC.md §8): devices that are apart exchange encrypted files
@@ -62,6 +65,11 @@ data class CellarKey(
     val epoch: Long,
     @Serializable(with = Base64Serializer::class) val key: ByteArray,
 ) {
+    init {
+        // A key received from another device must be 32 bytes, like the ones devices make.
+        require(key.size == 32) { "A cellar key is 32 bytes" }
+    }
+
     internal fun derive(info: String, count: Int = 32): ByteArray = KeySchedule.derive(key, ByteArray(0), info, count)
 
     /**
@@ -151,28 +159,35 @@ data class KeyGrant(
     /** Where the files are (for example a relay URL), so the recipient can follow. */
     val storage: String? = null,
 ) {
-    val path: String get() = "grant/${cellarKey.cellarId.lower}-${"%08d".format(cellarKey.epoch)}-${from.lower}"
-
-    /** Seals for [recipient] (its identity public key). Returns the path and the file. */
+    /**
+     * Seals for [recipient] (its identity public key). Returns the path and the file. The
+     * path ends with a random part, so nobody who can write to the inbox can take the name first.
+     */
     fun sealed(sender: DeviceIdentity, recipient: ByteArray, ephemeral: X25519Key = X25519Key.generate()): Pair<String, ByteArray> {
-        val path = path
+        val path = GrantPath(cellarKey.cellarId, cellarKey.epoch, from).string
         val key = key(path, ephemeral.publicKey, recipient, ephemeral.agree(recipient), sender.privateKey.agree(recipient))
         val body = Envelope.seal(SyncJson.encode(serializer(), this), Envelope.Kind.Grant, path, key)
         return path to ephemeral.publicKey + body
     }
 
     companion object {
+        /** Grants are at most this large; larger files in an inbox are deleted unopened. */
+        const val MAX_SIZE = 4096
+
         /** Opens a grant found in this device's inbox. [members] gives the senders' keys. */
         fun open(data: ByteArray, path: String, recipient: DeviceIdentity, members: Membership): KeyGrant {
-            if (data.size <= 32) throw RemoteSyncException(RemoteSyncError.Corrupted(path))
+            val name = GrantPath.parse(path)
+            if (data.size <= 32 || data.size > MAX_SIZE || name == null) throw RemoteSyncException(RemoteSyncError.Corrupted(path))
             val ephemeralPublic = data.copyOf(32)
             // The sender's ID is in the path; it must be a current member.
-            val senderId = runCatching { UUID.fromString(path.split("-").takeLast(5).joinToString("-")) }.getOrNull()
-            val sender = senderId?.let { members.members[it] } ?: throw SyncException(SyncError.UnknownDevice)
+            val senderId = name.sender
+            val sender = members.members[senderId] ?: throw SyncException(SyncError.UnknownDevice)
             val key = key(path, ephemeralPublic, recipient.publicKey, recipient.privateKey.agree(ephemeralPublic), recipient.privateKey.agree(sender.publicKey))
             val plain = Envelope.open(data.copyOfRange(32, data.size), Envelope.Kind.Grant, path, key)
             val grant = runCatching { SyncJson.decode(serializer(), plain) }.getOrElse { throw RemoteSyncException(RemoteSyncError.Corrupted(path)) }
-            if (grant.from != senderId || grant.cellarKey.cellarId != members.cellarId || path != grant.path) {
+            if (grant.from != senderId || grant.cellarKey.cellarId != members.cellarId ||
+                name.cellarId != grant.cellarKey.cellarId || name.epoch != grant.cellarKey.epoch
+            ) {
                 throw RemoteSyncException(RemoteSyncError.Corrupted(path))
             }
             return grant
@@ -230,10 +245,15 @@ object RemoteSync {
      * One round: picks up key grants, reads the other devices' newest snapshots,
      * merges them, fetches missing photos, then writes this device's snapshot and
      * photos if anything changed.
+     *
+     * [currentStorage] is where [store] keeps the files, if the caller knows it: a new key
+     * granted with another storage then ends the round, so nothing is read from or written
+     * to the old storage under the new key (the result has the key, the storage and a fresh
+     * progress for the next round).
      */
     suspend fun run(
         store: MailboxStore, identity: DeviceIdentity, key: CellarKey, local: SyncSnapshot,
-        progress: RemoteProgress, photos: PhotoAccess,
+        progress: RemoteProgress, photos: PhotoAccess, currentStorage: String? = null,
     ): Result {
         var currentKey = key
         var current = progress
@@ -249,6 +269,10 @@ object RemoteSync {
             storage = grant.storage
         }
         if (current.epoch != currentKey.epoch || newKey != null) current = RemoteProgress(epoch = currentKey.epoch)
+        val granted = storage
+        if (newKey != null && granted != null && currentStorage != null && granted != currentStorage) {
+            return Result(null, current, newKey, granted, emptyList(), local.state.clock)
+        }
 
         // 2. Other devices' newest snapshots.
         val mailbox = store.mailbox(currentKey.mailboxId, currentKey.token)
@@ -267,11 +291,16 @@ object RemoteSync {
             // One unreadable file must not stop the round for the other devices.
             val remote = try {
                 decodeSnapshot(Envelope.open(file, Envelope.Kind.Snapshot, newest.string, currentKey.dataKey)).also {
-                    if (it.state.device != device || it.membership.cellarId != merged.membership.cellarId) {
+                    // The path's clock is the one readers compare: it must be the snapshot's.
+                    if (it.state.device != device || it.state.clock != newest.clock ||
+                        it.membership.cellarId != merged.membership.cellarId
+                    ) {
                         throw RemoteSyncException(RemoteSyncError.Corrupted(newest.string))
                     }
                     SyncState.check(it.state, it.membership)
                 }
+            } catch (error: CancellationException) {
+                throw error
             } catch (_: Exception) {
                 unreadable += device
                 continue
@@ -288,9 +317,15 @@ object RemoteSync {
         // 3. Missing photos.
         val referenced = merged.cellar.photoIds.toSortedSet()
         for (id in referenced) {
-            if (!PhotoId.isValid(id) || photos.data(id) != null) continue
+            if (!PhotoId.isValid(id) || photos.exists(id)) continue
             val path = photoPath(id)
-            val file = runCatching { mailbox.get(path) }.getOrNull() ?: continue
+            val file = try {
+                mailbox.get(path)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                null
+            } ?: continue
             val data = runCatching { Envelope.open(file, Envelope.Kind.Photo, path, currentKey.dataKey) }.getOrNull() ?: continue
             if (!PhotoId.matches(id, data)) continue
             photos.save(id, data)
@@ -302,8 +337,9 @@ object RemoteSync {
         var uploadedDigest = current.uploadedDigest
         val digest = stampDigest(merged)
         if (uploadedClock != merged.state.clock || uploadedDigest != digest || newKey != null) {
-            // Other devices read a snapshot only if its clock is newer than the last one.
-            val last = uploadedClock
+            // Other devices read a snapshot only if its clock is newer than the last one,
+            // including one written by a round that failed after writing it.
+            val last = listOfNotNull(uploadedClock, snapshots.filter { it.device == identity.id }.maxOfOrNull { it.clock }).maxOrNull()
             if (last != null && java.lang.Long.compareUnsigned(merged.state.clock, last) <= 0) {
                 merged = merged.copy(state = merged.state.copy(clock = last + 1))
             }
@@ -350,18 +386,27 @@ object RemoteSync {
         val inbox = store.inbox(identity.inboxId, identity.inboxToken)
         val ownPrefix = "grant/${membership.cellarId.lower}-"
         var best: KeyGrant? = null
+        var waiting = 0
         for (path in inbox.list("grant/")) {
             val data = inbox.get(path) ?: continue
             val grant = try {
                 KeyGrant.open(data, path, identity, membership)
             } catch (error: SyncException) {
                 // From a device of this cellar this one has not heard of yet: kept for later.
-                if (error.error == SyncError.UnknownDevice && path.startsWith(ownPrefix) && !isFromRemovedDevice(path, membership)) continue
-                runCatching { inbox.delete(path) }
+                // Only a few, since anyone can write to an inbox.
+                if (error.error == SyncError.UnknownDevice && GrantPath.parse(path)?.cellarId == membership.cellarId &&
+                    !isFromRemovedDevice(path, membership) && waiting < MAX_WAITING_GRANTS
+                ) {
+                    waiting++
+                    continue
+                }
+                deleteQuietly(inbox, path)
                 continue
+            } catch (error: CancellationException) {
+                throw error
             } catch (_: Exception) {
                 // Forged, damaged or for another cellar: never usable, and it takes room.
-                runCatching { inbox.delete(path) }
+                deleteQuietly(inbox, path)
                 continue
             }
             if (grant.cellarKey.supersedes(best?.cellarKey ?: current)) best = grant
@@ -370,17 +415,30 @@ object RemoteSync {
         val kept = best?.cellarKey?.epoch ?: newerThan.takeIf { it > 0 }
         if (kept != null) {
             for (path in inbox.list(ownPrefix)) {
-                val epoch = path.split("-").drop(5).firstOrNull()?.toLongOrNull() ?: continue
-                if (epoch < kept) runCatching { inbox.delete(path) }
+                val name = GrantPath.parse(path) ?: continue
+                if (name.cellarId == membership.cellarId && name.epoch < kept) deleteQuietly(inbox, path)
             }
         }
         return best
     }
 
-    /** A grant path ends with the sender's ID; true if that device was removed (or the path is unreadable). */
+    /** Grants from devices not known yet that an inbox keeps; the others are deleted. */
+    const val MAX_WAITING_GRANTS = 8
+
+    /** A grant path names the sender; true if that device was removed (or the path is not a grant's). */
     internal fun isFromRemovedDevice(path: String, membership: Membership): Boolean {
-        val sender = runCatching { UUID.fromString(path.takeLast(36)) }.getOrNull() ?: return true
+        val sender = GrantPath.parse(path)?.sender ?: return true
         return membership.stamps[sender]?.deleted == true
+    }
+
+    /** Deletes a file that is of no use; a failure is retried at the next round, a cancellation is not swallowed. */
+    private suspend fun deleteQuietly(mailbox: Mailbox, path: String) {
+        try {
+            mailbox.delete(path)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+        }
     }
 
     /**
@@ -411,7 +469,10 @@ object RemoteSync {
             // Devices whose record has no inbox yet get the key on the local network.
             val inbox = member.inbox?.takeIf { RelayPath.isValidMailbox(it) && it.startsWith("i") } ?: continue
             val (path, data) = KeyGrant(key, identity.id, storage).sealed(identity, member.publicKey)
-            store.inbox(inbox, "").create(path, data)
+            // The name has a random part: a file already there is not this grant.
+            if (!store.inbox(inbox, "").create(path, data)) {
+                throw RemoteSyncException(RemoteSyncError.Unavailable("grant not created"))
+            }
         }
     }
 
@@ -421,9 +482,17 @@ object RemoteSync {
     internal suspend fun write(snapshot: SyncSnapshot, mailbox: Mailbox, key: CellarKey, device: UUID) {
         val path = SnapshotPath(device, snapshot.state.clock).string
         mailbox.create(path, Envelope.seal(encodeSnapshot(snapshot), Envelope.Kind.Snapshot, path, key.dataKey))
-        // Older snapshots of this device: keep the newest few.
-        val mine = mailbox.list("snap/${device.lower}/").mapNotNull { SnapshotPath.parse(it) }.sortedByDescending { it.clock }
-        for (old in mine.drop(KEPT_SNAPSHOTS)) runCatching { mailbox.delete(old.string) }
+        // Older snapshots of this device: keep the newest few. The snapshot is written,
+        // so a failure here is left for the next round.
+        val listed = try {
+            mailbox.list("snap/${device.lower}/")
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            emptyList()
+        }
+        val mine = listed.mapNotNull { SnapshotPath.parse(it) }.sortedByDescending { it.clock }
+        for (old in mine.drop(KEPT_SNAPSHOTS)) deleteQuietly(mailbox, old.string)
     }
 
     fun encodeSnapshot(snapshot: SyncSnapshot): ByteArray = WireMessage(
@@ -446,19 +515,48 @@ object RemoteSync {
 }
 
 /**
+ * `grant/<cellar>-<epoch, 8 digits>-<sender>-<8 random hex>` (lowercase UUIDs). The random
+ * part keeps anyone who can write to an inbox from creating a grant's file before its sender does.
+ */
+internal class GrantPath(val cellarId: UUID, val epoch: Long, val sender: UUID, val suffix: String = randomHex(4)) {
+    val string: String get() = "grant/${cellarId.lower}-${"%08d".format(Locale.ROOT, epoch)}-${sender.lower}-$suffix"
+
+    companion object {
+        fun parse(string: String): GrantPath? {
+            if (!string.startsWith("grant/")) return null
+            val parts = string.removePrefix("grant/").split("-")
+            // Cellar (a UUID: 5 parts), epoch, sender (5 parts), random part.
+            if (parts.size != 12) return null
+            val cellarText = parts.subList(0, 5).joinToString("-")
+            val senderText = parts.subList(6, 11).joinToString("-")
+            val epochText = parts[5]
+            val suffix = parts[11]
+            val cellar = parseUuid(cellarText)?.takeIf { it.lower == cellarText } ?: return null
+            val sender = parseUuid(senderText)?.takeIf { it.lower == senderText } ?: return null
+            if (epochText.length !in 8..10 || !epochText.all { it in '0'..'9' }) return null
+            val epoch = epochText.toLong().takeIf { it <= 0xFFFF_FFFFL } ?: return null
+            if (suffix.length != 8 || !suffix.all { it in '0'..'9' || it in 'a'..'f' }) return null
+            return GrantPath(cellar, epoch, sender, suffix)
+        }
+    }
+}
+
+internal fun randomHex(bytes: Int): String = ByteArray(bytes).also { random.nextBytes(it) }.hex()
+
+/**
  * `snap/<device>/<clock, 16 digits>-<8 random hex>`: the random part keeps two
  * snapshots with the same clock (after a new epoch, say) from colliding.
  */
-internal class SnapshotPath(val device: UUID, val clock: Long, val suffix: String = ByteArray(4).also { random.nextBytes(it) }.hex()) {
-    val string: String get() = "snap/${device.lower}/${"%016d".format(clock)}-$suffix"
+internal class SnapshotPath(val device: UUID, val clock: Long, val suffix: String = randomHex(4)) {
+    val string: String get() = "snap/${device.lower}/${"%016d".format(Locale.ROOT, clock)}-$suffix"
 
     companion object {
         fun parse(string: String): SnapshotPath? {
             val parts = string.split("/")
             if (parts.size != 3 || parts[0] != "snap") return null
-            val device = runCatching { UUID.fromString(parts[1]) }.getOrNull() ?: return null
+            val device = parseUuid(parts[1]) ?: return null
             val name = parts[2].split("-")
-            if (name.size != 2 || name[0].length != 16) return null
+            if (name.size != 2 || name[0].length != 16 || !name[0].all { it in '0'..'9' }) return null
             val clock = name[0].toLongOrNull() ?: return null
             return SnapshotPath(device, clock, name[1])
         }

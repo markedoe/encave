@@ -51,6 +51,13 @@ import Testing
         cellar.undoDrink(bottle.id, previousSlot: slot)
         #expect(cellar.bottle(at: slot)?.id == bottle.id)
         #expect(cellar.consumedBottles.isEmpty)
+
+        // The rack was removed in the meantime: the bottle comes back without a place.
+        try cellar.drink(bottle.id, tasting: Tasting())
+        cellar.removeRack(rack.id)
+        cellar.undoDrink(bottle.id, previousSlot: slot)
+        #expect(cellar.bottles[bottle.id]?.status == .inCellar)
+        #expect(cellar.bottles[bottle.id]?.slot == nil)
     }
 
     @Test func moveRejectsOccupiedSlot() throws {

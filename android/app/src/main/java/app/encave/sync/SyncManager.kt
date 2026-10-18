@@ -733,7 +733,7 @@ class SyncManager(
                 return
             }
             val current = synchronized(this) { progress }
-            val result = RemoteSync.run(store, identity, key, local, current, photos.syncAccess)
+            val result = RemoteSync.run(store, identity, key, local, current, photos.syncAccess, currentStorage = url)
             // The device left or joined another cellar meanwhile: drop the result.
             if (round != generation) return
             result.newKey?.let(::storeRemoteKey)

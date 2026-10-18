@@ -102,6 +102,7 @@ class PhotoStore(context: Context) {
     /** Photos for a sync session: read and saved by ID. */
     val syncAccess: PhotoAccess = object : PhotoAccess {
         override fun data(id: String): ByteArray? = this@PhotoStore.data(id)
+        override fun exists(id: String): Boolean = this@PhotoStore.exists(id)
         override fun save(id: String, data: ByteArray) {
             store(id, data)
         }

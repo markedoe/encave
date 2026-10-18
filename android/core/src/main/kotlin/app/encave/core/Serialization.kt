@@ -36,11 +36,22 @@ import kotlinx.serialization.json.jsonPrimitive
  * - `[UUID: Wine]` dictionaries as flat arrays alternating key and value.
  */
 
+private val uuidPattern = Regex("^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$")
+
+/**
+ * A UUID in its 36-character form, in either case, as Foundation's `UUID(uuidString:)`
+ * reads it; null otherwise (`UUID.fromString` also takes shorter forms such as "1-2-3-4-5").
+ */
+fun parseUuid(text: String): UUID? = if (uuidPattern.matches(text)) UUID.fromString(text) else null
+
 /** UUID as an uppercase string, as Foundation writes it. */
 object UuidSerializer : KSerializer<UUID> {
     override val descriptor = PrimitiveSerialDescriptor("app.encave.UUID", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: UUID) = encoder.encodeString(value.toString().uppercase(Locale.ROOT))
-    override fun deserialize(decoder: Decoder): UUID = UUID.fromString(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): UUID {
+        val text = decoder.decodeString()
+        return parseUuid(text) ?: throw SerializationException("Invalid UUID: $text")
+    }
 }
 
 /** ISO-8601 instant, whole seconds. Also reads Apple reference-date numbers. */
@@ -72,13 +83,19 @@ object InstantSerializer : KSerializer<Instant> {
         return Instant.ofEpochSecond(APPLE_REFERENCE_EPOCH + whole.toLong(), nanos)
     }
 
+    /**
+     * Strict like Swift's decoders: the on-device file and the sync payload hold numbers
+     * (`.deferredToDate`), backups ISO-8601 strings without fractions (`.iso8601`).
+     */
     override fun deserialize(decoder: Decoder): Instant {
         if (decoder is JsonDecoder) {
             val element = decoder.decodeJsonElement().jsonPrimitive
-            if (!element.isString) {
-                val seconds = element.doubleOrNull ?: throw SerializationException("Invalid date: $element")
+            val numbers = decoder.serializersModule.getContextual(ReferenceDates::class) != null
+            if (numbers) {
+                val seconds = element.takeUnless { it.isString }?.doubleOrNull ?: throw SerializationException("Invalid date: $element")
                 return fromReferenceSeconds(seconds)
             }
+            if (!element.isString || element.content.contains('.')) throw SerializationException("Invalid date: $element")
             return parse(element.content)
         }
         return parse(decoder.decodeString())
@@ -125,8 +142,17 @@ object DecimalSerializer : KSerializer<BigDecimal> {
     }
 
     override fun deserialize(decoder: Decoder): BigDecimal {
-        val text = if (decoder is JsonDecoder) decoder.decodeJsonElement().jsonPrimitive.content else decoder.decodeString()
-        return text.toBigDecimalOrNull() ?: throw SerializationException("Invalid decimal: $text")
+        val text = if (decoder is JsonDecoder) {
+            val element = decoder.decodeJsonElement().jsonPrimitive
+            // A number, as Swift writes and reads `Decimal`; not a string.
+            if (element.isString) throw SerializationException("Invalid decimal: $element")
+            element.content
+        } else {
+            decoder.decodeString()
+        }
+        // Without trailing zeros: `BigDecimal` equality counts the scale, and a price read
+        // back from a file must equal the one in memory, or the change detection stamps it again.
+        return text.toBigDecimalOrNull()?.stripTrailingZeros() ?: throw SerializationException("Invalid decimal: $text")
     }
 
     /** "24" rather than "24.00" or "2.4E+1", like Swift's `"\(Decimal)"`. */
@@ -195,10 +221,18 @@ object CellarSerializer : KSerializer<Cellar> {
      * with the smallest key (as an uppercase string) comes first, so it is the one kept.
      */
     private fun entries(element: JsonElement?): List<JsonElement> {
+        // Swift encodes a dictionary keyed by UUID as an array only, and its decoder
+        // refuses anything else: an odd array or a key that is not a UUID fails here too.
         val pairs = when (element) {
             null -> emptyList()
-            is JsonArray -> element.chunked(2).filter { it.size == 2 }.map { (key, value) -> key.jsonPrimitive.content to value }
-            is JsonObject -> element.entries.map { it.key to it.value }
+            is JsonArray -> {
+                if (element.size % 2 != 0) throw SerializationException("Odd dictionary array")
+                element.chunked(2).map { (key, value) ->
+                    val text = key.jsonPrimitive.content
+                    if (!key.jsonPrimitive.isString || parseUuid(text) == null) throw SerializationException("Invalid UUID key: $text")
+                    text to value
+                }
+            }
             else -> throw SerializationException("Unexpected dictionary encoding")
         }
         val ownId = { value: JsonElement -> ((value as? JsonObject)?.get("id") as? JsonPrimitive)?.content?.uppercase(Locale.ROOT) }
@@ -228,7 +262,9 @@ object CellarJson {
         ignoreUnknownKeys = true
         explicitNulls = false
         encodeDefaults = true
-        coerceInputValues = true
+        // Strict, like Swift's decoder: an unknown wine color or bottle status fails the
+        // read instead of silently becoming another value (SYNC.md §1).
+        coerceInputValues = false
     }
 
     private val pretty = Json(json) {
@@ -242,7 +278,8 @@ object CellarJson {
     /** The on-device file and the sync payload: dates as numbers (backups keep ISO-8601). */
     fun encode(cellar: Cellar): String = referenceJson.encodeToString(CellarSerializer, cellar)
 
-    fun decode(text: String): Cellar = json.decodeFromString(CellarSerializer, text)
+    /** The on-device file (dates as numbers). */
+    fun decode(text: String): Cellar = referenceJson.decodeFromString(CellarSerializer, text)
 
     /** Pretty-printed backup with sorted keys, like the Apple export. */
     fun backup(cellar: Cellar, exportedAt: Instant = Instant.now()): String {

@@ -173,20 +173,22 @@ struct WebDAVMailbox: Mailbox {
     func list(prefix: String) async throws -> [String] {
         var start = prefix.lastIndex(of: "/").map { String(prefix[..<$0]) } ?? ""
         if !start.isEmpty, !RelayPath.isValid(start) { start = "" }
-        var files: [String] = []
+        var files = Set<String>()
         var folders = [start]
-        var visited = 0
+        // Each folder once, even if a server lists a parent among the children.
+        var visited: Set<String> = [start]
         while let folder = folders.popLast() {
-            visited += 1
             // A mailbox holds a few folders and at most a few thousand files.
-            guard visited <= 1_000, files.count <= 10_000 else { throw RemoteSyncError.unavailable("bad list") }
+            guard visited.count <= 1_000, files.count <= 10_000 else { throw RemoteSyncError.unavailable("bad list") }
             guard let entries = try await entries(in: folder) else { continue }
             for entry in entries where entry.path != folder && RelayPath.isValid(entry.path) {
                 if entry.isFolder {
                     let inside = entry.path + "/"
-                    if inside.hasPrefix(prefix) || prefix.hasPrefix(inside) { folders.append(entry.path) }
+                    if inside.hasPrefix(prefix) || prefix.hasPrefix(inside), visited.insert(entry.path).inserted {
+                        folders.append(entry.path)
+                    }
                 } else if entry.path.hasPrefix(prefix) {
-                    files.append(entry.path)
+                    files.insert(entry.path)
                 }
             }
         }

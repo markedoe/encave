@@ -1,8 +1,9 @@
 package app.encave.core
 
+import app.encave.core.search.PriceExtractor
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -28,8 +29,12 @@ object CellarExport {
 
     fun backupFromJson(text: String): CellarBackup = CellarJson.backupFrom(text)
 
-    /** One row per bottle. Includes consumed and gone bottles when [includeHistory] is true; ordered ones always. */
-    fun csv(cellar: Cellar, includeHistory: Boolean = true): String {
+    /**
+     * One row per bottle. Includes consumed and gone bottles when [includeHistory] is true;
+     * ordered ones always. Dates are days of [zone], the calendar day the user saw when entering them.
+     */
+    fun csv(cellar: Cellar, includeHistory: Boolean = true, zone: ZoneId = ZoneId.systemDefault()): String {
+        val day = { instant: Instant -> day(instant, zone) }
         val collator = Cellar.collator()
         val bottles = cellar.bottles.values
             .filter { includeHistory || it.status == Bottle.Status.InCellar || it.status == Bottle.Status.Ordered }
@@ -47,31 +52,37 @@ object CellarExport {
                 wine.region, wine.country, wine.appellation, wine.grapes.joinToString("; "),
                 wine.drinkFrom?.toString(), wine.drinkUntil?.toString(), bottle.status.raw,
                 rack?.name, bottle.slot?.let { rack?.label(it) }, bottle.storageNote,
-                bottle.purchaseDate?.let(::day), bottle.purchasePrice?.let(DecimalSerializer::plain), bottle.currency,
+                bottle.purchaseDate?.let(day), bottle.purchasePrice?.let(DecimalSerializer::plain), bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, bottle.sizeML.toString(),
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
-                bottle.tasting?.note, bottle.expectedAt?.let(::day), wine.tags.orEmpty().joinToString("; "),
+                bottle.tasting?.note, bottle.expectedAt?.let(day), wine.tags.orEmpty().joinToString("; "),
                 bottle.reservedFor,
                 wine.currentPrice?.let(DecimalSerializer::plain),
                 if (wine.currentPrice == null) null else wine.currentPriceCurrency,
-                if (wine.currentPrice == null) null else wine.currentPriceDate?.let(::day),
+                if (wine.currentPrice == null) null else wine.currentPriceDate?.let(day),
             )
             lines += fields.joinToString(",") { escape(it ?: "") }
         }
         return lines.joinToString("\n") + "\n"
     }
 
-    internal fun escape(field: String): String {
+    internal fun escape(text: String): String {
+        // A spreadsheet runs a cell that starts with "=", "+", "-" or "@" as a formula: such
+        // text (from any device of the cellar) is written after a quote mark, which the
+        // import removes. Encave writes no negative numbers.
+        val field = if (text.firstOrNull()?.let { it in "=+-@" } == true) "'$text" else text
         if (field.none { it == ',' || it == '"' || it == '\n' || it == '\r' || it == ';' }) return field
         return "\"" + field.replace("\"", "\"\"") + "\""
     }
 
-    private val dayFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ROOT).withZone(ZoneOffset.UTC)
+    private val dayFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ROOT)
 
-    internal fun day(instant: Instant): String = dayFormatter.format(instant)
+    /** The day of [instant] in [zone], "2024-03-10". */
+    internal fun day(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String = dayFormatter.format(instant.atZone(zone))
 
-    internal fun parseDay(text: String): Instant? = try {
-        LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay(ZoneOffset.UTC).toInstant()
+    /** The start of the day in [zone]. */
+    internal fun parseDay(text: String, zone: ZoneId = ZoneId.systemDefault()): Instant? = try {
+        LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay(zone).toInstant()
     } catch (_: Exception) {
         null
     }
@@ -107,13 +118,16 @@ fun Cellar.merge(other: Cellar): ImportSummary {
  * order; only a wine name is required. A quantity column creates that many bottles per
  * row. A Vivino scan history (a "scan date" column and no quantity) becomes discoveries.
  */
-fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportSummary {
+fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: ZoneId = ZoneId.systemDefault()): ImportSummary {
     val rows = CsvParser.parse(text)
     val header = rows.firstOrNull() ?: throw ImportException(ImportError.EmptyFile)
     val columns = header.map(CsvColumns::canonical)
     val nameIndex = columns.indexOf("name")
     if (nameIndex < 0) throw ImportException(ImportError.MissingNameColumn)
-    if ("scan_date" in columns && "quantity" !in columns) return importDiscoveries(rows, columns, nameIndex, now)
+    // Dates ("2024-03-10") are days of [zone], as the export writes them; other apps' dates
+    // (with a time, or "10/03/2024") are read too.
+    val day = { text: String -> CellarExport.parseDay(text, zone) ?: CsvColumns.date(text) }
+    if ("scan_date" in columns && "quantity" !in columns) return importDiscoveries(rows, columns, nameIndex, now, day)
     val winesByKey = HashMap<String, Wine>()
     wines.values.forEach { winesByKey.putIfAbsent(it.identityKey, it) }
     var winesAdded = 0
@@ -124,14 +138,14 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
         fun value(column: String): String? {
             val index = columns.indexOf(column)
             if (index < 0 || index >= row.size) return null
-            return row[index].trim().ifEmpty { null }
+            return CsvColumns.cleaned(row[index])
         }
         val name = if (nameIndex < row.size) value("name") else null
         if (name == null) {
             if (row.any { it.isNotBlank() }) rowsSkipped++
             continue
         }
-        var wine = CsvColumns.wine(name, ::value)
+        var wine = CsvColumns.wine(name, ::value, day)
         val existing = winesByKey[wine.identityKey]
         if (existing != null) {
             wine = existing
@@ -141,14 +155,14 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
             winesAdded++
         }
 
-        val quantity = (value("quantity")?.let(CsvColumns::number)?.toInt() ?: 1).coerceAtLeast(1)
+        val quantity = CsvColumns.quantity(value("quantity"))
         repeat(quantity) {
             var bottle = Bottle(
                 wineId = wine.id, storageNote = value("storage"), addedAt = now,
-                purchaseDate = value("purchase_date")?.let(CellarExport::parseDay),
-                purchasePrice = value("price")?.replace(",", ".")?.toBigDecimalOrNull(),
+                purchaseDate = value("purchase_date")?.let(day),
+                purchasePrice = value("price")?.let(PriceExtractor::decimal),
                 currency = value("currency") ?: settings.currency, purchasePlace = value("purchase_place"),
-                receivedFrom = value("received_from"), sizeML = value("size_ml")?.toIntOrNull() ?: 750,
+                receivedFrom = value("received_from"), sizeML = value("size_ml")?.let(CsvColumns::size) ?: 750,
                 reservedFor = value("reserved_for"),
             )
             val status = value("status")?.let { Bottle.Status.fromRaw(it) } ?: Bottle.Status.InCellar
@@ -162,14 +176,14 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
                 status == Bottle.Status.Consumed -> bottle.copy(
                     status = Bottle.Status.Consumed,
                     tasting = Tasting(
-                        date = value("tasted_on")?.let(CellarExport::parseDay) ?: now,
+                        date = value("tasted_on")?.let(day) ?: now,
                         rating = value("rating")?.let(CsvColumns::rating), note = value("note"),
                     ).normalized(),
                 )
                 status == Bottle.Status.Gone -> bottle.copy(status = Bottle.Status.Gone)
                 // An ordered bottle has no place yet.
                 status == Bottle.Status.Ordered -> bottle.copy(
-                    status = Bottle.Status.Ordered, expectedAt = value("expected_on")?.let(CellarExport::parseDay),
+                    status = Bottle.Status.Ordered, expectedAt = value("expected_on")?.let(day),
                 )
                 slot != null -> bottle.copy(slot = slot)
                 rackName != null -> bottle.copy(
@@ -185,7 +199,9 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now()): ImportS
 }
 
 /** Rows of a tasting history (Vivino): each becomes a discovery of the wine. */
-internal fun Cellar.importDiscoveries(rows: List<List<String>>, columns: List<String>, nameIndex: Int, now: Instant): ImportSummary {
+internal fun Cellar.importDiscoveries(
+    rows: List<List<String>>, columns: List<String>, nameIndex: Int, now: Instant, day: (String) -> Instant?,
+): ImportSummary {
     var winesAdded = 0
     var rowsSkipped = 0
     var added = 0
@@ -193,19 +209,19 @@ internal fun Cellar.importDiscoveries(rows: List<List<String>>, columns: List<St
         fun value(column: String): String? {
             val index = columns.indexOf(column)
             if (index < 0 || index >= row.size) return null
-            return row[index].trim().ifEmpty { null }
+            return CsvColumns.cleaned(row[index])
         }
         val name = if (nameIndex < row.size) value("name") else null
         if (name == null) {
             if (row.any { it.isNotBlank() }) rowsSkipped++
             continue
         }
-        val wine = CsvColumns.wine(name, ::value)
+        val wine = CsvColumns.wine(name, ::value, day)
         val known = wines.values.any { it.identityKey == wine.identityKey }
         val discovery = Discovery(
             wineId = wine.id, date = value("scan_date")?.let(CsvColumns::date) ?: now, place = value("place"),
             rating = value("rating")?.let(CsvColumns::rating), note = value("note"),
-            price = value("price")?.let(CsvColumns::number)?.let { java.math.BigDecimal(it.toString()) },
+            price = value("price")?.let(PriceExtractor::decimal),
             currency = value("currency") ?: settings.currency,
         )
         addDiscovery(discovery, wine)
@@ -252,7 +268,36 @@ internal object CsvColumns {
         return synonyms[folded] ?: header.trim().lowercase(Locale.ROOT).replace(" ", "_")
     }
 
-    fun wine(name: String, value: (String) -> String?): Wine {
+    /**
+     * A cell without surrounding spaces, and without the quote mark the export puts before
+     * text a spreadsheet would run as a formula; null if empty.
+     */
+    fun cleaned(cell: String): String? {
+        var text = cell.trim()
+        if (text.length > 1 && text[0] == '\'' && text[1] in "=+-@") text = text.substring(1)
+        return text.ifEmpty { null }
+    }
+
+    /** Bottles a row creates: 1 to [MAX_QUANTITY] (a number larger than that is a mistake, not bottles). */
+    const val MAX_QUANTITY = 999
+
+    fun quantity(text: String?): Int {
+        val value = text?.let(::number)?.takeUnless { it.isNaN() } ?: return 1
+        return integer(value.coerceIn(1.0, MAX_QUANTITY.toDouble())) ?: 1
+    }
+
+    /** "750", "750.0"; null unless positive. */
+    fun size(text: String): Int? = number(text)?.let(::integer)?.takeIf { it in 1..100_000 }
+
+    /** The nearest integer, or null if there is none (NaN, infinite, too large), as Swift's `Int(exactly:)`. */
+    fun integer(value: Double): Int? {
+        if (value.isNaN() || value.isInfinite()) return null
+        // Swift's `rounded()`: to the nearest, halves away from zero.
+        val nearest = if (value < 0) -Math.floor(-value + 0.5) else Math.floor(value + 0.5)
+        return if (nearest >= Int.MIN_VALUE && nearest <= Int.MAX_VALUE) nearest.toInt() else null
+    }
+
+    fun wine(name: String, value: (String) -> String?, day: (String) -> Instant?): Wine {
         var from = value("drink_from")?.let(::year)
         var until = value("drink_until")?.let(::year)
         if (from == null && until == null) {
@@ -270,25 +315,24 @@ internal object CsvColumns {
             drinkFrom = from, drinkUntil = until,
             tags = Wine.normalizedTags(value("tags")?.split(';', ',')),
         ).let { wine ->
-            val price = value("current_price")?.replace(",", ".")?.toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
-                ?: return@let wine
+            val price = value("current_price")?.let(PriceExtractor::decimal)?.takeIf { it.signum() > 0 } ?: return@let wine
             wine.copy(
                 currentPrice = price,
                 currentPriceCurrency = value("current_price_currency") ?: value("currency"),
-                currentPriceDate = value("current_price_date")?.let(CellarExport::parseDay),
+                currentPriceDate = value("current_price_date")?.let(day),
             )
         }
     }
 
     /** "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage). */
-    fun year(text: String): Int? = number(text)?.toInt()?.takeIf { it in 1800..2200 }
+    fun year(text: String): Int? = number(text)?.let(::integer)?.takeIf { it in 1800..2200 }
 
-    fun number(text: String): Double? = text.replace(",", ".").filter { it.isDigit() || it == '.' || it == '-' }.toDoubleOrNull()
+    fun number(text: String): Double? = text.replace(",", ".").filter { it in '0'..'9' || it == '.' || it == '-' }.toDoubleOrNull()
 
     /** 1 to 5 (decimals rounded); 100-point scores are converted. */
     fun rating(text: String): Int? {
         val value = number(text)?.takeIf { it > 0 } ?: return null
-        val five = if (value > 5) value / 20 else value
+        val five = minOf(5.0, if (value > 5) value / 20 else value)
         return Math.round(five).toInt().coerceIn(1, 5)
     }
 

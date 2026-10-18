@@ -2,7 +2,7 @@ package app.encave.core.sync
 
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.URI
+import java.util.Locale
 import java.net.URL
 import java.net.URLEncoder
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * Mailboxes on an Encave relay (see `relay/`), a small HTTP service anyone can host.
@@ -47,9 +48,11 @@ class RelayMailboxStore(baseUrl: String) : MailboxStore {
          * local network (localhost, *.local), where there is no certificate.
          */
         fun isAllowed(url: String): Boolean {
-            val uri = runCatching { URI(url.trim()) }.getOrNull() ?: return false
-            val host = uri.host?.lowercase() ?: return false
-            return when (uri.scheme?.lowercase()) {
+            // OkHttp reads hosts that java.net.URI leaves out ("my_nas.example", "café.example"),
+            // as URLComponents does in Swift.
+            val parsed = url.trim().toHttpUrlOrNull() ?: return false
+            val host = parsed.host.lowercase(Locale.ROOT)
+            return when (parsed.scheme) {
                 "https" -> true
                 "http" -> host == "localhost" || host.endsWith(".local")
                 else -> false
@@ -71,6 +74,8 @@ internal fun http(url: String, method: String, token: String, body: ByteArray? =
         connection.connectTimeout = timeoutMs
         connection.readTimeout = timeoutMs
         connection.useCaches = false
+        // Never follow a redirect: the token would go to another address.
+        connection.instanceFollowRedirects = false
         if (token.isNotEmpty()) connection.setRequestProperty("Authorization", "Bearer $token")
         headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
         if (body != null) {
@@ -105,6 +110,7 @@ private class RelayMailbox(val base: String, val id: String, val token: String) 
                 401, 403 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)
                 413 -> throw RemoteSyncException(RemoteSyncError.FileTooLarge)
                 507 -> throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
+                in 300..399 -> throw RemoteSyncException(RemoteSyncError.Unavailable("relay redirect $status"))
                 else -> if (status == 429 || status >= 500) throw RemoteSyncException(RemoteSyncError.Unavailable("relay status $status"))
             }
             result

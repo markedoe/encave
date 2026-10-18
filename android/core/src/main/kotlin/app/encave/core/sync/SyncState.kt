@@ -6,6 +6,7 @@ import app.encave.core.SavedSearch
 import app.encave.core.UuidSerializer
 import java.util.Locale
 import java.util.UUID
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
 // Sync metadata and the merge, ported from CaveKit's SyncState.swift (docs/SYNC.md §1).
@@ -27,7 +28,7 @@ data class Stamp(
     val counter: Long,
     @Serializable(with = UuidSerializer::class) val device: UUID,
     /** The object was deleted at this time. */
-    val deleted: Boolean = false,
+    @Required val deleted: Boolean = false,
 ) : Comparable<Stamp> {
     override fun compareTo(other: Stamp): Int {
         if (counter != other.counter) return java.lang.Long.compareUnsigned(counter, other.counter)
@@ -48,13 +49,13 @@ data class Stamp(
  */
 @Serializable
 data class SyncState(
-    val version: Int = FORMAT_VERSION,
+    @Required val version: Int = FORMAT_VERSION,
     /** This device. */
-    @Serializable(with = UuidSerializer::class) val device: UUID = UUID.randomUUID(),
+    @Required @Serializable(with = UuidSerializer::class) val device: UUID = UUID.randomUUID(),
     /** The highest counter seen; the next local change uses `clock + 1`. */
-    val clock: Long = 0,
+    @Required val clock: Long = 0,
     /** Last change of each object, by key ("wine:…", "settings", "rack-order"). Deleted objects keep a stamp. */
-    val stamps: Map<String, Stamp> = emptyMap(),
+    @Required val stamps: Map<String, Stamp> = emptyMap(),
 ) {
     /** Stamps every object that differs between two versions of the cellar. Called after each local change. */
     fun recording(old: Cellar, new: Cellar): SyncState {
@@ -85,11 +86,11 @@ data class SyncState(
         const val FORMAT_VERSION = 1
 
         /**
-         * The largest counter a sender may use: far below the overflow of a UInt64, so a
-         * device can never be pushed to the point where its next change overflows, and
-         * exact in JSON readers that use doubles.
+         * The largest counter a sender may use (2^52): far below the overflow of a UInt64,
+         * and half of what a double holds exactly (2^53), so a device that accepted it still
+         * has room for as many changes and its counters stay exact in JSON readers that use doubles.
          */
-        const val MAX_COUNTER: Long = 1L shl 53
+        const val MAX_COUNTER: Long = 1L shl 52
 
         /**
          * Refuses a state from another device whose counters are out of bounds (SYNC.md §1,
