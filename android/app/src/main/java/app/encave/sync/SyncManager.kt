@@ -293,7 +293,7 @@ class SyncManager(
             }
         }
         if (replace) {
-            repository.applySynced { Cellar(settings = it.settings) }
+            repository.applySynced(merge = { Cellar(settings = it.settings) })
         }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
@@ -363,7 +363,7 @@ class SyncManager(
      */
     suspend fun apply(result: SyncSnapshot, from: UUID?) {
         var membership: Membership? = null
-        repository.applySynced { current ->
+        repository.applySynced(merge = { current ->
             synchronized(this) {
                 val state = syncState ?: return@applySynced current
                 val merge = CellarMerge.merge(current, state, result.cellar, result.state)
@@ -371,7 +371,7 @@ class SyncManager(
                 membership = status.value.membership?.merged(result.membership)
                 merge.cellar
             }
-        }
+        })
         val members = membership ?: return
         // Learned from an authenticated list of devices: this device was removed.
         val removed = !members.members.containsKey(identity.id)

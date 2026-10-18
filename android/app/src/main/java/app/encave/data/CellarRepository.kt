@@ -33,61 +33,88 @@ class CellarRepository(
     /** False until the file has been read, so the UI does not flash the empty state. */
     val loaded: StateFlow<Boolean> = loadedState.asStateFlow()
 
-    /** Set when the stored cellar could not be read; the file is then left untouched. */
-    var loadFailed: Boolean = false
+    /**
+     * Set when the stored cellar could not be read at launch and could not be moved aside
+     * either: the cellar shown is not the stored one, and nothing is saved over the file.
+     */
+    @Volatile var loadFailed: Boolean = false
+        private set
+
+    /**
+     * The name the unreadable cellar file was kept under (next to the cellar file). Encave
+     * then starts with an empty cellar; the file is never overwritten.
+     */
+    @Volatile var setAsideName: String? = null
         private set
 
     init {
         scope.launch {
             mutex.withLock {
                 val result = withContext(io) { runCatching { store.load() } }
-                result.onSuccess { state.value = it }.onFailure { loadFailed = true }
+                result.onSuccess { state.value = it }.onFailure {
+                    // Moved aside before anything can save, while the lock is held.
+                    setAsideName = withContext(io) { runCatching { store.setAside() }.getOrNull() }
+                    loadFailed = setAsideName == null
+                }
                 loadedState.value = true
             }
         }
     }
 
+    /** Cellar files that could not be read and were kept aside, oldest first. */
+    fun keptAside(): List<java.io.File> = store.keptAside()
+
+    private fun refused(): Result<Nothing> = Result.failure(java.io.IOException("The cellar file could not be read and is kept as it is."))
+
     /**
      * Told of every change made on this device (not of changes received from other
      * devices), with the cellar before and after, while the change still holds the
-     * lock: sync records what changed.
+     * lock: sync records what changed. Called off the main thread.
      */
     @Volatile var onLocalChange: ((old: Cellar, new: Cellar) -> Unit)? = null
 
     /** Applies [change] to a copy, saves it, then publishes it. */
     suspend fun <T> update(change: (Cellar) -> T): Result<T> = mutex.withLock {
+        if (loadFailed) return@withLock refused()
         val before = state.value
         val copy = before.copy()
         val result = runCatching { change(copy) }
         if (result.isFailure) return@withLock result
         val saved = withContext(io) { runCatching { store.save(copy) } }
         saved.exceptionOrNull()?.let { return@withLock Result.failure(it) }
-        loadFailed = false
         state.value = copy
-        onLocalChange?.invoke(before, copy)
+        onLocalChange?.let { record -> withContext(io) { record(before, copy) } }
         result
     }
 
-    /** Replaces the whole cellar (sample data, erase all). */
+    /** Replaces the whole cellar (sample data, erase all, and their undo). */
     suspend fun replace(cellar: Cellar): Result<Unit> = mutex.withLock {
+        if (loadFailed) return@withLock refused()
         val before = state.value
         val copy = cellar.copy()
         withContext(io) { runCatching { store.save(copy) } }.onSuccess {
-            loadFailed = false
             state.value = copy
-            onLocalChange?.invoke(before, copy)
+            onLocalChange?.let { record -> withContext(io) { record(before, copy) } }
         }
     }
 
     /**
      * Applies what came from another device: [merge] gets the current cellar and
-     * returns the new one. Not reported to [onLocalChange].
+     * returns the new one, off the main thread. Not reported to [onLocalChange].
+     * [onSaved] runs once the result is saved, still under the lock (sync keeps its
+     * stamps in step with the saved cellar); nothing changes if saving fails.
      */
-    suspend fun applySynced(merge: (Cellar) -> Cellar): Result<Unit> = mutex.withLock {
-        val merged = merge(state.value.copy())
-        withContext(io) { runCatching { store.save(merged) } }.onSuccess {
-            loadFailed = false
+    suspend fun applySynced(merge: (Cellar) -> Cellar, onSaved: () -> Unit = {}): Result<Unit> = mutex.withLock {
+        if (loadFailed) return@withLock refused()
+        withContext(io) {
+            runCatching {
+                val merged = merge(state.value.copy())
+                store.save(merged)
+                merged
+            }
+        }.map { merged ->
             state.value = merged
+            onSaved()
         }
     }
 

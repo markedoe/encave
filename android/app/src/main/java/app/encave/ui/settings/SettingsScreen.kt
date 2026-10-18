@@ -97,6 +97,12 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.import(resolver, it) }
     }
+    val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
+    // A cellar file that could not be read at launch, kept aside: it can be saved elsewhere.
+    val keptAside = remember(cellar) { viewModel.keptAside().lastOrNull() }
+    val saveKept = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null && keptAside != null) viewModel.exportKeptAside(resolver, uri, keptAside)
+    }
 
     Scaffold(
         topBar = {
@@ -206,14 +212,25 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 supportingContent = { Text(stringResource(R.string.settings_import_other_body)) },
             )
 
+            if (keptAside != null) {
+                ListItem(
+                    modifier = Modifier.clickable { saveKept.launch(keptAside.name) }.testTag("settings.save_unreadable"),
+                    leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.settings_save_unreadable)) },
+                    supportingContent = { Text(stringResource(R.string.settings_save_unreadable_body, keptAside.name)) },
+                )
+            }
+
             SectionHeader(stringResource(R.string.settings_test_data))
-            ListItem(
-                modifier = Modifier.clickable {
-                    if (cellar.isEmpty) viewModel.loadSample(sampleLabels(resources)) else confirmSample = true
-                },
-                leadingContent = { Icon(Icons.Outlined.Science, contentDescription = null) },
-                headlineContent = { Text(stringResource(R.string.action_load_sample)) },
-            )
+            // Only on an empty cellar that no other device shares: the sample never replaces bottles.
+            if (viewModel.canLoadSample(cellar, shared)) {
+                ListItem(
+                    modifier = Modifier.clickable { confirmSample = true },
+                    leadingContent = { Icon(Icons.Outlined.Science, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.action_load_sample)) },
+                    supportingContent = { Text(stringResource(R.string.settings_sample_body)) },
+                )
+            }
             ListItem(
                 modifier = Modifier.clickable { confirmErase = true },
                 leadingContent = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
@@ -249,15 +266,16 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         ConfirmDialog(
             title = stringResource(R.string.settings_sample_confirm_title),
             body = stringResource(R.string.settings_sample_confirm_body),
-            confirm = stringResource(R.string.action_replace),
+            confirm = stringResource(R.string.action_load_sample),
             onConfirm = { viewModel.loadSample(sampleLabels(resources)) },
             onDismiss = { confirmSample = false },
+            destructive = false,
         )
     }
     if (confirmErase) {
         ConfirmDialog(
             title = stringResource(R.string.settings_erase_title),
-            body = stringResource(R.string.settings_erase_body),
+            body = stringResource(if (shared) R.string.settings_erase_body_devices else R.string.settings_erase_body),
             confirm = stringResource(R.string.settings_erase),
             onConfirm = { viewModel.eraseAll() },
             onDismiss = { confirmErase = false },

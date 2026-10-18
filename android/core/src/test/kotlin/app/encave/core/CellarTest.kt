@@ -169,6 +169,28 @@ class StoreTest {
     }
 
     @Test
+    fun unreadableFileIsMovedAsideNotOverwritten() {
+        val dir = Files.createTempDirectory("encave").toFile()
+        try {
+            val file = File(dir, "cellar.json")
+            file.writeText("{ damaged")
+            val store = JsonFileCellarStore(file) { java.time.LocalDateTime.of(2026, 10, 18, 9, 5, 7) }
+            assertThrows<Exception> { store.load() }
+            assertEquals("cellar-unreadable-20261018-090507.json", store.setAside())
+            assertTrue(!file.exists())
+            assertEquals("{ damaged", File(dir, "cellar-unreadable-20261018-090507.json").readText())
+            // The same second again: a second name, nothing replaced.
+            file.writeText("{ also damaged")
+            assertEquals("cellar-unreadable-20261018-090507-2.json", store.setAside())
+            assertEquals(listOf("cellar-unreadable-20261018-090507-2.json", "cellar-unreadable-20261018-090507.json").sorted(), store.keptAside().map { it.name })
+            assertTrue(store.load().isEmpty)
+            assertNull(store.setAside())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun sampleDataIsConsistent() {
         val cellar = SampleData.cellar(year = 2026)
         assertEquals(6, cellar.racks.size)

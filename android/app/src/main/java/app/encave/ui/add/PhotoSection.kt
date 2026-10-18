@@ -153,7 +153,7 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
                 FilledTonalButton(onClick = {
                     scope.launch {
                         val bytes = jpeg ?: form.storedPhotoId?.let { id ->
-                            withContext(Dispatchers.IO) { viewModel.photos.file(id).takeIf { it.exists() }?.readBytes() }
+                            withContext(Dispatchers.IO) { viewModel.photos.data(id) }
                         }
                         bytes?.let(::analyze)
                     }

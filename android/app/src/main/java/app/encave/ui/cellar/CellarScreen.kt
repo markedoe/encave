@@ -217,6 +217,8 @@ private fun CellarList(
     var picked by remember { mutableStateOf(setOf<java.util.UUID>()) }
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var namingSearch by remember { mutableStateOf(false) }
+    var confirmSample by remember { mutableStateOf(false) }
+    val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
     fun endSelection() {
         selecting = false
         picked = emptySet()
@@ -281,8 +283,11 @@ private fun CellarList(
                 Button(onClick = { navigator.open(AddBottleRoute()) }, modifier = Modifier.testTag("action.empty_add")) {
                     ActionContent(stringResource(R.string.action_add_bottle), Icons.Filled.Add)
                 }
-                OutlinedButton(onClick = { viewModel.loadSample(sampleLabels(resources)) }) {
-                    Text(stringResource(R.string.action_load_sample))
+                // Only when everything is empty (no racks or discoveries either) and no other device shares the cellar.
+                if (viewModel.canLoadSample(cellar, shared)) {
+                    OutlinedButton(onClick = { confirmSample = true }) {
+                        Text(stringResource(R.string.action_load_sample))
+                    }
                 }
                 TextButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
                     Text(stringResource(R.string.discovery_new_long))
@@ -421,6 +426,16 @@ private fun CellarList(
             initial = filter.query.trim(),
             onSave = { name -> viewModel.saveSearch(name, filter) },
             onDismiss = { namingSearch = false },
+        )
+    }
+    if (confirmSample) {
+        ConfirmDialog(
+            title = stringResource(R.string.settings_sample_confirm_title),
+            body = stringResource(R.string.settings_sample_confirm_body),
+            confirm = stringResource(R.string.action_load_sample),
+            onConfirm = { viewModel.loadSample(sampleLabels(resources)) },
+            onDismiss = { confirmSample = false },
+            destructive = false,
         )
     }
     if (confirmBulkDelete) {
