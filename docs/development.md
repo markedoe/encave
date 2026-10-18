@@ -82,6 +82,10 @@ cd android
   `ProtocolVectorTests` must reproduce the published vectors. With a relay
   running (`PORT=8787 node relay/server.mjs`), `ENCAVE_RELAY_URL=http://localhost:8787
   ./gradlew :core:test` also syncs two devices through it, as CI does.
+- Home screen widgets (Jetpack Glance) are in `android/app/.../widget`. They
+  read `files/widget-snapshot.json`, a summary (`WidgetSnapshot` in core, as in
+  CaveKit) that the app rewrites after each saved or synced change; the cellar
+  is loaded only when it is missing or from last year. `WidgetContentTest` renders them with `glance-appwidget-testing`.
 - `ScreenTourTest` opens every main screen with the sample cellar on a phone
   and a tablet, in English and French, saves screenshots to
   `android/app/build/screens` (never commit them) and checks the layout:

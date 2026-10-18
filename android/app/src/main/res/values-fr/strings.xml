@@ -923,6 +923,21 @@
     <string name="picture_footer">Seuls les termes de recherche sont envoyés à %1$s. Les miniatures et l’image que vous choisissez sont téléchargées depuis les sites qui les hébergent, qui voient la requête et votre adresse IP. Les images des boutiques sont pour votre usage privé. La photo de l’étiquette est conservée.</string>
     <string name="help_web_pictures_title">Images</string>
     <string name="help_web_pictures">Sur la fiche d’un vin, **Changer l’image** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé.</string>
+    <string name="widget_tonight_description">Les bouteilles à ouvrir maintenant, les plus urgentes d’abord.</string>
+    <string name="widget_cellar_description">Combien de bouteilles vous avez, et combien boire bientôt.</string>
+    <string name="widget_empty_title">Ajoutez des bouteilles dans Encave</string>
+    <string name="widget_empty_body">Scannez une étiquette ou tapez un nom.</string>
+    <string name="widget_tonight_none">Aucune bouteille n’est à son apogée en ce moment.</string>
+    <string name="widget_drink_soon">À boire bientôt : %1$d</string>
+    <string name="widget_ready">Prêtes à boire : %1$d</string>
+    <string name="widget_on_order">En commande : %1$d</string>
+    <string name="widget_times">×%1$d</string>
+    <string name="widget_preview_wine">Clos des Tilleuls 2017</string>
+    <string name="widget_preview_place">Casier principal · B3</string>
+    <string name="widget_preview_bottles">24 bouteilles</string>
+    <string name="widget_preview_drink_soon">À boire bientôt : 3</string>
+    <string name="help_start_widgets_title">Widgets</string>
+    <string name="help_start_widgets">Sur l’écran d’accueil, maintenez un espace vide appuyé, puis choisissez **Widgets** et Encave. **Ce soir** liste les bouteilles à ouvrir maintenant et où elles sont (touchez-en une pour l’ouvrir) ; **Cave** indique combien de bouteilles vous avez, et combien sont à boire bientôt ou prêtes. Les widgets affichent un résumé gardé sur cet appareil.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>
@@ -957,5 +972,10 @@
         <item quantity="one">%d résultat</item>
         <item quantity="many">%d résultats</item>
         <item quantity="other">%d résultats</item>
+    </plurals>
+    <plurals name="widget_bottles_in_cellar">
+        <item quantity="one">%d bouteille en cave</item>
+        <item quantity="many">%d bouteilles en cave</item>
+        <item quantity="other">%d bouteilles en cave</item>
     </plurals>
 </resources>

@@ -1022,6 +1022,24 @@ S = [
  ("picture_footer", "Only the search terms are sent to %1$s. The thumbnails and the picture you choose are downloaded from the sites that host them, which see the request and your IP address. Pictures from shops are for your private use. The label photo is kept.", "Seuls les termes de recherche sont envoyés à %1$s. Les miniatures et l’image que vous choisissez sont téléchargées depuis les sites qui les hébergent, qui voient la requête et votre adresse IP. Les images des boutiques sont pour votre usage privé. La photo de l’étiquette est conservée."),
  ("help_web_pictures_title", "Pictures", "Images"),
  ("help_web_pictures", "On a wine’s page, **Change picture** then **Search pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.", "Sur la fiche d’un vin, **Changer l’image** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé."),
+
+ # Home screen widgets
+ ("widget_tonight_description", "The bottles to open now, the most urgent first.", "Les bouteilles à ouvrir maintenant, les plus urgentes d’abord."),
+ ("widget_cellar_description", "How many bottles you have, and how many to drink soon.", "Combien de bouteilles vous avez, et combien boire bientôt."),
+ ("widget_empty_title", "Add bottles in Encave", "Ajoutez des bouteilles dans Encave"),
+ ("widget_empty_body", "Scan a label or type a name.", "Scannez une étiquette ou tapez un nom."),
+ ("widget_tonight_none", "No bottle is at its best right now.", "Aucune bouteille n’est à son apogée en ce moment."),
+ ("widget_drink_soon", "Drink soon: %1$d", "À boire bientôt : %1$d"),
+ ("widget_ready", "Ready: %1$d", "Prêtes à boire : %1$d"),
+ ("widget_on_order", "On order: %1$d", "En commande : %1$d"),
+ ("widget_times", "×%1$d", "×%1$d"),
+ ("widget_preview_wine", "Clos des Tilleuls 2017", "Clos des Tilleuls 2017"),
+ ("widget_preview_place", "Main rack · B3", "Casier principal · B3"),
+ ("widget_preview_bottles", "24 bottles", "24 bouteilles"),
+ ("widget_preview_drink_soon", "Drink soon: 3", "À boire bientôt : 3"),
+ ("help_start_widgets_title", "Widgets", "Widgets"),
+ ("help_start_widgets", "On the home screen, touch and hold an empty spot, then choose **Widgets** and Encave. **Tonight** lists the bottles to open now and where they are (touch one to open it); **Cellar** shows how many bottles you have, and how many to drink soon or ready. Widgets show a summary kept on this device.",
+  "Sur l’écran d’accueil, maintenez un espace vide appuyé, puis choisissez **Widgets** et Encave. **Ce soir** liste les bouteilles à ouvrir maintenant et où elles sont (touchez-en une pour l’ouvrir) ; **Cave** indique combien de bouteilles vous avez, et combien sont à boire bientôt ou prêtes. Les widgets affichent un résumé gardé sur cet appareil."),
 ]
 
 P = [
@@ -1033,6 +1051,7 @@ P = [
   ("%1$s : %2$d bouteille. Marquez-la comme reçue à son arrivée.", "%1$s : %2$d bouteilles. Marquez-les comme reçues à leur arrivée.")),
  ("bottles_added_action", ("Add %d bottle", "Add %d bottles"), ("Ajouter %d bouteille", "Ajouter %d bouteilles")),
  ("web_search_results_count", ("%d result", "%d results"), ("%d résultat", "%d résultats")),
+ ("widget_bottles_in_cellar", ("%d bottle in the cellar", "%d bottles in the cellar"), ("%d bouteille en cave", "%d bouteilles en cave")),
 ]
 
 def esc(text):

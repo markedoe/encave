@@ -924,6 +924,21 @@
     <string name="picture_footer">Only the search terms are sent to %1$s. The thumbnails and the picture you choose are downloaded from the sites that host them, which see the request and your IP address. Pictures from shops are for your private use. The label photo is kept.</string>
     <string name="help_web_pictures_title">Pictures</string>
     <string name="help_web_pictures">On a wine’s page, **Change picture** then **Search pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.</string>
+    <string name="widget_tonight_description">The bottles to open now, the most urgent first.</string>
+    <string name="widget_cellar_description">How many bottles you have, and how many to drink soon.</string>
+    <string name="widget_empty_title">Add bottles in Encave</string>
+    <string name="widget_empty_body">Scan a label or type a name.</string>
+    <string name="widget_tonight_none">No bottle is at its best right now.</string>
+    <string name="widget_drink_soon">Drink soon: %1$d</string>
+    <string name="widget_ready">Ready: %1$d</string>
+    <string name="widget_on_order">On order: %1$d</string>
+    <string name="widget_times">×%1$d</string>
+    <string name="widget_preview_wine">Clos des Tilleuls 2017</string>
+    <string name="widget_preview_place">Main rack · B3</string>
+    <string name="widget_preview_bottles">24 bottles</string>
+    <string name="widget_preview_drink_soon">Drink soon: 3</string>
+    <string name="help_start_widgets_title">Widgets</string>
+    <string name="help_start_widgets">On the home screen, touch and hold an empty spot, then choose **Widgets** and Encave. **Tonight** lists the bottles to open now and where they are (touch one to open it); **Cellar** shows how many bottles you have, and how many to drink soon or ready. Widgets show a summary kept on this device.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
@@ -951,5 +966,9 @@
     <plurals name="web_search_results_count">
         <item quantity="one">%d result</item>
         <item quantity="other">%d results</item>
+    </plurals>
+    <plurals name="widget_bottles_in_cellar">
+        <item quantity="one">%d bottle in the cellar</item>
+        <item quantity="other">%d bottles in the cellar</item>
     </plurals>
 </resources>
