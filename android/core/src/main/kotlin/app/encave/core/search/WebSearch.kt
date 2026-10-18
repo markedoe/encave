@@ -166,7 +166,7 @@ internal fun checkStatus(status: Int) {
  * Brave Search API: GET /res/v1/web/search, the key in X-Subscription-Token.
  * Answer: {"web": {"results": [{"title", "url", "description"}]}}.
  */
-class BraveSearch(private val apiKey: String) : WebSearchProvider {
+class BraveSearch(private val apiKey: String) : WebSearchProvider, WebImageSearchProvider {
     @Serializable private data class Item(val title: String? = null, val url: String? = null, val description: String? = null)
     @Serializable private data class Web(val results: List<Item>? = null)
     @Serializable private data class Answer(val web: Web? = null)
@@ -183,6 +183,18 @@ class BraveSearch(private val apiKey: String) : WebSearchProvider {
             .getOrElse { throw WebSearchError.InvalidResponse }
         return answer.web?.results.orEmpty().mapNotNull { WebSearchResult.of(it.title, it.url, it.description) }
     }
+
+    /** Brave Image Search: GET /res/v1/images/search, the same key. */
+    override fun imageRequest(query: String, count: Int): WebSearchRequest = WebSearchRequest(
+        url = "https://api.search.brave.com/res/v1/images/search?q=${WebSearchQuery.encode(query)}&count=${count.coerceIn(1, 100)}&safesearch=strict",
+        method = "GET",
+        headers = mapOf("Accept" to "application/json", "X-Subscription-Token" to apiKey),
+    )
+
+    override fun imageResults(body: String, status: Int): List<WebImageResult> {
+        checkStatus(status)
+        return ImageAnswers.brave(body)
+    }
 }
 
 /**
@@ -190,7 +202,7 @@ class BraveSearch(private val apiKey: String) : WebSearchProvider {
  * (search: formats: [html, json] in settings.yml), or it answers 403.
  * Answer: {"results": [{"title", "url", "content"}]}.
  */
-class SearXNGSearch(serverUrl: String) : WebSearchProvider {
+class SearXNGSearch(serverUrl: String) : WebSearchProvider, WebImageSearchProvider {
     @Serializable private data class Item(val title: String? = null, val url: String? = null, val content: String? = null)
     @Serializable private data class Answer(val results: List<Item>? = null)
 
@@ -220,16 +232,34 @@ class SearXNGSearch(serverUrl: String) : WebSearchProvider {
             .getOrElse { throw WebSearchError.InvalidResponse }
         return answer.results.orEmpty().mapNotNull { WebSearchResult.of(it.title, it.url, it.content) }
     }
+
+    override fun imageRequest(query: String, count: Int): WebSearchRequest = WebSearchRequest(
+        url = "$base/search?q=${WebSearchQuery.encode(query)}&format=json&categories=images&safesearch=1",
+        method = "GET",
+        headers = mapOf("Accept" to "application/json"),
+    )
+
+    override fun imageResults(body: String, status: Int): List<WebImageResult> {
+        if (status == 403) throw WebSearchError.JsonFormatDisabled
+        checkStatus(status)
+        return ImageAnswers.searx(body)
+    }
 }
 
 /**
  * Tavily: POST /search with a JSON body, the key as a Bearer token.
  * Answer: {"results": [{"title", "url", "content"}]}.
  */
-class TavilySearch(private val apiKey: String) : WebSearchProvider {
+class TavilySearch(private val apiKey: String) : WebSearchProvider, WebImageSearchProvider {
     @Serializable private data class Item(val title: String? = null, val url: String? = null, val content: String? = null)
     @Serializable private data class Answer(val results: List<Item>? = null)
     @Serializable private data class Body(val query: String, val max_results: Int, val search_depth: String = "basic")
+    @Serializable private data class ImageBody(
+        val query: String,
+        val max_results: Int,
+        val include_images: Boolean = true,
+        val include_image_descriptions: Boolean = true,
+    )
 
     override fun request(query: String, count: Int): WebSearchRequest = WebSearchRequest(
         url = "https://api.tavily.com/search",
@@ -243,6 +273,18 @@ class TavilySearch(private val apiKey: String) : WebSearchProvider {
         val answer = runCatching { searchJson.decodeFromString(Answer.serializer(), body) }
             .getOrElse { throw WebSearchError.InvalidResponse }
         return answer.results.orEmpty().mapNotNull { WebSearchResult.of(it.title, it.url, it.content) }
+    }
+
+    override fun imageRequest(query: String, count: Int): WebSearchRequest = WebSearchRequest(
+        url = "https://api.tavily.com/search",
+        method = "POST",
+        headers = mapOf("Content-Type" to "application/json", "Authorization" to "Bearer $apiKey"),
+        body = Json { encodeDefaults = true }.encodeToString(ImageBody.serializer(), ImageBody(query, count.coerceIn(1, 20))),
+    )
+
+    override fun imageResults(body: String, status: Int): List<WebImageResult> {
+        checkStatus(status)
+        return ImageAnswers.tavily(body)
     }
 }
 
