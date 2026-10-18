@@ -516,11 +516,29 @@ import Testing
         #expect(ordered.text.hasSuffix("| 2026-12-01"))
         #expect(cellar.report(scope: .all, search: "chenin", year: 2026).rows.map(\.name) == ["Soon"])
         #expect(cellar.report(scope: .pastPeak, year: 2026).text == "Encave cellar, 2026, bottles past their peak: 0 wines, 0 bottles.")
+        #expect(cellar.report(scope: .all, year: 2026, limit: 1).text.hasPrefix(
+            "Encave cellar, 2026, all bottles: 1 wine, 2 bottles (1 more wine left out)."))
     }
 
     @Test func jsonUsesFixedKeys() throws {
         let json = try cellar().report(scope: .all, search: "Young", year: 2026).json()
         #expect(json.contains("\"maturity\" : \"too young\""))
         #expect(json.contains("\"bottles\" : 2"))
+    }
+}
+
+@Suite struct CoverPhotoTests {
+    @Test func coverIsShownKeptAndRoundTrips() throws {
+        var wine = Wine(name: "Cover", photoID: "label")
+        wine.coverPhotoID = "cover"
+        #expect(wine.shownPhotoID == "cover")
+        #expect(wine.allPhotoIDs == ["label", "cover"])
+        var cellar = Cellar()
+        try cellar.addBottles(of: wine)
+        #expect(cellar.photoIDs == ["label", "cover"])
+        let decoded = try JSONDecoder().decode(Wine.self, from: JSONEncoder().encode(wine))
+        #expect(decoded.coverPhotoID == "cover")
+        let old = try JSONDecoder().decode(Wine.self, from: Data(#"{"id":"\#(UUID())","name":"Old"}"#.utf8))
+        #expect(old.coverPhotoID == nil && old.shownPhotoID == nil)
     }
 }

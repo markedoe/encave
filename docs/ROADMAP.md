@@ -135,7 +135,7 @@ grouping ("Château X 2015 ×3").
    soon, past peak, young), with a drinking-window gauge.
 5. **Share a cellar** with a QR code (see above).
 6. **Work offline:** everything is local. The label is read on the device;
-   only the optional AI recognition needs the network.
+   only the optional AI recognition and web search need the network.
 
 Also in v1: onboarding (create a rack or scan a first bottle, or join a
 shared cellar), import and export as JSON/CSV, App Intents /
@@ -190,9 +190,14 @@ kept within the privacy rules: everything is worked out on the device.
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Tablets |
 | Widgets, Control Center | iPhone and iPad (Tonight, Cellar, lock screen, Add Bottles control) | Planned (Glance) |
-| Saved searches | Done | Planned |
-| Several photos per wine | Done | Planned |
+| Saved searches | Done | Done |
+| Several photos per wine | Done | Done |
+| Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Later (no ML Kit: needs another way) |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
+| Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
+| Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
+| Search Pictures of the bottle (cover picture; the label photo is kept) | Done | Done |
+| Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
 | Watch app | Later | Later (Wear OS tile) |
 | More places to sync through: Google Drive, Dropbox, pCloud, Proton Drive (depends on its API), a NAS over WebDAV (Synology, QNAP, Nextcloud). Each is a thin adapter of the same encrypted mailbox protocol | Later | Later |
 
@@ -209,7 +214,9 @@ on-device model is unavailable. Android may follow with an on-device model once
 one is available without sending usage data to a third party.
 
 A cloud version (sending a summary of the cellar to the AI provider set up for
-labels) is not planned: `CLAUDE.md` allows only the label photo to be sent.
+labels) is not planned: `CLAUDE.md` allows only the label photo to be sent to
+it. For the same reason, Suggest Details reads web search results only with the
+on-device model.
 
 ## Open questions
 

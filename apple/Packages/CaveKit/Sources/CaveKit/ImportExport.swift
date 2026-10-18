@@ -54,6 +54,7 @@ public enum CellarExport {
         "drink_from", "drink_until", "status", "rack", "slot", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
         "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
+        "current_price", "current_price_currency", "current_price_date",
     ]
 
     /// One row per bottle, including bottles on order. Includes consumed and
@@ -81,6 +82,8 @@ public enum CellarExport {
                 bottle.tasting?.rating.map(String.init), bottle.tasting.map { day.string(from: $0.date) },
                 bottle.tasting?.note, bottle.expectedAt.map(day.string(from:)), wine.tags?.joined(separator: "; "),
                 bottle.reservedFor,
+                wine.currentPrice.map { "\($0)" }, wine.currentPrice == nil ? nil : wine.currentPriceCurrency,
+                wine.currentPrice == nil ? nil : wine.currentPriceDate.map(day.string(from:)),
             ]
             lines.append(fields.map { escape($0 ?? "") }.joined(separator: ","))
         }
@@ -248,6 +251,9 @@ enum CSVColumns {
         "receivedfrom": "received_from", "sizeml": "size_ml", "tastedon": "tasted_on",
         "rating": "rating", "yourrating": "rating", "note": "note", "notes": "note", "yourreview": "note",
         "personalnote": "note", "commentaire": "note",
+        "currentprice": "current_price", "currentvalue": "current_price", "prixactuel": "current_price",
+        "valeuractuelle": "current_price", "currentpricecurrency": "current_price_currency",
+        "currentpricedate": "current_price_date",
         "tags": "tags", "tag": "tags", "reservedfor": "reserved_for", "reserved": "reserved_for",
         "expectedon": "expected_on", "deliverydate": "expected_on", "livraison": "expected_on",
         "scandate": "scan_date", "scanreviewlocation": "place", "place": "place", "lieu": "place",
@@ -266,7 +272,7 @@ enum CSVColumns {
             let years = window.split { !$0.isNumber }.compactMap { Int($0) }.filter { (1900...2200).contains($0) }
             from = years.first; until = years.count > 1 ? years[1] : nil
         }
-        return Wine(
+        var wine = Wine(
             name: name, producer: value("producer"), vintage: value("vintage").flatMap(year),
             color: value("color").flatMap(color), region: value("region"),
             country: value("country"), appellation: value("appellation"),
@@ -275,6 +281,13 @@ enum CSVColumns {
             drinkFrom: from, drinkUntil: until,
             tags: value("tags")?.split(whereSeparator: { $0 == ";" || $0 == "," }).map(String.init)
         )
+        if let price = value("current_price").flatMap({ Decimal(string: $0.replacingOccurrences(of: ",", with: ".")) }),
+           price > 0 {
+            wine.currentPrice = price
+            wine.currentPriceCurrency = value("current_price_currency") ?? value("currency")
+            wine.currentPriceDate = value("current_price_date").flatMap(CellarExport.dayFormatter().date(from:))
+        }
+        return wine
     }
 
     /// "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage).

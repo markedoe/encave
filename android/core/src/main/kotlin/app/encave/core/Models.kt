@@ -50,11 +50,26 @@ data class Wine(
     val barcodes: List<String>? = null,
     /** The user's own labels ("gift", "for summer"), normalized; null rather than empty. */
     val tags: List<String>? = null,
+    /**
+     * What a bottle sells for today, accepted by the user from a web search or typed:
+     * the amount, its currency code and the day it was set. Null when never set.
+     */
+    @Serializable(with = DecimalSerializer::class) val currentPrice: BigDecimal? = null,
+    val currentPriceCurrency: String? = null,
+    @Serializable(with = InstantSerializer::class) val currentPriceDate: Instant? = null,
     /** More photos (back label, receipt…), synced like the label photo; null rather than empty. */
     @SerialName("extraPhotoIDs") val extraPhotoIds: List<String>? = null,
+    /**
+     * The picture shown instead of the label photo (found on the internet or an
+     * illustration made on an Apple device); null shows the label photo. Synced.
+     */
+    @SerialName("coverPhotoID") val coverPhotoId: String? = null,
 ) {
-    /** The label photo, then the others. */
-    val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty()
+    /** The label photo, then the others, then the cover. */
+    val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty() + listOfNotNull(coverPhotoId)
+
+    /** The picture to show: the cover if any, else the label photo. */
+    val shownPhotoId: String? get() = coverPhotoId ?: photoId
 
     /** "Château X 2015" or "Château X" for non-vintage wines. */
     val displayName: String get() = if (vintage != null) "$name $vintage" else name

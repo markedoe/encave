@@ -10,6 +10,7 @@ struct DiscoveryEditor: View {
 
     @State private var draft = WineDraft()
     @State private var scan = LabelScan()
+    @State private var searchingOnline = false
     @State private var newPhoto: Data?
     @State private var photoRemoved = false
     @State private var date = Date.now
@@ -35,7 +36,8 @@ struct DiscoveryEditor: View {
                 if scan.showsSummary {
                     WineSummarySections(draft: $draft, scan: scan)
                 } else {
-                    WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false)
+                    WineFormSections(draft: $draft, focusName: false, showsCellarDetails: false,
+                                     onSearchOnline: { searchingOnline = true })
                 }
 
                 Section {
@@ -95,6 +97,7 @@ struct DiscoveryEditor: View {
             }
             .formStyle(.grouped)
             .labelScanner(scan, draft: $draft)
+            .webSearchSheet(isPresented: $searchingOnline, draft: $draft, includesWindow: false)
             .navigationTitle(discoveryID == nil ? Text("Remember a Wine") : Text("Discovery"))
             .inlineTitle()
             .toolbar {
@@ -176,7 +179,6 @@ struct DiscoveryEditor: View {
             try cellar.updateWine(wine)
             try cellar.updateDiscovery(discovery)
         }) else { return }
-        if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
         dismiss()
     }
 }

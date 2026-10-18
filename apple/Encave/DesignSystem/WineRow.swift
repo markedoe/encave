@@ -22,7 +22,14 @@ struct WineRow: View {
     var body: some View {
         let maturity: Maturity = isOrder ? .unknown : Maturity.of(group.wine, year: model.currentYear)
         HStack(spacing: 14) {
-            BottleEnd(color: group.wine.color, size: 34)
+            if group.wine.hasShownPhoto {
+                WineImage(wine: group.wine, maxPixelSize: 200, inset: 2)
+                    .frame(width: 34, height: 46)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .accessibilityHidden(true)
+            } else {
+                BottleEnd(color: group.wine.color, size: 34)
+            }
             VStack(alignment: .leading, spacing: 3) {
                 (Text(group.wine.name).font(.body.weight(.semibold))
                     + Text(verbatim: group.wine.vintage.map { " \($0)" } ?? "").foregroundStyle(.secondary))

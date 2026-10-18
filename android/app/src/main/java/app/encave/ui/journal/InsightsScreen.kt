@@ -134,6 +134,17 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     }
                 }
             }
+            if (stats.estimatedValueByCurrency.isNotEmpty()) {
+                ChartCard(stringResource(R.string.insights_estimated)) {
+                    stats.estimatedValueByCurrency.toSortedMap().forEach { (code, amount) ->
+                        Text(Formats.money(amount, code), style = MaterialTheme.typography.headlineSmall)
+                    }
+                    Text(
+                        stringResource(R.string.insights_estimated_count, stats.pricedBottleCount, stats.bottleCount),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             DrinkDownCard(cellar, viewModel.year)
             if (stats.byColor.isNotEmpty()) ChartCard(stringResource(R.string.insights_by_style)) { StyleDonut(stats) }
             if (stats.byMaturity.isNotEmpty()) {

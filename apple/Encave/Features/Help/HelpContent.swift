@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Topics of the in-app help. Screens open the topic that matches them.
 enum HelpTopic: String, CaseIterable, Identifiable, Hashable {
-    case start, adding, scanning, racks, tonight, drinking, discoveries, devices, ai, data, privacy, shortcuts
+    case start, adding, scanning, racks, tonight, drinking, discoveries, devices, ai, webSearch, data, privacy, shortcuts
     var id: String { rawValue }
 }
 
@@ -51,7 +51,8 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "On this device", body: "Point the camera at the label and tap **Use This Label**, or choose a photo. The text is read on the device and fills in the name, producer, vintage and appellation. Nothing is sent anywhere."),
                 HelpSection(title: "With AI (optional)", body: "If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar."),
                 HelpSection(title: "What you typed stays", body: "A new scan or the AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept."),
-                HelpSection(title: "The photo", body: "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine."),
+                HelpSection(title: "The photo", body: "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**."),
+                HelpSection(title: "Another picture", body: "On the wine's page, **Change Picture…** shows instead an illustration made on this device with Image Playground (with Apple Intelligence), or a picture found on the internet if a search service is set up. The label photo is always kept."),
                 HelpSection(title: "Barcodes", body: "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online."),
             ]),
             HelpArticle(topic: .racks, title: "Racks",
@@ -111,6 +112,16 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Server URL", body: "Leave it empty to use the provider's usual address. Change it only if the provider gives you another one, for example for its China region."),
                 HelpSection(title: "What is sent", body: "Only the label photo, when you scan a label or tap **Complete with AI**. Your cellar, notes and prices are never sent."),
             ]),
+            HelpArticle(topic: .webSearch, title: "Searching online",
+                        summary: "Complete a wine's details from the web, with the search service you choose.", systemImage: "globe", sections: [
+                HelpSection(title: "Off by default", body: "Nothing is looked up online until you choose a service in **Settings → Web Search**."),
+                HelpSection(title: "Choose a service", body: "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080`. Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check."),
+                HelpSection(title: "Search Online", body: "On a wine's page, or while adding or editing a wine, tap **Search Online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.", systemImage: "globe"),
+                HelpSection(title: "Current price", body: "On a wine's page, **Find Current Price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save Price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**. With Apple Intelligence, **Estimate on This Device** reads the prices on the device.", systemImage: "tag"),
+                HelpSection(title: "Pictures", body: "On a wine's page, **Change Picture…** then **Search Pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.", systemImage: "photo.on.rectangle.angled"),
+                HelpSection(title: "Suggest Details", body: "On devices with Apple Intelligence, **Suggest Details** reads the results on the device and proposes the producer, region, appellation, country, grapes and drinking window. Each suggestion is shown next to the current value, and only the ones you select are used. The results are not sent to any AI service.", systemImage: "sparkles"),
+                HelpSection(title: "What is sent", body: "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device."),
+            ]),
             HelpArticle(topic: .data, title: "Backup, export and import",
                         summary: "Keep a copy and move your cellar.", systemImage: "externaldrive", sections: [
                 HelpSection(title: "Back up", body: "**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced."),
@@ -123,7 +134,7 @@ struct HelpArticle: Identifiable {
                         summary: "Your cellar stays yours.", systemImage: "lock.shield", sections: [
                 HelpSection(body: "Your cellar is stored only on your devices. There is no account, no tracking and no advertising."),
                 HelpSection(body: "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud or a relay, only encrypted files are stored, and nobody else can read them."),
-                HelpSection(body: "Apart from sync, the only data that can leave the device is the label photo, and only if you set up an AI service yourself."),
+                HelpSection(body: "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search."),
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",

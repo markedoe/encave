@@ -35,6 +35,10 @@ public struct CellarStatistics: Sendable, Equatable {
     /// Bottles opened per month over the last 12 months, oldest first.
     public var consumptionByMonth: [MonthCount]
     public var topGrapes: [Slice]
+    /// Sum of the current prices of bottles in the cellar, per currency, for the wines
+    /// that have one; `pricedBottleCount` says how many bottles that covers.
+    public var estimatedValueByCurrency: [String: Decimal] = [:]
+    public var pricedBottleCount = 0
 }
 
 public extension Cellar {
@@ -53,6 +57,13 @@ public extension Cellar {
         for bottle in inCellar {
             guard let price = bottle.purchasePrice else { continue }
             value[bottle.currency ?? settings.currency, default: 0] += price
+        }
+        var estimated: [String: Decimal] = [:]
+        var priced = 0
+        for bottle in inCellar {
+            guard let wine = wines[bottle.wineID], let price = wine.currentPrice else { continue }
+            estimated[wine.currentPriceCurrency ?? settings.currency, default: 0] += price
+            priced += 1
         }
 
         let colorCounts = Dictionary(grouping: winesInCellar, by: \.color).mapValues(\.count)
@@ -96,7 +107,9 @@ public extension Cellar {
             byVintageDecade: byDecade,
             byMaturity: byMaturity,
             consumptionByMonth: monthly,
-            topGrapes: slices(winesInCellar.flatMap(\.grapes), limit: 8)
+            topGrapes: slices(winesInCellar.flatMap(\.grapes), limit: 8),
+            estimatedValueByCurrency: estimated,
+            pricedBottleCount: priced
         )
     }
 }

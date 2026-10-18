@@ -4,6 +4,9 @@ import SwiftUI
 struct WineDetailView: View {
     @Environment(CellarModel.self) private var model
     let wineID: UUID
+    @State private var searchingOnline = false
+    @State private var findingPrice = false
+    private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
         if let wine = model.cellar.wines[wineID] {
@@ -71,6 +74,10 @@ struct WineDetailView: View {
                     }
                 }
 
+                if wine.currentPrice != nil || webSearchEnabled {
+                    priceSection(wine)
+                }
+
                 Section("Details") {
                     if let color = wine.color {
                         LabeledContent("Style") {
@@ -96,6 +103,15 @@ struct WineDetailView: View {
                         Text(notes)
                             .font(.callout)
                             .foregroundStyle(.secondary)
+                    }
+                    if webSearchEnabled {
+                        Button {
+                            searchingOnline = true
+                        } label: {
+                            Label("Search Online", systemImage: "globe")
+                        }
+                        .accessibilityHint(Text("Shows the search terms before anything is sent."))
+                        .accessibilityIdentifier("action.wine.searchOnline")
                     }
                 }
 
@@ -159,10 +175,34 @@ struct WineDetailView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            .sheet(isPresented: $findingPrice) {
+                let sizeML = usualSize(of: bottles)
+                PriceSearchView(
+                    terms: WebSearchQuery.priceTerms(for: wine, sizeML: sizeML,
+                                                     priceWord: String(localized: "price", comment: "Added to price search terms")),
+                    sizeML: sizeML, currentPrice: wine.currentPrice,
+                    currency: wine.currentPriceCurrency ?? model.cellar.settings.currency
+                ) { price, currency in
+                    setPrice(price, currency: currency)
+                }
+            }
+            .sheet(isPresented: $searchingOnline) {
+                WebSearchView(
+                    terms: WebSearchQuery.terms(for: wine, wineWord: String(localized: "wine", comment: "Added to web search terms")),
+                    current: WineDetails(wine), vintage: wine.vintage
+                ) { details, fields in
+                    model.update { cellar in
+                        guard var updated = cellar.wines[wineID] else { return }
+                        updated.apply(details, fields: fields)
+                        try cellar.updateWine(updated)
+                    }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: wineID) }
+                        Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wineID) }
                         Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
                         Divider()
                         Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(wineID) }
@@ -187,6 +227,59 @@ struct WineDetailView: View {
     }
 
     @ViewBuilder
+    private func priceSection(_ wine: Wine) -> some View {
+        Section {
+            if let price = wine.currentPrice {
+                LabeledContent {
+                    Text(verbatim: price.formatted(.currency(code: wine.currentPriceCurrency ?? model.cellar.settings.currency)))
+                        .monospacedDigit()
+                } label: {
+                    Label("Price today", systemImage: "tag")
+                }
+                if let date = wine.currentPriceDate {
+                    Text("Set on \(date.formatted(date: .abbreviated, time: .omitted)), for one bottle.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if webSearchEnabled {
+                Button {
+                    findingPrice = true
+                } label: {
+                    Label("Find Current Price", systemImage: "magnifyingglass.circle")
+                }
+                .accessibilityHint(Text("Shows the search terms before anything is sent."))
+                .accessibilityIdentifier("action.wine.findPrice")
+            }
+            if wine.currentPrice != nil {
+                Button("Remove Price", systemImage: "xmark.circle", role: .destructive) {
+                    setPrice(nil, currency: nil)
+                }
+            }
+        } header: {
+            Text("Value")
+        } footer: {
+            Text("What a bottle sells for today. Counted in the estimated value of your cellar in Insights.")
+        }
+    }
+
+    /// The size of most of the wine's bottles, 75 cl when there are none.
+    private func usualSize(of bottles: [Bottle]) -> Int {
+        let counts = Dictionary(grouping: bottles, by: \.sizeML).mapValues(\.count)
+        return counts.max { $0.value != $1.value ? $0.value < $1.value : $0.key > $1.key }?.key ?? 750
+    }
+
+    private func setPrice(_ price: Decimal?, currency: String?) {
+        model.update { cellar in
+            guard var wine = cellar.wines[wineID] else { return }
+            wine.currentPrice = price
+            wine.currentPriceCurrency = price == nil ? nil : currency
+            wine.currentPriceDate = price == nil ? nil : .now
+            try cellar.updateWine(wine)
+        }
+    }
+
+    @ViewBuilder
     private func optionalRow(_ title: LocalizedStringKey, _ value: String?) -> some View {
         if let value, !value.isEmpty {
             LabeledContent(title, value: value)
@@ -198,16 +291,32 @@ struct WineDetailView: View {
 private struct WineHeader: View {
     let wine: Wine
     let count: Int
+    @Environment(CellarModel.self) private var model
+    @AppStorage(StudioPhoto.settingKey) private var studio = true
+    @State private var asTaken = false
 
     var body: some View {
         VStack(spacing: 12) {
-            if PhotoStore.exists(wine.photoID) {
-                WinePhoto(photoID: wine.photoID)
-                    .frame(maxWidth: 360)
-                    .frame(height: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .padding(.top, 4)
-                    .accessibilityHidden(true)
+            if wine.hasShownPhoto {
+                Group {
+                    if asTaken, let photoID = wine.photoID {
+                        WinePhoto(photoID: photoID)
+                    } else {
+                        WineImage(wine: wine, inset: 18)
+                    }
+                }
+                .frame(maxWidth: 360)
+                .frame(height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .padding(.top, 4)
+                .accessibilityHidden(true)
+                .contextMenu {
+                    Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wine.id) }
+                    if studio, wine.coverPhotoID == nil, PhotoStore.exists(wine.photoID) {
+                        Button(asTaken ? LocalizedStringKey("Show Studio Look") : LocalizedStringKey("Show Photo as Taken"),
+                               systemImage: asTaken ? "wand.and.stars" : "photo") { asTaken.toggle() }
+                    }
+                }
             } else {
                 BottleEnd(color: wine.color, size: 72)
                     .padding(.top, 8)

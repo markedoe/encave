@@ -206,9 +206,9 @@ fun DiscoveryRow(
         modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
         leadingContent = if (showsWine) {
             {
-                if (photos.exists(wine?.photoId)) {
+                if (photos.exists(wine?.shownPhotoId)) {
                     WinePhoto(
-                        photos, wine?.photoId, contentDescription = null, height = 56.dp,
+                        photos, wine?.shownPhotoId, contentDescription = null, height = 56.dp,
                         modifier = Modifier.size(44.dp, 56.dp),
                     )
                 } else {

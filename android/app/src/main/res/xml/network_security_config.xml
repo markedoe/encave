@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The only network use is the optional AI label recognition. Plain HTTP is allowed
-     so a self-hosted OpenAI-compatible server on the local network (Ollama,
-     OpenWebUI) can be used; the default providers are HTTPS. -->
+<!-- The only network uses are sync and the optional AI label recognition and web
+     search. Plain HTTP is allowed so a self-hosted server on the local network (Ollama,
+     OpenWebUI, SearXNG on a NAS) can be used; the default providers are HTTPS. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>

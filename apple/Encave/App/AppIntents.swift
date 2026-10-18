@@ -211,7 +211,7 @@ struct WineDetailsIntent: AppIntent {
         for tasting in tastings.prefix(20) {
             let parts = [tasting.rating.map { "\($0)/5" }, tasting.occasion, tasting.note, tasting.nose, tasting.palate,
                          tasting.foodPairing.map { "with \($0)" }]
-            add("Tasted \(tasting.date.formatted(.iso8601.year().month().day()))", parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "; "))
+            add("Tasted \(tasting.date.formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day()))", parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "; "))
         }
         return .result(value: lines.joined(separator: "\n"))
     }

@@ -20,6 +20,16 @@ where each bottle sits in your racks, and when it is ready to drink.
   - Scan the label: the text is read on the device, and the barcode recognizes
     wines you already have.
   - Optional AI recognition uses your own API key and sends only the label photo.
+  - Optional **Find Current Price** and **Search Online** look a wine up on the
+    web with Brave Search, Tavily or your own SearXNG server: the prices found
+    are listed with their sites, the middle one is suggested, and the price you
+    save counts in the estimated value of the cellar. Only the search terms
+    (producer, name, appellation, vintage, bottle size) are sent, after you see
+    and can edit them. On Apple Intelligence devices, **Suggest Details** reads
+    the results on the device and proposes details you accept one by one.
+  - **Search Pictures** finds a picture of the bottle with the same service;
+    the one you choose is downloaded from its site and shown as the wine's
+    picture. The label photo is always kept.
 - **Racks drawn as they look:** grids, honeycombs, wine fridges with depth, diamond
   bins, irregular rows.
   - See which bottle is where.

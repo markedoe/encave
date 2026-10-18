@@ -31,6 +31,13 @@ sync between devices and users (see `docs/ROADMAP.md`):
 - Exception: the optional AI label recognition, off by default, which sends
   only the label photo directly to the provider the user sets up with their
   own key. Never send the cellar or anything else to it.
+- Exception: the optional web search, off by default, which sends only the
+  search terms (producer, name, appellation, vintage, and for a price the
+  bottle size; shown and editable before sending) to the search provider the
+  user sets up. Never send the cellar, notes, prices or places. Results are
+  read on the device only. Picture thumbnails and the picture the user picks
+  are downloaded from their hosts, which see the request; the picture is
+  kept as the wine's cover and never replaces the label photo.
 - No analytics or third-party SDKs that receive user data.
 - No integrations with commercial wine platforms.
 

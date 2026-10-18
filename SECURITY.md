@@ -22,9 +22,22 @@ Your cellar stays on your devices.
 
 The protocol and its threat model are in [docs/SYNC.md](docs/SYNC.md).
 
-The only exception is the optional AI label recognition, off by default: when
-you enable it with your own API key, the label photo (and nothing else) is sent
-directly to the provider you chose. The key is kept in the Keychain on the device.
+There are two exceptions, both off by default:
+
+- The optional AI label recognition: when you enable it with your own API key,
+  the label photo (and nothing else) is sent directly to the provider you chose.
+- The optional web search: when you choose a search service (Brave Search,
+  Tavily or your own SearXNG server) and tap Search, only the search terms
+  are sent to it: by default the producer, name, appellation and vintage (and
+  the bottle size, for a price), shown and editable first. The cellar, notes, prices and places are never sent. The
+  results are read on the device; on Apple devices, Suggest Details uses only the
+  on-device Apple Intelligence model. For Search Pictures, the thumbnails and
+  the picture you choose are downloaded from the sites that host them, which
+  see the request (your IP address); the picture is checked (https, an image,
+  at most 8 MB) and saved as a re-encoded JPEG without metadata.
+
+Keys are kept in the Keychain (Apple) or encrypted with the Android Keystore,
+on the device.
 
 ## Keeping the repo clean
 

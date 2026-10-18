@@ -27,6 +27,7 @@ struct AddBottleView: View {
     @State private var choosingSlots = false
     @State private var prepared = false
     @State private var scan = LabelScan()
+    @State private var searchingOnline = false
 
     private var wineIsValid: Bool { existingWine != nil || draft.isValid }
 
@@ -81,7 +82,8 @@ struct AddBottleView: View {
                             Text("Choose it to add bottles without typing the wine again.")
                         }
                     }
-                    WineFormSections(draft: $draft, focusName: context.wine == nil && model.cellar.wines.isEmpty)
+                    WineFormSections(draft: $draft, focusName: context.wine == nil && model.cellar.wines.isEmpty,
+                                     onSearchOnline: { searchingOnline = true })
                     }
                 }
 
@@ -180,6 +182,7 @@ struct AddBottleView: View {
             }
             .formStyle(.grouped)
             .labelScanner(scan, draft: $draft)
+            .webSearchSheet(isPresented: $searchingOnline, draft: $draft)
             .navigationTitle("Add Bottles")
             .inlineTitle()
             .toolbar {
@@ -248,6 +251,11 @@ struct AddBottleView: View {
         let added = model.addBottles(of: wine, quantity: quantity, slots: Array(slots.prefix(quantity)), purchase: purchase)
         if added, let discoveryID = context.discoveryID {
             model.update { try $0.markBought(discoveryID) }
+        }
+        if added, existingWine == nil {
+            var saved = draft
+            saved.photoID = wine.photoID
+            scan.completeLater(saved, in: model)
         }
         dismiss()
     }

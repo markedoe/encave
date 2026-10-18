@@ -6,6 +6,7 @@ import app.encave.data.CellarRepository
 import app.encave.data.PhotoStore
 import app.encave.data.Preferences
 import app.encave.data.ai.AiPreferences
+import app.encave.data.search.WebSearchPreferences
 import app.encave.sync.SyncManager
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ class EncaveApplication : Application() {
     val preferences: Preferences by lazy { Preferences(this) }
     val photos: PhotoStore by lazy { PhotoStore(this) }
     val ai: AiPreferences by lazy { AiPreferences(this) }
+    val webSearch: WebSearchPreferences by lazy { WebSearchPreferences(this) }
 
     /** Pairing and sync with the user's other devices (off until a device is added). */
     val sync: SyncManager by lazy { SyncManager(this, repository, photos, scope) }

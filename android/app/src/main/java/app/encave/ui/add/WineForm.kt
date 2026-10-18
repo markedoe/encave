@@ -53,6 +53,13 @@ import app.encave.ui.components.Hint
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.labelRes
 import app.encave.ui.theme.Dimens
+import app.encave.core.search.WebSearchQuery
+import app.encave.ui.search.WebSearchSheet
+import app.encave.ui.search.webSearchPreferences
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material3.OutlinedButton
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -234,6 +241,21 @@ fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier 
         )
         GrapesField(form, known.grapes)
         Hint(stringResource(R.string.help_origin_footer))
+        val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
+        var searching by remember { mutableStateOf(false) }
+        if (webSearch.isEnabled) {
+            OutlinedButton(onClick = { searching = true }, enabled = !form.nameMissing, modifier = Modifier.testTag("form.search_online")) {
+                Icon(Icons.Outlined.Public, contentDescription = null)
+                Text(stringResource(R.string.search_online), Modifier.padding(start = Dimens.s))
+            }
+            Hint(stringResource(R.string.search_online_footer, webSearch.service.brand.orEmpty()))
+        }
+        if (searching) {
+            WebSearchSheet(
+                initialQuery = WebSearchQuery.terms(form.producer, form.name, form.appellation, form.vintage, stringResource(R.string.search_wine_word)),
+                onDismiss = { searching = false },
+            )
+        }
         // Discoveries have tags of their own.
         if (showsTags) WineTagsField(form, known.tags)
         OutlinedTextField(

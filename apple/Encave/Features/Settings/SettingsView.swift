@@ -13,6 +13,7 @@ struct SettingsView: View {
     #if os(macOS)
     @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
     #endif
+    @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     @State private var remindersRefused = false
 
     private static let currencies = ["EUR", "CHF", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK"]
@@ -95,6 +96,14 @@ struct SettingsView: View {
             #endif
 
             Section {
+                Toggle(isOn: $studioPhotos) {
+                    Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
+                }
+            } footer: {
+                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+            }
+
+            Section {
                 Picker("Currency", selection: currencyBinding) {
                     ForEach(Self.currencies, id: \.self) { code in
                         Text(Locale.current.localizedString(forCurrencyCode: code).map { "\($0) (\(code))" } ?? code).tag(code)
@@ -135,6 +144,8 @@ struct SettingsView: View {
             }
 
             AISettingsSection()
+
+            WebSearchSettingsSection()
 
             Section {
                 if model.sync.otherDevices.isEmpty {
