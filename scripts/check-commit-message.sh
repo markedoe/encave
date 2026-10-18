@@ -8,27 +8,33 @@ set -euo pipefail
 
 MAX_SUBJECT=72
 MAX_BODY_LINES=12
-# Phrases that indicate a pasted prompt or chat transcript.
-BANNED='((my|your|this|the user.s|mon|ton|le) prompt|the user (asked|wants|said|requested)|as requested|you asked|l.utilisateur|je veux|tu peux|peux-tu|stp|s.il te pla|merci|as an ai|claude code session transcript|<pasted_content|system-reminder)'
+# Phrases that indicate a pasted prompt or chat transcript. Short words only
+# match as whole words ("commercial" is not "merci"), with POSIX classes rather
+# than \b, which BSD grep on macOS does not support.
+L='(^|[^[:alnum:]_])'
+R='([^[:alnum:]_]|$)'
+BANNED="${L}(my|your|this|the user.s|mon|ton|le) prompt|the user (asked|wants|said|requested)|${L}as requested|${L}you asked|l.utilisateur|${L}je veux${R}|${L}tu peux${R}|${L}peux-tu|${L}stp${R}|s.il te pla|${L}merci${R}|${L}as an ai${R}|claude code session transcript|<pasted_content|system-reminder|^(user|assistant|human) ?:"
 
 # Links to AI chat sessions expose private conversations, even as trailers.
 SESSION_LINK='(claude\.ai/(code/)?(session|chat)|chatgpt\.com/(c|share)/|Claude-Session:)'
+
+# Trailers left out of the line count: only those git finds in the last
+# paragraph, and only the usual kinds.
+TRAILER='^([A-Za-z-]+-by|Fixes|Closes|Refs|See-also|Change-Id|Bug): '
 
 check_message() {
   local label="$1" msg="$2" errors=0
   if printf '%s\n' "$msg" | grep -qiE "$SESSION_LINK"; then
     echo "$label: contains a link to an AI chat session; remove it"; errors=1
   fi
-  # Drop comment lines; in the body, also drop git trailers
-  # (Co-Authored-By, Signed-off-by...) from the line count. Session links fail
-  # above, trailers included.
-  local nocomment subject body clean
+  local nocomment subject clean trailers body_lines
   nocomment=$(printf '%s\n' "$msg" | grep -v '^#' || true)
   subject=$(printf '%s\n' "$nocomment" | sed -n '1p')
-  body=$(printf '%s\n' "$nocomment" | sed '1d' | grep -vE '^[A-Z][A-Za-z-]+: ' || true)
-  clean=$(printf '%s\n%s\n' "$subject" "$body")
-  local body_lines
-  body_lines=$(printf '%s\n' "$body" | grep -c '[^[:space:]]' || true)
+  # The phrases are looked for in the whole message, trailers included.
+  clean="$nocomment"
+  trailers=$(printf '%s\n' "$nocomment" | git interpret-trailers --parse 2>/dev/null | grep -ciE "$TRAILER" || true)
+  body_lines=$(printf '%s\n' "$nocomment" | sed '1d' | grep -c '[^[:space:]]' || true)
+  body_lines=$(( body_lines - trailers ))
 
   if [[ -z "$subject" ]]; then
     echo "$label: empty subject"; errors=1
