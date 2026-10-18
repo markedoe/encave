@@ -7,6 +7,8 @@ struct ToastOverlay: View {
     @Environment(\.undoManager) private var undoManager
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @State private var registered: ToastUndo?
+    /// The undo manager `registered` went to, which may not be the current one.
+    @State private var registeredIn: UndoManager?
 
     var body: some View {
         VStack {
@@ -49,17 +51,23 @@ struct ToastOverlay: View {
         }
         .animation(.spring(duration: 0.35), value: model.toast?.id)
         .onChange(of: model.toast?.id, initial: true) { registerUndo() }
+        .onDisappear { unregister() }
     }
 
     /// Only the banner on screen can be undone this way: some undos restore a
     /// whole earlier cellar, which must not happen after later changes.
     private func registerUndo() {
-        if let registered {
-            undoManager?.removeAllActions(withTarget: registered)
-            self.registered = nil
-        }
-        guard let undo = model.toast?.undo, let undoManager else { return }
+        unregister()
+        guard let toast = model.toast, let undo = toast.undo, let undoManager else { return }
         undoManager.registerUndo(withTarget: undo, selector: #selector(ToastUndo.run), object: nil)
+        undoManager.setActionName(toast.message)
         registered = undo
+        registeredIn = undoManager
+    }
+
+    private func unregister() {
+        if let registered { registeredIn?.removeAllActions(withTarget: registered) }
+        registered = nil
+        registeredIn = nil
     }
 }

@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Photo %lld of %lld': 'Photo %lld sur %lld',
+    'Photo removed': 'Photo retirée',
     'Other apps and AI assistants': 'Autres apps et assistants IA',
     'In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.': 'Dans Raccourcis, **Obtenir le contenu de la cave** donne vos bouteilles en texte ou en JSON (toutes, celles à ouvrir maintenant, en commande…), et **Obtenir la fiche d’un vin** donne un vin avec ses notes de dégustation. Une app de cet appareil qui lance des raccourcis, comme un assistant IA local, peut s’en servir pour répondre à vos questions sur votre cave. Encave n’envoie rien.',
     'Bottles': 'Bouteilles',

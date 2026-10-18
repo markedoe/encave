@@ -516,6 +516,8 @@ import Testing
         #expect(ordered.text.hasSuffix("| 2026-12-01"))
         #expect(cellar.report(scope: .all, search: "chenin", year: 2026).rows.map(\.name) == ["Soon"])
         #expect(cellar.report(scope: .pastPeak, year: 2026).text == "Encave cellar, 2026, bottles past their peak: 0 wines, 0 bottles.")
+        #expect(cellar.report(scope: .all, year: 2026, limit: 1).text.hasPrefix(
+            "Encave cellar, 2026, all bottles: 1 wine, 2 bottles (1 more wine left out)."))
     }
 
     @Test func jsonUsesFixedKeys() throws {

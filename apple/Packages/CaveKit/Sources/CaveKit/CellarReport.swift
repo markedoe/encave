@@ -49,13 +49,16 @@ public struct CellarReport: Sendable, Equatable {
     public var year: Int
     public var scope: CellarReportScope
     public var rows: [Row]
+    /// Wines left out to stay within the limit.
+    public var omitted: Int = 0
 
     public var bottleCount: Int { rows.reduce(0) { $0 + $1.bottles } }
 
     /// Header, column names, then one numbered line per wine.
     public var text: String {
         let header = "Encave cellar, \(year), \(scope.summary): \(rows.count) wine\(rows.count == 1 ? "" : "s"), "
-            + "\(bottleCount) bottle\(bottleCount == 1 ? "" : "s")."
+            + "\(bottleCount) bottle\(bottleCount == 1 ? "" : "s")"
+            + (omitted > 0 ? " (\(omitted) more wine\(omitted == 1 ? "" : "s") left out)." : ".")
         guard !rows.isEmpty else { return header }
         let columns = "Columns: wine | producer | style | origin | grapes | window | maturity | bottles | places | tags | kept for"
             + (scope == .onOrder ? " | expected" : "")
@@ -159,6 +162,6 @@ public extension Cellar {
                 keptFor: Array(Set(group.bottles.compactMap(\.reservedFor))).sorted(),
                 expected: group.bottles.compactMap { $0.expectedAt.map(day.string(from:)) })
         }
-        return CellarReport(year: year, scope: scope, rows: Array(rows))
+        return CellarReport(year: year, scope: scope, rows: Array(rows), omitted: max(0, groups.count - rows.count))
     }
 }

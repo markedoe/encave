@@ -249,8 +249,10 @@ struct EditWineView: View {
         } else if photoRemoved {
             wine.photoID = nil
         }
+        // Photos added elsewhere while the form was open (another window, sync) stay.
+        wine.extraPhotoIDs = model.cellar.wines[wine.id]?.extraPhotoIDs ?? wine.extraPhotoIDs
+        // A replaced photo file is removed by the cleanup at launch, after a grace period.
         guard model.update({ try $0.updateWine(wine) }) else { return }
-        if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
         dismiss()
     }
 }

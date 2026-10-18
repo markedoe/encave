@@ -176,7 +176,6 @@ struct DiscoveryEditor: View {
             try cellar.updateWine(wine)
             try cellar.updateDiscovery(discovery)
         }) else { return }
-        if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
         dismiss()
     }
 }

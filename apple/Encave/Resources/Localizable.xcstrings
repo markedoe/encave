@@ -5371,6 +5371,26 @@
         }
       }
     },
+    "Photo %lld of %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo %lld sur %lld"
+          }
+        }
+      }
+    },
+    "Photo removed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo retirée"
+          }
+        }
+      }
+    },
     "Photos": {
       "localizations": {
         "fr": {

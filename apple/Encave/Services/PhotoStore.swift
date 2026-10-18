@@ -40,18 +40,34 @@ enum PhotoStore {
         return FileManager.default.fileExists(atPath: url.path)
     }
 
-    static func delete(_ id: String?) {
-        guard let id, let url = url(for: id) else { return }
-        try? FileManager.default.removeItem(at: url)
-    }
+    /// How long a photo no wine refers to is kept before its file is removed. A wine
+    /// can refer to it again in the meantime: an undo, or a device that has not
+    /// synced yet sending an older copy of the wine.
+    static let orphanGracePeriod: TimeInterval = 30 * 24 * 3600
 
-    /// Removes photo files no wine refers to any more.
-    static func removeOrphans(keeping ids: Set<String>) {
+    /// Removes photo files no wine has referred to for `orphanGracePeriod`. When a
+    /// file was first seen unreferenced is kept in a small list next to the photos.
+    static func removeOrphans(keeping ids: Set<String>, now: Date = .now) {
         guard let folder,
               let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
         else { return }
-        for file in files where file.pathExtension == "jpg" && !ids.contains(file.deletingPathExtension().lastPathComponent) {
-            try? FileManager.default.removeItem(at: file)
+        let listURL = folder.appendingPathComponent("unreferenced.json")
+        let seen = (try? JSONDecoder().decode([String: Date].self, from: Data(contentsOf: listURL))) ?? [:]
+        var unreferenced: [String: Date] = [:]
+        for file in files where file.pathExtension == "jpg" {
+            let id = file.deletingPathExtension().lastPathComponent
+            guard !ids.contains(id) else { continue }
+            let since = seen[id] ?? now
+            if now.timeIntervalSince(since) >= orphanGracePeriod {
+                try? FileManager.default.removeItem(at: file)
+            } else {
+                unreferenced[id] = since
+            }
+        }
+        if unreferenced.isEmpty {
+            try? FileManager.default.removeItem(at: listURL)
+        } else if unreferenced != seen, let data = try? JSONEncoder().encode(unreferenced) {
+            try? data.write(to: listURL, options: [.atomic])
         }
     }
 
