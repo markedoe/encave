@@ -419,7 +419,8 @@ final class ScreenTourTests: XCTestCase {
             "en": ["cellar": "Cellar", "racks": "Racks", "tonight": "Tonight", "journal": "Journal"],
             "fr": ["cellar": "Cave", "racks": "Casiers", "tonight": "Ce soir", "journal": "Journal"],
         ]
-        return titles[language]?[section] ?? section
+        // The large-text tour ("xl") runs in English.
+        return titles[language == "fr" ? "fr" : "en"]?[section] ?? section
     }
 
     private func openSection(_ index: Int, _ name: String) {
