@@ -7,7 +7,7 @@ import UIKit
 #endif
 
 /// Keeps this device's cellar in step with the user's other devices on the same
-/// network, and away from home through iCloud or a relay (`RemoteSync`). On the
+/// network, and away from home through iCloud, a WebDAV folder or a relay (`RemoteSync`). On the
 /// network, devices find each other with Bonjour; every session is authenticated
 /// with the devices' identity keys and encrypted (see CaveKit `SyncProtocol`).
 ///
@@ -27,8 +27,11 @@ final class SyncService {
     /// This device was removed from the cellar by another device.
     private(set) var wasRemoved = false
 
-    /// Away from home: where the encrypted files are (iCloud or a relay), if anywhere.
+    /// Away from home: where the encrypted files are (iCloud, a WebDAV folder or a relay), if anywhere.
     private(set) var remoteStorage: RemoteStorage?
+    /// The login for a WebDAV folder (Keychain), on this device only: other devices
+    /// receive the folder's address and sign in with their own.
+    private(set) var webDAVLogin: WebDAVLogin?
     /// The key of the cellar's remote files (Keychain).
     private(set) var remoteKey: CellarKey?
     private(set) var lastRemoteSync: Date?
@@ -78,6 +81,7 @@ final class SyncService {
         if membership != nil, state == nil { state = .starting(with: model.cellar, device: identity.id) }
         remoteStorage = UserDefaults.standard.string(forKey: Self.storageKey).flatMap(RemoteStorage.init)
         remoteKey = Keychain.getData(Self.cellarKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) }
+        webDAVLogin = Keychain.getData(Self.webDAVLoginAccount).flatMap { try? JSONDecoder().decode(WebDAVLogin.self, from: $0) }
         remoteProgress = files.loadRemoteProgress()
         // A key of another cellar (left from before joining this one) is never used.
         if let key = remoteKey, key.cellarID != membership?.cellarID { resetRemote() }
@@ -205,6 +209,7 @@ final class SyncService {
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
         pendingKey = nil
         storeRemoteKey(nil)
+        storeWebDAVLogin(nil)
         remoteLoop?.cancel(); remoteLoop = nil
     }
 
@@ -353,24 +358,35 @@ final class SyncService {
     /// Builds before the pending key kept only this flag.
     static let rotationKey = "sync.rotationPending"
     static let pendingKeyAccount = "sync.pendingCellarKey"
+    static let webDAVLoginAccount = "sync.webDAVLogin"
 
     var remoteInfo: RemoteInfo? {
         remoteKey.map { RemoteInfo(key: $0, storage: remoteStorage?.string) }
     }
 
+    /// The WebDAV folder this device syncs through has no login here (its address
+    /// came from another device, or the login is for another folder): Devices asks
+    /// the user to sign in instead of failing silently.
+    var needsWebDAVSignIn: Bool {
+        guard case .webDAV(let url) = remoteStorage else { return false }
+        return webDAVLogin?.folder != url.absoluteString
+    }
+
     /// Turns syncing away from home on with a storage (or off with nil). Checks the
     /// storage first. The first device to turn it on creates the cellar's key and
-    /// gives it to the others.
-    func setRemoteStorage(_ storage: RemoteStorage?) async throws {
+    /// gives it to the others. A WebDAV folder needs `login`, kept on this device only.
+    func setRemoteStorage(_ storage: RemoteStorage?, login: WebDAVLogin? = nil) async throws {
         guard let storage else {
             remoteStorage = nil
             UserDefaults.standard.removeObject(forKey: Self.storageKey)
+            storeWebDAVLogin(nil)
             remoteLoop?.cancel(); remoteLoop = nil
             return
         }
-        guard let store = storage.store() else { throw RemoteSyncError.unavailable("storage") }
-        try await storage.check()
+        guard let store = storage.store(login: login) else { throw RemoteSyncError.unauthorized }
+        try await storage.check(login: login)
         setUpIfNeeded()
+        if case .webDAV = storage { storeWebDAVLogin(login) }
         remoteStorage = storage
         UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
         if remoteKey == nil, let membership {
@@ -389,11 +405,29 @@ final class SyncService {
         await remoteRound()
     }
 
+    /// Signs in to the WebDAV folder this device already syncs through (its address came
+    /// from another device). Checks the login first.
+    func signInToWebDAV(username: String, password: String) async throws {
+        guard case .webDAV(let url) = remoteStorage else { return }
+        let login = WebDAVLogin(folder: url.absoluteString, username: username, password: password)
+        try await RemoteStorage.webDAV(url).check(login: login)
+        storeWebDAVLogin(login)
+        remoteProblem = nil
+        startRemoteLoop()
+        await remoteRound()
+    }
+
+    private func storeWebDAVLogin(_ login: WebDAVLogin?) {
+        webDAVLogin = login
+        Keychain.setData(login.flatMap { try? JSONEncoder().encode($0) }, for: Self.webDAVLoginAccount)
+    }
+
     /// A key and storage received from a device on the network.
     func adoptRemote(_ info: RemoteInfo?) {
         guard let info, let membership, info.key.cellarID == membership.cellarID else { return }
         if info.key.supersedes(remoteKey) { storeRemoteKey(info.key) }
-        // Only a storage this device can use: an HTTPS relay, or iCloud in a build that has it.
+        // Only a storage this device can use: an HTTPS relay or WebDAV folder, or iCloud in a
+        // build that has it. A WebDAV folder then asks for this device's own login.
         if remoteStorage == nil, let storage = info.storage.flatMap(RemoteStorage.init), storage.isAcceptedFromPeer {
             remoteStorage = storage
             UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
@@ -424,7 +458,8 @@ final class SyncService {
     }
 
     func remoteRound() async {
-        guard let store = remoteStorage?.store(), !isSyncingRemotely, !wasRemoved, let local = snapshot() else { return }
+        guard let store = remoteStorage?.store(login: webDAVLogin), !isSyncingRemotely, !wasRemoved,
+              let local = snapshot() else { return }
         isSyncingRemotely = true
         defer { isSyncingRemotely = false }
         let round = generation
@@ -458,7 +493,8 @@ final class SyncService {
             }
             if let storage = result.storage.flatMap(RemoteStorage.init), storage.isAcceptedFromPeer,
                storage != remoteStorage, result.newKey != nil {
-                // The device that gave the new key moved the files: follow it.
+                // The device that gave the new key moved the files: follow it (a WebDAV
+                // folder then asks for a login on this device, see `needsWebDAVSignIn`).
                 remoteStorage = storage
                 UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
             }
@@ -466,15 +502,23 @@ final class SyncService {
             remoteProblem = result.unreadable.isEmpty ? nil
                 : String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
         } catch RemoteSyncError.unauthorized {
-            remoteProblem = remoteStorage == .iCloud
-                ? String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
-                : String(localized: "The relay refused this device. Check the relay address.")
+            switch remoteStorage {
+            case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
+            case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
+            default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
+            }
         } catch RemoteSyncError.fileTooLarge {
-            remoteProblem = String(localized: "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.")
+            if case .webDAV = remoteStorage {
+                remoteProblem = String(localized: "The cellar is larger than this WebDAV server accepts in one file. Raise its upload limit.")
+            } else {
+                remoteProblem = String(localized: "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.")
+            }
         } catch RemoteSyncError.quotaExceeded {
-            remoteProblem = remoteStorage == .iCloud
-                ? String(localized: "Your iCloud storage is full.")
-                : String(localized: "The relay is full. Remove old photos or use another relay.")
+            switch remoteStorage {
+            case .iCloud: remoteProblem = String(localized: "Your iCloud storage is full.")
+            case .webDAV: remoteProblem = String(localized: "The WebDAV folder is full. Free some space on the server.")
+            default: remoteProblem = String(localized: "The relay is full. Remove old photos or use another relay.")
+            }
         } catch {
             remoteProblem = String(localized: "The storage cannot be reached. Syncing will resume when it can.")
         }
@@ -680,12 +724,16 @@ final class SyncService {
 /// Where a cellar's encrypted files are kept for devices that are apart.
 enum RemoteStorage: Equatable {
     case iCloud
+    /// A WebDAV folder (a NAS, Nextcloud, pCloud…). Each device signs in with its own login.
+    case webDAV(URL)
     case relay(URL)
 
-    /// As stored and as passed to other devices: "icloud" or the relay URL.
+    /// As stored and as passed to other devices: "icloud", "webdav:" and the folder
+    /// URL, or the relay URL. Never a login.
     var string: String {
         switch self {
         case .iCloud: "icloud"
+        case .webDAV(let url): "webdav:" + url.absoluteString
         case .relay(let url): url.absoluteString
         }
     }
@@ -693,6 +741,9 @@ enum RemoteStorage: Equatable {
     init?(_ string: String) {
         if string == "icloud" {
             self = .iCloud
+        } else if string.hasPrefix("webdav:") {
+            guard let folder = WebDAVMailboxStore.folderURL(String(string.dropFirst("webdav:".count))) else { return nil }
+            self = .webDAV(folder)
         } else if let url = URL(string: string), let scheme = url.scheme, ["https", "http"].contains(scheme), url.host() != nil {
             self = .relay(url)
         } else {
@@ -700,27 +751,46 @@ enum RemoteStorage: Equatable {
         }
     }
 
-    /// A storage told by another device: an HTTPS relay, or iCloud if this build has it.
+    /// A storage told by another device: an HTTPS relay or WebDAV folder (HTTP only on
+    /// the local network), or iCloud if this build has it.
     var isAcceptedFromPeer: Bool {
         switch self {
         case .iCloud: CloudKitMailboxStore.isConfigured
+        case .webDAV(let url): WebDAVMailboxStore.isAllowed(url)
         case .relay(let url): url.scheme == "https"
         }
     }
 
-    func store() -> MailboxStore? {
+    /// Nil for a WebDAV folder without a login for it.
+    func store(login: WebDAVLogin?) -> MailboxStore? {
         switch self {
-        case .iCloud: CloudKitMailboxStore.make()
-        case .relay(let url): RelayMailboxStore(baseURL: url)
+        case .iCloud:
+            return CloudKitMailboxStore.make()
+        case .webDAV(let url):
+            guard let login, login.folder == url.absoluteString else { return nil }
+            return WebDAVMailboxStore(baseURL: url, username: login.username, password: login.password)
+        case .relay(let url):
+            return RelayMailboxStore(baseURL: url)
         }
     }
 
-    func check() async throws {
+    func check(login: WebDAVLogin?) async throws {
         switch self {
         case .iCloud:
             guard await CloudKitMailboxStore.accountAvailable() else { throw RemoteSyncError.unauthorized }
+        case .webDAV(let url):
+            guard let login, login.folder == url.absoluteString else { throw RemoteSyncError.unauthorized }
+            try await WebDAVMailboxStore(baseURL: url, username: login.username, password: login.password).check()
         case .relay(let url):
             try await RelayMailboxStore(baseURL: url).check()
         }
     }
+}
+
+/// A username and (app) password for one WebDAV folder, kept in the Keychain.
+struct WebDAVLogin: Codable, Equatable, Sendable {
+    /// The folder URL the login belongs to; a login for another folder is not used.
+    var folder: String
+    var username: String
+    var password: String
 }

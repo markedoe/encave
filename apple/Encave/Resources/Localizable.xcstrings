@@ -441,6 +441,16 @@
         }
       }
     },
+    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants."
+          }
+        }
+      }
+    },
     "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.": {
       "localizations": {
         "fr": {
@@ -957,6 +967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déjà dans votre cave ?"
+          }
+        }
+      }
+    },
+    "An app password created on the server is recommended. Stored in the Keychain on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un mot de passe d’application créé sur le serveur est recommandé. Stocké dans le trousseau de cet appareil."
           }
         }
       }
@@ -1781,6 +1801,16 @@
         }
       }
     },
+    "Change Username or Password": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer le nom d’utilisateur ou le mot de passe"
+          }
+        }
+      }
+    },
     "Changes from another device could not be read. Update Encave on all your devices.": {
       "localizations": {
         "fr": {
@@ -1807,6 +1837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier ce casier"
+          }
+        }
+      }
+    },
+    "Check and Sign In": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier et se connecter"
           }
         }
       }
@@ -2917,6 +2957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher."
+          }
+        }
+      }
+    },
+    "Each device signs in with its own username and password, kept in the Keychain on that device. An app password is recommended.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque appareil se connecte avec son propre nom d’utilisateur et mot de passe, gardés dans le trousseau de cet appareil. Un mot de passe d’application est recommandé."
           }
         }
       }
@@ -4231,12 +4281,12 @@
         }
       }
     },
-    "Keeps devices in sync when they are not on the same Wi-Fi, through a relay that only stores encrypted data.": {
+    "Keeps devices in sync when they are not on the same Wi-Fi, through storage that only holds encrypted data: iCloud, a WebDAV folder or a relay.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un relais qui ne stocke que des données chiffrées."
+            "value": "Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un stockage qui ne contient que des données chiffrées : iCloud, un dossier WebDAV ou un relais."
           }
         }
       }
@@ -5461,12 +5511,12 @@
         }
       }
     },
-    "On the same Wi-Fi, devices talk directly; no server is involved. Through a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.": {
+    "On the same Wi-Fi, devices talk directly; no server is involved. Through iCloud, a WebDAV folder or a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
+            "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
           }
         }
       }
@@ -5541,12 +5591,12 @@
         }
       }
     },
-    "Only encrypted files are stored. Neither Apple nor a relay can see your wines, photos or device names.": {
+    "Only encrypted files are stored. Neither Apple, the WebDAV server nor a relay can see your wines, photos or device names.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seuls des fichiers chiffrés sont stockés. Ni Apple ni un relais ne peuvent voir vos vins, vos photos ou le nom de vos appareils."
+            "value": "Seuls des fichiers chiffrés sont stockés. Ni Apple, ni le serveur WebDAV, ni un relais ne peuvent voir vos vins, vos photos ou le nom de vos appareils."
           }
         }
       }
@@ -5847,6 +5897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouche"
+          }
+        }
+      }
+    },
+    "Password": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot de passe"
           }
         }
       }
@@ -7141,6 +7201,16 @@
         }
       }
     },
+    "Server address": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse du serveur"
+          }
+        }
+      }
+    },
     "Serving": {
       "localizations": {
         "fr": {
@@ -7491,6 +7561,16 @@
         }
       }
     },
+    "Sign in to this WebDAV folder": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se connecter à ce dossier WebDAV"
+          }
+        }
+      }
+    },
     "Silky, red fruit, long finish.": {
       "localizations": {
         "fr": {
@@ -7691,6 +7771,16 @@
         }
       }
     },
+    "Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays in the Keychain on this device. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un stockage que vous avez déjà, pour tous les appareils. Seuls des fichiers chiffrés sont stockés dans ce dossier. Utilisez un mot de passe d’application si le serveur en propose ; il reste dans le trousseau de cet appareil. Par exemple : l’adresse WebDAV d’un NAS Synology ou QNAP, https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud, https://webdav.pcloud.com/Encave pour pCloud."
+          }
+        }
+      }
+    },
     "Studio Look for Label Photos": {
       "localizations": {
         "fr": {
@@ -7811,12 +7901,12 @@
         }
       }
     },
-    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud or a relay, only encrypted files are stored, and nobody else can read them.": {
+    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud, a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via iCloud ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire."
+            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire."
           }
         }
       }
@@ -8141,6 +8231,26 @@
         }
       }
     },
+    "The WebDAV folder is full. Free some space on the server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier WebDAV est plein. Libérez de l’espace sur le serveur."
+          }
+        }
+      }
+    },
+    "The WebDAV server refused the username or password. Sign in again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur WebDAV a refusé le nom d’utilisateur ou le mot de passe. Reconnectez-vous."
+          }
+        }
+      }
+    },
     "The address of your SearXNG server, on your network or online.": {
       "localizations": {
         "fr": {
@@ -8197,6 +8307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les bouteilles ouvertes avec vos notes, les vins découverts ailleurs, votre liste d’achats et vos statistiques."
+          }
+        }
+      }
+    },
+    "The cellar is larger than this WebDAV server accepts in one file. Raise its upload limit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave dépasse ce que ce serveur WebDAV accepte en un seul fichier. Augmentez sa limite d’envoi."
           }
         }
       }
@@ -8551,6 +8671,16 @@
         }
       }
     },
+    "The server refused this username or password. With two-step verification, use an app password.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur a refusé ce nom d’utilisateur ou ce mot de passe. Avec la validation en deux étapes, utilisez un mot de passe d’application."
+          }
+        }
+      }
+    },
     "The storage cannot be reached. Syncing will resume when it can.": {
       "localizations": {
         "fr": {
@@ -8561,12 +8691,12 @@
         }
       }
     },
-    "The storage sees when devices sync, how much they send and, for a relay, their IP addresses.": {
+    "The storage sees when devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le stockage voit quand les appareils se synchronisent, combien ils envoient et, pour un relais, leurs adresses IP."
+            "value": "Le stockage voit quand les appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
           }
         }
       }
@@ -8687,6 +8817,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce serveur SearXNG ne répond pas en JSON. Ajoutez json sous search: formats: dans son settings.yml, puis redémarrez-le."
+          }
+        }
+      }
+    },
+    "This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette adresse ne répond pas comme un dossier WebDAV. Vérifiez l’adresse et que WebDAV est activé sur le serveur."
           }
         }
       }
@@ -8901,12 +9041,12 @@
         }
       }
     },
-    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), or enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi, or when you enter the same relay on them.": {
+    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi, or when you enter the same storage on them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), ou saisissez l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, ou quand vous y saisissez le même relais."
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, ou quand vous y saisissez le même stockage."
           }
         }
       }
@@ -9281,6 +9421,16 @@
         }
       }
     },
+    "Username": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom d’utilisateur"
+          }
+        }
+      }
+    },
     "Uses this picture for the wine.": {
       "localizations": {
         "fr": {
@@ -9397,6 +9547,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche web"
+          }
+        }
+      }
+    },
+    "WebDAV folder": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier WebDAV"
+          }
+        }
+      }
+    },
+    "WebDAV folder (NAS, Nextcloud, pCloud…)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier WebDAV (NAS, Nextcloud, pCloud…)"
           }
         }
       }
