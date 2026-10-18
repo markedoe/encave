@@ -4,6 +4,8 @@ import SwiftUI
 struct WineDetailView: View {
     @Environment(CellarModel.self) private var model
     let wineID: UUID
+    @State private var searchingOnline = false
+    private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
         if let wine = model.cellar.wines[wineID] {
@@ -97,6 +99,15 @@ struct WineDetailView: View {
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
+                    if webSearchEnabled {
+                        Button {
+                            searchingOnline = true
+                        } label: {
+                            Label("Search Online", systemImage: "globe")
+                        }
+                        .accessibilityHint(Text("Shows the search terms before anything is sent."))
+                        .accessibilityIdentifier("action.wine.searchOnline")
+                    }
                 }
 
                 MorePhotosSection(wine: wine)
@@ -159,6 +170,18 @@ struct WineDetailView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            .sheet(isPresented: $searchingOnline) {
+                WebSearchView(
+                    terms: WebSearchQuery.terms(for: wine, wineWord: String(localized: "wine", comment: "Added to web search terms")),
+                    current: WineDetails(wine), vintage: wine.vintage
+                ) { details, fields in
+                    model.update { cellar in
+                        guard var updated = cellar.wines[wineID] else { return }
+                        updated.apply(details, fields: fields)
+                        try cellar.updateWine(updated)
+                    }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {

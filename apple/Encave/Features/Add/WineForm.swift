@@ -80,6 +80,9 @@ struct WineFormSections: View {
     var focusName = false
     /// Drinking window and wine notes, hidden when noting a wine found elsewhere.
     var showsCellarDetails = true
+    /// Opens Search Online, presented by the screen. Shown only when web search is set up.
+    var onSearchOnline: (() -> Void)?
+    private let webSearch = WebSearchSettings.load()
 
     private let currentYear = Calendar.current.component(.year, from: .now)
 
@@ -135,6 +138,19 @@ struct WineFormSections: View {
             Text("Origin")
         } footer: {
             Text("Optional. Makes search and food pairing better. Separate grapes with commas.")
+        }
+
+        if webSearch.isEnabled, let onSearchOnline {
+            Section {
+                Button(action: onSearchOnline) {
+                    Label("Search Online", systemImage: "globe")
+                }
+                .disabled(!draft.isValid)
+                .accessibilityIdentifier("form.searchOnline")
+            } footer: {
+                let serviceName = webSearch.service.name
+                Text("Finds this wine on the web with \(serviceName) to complete its details. You see the search terms before they are sent.")
+            }
         }
 
         if showsCellarDetails {
@@ -209,6 +225,7 @@ struct EditWineView: View {
     @Environment(\.dismiss) private var dismiss
     let wineID: UUID
     @State private var draft = WineDraft()
+    @State private var searchingOnline = false
     @State private var loaded = false
     @State private var newPhoto: Data?
     @State private var photoRemoved = false
@@ -216,10 +233,11 @@ struct EditWineView: View {
     var body: some View {
         NavigationStack {
             Form {
-                WineFormSections(draft: $draft)
+                WineFormSections(draft: $draft, onSearchOnline: { searchingOnline = true })
                 PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
             }
             .formStyle(.grouped)
+            .webSearchSheet(isPresented: $searchingOnline, draft: $draft)
             .navigationTitle("Edit Wine")
             .inlineTitle()
             .toolbar {

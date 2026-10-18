@@ -136,6 +136,8 @@ struct SettingsView: View {
 
             AISettingsSection()
 
+            WebSearchSettingsSection()
+
             Section {
                 if model.sync.otherDevices.isEmpty {
                     Label("Your cellar is stored only on this device.", systemImage: "lock.shield")

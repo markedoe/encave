@@ -311,6 +311,46 @@
         }
       }
     },
+    "%lld results": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld result"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld results"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld résultat"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld résultats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld stars": {
       "localizations": {
         "fr": {
@@ -327,6 +367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "**Sauvegarder (JSON)** enregistre tout : vins, bouteilles, casiers, dégustations et découvertes. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve déjà n’est remplacé."
+          }
+        }
+      }
+    },
+    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080`. Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080`. Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
           }
         }
       }
@@ -961,6 +1011,16 @@
         }
       }
     },
+    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher."
+          }
+        }
+      }
+    },
     "Apart from sync, the only data that can leave the device is the label photo, and only if you set up an AI service yourself.": {
       "localizations": {
         "fr": {
@@ -1007,6 +1067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apple Intelligence n’est pas disponible sur cet appareil pour le moment."
+          }
+        }
+      }
+    },
+    "Apple Intelligence reads these results on this device and proposes details. The results are not sent anywhere else. Check each suggestion: web pages can be wrong.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence lit ces résultats sur cet appareil et propose des détails. Les résultats ne sont envoyés nulle part ailleurs. Vérifiez chaque suggestion : les pages web peuvent se tromper."
           }
         }
       }
@@ -1641,6 +1711,16 @@
         }
       }
     },
+    "Chablis wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin Chablis"
+          }
+        }
+      }
+    },
     "Change": {
       "localizations": {
         "fr": {
@@ -1817,6 +1897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un casier pour savoir exactement où sont les bouteilles, ou indiquez où elles sont rangées."
+          }
+        }
+      }
+    },
+    "Choose a service": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir un service"
           }
         }
       }
@@ -2001,6 +2091,16 @@
         }
       }
     },
+    "Complete a wine's details from the web, with the search service you choose.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complétez la fiche d’un vin depuis le web, avec le service de recherche de votre choix."
+          }
+        }
+      }
+    },
     "Complete with AI": {
       "localizations": {
         "fr": {
@@ -2127,6 +2227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créée sur le site du fournisseur. Conservée dans le trousseau de cet appareil."
+          }
+        }
+      }
+    },
+    "Created on the service's website. Stored in the Keychain on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée sur le site du service. Conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -2901,6 +3011,16 @@
         }
       }
     },
+    "Enter the full server address, starting with http:// or https://.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez l’adresse complète du serveur, commençant par http:// ou https://."
+          }
+        }
+      }
+    },
     "Erase all data": {
       "localizations": {
         "fr": {
@@ -3081,6 +3201,16 @@
         }
       }
     },
+    "Finds this wine on the web with %@ to complete its details. You see the search terms before they are sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cherche ce vin sur le web avec %@ pour compléter sa fiche. Vous voyez les termes de recherche avant leur envoi."
+          }
+        }
+      }
+    },
     "Fine tannins, fresh acidity": {
       "localizations": {
         "fr": {
@@ -3187,6 +3317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muté"
+          }
+        }
+      }
+    },
+    "Found: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvé : %@"
           }
         }
       }
@@ -3561,6 +3701,16 @@
         }
       }
     },
+    "How to set up web search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment configurer la recherche web"
+          }
+        }
+      }
+    },
     "How was it?": {
       "localizations": {
         "fr": {
@@ -3677,6 +3827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Installer Ollama"
+          }
+        }
+      }
+    },
+    "Install SearXNG": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer SearXNG"
           }
         }
       }
@@ -4107,6 +4267,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une bouteille vous a plu chez des amis ou au restaurant ? Scannez-la pour vous en souvenir, ajoutez des notes et des tags, et mettez-la sur votre liste d’achats."
+          }
+        }
+      }
+    },
+    "Links open in your browser.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les liens s’ouvrent dans votre navigateur."
           }
         }
       }
@@ -4551,6 +4721,16 @@
         }
       }
     },
+    "No pages found. Try fewer words.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune page trouvée. Essayez avec moins de mots."
+          }
+        }
+      }
+    },
     "No rack": {
       "localizations": {
         "fr": {
@@ -4567,6 +4747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun casier"
+          }
+        }
+      }
+    },
+    "No suggestions this time. Try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de suggestion cette fois. Réessayez."
           }
         }
       }
@@ -4681,6 +4871,16 @@
         }
       }
     },
+    "Not working": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne fonctionne pas"
+          }
+        }
+      }
+    },
     "Notes": {
       "localizations": {
         "fr": {
@@ -4697,6 +4897,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notes sur ce vin"
+          }
+        }
+      }
+    },
+    "Nothing is looked up online until you choose a service in **Settings → Web Search**.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien n’est cherché en ligne tant que vous n’avez pas choisi un service dans **Réglages → Recherche web**."
+          }
+        }
+      }
+    },
+    "Nothing new in these results.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien de nouveau dans ces résultats."
           }
         }
       }
@@ -4731,6 +4951,26 @@
         }
       }
     },
+    "Now: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actuel : %@"
+          }
+        }
+      }
+    },
+    "Now: not set": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actuel : non renseigné"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "fr": {
@@ -4757,6 +4997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Désactivée"
+          }
+        }
+      }
+    },
+    "Off by default": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivée par défaut"
           }
         }
       }
@@ -4791,12 +5041,32 @@
         }
       }
     },
+    "On a wine's page, or while adding or editing a wine, tap **Search Online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur."
+          }
+        }
+      }
+    },
     "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées."
+          }
+        }
+      }
+    },
+    "On devices with Apple Intelligence, **Suggest Details** reads the results on the device and proposes the producer, region, appellation, country, grapes and drinking window. Each suggestion is shown next to the current value, and only the ones you select are used. The results are not sent to any AI service.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur les appareils avec Apple Intelligence, **Suggérer des détails** lit les résultats sur l’appareil et propose le producteur, la région, l’appellation, le pays, les cépages et la fenêtre de dégustation. Chaque suggestion s’affiche à côté de la valeur actuelle, et seules celles que vous choisissez sont utilisées. Les résultats ne sont envoyés à aucun service d’IA."
           }
         }
       }
@@ -5041,6 +5311,36 @@
         }
       }
     },
+    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine. You see them and can change them first. Your cellar, notes and prices are never sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés."
+          }
+        }
+      }
+    },
+    "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime. Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
+          }
+        }
+      }
+    },
+    "Only these words are sent, to %@, when you tap Search. Change them if you like. Nothing else about this wine or your cellar is sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuls ces mots sont envoyés, à %@, quand vous touchez Chercher. Modifiez-les si vous le souhaitez. Rien d’autre sur ce vin ou votre cave n’est envoyé."
+          }
+        }
+      }
+    },
     "Open Encave": {
       "localizations": {
         "fr": {
@@ -5057,6 +5357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir le vin"
+          }
+        }
+      }
+    },
+    "Open in Browser": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir dans le navigateur"
           }
         }
       }
@@ -5091,6 +5401,16 @@
         }
       }
     },
+    "Opens the page in your browser.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre la page dans votre navigateur."
+          }
+        }
+      }
+    },
     "Opens the wine in Encave.": {
       "localizations": {
         "fr": {
@@ -5107,6 +5427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Facultatif. Pour retrouver où racheter un vin et connaître la valeur de votre cave."
+          }
+        }
+      }
+    },
+    "Optional. Looks up a wine on the web to complete its details, with the search service you choose.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Cherche un vin sur le web pour compléter sa fiche, avec le service de recherche de votre choix."
           }
         }
       }
@@ -5621,6 +5951,16 @@
         }
       }
     },
+    "Reading the results…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture des résultats…"
+          }
+        }
+      }
+    },
     "Reads the label on this device to fill in the name and vintage.": {
       "localizations": {
         "fr": {
@@ -5941,6 +6281,16 @@
         }
       }
     },
+    "Results": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résultats"
+          }
+        }
+      }
+    },
     "Roast duck": {
       "localizations": {
         "fr": {
@@ -6141,6 +6491,46 @@
         }
       }
     },
+    "SearXNG must answer in JSON: add json under search: formats: in its settings.yml.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SearXNG doit répondre en JSON : ajoutez json sous search: formats: dans son settings.yml."
+          }
+        }
+      }
+    },
+    "Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher"
+          }
+        }
+      }
+    },
+    "Search Online": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher en ligne"
+          }
+        }
+      }
+    },
+    "Search Service": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service de recherche"
+          }
+        }
+      }
+    },
     "Search in the Journal also looks in the place, notes and tags.": {
       "localizations": {
         "fr": {
@@ -6161,12 +6551,52 @@
         }
       }
     },
+    "Search terms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Termes de recherche"
+          }
+        }
+      }
+    },
     "Search your wines": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Rechercher dans vos vins"
+          }
+        }
+      }
+    },
+    "Searches for “Chablis wine” to check the settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cherche « vin Chablis » pour vérifier les réglages."
+          }
+        }
+      }
+    },
+    "Searching online": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher en ligne"
+          }
+        }
+      }
+    },
+    "Searching…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche…"
           }
         }
       }
@@ -6197,6 +6627,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un vin"
+          }
+        }
+      }
+    },
+    "Select the details to use. The others stay as they are.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez les détails à utiliser. Les autres restent tels quels."
           }
         }
       }
@@ -6511,6 +6951,16 @@
         }
       }
     },
+    "Shows the search terms before anything is sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les termes de recherche avant tout envoi."
+          }
+        }
+      }
+    },
     "Shows where its bottles are in the rack.": {
       "localizations": {
         "fr": {
@@ -6747,6 +7197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Type et origine"
+          }
+        }
+      }
+    },
+    "Suggest Details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggérer des détails"
           }
         }
       }
@@ -7091,6 +7551,16 @@
         }
       }
     },
+    "Test Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tester la recherche"
+          }
+        }
+      }
+    },
     "Test data": {
       "localizations": {
         "fr": {
@@ -7141,12 +7611,32 @@
         }
       }
     },
+    "The address of your SearXNG server, on your network or online.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’adresse de votre serveur SearXNG, sur votre réseau ou en ligne."
+          }
+        }
+      }
+    },
     "The answer from the AI service could not be read.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La réponse du service d’IA est illisible."
+          }
+        }
+      }
+    },
+    "The answer from the search service could not be read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La réponse du service de recherche est illisible."
           }
         }
       }
@@ -7461,6 +7951,46 @@
         }
       }
     },
+    "The search engine that looks up a wine on the web when you tap Search Online.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le moteur qui cherche un vin sur le web quand vous touchez Chercher en ligne."
+          }
+        }
+      }
+    },
+    "The search service could not be reached. Check the connection and the address.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le service de recherche est injoignable. Vérifiez la connexion et l’adresse."
+          }
+        }
+      }
+    },
+    "The search service refused the key. Check it in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le service de recherche a refusé la clé. Vérifiez-la dans les réglages."
+          }
+        }
+      }
+    },
+    "The search service returned error %lld.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le service de recherche a renvoyé l’erreur %lld."
+          }
+        }
+      }
+    },
     "The storage cannot be reached. Syncing will resume when it can.": {
       "localizations": {
         "fr": {
@@ -7551,6 +8081,26 @@
         }
       }
     },
+    "These results are too long for the model on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ces résultats sont trop longs pour le modèle de cet appareil."
+          }
+        }
+      }
+    },
+    "These results cannot be read on this device. Try other search terms.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ces résultats ne peuvent pas être lus sur cet appareil. Essayez d’autres termes de recherche."
+          }
+        }
+      }
+    },
     "They Match": {
       "localizations": {
         "fr": {
@@ -7567,6 +8117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réflexion…"
+          }
+        }
+      }
+    },
+    "This SearXNG server does not answer in JSON. Add json under search: formats: in its settings.yml, then restart it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce serveur SearXNG ne répond pas en JSON. Ajoutez json sous search: formats: dans son settings.yml, puis redémarrez-le."
           }
         }
       }
@@ -7821,6 +8381,16 @@
         }
       }
     },
+    "Too many searches for now, or the free allowance is used up. Try again later.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop de recherches pour le moment, ou le quota gratuit est épuisé. Réessayez plus tard."
+          }
+        }
+      }
+    },
     "Travel": {
       "localizations": {
         "fr": {
@@ -8001,6 +8571,16 @@
         }
       }
     },
+    "Use Selected Details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser les détails choisis"
+          }
+        }
+      }
+    },
     "Use This Label": {
       "localizations": {
         "fr": {
@@ -8167,6 +8747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En attente de l’autre appareil…"
+          }
+        }
+      }
+    },
+    "Web Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche web"
           }
         }
       }
@@ -8967,6 +9557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Démarrer avec vLLM"
+          }
+        }
+      }
+    },
+    "wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin"
           }
         }
       }

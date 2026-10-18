@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Topics of the in-app help. Screens open the topic that matches them.
 enum HelpTopic: String, CaseIterable, Identifiable, Hashable {
-    case start, adding, scanning, racks, tonight, drinking, discoveries, devices, ai, data, privacy, shortcuts
+    case start, adding, scanning, racks, tonight, drinking, discoveries, devices, ai, webSearch, data, privacy, shortcuts
     var id: String { rawValue }
 }
 
@@ -111,6 +111,14 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Server URL", body: "Leave it empty to use the provider's usual address. Change it only if the provider gives you another one, for example for its China region."),
                 HelpSection(title: "What is sent", body: "Only the label photo, when you scan a label or tap **Complete with AI**. Your cellar, notes and prices are never sent."),
             ]),
+            HelpArticle(topic: .webSearch, title: "Searching online",
+                        summary: "Complete a wine's details from the web, with the search service you choose.", systemImage: "globe", sections: [
+                HelpSection(title: "Off by default", body: "Nothing is looked up online until you choose a service in **Settings → Web Search**."),
+                HelpSection(title: "Choose a service", body: "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080`. Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check."),
+                HelpSection(title: "Search Online", body: "On a wine's page, or while adding or editing a wine, tap **Search Online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.", systemImage: "globe"),
+                HelpSection(title: "Suggest Details", body: "On devices with Apple Intelligence, **Suggest Details** reads the results on the device and proposes the producer, region, appellation, country, grapes and drinking window. Each suggestion is shown next to the current value, and only the ones you select are used. The results are not sent to any AI service.", systemImage: "sparkles"),
+                HelpSection(title: "What is sent", body: "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device."),
+            ]),
             HelpArticle(topic: .data, title: "Backup, export and import",
                         summary: "Keep a copy and move your cellar.", systemImage: "externaldrive", sections: [
                 HelpSection(title: "Back up", body: "**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced."),
@@ -123,7 +131,7 @@ struct HelpArticle: Identifiable {
                         summary: "Your cellar stays yours.", systemImage: "lock.shield", sections: [
                 HelpSection(body: "Your cellar is stored only on your devices. There is no account, no tracking and no advertising."),
                 HelpSection(body: "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud or a relay, only encrypted files are stored, and nobody else can read them."),
-                HelpSection(body: "Apart from sync, the only data that can leave the device is the label photo, and only if you set up an AI service yourself."),
+                HelpSection(body: "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search."),
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",
