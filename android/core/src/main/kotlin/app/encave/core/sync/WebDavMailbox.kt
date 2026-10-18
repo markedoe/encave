@@ -45,9 +45,14 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
      */
     suspend fun check() {
         val quick = client.newBuilder().callTimeout(CHECK_TIMEOUT_S, TimeUnit.SECONDS).build()
-        val (_, made) = send("MKCOL", baseUrl, client = quick)
-        if (made !in listOf(200, 201, 204, 405)) throw RemoteSyncException(RemoteSyncError.Unavailable("cannot create the folder ($made)"))
-        val (_, found) = send("PROPFIND", baseUrl, mapOf("Depth" to "0"), PROPFIND_BODY, XML, quick)
+        // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
+        suspend fun propfind() = send("PROPFIND", baseUrl, mapOf("Depth" to "0"), PROPFIND_BODY, XML, quick).second
+        var found = propfind()
+        if (found == 404) {
+            val (_, made) = send("MKCOL", baseUrl, client = quick)
+            if (made !in listOf(200, 201, 204, 405)) throw RemoteSyncException(RemoteSyncError.Unavailable("cannot create the folder ($made)"))
+            found = propfind()
+        }
         if (found != 207) throw RemoteSyncException(RemoteSyncError.Unavailable("not a WebDAV folder ($found)"))
         val file = baseUrl.resolve("encave-check-" + ByteArray(4).also { random.nextBytes(it) }.hex())!!
         val content = "Encave checks that it can write here. This file can be deleted.\n".toByteArray()

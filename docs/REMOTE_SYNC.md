@@ -462,7 +462,8 @@ invitee pairs once.
 **Status: done** (`WebDAVMailbox.swift`, `WebDavMailbox.kt`; mapping in
 [SYNC.md](SYNC.md), section 8, "Storages"). Generic WebDAV with a username and
 app password covers NAS boxes, Nextcloud and pCloud
-(`webdav.pcloud.com`, or `ewebdav.pcloud.com` for accounts in the EU region)
+(`webdav.pcloud.com`, or `ewebdav.pcloud.com` for accounts in the EU region
+**[unverified]**)
 without registering any app. Each device signs in with its own login; only the
 folder URL travels in grants. `If-None-Match: *` is sent on every `PUT`, but
 the protocol stays safe on a server that ignores it (overwrites are by the

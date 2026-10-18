@@ -83,10 +83,15 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// Checks the folder and the login before turning sync on: creates the folder
     /// if needed, then writes, reads back and deletes a test file.
     public func check() async throws {
-        let (_, made) = try await send("MKCOL", baseURL, timeout: 15)
-        guard [200, 201, 204, 405].contains(made) else { throw RemoteSyncError.unavailable("cannot create the folder (\(made))") }
-        let (_, found) = try await send("PROPFIND", baseURL, headers: ["Depth": "0", "Content-Type": "application/xml; charset=utf-8"],
-                                        body: Self.propfindBody, timeout: 15)
+        // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
+        let propfind = { try await self.send("PROPFIND", self.baseURL, headers: ["Depth": "0", "Content-Type": "application/xml; charset=utf-8"],
+                                             body: Self.propfindBody, timeout: 15).1 }
+        var found = try await propfind()
+        if found == 404 {
+            let (_, made) = try await send("MKCOL", baseURL, timeout: 15)
+            guard [200, 201, 204, 405].contains(made) else { throw RemoteSyncError.unavailable("cannot create the folder (\(made))") }
+            found = try await propfind()
+        }
         guard found == 207 else { throw RemoteSyncError.unavailable("not a WebDAV folder (\(found))") }
         let name = "encave-check-" + Data((0..<4).map { _ in UInt8.random(in: .min ... .max) }).hexString
         let file = baseURL.appendingPathComponent(name)

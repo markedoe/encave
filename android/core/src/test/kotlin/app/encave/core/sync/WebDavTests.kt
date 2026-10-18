@@ -238,7 +238,7 @@ class WebDavTests {
         val server = server()
         server.store().check()
         assertTrue(server.allFiles.isEmpty())
-        assertEquals("MKCOL ${server.basePath}", server.requests.first())
+        assertEquals(listOf("PROPFIND ${server.basePath}", "MKCOL ${server.basePath}"), server.requests.take(2))
         server.store().check()
     }
 

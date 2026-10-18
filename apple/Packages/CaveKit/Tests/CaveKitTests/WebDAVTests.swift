@@ -239,7 +239,7 @@ final class FakeWebDAVProtocol: URLProtocol {
         let server = FakeWebDAV()
         try await server.store().check()
         #expect(server.allFiles.isEmpty)
-        #expect(server.requests.first == "MKCOL \(server.basePath)")
+        #expect(server.requests.prefix(2) == ["PROPFIND \(server.basePath)", "MKCOL \(server.basePath)"])
         // Twice is fine: the folder exists.
         try await server.store().check()
     }
