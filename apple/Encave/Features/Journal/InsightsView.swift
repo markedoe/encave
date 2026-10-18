@@ -21,6 +21,11 @@ struct InsightsView: View {
                         StatTile(value: (stats.valueByCurrency[currency] ?? 0).formatted(.currency(code: currency).precision(.fractionLength(0))),
                                  caption: "purchase value", systemImage: "banknote")
                     }
+                    ForEach(stats.estimatedValueByCurrency.keys.sorted(), id: \.self) { currency in
+                        let pricedCount = stats.pricedBottleCount, bottleCount = stats.bottleCount
+                        StatTile(value: (stats.estimatedValueByCurrency[currency] ?? 0).formatted(.currency(code: currency).precision(.fractionLength(0))),
+                                 caption: "estimated value today, \(pricedCount) of \(bottleCount) bottles", systemImage: "chart.line.uptrend.xyaxis")
+                    }
                 }
 
                 DrinkDownCard()

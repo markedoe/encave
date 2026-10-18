@@ -85,7 +85,7 @@ struct WebSearchView: View {
                 if !results.isEmpty {
                     Section {
                         ForEach(results) { result in
-                            ResultRow(result: result)
+                            WebResultRow(result: result)
                         }
                     } header: {
                         Text("Results")
@@ -217,7 +217,7 @@ struct WebSearchView: View {
 }
 
 /// A page found: title, snippet and site, opening in the browser.
-private struct ResultRow: View {
+struct WebResultRow: View {
     @Environment(\.openURL) private var openURL
     let result: WebSearchResult
 

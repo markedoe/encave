@@ -5,6 +5,7 @@ struct WineDetailView: View {
     @Environment(CellarModel.self) private var model
     let wineID: UUID
     @State private var searchingOnline = false
+    @State private var findingPrice = false
     private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
@@ -71,6 +72,10 @@ struct WineDetailView: View {
                             Label("Decanting", systemImage: "drop")
                         }
                     }
+                }
+
+                if wine.currentPrice != nil || webSearchEnabled {
+                    priceSection(wine)
                 }
 
                 Section("Details") {
@@ -170,6 +175,17 @@ struct WineDetailView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            .sheet(isPresented: $findingPrice) {
+                let sizeML = usualSize(of: bottles)
+                PriceSearchView(
+                    terms: WebSearchQuery.priceTerms(for: wine, sizeML: sizeML,
+                                                     priceWord: String(localized: "price", comment: "Added to price search terms")),
+                    sizeML: sizeML, currentPrice: wine.currentPrice,
+                    currency: wine.currentPriceCurrency ?? model.cellar.settings.currency
+                ) { price, currency in
+                    setPrice(price, currency: currency)
+                }
+            }
             .sheet(isPresented: $searchingOnline) {
                 WebSearchView(
                     terms: WebSearchQuery.terms(for: wine, wineWord: String(localized: "wine", comment: "Added to web search terms")),
@@ -207,6 +223,59 @@ struct WineDetailView: View {
         let low = Measurement(value: Double(advice.minTemperature), unit: UnitTemperature.celsius)
         let high = Measurement(value: Double(advice.maxTemperature), unit: UnitTemperature.celsius)
         return "\(low.formatted(style)) – \(high.formatted(style))"
+    }
+
+    @ViewBuilder
+    private func priceSection(_ wine: Wine) -> some View {
+        Section {
+            if let price = wine.currentPrice {
+                LabeledContent {
+                    Text(verbatim: price.formatted(.currency(code: wine.currentPriceCurrency ?? model.cellar.settings.currency)))
+                        .monospacedDigit()
+                } label: {
+                    Label("Price today", systemImage: "tag")
+                }
+                if let date = wine.currentPriceDate {
+                    Text("Set on \(date.formatted(date: .abbreviated, time: .omitted)), for one bottle.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if webSearchEnabled {
+                Button {
+                    findingPrice = true
+                } label: {
+                    Label("Find Current Price", systemImage: "magnifyingglass.circle")
+                }
+                .accessibilityHint(Text("Shows the search terms before anything is sent."))
+                .accessibilityIdentifier("action.wine.findPrice")
+            }
+            if wine.currentPrice != nil {
+                Button("Remove Price", systemImage: "xmark.circle", role: .destructive) {
+                    setPrice(nil, currency: nil)
+                }
+            }
+        } header: {
+            Text("Value")
+        } footer: {
+            Text("What a bottle sells for today. Counted in the estimated value of your cellar in Insights.")
+        }
+    }
+
+    /// The size of most of the wine's bottles, 75 cl when there are none.
+    private func usualSize(of bottles: [Bottle]) -> Int {
+        let counts = Dictionary(grouping: bottles, by: \.sizeML).mapValues(\.count)
+        return counts.max { $0.value != $1.value ? $0.value < $1.value : $0.key > $1.key }?.key ?? 750
+    }
+
+    private func setPrice(_ price: Decimal?, currency: String?) {
+        model.update { cellar in
+            guard var wine = cellar.wines[wineID] else { return }
+            wine.currentPrice = price
+            wine.currentPriceCurrency = price == nil ? nil : currency
+            wine.currentPriceDate = price == nil ? nil : .now
+            try cellar.updateWine(wine)
+        }
     }
 
     @ViewBuilder

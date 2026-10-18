@@ -1061,6 +1061,16 @@
         }
       }
     },
+    "Apple Intelligence found no price that fits. The middle price is kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence n’a trouvé aucun prix qui convienne. Le prix médian est conservé."
+          }
+        }
+      }
+    },
     "Apple Intelligence is not available on this device right now.": {
       "localizations": {
         "fr": {
@@ -1077,6 +1087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apple Intelligence lit ces résultats sur cet appareil et propose des détails. Les résultats ne sont envoyés nulle part ailleurs. Vérifiez chaque suggestion : les pages web peuvent se tromper."
+          }
+        }
+      }
+    },
+    "Apple Intelligence suggests %@ from these prices, on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence propose %@ d’après ces prix, sur cet appareil."
           }
         }
       }
@@ -2251,6 +2271,16 @@
         }
       }
     },
+    "Current price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix actuel"
+          }
+        }
+      }
+    },
     "Date": {
       "localizations": {
         "fr": {
@@ -3051,6 +3081,16 @@
         }
       }
     },
+    "Estimate on This Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimer sur cet appareil"
+          }
+        }
+      }
+    },
     "Estimated from the style and the vintage: ready %lld years after the harvest, then at its best for %lld years. Adjust it if the producer or a guide says otherwise.": {
       "localizations": {
         "fr": {
@@ -3167,6 +3207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplir un vin à partir d’une photo de son étiquette."
+          }
+        }
+      }
+    },
+    "Find Current Price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver le prix actuel"
           }
         }
       }
@@ -4081,6 +4131,16 @@
         }
       }
     },
+    "Kept with the wine and used for the estimated value of your cellar in Insights. Web prices vary: check them on the sites.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardé avec le vin et utilisé pour la valeur estimée de votre cave dans les Statistiques. Les prix du web varient : vérifiez-les sur les sites."
+          }
+        }
+      }
+    },
     "Keyboard shortcuts": {
       "localizations": {
         "fr": {
@@ -4701,6 +4761,16 @@
         }
       }
     },
+    "No estimate this time. The middle price is kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas d’estimation cette fois. Le prix médian est conservé."
+          }
+        }
+      }
+    },
     "No free place in this rack for bottles without a place.": {
       "localizations": {
         "fr": {
@@ -4727,6 +4797,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune page trouvée. Essayez avec moins de mots."
+          }
+        }
+      }
+    },
+    "No price in %@ was found. Tap a price below to use it with its currency.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun prix en %@ n’a été trouvé. Touchez un prix ci-dessous pour l’utiliser avec sa devise."
+          }
+        }
+      }
+    },
+    "No prices in these results. Try other words, or open a result below.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun prix dans ces résultats. Essayez d’autres mots, ou ouvrez un résultat ci-dessous."
           }
         }
       }
@@ -5041,6 +5131,16 @@
         }
       }
     },
+    "On a wine's page, **Find Current Price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save Price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**. With Apple Intelligence, **Estimate on This Device** reads the prices on the device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
+          }
+        }
+      }
+    },
     "On a wine's page, or while adding or editing a wine, tap **Search Online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.": {
       "localizations": {
         "fr": {
@@ -5311,22 +5411,22 @@
         }
       }
     },
-    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine. You see them and can change them first. Your cellar, notes and prices are never sent.": {
+    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés."
+            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés."
           }
         }
       }
     },
-    "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device.": {
+    "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime. Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, et pour un prix le format de la bouteille et le mot « prix ». Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -5751,6 +5851,36 @@
         }
       }
     },
+    "Price today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix actuel"
+          }
+        }
+      }
+    },
+    "Prices for several bottles, delivery or another bottle size are left out. Tap a price to use it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. Touchez un prix pour l’utiliser."
+          }
+        }
+      }
+    },
+    "Prices found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix trouvés"
+          }
+        }
+      }
+    },
     "Printed inventory": {
       "localizations": {
         "fr": {
@@ -5947,6 +6077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lecture de l’étiquette…"
+          }
+        }
+      }
+    },
+    "Reading the prices…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture des prix…"
           }
         }
       }
@@ -6201,6 +6341,16 @@
         }
       }
     },
+    "Remove Price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer le prix"
+          }
+        }
+      }
+    },
     "Remove from List": {
       "localizations": {
         "fr": {
@@ -6387,6 +6537,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrer"
+          }
+        }
+      }
+    },
+    "Save Price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer le prix"
           }
         }
       }
@@ -6687,6 +6847,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Définir une fenêtre de dégustation"
+          }
+        }
+      }
+    },
+    "Set on %@, for one bottle.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fixé le %@, pour une bouteille."
           }
         }
       }
@@ -7821,6 +7991,16 @@
         }
       }
     },
+    "The middle value of %lld prices found in %@. Change it if you like.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La valeur médiane de %lld prix trouvés en %@. Modifiez-la si vous le souhaitez."
+          }
+        }
+      }
+    },
     "The model declined to read this photo.": {
       "localizations": {
         "fr": {
@@ -7837,6 +8017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le nom sur l’étiquette, sans le millésime. Obligatoire."
+          }
+        }
+      }
+    },
+    "The only price found in %@. Change it if you like.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le seul prix trouvé en %@. Modifiez-le si vous le souhaitez."
           }
         }
       }
@@ -8671,12 +8861,32 @@
         }
       }
     },
+    "Uses this price.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilise ce prix."
+          }
+        }
+      }
+    },
     "Valid for 2 minutes, for one device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Valable 2 minutes, pour un seul appareil."
+          }
+        }
+      }
+    },
+    "Value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur"
           }
         }
       }
@@ -8757,6 +8967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche web"
+          }
+        }
+      }
+    },
+    "What a bottle sells for today. Counted in the estimated value of your cellar in Insights.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le prix d’une bouteille aujourd’hui. Compté dans la valeur estimée de votre cave dans les Statistiques."
           }
         }
       }
@@ -9451,6 +9671,16 @@
         }
       }
     },
+    "estimated value today, %lld of %lld bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "valeur estimée aujourd’hui, %lld bouteilles sur %lld"
+          }
+        }
+      }
+    },
     "front": {
       "localizations": {
         "fr": {
@@ -9487,6 +9717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "milieu"
+          }
+        }
+      }
+    },
+    "price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "prix"
           }
         }
       }
