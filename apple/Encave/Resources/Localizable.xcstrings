@@ -2391,6 +2391,16 @@
         }
       }
     },
+    "Details completed by AI: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fiche complétée par l’IA : %@"
+          }
+        }
+      }
+    },
     "Devices": {
       "localizations": {
         "fr": {

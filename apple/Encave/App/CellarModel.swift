@@ -286,6 +286,31 @@ final class CellarModel {
         }
     }
 
+    /// The AI answered after the wine was saved: fills the fields still as they were
+    /// at saving (the user may have edited others since), with Undo.
+    func completeWine(_ id: UUID, from before: Wine, to after: Wine) {
+        guard let live = cellar.wines[id] else { return }
+        var updated = live
+        func take<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
+            if live[keyPath: field] == before[keyPath: field] { updated[keyPath: field] = after[keyPath: field] }
+        }
+        take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
+        take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
+        guard updated != live, update({ try $0.updateWine(updated) }) else { return }
+        let completed = updated
+        showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
+            self?.update { cellar in
+                guard var wine = cellar.wines[id] else { return }
+                func restore<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
+                    if wine[keyPath: field] == completed[keyPath: field] { wine[keyPath: field] = live[keyPath: field] }
+                }
+                restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
+                restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
+                try cellar.updateWine(wine)
+            }
+        }
+    }
+
     func showToast(_ message: String, undo: (@MainActor () -> Void)? = nil) {
         var toast = Toast(message: message)
         if let undo {

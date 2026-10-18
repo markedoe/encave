@@ -21,6 +21,7 @@ struct WineDraft: Equatable {
     var tags: [String] = []
     /// Not edited in the form, but kept.
     var extraPhotoIDs: [String]?
+    var coverPhotoID: String?
     /// A tag being typed, kept on save.
     var pendingTag = ""
 
@@ -44,6 +45,7 @@ struct WineDraft: Equatable {
         barcodes = wine.barcodes ?? []
         tags = wine.tags ?? []
         extraPhotoIDs = wine.extraPhotoIDs
+        coverPhotoID = wine.coverPhotoID
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -68,6 +70,7 @@ struct WineDraft: Equatable {
             tags: tags + pendingTag.split(separator: ",").map(String.init)
         )
         wine.extraPhotoIDs = extraPhotoIDs
+        wine.coverPhotoID = coverPhotoID
         return wine
     }
 }
@@ -250,7 +253,10 @@ struct EditWineView: View {
             wine.photoID = nil
         }
         // Photos added elsewhere while the form was open (another window, sync) stay.
-        wine.extraPhotoIDs = model.cellar.wines[wine.id]?.extraPhotoIDs ?? wine.extraPhotoIDs
+        if let live = model.cellar.wines[wine.id] {
+            wine.extraPhotoIDs = live.extraPhotoIDs
+            wine.coverPhotoID = live.coverPhotoID
+        }
         // A replaced photo file is removed by the cleanup at launch, after a grace period.
         guard model.update({ try $0.updateWine(wine) }) else { return }
         dismiss()

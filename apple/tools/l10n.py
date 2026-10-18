@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Details completed by AI: %@': 'Fiche complétée par l’IA : %@',
     'Another picture': 'Une autre image',
     "On the wine's page, **Change Picture…** shows instead an illustration made on this device with Image Playground (with Apple Intelligence), or a picture found on the internet if a search service is set up. The label photo is always kept.": 'Sur la fiche du vin, **Changer l’image…** affiche à la place une illustration créée sur cet appareil avec Image Playground (avec Apple Intelligence), ou une image trouvée sur internet si un service de recherche est configuré. La photo d’étiquette est toujours gardée.',
     'Wine Picture': 'Image du vin',

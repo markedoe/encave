@@ -249,6 +249,11 @@ struct AddBottleView: View {
         if added, let discoveryID = context.discoveryID {
             model.update { try $0.markBought(discoveryID) }
         }
+        if added, existingWine == nil {
+            var saved = draft
+            saved.photoID = wine.photoID
+            scan.completeLater(saved, in: model)
+        }
         dismiss()
     }
 }
