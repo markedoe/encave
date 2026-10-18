@@ -67,7 +67,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MorePhotosSection(viewModel: AppViewModel, wine: Wine) {
-    val photos = wine.extraPhotoIds.orEmpty().filter { viewModel.photos.exists(it) }
+    val photos = wine.extraPhotoIds.orEmpty().distinct().filter { viewModel.photos.exists(it) }
     var adding by remember { mutableStateOf(false) }
     var shown by remember { mutableStateOf<String?>(null) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->

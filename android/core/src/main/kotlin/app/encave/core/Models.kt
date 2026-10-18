@@ -90,11 +90,14 @@ data class Wine(
     /** True if the wine has this tag, ignoring case. */
     fun hasTag(tag: String): Boolean = tags.orEmpty().any { it.equals(tag, ignoreCase = true) }
 
-    /** Tags normalized and empty lists left out, as Swift's initializer keeps them. */
+    /**
+     * Tags normalized and empty lists left out, as Swift's initializer keeps them. Extra
+     * photos are named after their content, so the same picture added twice is kept once.
+     */
     fun normalized(): Wine {
         val cleanTags = normalizedTags(tags)
         val cleanBarcodes = barcodes?.ifEmpty { null }
-        val cleanExtras = extraPhotoIds?.ifEmpty { null }
+        val cleanExtras = extraPhotoIds?.distinct()?.ifEmpty { null }
         return if (cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds) this
         else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras)
     }

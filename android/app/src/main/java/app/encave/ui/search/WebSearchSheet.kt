@@ -134,10 +134,12 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
         scope.launch {
             val key = withContext(Dispatchers.IO) { preferences.apiKey(current.service) }
             runCatching { WebSearchClient.search(terms, current, key, count = if (price != null) 20 else 10) }
-                .onSuccess { found ->
+                .onSuccess { all ->
+                    // Lists are keyed by address: a page listed twice is shown once.
+                    val found = all.distinctBy { it.url }
                     results = found
                     if (price != null) {
-                        prices = PriceExtractor.prices(found, price.sizeML)
+                        prices = PriceExtractor.prices(found, price.sizeML).distinctBy { it.id }
                         PriceExtractor.suggested(prices, currency)?.let { priceText = it.toPlainString() }
                     }
                 }
