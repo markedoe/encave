@@ -111,7 +111,9 @@ class WebSearchTest {
             assertEquals("GET", request.method)
         }
         assertEquals("https://search.example.org/searx/search?q=a&format=json", SearXNGSearch("https://search.example.org/searx/").request("a", 5).url)
-        for (bad in listOf("nas.local:8080", "", "ftp://nas.local")) {
+        // Plain HTTP to a server on the internet would show the search terms to anyone on the way.
+        assertEquals("http://nas.home.arpa/search?q=a&format=json", SearXNGSearch("http://nas.home.arpa").request("a", 5).url)
+        for (bad in listOf("nas.local:8080", "", "ftp://nas.local", "http://search.example.org")) {
             assertEquals(WebSearchError.InvalidServerUrl, assertThrows<WebSearchError> { SearXNGSearch(bad) })
         }
     }

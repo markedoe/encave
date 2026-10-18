@@ -76,10 +76,10 @@ public struct SyncState: Codable, Equatable, Sendable {
         stamps[key] = Stamp(counter: clock, device: device, deleted: deleted)
     }
 
-    /// The largest counter a sender may use. Far below `UInt64.max`, so a device
-    /// can never be pushed to the point where its next change overflows, and exact
-    /// in JSON readers that use doubles.
-    public static let maxCounter: UInt64 = 1 << 53
+    /// The largest counter a sender may use (2^52). Far below `UInt64.max`, and half of
+    /// what a double holds exactly (2^53), so a device that accepted it still has room
+    /// for as many changes and its counters stay exact in JSON readers that use doubles.
+    public static let maxCounter: UInt64 = 1 << 52
 
     /// Refuses a state from another device whose counters are out of bounds: over
     /// `maxCounter`, or over the sender's own clock (it would make a later local

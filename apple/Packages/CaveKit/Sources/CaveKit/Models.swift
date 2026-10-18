@@ -28,8 +28,12 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var barcodes: [String]?
     /// The user's own groups ("Gift", "Birth year"). Nil rather than empty, like barcodes.
     public var tags: [String]?
-    /// More photos (back label, receipt, the bottle in its rack). Nil rather than empty.
-    public var extraPhotoIDs: [String]?
+    /// More photos (back label, receipt, the bottle in its rack). Nil rather than empty,
+    /// and each once: photos are named after their content, so the same picture added
+    /// twice is kept once (as in the Kotlin core).
+    public var extraPhotoIDs: [String]? {
+        didSet { extraPhotoIDs = Wine.uniquePhotoIDs(extraPhotoIDs) }
+    }
     /// What a 75 cl bottle (or the wine's usual size) sells for today, accepted by the user
     /// from a web search or typed: the amount, its currency code and the day it was set.
     public var currentPrice: Decimal?
@@ -69,9 +73,11 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         drinkUntil = try c.decodeIfPresent(Int.self, forKey: .drinkUntil)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         photoID = try c.decodeIfPresent(String.self, forKey: .photoID)
-        barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes)
-        tags = try c.decodeIfPresent([String].self, forKey: .tags)
-        extraPhotoIDs = try c.decodeIfPresent([String].self, forKey: .extraPhotoIDs)
+        // Normalized as the initializer does, and as the Kotlin core reads them, so both
+        // platforms hold and write back the same wine.
+        barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes).flatMap { $0.isEmpty ? nil : $0 }
+        tags = Wine.normalizedTags(try c.decodeIfPresent([String].self, forKey: .tags))
+        extraPhotoIDs = Wine.uniquePhotoIDs(try c.decodeIfPresent([String].self, forKey: .extraPhotoIDs))
         currentPrice = try c.decodeIfPresent(Decimal.self, forKey: .currentPrice)
         currentPriceCurrency = try c.decodeIfPresent(String.self, forKey: .currentPriceCurrency)
         currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
@@ -88,6 +94,13 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public static func normalizedTags(_ tags: [String]?) -> [String]? {
         let clean = Discovery.normalized(tags ?? [])
         return clean.isEmpty ? nil : clean
+    }
+
+    /// Each ID once, in the order given; nil when none are left.
+    public static func uniquePhotoIDs(_ ids: [String]?) -> [String]? {
+        var seen = Set<String>()
+        let unique = (ids ?? []).filter { seen.insert($0).inserted }
+        return unique.isEmpty ? nil : unique
     }
 
     /// True if the wine has this tag, ignoring case.
@@ -189,15 +202,19 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var rowColumns: [Int]?
 
     public static let maxDepth = 3
+    /// Largest number of rows, of cells in a row and of bottles in a bin. The editors
+    /// stay well below; a rack from another device or a file is cut to it, so a
+    /// damaged or hostile one cannot make every device allocate millions of cells.
+    public static let maxSize = 100
 
     public init(
         id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
         depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil
     ) {
         self.id = id; self.name = name; self.kind = kind
-        self.rows = max(1, rows); self.columns = max(1, columns)
-        self.depth = min(Rack.maxDepth, max(1, depth)); self.binCapacity = max(1, binCapacity)
-        self.rowColumns = rowColumns.map { $0.map { max(1, $0) } }
+        self.rows = Rack.bounded(rows); self.columns = Rack.bounded(columns)
+        self.depth = min(Rack.maxDepth, max(1, depth)); self.binCapacity = Rack.bounded(binCapacity)
+        self.rowColumns = rowColumns.map { $0.prefix(Rack.maxSize).map(Rack.bounded) }
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -212,12 +229,15 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         name = try c.decode(String.self, forKey: .name)
         // Absent in files from version 0.1 and 0.2 (grids). An unknown value fails, like any enum.
         kind = try c.decodeIfPresent(RackKind.self, forKey: .kind) ?? .grid
-        rows = max(1, try c.decode(Int.self, forKey: .rows))
-        columns = max(1, try c.decode(Int.self, forKey: .columns))
+        rows = Rack.bounded(try c.decode(Int.self, forKey: .rows))
+        columns = Rack.bounded(try c.decode(Int.self, forKey: .columns))
         depth = min(Rack.maxDepth, max(1, try c.decodeIfPresent(Int.self, forKey: .depth) ?? 1))
-        binCapacity = max(1, try c.decodeIfPresent(Int.self, forKey: .binCapacity) ?? 12)
-        rowColumns = try c.decodeIfPresent([Int].self, forKey: .rowColumns)?.map { max(1, $0) }
+        binCapacity = Rack.bounded(try c.decodeIfPresent(Int.self, forKey: .binCapacity) ?? 12)
+        rowColumns = try c.decodeIfPresent([Int].self, forKey: .rowColumns)?.prefix(Rack.maxSize).map(Rack.bounded)
     }
+
+    /// 1 to `maxSize`.
+    static func bounded(_ value: Int) -> Int { min(maxSize, max(1, value)) }
 
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -386,7 +406,8 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
         status = try c.decodeIfPresent(Status.self, forKey: .status) ?? .inCellar
         slot = try c.decodeIfPresent(Slot.self, forKey: .slot)
         storageNote = try c.decodeIfPresent(String.self, forKey: .storageNote)
-        addedAt = try c.decodeIfPresent(Date.self, forKey: .addedAt) ?? .now
+        // Required: "now" would differ on every device that reads the same record.
+        addedAt = try c.decode(Date.self, forKey: .addedAt)
         purchaseDate = try c.decodeIfPresent(Date.self, forKey: .purchaseDate)
         purchasePrice = try c.decodeIfPresent(Decimal.self, forKey: .purchasePrice)
         currency = try c.decodeIfPresent(String.self, forKey: .currency)

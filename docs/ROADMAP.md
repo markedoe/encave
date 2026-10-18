@@ -29,9 +29,9 @@ it with.
 ```
  iPhone / iPad / Mac (SwiftUI)              Android (Compose)
    CaveKit (Swift package)                  core (Kotlin module)
-   model, merge, sync protocol      ⇄       same model; protocol port in
-                                            progress, checked with shared
-                                            test vectors
+   model, merge, sync protocol      ⇄       same model and protocol,
+                                            checked with shared test
+                                            vectors
             │  same Wi-Fi: Bonjour, direct, encrypted  │
             └──────────────────────┬───────────────────┘
                                    │  away from home: encrypted files only
@@ -47,8 +47,8 @@ it with.
   - The cellar model is written in Swift (CaveKit, tested on Linux) and in
     Kotlin (`android/core`). They read each other's files (interop tests on
     fixtures).
-  - The sync protocol is in CaveKit. The Kotlin port, checked against the test
-    vectors in [SYNC.md](SYNC.md), is in progress.
+  - The sync protocol is in CaveKit and in `android/core` (`core/sync`); both
+    reproduce the test vectors in [SYNC.md](SYNC.md).
   - A shared Rust core was the first plan. Two small, well-tested
     implementations proved simpler than UniFFI bindings for a model of this
     size; the decision can be revisited if the model grows.
@@ -77,7 +77,7 @@ it with.
 
 ### Pairing and sharing (QR code or 6-digit code)
 
-**Built (iPhone, iPad, Mac; Android in progress):**
+**Built (iPhone, iPad, Mac, Android):**
 
 1. Device A (Settings › Devices › Add a Device) shows a QR code and a 6-digit code,
    valid two minutes, for one device.
@@ -233,8 +233,8 @@ on-device model.
   export compliance questions in App Store Connect, and France requires a
   declaration for encryption products. To verify before the first store
   submission.
-- **Shared core.** The model is implemented twice (Swift, Kotlin), and the
-  protocol's Kotlin port is in progress, with shared test vectors. If the model grows much, revisit a shared Rust core
+- **Shared core.** The model and the sync protocol are implemented twice
+  (Swift, Kotlin), checked with shared test vectors. If the model grows much, revisit a shared Rust core
   (UniFFI) or a CRDT engine such as Automerge.
 - **Community relay.** Whether the project runs a capped public relay, or only
   publishes the self-hosting template; see [REMOTE_SYNC.md](REMOTE_SYNC.md).
@@ -243,7 +243,7 @@ on-device model.
 
 ```
 apple/     SwiftUI app (iOS, iPadOS, macOS) and the CaveKit package (model, sync)
-android/   Kotlin / Compose app and its core module (model; sync in progress)
+android/   Kotlin / Compose app and its core module (model, sync)
 relay/     Self-hostable relay (Node server, Cloudflare Worker)
 design/    Design tokens and asset generators
 docs/      Roadmap, sync protocol, remote sync analysis, development guide

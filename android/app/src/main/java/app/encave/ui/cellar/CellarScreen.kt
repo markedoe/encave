@@ -122,6 +122,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.UuidSetSaver
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.WineGroupRow
 import app.encave.ui.components.icon
@@ -172,6 +173,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         viewModel, navigator, selectedId,
                         showBack = !twoPane,
                         onBack = { scope.launch { paneNavigator.navigateBack() } },
+                        showMessages = !twoPane,
                     )
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -214,9 +216,11 @@ private fun CellarList(
     val reservations = remember(cellar) { cellar.reservations }
     // Choosing several wines: a contextual top bar acts on all of them, with one Undo.
     var selecting by rememberSaveable { mutableStateOf(false) }
-    var picked by remember { mutableStateOf(setOf<java.util.UUID>()) }
+    var picked by rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(setOf<java.util.UUID>()) }
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var namingSearch by remember { mutableStateOf(false) }
+    var confirmSample by remember { mutableStateOf(false) }
+    val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
     fun endSelection() {
         selecting = false
         picked = emptySet()
@@ -281,8 +285,11 @@ private fun CellarList(
                 Button(onClick = { navigator.open(AddBottleRoute()) }, modifier = Modifier.testTag("action.empty_add")) {
                     ActionContent(stringResource(R.string.action_add_bottle), Icons.Filled.Add)
                 }
-                OutlinedButton(onClick = { viewModel.loadSample(sampleLabels(resources)) }) {
-                    Text(stringResource(R.string.action_load_sample))
+                // Only when everything is empty (no racks or discoveries either) and no other device shares the cellar.
+                if (viewModel.canLoadSample(cellar, shared)) {
+                    OutlinedButton(onClick = { confirmSample = true }) {
+                        Text(stringResource(R.string.action_load_sample))
+                    }
                 }
                 TextButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
                     Text(stringResource(R.string.discovery_new_long))
@@ -421,6 +428,16 @@ private fun CellarList(
             initial = filter.query.trim(),
             onSave = { name -> viewModel.saveSearch(name, filter) },
             onDismiss = { namingSearch = false },
+        )
+    }
+    if (confirmSample) {
+        ConfirmDialog(
+            title = stringResource(R.string.settings_sample_confirm_title),
+            body = stringResource(R.string.settings_sample_confirm_body),
+            confirm = stringResource(R.string.action_load_sample),
+            onConfirm = { viewModel.loadSample(sampleLabels(resources)) },
+            onDismiss = { confirmSample = false },
+            destructive = false,
         )
     }
     if (confirmBulkDelete) {

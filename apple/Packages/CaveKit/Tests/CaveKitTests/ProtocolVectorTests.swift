@@ -64,7 +64,7 @@ import Testing
         let envelope = try Envelope.seal(Data("hello".utf8), kind: .photo, path: "photo/x", key: cellarKey.dataKey,
                                          nonce: ChaChaPoly.Nonce(data: Data(repeating: 0x07, count: 12)))
         let ephemeral = try Self.key(0x01)
-        let grantPath = "grant/\(Self.cellar.uuidString.lowercased())-00000002-\(Self.hostDevice.uuidString.lowercased())"
+        let grantPath = "grant/\(Self.cellar.uuidString.lowercased())-00000002-\(Self.hostDevice.uuidString.lowercased())-0a1b2c3d"
         let grantKey = try KeyGrant.key(
             path: grantPath, ephemeralPublic: ephemeral.publicKey.rawRepresentation,
             recipient: recipient.publicKey.rawRepresentation,
@@ -91,7 +91,7 @@ import Testing
         "inbox token": "K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8",
         "inbox": "i2a17946aea22c15127c53bac03a59f8a",
         "envelope": "454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf",
-        "grant key": "a9547f8ceac9dc53b97196fc6bb6f23ad6659127b8cc83591b95236c8303567d",
+        "grant key": "b2ecfff6ab54c6b39ae9edbdd44abffc2dbc361e2faa6571cd4abc5fba9d517d",
     ]
 
     static let expected: [String: String] = [

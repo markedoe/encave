@@ -118,6 +118,13 @@ import Testing
         #expect(best.group.wine.color == .red)
         #expect(best.reasons.contains(.readyToDrink))
     }
+
+    @Test func reservedBottlesAreNotSuggested() throws {
+        var cellar = SampleData.cellar(year: 2026)
+        let best = try #require(cellar.pairings(for: .fish, year: 2026).first)
+        try cellar.reserve(best.group.bottles.map(\.id), for: "Wedding")
+        #expect(!cellar.pairings(for: .fish, year: 2026).contains { $0.group.wine.id == best.group.wine.id })
+    }
 }
 
 @Suite struct ImportExportTests {

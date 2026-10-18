@@ -131,12 +131,13 @@ object PriceExtractor {
         val last = text.indexOfLast { it == '.' || it == ',' }
         if (last >= 0) {
             val tail = text.substring(last + 1)
-            if (tail.length in 1..2 && tail.all { it.isDigit() }) {
+            if (tail.length in 1..2 && tail.all { it in '0'..'9' }) {
                 integer = text.substring(0, last)
                 fraction = tail
             }
         }
-        val digits = integer.filter { it.isDigit() }
+        // ASCII digits only, as in Swift (`BigDecimal` would also read other scripts' digits).
+        val digits = integer.filter { it in '0'..'9' }
         if (digits.isEmpty()) return null
         return BigDecimal(if (fraction.isEmpty()) digits else "$digits.$fraction").stripTrailingZeros()
     }

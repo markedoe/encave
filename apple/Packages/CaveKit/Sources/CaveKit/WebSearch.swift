@@ -46,7 +46,7 @@ public struct WebSearchRequest: Equatable, Sendable {
 
 public enum WebSearchError: Error, Equatable, Sendable {
     case missingKey
-    /// The server address is not a full http:// or https:// address.
+    /// The server address is not a full https:// address (or http:// on the local network).
     case invalidServerURL
     /// The key was refused.
     case unauthorized
@@ -193,8 +193,10 @@ public struct SearXNGSearch: WebSearchProvider {
         while base.hasSuffix("/") { base.removeLast() }
         if base.lowercased().hasSuffix("/search") { base.removeLast("/search".count) }
         while base.hasSuffix("/") { base.removeLast() }
+        // Plain HTTP only on the local network: elsewhere anyone on the way would read the search terms.
         guard let url = URL(string: base), let scheme = url.scheme?.lowercased(),
-              scheme == "http" || scheme == "https", let host = url.host, !host.isEmpty else {
+              scheme == "http" || scheme == "https", let host = url.host, !host.isEmpty,
+              scheme == "https" || LocalAddress.isLocal(host: host) else {
             throw WebSearchError.invalidServerURL
         }
         self.base = base

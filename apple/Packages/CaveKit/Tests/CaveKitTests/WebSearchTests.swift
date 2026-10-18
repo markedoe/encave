@@ -108,6 +108,9 @@ enum WebSearchFixtures {
         #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "nas.local:8080") }
         #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "") }
         #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "ftp://nas.local") }
+        // Plain HTTP to a server on the internet would show the search terms to anyone on the way.
+        #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "http://search.example.org") }
+        #expect(try SearXNGSearch(serverURL: "http://localhost:8888").base == "http://localhost:8888")
     }
 
     @Test func searxngResults() throws {

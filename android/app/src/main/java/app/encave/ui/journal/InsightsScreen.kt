@@ -91,6 +91,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val stats = remember(cellar) { cellar.statistics(viewModel.year) }
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(app.encave.ui.components.LocalSnackbarHostState.current) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.action_insights)) },
@@ -440,7 +441,7 @@ private fun YearInWineCard(cellar: Cellar) {
                 if (recap.discoveries > 0) YearFigure(recap.discoveries, stringResource(R.string.insights_year_discoveries))
             }
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-                recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, stringResource(R.string.insights_year_favorite, name, rating)) }
+                recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, androidx.compose.ui.res.pluralStringResource(R.plurals.insights_year_favorite, rating, name, rating)) }
                 recap.topRegion?.let { YearFact(Icons.Outlined.Map, stringResource(R.string.insights_year_region, it)) }
                 recap.topColor?.let { YearFact(Icons.Outlined.WineBar, stringResource(R.string.insights_year_style, stringResource(it.labelRes))) }
                 recap.topOccasion?.let { YearFact(Icons.Outlined.Group, stringResource(R.string.insights_year_occasion, it)) }

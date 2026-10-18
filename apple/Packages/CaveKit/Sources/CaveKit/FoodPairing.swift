@@ -68,10 +68,14 @@ public struct PairingRule: Sendable {
 }
 
 public extension Cellar {
-    /// Bottles in the cellar that go well with a dish, best first.
+    /// Bottles in the cellar that go well with a dish, best first. Bottles reserved
+    /// for an occasion are left out, as in Tonight.
     func pairings(for dish: DishCategory, year: Int, limit: Int = 10) -> [PairingSuggestion] {
         let rule = PairingRule.rule(for: dish)
-        return groups().compactMap { group -> PairingSuggestion? in
+        return groups().compactMap { all -> PairingSuggestion? in
+            let free = all.bottles.filter { $0.reservedFor == nil }
+            guard !free.isEmpty else { return nil }
+            let group = WineGroup(wine: all.wine, bottles: free)
             let wine = group.wine
             var score = 0
             var reasons: [PairingReason] = []

@@ -60,6 +60,9 @@ class WebSearchPreferences(context: Context) {
 
     fun setApiKey(service: WebSearchService, key: String?) =
         secrets.set("webSearch.apiKey.${service.raw}", key?.let { AiPreferences.cleanKey(it) })
+
+    /** Saves the key in the background, in the order keys are typed. */
+    fun saveApiKey(service: WebSearchService, key: String?) = SecretStore.writes.execute { runCatching { setApiKey(service, key) } }
 }
 
 /** Sends the query, and nothing else, to the service set up in Settings. */

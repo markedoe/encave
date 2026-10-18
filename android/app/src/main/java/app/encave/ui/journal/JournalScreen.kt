@@ -68,6 +68,8 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.WhenLoaded
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.RatingStars
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.StyleLabel
@@ -228,11 +230,17 @@ private fun TastingRow(cellar: app.encave.core.Cellar, bottle: app.encave.core.B
 /** View and edit a full tasting note; a bottle can also be put back if it was marked by mistake. */
 @Composable
 fun TastingScreen(viewModel: AppViewModel, navigator: AppNavigator, bottleId: String) {
+    WhenLoaded(viewModel) { TastingForm(viewModel, navigator, bottleId) }
+}
+
+@Composable
+private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottleId: String) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val bottle = cellar.bottles.values.firstOrNull { it.id.toString() == bottleId }
     val tasting = bottle?.tasting
     val wine = bottle?.let { cellar.wines[it.wineId] }
-    val form = remember(bottleId, tasting != null) { tasting?.let { TastingFormState(it) } }
+    // Kept while the activity is recreated; started from the tasting once it is there.
+    val form = tasting?.let { rememberRetained("tasting.form") { TastingFormState(it) } }
 
     Scaffold(
         topBar = {

@@ -41,8 +41,10 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         wineID = try c.decode(UUID.self, forKey: .wineID)
-        date = try c.decodeIfPresent(Date.self, forKey: .date) ?? .now
-        setting = try? c.decodeIfPresent(Setting.self, forKey: .setting)
+        // Strict like the other records: an unknown setting fails (SYNC.md §1) rather than
+        // being dropped, and a missing date is not replaced by today.
+        date = try c.decode(Date.self, forKey: .date)
+        setting = try c.decodeIfPresent(Setting.self, forKey: .setting)
         place = try c.decodeIfPresent(String.self, forKey: .place)
         rating = try c.decodeIfPresent(Int.self, forKey: .rating).map { min(5, max(1, $0)) }
         note = try c.decodeIfPresent(String.self, forKey: .note)

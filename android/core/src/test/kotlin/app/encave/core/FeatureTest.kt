@@ -194,6 +194,14 @@ class PairingTest {
     }
 
     @Test
+    fun reservedBottlesAreNotSuggested() {
+        val cellar = SampleData.cellar(year = 2026)
+        val best = cellar.pairings(DishCategory.Fish, 2026).first()
+        cellar.reserve(best.group.bottles.map { it.id }, "Wedding")
+        assertTrue(cellar.pairings(DishCategory.Fish, 2026).none { it.group.wine.id == best.group.wine.id })
+    }
+
+    @Test
     fun scoresAreBoundedAndSorted() {
         val cellar = SampleData.cellar(year = 2026)
         for (dish in DishCategory.entries) {
@@ -269,7 +277,7 @@ class ImportExportTest {
         cellar.importCsv("name,rack,slot,price\nW,Garage,B2,\"12,50\"\n")
         val bottle = cellar.bottles.values.single()
         assertEquals("Garage · B2", bottle.storageNote)
-        assertEquals(BigDecimal("12.50"), bottle.purchasePrice)
+        assertEquals(BigDecimal("12.5"), bottle.purchasePrice)
     }
 
     @Test

@@ -46,10 +46,11 @@ class EncaveApplication : Application() {
         WidgetPublisher(repository, widgetSnapshots, scope, onChanged = { Widgets.update(this) }).start()
         scope.launch { Widgets.publishPreviews(this@EncaveApplication) }
         if (app.encave.reminders.Reminders.isEnabled(this)) app.encave.reminders.Reminders.schedule(this)
-        // Photos no wine refers to any more (deleted or replaced) are removed at launch.
+        // Photos no wine has referred to for a while (deleted or replaced) are removed at launch.
+        // Not while a cellar file that could not be read is kept: its photos may be needed.
         scope.launch(Dispatchers.IO) {
             repository.loaded.first { it }
-            if (!repository.loadFailed) {
+            if (!repository.loadFailed && repository.keptAside().isEmpty()) {
                 photos.removeOrphans(repository.cellar.value.photoIds)
             }
         }

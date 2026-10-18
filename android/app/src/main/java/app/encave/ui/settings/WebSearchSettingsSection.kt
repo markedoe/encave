@@ -122,7 +122,7 @@ fun WebSearchSettingsSection() {
                     onValueChange = { key ->
                         apiKey = key
                         if (test != TestState.Testing) test = TestState.Idle
-                        scope.launch(Dispatchers.IO) { preferences.setApiKey(service, key) }
+                        preferences.saveApiKey(service, key)
                     },
                     label = { Text(stringResource(R.string.ai_key)) },
                     supportingText = { Text(stringResource(R.string.help_field_web_search_key)) },

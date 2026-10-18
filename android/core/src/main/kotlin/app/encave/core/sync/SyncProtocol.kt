@@ -197,7 +197,7 @@ data class PairingCode(private val raw: String) {
     override fun hashCode(): Int = digits.hashCode()
 
     companion object {
-        fun random(): PairingCode = PairingCode("%06d".format(random.nextInt(1_000_000)))
+        fun random(): PairingCode = PairingCode("%06d".format(java.util.Locale.ROOT, random.nextInt(1_000_000)))
 
         /** Reads a QR code made by [qrPayload]: the code and the commitment, if any. */
         fun parse(qr: String): Pair<PairingCode, ByteArray?>? {
@@ -517,6 +517,9 @@ interface PhotoAccess {
     fun data(id: String): ByteArray?
     fun save(id: String, data: ByteArray)
 
+    /** Whether the device has the photo, without reading it: each round checks every photo of the cellar. */
+    fun exists(id: String): Boolean = data(id) != null
+
     companion object {
         val NONE = object : PhotoAccess {
             override fun data(id: String): ByteArray? = null
@@ -590,7 +593,7 @@ object SyncExchange {
 
         // Photos: each side asks for the ones it is missing (valid IDs only).
         val known = merge.cellar.photoIds
-        val wanted = known.filter { PhotoId.isValid(it) && photos.data(it) == null }.sorted()
+        val wanted = known.filter { PhotoId.isValid(it) && !photos.exists(it) }.sorted()
         val request = swap(channel, isInitiator, WireMessage("photos-want", photos = wanted), "photos-want")
         // Only photos of the merged cellar are sent, whatever is asked.
         val toSend = request.photos.orEmpty().filter { it in known && PhotoId.isValid(it) }

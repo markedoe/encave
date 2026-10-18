@@ -119,8 +119,12 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
             val result = snackbar.showSnackbar(
                 message = message.text.resolve(resources),
                 actionLabel = message.undo?.let { resources.getString(R.string.action_undo) },
-                withDismissAction = message.undo == null,
-                duration = if (message.undo != null) SnackbarDuration.Long else SnackbarDuration.Short,
+                withDismissAction = message.undo == null || message.persistent,
+                duration = when {
+                    message.persistent -> SnackbarDuration.Indefinite
+                    message.undo != null -> SnackbarDuration.Long
+                    else -> SnackbarDuration.Short
+                },
             )
             if (result == SnackbarResult.ActionPerformed) message.undo?.invoke()
         }

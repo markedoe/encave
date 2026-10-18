@@ -144,12 +144,12 @@ public enum PriceExtractor {
         var integer = text, fraction = ""
         if let last = text.lastIndex(where: { $0 == "." || $0 == "," }) {
             let tail = text[text.index(after: last)...]
-            if (1...2).contains(tail.count), tail.allSatisfy(\.isNumber) {
+            if (1...2).contains(tail.count), tail.allSatisfy(\.isASCIIDigit) {
                 integer = String(text[..<last])
                 fraction = String(tail)
             }
         }
-        let digits = integer.filter(\.isNumber)
+        let digits = integer.filter(\.isASCIIDigit)
         guard !digits.isEmpty else { return nil }
         return Decimal(string: fraction.isEmpty ? digits : "\(digits).\(fraction)", locale: Locale(identifier: "en_US_POSIX"))
     }

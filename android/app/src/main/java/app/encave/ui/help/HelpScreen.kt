@@ -132,6 +132,7 @@ fun HelpScreen(navigator: AppNavigator, initialTopic: String? = null) {
     val article = open?.let { name -> HelpArticle.all.firstOrNull { it.topic.name == name } }
     BackHandler(enabled = article != null && initialTopic == null) { open = null }
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(app.encave.ui.components.LocalSnackbarHostState.current) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(article?.title ?: R.string.help_encave)) },

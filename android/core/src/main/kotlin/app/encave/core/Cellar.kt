@@ -342,7 +342,9 @@ class Cellar(
     fun undoDrink(bottleId: UUID, previousSlot: Slot?) {
         val bottle = bottleMap[bottleId] ?: return
         if (bottle.status == Bottle.Status.InCellar) return
-        val slot = if (previousSlot != null && bottleAt(previousSlot) == null) previousSlot else bottle.slot
+        // Back in its place if it is still free and still exists (the rack may be gone or smaller).
+        val free = previousSlot != null && bottleAt(previousSlot) == null && rack(previousSlot.rackId)?.contains(previousSlot) == true
+        val slot = if (free) previousSlot else bottle.slot
         bottleMap[bottleId] = bottle.copy(status = Bottle.Status.InCellar, tasting = null, slot = slot)
     }
 
@@ -372,6 +374,8 @@ class Cellar(
     fun move(bottleId: UUID, slot: Slot?) {
         val bottle = bottleMap[bottleId] ?: throw CellarException(CellarError.UnknownBottle)
         if (slot != null) {
+            // A bottle on order has no place until it is received, as in Swift.
+            if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)
             val occupant = bottleAt(slot)
             if (occupant != null && occupant.id != bottleId) throw CellarException(CellarError.SlotTaken)
             validateInRange(slot)

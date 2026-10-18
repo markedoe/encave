@@ -15,6 +15,22 @@ class AiSettingsTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
     @Test
+    fun claudeOptionsFollowEachModel() {
+        fun options(model: String) = AiService.claudeOptions(model).let { it.effort to it.fallbacks }
+        assertEquals(true to true, options("claude-opus-5-5"))
+        assertEquals(true to true, options("claude-opus-5"))
+        assertEquals(true to true, options("claude-fable-5-1"))
+        assertEquals(true to true, options("claude-sonnet-5-5"))
+        assertEquals(true to false, options("claude-sonnet-5"))
+        assertEquals(true to false, options("claude-haiku-5-5"))
+        assertEquals(true to false, options("claude-opus-4-8"))
+        assertEquals(true to false, options("claude-opus-4-5-20251101"))
+        assertEquals(false to false, options("claude-sonnet-4-5-20250929"))
+        assertEquals(false to false, options("claude-haiku-4-5"))
+        assertEquals(false to false, options("claude-3-7-sonnet-latest"))
+    }
+
+    @Test
     fun emptyBaseUrlMeansTheDefault() {
         assertEquals("https://api.mistral.ai/v1", AiSettings(AiProvider.Mistral).effectiveBaseUrl)
         assertEquals("https://example.test/v1", AiSettings(AiProvider.Mistral, baseUrl = "https://example.test/v1").effectiveBaseUrl)

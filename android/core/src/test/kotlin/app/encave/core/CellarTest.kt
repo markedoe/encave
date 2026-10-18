@@ -63,6 +63,13 @@ class CellarTest {
         cellar.undoDrink(bottle.id, previousSlot = slot)
         assertEquals(bottle.id, cellar.bottleAt(slot)?.id)
         assertTrue(cellar.consumedBottles.isEmpty())
+
+        // The rack was removed in the meantime: the bottle comes back without a place.
+        cellar.drink(bottle.id, Tasting())
+        cellar.removeRack(rack.id)
+        cellar.undoDrink(bottle.id, previousSlot = slot)
+        assertEquals(Bottle.Status.InCellar, cellar.bottles[bottle.id]?.status)
+        assertNull(cellar.bottles[bottle.id]?.slot)
     }
 
     @Test
@@ -163,6 +170,28 @@ class StoreTest {
             store.save(cellar)
             assertEquals(cellar, store.load())
             assertTrue(dir.listFiles().orEmpty().none { it.name.endsWith(".tmp") }, "temporary file is renamed")
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun unreadableFileIsMovedAsideNotOverwritten() {
+        val dir = Files.createTempDirectory("encave").toFile()
+        try {
+            val file = File(dir, "cellar.json")
+            file.writeText("{ damaged")
+            val store = JsonFileCellarStore(file) { java.time.LocalDateTime.of(2026, 10, 18, 9, 5, 7) }
+            assertThrows<Exception> { store.load() }
+            assertEquals("cellar-unreadable-20261018-090507.json", store.setAside())
+            assertTrue(!file.exists())
+            assertEquals("{ damaged", File(dir, "cellar-unreadable-20261018-090507.json").readText())
+            // The same second again: a second name, nothing replaced.
+            file.writeText("{ also damaged")
+            assertEquals("cellar-unreadable-20261018-090507-2.json", store.setAside())
+            assertEquals(listOf("cellar-unreadable-20261018-090507-2.json", "cellar-unreadable-20261018-090507.json").sorted(), store.keptAside().map { it.name })
+            assertTrue(store.load().isEmpty)
+            assertNull(store.setAside())
         } finally {
             dir.deleteRecursively()
         }
