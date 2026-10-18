@@ -62,7 +62,7 @@ public struct WebDAVMailboxStore: MailboxStore {
         guard let host = url.host?.lowercased(), !host.isEmpty, url.user == nil, url.password == nil else { return false }
         switch url.scheme?.lowercased() {
         case "https": return true
-        case "http": return LocalNetwork.isLocal(host: host)
+        case "http": return LocalAddress.isLocal(host: host)
         default: return false
         }
     }
@@ -361,7 +361,7 @@ enum WebDAVMultistatus {
 
 /// Addresses on this device or the local network, where a server has no certificate
 /// and plain HTTP is accepted.
-public enum LocalNetwork {
+public enum LocalAddress {
     public static func isLocal(host: String) -> Bool {
         var host = host.lowercased()
         if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }

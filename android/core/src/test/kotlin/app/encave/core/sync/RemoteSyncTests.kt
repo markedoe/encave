@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 /** A device for remote sync tests: its cellar, identity and remote state. Mirrors CaveKit's RemoteSyncTests. */
-private class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnapshot, var key: CellarKey?) {
+internal class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnapshot, var key: CellarKey?) {
     var progress = RemoteProgress()
     val photos = PhotoBox()
 
@@ -38,7 +38,7 @@ private class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnaps
 }
 
 /** Devices of one cellar, the first holding the key. */
-private fun household(count: Int = 3): List<RemoteDevice> {
+internal fun household(count: Int = 3): List<RemoteDevice> {
     val identities = List(count) { identity() }
     var membership = Membership()
     var clock = 0L
@@ -53,7 +53,7 @@ private fun household(count: Int = 3): List<RemoteDevice> {
     }
 }
 
-private suspend fun grantAll(devices: List<RemoteDevice>, store: MailboxStore, storage: String?) =
+internal suspend fun grantAll(devices: List<RemoteDevice>, store: MailboxStore, storage: String?) =
     RemoteSync.grant(devices[0].key!!, devices[0].snapshot.membership.active, store, devices[0].identity, storage)
 
 class RemoteSyncTests {
