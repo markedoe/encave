@@ -32,7 +32,7 @@ check_message() {
   subject=$(printf '%s\n' "$nocomment" | sed -n '1p')
   # The phrases are looked for in the whole message, trailers included.
   clean="$nocomment"
-  trailers=$(printf '%s\n' "$nocomment" | git interpret-trailers --parse 2>/dev/null | grep -ciE "$TRAILER" || true)
+  trailers=$(printf '%s\n' "$nocomment" | git interpret-trailers --parse --no-divider 2>/dev/null | grep -ciE "$TRAILER" || true)
   body_lines=$(printf '%s\n' "$nocomment" | sed '1d' | grep -c '[^[:space:]]' || true)
   body_lines=$(( body_lines - trailers ))
 

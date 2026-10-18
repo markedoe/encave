@@ -252,7 +252,7 @@ const server = createServer(async (req, res) => {
   const finish = (status, headers = {}, body) => {
     if (!req.complete) {
       const declared = Number(req.headers["content-length"]);
-      if (Number.isFinite(declared) && declared <= drainBytes) res.on("finish", () => req.resume());
+      if (Number.isFinite(declared) && declared <= drainBytes) res.on("finish", () => req.on("data", () => {}));
       else headers = { ...headers, connection: "close" };
     }
     res.writeHead(status, headers);
