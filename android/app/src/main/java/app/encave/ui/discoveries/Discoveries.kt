@@ -65,6 +65,7 @@ import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
 import app.encave.ui.theme.Dimens
+import app.encave.ui.components.hasPicture
 
 /** Actions available on a discovery row. */
 class DiscoveryActions(
@@ -206,10 +207,9 @@ fun DiscoveryRow(
         modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
         leadingContent = if (showsWine) {
             {
-                if (photos.exists(wine?.shownPhotoId)) {
-                    WinePhoto(
-                        photos, wine?.shownPhotoId, contentDescription = null, height = 56.dp,
-                        modifier = Modifier.size(44.dp, 56.dp),
+                if (wine != null && photos.hasPicture(wine)) {
+                    app.encave.ui.components.WineImage(
+                        wine, modifier = Modifier.size(44.dp, 56.dp), maxPixelSize = 200, inset = 3.dp, corner = 8.dp,
                     )
                 } else {
                     WineColorDot(wine?.color, size = 30.dp)

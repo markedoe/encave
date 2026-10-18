@@ -91,7 +91,12 @@ fun WineGroupRow(
                     WineColorDot(wine.color, size = 16.dp)
                 }
             } else {
-                WineColorDot(wine.color, size = 16.dp)
+                val photos = LocalPhotoStore.current
+                if (photos != null && photos.hasPicture(wine)) {
+                    WineImage(wine, Modifier.size(34.dp, 46.dp), maxPixelSize = 200, inset = 2.dp, corner = 7.dp)
+                } else {
+                    WineColorDot(wine.color, size = 16.dp)
+                }
             }
         },
         headlineContent = { Text(wine.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis) },

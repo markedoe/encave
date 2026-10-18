@@ -499,6 +499,8 @@ class AppViewModel(
 
     fun setDynamicColor(enabled: Boolean) = preferences.setDynamicColor(enabled)
 
+    fun setStudioLook(enabled: Boolean) = preferences.setStudioLook(enabled)
+
     fun loadSample(labels: SampleData.Labels) {
         viewModelScope.launch {
             val sample = SampleData.cellar(year, labels).also { it.settings = cellar.value.settings }

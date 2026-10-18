@@ -192,7 +192,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
 | Saved searches | Done | Done |
 | Several photos per wine | Done | Done |
-| Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Later (no ML Kit: needs another way) |
+| Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Light evened out on a clean background (no cut-out: it would need ML Kit) |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |

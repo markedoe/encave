@@ -68,6 +68,7 @@ import androidx.compose.material.icons.outlined.Devices
 import app.encave.ui.components.commonCurrencies
 import app.encave.ui.components.sampleLabels
 import java.time.LocalDate
+import androidx.compose.material.icons.outlined.AutoAwesome
 
 private const val SOURCE_URL = "https://github.com/markedoe/encave"
 
@@ -77,6 +78,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val resources = LocalResources.current
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val dynamicColor by viewModel.preferences.dynamicColor.collectAsStateWithLifecycle()
+    val studioLook by viewModel.preferences.studioLook.collectAsStateWithLifecycle()
     var currencyMenu by remember { mutableStateOf(false) }
     var confirmSample by remember { mutableStateOf(false) }
     var confirmErase by remember { mutableStateOf(false) }
@@ -156,6 +158,13 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     trailingContent = { Switch(checked = dynamicColor, onCheckedChange = null) },
                 )
             }
+            ListItem(
+                modifier = Modifier.toggleable(studioLook, role = Role.Switch) { viewModel.setStudioLook(it) },
+                leadingContent = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_studio_look)) },
+                supportingContent = { Text(stringResource(R.string.settings_studio_look_body)) },
+                trailingContent = { Switch(checked = studioLook, onCheckedChange = null) },
+            )
 
             AiSettingsSection(viewModel)
 

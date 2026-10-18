@@ -245,6 +245,8 @@
     <string name="settings_appearance">Apparence</string>
     <string name="settings_dynamic_color">Utiliser les couleurs du fond d’écran</string>
     <string name="settings_dynamic_color_body">Couleurs Material You au lieu du bordeaux d’Encave</string>
+    <string name="settings_studio_look">Aspect studio pour les photos d’étiquette</string>
+    <string name="settings_studio_look_body">Lumière corrigée et photo entière sur un fond net, sur cet appareil. La photo prise est gardée telle quelle.</string>
     <string name="settings_data">Vos données</string>
     <string name="settings_export_json">Exporter une sauvegarde (JSON)</string>
     <string name="settings_export_json_body">Tout, lisible par Encave sur tous vos appareils</string>

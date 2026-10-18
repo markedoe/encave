@@ -29,7 +29,18 @@ class Preferences(context: Context) {
         table.value = enabled
     }
 
+    private val studio = MutableStateFlow(prefs.getBoolean(KEY_STUDIO_LOOK, true))
+
+    /** Label photos shown evened out on a clean background; the stored photo is not changed. */
+    val studioLook: StateFlow<Boolean> = studio.asStateFlow()
+
+    fun setStudioLook(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_STUDIO_LOOK, enabled) }
+        studio.value = enabled
+    }
+
     private companion object {
+        const val KEY_STUDIO_LOOK = "studio_look"
         const val KEY_DYNAMIC_COLOR = "dynamic_color"
         const val KEY_CELLAR_TABLE = "cellar_table"
     }

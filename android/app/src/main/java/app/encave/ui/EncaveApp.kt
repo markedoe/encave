@@ -144,7 +144,12 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
         else -> NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
     }
 
-    CompositionLocalProvider(LocalSnackbarHostState provides snackbar) {
+    val studioLook by viewModel.preferences.studioLook.collectAsStateWithLifecycle()
+    CompositionLocalProvider(
+        LocalSnackbarHostState provides snackbar,
+        app.encave.ui.components.LocalPhotoStore provides viewModel.photos,
+        app.encave.ui.components.LocalStudioLook provides studioLook,
+    ) {
         NavigationSuiteScaffold(
             layoutType = layoutType,
             navigationSuiteItems = {

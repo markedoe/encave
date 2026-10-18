@@ -269,6 +269,8 @@ S = [
  ("settings_appearance", "Appearance", "Apparence"),
  ("settings_dynamic_color", "Use wallpaper colors", "Utiliser les couleurs du fond d’écran"),
  ("settings_dynamic_color_body", "Material You colors instead of the Encave burgundy", "Couleurs Material You au lieu du bordeaux d’Encave"),
+ ("settings_studio_look", "Studio look for label photos", "Aspect studio pour les photos d’étiquette"),
+ ("settings_studio_look_body", "Light evened out and the whole photo on a clean background, made on this device. The photo you took is kept as is.", "Lumière corrigée et photo entière sur un fond net, sur cet appareil. La photo prise est gardée telle quelle."),
  ("settings_data", "Your data", "Vos données"),
  ("settings_export_json", "Export a backup (JSON)", "Exporter une sauvegarde (JSON)"),
  ("settings_export_json_body", "Everything, readable by Encave on every device", "Tout, lisible par Encave sur tous vos appareils"),

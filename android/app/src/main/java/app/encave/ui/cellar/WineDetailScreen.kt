@@ -112,6 +112,7 @@ import app.encave.ui.search.WebSearchSheet
 import app.encave.ui.search.WinePictureSheet
 import app.encave.ui.search.webSearchPreferences
 import java.util.UUID
+import app.encave.ui.components.hasPicture
 
 @Composable
 fun WineDetailScreen(
@@ -187,12 +188,13 @@ fun WineDetailScreen(
         val tastings = cellar.tastingsOf(wine.id)
         LazyColumn(Modifier.fillMaxSize().testTag("wine.detail"), contentPadding = padding) {
             item {
-                if (viewModel.photos.exists(wine.shownPhotoId)) {
-                    app.encave.ui.add.WinePhoto(
-                        viewModel.photos, wine.shownPhotoId,
+                if (viewModel.photos.hasPicture(wine)) {
+                    app.encave.ui.components.WineImage(
+                        wine,
                         contentDescription = stringResource(R.string.photo_description, wine.displayName),
-                        modifier = Modifier.padding(horizontal = Dimens.l).padding(top = Dimens.s),
-                        height = 240.dp,
+                        modifier = Modifier.padding(horizontal = Dimens.l).padding(top = Dimens.s)
+                            .fillMaxWidth().height(240.dp),
+                        inset = 18.dp,
                     )
                 }
                 Hero(wine)

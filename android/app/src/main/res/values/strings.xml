@@ -246,6 +246,8 @@
     <string name="settings_appearance">Appearance</string>
     <string name="settings_dynamic_color">Use wallpaper colors</string>
     <string name="settings_dynamic_color_body">Material You colors instead of the Encave burgundy</string>
+    <string name="settings_studio_look">Studio look for label photos</string>
+    <string name="settings_studio_look_body">Light evened out and the whole photo on a clean background, made on this device. The photo you took is kept as is.</string>
     <string name="settings_data">Your data</string>
     <string name="settings_export_json">Export a backup (JSON)</string>
     <string name="settings_export_json_body">Everything, readable by Encave on every device</string>
