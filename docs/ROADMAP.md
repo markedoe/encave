@@ -135,7 +135,7 @@ grouping ("Château X 2015 ×3").
    soon, past peak, young), with a drinking-window gauge.
 5. **Share a cellar** with a QR code (see above).
 6. **Work offline:** everything is local. The label is read on the device;
-   only the optional AI recognition needs the network.
+   only the optional AI recognition and web search need the network.
 
 Also in v1: onboarding (create a rack or scan a first bottle, or join a
 shared cellar), import and export as JSON/CSV, App Intents /
@@ -192,6 +192,8 @@ kept within the privacy rules: everything is worked out on the device.
 | Saved searches | Done | Planned |
 | Several photos per wine | Done | Planned |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
+| Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
+| Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
 | Watch app | Later | Later (Wear OS tile) |
 
 ### Ask your cellar (on the device)
@@ -207,7 +209,9 @@ on-device model is unavailable. Android may follow with an on-device model once
 one is available without sending usage data to a third party.
 
 A cloud version (sending a summary of the cellar to the AI provider set up for
-labels) is not planned: `CLAUDE.md` allows only the label photo to be sent.
+labels) is not planned: `CLAUDE.md` allows only the label photo to be sent to
+it. For the same reason, Suggest Details reads web search results only with the
+on-device model.
 
 ## Open questions
 
