@@ -157,6 +157,10 @@ struct DiscoveryRow: View {
                     }
                 }
                 HStack(spacing: 10) {
+                    // The style in words, not only by the bottle's color.
+                    if showsWine, let style = wine?.color?.name {
+                        Text(style)
+                    }
                     if let place = discovery.place {
                         Label(place, systemImage: discovery.setting?.systemImage ?? "mappin.and.ellipse")
                     } else if let setting = discovery.setting {

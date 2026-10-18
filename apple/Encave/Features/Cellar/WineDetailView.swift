@@ -23,7 +23,7 @@ struct WineDetailView: View {
                 Section {
                     HStack(spacing: 12) {
                         Button {
-                            if let bottle = bottles.first { model.sheet = .drink(bottleID: bottle.id) }
+                            if let bottle = bottles.bottleToOpen { model.sheet = .drink(bottleID: bottle.id) }
                         } label: {
                             ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                         }

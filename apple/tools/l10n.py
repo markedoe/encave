@@ -716,7 +716,6 @@ FR = {
     "Unknown wine": "Vin inconnu",
     "Until": "À",
     "Use This Label": "Utiliser cette étiquette",
-    "Use this if the bottle was logged by mistake.": "À utiliser si la bouteille a été notée par erreur.",
     "Used by Tonight to suggest what to open. You can adjust it anytime.":
         "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment.",
     "Used for new purchases. Prices already entered keep their currency.":
@@ -1094,6 +1093,8 @@ FR = {
     "This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après.",
     "Your cellar could not be loaded. Nothing is saved until Encave is opened again.": "Impossible de charger votre cave. Rien n’est enregistré avant la prochaine ouverture d’Encave.",
     "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Vos données.",
+    "Bottle put back in the cellar": "Bouteille remise en cave",
+    "Use this if the bottle was logged by mistake. Its tasting note is deleted; you can undo right after.": "À utiliser si la bouteille a été notée par erreur. Sa note de dégustation est supprimée ; vous pouvez annuler juste après.",
 }
 
 # Keys with plural forms: English one/other and French one/other.

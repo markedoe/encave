@@ -46,8 +46,8 @@ struct DrinkSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        model.drink(bottleID, tasting: draft.makeTasting())
-                        dismiss()
+                        // On failure the sheet stays open with what was typed, under the error.
+                        if model.drink(bottleID, tasting: draft.makeTasting()) { dismiss() }
                     }
                     .keyboardShortcut(.defaultAction)
                 }
@@ -82,11 +82,11 @@ struct TastingEditor: View {
                 TastingFormSections(draft: $draft, startsExpanded: true)
                 Section {
                     Button("Put Back in the Cellar", role: .destructive) {
-                        model.update { $0.undoDrink(bottleID, previousSlot: nil) }
+                        model.putBack(bottleID)
                         dismiss()
                     }
                 } footer: {
-                    Text("Use this if the bottle was logged by mistake.")
+                    Text("Use this if the bottle was logged by mistake. Its tasting note is deleted; you can undo right after.")
                 }
             }
             .formStyle(.grouped)

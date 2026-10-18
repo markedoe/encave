@@ -231,7 +231,9 @@ struct AddBottleView: View {
     }
 
     private func save() {
-        var wine = existingWine ?? draft.makeWine()
+        // An existing wine as it is now: it may have been edited since it was chosen
+        // (another window, sync), and adding bottles saves the wine record too.
+        var wine = existingWine.map { model.cellar.wines[$0.id] ?? $0 } ?? draft.makeWine()
         if existingWine == nil, let labelPhoto = scan.photo {
             wine.photoID = PhotoStore.save(labelPhoto)
         }
@@ -248,11 +250,13 @@ struct AddBottleView: View {
             storageNote: !isOrdered && selectedRack == nil && !storageNote.isEmpty ? storageNote : nil,
             sizeML: sizeML, isOrdered: isOrdered, expectedAt: hasExpectedDate ? expectedDate : nil
         )
-        let added = model.addBottles(of: wine, quantity: quantity, slots: Array(slots.prefix(quantity)), purchase: purchase)
-        if added, let discoveryID = context.discoveryID {
+        // On failure (a place taken meanwhile…) the form stays open under the error.
+        guard model.addBottles(of: wine, quantity: quantity, slots: Array(slots.prefix(quantity)), purchase: purchase)
+        else { return }
+        if let discoveryID = context.discoveryID {
             model.update { try $0.markBought(discoveryID) }
         }
-        if added, existingWine == nil {
+        if existingWine == nil {
             var saved = draft
             saved.photoID = wine.photoID
             scan.completeLater(saved, in: model)

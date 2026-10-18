@@ -121,8 +121,9 @@ private struct RackBottleRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(wine?.displayName ?? String(localized: "Unknown wine"))
                     .lineLimit(1)
-                if let producer = wine?.producer {
-                    Text(producer).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                let line = [wine?.color?.name, wine?.producer].compactMap { $0 }.joined(separator: " · ")
+                if !line.isEmpty {
+                    Text(line).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
         }

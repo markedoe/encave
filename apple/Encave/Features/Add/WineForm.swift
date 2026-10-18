@@ -40,7 +40,8 @@ struct WineDraft: Equatable {
         notes = wine.notes ?? ""
         drinkFrom = wine.drinkFrom
         drinkUntil = wine.drinkUntil
-        windowIsAutomatic = wine.drinkFrom == nil
+        // Automatic unless the years were entered: an estimate follows the vintage and style.
+        windowIsAutomatic = wine.windowSource != .entered
         photoID = wine.photoID
         barcodes = wine.barcodes ?? []
         tags = wine.tags ?? []
@@ -55,12 +56,22 @@ struct WineDraft: Equatable {
         Wine(name: name, vintage: vintage, color: color).estimatedWindow()
     }
 
+    /// The years entered by hand, as the form shows them: a year not set yet shows
+    /// (and is saved as) the estimate, or this year and five years on.
+    var manualWindow: (from: Int, until: Int) {
+        let year = CellarYear.current
+        let from = drinkFrom ?? estimatedWindow?.from ?? year
+        return (from, max(from, drinkUntil ?? estimatedWindow?.until ?? year + 5))
+    }
+
+    /// The window saved with the wine.
+    var window: (from: Int, until: Int)? { windowIsAutomatic ? estimatedWindow : manualWindow }
+
     func makeWine() -> Wine {
         func clean(_ text: String) -> String? {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed.isEmpty ? nil : trimmed
         }
-        let window = windowIsAutomatic ? estimatedWindow : drinkFrom.flatMap { from in drinkUntil.map { (from, max(from, $0)) } }
         var wine = Wine(
             id: id, name: clean(name) ?? name, producer: clean(producer), vintage: vintage, color: color,
             region: clean(region), country: clean(country), appellation: clean(appellation),
@@ -209,14 +220,14 @@ struct WineFormSections: View {
 
     private var fromBinding: Binding<Int> {
         Binding(
-            get: { draft.drinkFrom ?? draft.estimatedWindow?.from ?? currentYear },
+            get: { draft.manualWindow.from },
             set: { draft.drinkFrom = $0; if (draft.drinkUntil ?? $0) < $0 { draft.drinkUntil = $0 } }
         )
     }
 
     private var untilBinding: Binding<Int> {
         Binding(
-            get: { max(draft.drinkUntil ?? draft.estimatedWindow?.until ?? currentYear + 5, fromBinding.wrappedValue) },
+            get: { draft.manualWindow.until },
             set: { draft.drinkUntil = $0; if draft.drinkFrom == nil { draft.drinkFrom = fromBinding.wrappedValue } }
         )
     }

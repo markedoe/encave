@@ -1411,6 +1411,16 @@
         }
       }
     },
+    "Bottle put back in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille remise en cave"
+          }
+        }
+      }
+    },
     "Bottle removed from the cellar": {
       "localizations": {
         "fr": {
@@ -9481,12 +9491,12 @@
         }
       }
     },
-    "Use this if the bottle was logged by mistake.": {
+    "Use this if the bottle was logged by mistake. Its tasting note is deleted; you can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "À utiliser si la bouteille a été notée par erreur."
+            "value": "À utiliser si la bouteille a été notée par erreur. Sa note de dégustation est supprimée ; vous pouvez annuler juste après."
           }
         }
       }

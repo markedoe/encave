@@ -262,9 +262,7 @@ struct WineSummarySections: View {
 
     /// Years when the wine is at its best: entered, or estimated from style and vintage.
     private var window: (Int, Int)? {
-        if draft.windowIsAutomatic { return draft.estimatedWindow.map { ($0.from, $0.until) } }
-        guard let from = draft.drinkFrom, let until = draft.drinkUntil else { return nil }
-        return (from, until)
+        draft.window.map { ($0.from, $0.until) }
     }
 
     private func row(_ title: LocalizedStringKey, _ value: String) -> some View {

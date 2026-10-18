@@ -187,14 +187,19 @@ final class CellarModel {
         }
     }
 
-    func drink(_ bottleID: UUID, tasting: Tasting) {
-        guard let bottle = cellar.bottles[bottleID], let wine = cellar.wines[bottle.wineID] else { return }
+    @discardableResult
+    func drink(_ bottleID: UUID, tasting: Tasting) -> Bool {
+        guard let bottle = cellar.bottles[bottleID], let wine = cellar.wines[bottle.wineID] else {
+            errorMessage = CellarError.unknownBottle.localizedMessage
+            return false
+        }
         let previousSlot = bottle.slot
-        guard update({ try $0.drink(bottleID, tasting: tasting) }) else { return }
+        guard update({ try $0.drink(bottleID, tasting: tasting) }) else { return false }
         successCount += 1
         showToast(String(localized: "Enjoy your \(wine.displayName)")) { [weak self] in
             self?.update { $0.undoDrink(bottleID, previousSlot: previousSlot) }
         }
+        return true
     }
 
     func markGone(_ bottleID: UUID) {
@@ -267,6 +272,29 @@ final class CellarModel {
         let snapshot = cellar
         guard update({ cellar in wineIDs.forEach { cellar.deleteWine($0) } }) else { return }
         showToast(String(localized: "Wines deleted: \(wineIDs.count)")) { [weak self] in self?.update { $0 = snapshot } }
+    }
+
+    /// Deletes a rack, with Undo. Its bottles stay in the cellar without a place.
+    func deleteRack(_ rackID: UUID) {
+        let snapshot = cellar
+        guard let rack = cellar.rack(rackID), update({ $0.removeRack(rackID) }) else { return }
+        let rackName = rack.name
+        showToast(String(localized: "Deleted \(rackName)")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
+
+    /// A bottle logged as opened by mistake goes back to the cellar, without its tasting, with Undo.
+    func putBack(_ bottleID: UUID) {
+        guard let bottle = cellar.bottles[bottleID], bottle.status != .inCellar,
+              update({ $0.undoDrink(bottleID, previousSlot: nil) }) else { return }
+        showToast(String(localized: "Bottle put back in the cellar")) { [weak self] in
+            self?.update { cellar in
+                // As it was, unless it changed meanwhile.
+                guard cellar.bottles[bottleID]?.status == .inCellar else { return }
+                cellar.bottles[bottleID] = bottle
+            }
+        }
     }
 
     func addDiscovery(_ discovery: Discovery, wine: Wine) {

@@ -11,6 +11,18 @@ import Testing
         return cellar
     }
 
+    @Test func quickDrinkSkipsBottlesKeptForAnOccasion() throws {
+        var cellar = cellarWithRack()
+        let wine = Wine(name: "Test", vintage: 2015, color: .red)
+        let added = try cellar.addBottles(of: wine, quantity: 2, addedAt: Date(timeIntervalSince1970: 0))
+        try cellar.reserve([added[0].id], for: "Birthday")
+        let bottles = cellar.bottles(of: wine.id)
+        #expect(bottles.bottleToOpen?.id == added[1].id)
+        try cellar.reserve([added[1].id], for: "Birthday")
+        #expect(cellar.bottles(of: wine.id).bottleToOpen != nil, "all kept: still one to open")
+        #expect([Bottle]().bottleToOpen == nil)
+    }
+
     @Test func addBottlesGroupsByWine() throws {
         var cellar = cellarWithRack()
         let wine = Wine(name: "Test", vintage: 2015, color: .red)

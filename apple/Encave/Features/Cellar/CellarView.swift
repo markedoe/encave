@@ -162,7 +162,7 @@ struct CellarList: View {
                             .accessibilityIdentifier("wine.row")
                             .tag(group.wine.id)
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                if let bottle = group.bottles.first {
+                                if let bottle = group.bottles.bottleToOpen {
                                     Button {
                                         model.sheet = .drink(bottleID: bottle.id)
                                     } label: {
@@ -433,7 +433,7 @@ struct WineContextMenu: View {
     let group: WineGroup
 
     var body: some View {
-        if let bottle = group.bottles.first {
+        if let bottle = group.bottles.bottleToOpen {
             Button("Drink a Bottle", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
             if bottle.slot != nil {
                 Button("Show in Rack", systemImage: "square.grid.3x3") { model.showInRack(bottle) }

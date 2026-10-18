@@ -26,6 +26,8 @@ struct RackDetailView: View {
     @State private var showsList = false
     @State private var listSelection: UUID?
     @State private var afterList: AppSheet?
+    /// Chosen in the place's sheet: done once that sheet is gone, so a sheet it opens is not lost.
+    @State private var afterCell: CellAction?
     /// Checking the rack: places whose bottles were found.
     @State private var auditing = false
     @State private var checked: Set<Slot> = []
@@ -55,10 +57,13 @@ struct RackDetailView: View {
                 } message: {
                     Text("Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.")
                 }
-                .sheet(item: $openCell) { open in
+                .sheet(item: $openCell, onDismiss: {
+                    if let afterCell { perform(afterCell) }
+                    afterCell = nil
+                }) { open in
                     CellSheet(rack: rack, cell: open.cell) { action in
+                        afterCell = action
                         openCell = nil
-                        perform(action)
                     }
                     .presentationDetents([.medium, .large])
                     .solidSheetBackground()
@@ -314,8 +319,9 @@ private struct SelectedBottleCard: View {
                     Text(wine?.displayName ?? String(localized: "Unknown wine"))
                         .font(.headline)
                         .lineLimit(2)
-                    if let producer = wine?.producer {
-                        Text(producer).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    let line = [wine?.color?.name, wine?.producer].compactMap { $0 }.joined(separator: " · ")
+                    if !line.isEmpty {
+                        Text(line).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                     }
                     HStack(spacing: 8) {
                         if let slot = bottle.slot {
@@ -443,7 +449,8 @@ private struct RackKey: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("\(entry.wine.displayName), \(entry.count) bottles"))
+        .accessibilityLabel(Text(verbatim: [entry.wine.displayName, entry.wine.color?.name].compactMap { $0 }.joined(separator: ", "))
+            + Text(verbatim: ", ") + Text("\(entry.count) bottles"))
         .accessibilityHint(Text("Shows where its bottles are in the rack."))
         .accessibilityAddTraits(isOn ? .isSelected : [])
         .accessibilityIdentifier("rack.key.wine")

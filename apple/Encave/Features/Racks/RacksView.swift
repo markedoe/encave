@@ -34,7 +34,7 @@ struct RacksView: View {
                                 .contextMenu {
                                     Button("Edit Rack", systemImage: "pencil") { model.sheet = .editRack(rackID: rack.id) }
                                     Button("Delete Rack", systemImage: "trash", role: .destructive) {
-                                        model.update { $0.removeRack(rack.id) }
+                                        model.deleteRack(rack.id)
                                     }
                                 }
                             }

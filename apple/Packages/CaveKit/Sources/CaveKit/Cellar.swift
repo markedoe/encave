@@ -66,6 +66,11 @@ public struct WineGroup: Identifiable, Hashable, Sendable {
     public var count: Int { bottles.count }
 }
 
+public extension Collection where Element == Bottle {
+    /// The bottle a quick "Drink" opens: one not kept for an occasion when there is one.
+    var bottleToOpen: Bottle? { first { $0.reservedFor == nil } ?? first }
+}
+
 public struct MaturitySection: Identifiable, Hashable, Sendable {
     public var maturity: Maturity
     public var groups: [WineGroup]

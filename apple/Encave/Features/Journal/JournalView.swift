@@ -147,6 +147,10 @@ struct TastingRow: View {
                         .lineLimit(3)
                 }
                 HStack(spacing: 10) {
+                    // The style in words, not only by the bottle's color.
+                    if showsWine, let style = wine?.color?.name {
+                        Text(style)
+                    }
                     if let occasion = tasting?.occasion {
                         Label(occasion, systemImage: "person.2")
                     }

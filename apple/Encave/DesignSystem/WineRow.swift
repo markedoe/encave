@@ -6,8 +6,10 @@ struct WineRow: View {
     @Environment(CellarModel.self) private var model
     let group: WineGroup
 
+    /// "Red · Domaine X · Pauillac": the style in words, not only by the bottle's color.
     private var subtitle: String {
-        [group.wine.producer, group.wine.appellation ?? group.wine.region].compactMap { $0 }.joined(separator: " · ")
+        [group.wine.color?.name, group.wine.producer, group.wine.appellation ?? group.wine.region]
+            .compactMap { $0 }.joined(separator: " · ")
     }
 
     private var location: String? {
