@@ -107,7 +107,10 @@ struct SettingsView: View {
 
             Section {
                 Picker("Currency", selection: currencyBinding) {
-                    ForEach(Self.currencies, id: \.self) { code in
+                    // The cellar's currency is always listed, even if set elsewhere (import, another device).
+                    let current = model.cellar.settings.currency
+                    let codes = Self.currencies.contains(current) ? Self.currencies : Self.currencies + [current]
+                    ForEach(codes, id: \.self) { code in
                         Text(Locale.current.localizedString(forCurrencyCode: code).map { "\($0) (\(code))" } ?? code).tag(code)
                     }
                 }
@@ -142,7 +145,7 @@ struct SettingsView: View {
             } header: {
                 Text("Your data")
             } footer: {
-                Text("A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                Text("A backup contains your whole cellar, without the photos, and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
             }
 
             let unreadable = model.unreadableFiles
@@ -291,21 +294,37 @@ struct SettingsView: View {
             importMessage = String(localized: "The file could not be read.")
             return
         }
-        var summary: ImportSummary?
-        let ok = model.update { cellar in
+        // Read first: a file that cannot be read says so; a failed save shows its own error.
+        var imported = model.cellar
+        let summary: ImportSummary
+        do {
             if url.pathExtension.lowercased() == "json" {
-                summary = cellar.merge(try CellarExport.backup(fromJSON: data).cellar)
+                summary = imported.merge(try CellarExport.backup(fromJSON: data).cellar)
             } else {
-                summary = try cellar.importCSV(String(decoding: data, as: UTF8.self))
+                summary = try imported.importCSV(String(decoding: data, as: UTF8.self))
             }
-        }
-        if ok, let summary {
-            importMessage = String(localized: "Imported \(summary.bottlesAdded) bottles of \(summary.winesAdded) new wines.")
-            model.errorMessage = nil
-        } else {
-            model.errorMessage = nil
+        } catch {
             importMessage = String(localized: "This file is not an Encave backup or a CSV with a name column.")
+            return
         }
+        let discoveriesAdded = imported.discoveries.count - model.cellar.discoveries.count
+        guard model.update({ $0 = imported }) else { return }
+        importMessage = Self.importMessage(summary, discoveriesAdded: discoveriesAdded)
+    }
+
+    /// "Imported 12 bottles, 3 new wines and 2 discoveries. Rows skipped: 1".
+    static func importMessage(_ summary: ImportSummary, discoveriesAdded: Int) -> String {
+        var parts: [String] = []
+        if summary.bottlesAdded > 0 { parts.append(String(localized: "\(summary.bottlesAdded) bottles")) }
+        if summary.winesAdded > 0 { parts.append(String(localized: "\(summary.winesAdded) new wines")) }
+        if discoveriesAdded > 0 { parts.append(String(localized: "\(discoveriesAdded) discoveries")) }
+        let importedLabel = parts.formatted(.list(type: .and))
+        var message = parts.isEmpty ? String(localized: "Nothing new: everything in this file is already in your cellar.")
+            : String(localized: "Imported \(importedLabel).")
+        if summary.rowsSkipped > 0 {
+            message += " " + String(localized: "Rows without a wine name, skipped: \(summary.rowsSkipped)")
+        }
+        return message
     }
 }
 

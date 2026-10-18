@@ -325,14 +325,22 @@ struct EditWineView: View {
         } else if photoRemoved {
             wine.photoID = nil
         }
-        // Photos added elsewhere while the form was open (another window, sync) stay.
-        if let live = model.cellar.wines[wine.id] {
-            wine.extraPhotoIDs = live.extraPhotoIDs
-            wine.coverPhotoID = live.coverPhotoID
-        }
+        if let live = model.cellar.wines[wine.id] { wine.keepUnedited(from: live) }
         // A replaced photo file is removed by the cleanup at launch, after a grace period.
         guard model.update({ try $0.updateWine(wine) }) else { return }
         dismiss()
+    }
+}
+
+extension Wine {
+    /// Takes the fields the form does not edit from the wine as it is now: photos added
+    /// elsewhere while the form was open (another window, sync) and the current price.
+    mutating func keepUnedited(from live: Wine) {
+        extraPhotoIDs = live.extraPhotoIDs
+        coverPhotoID = live.coverPhotoID
+        currentPrice = live.currentPrice
+        currentPriceCurrency = live.currentPriceCurrency
+        currentPriceDate = live.currentPriceDate
     }
 }
 

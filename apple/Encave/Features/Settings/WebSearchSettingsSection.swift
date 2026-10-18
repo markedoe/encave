@@ -133,10 +133,15 @@ struct WebSearchSettingsSection: View {
             do {
                 let results = try await WebSearchClient.search(String(localized: "Chablis wine"), settings: settings,
                                                                apiKey: key, count: 5)
-                test = .worked(results.count)
+                // Changed while testing: the result is about settings that are gone.
+                test = isCurrent(settings, key: key) ? .worked(results.count) : .idle
             } catch {
-                test = .failed(WebSearchClient.message(for: error))
+                test = isCurrent(settings, key: key) ? .failed(WebSearchClient.message(for: error)) : .idle
             }
         }
+    }
+
+    private func isCurrent(_ tested: WebSearchSettings, key: String) -> Bool {
+        tested.service == settings.service && tested.serverURL == settings.serverURL && key == AISettings.cleanKey(apiKey)
     }
 }

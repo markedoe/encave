@@ -8,7 +8,14 @@ struct DiscoverySections: View {
     @State private var toBuyOnly = false
     @State private var tag: String?
 
+    /// The chosen tag while some discovery still has it: otherwise its chip is gone and
+    /// the filter could not be cleared.
+    private var activeTag: String? {
+        tag.flatMap { model.cellar.discoveryTags.contains($0) ? $0 : nil }
+    }
+
     var body: some View {
+        let tag = activeTag
         let items = model.cellar.discoveries(filter: DiscoveryFilter(query: query, tag: tag, toBuyOnly: toBuyOnly))
         if model.cellar.discoveries.isEmpty {
             ContentUnavailableView {
@@ -39,7 +46,7 @@ struct DiscoverySections: View {
                         }
                         ForEach(model.cellar.discoveryTags, id: \.self) { name in
                             ChoiceChip(verbatim: name, isSelected: tag == name) {
-                                withAnimation(.snappy) { tag = tag == name ? nil : name }
+                                withAnimation(.snappy) { self.tag = tag == name ? nil : name }
                             } leading: {
                                 Image(systemName: "number").font(.caption.weight(.semibold))
                             }

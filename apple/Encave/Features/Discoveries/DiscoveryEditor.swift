@@ -78,7 +78,9 @@ struct DiscoveryEditor: View {
                     Toggle(isOn: $wantsToBuy.animation()) {
                         Label("To buy", systemImage: "cart")
                     }
-                    TextField("Price seen", value: $price, format: .currency(code: model.cellar.settings.currency))
+                    // In the currency it was noted in, not the one set since.
+                    TextField("Price seen", value: $price,
+                              format: .currency(code: existing?.currency ?? model.cellar.settings.currency))
                         .numericKeyboard()
                         .fieldHelp("The price on the wine list or in the shop, to compare when you buy it.")
                 } footer: {
@@ -164,11 +166,19 @@ struct DiscoveryEditor: View {
         discovery.wantsToBuy = wantsToBuy
 
         if existing == nil {
-            if let labelPhoto = scan.photo { wine.photoID = PhotoStore.save(labelPhoto) }
+            if let live = model.cellar.wines[wine.id] {
+                // A wine of the cellar recognized by the scan: what was changed in the form is kept.
+                wine.keepUnedited(from: live)
+                if wine.photoID == nil, let labelPhoto = scan.photo { wine.photoID = PhotoStore.save(labelPhoto) }
+                guard model.update({ try $0.updateWine(wine) }) else { return }
+            } else if let labelPhoto = scan.photo {
+                wine.photoID = PhotoStore.save(labelPhoto)
+            }
             model.addDiscovery(discovery, wine: wine)
             dismiss()
             return
         }
+        if let live = model.cellar.wines[wine.id] { wine.keepUnedited(from: live) }
         let oldPhoto = wine.photoID
         if let newPhoto {
             wine.photoID = PhotoStore.save(newPhoto) ?? oldPhoto
