@@ -192,6 +192,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Saved searches | Done | Planned |
 | Several photos per wine | Done | Planned |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
+| Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
 | Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
 | Watch app | Later | Later (Wear OS tile) |

@@ -28,8 +28,8 @@ There are two exceptions, both off by default:
   the label photo (and nothing else) is sent directly to the provider you chose.
 - The optional web search: when you choose a search service (Brave Search,
   Tavily or your own SearXNG server) and tap Search, only the search terms
-  are sent to it: by default the producer, name, appellation and vintage, shown
-  and editable first. The cellar, notes, prices and places are never sent. The
+  are sent to it: by default the producer, name, appellation and vintage (and
+  the bottle size, for a price), shown and editable first. The cellar, notes, prices and places are never sent. The
   results are read on the device; on Apple devices, Suggest Details uses only the
   on-device Apple Intelligence model.
 
