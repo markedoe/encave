@@ -12,10 +12,13 @@ from a primary source and should be tested before anything depends on them.
 > **Status (October 2026).**
 > - Implemented:
 >   - the storage-agnostic file protocol (snapshots, photo blobs, key grants,
->     key rotation): `RemoteSync.swift`, specified in [SYNC.md](SYNC.md), section 8;
->   - the self-hostable relay (Node and Cloudflare Workers + R2, `relay/`),
->     which keeps no tokens: a mailbox ID is derived from its token;
->   - its client in the Apple app;
+>     key rotation): `RemoteSync.swift` and `RemoteSync.kt`, specified in
+>     [SYNC.md](SYNC.md), section 8;
+>   - the self-hostable relay (Node, or Cloudflare Workers + R2 without
+>     Durable Objects, `relay/`), which keeps no tokens: a mailbox ID is
+>     derived from its token. It differs from the design in section 7; see
+>     the note there and [relay/README.md](../relay/README.md);
+>   - its client in the Apple and Android apps;
 >   - CloudKit (the user's private database, one zone per mailbox) in the Apple
 >     app, shown only in builds that declare an iCloud container;
 >   - WebDAV (section 6.3) in the Apple and Android apps: a folder on a NAS
@@ -559,6 +562,19 @@ Authorization: Bearer <token derived from the cellar key>  (relay stores only a 
 **Cloudflare mapping:** a Worker for routing, auth and rate limits; one
 **Durable Object per mailbox** holding the file index in SQLite and the
 WebSocket fan-out (hibernation API); **R2** for blob bodies over a few KB.
+
+> **As built (October 2026), see [relay/README.md](../relay/README.md):**
+> - an existing file gives 412, not 409 (409 means a folder on the path is a file);
+> - no Durable Objects: the Worker lists and stores everything in R2;
+> - no WebSocket watch: devices poll;
+> - no rendezvous endpoint yet (remote pairing is planned);
+> - mailboxes not written to for 365 days are deleted, not after 30 days;
+> - the mailbox ID is derived from its token, so the relay stores no hash;
+> - limits per file, mailbox, inbox and for the whole relay, per-client rate
+>   limits, and an optional access key for private relays.
+>
+> The costs in section 7.2 assume Durable Objects and do not apply as such:
+> the relay as built uses Workers requests and R2 only.
 
 ### 7.2 Cloudflare free tier (October 2026)
 

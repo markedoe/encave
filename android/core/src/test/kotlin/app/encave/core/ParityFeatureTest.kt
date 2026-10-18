@@ -75,6 +75,15 @@ class OnOrderTest {
 
 class WineTagTest {
     @Test
+    fun extraPhotosAreKeptOnce() {
+        val wine = Wine(name = "W", extraPhotoIds = listOf("sha256-a", "sha256-b", "sha256-a"))
+        assertEquals(listOf("sha256-a", "sha256-b"), wine.normalized().extraPhotoIds)
+        assertNull(Wine(name = "W", extraPhotoIds = emptyList()).normalized().extraPhotoIds)
+        val cellar = Cellar(listOf(wine))
+        assertEquals(listOf("sha256-a", "sha256-b"), cellar.wines[wine.id]?.extraPhotoIds)
+    }
+
+    @Test
     fun tagsFilterSearchAndStayOutOfOldFiles() {
         val cellar = Cellar()
         val gift = Wine(name = "Gift wine", tags = listOf(" Gift ", "gift", "Birth year"))

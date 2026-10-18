@@ -51,8 +51,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -62,8 +65,8 @@ sealed interface UiText {
     data class Plural(@PluralsRes val id: Int, val count: Int) : UiText
 }
 
-/** A snackbar message, with an optional undo. */
-data class UiMessage(val text: UiText, val undo: (() -> Unit)? = null)
+/** A snackbar message, with an optional undo; [persistent] ones stay until dismissed. */
+data class UiMessage(val text: UiText, val undo: (() -> Unit)? = null, val persistent: Boolean = false)
 
 /**
  * The cellar and every command the screens can run. Commands go through the
@@ -74,7 +77,11 @@ class AppViewModel(
     val preferences: Preferences,
     val photos: PhotoStore,
     val ai: AiPreferences,
+    /** True while other devices sync with this one: erasing reaches them, the sample is not offered. */
+    sharedWithDevices: Flow<Boolean> = flowOf(false),
 ) : ViewModel() {
+    val sharedWithDevices: StateFlow<Boolean> = sharedWithDevices.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     val cellar: StateFlow<Cellar> = repository.cellar
     val loaded: StateFlow<Boolean> = repository.loaded
 
@@ -93,7 +100,12 @@ class AppViewModel(
 
     init {
         viewModelScope.launch {
-            repository.loaded.collect { if (it && repository.loadFailed) post(UiText.Res(R.string.msg_load_failed)) }
+            repository.loaded.first { it }
+            val kept = repository.setAsideName
+            when {
+                kept != null -> messageChannel.trySend(UiMessage(UiText.Res(R.string.msg_load_set_aside, listOf(kept)), persistent = true))
+                repository.loadFailed -> messageChannel.trySend(UiMessage(UiText.Res(R.string.msg_load_failed), persistent = true))
+            }
         }
     }
 
@@ -156,10 +168,7 @@ class AppViewModel(
                     if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
                     else post(UiText.Plural(R.plurals.bottles_added, it.size))
                 }
-                .onFailure {
-                    deleteUnusedPhoto(photoId)
-                    post(errorText(it))
-                }
+                .onFailure { post(errorText(it)) }
         }
     }
 
@@ -173,9 +182,13 @@ class AppViewModel(
 
     fun undoDrink(bottleId: UUID, previousSlot: Slot?) = change<Unit> { it.undoDrink(bottleId, previousSlot) }
 
-    fun putBack(bottleId: UUID) = change<String>({ post(UiText.Res(R.string.msg_put_back, listOf(it))) }) {
-        it.undoDrink(bottleId, null)
-        nameOf(it, bottleId)
+    /** Back in the cellar, its tasting removed; Undo brings the tasting back. */
+    fun putBack(bottleId: UUID) {
+        val before = cellar.value.bottles[bottleId] ?: return
+        change<String>({ post(UiText.Res(R.string.msg_put_back, listOf(it))) { restore(listOf(before)) } }) {
+            it.undoDrink(bottleId, null)
+            nameOf(it, bottleId)
+        }
     }
 
     fun markGone(bottleId: UUID) {
@@ -303,10 +316,9 @@ class AppViewModel(
 
     // region Wines
 
-    /** Photos are named after their content, so two wines may share one: delete only if no wine uses it. */
-    private fun deleteUnusedPhoto(id: String?) {
-        if (id != null && id !in repository.cellar.value.photoIds) photos.delete(id)
-    }
+    // Photo files are never deleted right away: an Undo, or another device that has not
+    // synced yet, may refer to them again. Those no wine refers to are removed after a
+    // while (PhotoStore.removeOrphans, at launch).
 
     /**
      * Shows [jpeg] for the wine instead of its label photo (a picture from the internet),
@@ -314,26 +326,20 @@ class AppViewModel(
      */
     fun setCover(wineId: java.util.UUID, jpeg: ByteArray?) {
         viewModelScope.launch {
-            val wine = cellar.value.wines[wineId] ?: return@launch
-            val previous = wine.coverPhotoId
+            if (cellar.value.wines[wineId] == null) return@launch
             val newId = jpeg?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             if (jpeg != null && newId == null) {
                 post(UiText.Res(R.string.err_generic))
                 return@launch
             }
-            repository.update { it.updateWine(wine.copy(coverPhotoId = newId)) }
-                .onSuccess { if (previous != newId) deleteUnusedPhoto(previous) }
-                .onFailure {
-                    deleteUnusedPhoto(newId)
-                    post(errorText(it))
-                }
+            repository.update { c -> c.wines[wineId]?.let { c.updateWine(it.copy(coverPhotoId = newId)) } }
+                .onFailure { post(errorText(it)) }
         }
     }
 
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
     fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false) {
         viewModelScope.launch {
-            val previous = cellar.value.wines[wine.id]?.photoId
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val record = when {
                 newId != null -> wine.copy(photoId = newId)
@@ -341,14 +347,8 @@ class AppViewModel(
                 else -> wine
             }
             repository.update { it.updateWine(record) }
-                .onSuccess {
-                    if (record.photoId != previous) deleteUnusedPhoto(previous)
-                    if (!quiet) post(UiText.Res(R.string.msg_saved))
-                }
-                .onFailure {
-                    deleteUnusedPhoto(newId)
-                    post(errorText(it))
-                }
+                .onSuccess { if (!quiet) post(UiText.Res(R.string.msg_saved)) }
+                .onFailure { post(errorText(it)) }
         }
     }
 
@@ -363,18 +363,29 @@ class AppViewModel(
             }
             repository.update { cellar ->
                 val wine = cellar.wines[wineId] ?: return@update
-                cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty() + id))
-            }.onFailure {
-                deleteUnusedPhoto(id)
-                post(errorText(it))
-            }
+                // The same picture twice has the same ID: it is already there.
+                if (id !in wine.extraPhotoIds.orEmpty()) cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty() + id))
+            }.onFailure { post(errorText(it)) }
             onDone()
         }
     }
 
-    fun removeExtraPhoto(wineId: UUID, id: String) = change<Unit>({ deleteUnusedPhoto(id) }) { cellar ->
-        val wine = cellar.wines[wineId] ?: return@change
-        cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty().filter { it != id }.ifEmpty { null }))
+    /** Removes a photo from the wine, with Undo (the file stays for a while). */
+    fun removeExtraPhoto(wineId: UUID, id: String) {
+        val index = cellar.value.wines[wineId]?.extraPhotoIds.orEmpty().indexOf(id)
+        if (index < 0) return
+        change<Unit>({
+            post(UiText.Res(R.string.msg_photo_removed)) {
+                change<Unit> { c ->
+                    val wine = c.wines[wineId] ?: return@change
+                    val extras = wine.extraPhotoIds.orEmpty()
+                    if (id !in extras) c.updateWine(wine.copy(extraPhotoIds = extras.toMutableList().apply { add(minOf(index, size), id) }))
+                }
+            }
+        }) { cellar ->
+            val wine = cellar.wines[wineId] ?: return@change
+            cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty().filter { it != id }.ifEmpty { null }))
+        }
     }
 
     fun deleteWine(wineId: UUID) {
@@ -401,16 +412,12 @@ class AppViewModel(
                 .onSuccess {
                     post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
                 }
-                .onFailure {
-                    deleteUnusedPhoto(photoId)
-                    post(errorText(it))
-                }
+                .onFailure { post(errorText(it)) }
         }
     }
 
     fun updateDiscovery(discovery: Discovery, wine: Wine, photo: ByteArray?, removePhoto: Boolean) {
         viewModelScope.launch {
-            val previous = cellar.value.wines[wine.id]?.photoId
             val newId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val record = when {
                 newId != null -> wine.copy(photoId = newId)
@@ -420,13 +427,8 @@ class AppViewModel(
             repository.update {
                 it.updateWine(record)
                 it.updateDiscovery(discovery)
-            }.onSuccess {
-                if (record.photoId != previous) deleteUnusedPhoto(previous)
-                post(UiText.Res(R.string.msg_saved))
-            }.onFailure {
-                deleteUnusedPhoto(newId)
-                post(errorText(it))
-            }
+            }.onSuccess { post(UiText.Res(R.string.msg_saved)) }
+                .onFailure { post(errorText(it)) }
         }
     }
 
@@ -501,20 +503,50 @@ class AppViewModel(
 
     fun setStudioLook(enabled: Boolean) = preferences.setStudioLook(enabled)
 
+    /** The sample is offered only on an empty cellar that no other device shares. */
+    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = cellar.isEmpty && !shared
+
+    /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices). */
     fun loadSample(labels: SampleData.Labels) {
+        if (!canLoadSample(cellar.value, sharedWithDevices.value)) return
+        change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) }) { c ->
+            val empty = c.isEmpty
+            if (empty) c.merge(SampleData.cellar(year, labels))
+            empty
+        }
+    }
+
+    /**
+     * Erases the bottles, wines, racks, tastings and discoveries (on the other devices too,
+     * when they sync with this one); the settings are kept. Undo puts them back.
+     */
+    fun eraseAll() {
         viewModelScope.launch {
-            val sample = SampleData.cellar(year, labels).also { it.settings = cellar.value.settings }
-            repository.replace(sample)
-                .onSuccess { post(UiText.Res(R.string.msg_sample_loaded)) }
+            val before = cellar.value.copy()
+            repository.replace(Cellar(settings = before.settings))
+                .onSuccess { post(UiText.Res(R.string.msg_erased)) { change<Unit> { c -> c.merge(before) } } }
                 .onFailure { post(errorText(it)) }
         }
     }
 
-    fun eraseAll() {
+    /** Cellar files that could not be read at launch and were kept aside. */
+    fun keptAside(): List<java.io.File> = repository.keptAside()
+
+    /** Copies a kept-aside cellar file, as it is, to a file the user chose. */
+    fun exportKeptAside(resolver: ContentResolver, uri: Uri, file: java.io.File) {
         viewModelScope.launch {
-            repository.replace(Cellar())
-                .onSuccess { post(UiText.Res(R.string.msg_erased)) }
-                .onFailure { post(errorText(it)) }
+            val result = withContext(Dispatchers.IO) {
+                runCatching { requireNotNull(resolver.openOutputStream(uri, "wt")).use { out -> file.inputStream().use { it.copyTo(out) } } }
+            }
+            post(UiText.Res(if (result.isSuccess) R.string.msg_exported else R.string.msg_export_failed))
+        }
+    }
+
+    /** Deletes a kept-aside cellar file (photo cleanup resumes once none is left). */
+    fun deleteKeptAside(file: java.io.File, onDone: () -> Unit) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { file.delete() }
+            onDone()
         }
     }
 
@@ -586,7 +618,10 @@ class AppViewModel(
 
     companion object {
         fun factory(app: EncaveApplication): ViewModelProvider.Factory = viewModelFactory {
-            initializer { AppViewModel(app.repository, app.preferences, app.photos, app.ai) }
+            initializer {
+                val shared = app.sync.state.map { (it.membership?.active?.size ?: 0) > 1 }
+                AppViewModel(app.repository, app.preferences, app.photos, app.ai, shared)
+            }
         }
     }
 }

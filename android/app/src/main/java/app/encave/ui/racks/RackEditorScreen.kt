@@ -78,6 +78,8 @@ import app.encave.ui.components.Hint
 import app.encave.ui.help.HelpLink
 import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.WhenLoaded
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.Stepper
 import app.encave.ui.components.bodyRes
 import app.encave.ui.components.columnsRes
@@ -116,8 +118,18 @@ val RackKind.icon: ImageVector
 /** Create or edit a rack: the kind of storage, its size, rows of different lengths, with a live preview. */
 @Composable
 fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: String?) {
+    WhenLoaded(viewModel) { RackEditorForm(viewModel, navigator, rackId) }
+}
+
+@Composable
+private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rackId: String?) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val existing = remember(rackId) { rackId?.let { id -> cellar.racks.firstOrNull { it.id.toString() == id } } }
+    // Removed meanwhile (on another device): nothing to edit, and saving would add it again.
+    if (rackId != null && existing == null) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { navigator.back() }
+        return
+    }
     val defaultName = if (cellar.racks.isEmpty()) stringResource(R.string.sample_main_rack)
     else stringResource(R.string.rack_default_name, cellar.racks.size + 1)
     var name by rememberSaveable { mutableStateOf(existing?.name ?: defaultName) }
@@ -127,10 +139,10 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
     var depth by rememberSaveable { mutableIntStateOf(existing?.depth ?: 1) }
     var binCapacity by rememberSaveable { mutableIntStateOf(existing?.binCapacity ?: 10) }
     var customRows by rememberSaveable { mutableStateOf(existing?.rowColumns != null) }
-    val rowColumns = remember { mutableStateListOf<Int>().apply { existing?.rowColumns?.let { addAll(it) } } }
+    val rowColumns = rememberRetained("rack.rowColumns") { mutableStateListOf<Int>().apply { existing?.rowColumns?.let { addAll(it) } } }
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val id = remember { existing?.id ?: UUID.randomUUID() }
+    val id = rememberSaveable { existing?.id ?: UUID.randomUUID() }
 
     fun resizeRows(count: Int) {
         while (rowColumns.size < count) rowColumns.add(rowColumns.lastOrNull() ?: columns)

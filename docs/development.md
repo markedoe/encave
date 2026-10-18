@@ -99,7 +99,8 @@ CaveKit (`SyncState.swift`, `SyncProtocol.swift`, `RemoteSync.swift`,
 
 - **Tests:** `swift test --package-path apple/Packages/CaveKit` covers merges,
   pairing, handshakes, remote sync and the published test vectors.
-- **Relay:** `node --test relay/test/relay.test.mjs`. To sync through a running
+- **Relay:** `node --test relay/test/relay.test.mjs relay/test/worker.test.mjs`
+  (Node server and Cloudflare Worker). To sync through a running
   relay, start `node relay/server.mjs` and run the CaveKit tests with
   `ENCAVE_RELAY_URL=http://localhost:8787`.
 - **Two devices:** pairing needs two devices (or a device and a simulator) on
@@ -131,11 +132,11 @@ a container:
 
 | Workflow | What it does |
 |----------|--------------|
-| `ci.yml` | Secret scanning, public-safety and commit message checks |
+| `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
 | `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone and iPad (artifact `screens`), builds both apps; on a push to main (or a manual run), uploads to TestFlight |
-| `relay.yml` | Relay HTTP tests, and two simulated devices syncing through a running relay |
+| `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
 | `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`) |
-| `security.yml` | Weekly full-history secret scan |
+| `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
 
 TestFlight uploads need these repository secrets: `APPLE_TEAM_ID`,
 `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_PRIVATE_KEY` (an App Store Connect API

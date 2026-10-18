@@ -83,6 +83,8 @@ import app.encave.ui.components.Hint
 import app.encave.ui.help.HelpLink
 import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.WhenLoaded
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.Stepper
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.bottleSizes
@@ -113,13 +115,19 @@ fun Cellar.knownValues() = KnownValues(
  */
 @Composable
 fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: AddBottleRoute) {
+    WhenLoaded(viewModel) { AddBottleForm(viewModel, navigator, route) }
+}
+
+@Composable
+private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, route: AddBottleRoute) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val year = viewModel.year
     val known = remember(cellar) { cellar.knownValues() }
     val routeWine = remember(route.wineId) { route.wineId?.let { runCatching { UUID.fromString(it) }.getOrNull() } }
     var existingId by rememberSaveable { mutableStateOf(routeWine?.toString()) }
     val existing = existingId?.let { id -> cellar.wines[UUID.fromString(id)] }
-    val form = remember { WineFormState(null, year) }
+    // Kept while the activity is recreated (rotation, folding), with the photo being added.
+    val form = rememberRetained("add.form") { WineFormState(null, year) }
     var search by rememberSaveable { mutableStateOf("") }
     var moreDetails by rememberSaveable { mutableStateOf(false) }
     var quantity by rememberSaveable { mutableStateOf(1) }
@@ -130,7 +138,7 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     var rackId by rememberSaveable { mutableStateOf((routeRack ?: cellar.racks.firstOrNull())?.id?.toString()) }
     val rack = rackId?.let { id -> cellar.racks.firstOrNull { it.id.toString() == id } }
     // Slots chosen by hand; until then the first free slots are suggested.
-    val pickedSlots = remember {
+    val pickedSlots = rememberRetained("add.slots") {
         mutableStateListOf<Slot>().apply {
             if (routeRack != null && route.row >= 0 && route.column >= 0) add(Slot(routeRack.id, route.row, route.column, route.depth))
         }
@@ -139,14 +147,14 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
     var storage by rememberSaveable { mutableStateOf("") }
     var price by rememberSaveable { mutableStateOf("") }
     var currency by rememberSaveable { mutableStateOf(cellar.settings.currency) }
-    var purchaseDate by remember { mutableStateOf<Instant?>(null) }
+    var purchaseDate by rememberSaveable { mutableStateOf<Instant?>(null) }
     var pickingDate by remember { mutableStateOf(false) }
     var place by rememberSaveable { mutableStateOf("") }
     var receivedFrom by rememberSaveable { mutableStateOf("") }
     // Bought but not delivered yet (en primeur, or an order on its way).
     var ordered by rememberSaveable { mutableStateOf(false) }
     var hasExpectedDate by rememberSaveable { mutableStateOf(false) }
-    var expectedAt by remember { mutableStateOf<Instant?>(null) }
+    var expectedAt by rememberSaveable { mutableStateOf<Instant?>(null) }
     var pickingExpected by remember { mutableStateOf(false) }
     // Barcode read on the bottle: recognizes a wine already in the cellar, or is kept with the new one.
     var scanning by rememberSaveable { mutableStateOf(route.scan) }
@@ -598,9 +606,14 @@ fun CurrencyField(value: String, onChange: (String) -> Unit, modifier: Modifier 
 /** Edit the wine record itself (all its bottles share it). */
 @Composable
 fun EditWineScreen(viewModel: AppViewModel, navigator: AppNavigator, wineId: String) {
+    WhenLoaded(viewModel) { EditWineForm(viewModel, navigator, wineId) }
+}
+
+@Composable
+private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineId: String) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val wine = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull()?.let { cellar.wines[it] } }
-    val form = remember(wine) { WineFormState(wine, viewModel.year) }
+    val form = rememberRetained("editWine.form") { WineFormState(wine, viewModel.year) }
     val known = remember(cellar) { cellar.knownValues() }
     fun save() {
         form.showErrors = true

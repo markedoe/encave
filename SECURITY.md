@@ -51,17 +51,24 @@ This repository is public. A few rules keep secrets and internal details out of 
 - **No machine identities in commits.** Set a real or GitHub noreply address:
   `git config user.email "<id>+<user>@users.noreply.github.com"`.
 - **No infrastructure details.** No server hostnames, home paths or private IPs
-  in code or docs; use placeholders such as `/path/to/encave`. Private IPs and
-  common home paths are checked automatically; hostnames are not, so check them
-  yourself.
+  in code or docs; use placeholders such as `/path/to/encave`. Home folders
+  (Linux, macOS, root), private, CGNAT and Tailscale addresses and Tailscale
+  names are checked automatically, in the tree and in every line the pushed
+  commits add (a file added and removed again stays in the history). Other
+  hostnames and public IPs are not, so check them yourself.
+- **No test output or local settings.** Test reports (`.xcresult`, JUnit
+  `TEST-*.xml`, `build/reports`), `local.properties`, `.envrc`, certificates
+  and provisioning profiles are refused too.
 
 These rules are enforced by:
 
 | Guardrail | Where |
 |-----------|-------|
-| `gitleaks` with `.gitleaks.toml` | pre-commit and CI (`secrets` job) |
-| `scripts/check-public-safety.sh` | pre-commit and CI (`secrets` job) |
+| `gitleaks` with `.gitleaks.toml` | pre-commit, CI (`secrets` job) and weekly on the whole history |
+| `scripts/check-public-safety.sh` | pre-commit, CI (`secrets` job) and weekly on the whole history |
 | `scripts/check-commit-message.sh` | commit-msg hook and CI (`secrets` job) |
+
+The `secrets` job runs on pull requests and on pushes to `main` and `claude/**`.
 | GitHub secret scanning + push protection | repository settings |
 
 Set up the local hooks once:

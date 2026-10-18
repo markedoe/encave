@@ -19,20 +19,25 @@ jobs:
   relay:
     name: Relay and remote sync
     runs-on: ubuntu-latest
-    container: swift:6.2
+    timeout-minutes: 30
+    # swift:6.2 as of October 2026, pinned by digest (the multi-architecture index).
+    container: swift:6.2@sha256:d6f8f6112e9a63da0a4a151d6b93acd16699d35c0b82531ac1a245f5af210197
     defaults:
       run:
         shell: bash
     env:
       NODE_VERSION: "22.11.0"
+      # From https://nodejs.org/dist/v22.11.0/SHASUMS256.txt
+      NODE_SHA256: "4f862bab52039835efbe613b532238b6e4dde98d139a34e6923193e073438b13"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Install Node
         run: |
-          set -o pipefail
           apt-get update -qq && apt-get install -y -qq curl ca-certificates > /dev/null
-          curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz" \
-            | tar -xz -C /opt
+          archive="/tmp/node.tar.gz"
+          curl -fsSL -o "$archive" "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz"
+          echo "${NODE_SHA256}  $archive" | sha256sum -c -
+          tar -xzf "$archive" -C /opt
           echo "/opt/node-v${NODE_VERSION}-linux-x64/bin" >> "$GITHUB_PATH"
       - name: Relay tests
         run: node --test relay/test/relay.test.mjs relay/test/worker.test.mjs

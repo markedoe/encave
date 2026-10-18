@@ -140,6 +140,9 @@ class AiPreferences(context: Context) {
 
     fun setApiKey(provider: AiProvider, key: String?) = secrets.set("ai.apiKey.${provider.raw}", key?.let(::cleanKey))
 
+    /** Saves the key in the background, in the order keys are typed. */
+    fun saveApiKey(provider: AiProvider, key: String?) = SecretStore.writes.execute { runCatching { setApiKey(provider, key) } }
+
     companion object {
         /** Pasted keys often carry spaces, line breaks or quotes, which providers reject as invalid. */
         fun cleanKey(key: String): String = key.trim { it.isWhitespace() || it in "\"'“”‘’" }

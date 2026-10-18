@@ -67,7 +67,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MorePhotosSection(viewModel: AppViewModel, wine: Wine) {
-    val photos = wine.extraPhotoIds.orEmpty().filter { viewModel.photos.exists(it) }
+    val photos = wine.extraPhotoIds.orEmpty().distinct().filter { viewModel.photos.exists(it) }
     var adding by remember { mutableStateOf(false) }
     var shown by remember { mutableStateOf<String?>(null) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -92,7 +92,10 @@ fun MorePhotosSection(viewModel: AppViewModel, wine: Wine) {
                         Thumbnail(
                             viewModel.photos, id,
                             Modifier.size(96.dp, 128.dp).clip(RoundedCornerShape(Dimens.radiusCell))
-                                .combinedClickable(onClickLabel = largeLabel, onLongClick = { menu = true }, onClick = { shown = id })
+                                .combinedClickable(
+                                    onClickLabel = largeLabel, onLongClickLabel = removeLabel,
+                                    onLongClick = { menu = true }, onClick = { shown = id },
+                                )
                                 .semantics {
                                     customActions = listOf(CustomAccessibilityAction(removeLabel) { viewModel.removeExtraPhoto(wine.id, id); true })
                                 }

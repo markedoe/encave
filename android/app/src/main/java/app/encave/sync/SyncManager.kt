@@ -32,6 +32,7 @@ import java.net.Socket
 import java.time.Instant
 import java.util.Locale
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -170,14 +171,27 @@ class SyncManager(
             publishInbox()
             ready.value = true
             if (status.value.remoteStorage != null) RemoteSyncWorker.schedule(context)
+            // The app came to the foreground before this was read (cold start): start now.
+            if (foreground) {
+                resume()
+                syncRemotely()
+            }
         }
     }
 
     // region Lifecycle
 
-    /** Starts listening and looking for the other devices. Called when the app comes to the foreground. */
+    /** The app is in the foreground (between onStart and onStop). */
+    @Volatile private var foreground = false
+
+    /**
+     * Starts listening and looking for the other devices. Called when the app comes to the
+     * foreground; before [start] has read what was saved, it starts once that is done.
+     */
+    @Synchronized
     fun resume() {
-        if (!isSetUp || isDemo || otherDevices.isEmpty() || status.value.wasRemoved) return
+        foreground = true
+        if (!ready.value || !isSetUp || isDemo || otherDevices.isEmpty() || status.value.wasRemoved) return
         startListener()
         startBrowser()
         startRemoteLoop()
@@ -185,6 +199,13 @@ class SyncManager(
 
     /** Stops the network (the app goes to the background). Relay rounds continue with WorkManager. */
     fun pause() {
+        foreground = false
+        stopNetwork()
+    }
+
+    /** Stops listening, looking and the remote loop, without changing [foreground]. */
+    @Synchronized
+    private fun stopNetwork() {
         remoteLoop?.cancel()
         remoteLoop = null
         advertisement?.close()
@@ -265,7 +286,7 @@ class SyncManager(
      * and key, so it can join a cellar again later.
      */
     fun leave() {
-        pause()
+        stopNetwork()
         generation++
         synchronized(this) {
             syncState = null
@@ -293,7 +314,7 @@ class SyncManager(
             }
         }
         if (replace) {
-            repository.applySynced { Cellar(settings = it.settings) }
+            repository.applySynced(merge = { Cellar(settings = it.settings) })
         }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
@@ -361,18 +382,27 @@ class SyncManager(
      * Takes in the result of a session. The cellar may have changed during it, so the
      * result is merged again with what is here now: no local edit is lost.
      */
-    suspend fun apply(result: SyncSnapshot, from: UUID?) {
+    suspend fun apply(result: SyncSnapshot, from: UUID?): Boolean {
+        var merged: CellarMerge.Result? = null
         var membership: Membership? = null
-        repository.applySynced { current ->
-            synchronized(this) {
-                val state = syncState ?: return@applySynced current
-                val merge = CellarMerge.merge(current, state, result.cellar, result.state)
-                syncState = state.copy(stamps = merge.stamps, clock = maxOf(merge.clock, state.clock))
-                membership = status.value.membership?.merged(result.membership)
-                merge.cellar
-            }
-        }
-        val members = membership ?: return
+        val saved = repository.applySynced(
+            merge = { current ->
+                val state = synchronized(this) { syncState } ?: return@applySynced current
+                CellarMerge.merge(current, state, result.cellar, result.state).also { merged = it }.cellar
+            },
+            // The stamps follow the saved cellar: if saving fails, nothing is taken in.
+            onSaved = {
+                val merge = merged
+                synchronized(this) {
+                    val state = syncState
+                    if (merge != null && state != null) {
+                        syncState = state.copy(stamps = merge.stamps, clock = maxOf(merge.clock, state.clock))
+                        membership = status.value.membership?.merged(result.membership)
+                    }
+                }
+            },
+        ).isSuccess
+        val members = membership ?: return false
         // Learned from an authenticated list of devices: this device was removed.
         val removed = !members.members.containsKey(identity.id)
         status.update {
@@ -384,7 +414,8 @@ class SyncManager(
             )
         }
         save()
-        if (removed) pause()
+        if (removed) stopNetwork()
+        return saved
     }
 
     private fun save() {
@@ -416,6 +447,8 @@ class SyncManager(
                 handshake.cancel()
                 transport.allowLargeFrames()
                 exchange(channel, true, peer.id)
+            } catch (error: CancellationException) {
+                throw error
             } catch (error: Exception) {
                 report(error)
             } finally {
@@ -457,9 +490,12 @@ class SyncManager(
                 val (channel, member) = SyncHandshake.respond(transport, identity, membership)
                 handshake.cancel()
                 transport.allowLargeFrames()
-                peer = member.id
+                // Already syncing with it: leave that session's mark alone.
                 if (!markSyncing(member.id)) return@launch
+                peer = member.id
                 exchange(channel, false, member.id)
+            } catch (error: CancellationException) {
+                throw error
             } catch (error: Exception) {
                 // Someone else's connection failing is not this device's problem to show.
                 val code = (error as? SyncException)?.error
@@ -554,8 +590,10 @@ class SyncManager(
         if (url == null) {
             storage.remoteStorage = null
             storage.webDavLogin = null
-            remoteLoop?.cancel()
-            remoteLoop = null
+            synchronized(this) {
+                remoteLoop?.cancel()
+                remoteLoop = null
+            }
             RemoteSyncWorker.cancel(context)
             status.update { it.copy(remoteStorage = null, needsWebDavSignIn = false, remoteProblem = null) }
             return
@@ -636,6 +674,7 @@ class SyncManager(
     }
 
     /** While the app is open: a round every minute, to pick up changes from devices away. */
+    @Synchronized
     private fun startRemoteLoop() {
         if (storage.remoteStorage == null || remoteLoop != null || isDemo) return
         remoteLoop = scope.launch {
@@ -657,8 +696,16 @@ class SyncManager(
     private fun needsSignIn(storageString: String?): Boolean =
         storageString != null && storageString.startsWith(WEBDAV_PREFIX) && storage.webDavLogin?.folder != storageString.removePrefix(WEBDAV_PREFIX)
 
-    /** One round through the relay or WebDAV folder. Also run by [RemoteSyncWorker] in the background. */
+    /**
+     * One round through the relay or WebDAV folder, off the main thread. Also run by
+     * [RemoteSyncWorker] in the background.
+     */
     suspend fun remoteRound() {
+        awaitStarted()
+        withContext(Dispatchers.Default) { runRemoteRound() }
+    }
+
+    private suspend fun runRemoteRound() {
         val url = storage.remoteStorage ?: return
         val store = storeFor(url)
         if (store == null) {
@@ -679,6 +726,8 @@ class SyncManager(
             if (key == null || key.cellarId != local.membership.cellarId) return
             key = try {
                 rotateIfNeeded(store, key, local, url)
+            } catch (error: CancellationException) {
+                throw error
             } catch (_: Exception) {
                 status.update { it.copy(remoteProblem = RemoteProblem.RemovalPending) }
                 return
@@ -695,9 +744,12 @@ class SyncManager(
                 storage.remoteStorage = moved
                 status.update { it.copy(remoteStorage = moved, needsWebDavSignIn = needsSignIn(moved)) }
             }
+            // What was read is taken in first; the progress moves on only once it is saved, so
+            // changes that could not be saved are read again next round.
+            val applied = result.snapshot?.let { apply(it, null) } ?: true
+            if (!applied || round != generation) return
             synchronized(this) { progress = result.progress }
             withContext(Dispatchers.IO) { storage.saveRemoteProgress(result.progress) }
-            result.snapshot?.let { apply(it, null) }
             // Raised when the content changed without the clock moving: keep it, so the next
             // local change is newer than the snapshot just written.
             val raised = synchronized(this) {
@@ -721,6 +773,8 @@ class SyncManager(
                 else -> RemoteProblem.Unreachable
             }
             status.update { it.copy(remoteProblem = problem) }
+        } catch (error: CancellationException) {
+            throw error
         } catch (_: Exception) {
             status.update { it.copy(remoteProblem = RemoteProblem.Unreachable) }
         } finally {

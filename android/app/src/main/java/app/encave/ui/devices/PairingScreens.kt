@@ -47,6 +47,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -105,6 +107,7 @@ class PairingViewModel(application: Application) : AndroidViewModel(application)
 @Composable
 private fun PairingScaffold(title: Int, finished: Boolean, navigator: AppNavigator, content: @Composable () -> Unit) {
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(app.encave.ui.components.LocalSnackbarHostState.current) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(title)) },
@@ -178,7 +181,9 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     var scanning by rememberSaveable { mutableStateOf(false) }
     val code = PairingCode(digits)
     val start = rememberLocalNetworkAccess {
-        if (code.isValid) model.join(code, commitment?.let { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }, replace)
+        // Read when it runs, not when composed: a scanned code is set just before.
+        val typed = PairingCode(digits)
+        if (typed.isValid) model.join(typed, commitment?.let { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }, replace)
     }
     val phase = session?.phase?.collectAsStateWithLifecycle()?.value
 
@@ -372,10 +377,14 @@ private fun StatusView(
 /** Full-screen camera that reads one Encave QR code. */
 @Composable
 private fun QrScanner(onScan: (String) -> Unit, onCancel: () -> Unit) {
+    // Back closes the camera, not the screen.
+    androidx.activity.compose.BackHandler(onBack = onCancel)
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         CameraQrReader(onScan, Modifier.fillMaxSize())
         Row(
-            Modifier.fillMaxWidth().padding(Dimens.l),
+            Modifier.fillMaxWidth()
+                .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing)
+                .padding(Dimens.l),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.s),
         ) {

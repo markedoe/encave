@@ -52,7 +52,10 @@ internal fun brandScheme(dark: Boolean): ColorScheme {
     // grey, as Material's dark surfaces), warmed by a little accent. Pure black would hide
     // cards and sheets against the background.
     fun tone(lightness: Float, accentAmount: Float) = lerp(lerp(Color.Black, Color.White, lightness), accent, accentAmount)
-    return if (dark) {
+    // The other theme's accent, for the inverse roles (snackbar actions).
+    val otherAccent = DesignTokens.accent.resolve(!dark)
+    val dessert = DesignTokens.wineColors.getValue("wine-dessert").resolve(dark)
+    val scheme = if (dark) {
         darkColorScheme(
             primary = accent, onPrimary = lerp(accent, Color.Black, 0.8f),
             primaryContainer = lerp(accent, Color.Black, 0.6f), onPrimaryContainer = lerp(accent, Color.White, 0.8f),
@@ -79,6 +82,35 @@ internal fun brandScheme(dark: Boolean): ColorScheme {
             surfaceContainerLowest = Color.White, surfaceContainerLow = tint(0.03f), surfaceContainer = tint(0.045f),
             surfaceContainerHigh = tint(0.06f), surfaceContainerHighest = tint(0.08f),
             outline = lerp(ink, accent, 0.2f).copy(alpha = 0.5f), outlineVariant = tint(0.14f),
+        )
+    }
+    // Every other role too, so none keeps Material's default purple.
+    return if (dark) {
+        scheme.copy(
+            onTertiary = lerp(dessert, Color.Black, 0.8f),
+            tertiaryContainer = lerp(dessert, Color.Black, 0.6f), onTertiaryContainer = lerp(dessert, Color.White, 0.8f),
+            inversePrimary = otherAccent, inverseSurface = lerp(Color.White, accent, 0.06f), inverseOnSurface = tone(0.16f, 0.03f),
+            surfaceTint = accent, surfaceBright = tone(0.30f, 0.07f), surfaceDim = tone(0.12f, 0.02f),
+            primaryFixed = lerp(accent, Color.White, 0.8f), primaryFixedDim = lerp(accent, Color.White, 0.6f),
+            onPrimaryFixed = lerp(accent, Color.Black, 0.8f), onPrimaryFixedVariant = lerp(accent, Color.Black, 0.5f),
+            secondaryFixed = lerp(accent, Color.White, 0.85f), secondaryFixedDim = lerp(accent, Color.White, 0.65f),
+            onSecondaryFixed = lerp(accent, Color.Black, 0.85f), onSecondaryFixedVariant = lerp(accent, Color.Black, 0.55f),
+            tertiaryFixed = lerp(dessert, Color.White, 0.8f), tertiaryFixedDim = lerp(dessert, Color.White, 0.6f),
+            onTertiaryFixed = lerp(dessert, Color.Black, 0.8f), onTertiaryFixedVariant = lerp(dessert, Color.Black, 0.5f),
+        )
+    } else {
+        scheme.copy(
+            onTertiary = Color.White,
+            tertiaryContainer = lerp(paper, dessert, 0.18f), onTertiaryContainer = lerp(dessert, Color.Black, 0.6f),
+            inversePrimary = otherAccent, inverseSurface = lerp(lerp(Color.Black, Color.White, 0.2f), accent, 0.04f),
+            inverseOnSurface = lerp(Color.White, accent, 0.06f),
+            surfaceTint = accent, surfaceBright = tint(0.01f), surfaceDim = tint(0.12f),
+            primaryFixed = tint(0.2f), primaryFixedDim = tint(0.4f),
+            onPrimaryFixed = lerp(accent, Color.Black, 0.7f), onPrimaryFixedVariant = lerp(accent, Color.Black, 0.3f),
+            secondaryFixed = tint(0.12f), secondaryFixedDim = tint(0.3f),
+            onSecondaryFixed = lerp(accent, Color.Black, 0.75f), onSecondaryFixedVariant = lerp(accent, Color.Black, 0.4f),
+            tertiaryFixed = lerp(paper, dessert, 0.2f), tertiaryFixedDim = lerp(paper, dessert, 0.4f),
+            onTertiaryFixed = lerp(dessert, Color.Black, 0.7f), onTertiaryFixedVariant = lerp(dessert, Color.Black, 0.3f),
         )
     }
 }
