@@ -53,7 +53,10 @@ implementations:
   `expectedAt`, a date).
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
   when empty, and so is `wine.extraPhotoIDs` (more photos; they are synced like
-  `photoID`). `bottle.reservedFor` is an optional string (the occasion a bottle
+  `photoID`). `wine.currentPrice` (a number, like `bottle.purchasePrice`),
+  `wine.currentPriceCurrency` (an ISO code) and `wine.currentPriceDate` (a date)
+  are optional: the price of a bottle today, accepted by the user from a web
+  search or typed. `bottle.reservedFor` is an optional string (the occasion a bottle
   is kept for). `settings.savedSearches` is an optional array of
   `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
   `colors` and `maturities` sorted by their string value.

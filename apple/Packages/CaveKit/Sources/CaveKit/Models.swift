@@ -30,6 +30,11 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var tags: [String]?
     /// More photos (back label, receipt, the bottle in its rack). Nil rather than empty.
     public var extraPhotoIDs: [String]?
+    /// What a 75 cl bottle (or the wine's usual size) sells for today, accepted by the user
+    /// from a web search or typed: the amount, its currency code and the day it was set.
+    public var currentPrice: Decimal?
+    public var currentPriceCurrency: String?
+    public var currentPriceDate: Date?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -64,6 +69,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         barcodes = try c.decodeIfPresent([String].self, forKey: .barcodes)
         tags = try c.decodeIfPresent([String].self, forKey: .tags)
         extraPhotoIDs = try c.decodeIfPresent([String].self, forKey: .extraPhotoIDs)
+        currentPrice = try c.decodeIfPresent(Decimal.self, forKey: .currentPrice)
+        currentPriceCurrency = try c.decodeIfPresent(String.self, forKey: .currentPriceCurrency)
+        currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
     }
 
     /// The label photo first, then the others.
