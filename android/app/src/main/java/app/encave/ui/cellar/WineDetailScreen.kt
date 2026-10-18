@@ -105,6 +105,10 @@ import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.TastingRoute
 import app.encave.ui.theme.Dimens
 import app.encave.ui.theme.SerifDisplay
+import app.encave.core.search.WebSearchQuery
+import app.encave.ui.search.PriceOptions
+import app.encave.ui.search.WebSearchSheet
+import app.encave.ui.search.webSearchPreferences
 import java.util.UUID
 
 @Composable
@@ -125,6 +129,9 @@ fun WineDetailScreen(
     var drinking by remember { mutableStateOf<Bottle?>(null) }
     var deletingBottle by remember { mutableStateOf<Bottle?>(null) }
     var reserving by remember { mutableStateOf<Bottle?>(null) }
+    var findingPrice by remember { mutableStateOf(false) }
+    var searchingOnline by remember { mutableStateOf(false) }
+    val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -267,6 +274,16 @@ fun WineDetailScreen(
                 }
             }
             item { Details(wine) }
+            if (wine.currentPrice != null || webSearch.isEnabled) {
+                item {
+                    ValueSection(
+                        wine, cellar.settings.currency, webSearch.isEnabled,
+                        onFindPrice = { findingPrice = true },
+                        onSearch = { searchingOnline = true },
+                        onRemove = { viewModel.updateWine(wine.copy(currentPrice = null, currentPriceCurrency = null, currentPriceDate = null), quiet = true) },
+                    )
+                }
+            }
             if (tastings.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.detail_tastings)) }
                 items(tastings, key = { "t" + it.id }) { bottle ->
@@ -303,6 +320,28 @@ fun WineDetailScreen(
             confirm = stringResource(R.string.action_delete),
             onConfirm = { viewModel.deleteWine(wine.id); back() },
             onDismiss = { confirmDelete = false },
+        )
+    }
+    if (findingPrice && wine != null) {
+        val sizeML = cellar.bottlesOf(wine.id).groupingBy { it.sizeML }.eachCount()
+            .maxWithOrNull(compareBy<Map.Entry<Int, Int>> { it.value }.thenByDescending { it.key })?.key ?: 750
+        WebSearchSheet(
+            initialQuery = WebSearchQuery.priceTerms(wine, sizeML, stringResource(R.string.search_price_word)),
+            onDismiss = { findingPrice = false },
+            price = PriceOptions(sizeML, wine.currentPriceCurrency ?: cellar.settings.currency, wine.currentPrice) { amount, code ->
+                cellar.wines[wine.id]?.let { latest ->
+                    viewModel.updateWine(
+                        latest.copy(currentPrice = amount, currentPriceCurrency = code, currentPriceDate = app.encave.core.ReferenceDates.now()),
+                        quiet = true,
+                    )
+                }
+            },
+        )
+    }
+    if (searchingOnline && wine != null) {
+        WebSearchSheet(
+            initialQuery = WebSearchQuery.terms(wine, stringResource(R.string.search_wine_word)),
+            onDismiss = { searchingOnline = false },
         )
     }
     reserving?.let { bottle ->
@@ -601,6 +640,52 @@ private fun Serving(advice: ServingAdvice) {
             Text(advice.decantMinutes?.let { stringResource(R.string.serving_decant_value, it) } ?: stringResource(R.string.serving_no_decant))
         },
     )
+}
+
+/** The price of a bottle today, and the web searches. */
+@Composable
+private fun ValueSection(
+    wine: Wine,
+    cellarCurrency: String,
+    canSearch: Boolean,
+    onFindPrice: () -> Unit,
+    onSearch: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    SectionHeader(stringResource(R.string.detail_value))
+    Column(Modifier.fillMaxWidth()) {
+        wine.currentPrice?.let { price ->
+            ListItem(
+                overlineContent = { Text(stringResource(R.string.price_today)) },
+                headlineContent = { Text(Formats.money(price, wine.currentPriceCurrency ?: cellarCurrency)) },
+                supportingContent = { wine.currentPriceDate?.let { date -> Text(stringResource(R.string.price_set_on, Formats.day(date))) } },
+            )
+        }
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = Dimens.l),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+        ) {
+            if (canSearch) {
+                OutlinedButton(onClick = onFindPrice, modifier = Modifier.testTag("action.find_price")) {
+                    Text(stringResource(R.string.search_find_price))
+                }
+                OutlinedButton(onClick = onSearch, modifier = Modifier.testTag("action.search_online")) {
+                    Text(stringResource(R.string.search_online))
+                }
+            }
+        }
+        if (wine.currentPrice != null) {
+            TextButton(onClick = onRemove, modifier = Modifier.padding(horizontal = Dimens.s)) {
+                Text(stringResource(R.string.price_remove))
+            }
+        }
+        Text(
+            stringResource(R.string.detail_value_footer),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
+        )
+    }
 }
 
 @Composable

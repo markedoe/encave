@@ -154,6 +154,8 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 
             AiSettingsSection(viewModel)
 
+            WebSearchSettingsSection()
+
             SectionHeader(stringResource(R.string.settings_data))
             ListItem(
                 modifier = Modifier.clickable { exportJson.launch("encave-$today.json") },

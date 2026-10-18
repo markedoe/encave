@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
@@ -33,7 +34,7 @@ import app.encave.R
  * Topics of the in-app help, the same as on Apple. The keyboard-shortcuts topic is
  * left out: the Android app has no keyboard shortcuts.
  */
-enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Devices, Ai, Data, Privacy }
+enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Devices, Ai, WebSearch, Data, Privacy }
 
 /** A paragraph of help with an optional heading. Text can use **bold** and `code`. */
 data class HelpSection(@StringRes val body: Int, @StringRes val title: Int? = null, val icon: ImageVector? = null)
@@ -148,6 +149,16 @@ data class HelpArticle(
                     HelpSection(R.string.help_ai_local, R.string.help_ai_local_title),
                     HelpSection(R.string.help_ai_url, R.string.help_ai_url_title),
                     HelpSection(R.string.help_ai_sent, R.string.help_ai_sent_title),
+                ),
+            ),
+            HelpArticle(
+                HelpTopic.WebSearch, R.string.help_web_title, R.string.help_web_summary, Icons.Outlined.Public,
+                listOf(
+                    HelpSection(R.string.help_web_off, R.string.help_web_off_title),
+                    HelpSection(R.string.help_web_service, R.string.help_web_service_title),
+                    HelpSection(R.string.help_web_search, R.string.help_web_search_title, Icons.Outlined.Public),
+                    HelpSection(R.string.help_web_price, R.string.help_web_price_title, Icons.Outlined.Tag),
+                    HelpSection(R.string.help_web_sent, R.string.help_web_sent_title),
                 ),
             ),
             HelpArticle(
