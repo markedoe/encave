@@ -63,6 +63,13 @@ class CellarTest {
         cellar.undoDrink(bottle.id, previousSlot = slot)
         assertEquals(bottle.id, cellar.bottleAt(slot)?.id)
         assertTrue(cellar.consumedBottles.isEmpty())
+
+        // The rack was removed in the meantime: the bottle comes back without a place.
+        cellar.drink(bottle.id, Tasting())
+        cellar.removeRack(rack.id)
+        cellar.undoDrink(bottle.id, previousSlot = slot)
+        assertEquals(Bottle.Status.InCellar, cellar.bottles[bottle.id]?.status)
+        assertNull(cellar.bottles[bottle.id]?.slot)
     }
 
     @Test
