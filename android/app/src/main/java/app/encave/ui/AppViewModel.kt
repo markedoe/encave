@@ -308,6 +308,28 @@ class AppViewModel(
         if (id != null && id !in repository.cellar.value.photoIds) photos.delete(id)
     }
 
+    /**
+     * Shows [jpeg] for the wine instead of its label photo (a picture from the internet),
+     * or the label photo again when null. The label photo itself is never changed.
+     */
+    fun setCover(wineId: java.util.UUID, jpeg: ByteArray?) {
+        viewModelScope.launch {
+            val wine = cellar.value.wines[wineId] ?: return@launch
+            val previous = wine.coverPhotoId
+            val newId = jpeg?.let { withContext(Dispatchers.IO) { photos.save(it) } }
+            if (jpeg != null && newId == null) {
+                post(UiText.Res(R.string.err_generic))
+                return@launch
+            }
+            repository.update { it.updateWine(wine.copy(coverPhotoId = newId)) }
+                .onSuccess { if (previous != newId) deleteUnusedPhoto(previous) }
+                .onFailure {
+                    deleteUnusedPhoto(newId)
+                    post(errorText(it))
+                }
+        }
+    }
+
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
     fun updateWine(wine: Wine, photo: ByteArray? = null, removePhoto: Boolean = false, quiet: Boolean = false) {
         viewModelScope.launch {

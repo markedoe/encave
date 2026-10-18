@@ -109,6 +109,7 @@ import app.encave.ui.theme.SerifDisplay
 import app.encave.core.search.WebSearchQuery
 import app.encave.ui.search.PriceOptions
 import app.encave.ui.search.WebSearchSheet
+import app.encave.ui.search.WinePictureSheet
 import app.encave.ui.search.webSearchPreferences
 import java.util.UUID
 
@@ -132,6 +133,7 @@ fun WineDetailScreen(
     var reserving by remember { mutableStateOf<Bottle?>(null) }
     var findingPrice by remember { mutableStateOf(false) }
     var searchingOnline by remember { mutableStateOf(false) }
+    var choosingPicture by remember { mutableStateOf(false) }
     val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -194,6 +196,12 @@ fun WineDetailScreen(
                     )
                 }
                 Hero(wine)
+                if (webSearch.isEnabled || wine.coverPhotoId != null) {
+                    TextButton(
+                        onClick = { choosingPicture = true },
+                        modifier = Modifier.padding(horizontal = Dimens.s).testTag("action.change_picture"),
+                    ) { Text(stringResource(R.string.detail_change_picture)) }
+                }
             }
             item {
                 WindowCard(
@@ -339,6 +347,9 @@ fun WineDetailScreen(
                 }
             },
         )
+    }
+    if (choosingPicture && wine != null) {
+        WinePictureSheet(viewModel, wine, onDismiss = { choosingPicture = false })
     }
     if (searchingOnline && wine != null) {
         WebSearchSheet(

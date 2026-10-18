@@ -1007,6 +1007,19 @@ S = [
  ("photo_item", "Photo %1$d of %2$d", "Photo %1$d sur %2$d"),
  ("photo_show_large", "Show large", "Afficher en grand"),
 
+ ("detail_change_picture", "Change picture", "Changer l’image"),
+ ("search_bottle_word", "bottle", "bouteille"),
+ ("picture_title", "Wine picture", "Image du vin"),
+ ("picture_use_label", "Use the label photo", "Utiliser la photo de l’étiquette"),
+ ("picture_needs_search", "To find a picture on the internet, choose a search service in Settings › Web search. The label photo is always kept.", "Pour trouver une image sur internet, choisissez un service de recherche dans Réglages › Recherche web. La photo de l’étiquette est toujours conservée."),
+ ("picture_from_internet", "From the internet", "Depuis internet"),
+ ("picture_search", "Search pictures", "Chercher des images"),
+ ("picture_use", "Use this picture", "Utiliser cette image"),
+ ("picture_none", "No pictures found. Try fewer words.", "Aucune image trouvée. Essayez avec moins de mots."),
+ ("picture_download_failed", "This picture could not be downloaded. Try another one.", "Cette image n’a pas pu être téléchargée. Essayez-en une autre."),
+ ("picture_footer", "Only the search terms are sent to %1$s. The thumbnails and the picture you choose are downloaded from the sites that host them, which see the request and your IP address. Pictures from shops are for your private use. The label photo is kept.", "Seuls les termes de recherche sont envoyés à %1$s. Les miniatures et l’image que vous choisissez sont téléchargées depuis les sites qui les hébergent, qui voient la requête et votre adresse IP. Les images des boutiques sont pour votre usage privé. La photo de l’étiquette est conservée."),
+ ("help_web_pictures_title", "Pictures", "Images"),
+ ("help_web_pictures", "On a wine’s page, **Change picture** then **Search pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.", "Sur la fiche d’un vin, **Changer l’image** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé."),
 ]
 
 P = [

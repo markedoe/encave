@@ -160,6 +160,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_web_service, R.string.help_web_service_title),
                     HelpSection(R.string.help_web_search, R.string.help_web_search_title, Icons.Outlined.Public),
                     HelpSection(R.string.help_web_price, R.string.help_web_price_title, Icons.Outlined.Tag),
+                    HelpSection(R.string.help_web_pictures, R.string.help_web_pictures_title),
                     HelpSection(R.string.help_web_sent, R.string.help_web_sent_title),
                 ),
             ),

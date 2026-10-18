@@ -56,6 +56,21 @@ class PhotoStore(context: Context) {
         }
     }.getOrNull()
 
+    /** A downloaded picture as a resized JPEG, re-encoded so no metadata is kept; null if it is not an image. */
+    fun prepare(bytes: ByteArray, maxPixelSize: Int = MAX_PIXEL_SIZE): ByteArray? = runCatching {
+        val decoded = decode(bytes, maxPixelSize) ?: return null
+        val scale = minOf(1f, maxPixelSize.toFloat() / maxOf(decoded.width, decoded.height))
+        val output = if (scale < 1f) {
+            Bitmap.createScaledBitmap(decoded, (decoded.width * scale).toInt().coerceAtLeast(1), (decoded.height * scale).toInt().coerceAtLeast(1), true)
+        } else {
+            decoded
+        }
+        ByteArrayOutputStream().use { stream ->
+            output.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)
+            stream.toByteArray()
+        }
+    }.getOrNull()
+
     /**
      * Saves a prepared JPEG; returns the new photo identifier, named after its content
      * ("sha256-…") so other devices can check a synced photo is the one they asked for.

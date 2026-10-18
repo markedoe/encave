@@ -2,7 +2,11 @@ package app.encave.data.search
 
 import android.content.Context
 import androidx.core.content.edit
+import app.encave.core.search.WebImageDownload
+import app.encave.core.search.WebImageResult
 import app.encave.core.search.WebSearchError
+import app.encave.core.search.WebSearchRequest
+import app.encave.core.search.imageProvider
 import app.encave.core.search.WebSearchResult
 import app.encave.core.search.WebSearchService
 import app.encave.data.ai.AiPreferences
@@ -60,6 +64,69 @@ class WebSearchPreferences(context: Context) {
 
 /** Sends the query, and nothing else, to the service set up in Settings. */
 object WebSearchClient {
+    /** Pictures for the query, from the image search of the same service. */
+    suspend fun searchImages(query: String, settings: WebSearchSettings, apiKey: String?, count: Int = 30): List<WebImageResult> =
+        withContext(Dispatchers.IO) {
+            val provider = settings.service.imageProvider(apiKey, settings.serverUrl)
+            val (status, text) = send(provider.imageRequest(query, count))
+            provider.imageResults(text, status)
+        }
+
+    /** Downloads a picture from its host: https only, an image type, at most [maxBytes]. */
+    suspend fun downloadImage(url: String, maxBytes: Int = WebImageDownload.MAX_BYTES): ByteArray = withContext(Dispatchers.IO) {
+        if (!WebImageDownload.isAllowed(url)) throw WebSearchError.InvalidResponse
+        val connection = URL(url).openConnection() as HttpURLConnection
+        try {
+            connection.connectTimeout = WebImageDownload.TIMEOUT_MS
+            connection.readTimeout = WebImageDownload.TIMEOUT_MS
+            connection.useCaches = false
+            val status = connection.responseCode
+            if (status !in 200..299 || !WebImageDownload.isAllowed(connection.url.toString()) ||
+                !WebImageDownload.isImage(connection.contentType) ||
+                !WebImageDownload.acceptsLength(connection.contentLengthLong) || connection.contentLengthLong > maxBytes
+            ) {
+                throw WebSearchError.InvalidResponse
+            }
+            connection.inputStream.use { input ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(16 * 1024)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    output.write(buffer, 0, read)
+                    if (output.size() > maxBytes) throw WebSearchError.InvalidResponse
+                }
+                output.toByteArray()
+            }
+        } catch (error: IOException) {
+            throw WebSearchError.Server(0)
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun send(request: WebSearchRequest): Pair<Int, String> {
+        val connection = URL(request.url).openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = request.method
+            connection.connectTimeout = 20_000
+            connection.readTimeout = 30_000
+            connection.useCaches = false
+            request.headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
+            request.body?.let { body ->
+                connection.doOutput = true
+                connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            }
+            val status = connection.responseCode
+            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+            return status to stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
+        } catch (error: IOException) {
+            throw WebSearchError.Server(0)
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     suspend fun search(query: String, settings: WebSearchSettings, apiKey: String?, count: Int = 10): List<WebSearchResult> =
         withContext(Dispatchers.IO) {
             val provider = settings.service.provider(apiKey, settings.serverUrl)
