@@ -41,16 +41,6 @@
         }
       }
     },
-    "%@ · %lld bottles": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$lld bouteilles"
-          }
-        }
-      }
-    },
     "%@, %@": {
       "localizations": {
         "fr": {
@@ -91,6 +81,16 @@
         }
       }
     },
+    "%@: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$@"
+          }
+        }
+      }
+    },
     "%@: %@.": {
       "localizations": {
         "fr": {
@@ -101,12 +101,12 @@
         }
       }
     },
-    "%@: %lld bottles. Mark them received when they arrive.": {
+    "%@: %@. Mark them received when they arrive.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ : %2$lld bouteilles. Marquez-les comme reçues à leur arrivée."
+            "value": "%1$@ : %2$@. Marquez-les comme reçues à leur arrivée."
           }
         }
       }
@@ -193,10 +193,40 @@
     },
     "%lld bottles on order": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle on order"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles on order"
+                }
+              }
+            }
+          }
+        },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld bouteilles en commande"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille en commande"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles en commande"
+                }
+              }
+            }
           }
         }
       }
@@ -207,6 +237,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld appareils"
+          }
+        }
+      }
+    },
+    "%lld discoveries": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld discovery"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld discoveries"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld découverte"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld découvertes"
+                }
+              }
+            }
           }
         }
       }
@@ -223,10 +293,80 @@
     },
     "%lld models": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld model"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld models"
+                }
+              }
+            }
+          }
+        },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld modèles"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld modèle"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld modèles"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld new wines": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new wine"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new wines"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld nouveau vin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld nouveaux vins"
+                }
+              }
+            }
           }
         }
       }
@@ -353,20 +493,60 @@
     },
     "%lld stars": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld star"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld stars"
+                }
+              }
+            }
+          }
+        },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld étoiles"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld étoile"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld étoiles"
+                }
+              }
+            }
           }
         }
       }
     },
-    "**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced.": {
+    "%llds": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder (JSON)** enregistre tout : vins, bouteilles, casiers, dégustations et découvertes. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve déjà n’est remplacé."
+            "value": "années %lld"
+          }
+        }
+      }
+    },
+    "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, tastings, discoveries and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Sauvegarder (JSON)** enregistre toute votre cave : vins, bouteilles, casiers, dégustations, découvertes et réglages, mais pas les photos. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve n’est remplacé."
           }
         }
       }
@@ -401,12 +581,12 @@
         }
       }
     },
-    "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.": {
+    "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché."
+            "value": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
           }
         }
       }
@@ -461,12 +641,12 @@
         }
       }
     },
-    "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
+    "A backup contains your whole cellar, without the photos, and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde contient tout et s’importe sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde contient toute votre cave, sans les photos, et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour une assurance ou un déménagement."
           }
         }
       }
@@ -1051,12 +1231,12 @@
         }
       }
     },
-    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.": {
+    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher."
+            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête."
           }
         }
       }
@@ -1097,6 +1277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appellation"
+          }
+        }
+      }
+    },
+    "Apple Intelligence does not answer in the language of this device yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence ne répond pas encore dans la langue de cet appareil."
           }
         }
       }
@@ -2401,6 +2591,16 @@
         }
       }
     },
+    "Decade": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décennie"
+          }
+        }
+      }
+    },
     "Decanting": {
       "localizations": {
         "fr": {
@@ -3011,12 +3211,12 @@
         }
       }
     },
-    "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color.": {
+    "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color. A wine without a drinking window shows none of these and comes last in Tonight: set its window on its page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque vin est **trop jeune**, **prêt**, **à boire bientôt** (dernière année de sa fenêtre) ou **sur le déclin**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur."
+            "value": "Chaque vin est **trop jeune**, **prêt**, **à boire bientôt** (dernière année de sa fenêtre) ou **après son apogée**. L’étiquette et le symbole le disent toujours, pas seulement la couleur. Un vin sans fenêtre de dégustation n’affiche rien de cela et passe en dernier dans Ce soir : fixez sa fenêtre sur sa fiche."
           }
         }
       }
@@ -3351,12 +3551,12 @@
         }
       }
     },
-    "Favorite: %@, %lld stars": {
+    "Favorite: %@, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Préféré : %1$@, %2$lld étoiles"
+            "value": "Préféré : %1$@, %2$@"
           }
         }
       }
@@ -3883,10 +4083,40 @@
     },
     "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottle. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."
+                }
+              }
+            }
+          }
+        },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                }
+              }
+            }
           }
         }
       }
@@ -4001,12 +4231,12 @@
         }
       }
     },
-    "Imported %lld bottles of %lld new wines.": {
+    "Imported %@.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld bouteilles importées, dont %2$lld nouveaux vins."
+            "value": "Importé : %@."
           }
         }
       }
@@ -4781,6 +5011,16 @@
         }
       }
     },
+    "Month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mois"
+          }
+        }
+      }
+    },
     "Monthly Reminder": {
       "localizations": {
         "fr": {
@@ -4827,6 +5067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Région la plus ouverte : %@"
+          }
+        }
+      }
+    },
+    "Most opened style: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Style le plus ouvert : %@"
           }
         }
       }
@@ -5291,6 +5541,16 @@
         }
       }
     },
+    "Nothing new: everything in this file is already in your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien de nouveau : tout ce que contient ce fichier est déjà dans votre cave."
+          }
+        }
+      }
+    },
     "Nothing to suggest yet": {
       "localizations": {
         "fr": {
@@ -5541,12 +5801,12 @@
         }
       }
     },
-    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar** and scan the QR code, or type the code (on a Mac). Both devices must be on the same Wi-Fi.": {
+    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar**, then scan the QR code (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un code QR et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil** et scannez le code QR, ou saisissez le code (sur un Mac). Les deux appareils doivent être sur le même Wi-Fi."
+            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil**, puis scannez le QR code (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi."
           }
         }
       }
@@ -5631,12 +5891,12 @@
         }
       }
     },
-    "One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.": {
+    "One bottle per cell, in rows and columns. For racks deep enough to hold one bottle behind the other, set **Bottles per cell** to **Two, one behind the other**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une bouteille par case, en rangées et colonnes. Choisissez **deux bouteilles par case** pour les casiers assez profonds pour en mettre une derrière l’autre."
+            "value": "Une bouteille par case, en rangées et colonnes. Pour les casiers assez profonds pour tenir une bouteille derrière l’autre, réglez **Bouteilles par case** sur **Deux, l’une derrière l’autre**."
           }
         }
       }
@@ -5653,10 +5913,40 @@
     },
     "Only %lld free positions: the other bottles will have no position.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Only %lld free position: the other bottles will have no position."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Only %lld free positions: the other bottles will have no position."
+                }
+              }
+            }
+          }
+        },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Seulement %lld emplacement libre : les autres bouteilles n’auront pas d’emplacement."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
+                }
+              }
+            }
           }
         }
       }
@@ -6937,6 +7227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rangées de longueurs différentes"
+          }
+        }
+      }
+    },
+    "Rows without a wine name, skipped: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lignes sans nom de vin, ignorées : %lld"
           }
         }
       }

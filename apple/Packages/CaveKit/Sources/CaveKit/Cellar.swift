@@ -245,6 +245,22 @@ public extension Cellar {
         bottlesInCellar.filter { $0.wineID == wineID }.sorted { $0.addedAt < $1.addedAt }
     }
 
+    /// Opened bottles whose wine (name, producer, origin, grapes, tags) or tasting
+    /// (note, occasion, full note, food) contains `query`, most recent first.
+    func tastings(matching query: String) -> [Bottle] {
+        let needle = query.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty else { return consumedBottles }
+        return consumedBottles.filter { bottle in
+            if wines[bottle.wineID]?.matches(needle) == true { return true }
+            let tasting = bottle.tasting
+            let fields = [tasting?.note, tasting?.occasion, tasting?.appearance, tasting?.nose, tasting?.palate,
+                          tasting?.finish, tasting?.foodPairing]
+            return fields.compactMap { $0 }.contains {
+                $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
+        }
+    }
+
     /// Past tastings of a wine, most recent first.
     func tastings(of wineID: UUID) -> [Bottle] {
         consumedBottles.filter { $0.wineID == wineID }

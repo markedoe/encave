@@ -11,6 +11,21 @@ import Testing
         return cellar
     }
 
+    @Test func journalSearchLooksInTheWineAndTheTasting() throws {
+        var cellar = cellarWithRack()
+        let wine = Wine(name: "Clos Test", producer: "Domaine Été", grapes: ["Gamay"])
+        let bottles = try cellar.addBottles(of: wine, quantity: 2)
+        try cellar.drink(bottles[0].id, tasting: Tasting(date: .now, occasion: "Picnic", foodPairing: "Roast duck"))
+        try cellar.drink(bottles[1].id, tasting: Tasting(date: .now, note: "Silky"))
+        #expect(cellar.tastings(matching: "").count == 2)
+        #expect(cellar.tastings(matching: "gamay").count == 2)
+        #expect(cellar.tastings(matching: "ete").count == 2, "diacritics are ignored")
+        #expect(cellar.tastings(matching: "duck").map(\.id) == [bottles[0].id])
+        #expect(cellar.tastings(matching: "picnic").map(\.id) == [bottles[0].id])
+        #expect(cellar.tastings(matching: "silky ").map(\.id) == [bottles[1].id])
+        #expect(cellar.tastings(matching: "Bordeaux").isEmpty)
+    }
+
     @Test func quickDrinkSkipsBottlesKeptForAnOccasion() throws {
         var cellar = cellarWithRack()
         let wine = Wine(name: "Test", vintage: 2015, color: .red)

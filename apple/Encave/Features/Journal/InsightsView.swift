@@ -69,7 +69,7 @@ struct InsightsView: View {
                 if !stats.byVintageDecade.isEmpty {
                     ChartCard(title: "By vintage") {
                         Chart(stats.byVintageDecade) { slice in
-                            BarMark(x: .value("Decade", slice.label), y: .value("Bottles", slice.count))
+                            BarMark(x: .value("Decade", Self.decadeName(slice.label)), y: .value("Bottles", slice.count))
                                 .foregroundStyle(Color.accentColor.gradient)
                                 .cornerRadius(4)
                         }
@@ -110,6 +110,15 @@ struct InsightsView: View {
             .frame(maxWidth: .infinity)
         }
         .navigationTitle("Insights")
+    }
+
+    /// "2010s" and "NV" from the statistics, in the user's language.
+    static func decadeName(_ label: String) -> String {
+        if label == "NV" { return String(localized: "NV") }
+        if label.hasSuffix("s"), let decade = Int(label.dropLast()) {
+            return String(localized: "\(decade)s", comment: "A decade of vintages, such as 2010s")
+        }
+        return label
     }
 }
 
@@ -186,10 +195,18 @@ private struct DrinkDownCard: View {
 private struct YearInWineCard: View {
     @Environment(CellarModel.self) private var model
     @State private var year: Int?
+    /// Drawn once per year and recap, not at every rendering of the card.
+    @State private var image: Image?
+
+    private struct ImageKey: Equatable {
+        var year: Int
+        var recap: YearInWine
+    }
 
     var body: some View {
         let years = availableYears
-        let shown = year ?? years.first ?? model.currentYear
+        // A chosen year with nothing left in it falls back to the latest one.
+        let shown = year.flatMap { years.contains($0) ? $0 : nil } ?? years.first ?? model.currentYear
         let recap = model.cellar.yearInWine(shown)
         if !years.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
@@ -209,7 +226,7 @@ private struct YearInWineCard: View {
                     } else {
                         Text(verbatim: String(shown)).foregroundStyle(.secondary)
                     }
-                    if let image = shareImage(recap: recap, year: shown) {
+                    if let image {
                         ShareLink(item: image, preview: SharePreview(Text("Your year in wine"), image: image)) {
                             Label("Share", systemImage: "square.and.arrow.up")
                                 .labelStyle(.iconOnly)
@@ -227,6 +244,9 @@ private struct YearInWineCard: View {
                     .fill(Color.accentColor.opacity(0.1))
             }
             .accessibilityIdentifier("insights.year")
+            .task(id: ImageKey(year: shown, recap: recap)) {
+                image = shareImage(recap: recap, year: shown)
+            }
         }
     }
 
@@ -276,13 +296,14 @@ private struct YearInWineFacts: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 if let favorite = recap.favorite {
-                    fact("star.fill", Text("Favorite: \(favorite.name), \(favorite.rating) stars"))
+                    let starsLabel = String(localized: "\(favorite.rating) stars")
+                    fact("star.fill", Text("Favorite: \(favorite.name), \(starsLabel)"))
                 }
                 if let regionName = recap.topRegion {
                     fact("map", Text("Most opened region: \(regionName)"))
                 }
-                if let color = recap.topColor {
-                    fact("wineglass", Text("Most opened style: ") + Text(color.title))
+                if let styleName = recap.topColor?.name {
+                    fact("wineglass", Text("Most opened style: \(styleName)"))
                 }
                 if let occasionName = recap.topOccasion {
                     fact("person.2", Text("Favorite occasion: \(occasionName)"))

@@ -7,8 +7,8 @@ enum HelpTopic: String, CaseIterable, Identifiable, Hashable {
 }
 
 /// A paragraph of help, with an optional heading. Text can use **bold**.
-struct HelpSection: Identifiable {
-    let id = UUID()
+/// Shown by position in its article: a new ID at each rendering would rebuild the list.
+struct HelpSection {
     var title: LocalizedStringKey?
     var body: LocalizedStringKey
     var systemImage: String?
@@ -57,7 +57,7 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .racks, title: "Racks",
                         summary: "Describe your storage so every bottle has a place.", systemImage: "square.grid.3x3", sections: [
-                HelpSection(title: "Grid rack", body: "One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.", systemImage: "square.grid.3x3"),
+                HelpSection(title: "Grid rack", body: "One bottle per cell, in rows and columns. For racks deep enough to hold one bottle behind the other, set **Bottles per cell** to **Two, one behind the other**.", systemImage: "square.grid.3x3"),
                 HelpSection(title: "Honeycomb rack", body: "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row.", systemImage: "circle.hexagongrid"),
                 HelpSection(title: "Wine fridge or cabinet", body: "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.", systemImage: "refrigerator"),
                 HelpSection(title: "Bins or crates", body: "Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.", systemImage: "diamond"),
@@ -74,7 +74,7 @@ struct HelpArticle: Identifiable {
                         summary: "When each wine is at its best.", systemImage: "moon.stars", sections: [
                 HelpSection(title: "Why this window", body: "Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink Sooner** and **Keep Longer** move its end by a year."),
                 HelpSection(title: "Keeping bottles for an occasion", body: "On a bottle in a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back.", systemImage: "gift"),
-                HelpSection(title: "Maturity", body: "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color."),
+                HelpSection(title: "Maturity", body: "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color. A wine without a drinking window shows none of these and comes last in Tonight: set its window on its page."),
                 HelpSection(title: "Suggestions", body: "Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why."),
                 HelpSection(title: "Ask your cellar", body: "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.", systemImage: "sparkles"),
                 HelpSection(title: "Serving", body: "Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant."),
@@ -95,7 +95,7 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .devices, title: "Your devices",
                         summary: "The same cellar on your iPhone, iPad and Mac.", systemImage: "laptopcomputer.and.iphone", sections: [
-                HelpSection(title: "Add a device", body: "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar** and scan the QR code, or type the code (on a Mac). Both devices must be on the same Wi-Fi."),
+                HelpSection(title: "Add a device", body: "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar**, then scan the QR code (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi."),
                 HelpSection(title: "Compare the codes", body: "Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network."),
                 HelpSection(title: "Staying in sync", body: "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins."),
                 HelpSection(title: "Bottles already on the new device", body: "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar)."),
@@ -125,9 +125,9 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .data, title: "Backup, export and import",
                         summary: "Keep a copy and move your cellar.", systemImage: "externaldrive", sections: [
-                HelpSection(title: "Back up", body: "**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced."),
+                HelpSection(title: "Back up", body: "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, tastings, discoveries and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced."),
                 HelpSection(title: "Spreadsheet", body: "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place."),
-                HelpSection(title: "Printed inventory", body: "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices."),
+                HelpSection(title: "Printed inventory", body: "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory."),
                 HelpSection(title: "Coming from another app", body: "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device."),
                 HelpSection(title: "Photos", body: "Label photos stay on your devices and sync between them, but are not included in backups yet."),
             ]),
@@ -135,7 +135,7 @@ struct HelpArticle: Identifiable {
                         summary: "Your cellar stays yours.", systemImage: "lock.shield", sections: [
                 HelpSection(body: "Your cellar is stored only on your devices. There is no account, no tracking and no advertising."),
                 HelpSection(body: "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud, a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them."),
-                HelpSection(body: "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search."),
+                HelpSection(body: "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request."),
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",

@@ -79,7 +79,8 @@ enum Reminders {
                 let content = UNMutableNotificationContent()
                 content.title = String(localized: "Delivery expected today")
                 let wineName = group.wine.displayName
-                content.body = String(localized: "\(wineName): \(dates.count) bottles. Mark them received when they arrive.")
+                let bottlesLabel = String(localized: "\(dates.count) bottles")
+                content.body = String(localized: "\(wineName): \(bottlesLabel). Mark them received when they arrive.")
                 content.sound = .default
                 content.userInfo = [tabKey: AppTab.cellar.rawValue, wineKey: group.wine.id.uuidString]
                 content.threadIdentifier = deliveryPrefix

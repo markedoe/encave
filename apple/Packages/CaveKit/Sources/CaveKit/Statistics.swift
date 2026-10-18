@@ -67,8 +67,15 @@ public extension Cellar {
         }
 
         let colorCounts = Dictionary(grouping: winesInCellar, by: \.color).mapValues(\.count)
+        // Ties in a fixed order (styles as listed, unknown last), so the chart does not reshuffle.
         let byColor = colorCounts.map { CellarStatistics.ColorSlice(color: $0.key, count: $0.value) }
-            .sorted { $0.count > $1.count }
+            .sorted { a, b in
+                if a.count != b.count { return a.count > b.count }
+                func rank(_ color: WineColor?) -> Int {
+                    color.flatMap { WineColor.allCases.firstIndex(of: $0) } ?? WineColor.allCases.count
+                }
+                return rank(a.color) < rank(b.color)
+            }
 
         let decades = winesInCellar.map { wine -> String in
             guard let vintage = wine.vintage else { return "NV" }
