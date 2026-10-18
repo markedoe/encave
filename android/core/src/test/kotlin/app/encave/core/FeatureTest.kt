@@ -269,7 +269,7 @@ class ImportExportTest {
         cellar.importCsv("name,rack,slot,price\nW,Garage,B2,\"12,50\"\n")
         val bottle = cellar.bottles.values.single()
         assertEquals("Garage · B2", bottle.storageNote)
-        assertEquals(BigDecimal("12.50"), bottle.purchasePrice)
+        assertEquals(BigDecimal("12.5"), bottle.purchasePrice)
     }
 
     @Test

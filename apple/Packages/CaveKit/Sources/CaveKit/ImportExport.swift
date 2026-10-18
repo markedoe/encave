@@ -58,9 +58,10 @@ public enum CellarExport {
     ]
 
     /// One row per bottle, including bottles on order. Includes consumed and
-    /// given-away bottles when `includeHistory` is true.
-    public static func csv(_ cellar: Cellar, includeHistory: Bool = true) -> String {
-        let day = dayFormatter()
+    /// given-away bottles when `includeHistory` is true. Dates are days of `timeZone`,
+    /// the calendar day the user saw when entering them.
+    public static func csv(_ cellar: Cellar, includeHistory: Bool = true, timeZone: TimeZone = .current) -> String {
+        let day = dayFormatter(timeZone: timeZone)
         let bottles = cellar.bottles.values
             .filter { includeHistory || $0.status == .inCellar || $0.status == .ordered }
             .sorted { a, b in
@@ -91,15 +92,19 @@ public enum CellarExport {
     }
 
     static func escape(_ field: String) -> String {
+        // A spreadsheet runs a cell that starts with "=", "+", "-" or "@" as a formula: such
+        // text (from any device of the cellar) is written after a quote mark, which the
+        // import removes. Encave writes no negative numbers.
+        let field = field.first.map { "=+-@".contains($0) } == true ? "'" + field : field
         guard field.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" || $0 == ";" }) else { return field }
         return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
     }
 
-    static func dayFormatter() -> DateFormatter {
+    static func dayFormatter(timeZone: TimeZone = .current) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.timeZone = timeZone
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter
     }
@@ -132,30 +137,30 @@ public extension Cellar {
     /// in any order; only a wine name is required. A quantity column creates that
     /// many bottles per row. A Vivino scan history (a "scan date" column and no
     /// quantity) becomes discoveries rather than bottles.
+    /// Dates ("2024-03-10") are days of `timeZone`, as the export writes them.
     @discardableResult
-    mutating func importCSV(_ text: String, now: Date = .now) throws -> ImportSummary {
+    mutating func importCSV(_ text: String, now: Date = .now, timeZone: TimeZone = .current) throws -> ImportSummary {
         let rows = CSVParser.parse(text)
         guard let header = rows.first else { throw ImportError.emptyFile }
         let columns = header.map(CSVColumns.canonical)
         guard let nameIndex = columns.firstIndex(of: "name") else { throw ImportError.missingNameColumn }
+        let day = CellarExport.dayFormatter(timeZone: timeZone)
         if columns.contains("scan_date"), !columns.contains("quantity") {
-            return importDiscoveries(rows: rows, columns: columns, nameIndex: nameIndex, now: now)
+            return importDiscoveries(rows: rows, columns: columns, nameIndex: nameIndex, now: now, day: day)
         }
-        let day = CellarExport.dayFormatter()
         var winesByKey = Dictionary(wines.values.map { ($0.identityKey, $0) }, uniquingKeysWith: { a, _ in a })
         var summary = ImportSummary(winesAdded: 0, bottlesAdded: 0, rowsSkipped: 0)
 
         for row in rows.dropFirst() {
             func value(_ column: String) -> String? {
                 guard let index = columns.firstIndex(of: column), index < row.count else { return nil }
-                let trimmed = row[index].trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? nil : trimmed
+                return CSVColumns.cleaned(row[index])
             }
             guard nameIndex < row.count, let name = value("name") else {
                 if row.contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) { summary.rowsSkipped += 1 }
                 continue
             }
-            var wine = CSVColumns.wine(name: name, value: value)
+            var wine = CSVColumns.wine(name: name, value: value, day: day)
             if let existing = winesByKey[wine.identityKey] {
                 wine = existing
             } else {
@@ -164,14 +169,14 @@ public extension Cellar {
                 summary.winesAdded += 1
             }
 
-            let quantity = max(1, value("quantity").flatMap(CSVColumns.number).map { Int($0) } ?? 1)
+            let quantity = CSVColumns.quantity(value("quantity"))
             for _ in 0..<quantity {
                 var bottle = Bottle(
                     wineID: wine.id, storageNote: value("storage"), addedAt: now,
                     purchaseDate: value("purchase_date").flatMap(day.date(from:)),
-                    purchasePrice: value("price").flatMap { Decimal(string: $0.replacingOccurrences(of: ",", with: ".")) },
+                    purchasePrice: value("price").flatMap(PriceExtractor.decimal),
                     currency: value("currency") ?? settings.currency, purchasePlace: value("purchase_place"),
-                    receivedFrom: value("received_from"), sizeML: value("size_ml").flatMap { Int($0) } ?? 750
+                    receivedFrom: value("received_from"), sizeML: value("size_ml").flatMap(CSVColumns.size) ?? 750
                 )
                 bottle.reservedFor = value("reserved_for")
                 let status = value("status").flatMap { Bottle.Status(rawValue: $0) } ?? .inCellar
@@ -203,24 +208,24 @@ public extension Cellar {
 
 extension Cellar {
     /// Rows of a tasting history: each becomes a discovery of the wine.
-    mutating func importDiscoveries(rows: [[String]], columns: [String], nameIndex: Int, now: Date) -> ImportSummary {
+    mutating func importDiscoveries(rows: [[String]], columns: [String], nameIndex: Int, now: Date,
+                                    day: DateFormatter) -> ImportSummary {
         var summary = ImportSummary(winesAdded: 0, bottlesAdded: 0, rowsSkipped: 0)
         for row in rows.dropFirst() {
             func value(_ column: String) -> String? {
                 guard let index = columns.firstIndex(of: column), index < row.count else { return nil }
-                let trimmed = row[index].trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? nil : trimmed
+                return CSVColumns.cleaned(row[index])
             }
             guard nameIndex < row.count, let name = value("name") else {
                 if row.contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) { summary.rowsSkipped += 1 }
                 continue
             }
-            let wine = CSVColumns.wine(name: name, value: value)
+            let wine = CSVColumns.wine(name: name, value: value, day: day)
             let known = wines.values.contains { $0.identityKey == wine.identityKey }
             let discovery = Discovery(
                 wineID: wine.id, date: value("scan_date").flatMap(CSVColumns.date) ?? now, place: value("place"),
                 rating: value("rating").flatMap(CSVColumns.rating), note: value("note"),
-                price: value("price").flatMap(CSVColumns.number).map { Decimal($0) },
+                price: value("price").flatMap(PriceExtractor.decimal),
                 currency: value("currency") ?? settings.currency
             )
             addDiscovery(discovery, wine: wine)
@@ -266,7 +271,34 @@ enum CSVColumns {
         return synonyms[folded] ?? header.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: " ", with: "_")
     }
 
-    static func wine(name: String, value: (String) -> String?) -> Wine {
+    /// A cell without surrounding spaces, and without the quote mark the export puts
+    /// before text a spreadsheet would run as a formula; nil if empty.
+    static func cleaned(_ cell: String) -> String? {
+        var text = cell.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.hasPrefix("'"), let next = text.dropFirst().first, "=+-@".contains(next) { text.removeFirst() }
+        return text.isEmpty ? nil : text
+    }
+
+    /// Bottles a row creates: 1 to `maxQuantity` (a number larger than that is a mistake, not bottles).
+    static let maxQuantity = 999
+
+    static func quantity(_ text: String?) -> Int {
+        guard let value = text.flatMap(number), !value.isNaN else { return 1 }
+        return integer(min(Double(maxQuantity), max(1, value))) ?? 1
+    }
+
+    /// "750", "750.0"; nil unless positive.
+    static func size(_ text: String) -> Int? {
+        guard let value = number(text).flatMap(integer), (1...100_000).contains(value) else { return nil }
+        return value
+    }
+
+    /// The nearest integer, or nil if there is none (NaN, infinite, too large).
+    static func integer(_ value: Double) -> Int? {
+        Int(exactly: value.rounded())
+    }
+
+    static func wine(name: String, value: (String) -> String?, day: DateFormatter) -> Wine {
         var from = value("drink_from").flatMap(year), until = value("drink_until").flatMap(year)
         if from == nil, until == nil, let window = value("drinking_window") {
             let years = window.split { !$0.isNumber }.compactMap { Int($0) }.filter { (1900...2200).contains($0) }
@@ -281,29 +313,28 @@ enum CSVColumns {
             drinkFrom: from, drinkUntil: until,
             tags: value("tags")?.split(whereSeparator: { $0 == ";" || $0 == "," }).map(String.init)
         )
-        if let price = value("current_price").flatMap({ Decimal(string: $0.replacingOccurrences(of: ",", with: ".")) }),
-           price > 0 {
+        if let price = value("current_price").flatMap(PriceExtractor.decimal), price > 0 {
             wine.currentPrice = price
             wine.currentPriceCurrency = value("current_price_currency") ?? value("currency")
-            wine.currentPriceDate = value("current_price_date").flatMap(CellarExport.dayFormatter().date(from:))
+            wine.currentPriceDate = value("current_price_date").flatMap(day.date(from:))
         }
         return wine
     }
 
     /// "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage).
     static func year(_ text: String) -> Int? {
-        guard let value = number(text).map({ Int($0) }), (1800...2200).contains(value) else { return nil }
+        guard let value = number(text).flatMap(integer), (1800...2200).contains(value) else { return nil }
         return value
     }
 
     static func number(_ text: String) -> Double? {
-        Double(text.replacingOccurrences(of: ",", with: ".").filter { $0.isNumber || $0 == "." || $0 == "-" })
+        Double(text.replacingOccurrences(of: ",", with: ".").filter { $0.isASCIIDigit || $0 == "." || $0 == "-" })
     }
 
     /// 1 to 5 (decimals rounded); 100-point scores are converted.
     static func rating(_ text: String) -> Int? {
         guard let value = number(text), value > 0 else { return nil }
-        let five = value > 5 ? value / 20 : value
+        let five = min(5, value > 5 ? value / 20 : value)
         return min(5, max(1, Int(five.rounded())))
     }
 
@@ -335,9 +366,17 @@ public extension Rack {
         let parts = label.trimmingCharacters(in: .whitespaces).uppercased().split(separator: "-", maxSplits: 1)
         guard let first = parts.first else { return nil }
         let upper = String(first)
-        let depth = parts.count > 1 ? (Int(parts[1]) ?? 0) - 1 : 0
         let letters = upper.prefix { $0.isLetter }
-        guard !letters.isEmpty, let column = Int(upper.dropFirst(letters.count)) else { return nil }
+        let digits = upper.dropFirst(letters.count)
+        // Short labels only ("AB12-3"): longer ones are no place of a rack, and would overflow.
+        guard (1...3).contains(letters.count), (1...4).contains(digits.count), digits.allSatisfy(\.isASCIIDigit),
+              let column = Int(digits) else { return nil }
+        var depth = 0
+        if parts.count > 1 {
+            guard (1...4).contains(parts[1].count), parts[1].allSatisfy(\.isASCIIDigit), let value = Int(parts[1])
+            else { return nil }
+            depth = value - 1
+        }
         var row = 0
         for scalar in letters.unicodeScalars {
             guard (65...90).contains(scalar.value) else { return nil }
@@ -353,7 +392,8 @@ public extension Rack {
 public enum CSVParser {
     public static func parse(_ text: String) -> [[String]] {
         let body = text.hasPrefix("\u{FEFF}") ? String(text.dropFirst()) : text
-        let firstLine = body.prefix { $0 != "\n" && $0 != "\r" }
+        // "\r\n" is one Character in Swift, neither "\n" nor "\r".
+        let firstLine = body.prefix { $0 != "\n" && $0 != "\r" && $0 != "\r\n" }
         let separator: Character = firstLine.filter { $0 == ";" }.count > firstLine.filter { $0 == "," }.count ? ";" : ","
         var rows: [[String]] = []
         var row: [String] = []
