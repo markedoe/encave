@@ -68,6 +68,12 @@ targets:
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+          # Home-network names (RFC 8375), which local networking alone does not cover:
+          # a NAS or local AI server reached over plain HTTP, as the app allows.
+          NSExceptionDomains:
+            home.arpa:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
         UISupportedInterfaceOrientations:
@@ -110,6 +116,12 @@ targets:
         NSBonjourServices: [_encave._tcp]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+          # Home-network names (RFC 8375), which local networking alone does not cover:
+          # a NAS or local AI server reached over plain HTTP, as the app allows.
+          NSExceptionDomains:
+            home.arpa:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
 
   # Screen tour with screenshots and layout checks (see EncaveUITests).
