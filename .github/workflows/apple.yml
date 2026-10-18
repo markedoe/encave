@@ -324,6 +324,18 @@ jobs:
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+          # An unsigned archive carries no entitlements, so the export would drop the App
+          # Group the widgets share with the app. Sign it ad hoc with the entitlements
+          # (nested code first); the export re-signs everything with cloud signing.
+          # Xcode refuses ad-hoc signing of an iOS app with an App Group, hence codesign.
+          app="$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
+          sign=(codesign --force --sign - --timestamp=none --generate-entitlement-der)
+          find "$app" -depth \( -name '*.framework' -o -name '*.dylib' \) -print0 \
+            | xargs -0 -I{} "${sign[@]}" {}
+          "${sign[@]}" --entitlements Generated/EncaveWidgets.entitlements "$app/PlugIns/EncaveWidgets.appex"
+          "${sign[@]}" --entitlements Generated/Encave.entitlements "$app"
+          codesign --display --entitlements - "$app"
+          codesign --display --entitlements - "$app/PlugIns/EncaveWidgets.appex"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
