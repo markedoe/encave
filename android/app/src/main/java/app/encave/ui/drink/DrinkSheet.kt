@@ -135,7 +135,7 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
                 .padding(vertical = Dimens.s),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.drink_full_note), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.drink_full_note), Modifier.weight(1f).padding(end = Dimens.l), style = MaterialTheme.typography.bodyLarge)
             Switch(checked = state.detailed, onCheckedChange = null)
         }
         if (state.detailed) {

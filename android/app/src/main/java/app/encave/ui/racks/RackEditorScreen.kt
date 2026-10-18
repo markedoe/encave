@@ -67,6 +67,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.RackKind
@@ -186,7 +187,7 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
     ) { padding ->
         val rack = preview()
         Column(
-            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(Dimens.l),
+            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth().padding(Dimens.l),
             verticalArrangement = Arrangement.spacedBy(Dimens.l),
         ) {
             OutlinedTextField(
@@ -203,9 +204,13 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
             )
 
             Header(R.string.kind_title)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            // Two cards a row, the same width, so the choices line up.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s),
+                maxItemsInEachRow = 2,
+            ) {
                 RackKind.entries.forEach { option ->
-                    KindCard(option, selected = kind == option) {
+                    KindCard(option, selected = kind == option, Modifier.weight(1f)) {
                         kind = option
                         if (option == RackKind.Staggered) customRows = false
                         if (existing == null) presets.firstOrNull { it.kind == option }?.let(::apply)
@@ -265,7 +270,7 @@ fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: S
                     },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.weight(1f)) {
+                    Column(Modifier.weight(1f).padding(end = Dimens.l)) {
                         Text(stringResource(R.string.rack_custom_rows), style = MaterialTheme.typography.bodyLarge)
                         Text(
                             stringResource(R.string.rack_custom_rows_body),
@@ -338,15 +343,15 @@ private fun previewCellar(cellar: Cellar, rack: Rack): Cellar {
 }
 
 @Composable
-private fun KindCard(kind: RackKind, selected: Boolean, onClick: () -> Unit) {
+private fun KindCard(kind: RackKind, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     OutlinedCard(
-        modifier = Modifier.widthIn(min = 150.dp, max = 220.dp).selectable(selected, role = Role.RadioButton, onClick = onClick),
+        modifier = modifier.selectable(selected, role = Role.RadioButton, onClick = onClick),
         shape = RoundedCornerShape(Dimens.radiusCard),
         border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) scheme.primary else scheme.outlineVariant),
         colors = CardDefaults.outlinedCardColors(containerColor = if (selected) scheme.primaryContainer else scheme.surface),
     ) {
-        Column(Modifier.padding(Dimens.m).heightIn(min = 96.dp), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+        Column(Modifier.padding(Dimens.m).heightIn(min = 128.dp), verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
             Icon(kind.icon, contentDescription = null, tint = if (selected) scheme.primary else scheme.onSurfaceVariant)
             Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleSmall)
             Text(stringResource(kind.bodyRes), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)

@@ -10,6 +10,11 @@ import org.junit.jupiter.api.Test
 /**
  * Fixtures written by the Swift CaveKit (`CellarExport.json` and `CellarExport.csv`
  * of `SampleData.cellar(year: 2026)`), so both apps read each other's files.
+ *
+ * They predate the sample's bottles on order, tags, reservations and the newer fields
+ * (`reservedFor`, `savedSearches`, `extraPhotoIDs`); only the `reserved_for` CSV column
+ * was added by hand (empty, as Swift writes it). Regenerate both from Swift on a Mac to
+ * cover the new fields, then drop the on-order exclusion in [decodesTheAppleBackup].
  */
 class InteropTest {
     private fun resource(name: String): String =

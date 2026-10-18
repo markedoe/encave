@@ -260,7 +260,8 @@
     <string name="settings_erase_body">Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil.</string>
     <string name="settings_privacy">Confidentialité</string>
     <string name="settings_privacy_stored">Votre cave est enregistrée uniquement sur cet appareil.</string>
-    <string name="settings_privacy_body">Encave n’a ni accès au réseau, ni compte, ni statistiques d’usage. La synchronisation entre vos appareils et avec les personnes avec qui vous partagez une cave sera chiffrée de bout en bout.</string>
+    <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave.</string>
+    <string name="settings_privacy_stored_devices">Votre cave est enregistrée uniquement sur vos appareils.</string>
     <string name="settings_about">À propos</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Code source</string>
@@ -442,7 +443,7 @@
     <string name="help_field_appellation">L’appellation d’origine, comme Pauillac ou Chablis.</string>
     <string name="help_field_region">La région viticole, comme Bordeaux ou la Toscane.</string>
     <string name="help_field_grapes">Cépages, séparés par des virgules.</string>
-    <string name="help_origin_footer">Facultatif. Améliore la recherche et les accords mets-vins. Séparez les cépages par des virgules.</string>
+    <string name="help_origin_footer">Facultatif. Améliore la recherche et les accords mets-vins.</string>
     <string name="help_window_footer">Les années où le vin est à son meilleur, d’après le producteur ou un guide. Utilisé par Ce soir pour suggérer quoi ouvrir.</string>
     <string name="help_notes_footer">Sur le vin lui-même. Les notes sur une bouteille ouverte vont dans sa dégustation.</string>
     <string name="help_field_rating">D’une étoile (décevant) à cinq (exceptionnel). Touchez à nouveau la même étoile pour l’effacer.</string>
@@ -630,6 +631,7 @@
     <string name="remote_how_to">Héberger un relais</string>
     <string name="remote_problem_refused">Le relais a refusé cet appareil. Vérifiez l’adresse du relais.</string>
     <string name="remote_problem_full">Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais.</string>
+    <string name="remote_problem_too_large">La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.</string>
     <string name="remote_problem_unreachable">Le stockage est injoignable. La synchronisation reprendra dès que possible.</string>
     <string name="remote_problem_unreadable">Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.</string>
     <string name="remote_problem_removal">L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.</string>
@@ -725,6 +727,8 @@
     <string name="help_tonight_why">Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an.</string>
     <string name="insights_drink_down">Rythme de dégustation</string>
     <string name="insights_pace">Environ %1$s bouteilles par mois</string>
+    <string name="insights_pace_one">Environ une bouteille par mois</string>
+    <string name="insights_pace_less">Moins d’une bouteille par mois</string>
     <string name="insights_pace_detail">pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation.</string>
     <string name="insights_past_peak">Après leur apogée : %1$d</string>
     <string name="insights_windows_ending">Fins de fenêtre par année</string>
@@ -829,6 +833,20 @@
     <string name="msg_reservation_removed">Réservation retirée</string>
     <string name="help_tonight_occasion_title">Garder des bouteilles pour une occasion</string>
     <string name="help_tonight_occasion">Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible.</string>
+    <string name="action_save_search">Enregistrer cette recherche…</string>
+    <string name="save_search_title">Enregistrer cette recherche</string>
+    <string name="save_search_body">Elle apparaît en premier parmi les filtres, à portée d’un toucher.</string>
+    <string name="action_delete_search">Supprimer la recherche</string>
+    <string name="saved_search_hint">Applique cette recherche enregistrée.</string>
+    <string name="help_start_saved_title">Recherches enregistrées</string>
+    <string name="help_start_saved">Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils.</string>
+    <string name="more_photos">Autres photos</string>
+    <string name="more_photos_footer">La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées.</string>
+    <string name="action_add_photo">Ajouter une photo</string>
+    <string name="action_remove_photo">Retirer la photo</string>
+    <string name="photo_adding">Ajout…</string>
+    <string name="photo_item">Photo %1$d sur %2$d</string>
+    <string name="photo_show_large">Afficher en grand</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

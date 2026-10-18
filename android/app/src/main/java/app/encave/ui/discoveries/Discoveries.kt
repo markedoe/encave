@@ -232,7 +232,7 @@ fun DiscoveryRow(
                         Icon(discovery.setting?.icon ?: Icons.Outlined.Place, contentDescription = null, modifier = Modifier.size(16.dp))
                         Text(where, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     }
-                    if (showsWine) Text(Formats.day(discovery.date))
+                    if (showsWine) Text(if (where != null) "· ${Formats.day(discovery.date)}" else Formats.day(discovery.date), maxLines = 1)
                 }
                 discovery.rating?.let { RatingStars(it) }
                 discovery.note?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }

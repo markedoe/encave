@@ -78,6 +78,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.EncaveApplication
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.core.sync.Member
 import app.encave.core.sync.RelayMailboxStore
 import app.encave.sync.SyncManager
@@ -138,6 +139,7 @@ private val SyncManager.RemoteProblem.text: Int
     get() = when (this) {
         SyncManager.RemoteProblem.Refused -> R.string.remote_problem_refused
         SyncManager.RemoteProblem.Full -> R.string.remote_problem_full
+        SyncManager.RemoteProblem.FileTooLarge -> R.string.remote_problem_too_large
         SyncManager.RemoteProblem.Unreachable -> R.string.remote_problem_unreachable
         SyncManager.RemoteProblem.RemovalPending -> R.string.remote_problem_removal
         SyncManager.RemoteProblem.Unreadable -> R.string.remote_problem_unreadable
@@ -179,7 +181,7 @@ fun DevicesScreen(navigator: AppNavigator) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.devices_title)) }, navigationIcon = { Back(navigator) }) },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             status.problem?.let { problem ->
                 ListItem(
                     leadingContent = { Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
@@ -359,7 +361,7 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.remote_title)) }, navigationIcon = { Back(navigator) }) },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             val storage = status.remoteStorage
             if (storage != null) {
                 SectionHeader(stringResource(R.string.devices_remote_relay))

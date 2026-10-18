@@ -38,6 +38,9 @@ interface MailboxStore {
 sealed class RemoteSyncError {
     data object Unauthorized : RemoteSyncError()
     data object QuotaExceeded : RemoteSyncError()
+
+    /** One file is larger than the storage accepts (a very large cellar). */
+    data object FileTooLarge : RemoteSyncError()
     data class Unavailable(val detail: String) : RemoteSyncError()
     data class Corrupted(val path: String) : RemoteSyncError()
 }
@@ -191,6 +194,11 @@ data class RemoteProgress(
     val seen: Map<String, Long> = emptyMap(),
     /** Clock of the last snapshot this device wrote, in the current epoch. */
     val uploadedClock: Long? = null,
+    /**
+     * Digest of the stamps of the last snapshot written: a merge on the local
+     * network can change the cellar without moving the clock.
+     */
+    val uploadedDigest: String? = null,
     /** Photos already uploaded in the current epoch. */
     val uploadedPhotos: Set<String> = emptySet(),
     /** Epoch the progress refers to; a new epoch starts afresh. */
@@ -210,6 +218,12 @@ object RemoteSync {
         val storage: String?,
         /** Devices whose newest snapshot could not be read (damaged, from a newer version, out of bounds). Skipped. */
         val unreadable: List<UUID> = emptyList(),
+        /**
+         * This device's clock after the round: at least the one passed in. Raised when the
+         * content changed without the clock moving (a merge on the local network), so
+         * readers see a newer snapshot. Keep it.
+         */
+        val clock: Long = 0,
     )
 
     /**
@@ -272,7 +286,7 @@ object RemoteSync {
         val uploaded = current.uploadedPhotos.toMutableSet()
 
         // 3. Missing photos.
-        val referenced = merged.cellar.wines.values.mapNotNull { it.photoId }.toSortedSet()
+        val referenced = merged.cellar.photoIds.toSortedSet()
         for (id in referenced) {
             if (!PhotoId.isValid(id) || photos.data(id) != null) continue
             val path = photoPath(id)
@@ -285,7 +299,14 @@ object RemoteSync {
 
         // 4. This device's snapshot and photos, if something changed since the last upload.
         var uploadedClock = current.uploadedClock
-        if (uploadedClock != merged.state.clock || newKey != null) {
+        var uploadedDigest = current.uploadedDigest
+        val digest = stampDigest(merged)
+        if (uploadedClock != merged.state.clock || uploadedDigest != digest || newKey != null) {
+            // Other devices read a snapshot only if its clock is newer than the last one.
+            val last = uploadedClock
+            if (last != null && java.lang.Long.compareUnsigned(merged.state.clock, last) <= 0) {
+                merged = merged.copy(state = merged.state.copy(clock = last + 1))
+            }
             for (id in referenced) {
                 if (!PhotoId.isValid(id) || id in uploaded) continue
                 val data = photos.data(id) ?: continue
@@ -295,14 +316,29 @@ object RemoteSync {
             }
             write(merged, mailbox, currentKey, identity.id)
             uploadedClock = merged.state.clock
+            uploadedDigest = digest
         }
         return Result(
             if (received) merged else null,
-            current.copy(seen = seen, uploadedClock = uploadedClock, uploadedPhotos = uploaded),
+            current.copy(seen = seen, uploadedClock = uploadedClock, uploadedDigest = uploadedDigest, uploadedPhotos = uploaded),
             newKey,
             storage,
             unreadable,
+            merged.state.clock,
         )
+    }
+
+    /** Changes whenever any object or device stamp changes. Same text as CaveKit hashes. */
+    internal fun stampDigest(snapshot: SyncSnapshot): String {
+        val hash = java.security.MessageDigest.getInstance("SHA-256")
+        fun line(text: String) = hash.update(text.toByteArray(Charsets.UTF_8))
+        for ((key, stamp) in snapshot.state.stamps.toSortedMap()) {
+            line("$key ${stamp.counter.toULong()} ${stamp.device.lower} ${stamp.deleted}\n")
+        }
+        for ((id, stamp) in snapshot.membership.stamps.entries.sortedBy { it.key.lower }) {
+            line("member ${id.lower} ${stamp.counter.toULong()} ${stamp.device.lower} ${stamp.deleted}\n")
+        }
+        return hash.digest().hex()
     }
 
     /**

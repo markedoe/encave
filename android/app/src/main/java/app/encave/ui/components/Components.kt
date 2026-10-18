@@ -1,5 +1,6 @@
 package app.encave.ui.components
 
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -252,3 +253,10 @@ fun <T> RadioRow(option: T, selected: Boolean, label: String, onSelect: (T) -> U
         Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+/**
+ * On wide screens, keeps a form or a page of text to a readable width, centered.
+ * Applied after `verticalScroll`, so the whole screen still scrolls.
+ */
+fun Modifier.readableWidth(max: androidx.compose.ui.unit.Dp = 720.dp): Modifier =
+    this.wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = max)

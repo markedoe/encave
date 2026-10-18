@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.QrCodeScanner
@@ -55,6 +56,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
                     HelpSection(R.string.help_start_journal, R.string.nav_journal, Icons.Outlined.AutoStories),
                     HelpSection(R.string.help_start_table, R.string.help_start_table_title, Icons.Outlined.TableChart),
+                    HelpSection(R.string.help_start_saved, R.string.help_start_saved_title, Icons.Outlined.BookmarkBorder),
                     HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
                     HelpSection(R.string.help_start_try, R.string.help_start_try_title),
                 ),

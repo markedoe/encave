@@ -136,17 +136,16 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
                 val target = cameraTarget()
                 if (target != null) runCatching { take.launch(target) }.onFailure { viewModel.showMessage(UiText.Res(R.string.photo_failed)) }
             }) {
-                Icon(Icons.Outlined.PhotoCamera, contentDescription = null)
-                Text(stringResource(if (form.hasPhoto) R.string.photo_replace else R.string.photo_take))
+                app.encave.ui.components.ActionContent(
+                    stringResource(if (form.hasPhoto) R.string.photo_replace else R.string.photo_take), Icons.Outlined.PhotoCamera,
+                )
             }
             OutlinedButton(onClick = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
-                Icon(Icons.Outlined.PhotoLibrary, contentDescription = null)
-                Text(stringResource(R.string.photo_choose))
+                app.encave.ui.components.ActionContent(stringResource(R.string.photo_choose), Icons.Outlined.PhotoLibrary)
             }
             if (form.hasPhoto) {
                 TextButton(onClick = { form.newPhoto = null; form.photoRemoved = true; filled = false }) {
-                    Icon(Icons.Outlined.Delete, contentDescription = null)
-                    Text(stringResource(R.string.photo_remove))
+                    app.encave.ui.components.ActionContent(stringResource(R.string.photo_remove), Icons.Outlined.Delete)
                 }
             }
             val jpeg = form.newPhoto
@@ -159,8 +158,7 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
                         bytes?.let(::analyze)
                     }
                 }) {
-                    Icon(Icons.Outlined.AutoAwesome, contentDescription = null)
-                    Text(stringResource(R.string.ai_complete))
+                    app.encave.ui.components.ActionContent(stringResource(R.string.ai_complete), Icons.Outlined.AutoAwesome)
                 }
             }
         }

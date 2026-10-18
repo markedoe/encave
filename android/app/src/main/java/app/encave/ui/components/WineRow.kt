@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.encave.R
+import app.encave.ui.theme.Dimens
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Maturity
@@ -85,7 +86,7 @@ fun WineGroupRow(
         colors = if (selected || checked == true) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
         leadingContent = {
             if (checked != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                     Checkbox(checked = checked, onCheckedChange = null)
                     WineColorDot(wine.color, size = 16.dp)
                 }

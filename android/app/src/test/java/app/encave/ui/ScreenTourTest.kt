@@ -61,11 +61,14 @@ class ScreenTourTest(private val device: String, private val language: String) {
         private val devices = mapOf(
             "phone" to "w411dp-h891dp-port-xxhdpi",
             "tablet" to "w1280dp-h800dp-land-xhdpi",
+            // Dark theme, to check contrast; English only.
+            "phone-dark" to "w411dp-h891dp-port-night-xxhdpi",
         )
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
-        fun configurations() = listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } }
+        fun configurations() = listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } } +
+            listOf(arrayOf("phone-dark", "en"))
 
         private const val DOUBLE_TAP_WAIT = 500L
 
@@ -375,6 +378,44 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("wine.row")
         scrollIn("wine.detail", "bottle.reserved")
         capture("42-wine-occasion")
+    }
+
+    @Test
+    fun savedSearch() {
+        tap("cellar.stat.soon")
+        tap("cellar.sort")
+        tap("cellar.save_search")
+        compose.onNodeWithTag("save_search.field").performTextInput("Soon")
+        capture("43-save-search")
+        tap("save_search.save")
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("filter.saved").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("filter.saved").assertIsSelected()
+        capture("44-saved-search")
+    }
+
+    @Test
+    fun morePhotos() {
+        // Two photos of the first wine in the list, drawn here (no real photos in the tour).
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        fun jpeg(color: Int): ByteArray {
+            val image = Bitmap.createBitmap(300, 400, Bitmap.Config.ARGB_8888)
+            android.graphics.Canvas(image).drawColor(color)
+            return java.io.ByteArrayOutputStream().also { image.compress(Bitmap.CompressFormat.JPEG, 80, it) }.toByteArray()
+        }
+        val ids = listOf(jpeg(0xFFE8DCC8.toInt()), jpeg(0xFF8E1E3A.toInt())).mapNotNull { application.photos.save(it) }
+        runBlocking {
+            application.repository.update { cellar ->
+                val wine = cellar.groups().first().wine
+                cellar.updateWine(wine.copy(extraPhotoIds = ids))
+            }
+        }
+        compose.waitForIdle()
+        tap("wine.row")
+        scrollIn("wine.detail", "wine.more_photos")
+        scrollIn("wine.detail", "action.add_photo")
+        capture("45-more-photos")
+        tap("photo.thumb")
+        compose.onNodeWithTag("photo.done").assertExists()
     }
 
     @Test

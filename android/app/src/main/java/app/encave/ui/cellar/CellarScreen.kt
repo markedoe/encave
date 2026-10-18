@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,6 +53,12 @@ import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.Outbox
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -209,6 +216,7 @@ private fun CellarList(
     var selecting by rememberSaveable { mutableStateOf(false) }
     var picked by remember { mutableStateOf(setOf<java.util.UUID>()) }
     var confirmBulkDelete by remember { mutableStateOf(false) }
+    var namingSearch by remember { mutableStateOf(false) }
     fun endSelection() {
         selecting = false
         picked = emptySet()
@@ -303,6 +311,13 @@ private fun CellarList(
                     onToggleTag = { t -> viewModel.filter.value = filter.copy(tag = if (filter.tag == t) null else t) },
                     onSort = { viewModel.sort.value = it },
                     onSelect = { selecting = true },
+                    savedSearches = cellar.settings.savedSearches.orEmpty(),
+                    current = filter,
+                    onApplySearch = { search ->
+                        viewModel.filter.value = if (filter == search.filter) app.encave.core.CellarFilter() else search.filter
+                    },
+                    onDeleteSearch = { viewModel.deleteSearch(it.id) },
+                    onSaveSearch = if (filter.isActive || filter.query.isNotBlank()) ({ namingSearch = true }) else null,
                 )
                 if (groups.isEmpty() && !showOrders) {
                     EmptyState(
@@ -399,6 +414,13 @@ private fun CellarList(
             bottles = group.bottles,
             onDismiss = { drinking = null },
             onDrink = { bottle, tasting -> viewModel.drink(bottle.id, tasting) },
+        )
+    }
+    if (namingSearch) {
+        SaveSearchDialog(
+            initial = filter.query.trim(),
+            onSave = { name -> viewModel.saveSearch(name, filter) },
+            onDismiss = { namingSearch = false },
         )
     }
     if (confirmBulkDelete) {
@@ -542,6 +564,11 @@ private fun FilterBar(
     onToggleTag: (String) -> Unit,
     onSort: (CellarSort) -> Unit,
     onSelect: () -> Unit,
+    savedSearches: List<app.encave.core.SavedSearch>,
+    current: app.encave.core.CellarFilter,
+    onApplySearch: (app.encave.core.SavedSearch) -> Unit,
+    onDeleteSearch: (app.encave.core.SavedSearch) -> Unit,
+    onSaveSearch: (() -> Unit)?,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     Row(
@@ -566,6 +593,14 @@ private fun FilterBar(
                     )
                 }
                 HorizontalDivider()
+                if (onSaveSearch != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_save_search)) },
+                        onClick = { sortMenu = false; onSaveSearch() },
+                        leadingIcon = { Icon(Icons.Outlined.BookmarkAdd, contentDescription = null) },
+                        modifier = Modifier.testTag("cellar.save_search"),
+                    )
+                }
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_select_wines)) },
                     onClick = { sortMenu = false; onSelect() },
@@ -573,6 +608,10 @@ private fun FilterBar(
                     modifier = Modifier.testTag("cellar.select"),
                 )
             }
+        }
+        // Saved searches first: a tap applies one (or clears it), a long press offers to delete it.
+        savedSearches.forEach { search ->
+            SavedSearchChip(search, selected = current == search.filter, onClick = { onApplySearch(search) }, onDelete = { onDeleteSearch(search) })
         }
         WineColor.entries.forEach { color ->
             FilterChip(
@@ -611,6 +650,86 @@ private fun FilterBar(
         }
     }
     Spacer(Modifier.height(Dimens.xs))
+}
+
+/** A saved search among the filter chips; the delete menu opens on a long press or a TalkBack action. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun SavedSearchChip(search: app.encave.core.SavedSearch, selected: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    val scheme = MaterialTheme.colorScheme
+    val hint = stringResource(R.string.saved_search_hint)
+    val deleteLabel = stringResource(R.string.action_delete_search)
+    Box {
+        Surface(
+            shape = androidx.compose.material3.FilterChipDefaults.shape,
+            color = if (selected) scheme.secondaryContainer else scheme.surface,
+            border = if (selected) null else BorderStroke(1.dp, scheme.outlineVariant),
+            modifier = Modifier
+                // 32dp tall like the other chips, with a 48dp touch target.
+                .minimumInteractiveComponentSize()
+                .heightIn(min = 32.dp)
+                .clip(androidx.compose.material3.FilterChipDefaults.shape)
+                .combinedClickable(onClickLabel = hint, onLongClick = { menu = true }, onClick = onClick)
+                .semantics {
+                    this.selected = selected
+                    role = Role.Checkbox
+                    customActions = listOf(CustomAccessibilityAction(deleteLabel) { onDelete(); true })
+                }
+                .testTag("filter.saved"),
+        ) {
+            Row(
+                Modifier.padding(start = Dimens.s, end = Dimens.l).heightIn(min = 32.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+            ) {
+                Icon(
+                    if (selected) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder, contentDescription = null,
+                    modifier = Modifier.size(18.dp), tint = if (selected) scheme.onSecondaryContainer else scheme.primary,
+                )
+                Text(
+                    search.name, style = MaterialTheme.typography.labelLarge,
+                    color = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant,
+                )
+            }
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(deleteLabel, color = scheme.error) },
+                onClick = { menu = false; onDelete() },
+                leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = scheme.error) },
+            )
+        }
+    }
+}
+
+/** Names the current search and filters. */
+@Composable
+private fun SaveSearchDialog(initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf(initial) }
+    // Full width with margins: a text field in a default-width dialog never settles in tests.
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.padding(horizontal = Dimens.xl).widthIn(max = 560.dp),
+        title = { Text(stringResource(R.string.save_search_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                Text(stringResource(R.string.save_search_body))
+                androidx.compose.material3.OutlinedTextField(
+                    value = name, onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.field_name)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth().testTag("save_search.field"),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(name); onDismiss() }, enabled = name.isNotBlank(), modifier = Modifier.testTag("save_search.save")) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
 
 /** Swipe right to drink; long press (or TalkBack actions) for the other actions. */
