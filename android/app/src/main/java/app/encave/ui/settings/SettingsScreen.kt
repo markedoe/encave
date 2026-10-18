@@ -99,7 +99,9 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     }
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
     // A cellar file that could not be read at launch, kept aside: it can be saved elsewhere.
-    val keptAside = remember(cellar) { viewModel.keptAside().lastOrNull() }
+    var keptChanged by remember { mutableStateOf(0) }
+    val keptAside = remember(cellar, keptChanged) { viewModel.keptAside().lastOrNull() }
+    var confirmDeleteKept by remember { mutableStateOf(false) }
     val saveKept = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null && keptAside != null) viewModel.exportKeptAside(resolver, uri, keptAside)
     }
@@ -219,6 +221,12 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     headlineContent = { Text(stringResource(R.string.settings_save_unreadable)) },
                     supportingContent = { Text(stringResource(R.string.settings_save_unreadable_body, keptAside.name)) },
                 )
+                ListItem(
+                    modifier = Modifier.clickable { confirmDeleteKept = true },
+                    leadingContent = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                    headlineContent = { Text(stringResource(R.string.settings_delete_unreadable), color = MaterialTheme.colorScheme.error) },
+                    supportingContent = { Text(stringResource(R.string.settings_delete_unreadable_body)) },
+                )
             }
 
             SectionHeader(stringResource(R.string.settings_test_data))
@@ -270,6 +278,15 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             onConfirm = { viewModel.loadSample(sampleLabels(resources)) },
             onDismiss = { confirmSample = false },
             destructive = false,
+        )
+    }
+    if (confirmDeleteKept && keptAside != null) {
+        ConfirmDialog(
+            title = stringResource(R.string.settings_delete_unreadable_title),
+            body = stringResource(R.string.settings_delete_unreadable_confirm, keptAside.name),
+            confirm = stringResource(R.string.action_delete),
+            onConfirm = { viewModel.deleteKeptAside(keptAside) { keptChanged++ } },
+            onDismiss = { confirmDeleteKept = false },
         )
     }
     if (confirmErase) {

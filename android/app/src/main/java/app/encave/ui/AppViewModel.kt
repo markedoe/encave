@@ -542,6 +542,14 @@ class AppViewModel(
         }
     }
 
+    /** Deletes a kept-aside cellar file (photo cleanup resumes once none is left). */
+    fun deleteKeptAside(file: java.io.File, onDone: () -> Unit) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { file.delete() }
+            onDone()
+        }
+    }
+
     fun exportJson(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.json(it) }
 
     fun exportCsv(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.csv(it) }

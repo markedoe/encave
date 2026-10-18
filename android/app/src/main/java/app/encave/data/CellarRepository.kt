@@ -106,12 +106,10 @@ class CellarRepository(
      */
     suspend fun applySynced(merge: (Cellar) -> Cellar, onSaved: () -> Unit = {}): Result<Unit> = mutex.withLock {
         if (loadFailed) return@withLock refused()
+        // A failing merge is thrown to the caller (a sync problem); a failing save is a result.
         withContext(io) {
-            runCatching {
-                val merged = merge(state.value.copy())
-                store.save(merged)
-                merged
-            }
+            val merged = merge(state.value.copy())
+            runCatching { store.save(merged) }.map { merged }
         }.map { merged ->
             state.value = merged
             onSaved()

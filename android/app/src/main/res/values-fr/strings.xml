@@ -163,6 +163,10 @@
     <string name="msg_load_set_aside">Le fichier de votre cave n’a pas pu être lu. Il est conservé sur cet appareil sous le nom %1$s et Encave a démarré avec une cave vide. Pour en garder une copie ailleurs, utilisez Enregistrer le fichier de cave illisible dans les Réglages.</string>
     <string name="settings_save_unreadable">Enregistrer le fichier de cave illisible</string>
     <string name="settings_save_unreadable_body">%1$s n’a pas pu être lu à l’ouverture d’Encave et a été conservé tel quel. Enregistrez-en une copie pour le garder, ou pour l’importer une fois réparé.</string>
+    <string name="settings_delete_unreadable">Supprimer le fichier de cave illisible</string>
+    <string name="settings_delete_unreadable_body">Tant qu’il est conservé, les photos qu’aucun vin n’utilise le sont aussi, au cas où il serait réparé.</string>
+    <string name="settings_delete_unreadable_title">Supprimer le fichier de cave illisible ?</string>
+    <string name="settings_delete_unreadable_confirm">%1$s est supprimé de cet appareil. Enregistrez-en d’abord une copie si vous pourriez en avoir besoin.</string>
     <string name="msg_photo_removed">Photo retirée</string>
     <string name="err_slot_taken">Cet emplacement est déjà occupé.</string>
     <string name="err_slot_range">Cet emplacement est hors du casier.</string>
