@@ -13,6 +13,22 @@ open Encave.xcodeproj
 
 Schemes: `Encave` (iPhone and iPad) and `EncaveMac` (macOS).
 
+The iOS app embeds `EncaveWidgets`, an app extension (`app.encave.widgets`)
+with the Tonight and Cellar widgets and the Add Bottles control for Control
+Center. It shares a few files with the app (`apple/Encave/Shared`) and reads a
+small summary (`WidgetSnapshot` in CaveKit) that the app writes after each save
+to the App Group `group.app.encave`. Unsigned builds have no App Group: the
+widgets then show their empty state.
+
+### Widgets and the App Group (one-time setup)
+
+Both `app.encave` and `app.encave.widgets` carry the App Group entitlement.
+In the Apple Developer account, create the App Group `group.app.encave`,
+register the App ID `app.encave.widgets`, and enable App Groups with that group
+on both App IDs, unless automatic signing in the TestFlight export does it.
+The CI signs the iOS archive ad hoc with the entitlements (Xcode itself would
+not), so the export keeps the App Group when it re-signs with cloud signing.
+
 ### Model tests
 
 The cellar logic lives in `apple/Packages/CaveKit`, which has no UI code and
@@ -24,7 +40,8 @@ swift test --package-path apple/Packages/CaveKit
 
 ### Colors and icon
 
-Colors come from `design/tokens.json`. After editing tokens or the icon:
+Colors come from `design/tokens.json` (also written to the widgets' own
+catalog, `apple/EncaveWidgets/Assets.xcassets`). After editing tokens or the icon:
 
 ```bash
 python3 design/generate_apple_assets.py
@@ -36,7 +53,8 @@ Never hardcode colors in Swift; use the asset catalog names.
 ### Localization
 
 English is the source language; French translations live in
-`apple/tools/l10n.py`, which writes the String Catalogs:
+`apple/tools/l10n.py`, which writes the String Catalogs (shared by the app and
+the widgets, whose sources it scans too):
 
 ```bash
 python3 apple/tools/l10n.py           # regenerate Localizable and InfoPlist catalogs

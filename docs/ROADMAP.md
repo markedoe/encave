@@ -189,7 +189,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Tablets |
-| Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
+| Widgets, Control Center | iPhone and iPad (Tonight, Cellar, lock screen, Add Bottles control) | Planned (Glance) |
 | Saved searches | Done | Planned |
 | Several photos per wine | Done | Planned |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
