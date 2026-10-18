@@ -30,6 +30,41 @@ public struct JSONFileCellarStore: CellarStore {
         return try Self.makeDecoder().decode(Cellar.self, from: data)
     }
 
+    /// Loads the cellar. A file that exists but cannot be read is moved aside, as
+    /// `cellar-unreadable-<date>.json` next to it, before anything can be saved over
+    /// it: the result is then an empty cellar and the file's new place. Throws only
+    /// if the file could not be moved (nothing must then be saved to `fileURL`).
+    public func loadSettingAsideUnreadable(now: Date = .now) throws -> (cellar: Cellar, setAside: URL?) {
+        do {
+            return (try load(), nil)
+        } catch {
+            let folder = fileURL.deletingLastPathComponent()
+            let formatter = DateFormatter()
+            formatter.calendar = Calendar(identifier: .gregorian)
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "yyyyMMdd-HHmmss"
+            let stem = Self.unreadablePrefix + formatter.string(from: now)
+            var target = folder.appendingPathComponent(stem + ".json")
+            var number = 2
+            while FileManager.default.fileExists(atPath: target.path) {
+                target = folder.appendingPathComponent("\(stem)-\(number).json")
+                number += 1
+            }
+            try FileManager.default.moveItem(at: fileURL, to: target)
+            return (Cellar(), target)
+        }
+    }
+
+    static let unreadablePrefix = "cellar-unreadable-"
+
+    /// Cellar files set aside because they could not be read, oldest first.
+    public func unreadableFiles() -> [URL] {
+        let folder = fileURL.deletingLastPathComponent()
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+        return names.filter { $0.hasPrefix(Self.unreadablePrefix) && $0.hasSuffix(".json") }.sorted()
+            .map { folder.appendingPathComponent($0) }
+    }
+
     public func save(_ cellar: Cellar) throws {
         let data = try Self.makeEncoder().encode(cellar)
         #if canImport(Darwin) && !os(macOS)

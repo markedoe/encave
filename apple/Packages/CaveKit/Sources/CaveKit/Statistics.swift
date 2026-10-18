@@ -42,7 +42,7 @@ public struct CellarStatistics: Sendable, Equatable {
 }
 
 public extension Cellar {
-    func statistics(year: Int, now: Date = .now, calendar: Calendar = .current) -> CellarStatistics {
+    func statistics(year: Int, now: Date = .now, calendar: Calendar = CellarYear.calendar) -> CellarStatistics {
         let inCellar = bottlesInCellar
         let winesInCellar = inCellar.compactMap { wines[$0.wineID] }
 
@@ -140,7 +140,7 @@ public struct YearInWine: Sendable, Equatable {
 }
 
 public extension Cellar {
-    func yearInWine(_ year: Int, calendar: Calendar = .current) -> YearInWine {
+    func yearInWine(_ year: Int, calendar: Calendar = CellarYear.calendar) -> YearInWine {
         let opened = consumedBottles.filter { bottle in
             guard let date = bottle.tasting?.date else { return false }
             return calendar.component(.year, from: date) == year

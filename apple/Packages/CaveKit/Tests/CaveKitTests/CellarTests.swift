@@ -116,6 +116,16 @@ import Testing
     }
 }
 
+@Suite struct CellarYearTests {
+    @Test func yearsAreGregorianWhateverTheUserCalendar() {
+        #expect(CellarYear.calendar.identifier == .gregorian)
+        // 2026-07-01 12:00 UTC: 2569 in the Buddhist calendar, Reiwa 8 in the Japanese one.
+        let date = Date(timeIntervalSince1970: 1_782_907_200)
+        #expect(CellarYear.of(date) == 2026)
+        #expect(Calendar(identifier: .buddhist).component(.year, from: date) != 2026)
+    }
+}
+
 @Suite struct StoreTests {
     @Test func jsonStoreRoundTrips() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("cellar-\(UUID()).json")
@@ -126,6 +136,37 @@ import Testing
         let cellar = SampleData.cellar(year: 2026)
         try store.save(cellar)
         #expect(try store.load() == cellar)
+    }
+
+    @Test func unreadableFileIsSetAsideNotOverwritten() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("store-\(UUID())")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let url = folder.appendingPathComponent("cellar.json")
+        let store = JSONFileCellarStore(fileURL: url)
+        let damaged = Data("{\"wines\": [".utf8)
+        try damaged.write(to: url)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+        let first = try store.loadSettingAsideUnreadable(now: now)
+        #expect(first.cellar.isEmpty)
+        let kept = try #require(first.setAside)
+        #expect(kept.lastPathComponent.hasPrefix("cellar-unreadable-"))
+        #expect(try Data(contentsOf: kept) == damaged)
+        #expect(!FileManager.default.fileExists(atPath: url.path))
+
+        // A second damaged file in the same second gets its own name.
+        try damaged.write(to: url)
+        let second = try #require(try store.loadSettingAsideUnreadable(now: now).setAside)
+        #expect(second != kept)
+        #expect(store.unreadableFiles() == [kept, second].sorted { $0.lastPathComponent < $1.lastPathComponent })
+
+        // A readable file loads as usual and nothing is moved.
+        let cellar = SampleData.cellar(year: 2026)
+        try store.save(cellar)
+        let loaded = try store.loadSettingAsideUnreadable(now: now)
+        #expect(loaded.setAside == nil)
+        #expect(loaded.cellar == cellar)
     }
 
     @Test func sampleDataIsConsistent() {

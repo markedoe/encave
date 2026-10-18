@@ -38,7 +38,7 @@ public enum LabelTextParser {
     static let noiseWords = ["mis en bouteille", "bottled", "product of", "produit de", "contains sulfites", "contient des sulfites",
                              "alc.", "% vol", "%vol", "www.", "http", "tel", "tél"]
 
-    public static func parse(_ lines: [LabelLine], currentYear: Int = Calendar.current.component(.year, from: .now)) -> LabelScanResult {
+    public static func parse(_ lines: [LabelLine], currentYear: Int = CellarYear.current) -> LabelScanResult {
         let cleaned = lines
             .map { LabelLine(text: $0.text.trimmingCharacters(in: .whitespacesAndNewlines), height: $0.height) }
             .filter { $0.text.count >= 2 }

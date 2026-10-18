@@ -174,7 +174,7 @@ public extension Cellar {
 
     /// Wines that still have bottles in the cellar, sorted by name then vintage.
     func groups(matching query: String = "") -> [WineGroup] {
-        groups(filter: CellarFilter(query: query), sort: .name, year: Calendar.current.component(.year, from: .now))
+        groups(filter: CellarFilter(query: query), sort: .name, year: CellarYear.current)
     }
 
     func groups(filter: CellarFilter, sort: CellarSort, year: Int) -> [WineGroup] {
