@@ -327,11 +327,13 @@ enum WebDAVMultistatus {
         private var isCollection = false
 
         private func isDAV(_ namespace: String?) -> Bool { namespace == "DAV:" || namespace == nil || namespace == "" }
+        /// The name without a prefix, whichever form the parser gives.
+        private static func localName(_ name: String) -> Substring { name.split(separator: ":").last ?? Substring(name) }
 
         func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
                     qualifiedName: String?, attributes: [String: String] = [:]) {
             guard isDAV(namespaceURI) else { return }
-            switch elementName {
+            switch Self.localName(elementName) {
             case "multistatus": sawMultistatus = true
             case "response": inResponse = true; href = nil; isCollection = false
             case "href" where inResponse && href == nil: inHref = true; text = ""
@@ -347,7 +349,7 @@ enum WebDAVMultistatus {
 
         func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName: String?) {
             guard isDAV(namespaceURI) else { return }
-            switch elementName {
+            switch Self.localName(elementName) {
             case "href" where inHref: inHref = false; href = text
             case "resourcetype": inResourceType = false
             case "response" where inResponse:
