@@ -169,6 +169,9 @@ struct DiscoveryEditor: View {
             if let live = model.cellar.wines[wine.id] {
                 // A wine of the cellar recognized by the scan: what was changed in the form is kept.
                 wine.keepUnedited(from: live)
+                // The drinking window is not shown here: it stays as it is.
+                wine.drinkFrom = live.drinkFrom
+                wine.drinkUntil = live.drinkUntil
                 if wine.photoID == nil, let labelPhoto = scan.photo { wine.photoID = PhotoStore.save(labelPhoto) }
                 guard model.update({ try $0.updateWine(wine) }) else { return }
             } else if let labelPhoto = scan.photo {
@@ -178,7 +181,11 @@ struct DiscoveryEditor: View {
             dismiss()
             return
         }
-        if let live = model.cellar.wines[wine.id] { wine.keepUnedited(from: live) }
+        if let live = model.cellar.wines[wine.id] {
+            wine.keepUnedited(from: live)
+            wine.drinkFrom = live.drinkFrom
+            wine.drinkUntil = live.drinkUntil
+        }
         let oldPhoto = wine.photoID
         if let newPhoto {
             wine.photoID = PhotoStore.save(newPhoto) ?? oldPhoto
