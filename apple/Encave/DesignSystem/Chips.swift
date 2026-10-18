@@ -83,7 +83,13 @@ struct ChoiceChip<Leading: View>: View {
                 Capsule().strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
             )
             .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+            #if os(iOS)
+            // A 44-point touch target (design/tokens.json) around the smaller capsule.
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+            #else
             .contentShape(Capsule())
+            #endif
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

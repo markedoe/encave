@@ -91,6 +91,8 @@ struct WineFormSections: View {
     @Environment(CellarModel.self) private var model
     @Binding var draft: WineDraft
     @FocusState private var nameFocused: Bool
+    /// The name is focused once, when the form opens, not each time its section reappears.
+    @State private var focusedOnce = false
     var focusName = false
     /// Drinking window and wine notes, hidden when noting a wine found elsewhere.
     var showsCellarDetails = true
@@ -111,7 +113,8 @@ struct WineFormSections: View {
                 .fieldHelp("The estate, domaine or house that made the wine.")
             Picker("Vintage", selection: $draft.vintage) {
                 Text("Non-vintage").tag(Int?.none)
-                ForEach((1950...(currentYear + 1)).reversed(), id: \.self) { year in
+                // From 1900: old vintages of port, Madeira or Bordeaux are still in cellars.
+                ForEach((1900...(currentYear + 1)).reversed(), id: \.self) { year in
                     Text(verbatim: "\(year)").tag(Int?.some(year))
                 }
             }
@@ -121,7 +124,11 @@ struct WineFormSections: View {
         } footer: {
             Text("Only the name is required. Producer and vintage tell apart wines with the same name.")
         }
-        .onAppear { if focusName { nameFocused = true } }
+        .onAppear {
+            guard focusName, !focusedOnce else { return }
+            focusedOnce = true
+            nameFocused = true
+        }
 
         Section {
             FlowLayout(spacing: 8) {
@@ -187,7 +194,7 @@ struct WineFormSections: View {
                         .foregroundStyle(.secondary)
                 }
             } else {
-                Stepper(value: fromBinding, in: 1950...(currentYear + 60)) {
+                Stepper(value: fromBinding, in: 1900...(currentYear + 60)) {
                     LabeledContent("From") { Text(verbatim: "\(fromBinding.wrappedValue)").monospacedDigit() }
                 }
                 Stepper(value: untilBinding, in: fromBinding.wrappedValue...(currentYear + 80)) {
