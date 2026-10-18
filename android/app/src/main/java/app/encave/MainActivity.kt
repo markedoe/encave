@@ -14,7 +14,7 @@ import app.encave.ui.theme.EncaveTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
-    /** A link to open (reminder, app shortcut): encave://wine/<id>, encave://tonight or encave://scan. */
+    /** A link to open (reminder, app shortcut, widget): encave://wine/<id>, encave://tonight, encave://scan or encave://add. */
     private val links = MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val LINK_TONIGHT = "encave://tonight"
         const val LINK_SCAN = "encave://scan"
+        const val LINK_ADD = "encave://add"
         private const val WINE_PREFIX = "encave://wine/"
 
         fun wineLink(id: String) = WINE_PREFIX + id

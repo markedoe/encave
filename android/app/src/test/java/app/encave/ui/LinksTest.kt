@@ -64,4 +64,12 @@ class LinksTest {
         open(MainActivity.LINK_SCAN)
         compose.onNodeWithTag("barcode.field").assertExists()
     }
+
+    @Test
+    fun addBottles() {
+        // From a widget on an empty cellar.
+        open(MainActivity.LINK_ADD)
+        compose.onNodeWithTag("action.scan_barcode").assertExists()
+        compose.onNodeWithTag("barcode.field").assertDoesNotExist()
+    }
 }

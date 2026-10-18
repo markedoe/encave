@@ -97,7 +97,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
     val navigator = remember(nav) { AppNavigator(nav) }
     val link by links.collectAsStateWithLifecycle()
     val loaded by viewModel.loaded.collectAsStateWithLifecycle()
-    // Reminders and app shortcuts: open the section, the wine or the scanner once the cellar is loaded.
+    // Reminders, app shortcuts and widgets: open the section, the wine, Add bottles or the scanner once the cellar is loaded.
     LaunchedEffect(link, loaded) {
         val target = link ?: return@LaunchedEffect
         if (!loaded) return@LaunchedEffect
@@ -106,6 +106,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
         when {
             target == MainActivity.LINK_TONIGHT -> navigator.openTopLevel(TopLevel.Tonight)
             target == MainActivity.LINK_SCAN -> navigator.open(AddBottleRoute(scan = true))
+            target == MainActivity.LINK_ADD -> navigator.open(AddBottleRoute())
             wineId != null && viewModel.cellar.value.wines.keys.any { it.toString().equals(wineId, ignoreCase = true) } ->
                 navigator.open(WineDetailRoute(wineId.lowercase()))
         }
