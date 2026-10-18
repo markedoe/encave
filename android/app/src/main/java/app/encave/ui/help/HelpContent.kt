@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -59,6 +60,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_table, R.string.help_start_table_title, Icons.Outlined.TableChart),
                     HelpSection(R.string.help_start_saved, R.string.help_start_saved_title, Icons.Outlined.BookmarkBorder),
                     HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
+                    HelpSection(R.string.help_start_widgets, R.string.help_start_widgets_title, Icons.Outlined.Widgets),
                     HelpSection(R.string.help_start_try, R.string.help_start_try_title),
                 ),
             ),
