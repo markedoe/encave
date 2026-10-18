@@ -24,8 +24,13 @@ final class SyncService {
     private(set) var lastSync: [UUID: Date] = [:]
     /// The last problem, to show in Devices.
     private(set) var problem: String?
-    /// This device was removed from the cellar by another device.
+    /// This device was removed from the cellar by another device (kept in the list of
+    /// devices, so it stays known after a relaunch).
     private(set) var wasRemoved = false
+    /// This device's key could not be read from the Keychain (not missing: unreadable,
+    /// for example before the first unlock). Sync stays off until the next launch, so
+    /// the key is never replaced by mistake.
+    private(set) var identityUnavailable = false
 
     /// Away from home: where the encrypted files are (iCloud, a WebDAV folder or a relay), if anywhere.
     private(set) var remoteStorage: RemoteStorage?
@@ -73,20 +78,48 @@ final class SyncService {
         platform = Self.currentPlatform
         deviceName = Self.currentDeviceName
         files = demo ? nil : Files()
-        identity = demo ? DeviceIdentity.generate().identity : Self.loadIdentity()
+        let loaded: DeviceIdentity? = demo ? DeviceIdentity.generate().identity : Self.loadIdentity()
+        identity = loaded ?? DeviceIdentity.generate().identity
+        identityUnavailable = loaded == nil
         guard let files else { return }
         membership = files.loadMembership()
         state = (try? files.syncState.load()) ?? nil
         lastSync = files.loadLastSync()
-        if membership != nil, state == nil { state = .starting(with: model.cellar, device: identity.id) }
         remoteStorage = UserDefaults.standard.string(forKey: Self.storageKey).flatMap(RemoteStorage.init)
         remoteKey = Keychain.getData(Self.cellarKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) }
         webDAVLogin = Keychain.getData(Self.webDAVLoginAccount).flatMap { try? JSONDecoder().decode(WebDAVLogin.self, from: $0) }
         remoteProgress = files.loadRemoteProgress()
+        model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
+        if identityUnavailable {
+            // Changes are still stamped (with the device ID kept in the sync state); only
+            // the network stays off.
+            problem = String(localized: "This device’s key could not be read from the Keychain, so sync is paused. Open Encave again once the device is unlocked.")
+        } else if let members = membership, members.members[identity.id] == nil {
+            if members.stamps[identity.id]?.deleted == true {
+                // Removed by another device, learned before the last launch.
+                wasRemoved = true
+                problem = String(localized: "This device was removed from the cellar on another device.")
+            } else {
+                // The cellar does not know this device's key (a backup restored on another
+                // device, a reset Keychain): it cannot sync as the device it was.
+                forgetCellar()
+                problem = String(localized: "This device is no longer part of the synced cellar: its key changed, for example after restoring a backup. The cellar stays here. Join the cellar again from another device.")
+            }
+        }
+        if membership != nil, state == nil, !identityUnavailable {
+            state = .starting(with: model.cellar, device: identity.id)
+        }
+        if model.unreadableFile != nil, let old = state {
+            // The cellar file could not be read and the app started empty: without stamps,
+            // the other devices' copy wins every object and comes back with the next sync.
+            state = SyncState(device: old.device, clock: old.clock)
+            remoteProgress = RemoteProgress()
+            files.saveRemoteProgress(remoteProgress)
+            save()
+        }
         // A key of another cellar (left from before joining this one) is never used.
         if let key = remoteKey, key.cellarID != membership?.cellarID { resetRemote() }
-        model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
-        publishInbox()
+        if !identityUnavailable { publishInbox() }
     }
 
     /// Makes sure this device's record names its relay inbox, so others can leave it keys.
@@ -103,7 +136,7 @@ final class SyncService {
 
     /// Starts listening and looking for the other devices. Call when the app becomes active.
     func resume() {
-        guard isSetUp, !isDemo, !otherDevices.isEmpty else { return }
+        guard isSetUp, !isDemo, !identityUnavailable, !wasRemoved, !otherDevices.isEmpty else { return }
         startListener()
         startBrowser()
         startRemoteLoop()
@@ -127,7 +160,7 @@ final class SyncService {
 
     /// First device of a cellar: creates the list of devices with this one.
     func setUpIfNeeded() {
-        guard membership == nil, let model else { return }
+        guard membership == nil, !identityUnavailable, let model else { return }
         var members = Membership()
         var clock = state?.clock ?? 0
         members.add(me, clock: &clock, by: identity.id)
@@ -188,29 +221,41 @@ final class SyncService {
     /// Stops syncing on this device. The cellar stays here as it is. The device
     /// gets a new ID and key, so it can join a cellar again later.
     func leave() {
+        forgetCellar()
+        problem = nil
+        if !isDemo {
+            if let fresh = Self.newIdentity() {
+                identity = fresh
+            } else {
+                // The old ID is final once removed: without a new key, no joining again for now.
+                identityUnavailable = true
+                problem = String(localized: "This device’s key could not be read from the Keychain, so sync is paused. Open Encave again once the device is unlocked.")
+            }
+        }
+    }
+
+    /// Forgets the devices, stamps and remote sync of the cellar; the cellar itself stays.
+    private func forgetCellar() {
         pause()
         generation += 1
         membership = nil
         state = nil
         lastSync = [:]
         wasRemoved = false
-        problem = nil
         resetRemote()
         files?.deleteAll()
-        if !isDemo { identity = Self.newIdentity() }
     }
 
     /// Forgets the remote key, storage and progress (leaving, or joining another cellar).
     private func resetRemote() {
-        remoteStorage = nil
+        useStorage(nil)
         remoteProblem = nil
         lastRemoteSync = nil
-        UserDefaults.standard.removeObject(forKey: Self.storageKey)
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
+        UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         pendingKey = nil
         storeRemoteKey(nil)
         storeWebDAVLogin(nil)
-        remoteLoop?.cancel(); remoteLoop = nil
     }
 
     var me: Member {
@@ -359,6 +404,8 @@ final class SyncService {
     static let rotationKey = "sync.rotationPending"
     static let pendingKeyAccount = "sync.pendingCellarKey"
     static let webDAVLoginAccount = "sync.webDAVLogin"
+    /// The user turned syncing away from home off on this device.
+    static let remoteOffKey = "sync.remoteTurnedOff"
 
     var remoteInfo: RemoteInfo? {
         remoteKey.map { RemoteInfo(key: $0, storage: remoteStorage?.string) }
@@ -375,34 +422,60 @@ final class SyncService {
     /// Turns syncing away from home on with a storage (or off with nil). Checks the
     /// storage first. The first device to turn it on creates the cellar's key and
     /// gives it to the others. A WebDAV folder needs `login`, kept on this device only.
+    ///
+    /// Turning it off, or choosing another storage, applies to this device only. Once
+    /// turned off, a storage told by another device is not taken up again until the
+    /// user turns it on. The cellar's key stays: it belongs to the cellar, not to the storage.
     func setRemoteStorage(_ storage: RemoteStorage?, login: WebDAVLogin? = nil) async throws {
         guard let storage else {
-            remoteStorage = nil
-            UserDefaults.standard.removeObject(forKey: Self.storageKey)
+            useStorage(nil)
+            UserDefaults.standard.set(true, forKey: Self.remoteOffKey)
             storeWebDAVLogin(nil)
-            remoteLoop?.cancel(); remoteLoop = nil
+            remoteProblem = nil
+            lastRemoteSync = nil
             return
         }
         guard let store = storage.store(login: login) else { throw RemoteSyncError.unauthorized }
         try await storage.check(login: login)
         setUpIfNeeded()
-        if case .webDAV = storage { storeWebDAVLogin(login) }
-        remoteStorage = storage
-        UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
-        if remoteKey == nil, let membership {
+        // The key is settled before anything is kept, so a failure leaves remote sync off.
+        var key = remoteKey
+        if key == nil, let membership {
             // Maybe another device already turned it on and left a key for this one.
             if let grant = try? await RemoteSync.receiveGrant(store: store, identity: identity, membership: membership,
                                                              current: nil) {
-                storeRemoteKey(grant.cellarKey)
+                key = grant.cellarKey
             } else {
-                let key = CellarKey.random(cellarID: membership.cellarID)
-                storeRemoteKey(key)
-                try await RemoteSync.grant(key, to: membership.active, store: store, identity: identity,
+                let new = CellarKey.random(cellarID: membership.cellarID)
+                try await RemoteSync.grant(new, to: membership.active, store: store, identity: identity,
                                            storage: storage.string)
+                key = new
             }
         }
+        if case .webDAV = storage { storeWebDAVLogin(login) }
+        UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
+        useStorage(storage)
+        // A key received meanwhile from a device on the network may supersede this one.
+        if let key, key.cellarID == membership?.cellarID, key.supersedes(remoteKey) { storeRemoteKey(key) }
         startRemoteLoop()
         await remoteRound()
+    }
+
+    /// Switches this device to a storage (nil: none). Progress belongs to the files of
+    /// one storage, so another storage starts afresh, and a round still running for the
+    /// old one stores nothing.
+    private func useStorage(_ storage: RemoteStorage?) {
+        guard storage != remoteStorage else { return }
+        generation += 1
+        remoteLoop?.cancel(); remoteLoop = nil
+        remoteStorage = storage
+        if let storage {
+            UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.storageKey)
+        }
+        remoteProgress = RemoteProgress()
+        files?.saveRemoteProgress(remoteProgress)
     }
 
     /// Signs in to the WebDAV folder this device already syncs through (its address came
@@ -428,9 +501,20 @@ final class SyncService {
         if info.key.supersedes(remoteKey) { storeRemoteKey(info.key) }
         // Only a storage this device can use: an HTTPS relay or WebDAV folder, or iCloud in a
         // build that has it. A WebDAV folder then asks for this device's own login.
-        if remoteStorage == nil, let storage = info.storage.flatMap(RemoteStorage.init), storage.isAcceptedFromPeer {
-            remoteStorage = storage
-            UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
+        // Not after the user turned it off here.
+        guard remoteStorage == nil, !UserDefaults.standard.bool(forKey: Self.remoteOffKey),
+              let storage = info.storage.flatMap(RemoteStorage.init), storage.isAcceptedFromPeer else { return }
+        if storage == .iCloud {
+            // Only with an iCloud account on this device. Whether it is the same Apple Account
+            // cannot be checked: a round that never finds another device's files says so.
+            Task { [weak self] in
+                guard await CloudKitMailboxStore.accountAvailable(), let self, self.remoteStorage == nil,
+                      self.membership?.cellarID == info.key.cellarID else { return }
+                self.useStorage(storage)
+                self.startRemoteLoop()
+            }
+        } else {
+            useStorage(storage)
             startRemoteLoop()
         }
     }
@@ -459,7 +543,7 @@ final class SyncService {
 
     func remoteRound() async {
         guard let store = remoteStorage?.store(login: webDAVLogin), !isSyncingRemotely, !wasRemoved,
-              let local = snapshot() else { return }
+              !identityUnavailable, let local = snapshot() else { return }
         isSyncingRemotely = true
         defer { isSyncingRemotely = false }
         let round = generation
@@ -495,12 +579,18 @@ final class SyncService {
                storage != remoteStorage, result.newKey != nil {
                 // The device that gave the new key moved the files: follow it (a WebDAV
                 // folder then asks for a login on this device, see `needsWebDAVSignIn`).
-                remoteStorage = storage
-                UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
+                useStorage(storage)
+                startRemoteLoop()
             }
             lastRemoteSync = .now
-            remoteProblem = result.unreadable.isEmpty ? nil
-                : String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
+            if !result.unreadable.isEmpty {
+                remoteProblem = String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
+            } else if remoteStorage == .iCloud, remoteProgress.seen.isEmpty, !otherDevices.isEmpty {
+                // Each Apple Account has its own iCloud: devices on different accounts never meet there.
+                remoteProblem = String(localized: "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.")
+            } else {
+                remoteProblem = nil
+            }
         } catch RemoteSyncError.unauthorized {
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
@@ -638,19 +728,28 @@ final class SyncService {
         files.saveLastSync(lastSync)
     }
 
-    private static func loadIdentity() -> DeviceIdentity {
-        let account = "device.identity"
-        if let idString = UserDefaults.standard.string(forKey: "sync.deviceID"), let id = UUID(uuidString: idString),
-           let key = Keychain.getData(account), let identity = try? DeviceIdentity(id: id, privateKeyData: key) {
-            return identity
+    private static let identityAccount = "device.identity"
+
+    /// This device's ID and key. A new one only when there is none (first launch, or a
+    /// stored key that cannot be used); nil when the Keychain could not be read, so an
+    /// existing key is never replaced.
+    private static func loadIdentity() -> DeviceIdentity? {
+        let id = UserDefaults.standard.string(forKey: "sync.deviceID").flatMap(UUID.init(uuidString:))
+        switch Keychain.read(identityAccount) {
+        case .found(let key):
+            if let id, let identity = try? DeviceIdentity(id: id, privateKeyData: key) { return identity }
+            return newIdentity()
+        case .missing:
+            return newIdentity()
+        case .failed:
+            return nil
         }
-        return newIdentity()
     }
 
-    /// A new device ID and key, saved in place of the old ones.
-    private static func newIdentity() -> DeviceIdentity {
+    /// A new device ID and key, saved in place of the old ones. Nil if the key could not be saved.
+    private static func newIdentity() -> DeviceIdentity? {
         let (identity, key) = DeviceIdentity.generate()
-        Keychain.setData(key, for: "device.identity")
+        guard Keychain.setData(key, for: identityAccount) else { return nil }
         UserDefaults.standard.set(identity.id.uuidString, forKey: "sync.deviceID")
         return identity
     }

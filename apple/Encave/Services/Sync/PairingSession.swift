@@ -52,8 +52,12 @@ final class PairingSession {
 
     /// Shows a new code and waits for a device to join with it.
     static func invite(using service: SyncService) -> PairingSession {
-        service.setUpIfNeeded()
         let session = PairingSession(role: .inviting, code: .random(), service: service)
+        if service.identityUnavailable {
+            session.phase = .failed(Self.keyUnavailable)
+            return session
+        }
+        service.setUpIfNeeded()
         let host = PairingHost(identity: service.identity, name: service.deviceName, platform: service.platform)
         session.qrPayload = session.code.qrPayload(commitment: host.commitment)
         if !service.isDemo { session.listen(host: host) }
@@ -130,8 +134,16 @@ final class PairingSession {
     /// Looks for the device showing `code` and joins its cellar.
     static func join(code: PairingCode, commitment: Data?, replace: Bool, using service: SyncService) -> PairingSession {
         let session = PairingSession(role: .joining, code: code, service: service)
-        if !service.isDemo { session.find(commitment: commitment, replace: replace) }
+        if service.identityUnavailable {
+            session.phase = .failed(Self.keyUnavailable)
+        } else if !service.isDemo {
+            session.find(commitment: commitment, replace: replace)
+        }
         return session
+    }
+
+    private static var keyUnavailable: String {
+        String(localized: "This device’s key could not be read from the Keychain, so sync is paused. Open Encave again once the device is unlocked.")
     }
 
     private func find(commitment: Data?, replace: Bool) {

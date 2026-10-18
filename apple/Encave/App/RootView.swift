@@ -6,6 +6,8 @@ import SwiftUI
 struct RootView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
+    /// This window is counted among the windows in the foreground.
+    @State private var isCounted = false
 
     var body: some View {
         @Bindable var model = model
@@ -24,15 +26,21 @@ struct RootView: View {
             // Spotlight: an on-device index of the wines (not for the sample cellar of the screen tour).
             if !model.sync.isDemo { await SpotlightIndex.update(model.cellar) }
         }
-        // Sync runs while the app is open; iOS suspends it in the background anyway.
+        // Sync runs while a window is open in the foreground; iOS suspends it in the
+        // background anyway. With several windows (iPad, Mac), it stops with the last one.
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
+                if !isCounted { isCounted = true; model.sceneDidBecomeActive() }
                 model.sync.resume()
                 Task { await Reminders.schedule(for: model.cellar) }
-            case .background: model.sync.pause()
+            case .background:
+                if isCounted { isCounted = false; model.sceneDidEnterBackground() }
             default: break
             }
+        }
+        .onDisappear {
+            if isCounted { isCounted = false; model.sceneDidEnterBackground() }
         }
         .alert(
             "Something went wrong",
