@@ -12,8 +12,8 @@ struct SettingsView: View {
     @State private var remindersOn = Reminders.isEnabled
     #if os(macOS)
     @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
-    @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     #endif
+    @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     @State private var remindersRefused = false
 
     private static let currencies = ["EUR", "CHF", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK"]

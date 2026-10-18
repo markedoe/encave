@@ -17,7 +17,7 @@ enum StudioPhoto {
     /// Settings key; on by default.
     static let settingKey = "studioPhotos"
 
-    private nonisolated(unsafe) static let context = CIContext()
+    private static let context = CIContext()
 
     private static var folder: URL? {
         guard let base = try? FileManager.default.url(for: .cachesDirectory, in: .userDomainMask,
