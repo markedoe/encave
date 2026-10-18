@@ -481,3 +481,64 @@ import Testing
         #expect(old.savedSearches == nil && old.currency == "CHF")
     }
 }
+
+@Suite struct CellarReportTests {
+    private func cellar() throws -> Cellar {
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "Young", vintage: 2024, color: .red, drinkFrom: 2030, drinkUntil: 2040), quantity: 2)
+        let soon = try cellar.addBottles(of: Wine(name: "Soon", producer: "Dom. A", vintage: 2018, color: .white, region: "Loire",
+                                                  grapes: ["Chenin"], drinkFrom: 2020, drinkUntil: 2026),
+                                          quantity: 2, purchase: PurchaseInfo(storageNote: "Kitchen | shelf"))
+        try cellar.reserve([soon[0].id], for: "Christmas")
+        let day = DateComponents(calendar: Calendar(identifier: .gregorian), timeZone: .current, year: 2026, month: 12, day: 1).date!
+        try cellar.addBottles(of: Wine(name: "Ordered", drinkUntil: 2028), purchase: PurchaseInfo(isOrdered: true, expectedAt: day))
+        return cellar
+    }
+
+    @Test func textHasOneLinePerWine() throws {
+        let report = try cellar().report(scope: .all, year: 2026)
+        #expect(report.rows.map(\.name) == ["Soon", "Young"])
+        #expect(report.bottleCount == 4)
+        let lines = report.text.components(separatedBy: "\n")
+        #expect(lines[0] == "Encave cellar, 2026, all bottles: 2 wines, 4 bottles.")
+        #expect(lines[2] == "1. Soon 2018 | Dom. A | white | Loire | Chenin | 2020-2026 | drink soon | 2 | Kitchen / shelf; Kitchen / shelf |  | Christmas")
+    }
+
+    @Test func scopesPickTheirBottles() throws {
+        let cellar = try cellar()
+        let toOpen = cellar.report(scope: .toOpen, year: 2026)
+        #expect(toOpen.rows.map(\.name) == ["Soon"])
+        #expect(toOpen.bottleCount == 1)
+        #expect(cellar.report(scope: .reserved, year: 2026).rows.map(\.keptFor) == [["Christmas"]])
+        #expect(cellar.report(scope: .young, year: 2026).rows.map(\.name) == ["Young"])
+        let ordered = cellar.report(scope: .onOrder, year: 2026)
+        #expect(ordered.rows.map(\.expected) == [["2026-12-01"]])
+        #expect(ordered.text.hasSuffix("| 2026-12-01"))
+        #expect(cellar.report(scope: .all, search: "chenin", year: 2026).rows.map(\.name) == ["Soon"])
+        #expect(cellar.report(scope: .pastPeak, year: 2026).text == "Encave cellar, 2026, bottles past their peak: 0 wines, 0 bottles.")
+        #expect(cellar.report(scope: .all, year: 2026, limit: 1).text.hasPrefix(
+            "Encave cellar, 2026, all bottles: 1 wine, 2 bottles (1 more wine left out)."))
+    }
+
+    @Test func jsonUsesFixedKeys() throws {
+        let json = try cellar().report(scope: .all, search: "Young", year: 2026).json()
+        #expect(json.contains("\"maturity\" : \"too young\""))
+        #expect(json.contains("\"bottles\" : 2"))
+    }
+}
+
+@Suite struct CoverPhotoTests {
+    @Test func coverIsShownKeptAndRoundTrips() throws {
+        var wine = Wine(name: "Cover", photoID: "label")
+        wine.coverPhotoID = "cover"
+        #expect(wine.shownPhotoID == "cover")
+        #expect(wine.allPhotoIDs == ["label", "cover"])
+        var cellar = Cellar()
+        try cellar.addBottles(of: wine)
+        #expect(cellar.photoIDs == ["label", "cover"])
+        let decoded = try JSONDecoder().decode(Wine.self, from: JSONEncoder().encode(wine))
+        #expect(decoded.coverPhotoID == "cover")
+        let old = try JSONDecoder().decode(Wine.self, from: Data(#"{"id":"\#(UUID())","name":"Old"}"#.utf8))
+        #expect(old.coverPhotoID == nil && old.shownPhotoID == nil)
+    }
+}

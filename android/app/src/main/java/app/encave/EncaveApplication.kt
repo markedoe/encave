@@ -40,7 +40,7 @@ class EncaveApplication : Application() {
         scope.launch(Dispatchers.IO) {
             repository.loaded.first { it }
             if (!repository.loadFailed) {
-                photos.removeOrphans(repository.cellar.value.wines.values.mapNotNull { it.photoId }.toSet())
+                photos.removeOrphans(repository.cellar.value.photoIds)
             }
         }
     }

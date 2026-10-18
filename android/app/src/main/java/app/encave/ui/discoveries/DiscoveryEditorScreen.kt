@@ -56,6 +56,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.core.Discovery
 import app.encave.core.discoveryTags
 import app.encave.ui.AppNavigator
@@ -144,7 +145,7 @@ fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, disc
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
         Column(
-            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState())
+            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth()
                 .padding(horizontal = Dimens.l, vertical = Dimens.s),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {

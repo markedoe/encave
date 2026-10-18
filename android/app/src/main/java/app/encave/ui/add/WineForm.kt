@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -350,7 +351,7 @@ fun DrinkingWindowField(form: WineFormState, modifier: Modifier = Modifier) {
                 },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f).padding(end = Dimens.l)) {
                 Text(stringResource(R.string.add_window_set), style = MaterialTheme.typography.bodyLarge)
                 form.window?.let {
                     Text(

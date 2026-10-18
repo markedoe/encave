@@ -124,6 +124,99 @@ struct DrinkSoonIntent: AppIntent {
     }
 }
 
+/// Which bottles "Get Cellar Contents" returns.
+enum CellarScopeOption: String, AppEnum {
+    case all, toOpen, drinkSoon, ready, young, pastPeak, onOrder, reserved
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Bottles"
+    static let caseDisplayRepresentations: [CellarScopeOption: DisplayRepresentation] = [
+        .all: "All Bottles",
+        .toOpen: "To Open Now",
+        .drinkSoon: "To Drink Soon",
+        .ready: "Ready to Drink",
+        .young: "Too Young",
+        .pastPeak: "Past Their Peak",
+        .onOrder: "On Order",
+        .reserved: "Kept for an Occasion",
+    ]
+
+    var scope: CellarReportScope { CellarReportScope(rawValue: rawValue) ?? .all }
+}
+
+enum CellarFormatOption: String, AppEnum {
+    case text, json
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Format"
+    static let caseDisplayRepresentations: [CellarFormatOption: DisplayRepresentation] = [
+        .text: "Text, One Line per Wine",
+        .json: "JSON",
+    ]
+}
+
+/// The cellar as text or JSON, for another app on this device, such as a local AI
+/// assistant that runs shortcuts. The shortcut gets the text; Encave sends nothing.
+/// The returned text uses fixed English words so other tools can rely on it.
+struct CellarContentsIntent: AppIntent {
+    static let title: LocalizedStringResource = "Get Cellar Contents"
+    static let description = IntentDescription("Returns the bottles of your cellar as text or JSON, for another app or an AI assistant on this device. Encave sends nothing.")
+
+    @Parameter(title: "Bottles", default: .all)
+    var bottles: CellarScopeOption
+
+    @Parameter(title: "Containing")
+    var search: String?
+
+    @Parameter(title: "Format", default: .text)
+    var format: CellarFormatOption
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+        let report = CellarAccess.cellar().report(scope: bottles.scope, search: search ?? "", year: CellarAccess.year)
+        let value = try format == .json ? report.json() : report.text
+        return .result(value: value)
+    }
+}
+
+/// One wine with its bottles and past tastings, as text, for another app.
+struct WineDetailsIntent: AppIntent {
+    static let title: LocalizedStringResource = "Get Wine Details"
+    static let description = IntentDescription("Returns a wine of your cellar as text: its details, where its bottles are and your tasting notes.")
+
+    @Parameter(title: "Wine")
+    var wine: WineEntity
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+        let cellar = CellarAccess.cellar()
+        guard let record = cellar.wines[wine.id] else { return .result(value: "") }
+        let row = cellar.report(scope: .all, year: CellarAccess.year).rows.first { $0.wineID == wine.id }
+        var lines = ["Wine: \(record.displayName)"]
+        func add(_ title: String, _ value: String?) {
+            if let value, !value.isEmpty { lines.append("\(title): \(value)") }
+        }
+        add("Producer", record.producer)
+        add("Style", record.color?.rawValue)
+        add("Origin", [record.appellation, record.region, record.country].compactMap { $0 }.joined(separator: ", "))
+        add("Grapes", record.grapes.joined(separator: ", "))
+        if record.drinkFrom != nil || record.drinkUntil != nil {
+            add("Drinking window", [record.drinkFrom, record.drinkUntil].map { $0.map(String.init) ?? "?" }.joined(separator: "-"))
+        }
+        add("Maturity", row?.maturity)
+        add("Bottles in the cellar", row.map { String($0.bottles) } ?? "0")
+        add("Places", row?.places.joined(separator: "; "))
+        add("Kept for", row?.keptFor.joined(separator: ", "))
+        add("Tags", (record.tags ?? []).joined(separator: ", "))
+        add("Notes", record.notes)
+        let tastings = cellar.consumedBottles.filter { $0.wineID == wine.id }.compactMap(\.tasting)
+        for tasting in tastings.prefix(20) {
+            let parts = [tasting.rating.map { "\($0)/5" }, tasting.occasion, tasting.note, tasting.nose, tasting.palate,
+                         tasting.foodPairing.map { "with \($0)" }]
+            add("Tasted \(tasting.date.formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day()))", parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "; "))
+        }
+        return .result(value: lines.joined(separator: "\n"))
+    }
+}
+
 /// Opens the app on Add Bottles.
 struct AddBottleIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Bottles"

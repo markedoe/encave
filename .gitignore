@@ -46,3 +46,6 @@ Thumbs.db
 local.properties
 captures/
 *.hprof
+
+# Local agent worktrees
+.claude/worktrees/

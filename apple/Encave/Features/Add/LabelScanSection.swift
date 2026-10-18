@@ -12,6 +12,10 @@ final class LabelScan {
     var autoFilled = WineDraft()
     let aiEnabled = AISettings.load().isEnabled
     var isAnalyzing = false
+    /// Set when the bottles were added before the AI answered: the answer then
+    /// completes the saved wine (see `completeLater`).
+    private var savedDraft: WineDraft?
+    private weak var savedIn: CellarModel?
     var aiError: String?
     /// A scan filled the form: show the wine as a card, until the user wants to edit it.
     var scanned = false
@@ -32,6 +36,14 @@ final class LabelScan {
             photo = await PhotoStore.resized(image)
             if aiEnabled, photo != nil { completeWithAI(draft: draft) }
         }
+    }
+
+    /// The form was saved while the AI was still reading the label: keep going, and
+    /// complete the saved wine with its answer. Adding stays under ten seconds.
+    func completeLater(_ saved: WineDraft, in model: CellarModel) {
+        guard isAnalyzing else { return }
+        savedDraft = saved
+        savedIn = model
     }
 
     /// On-device reading: instant, fills only what the label clearly shows.
@@ -66,6 +78,14 @@ final class LabelScan {
             defer { isAnalyzing = false }
             do {
                 let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                if let saved = savedDraft, let model = savedIn {
+                    savedDraft = nil
+                    var completed = saved
+                    var filled = autoFilled
+                    analysis.apply(to: &completed, replacing: &filled)
+                    model.completeWine(saved.id, from: saved.makeWine(), to: completed.makeWine())
+                    return
+                }
                 var value = draft.wrappedValue
                 analysis.apply(to: &value, replacing: &autoFilled)
                 withAnimation { draft.wrappedValue = value }

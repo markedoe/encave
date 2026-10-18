@@ -35,6 +35,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var currentPrice: Decimal?
     public var currentPriceCurrency: String?
     public var currentPriceDate: Date?
+    /// The picture shown for the wine instead of the label photo: one found on the
+    /// internet or an illustration made on the device. Nil shows the label photo.
+    public var coverPhotoID: String?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -72,10 +75,14 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         currentPrice = try c.decodeIfPresent(Decimal.self, forKey: .currentPrice)
         currentPriceCurrency = try c.decodeIfPresent(String.self, forKey: .currentPriceCurrency)
         currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
+        coverPhotoID = try c.decodeIfPresent(String.self, forKey: .coverPhotoID)
     }
 
-    /// The label photo first, then the others.
-    public var allPhotoIDs: [String] { [photoID].compactMap { $0 } + (extraPhotoIDs ?? []) }
+    /// The label photo first, then the others, then the cover.
+    public var allPhotoIDs: [String] { [photoID].compactMap { $0 } + (extraPhotoIDs ?? []) + [coverPhotoID].compactMap { $0 } }
+
+    /// The picture to show for the wine: the cover if any, else the label photo.
+    public var shownPhotoID: String? { coverPhotoID ?? photoID }
 
     /// Trimmed, without empty or duplicate tags (ignoring case); nil when none are left.
     public static func normalizedTags(_ tags: [String]?) -> [String]? {

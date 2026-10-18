@@ -21,6 +21,7 @@ struct WineDraft: Equatable {
     var tags: [String] = []
     /// Not edited in the form, but kept.
     var extraPhotoIDs: [String]?
+    var coverPhotoID: String?
     /// A tag being typed, kept on save.
     var pendingTag = ""
 
@@ -44,6 +45,7 @@ struct WineDraft: Equatable {
         barcodes = wine.barcodes ?? []
         tags = wine.tags ?? []
         extraPhotoIDs = wine.extraPhotoIDs
+        coverPhotoID = wine.coverPhotoID
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -68,6 +70,7 @@ struct WineDraft: Equatable {
             tags: tags + pendingTag.split(separator: ",").map(String.init)
         )
         wine.extraPhotoIDs = extraPhotoIDs
+        wine.coverPhotoID = coverPhotoID
         return wine
     }
 }
@@ -229,12 +232,38 @@ struct EditWineView: View {
     @State private var loaded = false
     @State private var newPhoto: Data?
     @State private var photoRemoved = false
+    @State private var analyzing = false
+    @State private var aiProblem: String?
+    private let aiEnabled = AISettings.load().isEnabled
+
+    /// A label photo for the AI: a new one, or the one kept with the wine.
+    private var hasLabelPhoto: Bool {
+        newPhoto != nil || (!photoRemoved && PhotoStore.exists(draft.photoID))
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 WineFormSections(draft: $draft, onSearchOnline: { searchingOnline = true })
                 PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
+                if aiEnabled, hasLabelPhoto {
+                    Section {
+                        Button(action: completeWithAI) {
+                            if analyzing {
+                                HStack { ProgressView(); Text("Reading the label…") }
+                            } else {
+                                Label("Complete with AI", systemImage: "sparkles")
+                            }
+                        }
+                        .disabled(analyzing)
+                        if let aiProblem {
+                            Label(aiProblem, systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.secondary)
+                        }
+                    } footer: {
+                        Text("Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.")
+                    }
+                }
             }
             .formStyle(.grouped)
             .webSearchSheet(isPresented: $searchingOnline, draft: $draft)
@@ -259,6 +288,24 @@ struct EditWineView: View {
         .macSheetFrame()
     }
 
+    private func completeWithAI() {
+        guard !analyzing, let photo = newPhoto ?? (photoRemoved ? nil : PhotoStore.data(for: draft.photoID)) else { return }
+        analyzing = true
+        aiProblem = nil
+        Task {
+            defer { analyzing = false }
+            do {
+                let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                var value = draft
+                var filled = WineDraft()
+                analysis.apply(to: &value, replacing: &filled)
+                withAnimation { draft = value }
+            } catch {
+                aiProblem = error.localizedDescription
+            }
+        }
+    }
+
     private func save() {
         var wine = draft.makeWine()
         let oldPhoto = wine.photoID
@@ -267,8 +314,13 @@ struct EditWineView: View {
         } else if photoRemoved {
             wine.photoID = nil
         }
+        // Photos added elsewhere while the form was open (another window, sync) stay.
+        if let live = model.cellar.wines[wine.id] {
+            wine.extraPhotoIDs = live.extraPhotoIDs
+            wine.coverPhotoID = live.coverPhotoID
+        }
+        // A replaced photo file is removed by the cleanup at launch, after a grace period.
         guard model.update({ try $0.updateWine(wine) }) else { return }
-        if wine.photoID != oldPhoto { PhotoStore.delete(oldPhoto) }
         dismiss()
     }
 }

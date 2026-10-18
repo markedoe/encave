@@ -921,6 +921,16 @@
         }
       }
     },
+    "All Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les bouteilles"
+          }
+        }
+      }
+    },
     "All data erased": {
       "localizations": {
         "fr": {
@@ -977,6 +987,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autre idée"
+          }
+        }
+      }
+    },
+    "Another picture": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre image"
           }
         }
       }
@@ -1751,6 +1771,16 @@
         }
       }
     },
+    "Change Picture…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer l’image…"
+          }
+        }
+      }
+    },
     "Changes from another device could not be read. Update Encave on all your devices.": {
       "localizations": {
         "fr": {
@@ -2151,6 +2181,16 @@
         }
       }
     },
+    "Containing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contenant"
+          }
+        }
+      }
+    },
     "Counted from the left. Places are numbered 1, 2, 3…": {
       "localizations": {
         "fr": {
@@ -2237,6 +2277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créer une clé d’API chez %@"
+          }
+        }
+      }
+    },
+    "Create an Illustration…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une illustration…"
           }
         }
       }
@@ -2477,6 +2527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Détails"
+          }
+        }
+      }
+    },
+    "Details completed by AI: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fiche complétée par l’IA : %@"
           }
         }
       }
@@ -3361,6 +3421,16 @@
         }
       }
     },
+    "Format": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format"
+          }
+        }
+      }
+    },
     "Fortified": {
       "localizations": {
         "fr": {
@@ -3477,6 +3547,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gibier"
+          }
+        }
+      }
+    },
+    "Get Cellar Contents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtenir le contenu de la cave"
+          }
+        }
+      }
+    },
+    "Get Wine Details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtenir la fiche d’un vin"
           }
         }
       }
@@ -3851,6 +3941,16 @@
         }
       }
     },
+    "In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans Raccourcis, **Obtenir le contenu de la cave** donne vos bouteilles en texte ou en JSON (toutes, celles à ouvrir maintenant, en commande…), et **Obtenir la fiche d’un vin** donne un vin avec ses notes de dégustation. Une app de cet appareil qui lance des raccourcis, comme un assistant IA local, peut s’en servir pour répondre à vos questions sur votre cave. Encave n’envoie rien."
+          }
+        }
+      }
+    },
     "In the Cellar list (not the table), choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
@@ -3967,6 +4067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ses bouteilles, sa fenêtre de dégustation et vos dégustations apparaissent ici."
+          }
+        }
+      }
+    },
+    "JSON": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JSON"
           }
         }
       }
@@ -4131,6 +4241,16 @@
         }
       }
     },
+    "Kept for an Occasion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardées pour une occasion"
+          }
+        }
+      }
+    },
     "Kept with the wine and used for the estimated value of your cellar in Insights. Web prices vary: check them on the sites.": {
       "localizations": {
         "fr": {
@@ -4207,6 +4327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photo de l’étiquette"
+          }
+        }
+      }
+    },
+    "Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise."
           }
         }
       }
@@ -4417,6 +4547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche de l’appareil qui affiche %@…"
+          }
+        }
+      }
+    },
+    "Made on this device with Image Playground, from the wine's name and its label photo.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée sur cet appareil avec Image Playground, à partir du nom du vin et de sa photo d’étiquette."
           }
         }
       }
@@ -5121,6 +5261,16 @@
         }
       }
     },
+    "On Order": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En commande"
+          }
+        }
+      }
+    },
     "On a bottle in a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back.": {
       "localizations": {
         "fr": {
@@ -5287,6 +5437,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
+          }
+        }
+      }
+    },
+    "On the wine's page, **Change Picture…** shows instead an illustration made on this device with Image Playground (with Apple Intelligence), or a picture found on the internet if a search service is set up. The label photo is always kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur la fiche du vin, **Changer l’image…** affiche à la place une illustration créée sur cet appareil avec Image Playground (avec Apple Intelligence), ou une image trouvée sur internet si un service de recherche est configuré. La photo d’étiquette est toujours gardée."
           }
         }
       }
@@ -5611,6 +5771,16 @@
         }
       }
     },
+    "Other apps and AI assistants": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres apps et assistants IA"
+          }
+        }
+      }
+    },
     "Other server (OpenAI-compatible)": {
       "localizations": {
         "fr": {
@@ -5637,6 +5807,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouche"
+          }
+        }
+      }
+    },
+    "Past Their Peak": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après leur apogée"
           }
         }
       }
@@ -5687,6 +5867,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photo"
+          }
+        }
+      }
+    },
+    "Photo %lld of %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo %lld sur %lld"
+          }
+        }
+      }
+    },
+    "Photo removed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo retirée"
           }
         }
       }
@@ -6141,6 +6341,16 @@
         }
       }
     },
+    "Ready to Drink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêtes à boire"
+          }
+        }
+      }
+    },
     "Ready to drink": {
       "localizations": {
         "fr": {
@@ -6351,6 +6561,16 @@
         }
       }
     },
+    "Remove This Picture": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer cette image"
+          }
+        }
+      }
+    },
     "Remove from List": {
       "localizations": {
         "fr": {
@@ -6437,6 +6657,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Résultats"
+          }
+        }
+      }
+    },
+    "Returns a wine of your cellar as text: its details, where its bottles are and your tasting notes.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoie un vin de votre cave en texte : sa fiche, l’emplacement de ses bouteilles et vos notes de dégustation."
+          }
+        }
+      }
+    },
+    "Returns the bottles of your cellar as text or JSON, for another app or an AI assistant on this device. Encave sends nothing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoie les bouteilles de votre cave en texte ou en JSON, pour une autre app ou un assistant IA sur cet appareil. Encave n’envoie rien."
           }
         }
       }
@@ -6821,6 +7061,16 @@
         }
       }
     },
+    "Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment."
+          }
+        }
+      }
+    },
     "Server URL": {
       "localizations": {
         "fr": {
@@ -7011,6 +7261,26 @@
         }
       }
     },
+    "Show Photo as Taken": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la photo telle que prise"
+          }
+        }
+      }
+    },
+    "Show Studio Look": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher l’aspect studio"
+          }
+        }
+      }
+    },
     "Show Tonight in the Menu Bar": {
       "localizations": {
         "fr": {
@@ -7077,6 +7347,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher la cave en tableau ou en liste (Mac)"
+          }
+        }
+      }
+    },
+    "Shown in the studio look when it is on in Settings: cut out and straightened on a clean background.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net."
           }
         }
       }
@@ -7347,6 +7627,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stockage"
+          }
+        }
+      }
+    },
+    "Studio Look for Label Photos": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aspect studio pour les photos d’étiquette"
           }
         }
       }
@@ -7741,6 +8031,16 @@
         }
       }
     },
+    "Text, One Line per Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte, une ligne par vin"
+          }
+        }
+      }
+    },
     "That position is already taken.": {
       "localizations": {
         "fr": {
@@ -7977,6 +8277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin."
+          }
+        }
+      }
+    },
+    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**."
           }
         }
       }
@@ -8481,6 +8791,26 @@
         }
       }
     },
+    "To Drink Soon": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À boire bientôt"
+          }
+        }
+      }
+    },
+    "To Open Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À ouvrir maintenant"
+          }
+        }
+      }
+    },
     "To buy": {
       "localizations": {
         "fr": {
@@ -8567,6 +8897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce soir, ouvrez…"
+          }
+        }
+      }
+    },
+    "Too Young": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop jeunes"
           }
         }
       }
@@ -8797,6 +9137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utiliser iCloud"
+          }
+        }
+      }
+    },
+    "Use the Label Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser la photo d’étiquette"
           }
         }
       }
@@ -9177,6 +9527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fiche du vin"
+          }
+        }
+      }
+    },
+    "Wine Picture": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image du vin"
           }
         }
       }

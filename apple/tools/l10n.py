@@ -96,6 +96,44 @@ FR = {
     "On devices with Apple Intelligence, **Suggest Details** reads the results on the device and proposes the producer, region, appellation, country, grapes and drinking window. Each suggestion is shown next to the current value, and only the ones you select are used. The results are not sent to any AI service.": "Sur les appareils avec Apple Intelligence, **Suggérer des détails** lit les résultats sur l’appareil et propose le producteur, la région, l’appellation, le pays, les cépages et la fenêtre de dégustation. Chaque suggestion s’affiche à côté de la valeur actuelle, et seules celles que vous choisissez sont utilisées. Les résultats ne sont envoyés à aucun service d’IA.",
     "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device.": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, et pour un prix le format de la bouteille et le mot « prix ». Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil.",
     "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher.",
+    'Reading the label…': 'Lecture de l’étiquette…',
+    'Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.': 'Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment.',
+    'Details completed by AI: %@': 'Fiche complétée par l’IA : %@',
+    'Another picture': 'Une autre image',
+    "On the wine's page, **Change Picture…** shows instead an illustration made on this device with Image Playground (with Apple Intelligence), or a picture found on the internet if a search service is set up. The label photo is always kept.": 'Sur la fiche du vin, **Changer l’image…** affiche à la place une illustration créée sur cet appareil avec Image Playground (avec Apple Intelligence), ou une image trouvée sur internet si un service de recherche est configuré. La photo d’étiquette est toujours gardée.',
+    'Wine Picture': 'Image du vin',
+    'Change Picture…': 'Changer l’image…',
+    'Use the Label Photo': 'Utiliser la photo d’étiquette',
+    'Shown in the studio look when it is on in Settings: cut out and straightened on a clean background.': 'Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net.',
+    'Create an Illustration…': 'Créer une illustration…',
+    "Made on this device with Image Playground, from the wine's name and its label photo.": 'Créée sur cet appareil avec Image Playground, à partir du nom du vin et de sa photo d’étiquette.',
+    'Remove This Picture': 'Retirer cette image',
+    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": 'La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**.',
+    'Studio Look for Label Photos': 'Aspect studio pour les photos d’étiquette',
+    'Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.': 'Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise.',
+    'Show Studio Look': 'Afficher l’aspect studio',
+    'Show Photo as Taken': 'Afficher la photo telle que prise',
+    'Photo %lld of %lld': 'Photo %lld sur %lld',
+    'Photo removed': 'Photo retirée',
+    'Other apps and AI assistants': 'Autres apps et assistants IA',
+    'In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.': 'Dans Raccourcis, **Obtenir le contenu de la cave** donne vos bouteilles en texte ou en JSON (toutes, celles à ouvrir maintenant, en commande…), et **Obtenir la fiche d’un vin** donne un vin avec ses notes de dégustation. Une app de cet appareil qui lance des raccourcis, comme un assistant IA local, peut s’en servir pour répondre à vos questions sur votre cave. Encave n’envoie rien.',
+    'Bottles': 'Bouteilles',
+    'All Bottles': 'Toutes les bouteilles',
+    'To Open Now': 'À ouvrir maintenant',
+    'To Drink Soon': 'À boire bientôt',
+    'Ready to Drink': 'Prêtes à boire',
+    'Too Young': 'Trop jeunes',
+    'Past Their Peak': 'Après leur apogée',
+    'On Order': 'En commande',
+    'Kept for an Occasion': 'Gardées pour une occasion',
+    'Format': 'Format',
+    'Text, One Line per Wine': 'Texte, une ligne par vin',
+    'JSON': 'JSON',
+    'Get Cellar Contents': 'Obtenir le contenu de la cave',
+    'Returns the bottles of your cellar as text or JSON, for another app or an AI assistant on this device. Encave sends nothing.': 'Renvoie les bouteilles de votre cave en texte ou en JSON, pour une autre app ou un assistant IA sur cet appareil. Encave n’envoie rien.',
+    'Containing': 'Contenant',
+    'Get Wine Details': 'Obtenir la fiche d’un vin',
+    'Returns a wine of your cellar as text: its details, where its bottles are and your tasting notes.': 'Renvoie un vin de votre cave en texte : sa fiche, l’emplacement de ses bouteilles et vos notes de dégustation.',
     '⌘Z': '⌘Z',
     'Undo, while the banner with Undo shows': 'Annuler, tant que le bandeau Annuler est affiché',
     'Share': 'Partager',
@@ -1082,6 +1120,8 @@ def extract():
         keys.update(UI_CALL.findall(source))
         if "LocalizedStringKey" in source:
             keys.update(CASE_STRING.findall(source))
+        for block in re.findall(r"caseDisplayRepresentations: \[\w+: DisplayRepresentation\] = \[(.*?)\n    \]", source, re.S):
+            keys.update(re.findall(r'\.\w+: "((?:[^"\\]|\\.)*)"', block))
         for block in re.findall(r"\[LocalizedStringResource\] = \[(.*?)\]", source, re.S):
             keys.update(re.findall(r'"([^"]+)"', block))
         keys.update(re.findall(r'\("((?:[^"\\]|\\.)*)", \d+, \d+, \.(?:grid|diamond)\)', source))

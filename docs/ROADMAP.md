@@ -185,17 +185,20 @@ kept within the privacy rules: everything is worked out on the device.
 | Tags on wines, filter chips | Done | Done |
 | "Why this window", drink sooner or keep longer | Done | Done |
 | Ask your cellar (on-device language model) | Done (Apple Intelligence devices) | Later |
+| Shortcuts actions that return the cellar as text or JSON, for local AI assistants ([SHORTCUTS.md](SHORTCUTS.md)) | Done | Later |
 | Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Tablets |
 | Widgets, Control Center | Planned (needs an App Group) | Planned (Glance) |
-| Saved searches | Done | Planned |
-| Several photos per wine | Done | Planned |
+| Saved searches | Done | Done |
+| Several photos per wine | Done | Done |
+| Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Later (no ML Kit: needs another way) |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
 | Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
 | Watch app | Later | Later (Wear OS tile) |
+| More places to sync through: Google Drive, Dropbox, pCloud, Proton Drive (depends on its API), a NAS over WebDAV (Synology, QNAP, Nextcloud). Each is a thin adapter of the same encrypted mailbox protocol | Later | Later |
 
 ### Ask your cellar (on the device)
 

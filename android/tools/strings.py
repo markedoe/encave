@@ -284,8 +284,9 @@ S = [
  ("settings_erase_body", "This removes every bottle, rack and tasting from this device.", "Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil."),
  ("settings_privacy", "Privacy", "Confidentialité"),
  ("settings_privacy_stored", "Your cellar is stored only on this device.", "Votre cave est enregistrée uniquement sur cet appareil."),
- ("settings_privacy_body", "Encave has no network access, no account and no analytics. Sync between your devices and with the people you share a cellar with will be end-to-end encrypted.",
-  "Encave n’a ni accès au réseau, ni compte, ni statistiques d’usage. La synchronisation entre vos appareils et avec les personnes avec qui vous partagez une cave sera chiffrée de bout en bout."),
+ ("settings_privacy_body", "No account, no tracking, no advertising. Devices sync directly on your network, encrypted from end to end; no server ever sees your cellar.",
+  "Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave."),
+ ("settings_privacy_stored_devices", "Your cellar is stored only on your devices.", "Votre cave est enregistrée uniquement sur vos appareils."),
  ("settings_about", "About", "À propos"),
  ("settings_version", "Version", "Version"),
  ("settings_source", "Source code", "Code source"),
@@ -476,7 +477,7 @@ S = [
  ("help_field_appellation", "The protected name of origin, such as Pauillac or Chablis.", "L’appellation d’origine, comme Pauillac ou Chablis."),
  ("help_field_region", "The wine region, such as Bordeaux or Tuscany.", "La région viticole, comme Bordeaux ou la Toscane."),
  ("help_field_grapes", "Grape varieties, separated by commas.", "Cépages, séparés par des virgules."),
- ("help_origin_footer", "Optional. Makes search and food pairing better. Separate grapes with commas.", "Facultatif. Améliore la recherche et les accords mets-vins. Séparez les cépages par des virgules."),
+ ("help_origin_footer", "Optional. Makes search and food pairing better.", "Facultatif. Améliore la recherche et les accords mets-vins."),
  ("help_window_footer", "The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.", "Les années où le vin est à son meilleur, d’après le producteur ou un guide. Utilisé par Ce soir pour suggérer quoi ouvrir."),
  ("help_notes_footer", "About the wine itself. Notes on a bottle you opened go in its tasting.", "Sur le vin lui-même. Les notes sur une bouteille ouverte vont dans sa dégustation."),
  ("help_field_rating", "From one star (disappointing) to five (exceptional). Tap the same star again to clear it.", "D’une étoile (décevant) à cinq (exceptionnel). Touchez à nouveau la même étoile pour l’effacer."),
@@ -677,6 +678,8 @@ S = [
  ("remote_how_to", "How to run a relay", "Héberger un relais"),
  ("remote_problem_refused", "The relay refused this device. Check the relay address.", "Le relais a refusé cet appareil. Vérifiez l’adresse du relais."),
  ("remote_problem_full", "The relay is full. Remove old photos or use another relay.", "Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais."),
+ ("remote_problem_too_large", "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.",
+  "La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute."),
  ("remote_problem_unreachable", "The storage cannot be reached. Syncing will resume when it can.", "Le stockage est injoignable. La synchronisation reprendra dès que possible."),
  ("remote_problem_unreadable", "Changes from another device could not be read. Update Encave on all your devices.", "Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils."),
  ("remote_problem_removal", "The removed device could not be shut out of syncing away from home yet. It will be tried again.", "L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté."),
@@ -788,6 +791,8 @@ S = [
  # Insights: drink-down plan and year in wine
  ("insights_drink_down", "Drink-down plan", "Rythme de dégustation"),
  ("insights_pace", "About %1$s bottles a month", "Environ %1$s bouteilles par mois"),
+ ("insights_pace_one", "About one bottle a month", "Environ une bouteille par mois"),
+ ("insights_pace_less", "Less than one bottle a month", "Moins d’une bouteille par mois"),
  ("insights_pace_detail", "to open every bottle before the end of its drinking window.", "pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation."),
  ("insights_past_peak", "Past their peak: %1$d", "Après leur apogée : %1$d"),
  ("insights_windows_ending", "Windows ending each year", "Fins de fenêtre par année"),
@@ -983,6 +988,25 @@ S = [
  ('help_web_price', 'On a wine’s page, **Find current price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.', 'Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**.'),
  ('help_web_sent_title', 'What is sent', 'Ce qui est envoyé'),
  ('help_web_sent', 'Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.', 'Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, et pour un prix le format de la bouteille et le mot « prix ». Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est chiffrée avec le Keystore Android sur cet appareil.'),
+ # Saved searches
+ ("action_save_search", "Save this search…", "Enregistrer cette recherche…"),
+ ("save_search_title", "Save this search", "Enregistrer cette recherche"),
+ ("save_search_body", "It appears first among the filters, one tap away.", "Elle apparaît en premier parmi les filtres, à portée d’un toucher."),
+ ("action_delete_search", "Delete search", "Supprimer la recherche"),
+ ("saved_search_hint", "Applies this saved search.", "Applique cette recherche enregistrée."),
+ ("help_start_saved_title", "Saved searches", "Recherches enregistrées"),
+ ("help_start_saved", "Search or choose filters, then **Save this search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.",
+  "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."),
+
+ # More photos of a wine
+ ("more_photos", "More photos", "Autres photos"),
+ ("more_photos_footer", "The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.", "La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées."),
+ ("action_add_photo", "Add a photo", "Ajouter une photo"),
+ ("action_remove_photo", "Remove photo", "Retirer la photo"),
+ ("photo_adding", "Adding…", "Ajout…"),
+ ("photo_item", "Photo %1$d of %2$d", "Photo %1$d sur %2$d"),
+ ("photo_show_large", "Show large", "Afficher en grand"),
+
 ]
 
 P = [

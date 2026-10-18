@@ -99,6 +99,7 @@ struct CellarList: View {
             .alert("Save This Search", isPresented: $namingSearch) {
                 TextField("Name", text: $searchName)
                 Button("Save") { model.update { $0.saveSearch(searchName, filter: filter) } }
+                    .disabled(searchName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("It appears first among the filters, one tap away.")
@@ -366,6 +367,9 @@ private struct CellarSummary: View {
                             }
                         }
                         .accessibilityHint(Text("Applies this saved search."))
+                        .accessibilityAction(named: Text("Delete Search")) {
+                            model.update { $0.deleteSearch(search.id) }
+                        }
                     }
                     if !saved.isEmpty { Divider().frame(height: 24) }
                     ForEach(WineColor.allCases, id: \.self) { color in

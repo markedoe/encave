@@ -589,7 +589,7 @@ object SyncExchange {
         val result = SyncSnapshot(merge.cellar, local.state.copy(stamps = merge.stamps, clock = clock), membership)
 
         // Photos: each side asks for the ones it is missing (valid IDs only).
-        val known = merge.cellar.wines.values.mapNotNull { it.photoId }.toSet()
+        val known = merge.cellar.photoIds
         val wanted = known.filter { PhotoId.isValid(it) && photos.data(it) == null }.sorted()
         val request = swap(channel, isInitiator, WireMessage("photos-want", photos = wanted), "photos-want")
         // Only photos of the merged cellar are sent, whatever is asked.

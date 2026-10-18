@@ -77,7 +77,7 @@ class SyncManager(
     )
 
     enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen }
-    enum class RemoteProblem { Refused, Full, Unreachable, RemovalPending, Unreadable }
+    enum class RemoteProblem { Refused, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
 
     val storage = SyncStorage(context)
     internal val appContext: Context get() = context
@@ -647,6 +647,18 @@ class SyncManager(
             synchronized(this) { progress = result.progress }
             withContext(Dispatchers.IO) { storage.saveRemoteProgress(result.progress) }
             result.snapshot?.let { apply(it, null) }
+            // Raised when the content changed without the clock moving: keep it, so the next
+            // local change is newer than the snapshot just written.
+            val raised = synchronized(this) {
+                val state = syncState
+                if (state != null && java.lang.Long.compareUnsigned(result.clock, state.clock) > 0) {
+                    syncState = state.copy(clock = result.clock)
+                    true
+                } else {
+                    false
+                }
+            }
+            if (raised) save()
             status.update {
                 it.copy(lastRemoteSync = Instant.now(), remoteProblem = if (result.unreadable.isEmpty()) null else RemoteProblem.Unreadable)
             }
@@ -654,6 +666,7 @@ class SyncManager(
             val problem = when (error.error) {
                 RemoteSyncError.Unauthorized -> RemoteProblem.Refused
                 RemoteSyncError.QuotaExceeded -> RemoteProblem.Full
+                RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
             }
             status.update { it.copy(remoteProblem = problem) }

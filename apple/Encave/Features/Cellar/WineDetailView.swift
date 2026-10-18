@@ -202,6 +202,7 @@ struct WineDetailView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: wineID) }
+                        Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wineID) }
                         Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
                         Divider()
                         Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(wineID) }
@@ -290,16 +291,32 @@ struct WineDetailView: View {
 private struct WineHeader: View {
     let wine: Wine
     let count: Int
+    @Environment(CellarModel.self) private var model
+    @AppStorage(StudioPhoto.settingKey) private var studio = true
+    @State private var asTaken = false
 
     var body: some View {
         VStack(spacing: 12) {
-            if PhotoStore.exists(wine.photoID) {
-                WinePhoto(photoID: wine.photoID)
-                    .frame(maxWidth: 360)
-                    .frame(height: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .padding(.top, 4)
-                    .accessibilityHidden(true)
+            if wine.hasShownPhoto {
+                Group {
+                    if asTaken, let photoID = wine.photoID {
+                        WinePhoto(photoID: photoID)
+                    } else {
+                        WineImage(wine: wine, inset: 18)
+                    }
+                }
+                .frame(maxWidth: 360)
+                .frame(height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .padding(.top, 4)
+                .accessibilityHidden(true)
+                .contextMenu {
+                    Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wine.id) }
+                    if studio, wine.coverPhotoID == nil, PhotoStore.exists(wine.photoID) {
+                        Button(asTaken ? LocalizedStringKey("Show Studio Look") : LocalizedStringKey("Show Photo as Taken"),
+                               systemImage: asTaken ? "wand.and.stars" : "photo") { asTaken.toggle() }
+                    }
+                }
             } else {
                 BottleEnd(color: wine.color, size: 72)
                     .padding(.top, 8)

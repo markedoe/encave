@@ -261,7 +261,8 @@
     <string name="settings_erase_body">This removes every bottle, rack and tasting from this device.</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_stored">Your cellar is stored only on this device.</string>
-    <string name="settings_privacy_body">Encave has no network access, no account and no analytics. Sync between your devices and with the people you share a cellar with will be end-to-end encrypted.</string>
+    <string name="settings_privacy_body">No account, no tracking, no advertising. Devices sync directly on your network, encrypted from end to end; no server ever sees your cellar.</string>
+    <string name="settings_privacy_stored_devices">Your cellar is stored only on your devices.</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Source code</string>
@@ -443,7 +444,7 @@
     <string name="help_field_appellation">The protected name of origin, such as Pauillac or Chablis.</string>
     <string name="help_field_region">The wine region, such as Bordeaux or Tuscany.</string>
     <string name="help_field_grapes">Grape varieties, separated by commas.</string>
-    <string name="help_origin_footer">Optional. Makes search and food pairing better. Separate grapes with commas.</string>
+    <string name="help_origin_footer">Optional. Makes search and food pairing better.</string>
     <string name="help_window_footer">The years when the wine is at its best, from the producer or a guide. Used by Tonight to suggest what to open.</string>
     <string name="help_notes_footer">About the wine itself. Notes on a bottle you opened go in its tasting.</string>
     <string name="help_field_rating">From one star (disappointing) to five (exceptional). Tap the same star again to clear it.</string>
@@ -631,6 +632,7 @@
     <string name="remote_how_to">How to run a relay</string>
     <string name="remote_problem_refused">The relay refused this device. Check the relay address.</string>
     <string name="remote_problem_full">The relay is full. Remove old photos or use another relay.</string>
+    <string name="remote_problem_too_large">The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.</string>
     <string name="remote_problem_unreachable">The storage cannot be reached. Syncing will resume when it can.</string>
     <string name="remote_problem_unreadable">Changes from another device could not be read. Update Encave on all your devices.</string>
     <string name="remote_problem_removal">The removed device could not be shut out of syncing away from home yet. It will be tried again.</string>
@@ -726,6 +728,8 @@
     <string name="help_tonight_why">Under the gauge, each wine says where its window comes from: estimated from the style and the vintage, or entered by you. **Drink sooner** and **Keep longer** move its end by a year.</string>
     <string name="insights_drink_down">Drink-down plan</string>
     <string name="insights_pace">About %1$s bottles a month</string>
+    <string name="insights_pace_one">About one bottle a month</string>
+    <string name="insights_pace_less">Less than one bottle a month</string>
     <string name="insights_pace_detail">to open every bottle before the end of its drinking window.</string>
     <string name="insights_past_peak">Past their peak: %1$d</string>
     <string name="insights_windows_ending">Windows ending each year</string>
@@ -891,6 +895,20 @@
     <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
     <string name="help_web_sent_title">What is sent</string>
     <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.</string>
+    <string name="action_save_search">Save this search…</string>
+    <string name="save_search_title">Save this search</string>
+    <string name="save_search_body">It appears first among the filters, one tap away.</string>
+    <string name="action_delete_search">Delete search</string>
+    <string name="saved_search_hint">Applies this saved search.</string>
+    <string name="help_start_saved_title">Saved searches</string>
+    <string name="help_start_saved">Search or choose filters, then **Save this search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.</string>
+    <string name="more_photos">More photos</string>
+    <string name="more_photos_footer">The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.</string>
+    <string name="action_add_photo">Add a photo</string>
+    <string name="action_remove_photo">Remove photo</string>
+    <string name="photo_adding">Adding…</string>
+    <string name="photo_item">Photo %1$d of %2$d</string>
+    <string name="photo_show_large">Show large</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>

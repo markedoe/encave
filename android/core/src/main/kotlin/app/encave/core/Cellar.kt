@@ -57,6 +57,9 @@ class Cellar(
     val bottlesInCellar: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.InCellar }
 
     /** Bottles bought but not delivered yet. */
+    /** Every photo the cellar refers to: each wine's label photo and its other photos. */
+    val photoIds: Set<String> get() = wineMap.values.flatMap { it.allPhotoIds }.toSet()
+
     val bottlesOnOrder: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.Ordered }
 
     /** Wines with bottles on order, the soonest expected first (unknown dates last). */
@@ -300,6 +303,18 @@ class Cellar(
             }
         }
         return count
+    }
+
+    /** Saves a search under a name, replacing one with the same name (ignoring case). */
+    fun saveSearch(name: String, filter: CellarFilter) {
+        val search = SavedSearch.of(name, filter)
+        if (search.name.isEmpty()) return
+        val list = settings.savedSearches.orEmpty().filterNot { it.name.equals(search.name, ignoreCase = true) } + search
+        settings = settings.copy(savedSearches = list)
+    }
+
+    fun deleteSearch(id: UUID) {
+        settings = settings.copy(savedSearches = settings.savedSearches.orEmpty().filter { it.id != id }.ifEmpty { null })
     }
 
     /** Reserves bottles in the cellar for an occasion, or frees them (null or blank). */

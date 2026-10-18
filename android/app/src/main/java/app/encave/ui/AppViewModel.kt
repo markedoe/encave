@@ -225,6 +225,10 @@ class AppViewModel(
         }) { it.reserve(before.map(Bottle::id), occasion) }
     }
 
+    fun saveSearch(name: String, filter: CellarFilter) = change<Unit> { it.saveSearch(name, filter) }
+
+    fun deleteSearch(id: UUID) = change<Unit> { it.deleteSearch(id) }
+
     // region Several wines or bottles at once (one Undo for all)
 
     private fun bottlesOfWines(wineIds: Set<UUID>) = cellar.value.bottles.values.filter { it.wineId in wineIds }
@@ -301,7 +305,7 @@ class AppViewModel(
 
     /** Photos are named after their content, so two wines may share one: delete only if no wine uses it. */
     private fun deleteUnusedPhoto(id: String?) {
-        if (id != null && repository.cellar.value.wines.values.none { it.photoId == id }) photos.delete(id)
+        if (id != null && id !in repository.cellar.value.photoIds) photos.delete(id)
     }
 
     /** [photo] replaces the wine's photo when set; [removePhoto] clears it. */
@@ -324,6 +328,31 @@ class AppViewModel(
                     post(errorText(it))
                 }
         }
+    }
+
+    /** Adds a photo (back label, receipt…) to a wine, resized on the device. */
+    fun addExtraPhoto(wineId: UUID, uri: Uri, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            val id = withContext(Dispatchers.IO) { photos.prepare(uri)?.let { photos.save(it) } }
+            if (id == null) {
+                post(UiText.Res(R.string.err_generic))
+                onDone()
+                return@launch
+            }
+            repository.update { cellar ->
+                val wine = cellar.wines[wineId] ?: return@update
+                cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty() + id))
+            }.onFailure {
+                deleteUnusedPhoto(id)
+                post(errorText(it))
+            }
+            onDone()
+        }
+    }
+
+    fun removeExtraPhoto(wineId: UUID, id: String) = change<Unit>({ deleteUnusedPhoto(id) }) { cellar ->
+        val wine = cellar.wines[wineId] ?: return@change
+        cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty().filter { it != id }.ifEmpty { null }))
     }
 
     fun deleteWine(wineId: UUID) {

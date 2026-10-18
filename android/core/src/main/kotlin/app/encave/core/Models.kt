@@ -57,7 +57,20 @@ data class Wine(
     @Serializable(with = DecimalSerializer::class) val currentPrice: BigDecimal? = null,
     val currentPriceCurrency: String? = null,
     @Serializable(with = InstantSerializer::class) val currentPriceDate: Instant? = null,
+    /** More photos (back label, receipt…), synced like the label photo; null rather than empty. */
+    @SerialName("extraPhotoIDs") val extraPhotoIds: List<String>? = null,
+    /**
+     * The picture shown instead of the label photo (found on the internet or an
+     * illustration made on an Apple device); null shows the label photo. Synced.
+     */
+    @SerialName("coverPhotoID") val coverPhotoId: String? = null,
 ) {
+    /** The label photo, then the others, then the cover. */
+    val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty() + listOfNotNull(coverPhotoId)
+
+    /** The picture to show: the cover if any, else the label photo. */
+    val shownPhotoId: String? get() = coverPhotoId ?: photoId
+
     /** "Château X 2015" or "Château X" for non-vintage wines. */
     val displayName: String get() = if (vintage != null) "$name $vintage" else name
 
@@ -81,7 +94,9 @@ data class Wine(
     fun normalized(): Wine {
         val cleanTags = normalizedTags(tags)
         val cleanBarcodes = barcodes?.ifEmpty { null }
-        return if (cleanTags == tags && cleanBarcodes == barcodes) this else copy(tags = cleanTags, barcodes = cleanBarcodes)
+        val cleanExtras = extraPhotoIds?.ifEmpty { null }
+        return if (cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds) this
+        else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras)
     }
 
     /** Where the window comes from, to explain it. */
@@ -374,4 +389,31 @@ data class Bottle(
 data class CellarSettings(
     /** ISO 4217 code used by default for prices ("EUR", "CHF"...). */
     val currency: String = "EUR",
+    /** Searches the user named, shown as chips in the Cellar. Null when there are none. */
+    val savedSearches: List<SavedSearch>? = null,
 )
+
+/** A search and filters kept under a name ("Burgundy, ready"). */
+@Serializable
+data class SavedSearch(
+    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    val name: String,
+    val query: String,
+    val colors: List<WineColor>,
+    val maturities: List<Maturity>,
+    @SerialName("rackID") @Serializable(with = UuidSerializer::class) val rackId: UUID? = null,
+    val tag: String? = null,
+    val reservation: String? = null,
+) {
+    val filter: CellarFilter
+        get() = CellarFilter(query, colors.toSet(), maturities.toSet(), rackId, tag, reservation)
+
+    companion object {
+        /** Trimmed; colors and maturities sorted by their string value, so the same filters always encode the same way. */
+        fun of(name: String, filter: CellarFilter, id: UUID = UUID.randomUUID()) = SavedSearch(
+            id = id, name = name.trim(), query = filter.query.trim(),
+            colors = filter.colors.sortedBy { it.raw }, maturities = filter.maturities.sortedBy { it.raw },
+            rackId = filter.rackId, tag = filter.tag, reservation = filter.reservation,
+        )
+    }
+}

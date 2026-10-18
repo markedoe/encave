@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.core.CellarStatistics
 import app.encave.core.Maturity
 import app.encave.core.statistics
@@ -106,11 +107,16 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             return@Scaffold
         }
         Column(
-            Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(Dimens.l),
+            Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth(900.dp).padding(Dimens.l),
             verticalArrangement = Arrangement.spacedBy(Dimens.l),
         ) {
             YearInWineCard(cellar)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+            // Two tiles a row on phones, four on wider screens, filling the width.
+            val wide = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(Dimens.m),
+                maxItemsInEachRow = if (wide) 4 else 2,
+            ) {
                 StatTile(stringResource(R.string.insights_bottles), stats.bottleCount.toString())
                 StatTile(stringResource(R.string.insights_wines), stats.wineCount.toString())
                 StatTile(stringResource(R.string.insights_opened), stats.consumedCount.toString())
@@ -167,9 +173,9 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 }
 
 @Composable
-private fun StatTile(label: String, value: String) {
+private fun androidx.compose.foundation.layout.FlowRowScope.StatTile(label: String, value: String) {
     Card(
-        Modifier.widthIn(min = 140.dp).semantics(mergeDescendants = true) {},
+        Modifier.weight(1f).semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(Dimens.radiusCard),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
@@ -310,9 +316,19 @@ private fun DrinkDownCard(cellar: Cellar, year: Int) {
     val plan = remember(cellar, year) { cellar.drinkDownPlan(year, month) }
     if (plan.isEmpty) return
     ChartCard(stringResource(R.string.insights_drink_down)) {
-        val pace = Formats.decimal(plan.bottlesPerMonth, if (plan.bottlesPerMonth < 10) 1 else 0)
+        // "1.4", "3", "12": one decimal only for small paces that are not whole.
+        val rounded = Math.round(plan.bottlesPerMonth * 10) / 10.0
+        val whole = rounded == Math.rint(rounded)
+        val pace = Formats.decimal(rounded, if (rounded < 10 && !whole) 1 else 0)
         Column(Modifier.semantics(mergeDescendants = true) {}.testTag("insights.drinkdown")) {
-            Text(stringResource(R.string.insights_pace, pace), style = MaterialTheme.typography.titleLarge)
+            Text(
+                when {
+                    rounded < 0.75 -> stringResource(R.string.insights_pace_less)
+                    rounded <= 1 -> stringResource(R.string.insights_pace_one)
+                    else -> stringResource(R.string.insights_pace, pace)
+                },
+                style = MaterialTheme.typography.titleLarge,
+            )
             Text(
                 stringResource(R.string.insights_pace_detail),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,

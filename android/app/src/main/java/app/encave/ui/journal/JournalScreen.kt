@@ -62,6 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
+import app.encave.ui.components.readableWidth
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
@@ -259,7 +260,7 @@ fun TastingScreen(viewModel: AppViewModel, navigator: AppNavigator, bottleId: St
             return@Scaffold
         }
         Column(
-            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(Dimens.l),
+            Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth().padding(Dimens.l),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
             if (wine != null) {

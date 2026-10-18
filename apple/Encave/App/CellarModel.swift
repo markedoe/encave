@@ -72,7 +72,7 @@ final class CellarModel {
         }
         if let store = try? JSONFileCellarStore.defaultStore() {
             let model = CellarModel(store: store, demo: false)
-            // Photos of deleted wines are kept until the next launch so deleting can be undone.
+            // Photo files no wine refers to are removed after a grace period (PhotoStore).
             if model.errorMessage == nil {
                 PhotoStore.removeOrphans(keeping: model.cellar.photoIDs)
             }
@@ -97,6 +97,7 @@ final class CellarModel {
             try store.save(copy)
             let old = cellar
             cellar = copy
+            if !undoing { dropStaleUndo() }
             onLocalChange?(old, copy)
             return true
         } catch let error as CellarError {
@@ -113,6 +114,7 @@ final class CellarModel {
         do {
             try store.save(synced)
             cellar = synced
+            dropStaleUndo()
         } catch {
             errorMessage = String(localized: "The change could not be saved.")
         }
@@ -284,16 +286,54 @@ final class CellarModel {
         }
     }
 
+    /// The AI answered after the wine was saved: fills the fields still as they were
+    /// at saving (the user may have edited others since), with Undo.
+    func completeWine(_ id: UUID, from before: Wine, to after: Wine) {
+        guard let live = cellar.wines[id] else { return }
+        var updated = live
+        func take<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
+            if live[keyPath: field] == before[keyPath: field] { updated[keyPath: field] = after[keyPath: field] }
+        }
+        take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
+        take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
+        guard updated != live, update({ try $0.updateWine(updated) }) else { return }
+        let completed = updated
+        showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
+            self?.update { cellar in
+                guard var wine = cellar.wines[id] else { return }
+                func restore<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
+                    if wine[keyPath: field] == completed[keyPath: field] { wine[keyPath: field] = live[keyPath: field] }
+                }
+                restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
+                restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
+                try cellar.updateWine(wine)
+            }
+        }
+    }
+
     func showToast(_ message: String, undo: (@MainActor () -> Void)? = nil) {
         var toast = Toast(message: message)
         if let undo {
             let id = toast.id
             toast.undo = ToastUndo { [weak self] in
+                self?.undoing = true
                 undo()
+                self?.undoing = false
                 if self?.toast?.id == id { self?.toast = nil }
             }
         }
         self.toast = toast
+    }
+
+    /// True while a banner's Undo runs, so its own change does not cancel it.
+    @ObservationIgnored private var undoing = false
+
+    /// Some undos put back a whole earlier cellar: once anything else has changed
+    /// (here or by sync), the banner and its Undo go away so nothing newer is lost.
+    private func dropStaleUndo() {
+        guard let undo = toast?.undo else { return }
+        undo.cancel()
+        toast = nil
     }
 }
 
@@ -309,6 +349,8 @@ enum AppSheet: Identifiable {
     case editTasting(bottleID: UUID)
     case editRack(rackID: UUID?)
     case moveBottle(bottleID: UUID)
+    /// Choose the picture shown for a wine.
+    case wineImage(wineID: UUID)
     /// Remember a wine found elsewhere (nil: a new one).
     case discovery(discoveryID: UUID?)
     case settings
@@ -321,6 +363,7 @@ enum AppSheet: Identifiable {
         case .editTasting(let id): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"
+        case .wineImage(let id): "image-\(id)"
         case .discovery(let id): "discovery-\(id?.uuidString ?? "new")"
         case .settings: "settings"
         }
@@ -356,6 +399,10 @@ final class ToastUndo: NSObject {
         let action = self.action
         self.action = nil
         action?()
+    }
+
+    func cancel() {
+        action = nil
     }
 }
 
