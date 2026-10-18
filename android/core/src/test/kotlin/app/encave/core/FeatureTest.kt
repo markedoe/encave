@@ -194,6 +194,14 @@ class PairingTest {
     }
 
     @Test
+    fun reservedBottlesAreNotSuggested() {
+        val cellar = SampleData.cellar(year = 2026)
+        val best = cellar.pairings(DishCategory.Fish, 2026).first()
+        cellar.reserve(best.group.bottles.map { it.id }, "Wedding")
+        assertTrue(cellar.pairings(DishCategory.Fish, 2026).none { it.group.wine.id == best.group.wine.id })
+    }
+
+    @Test
     fun scoresAreBoundedAndSorted() {
         val cellar = SampleData.cellar(year = 2026)
         for (dish in DishCategory.entries) {

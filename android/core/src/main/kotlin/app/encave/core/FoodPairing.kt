@@ -90,11 +90,14 @@ data class PairingRule(val colors: Map<WineColor, Int>, val grapes: List<String>
     }
 }
 
-/** Bottles in the cellar that go well with a dish, best first. */
+/** Bottles in the cellar that go well with a dish, best first. Bottles reserved for an occasion are left out, as in Tonight. */
 fun Cellar.pairings(dish: DishCategory, year: Int, limit: Int = 10): List<PairingSuggestion> {
     val rule = PairingRule.forDish(dish)
     val collator = Cellar.collator()
-    return groups().mapNotNull { group ->
+    return groups().mapNotNull { all ->
+        val free = all.bottles.filter { it.reservedFor == null }
+        if (free.isEmpty()) return@mapNotNull null
+        val group = WineGroup(all.wine, free)
         val wine = group.wine
         var score = 0
         val reasons = mutableListOf<PairingReason>()

@@ -1,12 +1,14 @@
 package app.encave.core.search
 
 import app.encave.core.Wine
+import app.encave.core.sync.LocalAddress
 import java.net.URI
 import java.net.URLEncoder
 import java.text.Normalizer
 import java.util.Locale
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /*
  * Optional web search to complete a wine's details and find its current price, the Kotlin
@@ -213,9 +215,9 @@ class SearXNGSearch(serverUrl: String) : WebSearchProvider, WebImageSearchProvid
         base = base.trimEnd('/')
         if (base.lowercase(Locale.ROOT).endsWith("/search")) base = base.dropLast("/search".length)
         base = base.trimEnd('/')
-        val uri = runCatching { URI(base) }.getOrNull()
-        val scheme = uri?.scheme?.lowercase(Locale.ROOT)
-        if ((scheme != "http" && scheme != "https") || uri.host.isNullOrEmpty()) throw WebSearchError.InvalidServerUrl
+        val url = base.toHttpUrlOrNull()
+        // Plain HTTP only on the local network: elsewhere anyone on the way would read the search terms.
+        if (url == null || url.host.isEmpty() || (!url.isHttps && !LocalAddress.isLocal(url.host))) throw WebSearchError.InvalidServerUrl
         base
     }
 
