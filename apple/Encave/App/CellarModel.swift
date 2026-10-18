@@ -28,16 +28,48 @@ final class CellarModel {
     /// Told about every local change (old and new cellar), to record it for sync.
     @ObservationIgnored var onLocalChange: ((Cellar, Cellar) -> Void)?
 
+    /// The cellar file could not be read at launch: where it was kept (see `unreadableFiles`).
+    @ObservationIgnored private(set) var unreadableFile: URL?
+
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     init(store: any CellarStore, demo: Bool = true) {
-        self.store = store
+        var store = store
+        var demo = demo
         do {
-            cellar = try store.load()
+            if let file = store as? JSONFileCellarStore {
+                // A file that cannot be read is moved aside first, so it is never saved over.
+                let result = try file.loadSettingAsideUnreadable()
+                cellar = result.cellar
+                unreadableFile = result.setAside
+            } else {
+                cellar = try store.load()
+            }
         } catch {
+            // Not even moved aside: nothing is saved, and sync stays off, until the next launch.
             cellar = Cellar()
-            errorMessage = String(localized: "Your cellar could not be loaded.")
+            store = InMemoryCellarStore()
+            demo = true
+            errorMessage = String(localized: "Your cellar could not be loaded. Nothing is saved until Encave is opened again.")
+        }
+        self.store = store
+        if let fileName = unreadableFile?.lastPathComponent {
+            errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
         }
         sync = SyncService(model: self, demo: demo)
+    }
+
+    /// Cellar files set aside because they could not be read, to share or delete in Settings.
+    var unreadableFiles: [URL] {
+        _ = unreadableFilesVersion
+        return (store as? JSONFileCellarStore)?.unreadableFiles() ?? []
+    }
+
+    private var unreadableFilesVersion = 0
+
+    func deleteUnreadableFile(_ url: URL) {
+        guard unreadableFiles.contains(url) else { return }
+        try? FileManager.default.removeItem(at: url)
+        unreadableFilesVersion += 1
     }
 
     /// The app's model, for Siri and Shortcuts (App Intents) while the app runs.
@@ -72,8 +104,9 @@ final class CellarModel {
         }
         if let store = try? JSONFileCellarStore.defaultStore() {
             let model = CellarModel(store: store, demo: false)
-            // Photo files no wine refers to are removed after a grace period (PhotoStore).
-            if model.errorMessage == nil {
+            // Photo files no wine refers to are removed after a grace period (PhotoStore);
+            // not while a cellar file that could not be read is kept, as its photos may be needed.
+            if model.errorMessage == nil, store.unreadableFiles().isEmpty {
                 PhotoStore.removeOrphans(keeping: model.cellar.photoIDs)
             }
             return model
@@ -85,7 +118,7 @@ final class CellarModel {
         CellarModel(store: InMemoryCellarStore(SampleData.cellar(labels: .localized)))
     }
 
-    var currentYear: Int { Calendar.current.component(.year, from: .now) }
+    var currentYear: Int { CellarYear.current }
 
     /// Applies a change and saves it. On failure nothing changes and the error is shown.
     @discardableResult
@@ -267,20 +300,44 @@ final class CellarModel {
         if update({ try $0.swap(a, b) }) { successCount += 1 }
     }
 
+    /// Windows in the foreground: sync pauses only when the last one goes to the background.
+    @ObservationIgnored private var activeScenes = 0
+
+    func sceneDidBecomeActive() {
+        activeScenes += 1
+    }
+
+    func sceneDidEnterBackground() {
+        activeScenes = max(0, activeScenes - 1)
+        if activeScenes == 0 { sync.pause() }
+    }
+
     func showInRack(_ bottle: Bottle) {
         guard let slot = bottle.slot else { return }
         highlightedSlot = slot
         selectedTab = .racks
     }
 
+    /// The sample cellar replaces everything, so it is offered only for an empty cellar
+    /// that no other device syncs with.
+    var canLoadSample: Bool { cellar.isEmpty && sync.otherDevices.isEmpty }
+
     func loadSample() {
-        update { $0 = SampleData.cellar(labels: .localized) }
-        showToast(String(localized: "Sample cellar loaded"))
+        guard canLoadSample else { return }
+        let snapshot = cellar
+        var sample = SampleData.cellar(labels: .localized)
+        sample.settings = snapshot.settings
+        guard update({ $0 = sample }) else { return }
+        showToast(String(localized: "Sample cellar loaded")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
     }
 
+    /// Erases the cellar but keeps the settings (currency, saved searches). Synced
+    /// like any change: the other devices of the cellar erase it too.
     func eraseAll() {
         let snapshot = cellar
-        update { $0 = Cellar(settings: snapshot.settings) }
+        guard update({ $0 = Cellar(settings: snapshot.settings) }) else { return }
         showToast(String(localized: "All data erased")) { [weak self] in
             self?.update { $0 = snapshot }
         }

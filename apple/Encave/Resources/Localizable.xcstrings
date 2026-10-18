@@ -1751,6 +1751,16 @@
         }
       }
     },
+    "Cellar files that could not be read": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichiers de cave illisibles"
+          }
+        }
+      }
+    },
     "Cellar inventory": {
       "localizations": {
         "fr": {
@@ -2421,6 +2431,16 @@
         }
       }
     },
+    "Delete File": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le fichier"
+          }
+        }
+      }
+    },
     "Delete Rack": {
       "localizations": {
         "fr": {
@@ -2477,6 +2497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer cette découverte ?"
+          }
+        }
+      }
+    },
+    "Delete this file?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer ce fichier ?"
           }
         }
       }
@@ -3251,6 +3281,16 @@
         }
       }
     },
+    "Example wines, racks and tastings to try Encave. Erase them later with Erase all data.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des vins, casiers et dégustations d’exemple pour essayer Encave. Effacez-les ensuite avec Effacer toutes les données."
+          }
+        }
+      }
+    },
     "Expected %@": {
       "localizations": {
         "fr": {
@@ -3981,16 +4021,6 @@
         }
       }
     },
-    "In **Settings**, load the sample cellar to explore every screen, then erase it when you are ready to add your own bottles.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dans les **Réglages**, chargez la cave d’exemple pour découvrir chaque écran, puis effacez-la quand vous êtes prêt à ajouter vos bouteilles."
-          }
-        }
-      }
-    },
     "In LM Studio, load a vision model and start the server; turn on “Serve on Local Network” to use it from iPhone or iPad.": {
       "localizations": {
         "fr": {
@@ -4311,6 +4341,16 @@
         }
       }
     },
+    "Kept when Encave could not read your cellar at launch. Share one to keep it elsewhere or to report the problem; delete it when you no longer need it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservés quand Encave n’a pas pu lire votre cave au lancement. Partagez-en un pour le garder ailleurs ou signaler le problème ; supprimez-le quand vous n’en avez plus besoin."
+          }
+        }
+      }
+    },
     "Kept with the wine and used for the estimated value of your cellar in Insights. Web prices vary: check them on the sites.": {
       "localizations": {
         "fr": {
@@ -4557,6 +4597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Charger une cave d’exemple"
+          }
+        }
+      }
+    },
+    "Load the sample cellar?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charger la cave d’exemple ?"
           }
         }
       }
@@ -4987,6 +5037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sans emplacement"
+          }
+        }
+      }
+    },
+    "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun autre appareil ne s’est encore synchronisé via iCloud. Vos appareils doivent être connectés au même compte Apple, avec la synchronisation loin de la maison activée."
           }
         }
       }
@@ -7281,6 +7341,16 @@
         }
       }
     },
+    "Share %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager %@"
+          }
+        }
+      }
+    },
     "Shares this summary as an image. You choose where.": {
       "localizations": {
         "fr": {
@@ -8331,6 +8401,16 @@
         }
       }
     },
+    "The cellar it holds cannot be recovered afterwards.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave qu’il contient ne pourra plus être récupérée."
+          }
+        }
+      }
+    },
     "The cellar stays on this device as it is. Other devices keep syncing together.": {
       "localizations": {
         "fr": {
@@ -8631,6 +8711,16 @@
         }
       }
     },
+    "The sample cellar is offered while your cellar is empty and no other device syncs with this one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave d’exemple est proposée tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec celui-ci."
+          }
+        }
+      }
+    },
     "The search engine that looks up a wine on the web when you tap Search Online.": {
       "localizations": {
         "fr": {
@@ -8891,6 +8981,16 @@
         }
       }
     },
+    "This device is no longer part of the synced cellar: its key changed, for example after restoring a backup. The cellar stays here. Join the cellar again from another device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil ne fait plus partie de la cave synchronisée : sa clé a changé, par exemple après la restauration d’une sauvegarde. La cave reste ici. Rejoignez de nouveau la cave depuis un autre appareil."
+          }
+        }
+      }
+    },
     "This device only": {
       "localizations": {
         "fr": {
@@ -8927,6 +9027,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles de cet appareil"
+          }
+        }
+      }
+    },
+    "This device’s key could not be read from the Keychain, so sync is paused. Open Encave again once the device is unlocked.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clé de cet appareil n’a pas pu être lue dans le trousseau, la synchronisation est donc suspendue. Rouvrez Encave une fois l’appareil déverrouillé."
+          }
+        }
+      }
+    },
+    "This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes sur cet appareil et sur les autres appareils synchronisés avec lui. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
+    "This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
           }
         }
       }
@@ -8987,16 +9117,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette question ne peut pas recevoir de réponse. Essayez avec un plat ou une occasion."
-          }
-        }
-      }
-    },
-    "This removes every bottle, rack and tasting from this device.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil."
           }
         }
       }
@@ -9721,6 +9841,16 @@
         }
       }
     },
+    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings**) fills it with example wines to explore every screen. **Erase all data** in Settings removes them when you are ready to add your own bottles; in a cellar shared with other devices, it erases it on them too.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec elle, **Charger une cave d’exemple** (sur l’écran Cave vide ou dans les **Réglages**) la remplit de vins d’exemple pour découvrir chaque écran. **Effacer toutes les données** dans les Réglages les supprime quand vous êtes prêt à ajouter vos bouteilles ; dans une cave partagée avec d’autres appareils, elle est aussi effacée sur ceux-ci."
+          }
+        }
+      }
+    },
     "White": {
       "localizations": {
         "fr": {
@@ -9941,12 +10071,22 @@
         }
       }
     },
-    "Your cellar could not be loaded.": {
+    "Your cellar could not be loaded. Nothing is saved until Encave is opened again.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible de charger votre cave."
+            "value": "Impossible de charger votre cave. Rien n’est enregistré avant la prochaine ouverture d’Encave."
+          }
+        }
+      }
+    },
+    "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Vos données."
           }
         }
       }
@@ -10101,12 +10241,12 @@
         }
       }
     },
-    "Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.": {
+    "Your other devices that do not sync away from home yet receive this setting the next time they sync on the same Wi-Fi. Turning it off, or choosing another storage, applies to this device only: do the same on the others.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi."
+            "value": "Vos autres appareils qui ne se synchronisent pas encore à distance recevront ce réglage à leur prochaine synchronisation sur le même Wi-Fi. La désactiver, ou choisir un autre stockage, ne concerne que cet appareil : faites de même sur les autres."
           }
         }
       }

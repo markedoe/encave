@@ -6,6 +6,8 @@ struct SettingsView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingErase = false
+    @State private var confirmingSample = false
+    @State private var deletingUnreadable: URL?
     @State private var exportDocument: ExportDocument?
     @State private var importing = false
     @State private var importMessage: String?
@@ -143,6 +145,29 @@ struct SettingsView: View {
                 Text("A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
             }
 
+            let unreadable = model.unreadableFiles
+            if !unreadable.isEmpty {
+                Section {
+                    ForEach(unreadable, id: \.self) { url in
+                        let fileName = url.lastPathComponent
+                        ShareLink(item: url) {
+                            Label("Share \(fileName)", systemImage: "square.and.arrow.up")
+                        }
+                        .contextMenu {
+                            Button("Delete File", systemImage: "trash", role: .destructive) { deletingUnreadable = url }
+                        }
+                        .swipeActions {
+                            Button("Delete", role: .destructive) { deletingUnreadable = url }
+                        }
+                        .accessibilityAction(named: Text("Delete File")) { deletingUnreadable = url }
+                    }
+                } header: {
+                    Text("Cellar files that could not be read")
+                } footer: {
+                    Text("Kept when Encave could not read your cellar at launch. Share one to keep it elsewhere or to report the problem; delete it when you no longer need it.")
+                }
+            }
+
             AISettingsSection()
 
             WebSearchSettingsSection()
@@ -159,9 +184,18 @@ struct SettingsView: View {
                 Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
             }
 
-            Section("Test data") {
-                Button("Load sample cellar") { model.loadSample() }
+            Section {
+                if model.canLoadSample {
+                    Button("Load sample cellar") { confirmingSample = true }
+                }
                 Button("Erase all data", role: .destructive) { confirmingErase = true }
+                    .disabled(model.cellar.isEmpty)
+            } header: {
+                Text("Test data")
+            } footer: {
+                if model.canLoadSample {
+                    Text("The sample cellar is offered while your cellar is empty and no other device syncs with this one.")
+                }
             }
 
             Section("About") {
@@ -184,7 +218,27 @@ struct SettingsView: View {
         .confirmationDialog("Erase all data?", isPresented: $confirmingErase, titleVisibility: .visible) {
             Button("Erase all data", role: .destructive) { model.eraseAll() }
         } message: {
-            Text("This removes every bottle, rack and tasting from this device.")
+            if model.sync.otherDevices.isEmpty {
+                Text("This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+            } else {
+                Text("This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+            }
+        }
+        .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
+            Button("Load sample cellar") { model.loadSample() }
+        } message: {
+            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
+        }
+        .confirmationDialog(
+            "Delete this file?",
+            isPresented: Binding(get: { deletingUnreadable != nil }, set: { if !$0 { deletingUnreadable = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Delete File", role: .destructive) {
+                if let deletingUnreadable { model.deleteUnreadableFile(deletingUnreadable) }
+            }
+        } message: {
+            Text("The cellar it holds cannot be recovered afterwards.")
         }
         .fileExporter(
             isPresented: Binding(get: { exportDocument != nil }, set: { if !$0 { exportDocument = nil } }),

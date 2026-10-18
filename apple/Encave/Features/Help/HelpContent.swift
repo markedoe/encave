@@ -33,7 +33,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Journal", body: "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.", systemImage: "book.closed"),
                 HelpSection(title: "List or table", body: "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.", systemImage: "tablecells"),
                 HelpSection(title: "Saved searches", body: "Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.", systemImage: "bookmark"),
-                HelpSection(title: "Try it", body: "In **Settings**, load the sample cellar to explore every screen, then erase it when you are ready to add your own bottles."),
+                HelpSection(title: "Try it", body: "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings**) fills it with example wines to explore every screen. **Erase all data** in Settings removes them when you are ready to add your own bottles; in a cellar shared with other devices, it erases it on them too."),
             ]),
             HelpArticle(topic: .adding, title: "Adding bottles",
                         summary: "A new wine, or more bottles of one you already have.", systemImage: "plus.circle", sections: [

@@ -90,7 +90,8 @@ targets:
         com.apple.security.network.client: true
         # Sync: other devices connect to this Mac on the local network.
         com.apple.security.network.server: true
-        com.apple.security.files.user-selected.read-only: true
+        # Read for imports, write for backups and exports saved where the user chooses.
+        com.apple.security.files.user-selected.read-write: true
     settings:
       base:
         ENABLE_HARDENED_RUNTIME: YES
