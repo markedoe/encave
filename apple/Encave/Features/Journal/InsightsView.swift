@@ -132,7 +132,7 @@ private struct DrinkDownCard: View {
     @Environment(CellarModel.self) private var model
 
     var body: some View {
-        let month = Calendar.current.component(.month, from: .now)
+        let month = CellarYear.calendar.component(.month, from: .now)
         let plan = model.cellar.drinkDownPlan(year: model.currentYear, month: month)
         if !plan.isEmpty {
             ChartCard(title: "Drink-down plan") {
@@ -255,9 +255,8 @@ private struct YearInWineCard: View {
 
     /// Years with tastings or discoveries, most recent first.
     private var availableYears: [Int] {
-        let calendar = Calendar.current
         let dates = model.cellar.consumedBottles.compactMap { $0.tasting?.date } + model.cellar.discoveries.values.map(\.date)
-        return Set(dates.map { calendar.component(.year, from: $0) }).sorted(by: >)
+        return Set(dates.map(CellarYear.of)).sorted(by: >)
     }
 
 }
@@ -289,7 +288,7 @@ private struct YearInWineFacts: View {
                     fact("person.2", Text("Favorite occasion: \(occasionName)"))
                 }
                 if let month = recap.busiestMonth {
-                    let monthName = Calendar.current.monthSymbols[month - 1]
+                    let monthName = CellarYear.calendar.standaloneMonthSymbols[month - 1]
                     fact("calendar", Text("Busiest month: \(monthName)"))
                 }
             }

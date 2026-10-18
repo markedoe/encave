@@ -51,7 +51,7 @@ enum Reminders {
         let calendar = Calendar.current
         guard let next = calendar.nextDate(after: .now, matching: DateComponents(day: 1, hour: 10, minute: 0),
                                            matchingPolicy: .nextTime) else { return }
-        let digest = cellar.drinkingDigest(year: calendar.component(.year, from: next))
+        let digest = cellar.drinkingDigest(year: CellarYear.of(next))
         guard !digest.isEmpty else { return }
 
         let content = UNMutableNotificationContent()

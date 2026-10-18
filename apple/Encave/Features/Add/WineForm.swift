@@ -87,7 +87,7 @@ struct WineFormSections: View {
     var onSearchOnline: (() -> Void)?
     private let webSearch = WebSearchSettings.load()
 
-    private let currentYear = Calendar.current.component(.year, from: .now)
+    private let currentYear = CellarYear.current
 
     var body: some View {
         Section {

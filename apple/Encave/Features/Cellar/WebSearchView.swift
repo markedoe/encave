@@ -190,7 +190,7 @@ struct WebSearchView: View {
         suggestionProblem = nil
         let terms = searchedTerms ?? trimmedQuery
         let results = results
-        let year = Calendar.current.component(.year, from: .now)
+        let year = CellarYear.current
         Task {
             defer { suggesting = false }
             do {
