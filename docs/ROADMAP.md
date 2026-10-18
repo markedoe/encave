@@ -185,6 +185,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Tags on wines, filter chips | Done | Done |
 | "Why this window", drink sooner or keep longer | Done | Done |
 | Ask your cellar (on-device language model) | Done (Apple Intelligence devices) | Later |
+| Shortcuts actions that return the cellar as text or JSON, for local AI assistants ([SHORTCUTS.md](SHORTCUTS.md)) | Done | Later |
 | Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
 | Sortable table with an inspector | Mac and iPad | Tablets |
@@ -193,6 +194,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Several photos per wine | Done | Planned |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Watch app | Later | Later (Wear OS tile) |
+| More places to sync through: Google Drive, Dropbox, pCloud, Proton Drive (depends on its API), a NAS over WebDAV (Synology, QNAP, Nextcloud). Each is a thin adapter of the same encrypted mailbox protocol | Later | Later |
 
 ### Ask your cellar (on the device)
 

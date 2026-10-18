@@ -15,6 +15,25 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Other apps and AI assistants': 'Autres apps et assistants IA',
+    'In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.': 'Dans Raccourcis, **Obtenir le contenu de la cave** donne vos bouteilles en texte ou en JSON (toutes, celles à ouvrir maintenant, en commande…), et **Obtenir la fiche d’un vin** donne un vin avec ses notes de dégustation. Une app de cet appareil qui lance des raccourcis, comme un assistant IA local, peut s’en servir pour répondre à vos questions sur votre cave. Encave n’envoie rien.',
+    'Bottles': 'Bouteilles',
+    'All Bottles': 'Toutes les bouteilles',
+    'To Open Now': 'À ouvrir maintenant',
+    'To Drink Soon': 'À boire bientôt',
+    'Ready to Drink': 'Prêtes à boire',
+    'Too Young': 'Trop jeunes',
+    'Past Their Peak': 'Après leur apogée',
+    'On Order': 'En commande',
+    'Kept for an Occasion': 'Gardées pour une occasion',
+    'Format': 'Format',
+    'Text, One Line per Wine': 'Texte, une ligne par vin',
+    'JSON': 'JSON',
+    'Get Cellar Contents': 'Obtenir le contenu de la cave',
+    'Returns the bottles of your cellar as text or JSON, for another app or an AI assistant on this device. Encave sends nothing.': 'Renvoie les bouteilles de votre cave en texte ou en JSON, pour une autre app ou un assistant IA sur cet appareil. Encave n’envoie rien.',
+    'Containing': 'Contenant',
+    'Get Wine Details': 'Obtenir la fiche d’un vin',
+    'Returns a wine of your cellar as text: its details, where its bottles are and your tasting notes.': 'Renvoie un vin de votre cave en texte : sa fiche, l’emplacement de ses bouteilles et vos notes de dégustation.',
     '⌘Z': '⌘Z',
     'Undo, while the banner with Undo shows': 'Annuler, tant que le bandeau Annuler est affiché',
     'Share': 'Partager',
@@ -1000,6 +1019,8 @@ def extract():
         keys.update(UI_CALL.findall(source))
         if "LocalizedStringKey" in source:
             keys.update(CASE_STRING.findall(source))
+        for block in re.findall(r"caseDisplayRepresentations: \[\w+: DisplayRepresentation\] = \[(.*?)\n    \]", source, re.S):
+            keys.update(re.findall(r'\.\w+: "((?:[^"\\]|\\.)*)"', block))
         for block in re.findall(r"\[LocalizedStringResource\] = \[(.*?)\]", source, re.S):
             keys.update(re.findall(r'"([^"]+)"', block))
         keys.update(re.findall(r'\("((?:[^"\\]|\\.)*)", \d+, \d+, \.(?:grid|diamond)\)', source))
