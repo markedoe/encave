@@ -91,9 +91,7 @@ compute the same result.
 2. Settings: same rule with the `settings` stamp, then `savedSearches` is
    replaced by the saved searches merged one by one like objects (rule 1 with
    their `search:` stamps), sorted by lowercased name, then lowercase ID; nil
-   when none are left. So searches saved on two devices are all kept. A
-   device from before this rule stamps only `settings`: its searches have no
-   stamps of their own and count as `Stamp.zero`.
+   when none are left. So searches saved on two devices are all kept.
 3. **Revival.** A bottle or discovery whose wine was deleted, but whose own
    stamp is greater than the wine's deletion stamp (it was added or changed
    after the deletion, on another device), brings the wine back: its content
