@@ -138,14 +138,43 @@ object AiService {
 
     private fun base64(jpeg: ByteArray) = Base64.encodeToString(jpeg, Base64.NO_WRAP)
 
+    /** Request options a Claude model takes, from Anthropic's model documentation. */
+    internal data class ClaudeOptions(val effort: Boolean, val fallbacks: Boolean)
+
+    /** Models (and their dated versions) that take `output_config.effort`. */
+    private val effortModels = listOf(
+        "claude-opus-4-5", "claude-opus-4-6", "claude-opus-4-7", "claude-opus-4-8", "claude-opus-5",
+        "claude-sonnet-4-6", "claude-sonnet-5", "claude-haiku-5", "claude-fable-5", "claude-mythos-5",
+    )
+
+    /** Models that re-run a declined request on another model (`fallbacks: "default"`). */
+    private val fallbackModels = listOf("claude-fable-5", "claude-mythos-5-1", "claude-opus-5", "claude-sonnet-5-5")
+
+    internal fun claudeOptions(model: String): ClaudeOptions {
+        val id = model.trim().lowercase(java.util.Locale.ROOT)
+        fun among(list: List<String>) = list.any { id == it || id.startsWith("$it-") }
+        return ClaudeOptions(effort = among(effortModels), fallbacks = among(fallbackModels))
+    }
+
     /** Claude (Anthropic Messages API). */
     private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String): LabelAnalysis {
+        val options = claudeOptions(model)
+        return try {
+            claude(jpeg, model, apiKey, baseUrl, options)
+        } catch (error: AiError.Server) {
+            // A model or service that does not take these options: once more without them.
+            if (error.status != 400 || options == ClaudeOptions(effort = false, fallbacks = false)) throw error
+            claude(jpeg, model, apiKey, baseUrl, ClaudeOptions(effort = false, fallbacks = false))
+        }
+    }
+
+    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String, options: ClaudeOptions): LabelAnalysis {
         val body = buildJsonObject {
             put("model", model)
             put("max_tokens", 8000)
-            put("fallbacks", "default")
+            if (options.fallbacks) put("fallbacks", "default")
             putJsonObject("output_config") {
-                put("effort", "low")
+                if (options.effort) put("effort", "low")
                 putJsonObject("format") {
                     put("type", "json_schema")
                     put("schema", LabelAnalysis.schema)
@@ -171,13 +200,13 @@ object AiService {
                 })
             }
         }
-        val headers = mapOf(
-            "x-api-key" to apiKey,
-            "anthropic-version" to "2023-06-01",
+        val headers = buildMap {
+            put("x-api-key", apiKey)
+            put("anthropic-version", "2023-06-01")
             // Re-runs a declined request on another model instead of returning a refusal.
-            "anthropic-beta" to "server-side-fallback-2026-07-01",
-            "content-type" to "application/json",
-        )
+            if (options.fallbacks) put("anthropic-beta", "server-side-fallback-2026-07-01")
+            put("content-type", "application/json")
+        }
         val response = send(URL("$baseUrl/messages"), headers, body, timeout = REQUEST_TIMEOUT)
         if (response["stop_reason"]?.jsonPrimitive?.contentOrNull == "refusal") throw AiError.Refused
         val text = (response["content"] as? JsonArray).orEmpty()
