@@ -311,7 +311,8 @@ enum KeySchedule {
 public struct PairingCode: Sendable, Equatable {
     public let digits: String
 
-    public init(digits: String) { self.digits = digits.filter(\.isNumber) }
+    /// Keeps ASCII digits only: other digits ("١٢٣", "①") are not the code another device advertises.
+    public init(digits: String) { self.digits = digits.filter { $0.isASCII && $0.isNumber } }
 
     public static func random() -> PairingCode {
         PairingCode(digits: String(format: "%06u", UInt32.random(in: 0..<1_000_000)))
@@ -636,9 +637,14 @@ public struct SyncSnapshot: Sendable {
 public struct PhotoAccess: Sendable {
     public var data: @Sendable (String) -> Data?
     public var save: @Sendable (String, Data) -> Void
+    /// Whether the device has the photo, without reading it: each round checks every
+    /// photo of the cellar. Defaults to reading it.
+    public var exists: @Sendable (String) -> Bool
 
-    public init(data: @escaping @Sendable (String) -> Data?, save: @escaping @Sendable (String, Data) -> Void) {
+    public init(data: @escaping @Sendable (String) -> Data?, save: @escaping @Sendable (String, Data) -> Void,
+                exists: (@Sendable (String) -> Bool)? = nil) {
         self.data = data; self.save = save
+        self.exists = exists ?? { data($0) != nil }
     }
 
     public static let none = PhotoAccess(data: { _ in nil }, save: { _, _ in })
@@ -717,7 +723,7 @@ public enum SyncExchange {
 
         // Photos: each side asks for the ones it is missing.
         let wanted = merge.cellar.photoIDs
-            .filter { PhotoID.isValid($0) && photos.data($0) == nil }.sorted()
+            .filter { PhotoID.isValid($0) && !photos.exists($0) }.sorted()
         let ask = WireMessage.make("photos-want") { $0.photos = wanted }
         let request: WireMessage
         if isInitiator {

@@ -4,9 +4,11 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -87,7 +89,8 @@ object KeySchedule {
     /** The code both screens show: 6 digits, "123 456". */
     fun confirmationCode(key: ByteArray): String {
         val value = ByteBuffer.wrap(key, 0, 4).int.toLong() and 0xFFFF_FFFFL
-        val digits = "%06d".format(value % 1_000_000)
+        // ASCII digits whatever the language of the device (Persian or Arabic digits otherwise).
+        val digits = "%06d".format(Locale.ROOT, value % 1_000_000)
         return digits.take(3) + " " + digits.takeLast(3)
     }
 
@@ -136,5 +139,14 @@ fun String.base64UrlBytes(): ByteArray? = runCatching { Base64.getUrlDecoder().d
 object Base64Serializer : KSerializer<ByteArray> {
     override val descriptor = PrimitiveSerialDescriptor("app.encave.Base64", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: ByteArray) = encoder.encodeString(Base64.getEncoder().encodeToString(value))
-    override fun deserialize(decoder: Decoder): ByteArray = Base64.getMimeDecoder().decode(decoder.decodeString())
+    /** Strict, like Foundation's `Data(base64Encoded:)`: padded, no line breaks or other characters. */
+    override fun deserialize(decoder: Decoder): ByteArray {
+        val text = decoder.decodeString()
+        if (text.length % 4 != 0) throw SerializationException("Invalid Base64")
+        return try {
+            Base64.getDecoder().decode(text)
+        } catch (_: IllegalArgumentException) {
+            throw SerializationException("Invalid Base64")
+        }
+    }
 }

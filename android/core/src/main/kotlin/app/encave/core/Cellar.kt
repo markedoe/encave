@@ -372,6 +372,8 @@ class Cellar(
     fun move(bottleId: UUID, slot: Slot?) {
         val bottle = bottleMap[bottleId] ?: throw CellarException(CellarError.UnknownBottle)
         if (slot != null) {
+            // A bottle on order has no place until it is received, as in Swift.
+            if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)
             val occupant = bottleAt(slot)
             if (occupant != null && occupant.id != bottleId) throw CellarException(CellarError.SlotTaken)
             validateInRange(slot)

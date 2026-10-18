@@ -68,7 +68,7 @@ class ProtocolVectorTests {
         val recipient = key(0xC1)
         val envelope = Envelope.seal("hello".toByteArray(), Envelope.Kind.Photo, "photo/x", cellarKey.dataKey, ByteArray(12) { 7 })
         val ephemeral = key(0x01)
-        val grantPath = "grant/$cellar-00000002-$hostDevice"
+        val grantPath = "grant/$cellar-00000002-$hostDevice-0a1b2c3d"
         val grantKey = KeyGrant.key(
             grantPath, ephemeral.publicKey, recipient.publicKey,
             ephemeral.agree(recipient.publicKey), sender.privateKey.agree(recipient.publicKey),
@@ -94,7 +94,7 @@ class ProtocolVectorTests {
         "inbox token" to "K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8",
         "inbox" to "i2a17946aea22c15127c53bac03a59f8a",
         "envelope" to "454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf",
-        "grant key" to "a9547f8ceac9dc53b97196fc6bb6f23ad6659127b8cc83591b95236c8303567d",
+        "grant key" to "b2ecfff6ab54c6b39ae9edbdd44abffc2dbc361e2faa6571cd4abc5fba9d517d",
     )
 
     private val expected = mapOf(

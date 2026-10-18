@@ -348,7 +348,8 @@ final class SyncService {
     }
 
     nonisolated static var photos: PhotoAccess {
-        PhotoAccess(data: { PhotoStore.data(for: $0) }, save: { PhotoStore.store($1, id: $0) })
+        PhotoAccess(data: { PhotoStore.data(for: $0) }, save: { PhotoStore.store($1, id: $0) },
+                    exists: { PhotoStore.exists($0) })
     }
 
     // MARK: Away from home

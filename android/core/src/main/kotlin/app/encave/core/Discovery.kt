@@ -5,6 +5,7 @@ import java.time.Instant
 import java.util.Locale
 import java.util.UUID
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,9 +14,9 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Discovery(
-    @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
+    @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     @SerialName("wineID") @Serializable(with = UuidSerializer::class) val wineId: UUID,
-    @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
+    @Required @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
     val setting: Setting? = null,
     /** Free text: restaurant, city, friend's name. */
     val place: String? = null,

@@ -94,8 +94,15 @@ class RackTest {
         val restored = CellarJson.decode(CellarJson.encode(cellar))
         assertEquals(rack, restored.racks[0])
         assertEquals(Rack.MAX_DEPTH, restored.racks[1].depth)
-        val unknownKind = CellarJson.decode("""{"racks":[{"id":"${UUID.randomUUID()}","name":"Z","rows":1,"columns":1,"kind":"future"}]}""")
-        assertEquals(RackKind.Grid, unknownKind.racks[0].kind)
+        // An unknown kind fails, as in Swift, rather than turning the rack into a grid (SYNC.md §1).
+        val unknownKind = """{"racks":[{"id":"${UUID.randomUUID()}","name":"Z","rows":1,"columns":1,"kind":"future"}]}"""
+        assertTrue(runCatching { CellarJson.decode(unknownKind) }.isFailure)
+        // Racks from another device or a file are cut to a size the apps can draw.
+        val huge = CellarJson.decode(
+            """{"racks":[{"id":"${UUID.randomUUID()}","name":"H","rows":2000000000,"columns":-5,"binCapacity":99999,"rowColumns":[7,100000]}]}""",
+        ).racks.single()
+        assertEquals(listOf(Rack.MAX_SIZE, 1, Rack.MAX_SIZE), listOf(huge.rows, huge.columns, huge.binCapacity))
+        assertEquals(listOf(7, Rack.MAX_SIZE), huge.rowColumns)
     }
 
     @Test

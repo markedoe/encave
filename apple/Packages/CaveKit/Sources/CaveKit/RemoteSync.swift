@@ -52,6 +52,19 @@ public struct CellarKey: Codable, Equatable, Sendable {
         self.cellarID = cellarID; self.epoch = epoch; self.key = key
     }
 
+    private enum CodingKeys: String, CodingKey { case cellarID, epoch, key }
+
+    /// A key received from another device must be 32 bytes, like the ones devices make.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        cellarID = try c.decode(UUID.self, forKey: .cellarID)
+        epoch = try c.decode(UInt32.self, forKey: .epoch)
+        key = try c.decode(Data.self, forKey: .key)
+        guard key.count == 32 else {
+            throw DecodingError.dataCorruptedError(forKey: .key, in: c, debugDescription: "A cellar key is 32 bytes")
+        }
+    }
+
     public static func random(cellarID: UUID, epoch: UInt32 = 1) -> CellarKey {
         CellarKey(cellarID: cellarID, epoch: epoch, key: KeySchedule.randomNonce())
     }
@@ -143,13 +156,13 @@ public struct KeyGrant: Codable, Equatable, Sendable {
         self.cellarKey = cellarKey; self.from = from; self.storage = storage
     }
 
-    static func path(_ grant: KeyGrant) -> String {
-        "grant/\(grant.cellarKey.cellarID.lowercased)-\(String(format: "%08u", grant.cellarKey.epoch))-\(grant.from.lowercased)"
-    }
+    /// Grants are at most this large; larger files in an inbox are deleted unopened.
+    static let maxSize = 4096
 
-    /// Seals for `recipient` (its identity public key).
+    /// Seals for `recipient` (its identity public key). The path ends with a random
+    /// part, so nobody who can write to the inbox can take the name first.
     public func sealed(by sender: DeviceIdentity, for recipient: Data) throws -> (path: String, data: Data) {
-        let path = Self.path(self)
+        let path = GrantPath(cellarID: cellarKey.cellarID, epoch: cellarKey.epoch, sender: from).string
         let ephemeral = Curve25519.KeyAgreement.PrivateKey()
         let key = try Self.key(path: path, ephemeralPublic: ephemeral.publicKey.rawRepresentation, recipient: recipient,
                                ee: KeySchedule.dh(ephemeral, recipient), se: KeySchedule.dh(sender.privateKey, recipient))
@@ -160,17 +173,20 @@ public struct KeyGrant: Codable, Equatable, Sendable {
     /// Opens a grant found in this device's inbox. `members` gives the senders' keys.
     public static func open(_ data: Data, path: String, recipient: DeviceIdentity,
                             members: Membership) throws -> KeyGrant {
-        guard data.count > 32 else { throw RemoteSyncError.corrupted(path) }
+        guard data.count > 32, data.count <= maxSize, let name = GrantPath(path) else {
+            throw RemoteSyncError.corrupted(path)
+        }
         let ephemeralPublic = data.prefix(32)
         // The sender's ID is in the path; it must be a current member.
-        guard let senderID = path.split(separator: "-").suffix(5).joined(separator: "-").uuidValue,
-              let sender = members.members[senderID] else { throw SyncError.unknownDevice }
+        let senderID = name.sender
+        guard let sender = members.members[senderID] else { throw SyncError.unknownDevice }
         let key = try Self.key(path: path, ephemeralPublic: ephemeralPublic, recipient: recipient.publicKey,
                                ee: KeySchedule.dh(recipient.privateKey, ephemeralPublic),
                                se: KeySchedule.dh(recipient.privateKey, sender.publicKey))
         let grant = try JSONDecoder.sync.decode(KeyGrant.self, from: Envelope.open(data.dropFirst(32), kind: .grant,
                                                                                     path: path, key: key))
-        guard grant.from == senderID, grant.cellarKey.cellarID == members.cellarID, path == Self.path(grant) else {
+        guard grant.from == senderID, grant.cellarKey.cellarID == members.cellarID,
+              name.cellarID == grant.cellarKey.cellarID, name.epoch == grant.cellarKey.epoch else {
             throw RemoteSyncError.corrupted(path)
         }
         return grant
@@ -262,7 +278,9 @@ public enum RemoteSync {
             let remote: SyncSnapshot
             do {
                 remote = try decodeSnapshot(Envelope.open(file, kind: .snapshot, path: newest.string, key: key.dataKey))
-                guard remote.state.device == device, remote.membership.cellarID == merged.membership.cellarID else {
+                // The path's clock is the one readers compare: it must be the snapshot's.
+                guard remote.state.device == device, remote.state.clock == newest.clock,
+                      remote.membership.cellarID == merged.membership.cellarID else {
                     throw RemoteSyncError.corrupted(newest.string)
                 }
                 try SyncState.check(remote.state, membership: remote.membership)
@@ -282,7 +300,7 @@ public enum RemoteSync {
 
         // 3. Missing photos.
         let referenced = merged.cellar.photoIDs
-        for id in referenced.sorted() where PhotoID.isValid(id) && photos.data(id) == nil {
+        for id in referenced.sorted() where PhotoID.isValid(id) && !photos.exists(id) {
             let path = photoPath(id)
             guard let file = try? await mailbox.get(path),
                   let data = try? Envelope.open(file, kind: .photo, path: path, key: key.dataKey),
@@ -294,9 +312,12 @@ public enum RemoteSync {
         // 4. This device's snapshot and photos, if something changed since the last upload.
         let digest = stampDigest(merged)
         if progress.uploadedClock != merged.state.clock || progress.uploadedDigest != digest || newKey != nil {
-            // Other devices read a snapshot only if its clock is newer than the last one.
-            if let uploaded = progress.uploadedClock, merged.state.clock <= uploaded {
-                merged.state.clock = uploaded + 1
+            // Other devices read a snapshot only if its clock is newer than the last one,
+            // including one written by a round that failed after writing it.
+            let written = [progress.uploadedClock, snapshots.filter { $0.device == identity.id }.map(\.clock).max()]
+                .compactMap { $0 }.max()
+            if let written, merged.state.clock <= written {
+                merged.state.clock = written + 1
             }
             for id in referenced.sorted() where PhotoID.isValid(id) && !progress.uploadedPhotos.contains(id) {
                 guard let data = photos.data(id) else { continue }
@@ -319,14 +340,17 @@ public enum RemoteSync {
         let epoch = current?.epoch ?? 0
         let inbox = store.inbox(id: identity.inboxID, token: identity.inboxToken)
         var best: KeyGrant?
+        var waiting = 0
         for path in try await inbox.list(prefix: "grant/") {
             guard let data = try await inbox.get(path) else { continue }
             let grant: KeyGrant
             do {
                 grant = try KeyGrant.open(data, path: path, recipient: identity, members: membership)
-            } catch SyncError.unknownDevice where path.hasPrefix("grant/\(membership.cellarID.lowercased)-")
-                        && !isFromRemovedDevice(path, membership) {
-                // From a device of this cellar this one has not heard of yet: keep it for later.
+            } catch SyncError.unknownDevice where GrantPath(path)?.cellarID == membership.cellarID
+                        && !isFromRemovedDevice(path, membership) && waiting < maxWaitingGrants {
+                // From a device of this cellar this one has not heard of yet: keep it for
+                // later. Only a few, since anyone can write to an inbox.
+                waiting += 1
                 continue
             } catch {
                 // Forged, damaged or for another cellar: never usable, and it takes room.
@@ -338,7 +362,7 @@ public enum RemoteSync {
         // Grants up to the one kept are done with.
         if let kept = best?.cellarKey.epoch ?? (epoch > 0 ? epoch : nil) {
             for path in try await inbox.list(prefix: "grant/\(membership.cellarID.lowercased)-") {
-                if let epochPart = path.split(separator: "-").dropFirst(5).first, let value = UInt32(epochPart), value < kept {
+                if let name = GrantPath(path), name.cellarID == membership.cellarID, name.epoch < kept {
                     try? await inbox.delete(path)
                 }
             }
@@ -346,9 +370,12 @@ public enum RemoteSync {
         return best
     }
 
-    /// A grant path ends with the sender's ID; true if that device was removed.
+    /// Grants from devices not known yet that an inbox keeps; the others are deleted.
+    static let maxWaitingGrants = 8
+
+    /// A grant path names the sender; true if that device was removed (or the path is not a grant's).
     static func isFromRemovedDevice(_ path: String, _ membership: Membership) -> Bool {
-        guard let sender = UUID(uuidString: String(path.suffix(36))) else { return true }
+        guard let sender = GrantPath(path)?.sender else { return true }
         return membership.stamps[sender]?.deleted == true
     }
 
@@ -380,7 +407,10 @@ public enum RemoteSync {
             guard let inbox = member.inbox, RelayPath.isValidMailbox(inbox), inbox.hasPrefix("i") else { continue }
             let sealed = try KeyGrant(cellarKey: key, from: identity.id, storage: storage)
                 .sealed(by: identity, for: member.publicKey)
-            try await store.inbox(id: inbox, token: "").create(sealed.path, data: sealed.data)
+            // The name has a random part: a file already there is not this grant.
+            guard try await store.inbox(id: inbox, token: "").create(sealed.path, data: sealed.data) else {
+                throw RemoteSyncError.unavailable("grant not created")
+            }
         }
     }
 
@@ -403,8 +433,9 @@ public enum RemoteSync {
         let path = SnapshotPath(device: device, clock: snapshot.state.clock).string
         let data = try Envelope.seal(encodeSnapshot(snapshot), kind: .snapshot, path: path, key: key.dataKey)
         try await mailbox.create(path, data: data)
-        // Older snapshots of this device: keep the newest few.
-        let mine = try await mailbox.list(prefix: "snap/\(device.lowercased)/").compactMap(SnapshotPath.init)
+        // Older snapshots of this device: keep the newest few. The snapshot is written,
+        // so a failure here is left for the next round.
+        let mine = ((try? await mailbox.list(prefix: "snap/\(device.lowercased)/")) ?? []).compactMap(SnapshotPath.init)
             .sorted { $0.clock > $1.clock }
         for old in mine.dropFirst(keptSnapshots) { try? await mailbox.delete(old.string) }
     }
@@ -427,6 +458,47 @@ public enum RemoteSync {
     }
 }
 
+/// `grant/<cellar>-<epoch, 8 digits>-<sender>-<8 random hex>` (lowercase UUIDs). The
+/// random part keeps anyone who can write to an inbox from creating a grant's file
+/// before its sender does.
+struct GrantPath: Equatable {
+    let cellarID: UUID
+    let epoch: UInt32
+    let sender: UUID
+    let suffix: String
+
+    init(cellarID: UUID, epoch: UInt32, sender: UUID, suffix: String = RandomHex.make(bytes: 4)) {
+        self.cellarID = cellarID; self.epoch = epoch; self.sender = sender; self.suffix = suffix
+    }
+
+    init?(_ string: String) {
+        guard string.hasPrefix("grant/") else { return nil }
+        let parts = string.dropFirst(6).split(separator: "-", omittingEmptySubsequences: false).map(String.init)
+        // Cellar (a UUID: 5 parts), epoch, sender (5 parts), random part.
+        guard parts.count == 12 else { return nil }
+        let cellar = parts[0..<5].joined(separator: "-"), sender = parts[6..<11].joined(separator: "-")
+        let epochText = parts[5], suffix = parts[11]
+        guard let cellarID = UUID(uuidString: cellar), cellar == cellarID.lowercased,
+              let senderID = UUID(uuidString: sender), sender == senderID.lowercased,
+              (8...10).contains(epochText.count), epochText.allSatisfy(\.isASCIIDigit), let epoch = UInt32(epochText),
+              suffix.count == 8, suffix.allSatisfy(\.isLowercaseHexDigit) else { return nil }
+        self.init(cellarID: cellarID, epoch: epoch, sender: senderID, suffix: suffix)
+    }
+
+    var string: String {
+        "grant/\(cellarID.lowercased)-\(String(format: "%08u", epoch))-\(sender.lowercased)-\(suffix)"
+    }
+}
+
+enum RandomHex {
+    static func make(bytes: Int) -> String { Data((0..<bytes).map { _ in UInt8.random(in: .min ... .max) }).hexString }
+}
+
+extension Character {
+    var isASCIIDigit: Bool { ("0"..."9").contains(self) }
+    var isLowercaseHexDigit: Bool { isASCIIDigit || ("a"..."f").contains(self) }
+}
+
 /// `snap/<device>/<clock, 16 digits>-<8 random hex>`: the random part keeps two
 /// snapshots with the same clock (after a new epoch, say) from colliding.
 struct SnapshotPath {
@@ -436,14 +508,15 @@ struct SnapshotPath {
 
     init(device: UUID, clock: UInt64) {
         self.device = device; self.clock = clock
-        suffix = Data((0..<4).map { _ in UInt8.random(in: .min ... .max) }).hexString
+        suffix = RandomHex.make(bytes: 4)
     }
 
     init?(_ string: String) {
         let parts = string.split(separator: "/")
         guard parts.count == 3, parts[0] == "snap", let device = UUID(uuidString: String(parts[1])) else { return nil }
         let name = parts[2].split(separator: "-")
-        guard name.count == 2, name[0].count == 16, let clock = UInt64(name[0]) else { return nil }
+        guard name.count == 2, name[0].count == 16, name[0].allSatisfy(\.isASCIIDigit), let clock = UInt64(name[0])
+        else { return nil }
         self.device = device; self.clock = clock; suffix = String(name[1])
     }
 

@@ -62,11 +62,27 @@ implementations:
   is kept for). `settings.savedSearches` is an optional array of
   `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
   `colors` and `maturities` sorted by their string value.
-- Readers are strict: an unknown value of `wine.color`, `bottle.status` or
-  `rack.kind` fails decoding; readers never replace it with a default. A device
-  that does not know a new value refuses the sync instead of rewriting the
-  object with a wrong value and a newer stamp, which would spread the loss to
-  every device. (A rack without `kind`, from version 0.1 or 0.2, is a grid.)
+- Readers are strict: an unknown value of `wine.color`, `bottle.status`,
+  `rack.kind` or `discovery.setting` fails decoding; readers never replace it
+  with a default. A device that does not know a new value refuses the sync
+  instead of rewriting the object with a wrong value and a newer stamp, which
+  would spread the loss to every device. (A rack without `kind`, from version
+  0.1 or 0.2, is a grid.) In the same way:
+  - required fields are never filled in by the reader: every `id`, `wineID`,
+    `bottle.addedAt`, `discovery.date`, `tasting.date`, `member.addedAt`,
+    `settings.currency`, `cellarID`, `members` and `stamps` of a membership, the
+    three fields of a stamp and the four of a `SyncState`. Fields that may be
+    left out are read with their stated default
+    (`bottle.status` `inCellar`, `sizeML` 750, `depth` 0 or 1, `binCapacity` 12,
+    `grapes` and `discovery.tags` empty, `wantsToBuy` false);
+  - a UUID is its 36-character form (either case), binary values are standard
+    Base64 with padding and nothing else, prices are JSON numbers, and dates are
+    numbers in the cellar file and the sync payloads, ISO 8601 strings without
+    fractional seconds in backups;
+  - a rack's `rows`, `columns`, `binCapacity` and each `rowColumns` value are
+    brought into 1…100 (`depth` into 1…3), and `rowColumns` keeps at most 100
+    values, so a damaged or hostile rack cannot make a device allocate millions
+    of cells. Every device applies the same rule, so they read the same rack.
 - Readers key each wine, bottle and discovery by its own `id`, not by the map
   key; if two entries have the same `id`, the one whose map key sorts first
   (uppercase UUID string) is kept. Racks with a repeated `id` keep the first.
@@ -76,9 +92,11 @@ implementations:
 `merge(local, localState, remote, remoteState)` is deterministic: both devices
 compute the same result.
 
-0. **Bounds.** A received state is refused if its clock is over 2^53, if any of
+0. **Bounds.** A received state is refused if its clock is over 2^52, if any of
    its stamps has a counter over its clock, or if a membership stamp counter is
-   over 2^53. This keeps every clock far from overflowing.
+   over 2^52. A device that accepts the largest allowed value still has 2^52
+   changes before its counters stop being exact in readers that hold numbers as
+   doubles (2^53), and stays far from overflowing a UInt64.
 1. For every key in either cellar or either stamp map, take each side's stamp
    (or `Stamp.zero` if the object exists without one). The greater stamp wins
    and becomes the merged stamp. If it is a deletion, the object is dropped.
@@ -148,7 +166,8 @@ to join again it pairs as a new device, with a new ID and key.
 - Random nonces are 32 bytes.
 - **Confirmation code**: the first 4 bytes of `KDF(..., "encave pair code", 4)`
   read as a big-endian UInt32, modulo 1,000,000, written with 6 digits as
-  `"ddd ddd"`.
+  `"ddd ddd"`. Here and in every code and file name, digits are ASCII digits,
+  whatever the language of the device.
 
 ## 4. Transport
 
@@ -195,7 +214,7 @@ Device names are never advertised.
 ## 5. Pairing
 
 The **host** shows a 6-digit code (and a QR code), the **joiner** types or scans
-it. The code only finds the host on the network; security comes from the users
+it (only ASCII digits count: other characters typed are ignored). The code only finds the host on the network; security comes from the users
 comparing the confirmation code (a commit-then-reveal key exchange, as in
 Bluetooth numeric comparison).
 
@@ -327,7 +346,8 @@ file is written once by one device. Implementation: `RemoteSync.swift`,
 ### Keys
 
 A **cellar key** `{cellarID, epoch (UInt32), key (32 random bytes)}` is shared
-by the devices of a cellar. From it (HKDF-SHA256, empty salt):
+by the devices of a cellar. A received key whose `key` is not 32 bytes fails
+decoding. From it (HKDF-SHA256, empty salt):
 
 | Name | Info | Use |
 |---|---|---|
@@ -362,25 +382,34 @@ path (UTF-8)` as additional data, so a file cannot be moved to another name.
 | `photo/<photo ID, lowercase>` | 2 | the JPEG |
 
 Each device writes only under its own `snap/<device>/` and keeps its newest two
-snapshots. Paths use lowercase letters, digits, `-`, `_` and `/`, at most 200
+snapshots. The clock in a snapshot's name is its `syncData` clock, written with
+16 ASCII digits. Paths use lowercase letters, digits, `-`, `_` and `/`, at most 200
 characters, with no empty, `.` or `..` parts.
 
 ### Key grants
 
 A device gives a cellar key to another by creating, in the recipient's inbox,
-`grant/<cellarID>-<epoch, 8 digits>-<sender device>` containing
+`grant/<cellarID>-<epoch, 8 digits>-<sender device>-<8 random lowercase hex>`
+(lowercase UUIDs; an epoch over 99,999,999 has more digits) containing
 `ephemeralPublic (32) ‖ envelope(kind 3)` where the envelope's key is
 `KDF(DH(ephemeral, recipient) ‖ DH(sender identity, recipient),
 H("encave-grant-v1", [ephemeralPublic, recipientPublic, path]), "encave grant")`
 and the plaintext is `{"cellarKey":…,"from":senderID,"storage":"https://…"}`.
+Anyone may create files in an inbox, so a grant's name ends with a random
+part: nobody can create a file under the name the sender will use and so keep
+the grant out. A sender for whom the storage answers that the file already
+exists treats it as a failure (the grant was not left) and tries again later.
+
 The recipient accepts a grant only from a current member of its cellar and
 only for its cellar; both identity keys enter the key, so only a member can
-have written it. Grants are at most 4 KiB. A grant that cannot be opened is
-deleted, except one from a device of this cellar not known yet (kept for a
-later round); grants from removed devices are deleted. The recipient also
-checks that the grant's path names the same cellar, epoch and sender as its
-content. It uses a grant only if its key supersedes the current one, and it
-deletes the grants of its cellar with an older epoch than the key it keeps.
+have written it. Grants are at most 4 KiB: a larger file is deleted unopened.
+A file whose name does not have the form above is deleted, and so is a grant
+that cannot be opened, except one from a device of this cellar not known yet:
+up to 8 of those are kept for a later round (in name order), the others are
+deleted. Grants from removed devices are deleted. The recipient also checks
+that the grant's name gives the same cellar, epoch and sender as its content.
+It uses a grant only if its key supersedes the current one, and it deletes the
+grants of its cellar with an older epoch than the key it keeps.
 
 ### Storages
 
@@ -405,10 +434,9 @@ Each storage keeps the files of a mailbox or inbox under its ID:
     never sent to another address.
   - Only mailbox IDs and paths that pass the rules above become part of a URL.
   - A server that ignores `If-None-Match` replaces an existing file instead of
-    answering 412. The protocol does not depend on it: snapshot names carry a
-    random part, photos are named after their content, and a grant's name
-    (cellar, epoch, sender) is only ever written again by its sender with the
-    same key.
+    answering 412. The protocol does not depend on it: snapshot and grant names
+    carry a random part, so no name is written twice, and photos are named
+    after their content.
 
 ### One round
 
@@ -417,8 +445,8 @@ Each storage keeps the files of a mailbox or inbox under its ID:
 2. List `snap/`; for each other current member (a device of the membership,
    not removed; files of other device IDs are ignored), read its newest
    snapshot if newer than the last one read, check the bounds (section 1) and
-   merge it. A snapshot counts only if its `syncData` names the same device as
-   its path and its `membersData` the same cellar ID. A snapshot that cannot be
+   merge it. A snapshot counts only if its `syncData` names the same device and
+   the same clock as its path and its `membersData` the same cellar ID. A snapshot that cannot be
    read, decrypted, decoded or checked is skipped for this round; the other
    devices still sync.
 3. Fetch the photos the merged cellar references and this device lacks (valid
@@ -487,7 +515,8 @@ sign in to it, and syncs through it once they have.
 - **The relay** sees mailbox and inbox IDs, file counts, sizes, timing and IP
   addresses; never contents, names or keys. It also sees file paths: device
   IDs and Lamport clocks in snapshot names (how often the cellar changes), the
-  cellar ID, epoch and sender in grant names, and the hashes of photos. Device
+  cellar ID, epoch and sender in grant names (and their random part), and the
+  hashes of photos. Device
   IDs are the same before and after a key rotation, so the relay can link the
   old and new mailboxes. A mailbox opens only with the token its ID is derived
   from, so someone who learns a mailbox ID cannot read it or lock its owner out.
@@ -545,7 +574,7 @@ Inputs (all keys are X25519 private keys given as 32 raw bytes):
 **Remote sync** (section 8). Inputs: cellar key `{cellar above, epoch 1, key
 bytes 10 11 … 2f}`; device identity private key `81 82 … a0` (the host device
 above); for the envelope, plaintext `hello`, kind 2 (photo), path `photo/x`,
-nonce 12 × `07`; for the grant, path `grant/<cellar>-00000002-<host device>`
+nonce 12 × `07`; for the grant, path `grant/<cellar>-00000002-<host device>-0a1b2c3d`
 (lowercase UUIDs), ephemeral private key `01 02 … 20`, recipient identity
 private key `c1 c2 … e0`, sender identity `81 82 … a0`.
 
@@ -557,4 +586,4 @@ private key `c1 c2 … e0`, sender identity `81 82 … a0`.
 | inbox token | `K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8` |
 | inbox ID | `i2a17946aea22c15127c53bac03a59f8a` |
 | envelope (whole file) | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` |
-| grant key | `a9547f8ceac9dc53b97196fc6bb6f23ad6659127b8cc83591b95236c8303567d` |
+| grant key | `b2ecfff6ab54c6b39ae9edbdd44abffc2dbc361e2faa6571cd4abc5fba9d517d` |
