@@ -123,9 +123,7 @@ struct LabelPhoto: View {
         Group {
             if studio, let cutout {
                 ZStack {
-                    Rectangle().fill(.background.secondary)
-                    LinearGradient(colors: [(color?.tint ?? .accentColor).opacity(0.22), .clear],
-                                   startPoint: .top, endPoint: .bottom)
+                    StudioBackdrop(color: color)
                     Image(decorative: cutout, scale: 1)
                         .resizable()
                         .scaledToFit()
@@ -139,5 +137,46 @@ struct LabelPhoto: View {
         .task(id: studio ? photoID : "") {
             cutout = studio ? await StudioPhoto.cutout(for: photoID, maxPixelSize: maxPixelSize) : nil
         }
+    }
+}
+
+/// The clean background behind studio pictures, tinted by the wine's color.
+struct StudioBackdrop: View {
+    var color: WineColor?
+
+    var body: some View {
+        ZStack {
+            Rectangle().fill(.background.secondary)
+            LinearGradient(colors: [(color?.tint ?? .accentColor).opacity(0.22), .clear],
+                           startPoint: .top, endPoint: .bottom)
+        }
+    }
+}
+
+/// The picture shown for a wine: its cover (from the internet or an illustration)
+/// if it has one, else its label photo in the studio look. Callers check that
+/// `wine.shownPhotoID` exists first and show the bottle end otherwise.
+struct WineImage: View {
+    let wine: Wine
+    var maxPixelSize = 900
+    var inset: CGFloat = 12
+
+    var body: some View {
+        if let cover = wine.coverPhotoID, PhotoStore.exists(cover) {
+            ZStack {
+                StudioBackdrop(color: wine.color)
+                WinePhoto(photoID: cover, maxPixelSize: maxPixelSize, fits: true)
+                    .padding(inset / 2)
+            }
+        } else if let photoID = wine.photoID {
+            LabelPhoto(photoID: photoID, color: wine.color, maxPixelSize: maxPixelSize, inset: inset)
+        }
+    }
+}
+
+extension Wine {
+    /// True when there is a picture to show on this device.
+    var hasShownPhoto: Bool {
+        PhotoStore.exists(coverPhotoID) || PhotoStore.exists(photoID)
     }
 }

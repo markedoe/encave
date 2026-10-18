@@ -526,3 +526,19 @@ import Testing
         #expect(json.contains("\"bottles\" : 2"))
     }
 }
+
+@Suite struct CoverPhotoTests {
+    @Test func coverIsShownKeptAndRoundTrips() throws {
+        var wine = Wine(name: "Cover", photoID: "label")
+        wine.coverPhotoID = "cover"
+        #expect(wine.shownPhotoID == "cover")
+        #expect(wine.allPhotoIDs == ["label", "cover"])
+        var cellar = Cellar()
+        try cellar.addBottles(of: wine)
+        #expect(cellar.photoIDs == ["label", "cover"])
+        let decoded = try JSONDecoder().decode(Wine.self, from: JSONEncoder().encode(wine))
+        #expect(decoded.coverPhotoID == "cover")
+        let old = try JSONDecoder().decode(Wine.self, from: Data(#"{"id":"\#(UUID())","name":"Old"}"#.utf8))
+        #expect(old.coverPhotoID == nil && old.shownPhotoID == nil)
+    }
+}

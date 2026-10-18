@@ -163,6 +163,7 @@ struct WineDetailView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: wineID) }
+                        Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wineID) }
                         Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
                         Divider()
                         Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(wineID) }
@@ -198,17 +199,18 @@ struct WineDetailView: View {
 private struct WineHeader: View {
     let wine: Wine
     let count: Int
+    @Environment(CellarModel.self) private var model
     @AppStorage(StudioPhoto.settingKey) private var studio = true
     @State private var asTaken = false
 
     var body: some View {
         VStack(spacing: 12) {
-            if let photoID = wine.photoID, PhotoStore.exists(photoID) {
+            if wine.hasShownPhoto {
                 Group {
-                    if asTaken {
+                    if asTaken, let photoID = wine.photoID {
                         WinePhoto(photoID: photoID)
                     } else {
-                        LabelPhoto(photoID: photoID, color: wine.color, inset: 18)
+                        WineImage(wine: wine, inset: 18)
                     }
                 }
                 .frame(maxWidth: 360)
@@ -217,7 +219,8 @@ private struct WineHeader: View {
                 .padding(.top, 4)
                 .accessibilityHidden(true)
                 .contextMenu {
-                    if studio {
+                    Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wine.id) }
+                    if studio, wine.coverPhotoID == nil, PhotoStore.exists(wine.photoID) {
                         Button(asTaken ? LocalizedStringKey("Show Studio Look") : LocalizedStringKey("Show Photo as Taken"),
                                systemImage: asTaken ? "wand.and.stars" : "photo") { asTaken.toggle() }
                     }

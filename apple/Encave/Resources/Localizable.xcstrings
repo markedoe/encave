@@ -941,6 +941,16 @@
         }
       }
     },
+    "Another picture": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre image"
+          }
+        }
+      }
+    },
     "Answer": {
       "localizations": {
         "fr": {
@@ -1661,6 +1671,16 @@
         }
       }
     },
+    "Change Picture…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer l’image…"
+          }
+        }
+      }
+    },
     "Changes from another device could not be read. Update Encave on all your devices.": {
       "localizations": {
         "fr": {
@@ -2137,6 +2157,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créer une clé d’API chez %@"
+          }
+        }
+      }
+    },
+    "Create an Illustration…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une illustration…"
           }
         }
       }
@@ -4281,6 +4311,16 @@
         }
       }
     },
+    "Made on this device with Image Playground, from the wine's name and its label photo.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée sur cet appareil avec Image Playground, à partir du nom du vin et de sa photo d’étiquette."
+          }
+        }
+      }
+    },
     "Made with Encave": {
       "localizations": {
         "fr": {
@@ -5017,6 +5057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
+          }
+        }
+      }
+    },
+    "On the wine's page, **Change Picture…** shows instead an illustration made on this device with Image Playground (with Apple Intelligence), or a picture found on the internet if a search service is set up. The label photo is always kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur la fiche du vin, **Changer l’image…** affiche à la place une illustration créée sur cet appareil avec Image Playground (avec Apple Intelligence), ou une image trouvée sur internet si un service de recherche est configuré. La photo d’étiquette est toujours gardée."
           }
         }
       }
@@ -6011,6 +6061,16 @@
         }
       }
     },
+    "Remove This Picture": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer cette image"
+          }
+        }
+      }
+    },
     "Remove from List": {
       "localizations": {
         "fr": {
@@ -6657,6 +6717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher la cave en tableau ou en liste (Mac)"
+          }
+        }
+      }
+    },
+    "Shown in the studio look when it is on in Settings: cut out and straightened on a clean background.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net."
           }
         }
       }
@@ -8281,6 +8351,16 @@
         }
       }
     },
+    "Use the Label Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser la photo d’étiquette"
+          }
+        }
+      }
+    },
     "Use this if the bottle was logged by mistake.": {
       "localizations": {
         "fr": {
@@ -8617,6 +8697,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fiche du vin"
+          }
+        }
+      }
+    },
+    "Wine Picture": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image du vin"
           }
         }
       }

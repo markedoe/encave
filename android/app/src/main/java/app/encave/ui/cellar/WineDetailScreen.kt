@@ -178,9 +178,9 @@ fun WineDetailScreen(
         val tastings = cellar.tastingsOf(wine.id)
         LazyColumn(Modifier.fillMaxSize().testTag("wine.detail"), contentPadding = padding) {
             item {
-                if (viewModel.photos.exists(wine.photoId)) {
+                if (viewModel.photos.exists(wine.shownPhotoId)) {
                     app.encave.ui.add.WinePhoto(
-                        viewModel.photos, wine.photoId,
+                        viewModel.photos, wine.shownPhotoId,
                         contentDescription = stringResource(R.string.photo_description, wine.displayName),
                         modifier = Modifier.padding(horizontal = Dimens.l).padding(top = Dimens.s),
                         height = 240.dp,

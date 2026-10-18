@@ -22,8 +22,8 @@ struct WineRow: View {
     var body: some View {
         let maturity: Maturity = isOrder ? .unknown : Maturity.of(group.wine, year: model.currentYear)
         HStack(spacing: 14) {
-            if let photoID = group.wine.photoID, PhotoStore.exists(photoID) {
-                LabelPhoto(photoID: photoID, color: group.wine.color, maxPixelSize: 200, inset: 2)
+            if group.wine.hasShownPhoto {
+                WineImage(wine: group.wine, maxPixelSize: 200, inset: 2)
                     .frame(width: 34, height: 46)
                     .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                     .accessibilityHidden(true)

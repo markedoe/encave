@@ -15,6 +15,15 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Another picture': 'Une autre image',
+    "On the wine's page, **Change Picture…** shows instead an illustration made on this device with Image Playground (with Apple Intelligence), or a picture found on the internet if a search service is set up. The label photo is always kept.": 'Sur la fiche du vin, **Changer l’image…** affiche à la place une illustration créée sur cet appareil avec Image Playground (avec Apple Intelligence), ou une image trouvée sur internet si un service de recherche est configuré. La photo d’étiquette est toujours gardée.',
+    'Wine Picture': 'Image du vin',
+    'Change Picture…': 'Changer l’image…',
+    'Use the Label Photo': 'Utiliser la photo d’étiquette',
+    'Shown in the studio look when it is on in Settings: cut out and straightened on a clean background.': 'Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net.',
+    'Create an Illustration…': 'Créer une illustration…',
+    "Made on this device with Image Playground, from the wine's name and its label photo.": 'Créée sur cet appareil avec Image Playground, à partir du nom du vin et de sa photo d’étiquette.',
+    'Remove This Picture': 'Retirer cette image',
     "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": 'La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**.',
     'Studio Look for Label Photos': 'Aspect studio pour les photos d’étiquette',
     'Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.': 'Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise.',

@@ -324,6 +324,8 @@ enum AppSheet: Identifiable {
     case editTasting(bottleID: UUID)
     case editRack(rackID: UUID?)
     case moveBottle(bottleID: UUID)
+    /// Choose the picture shown for a wine.
+    case wineImage(wineID: UUID)
     /// Remember a wine found elsewhere (nil: a new one).
     case discovery(discoveryID: UUID?)
     case settings
@@ -336,6 +338,7 @@ enum AppSheet: Identifiable {
         case .editTasting(let id): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"
+        case .wineImage(let id): "image-\(id)"
         case .discovery(let id): "discovery-\(id?.uuidString ?? "new")"
         case .settings: "settings"
         }
