@@ -26,6 +26,9 @@ dependencies {
     // X25519 and ChaCha20-Poly1305 on every Android version (the platform has them
     // only from API 33 and 28). Lightweight API only; no provider is registered.
     implementation(libs.bouncycastle)
+    // WebDAV sync (PROPFIND, MKCOL, which HttpURLConnection refuses). Sends only
+    // what the store asks for, to the server the user chose.
+    implementation(libs.okhttp)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)

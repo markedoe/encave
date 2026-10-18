@@ -141,6 +141,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_devices_bottles, R.string.help_devices_bottles_title),
                     HelpSection(R.string.help_devices_remove, R.string.help_devices_remove_title),
                     HelpSection(R.string.help_devices_away, R.string.help_devices_away_title),
+                    HelpSection(R.string.help_devices_webdav, R.string.help_devices_webdav_title),
                     HelpSection(R.string.help_devices_privacy, R.string.help_devices_privacy_title),
                 ),
             ),

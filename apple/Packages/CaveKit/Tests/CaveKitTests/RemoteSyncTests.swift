@@ -3,7 +3,7 @@ import Testing
 @testable import CaveKit
 
 /// A device for remote sync tests: its cellar, identity and remote state.
-private struct RemoteDevice {
+struct RemoteDevice {
     var identity: DeviceIdentity
     var snapshot: SyncSnapshot
     var key: CellarKey?
@@ -36,7 +36,7 @@ private struct RemoteDevice {
 }
 
 /// Devices A, B and C of one cellar, A holding the first key.
-private func household(_ count: Int = 3) -> [RemoteDevice] {
+func household(_ count: Int = 3) -> [RemoteDevice] {
     let identities = (0..<count).map { _ in DeviceIdentity.generate().identity }
     var membership = Membership()
     var clock: UInt64 = 0

@@ -5,6 +5,7 @@ import app.encave.core.Cellar
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
 import app.encave.core.sync.DeviceIdentity
+import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
 import app.encave.core.sync.Membership
 import app.encave.core.sync.RelayMailboxStore
@@ -21,6 +22,7 @@ import app.encave.core.sync.SyncHandshake
 import app.encave.core.sync.SyncProtocol
 import app.encave.core.sync.SyncSnapshot
 import app.encave.core.sync.SyncState
+import app.encave.core.sync.WebDavMailboxStore
 import app.encave.data.CellarRepository
 import app.encave.data.PhotoStore
 import java.io.Closeable
@@ -47,8 +49,8 @@ import kotlinx.coroutines.withContext
 /**
  * Keeps this device's cellar in step with the user's other devices: on the same
  * network directly (found with NSD, sessions authenticated with the devices'
- * identity keys and encrypted), and away from home through a relay that only holds
- * encrypted files. The protocol is in `app.encave.core.sync` (docs/SYNC.md).
+ * identity keys and encrypted), and away from home through a WebDAV folder or a relay
+ * that only holds encrypted files. The protocol is in `app.encave.core.sync` (docs/SYNC.md).
  *
  * Nothing touches the network until the user adds or joins a device.
  */
@@ -68,8 +70,13 @@ class SyncManager(
         val problem: Problem? = null,
         /** This device was removed from the cellar by another device. */
         val wasRemoved: Boolean = false,
-        /** The relay URL when syncing away from home is on. */
+        /** The relay URL, or "webdav:" and the folder URL, when syncing away from home is on. */
         val remoteStorage: String? = null,
+        /**
+         * The WebDAV folder this device syncs through has no login here (its address came
+         * from another device): the Devices screen asks to sign in instead of failing silently.
+         */
+        val needsWebDavSignIn: Boolean = false,
         val hasRemoteKey: Boolean = false,
         val lastRemoteSync: Instant? = null,
         val syncingRemotely: Boolean = false,
@@ -154,6 +161,7 @@ class SyncManager(
                     membership = membership,
                     lastSync = storage.loadLastSync(),
                     remoteStorage = storage.remoteStorage,
+                    needsWebDavSignIn = needsSignIn(storage.remoteStorage),
                     hasRemoteKey = storage.remoteKey != null,
                     wasRemoved = membership != null && !membership.members.containsKey(identity.id),
                 )
@@ -280,7 +288,9 @@ class SyncManager(
             storage.resetRemote()
             storage.remoteStorage = null
             synchronized(this) { progress = RemoteProgress() }
-            status.update { it.copy(remoteStorage = null, hasRemoteKey = false, remoteProblem = null, lastRemoteSync = null) }
+            status.update {
+                it.copy(remoteStorage = null, needsWebDavSignIn = false, hasRemoteKey = false, remoteProblem = null, lastRemoteSync = null)
+            }
         }
         if (replace) {
             repository.applySynced { Cellar(settings = it.settings) }
@@ -543,17 +553,45 @@ class SyncManager(
     suspend fun setRemoteStorage(url: String?) {
         if (url == null) {
             storage.remoteStorage = null
+            storage.webDavLogin = null
             remoteLoop?.cancel()
             remoteLoop = null
             RemoteSyncWorker.cancel(context)
-            status.update { it.copy(remoteStorage = null, remoteProblem = null) }
+            status.update { it.copy(remoteStorage = null, needsWebDavSignIn = false, remoteProblem = null) }
             return
         }
         val store = RelayMailboxStore(url)
         store.check()
+        turnOn(store, store.baseUrl)
+    }
+
+    /**
+     * Turns syncing away from home on with a WebDAV folder. Checks the folder and the login
+     * first; the login stays on this device, only the folder's address goes to the others.
+     */
+    suspend fun setWebDav(folder: String, username: String, password: String) {
+        val url = WebDavMailboxStore.folderUrl(folder) ?: throw RemoteSyncException(RemoteSyncError.Unavailable("address"))
+        val store = WebDavMailboxStore(url, username, password)
+        store.check()
+        storage.webDavLogin = WebDavLogin(url, username, password)
+        turnOn(store, WEBDAV_PREFIX + url)
+    }
+
+    /** Signs in to the WebDAV folder this device already syncs through (its address came from another device). */
+    suspend fun signInToWebDav(username: String, password: String) {
+        val url = storage.remoteStorage?.takeIf { it.startsWith(WEBDAV_PREFIX) }?.removePrefix(WEBDAV_PREFIX) ?: return
+        WebDavMailboxStore(url, username, password).check()
+        storage.webDavLogin = WebDavLogin(url, username, password)
+        status.update { it.copy(needsWebDavSignIn = false, remoteProblem = null) }
+        RemoteSyncWorker.schedule(context)
+        startRemoteLoop()
+        remoteRound()
+    }
+
+    private suspend fun turnOn(store: MailboxStore, storageString: String) {
         setUpIfNeeded()
-        storage.remoteStorage = store.baseUrl
-        status.update { it.copy(remoteStorage = store.baseUrl) }
+        storage.remoteStorage = storageString
+        status.update { it.copy(remoteStorage = storageString, needsWebDavSignIn = needsSignIn(storageString)) }
         val membership = status.value.membership
         if (storage.remoteKey == null && membership != null) {
             // Maybe another device already turned it on and left a key for this one.
@@ -563,7 +601,7 @@ class SyncManager(
             } else {
                 val key = CellarKey.random(membership.cellarId)
                 storeRemoteKey(key)
-                RemoteSync.grant(key, membership.active, store, identity, store.baseUrl)
+                RemoteSync.grant(key, membership.active, store, identity, storageString)
             }
         }
         RemoteSyncWorker.schedule(context)
@@ -576,13 +614,12 @@ class SyncManager(
         val membership = status.value.membership ?: return
         if (info == null || info.key.cellarId != membership.cellarId) return
         if (info.key.supersedes(storage.remoteKey)) storeRemoteKey(info.key)
-        // Only a storage this device can use: an HTTPS relay. iCloud ("icloud") is Apple-only.
-        val offered = info.storage
-        if (storage.remoteStorage == null && offered != null && offered.lowercase(Locale.ROOT).startsWith("https://") &&
-            RelayMailboxStore.isAllowed(offered)
-        ) {
+        // Only a storage this device can use: an HTTPS relay or WebDAV folder. iCloud ("icloud")
+        // is Apple-only. A WebDAV folder then asks for this device's own login.
+        val offered = info.storage?.let(::acceptedFromPeer)
+        if (storage.remoteStorage == null && offered != null) {
             storage.remoteStorage = offered
-            status.update { it.copy(remoteStorage = offered) }
+            status.update { it.copy(remoteStorage = offered, needsWebDavSignIn = needsSignIn(offered)) }
             RemoteSyncWorker.schedule(context)
             startRemoteLoop()
         }
@@ -609,15 +646,30 @@ class SyncManager(
         }
     }
 
-    /** One round through the relay. Also run by [RemoteSyncWorker] in the background. */
+    /** The store for a storage string; null for a WebDAV folder without a login on this device. */
+    private fun storeFor(storageString: String): MailboxStore? {
+        if (!storageString.startsWith(WEBDAV_PREFIX)) return RelayMailboxStore(storageString)
+        val folder = storageString.removePrefix(WEBDAV_PREFIX)
+        val login = storage.webDavLogin?.takeIf { it.folder == folder } ?: return null
+        return runCatching { WebDavMailboxStore(folder, login.username, login.password) }.getOrNull()
+    }
+
+    private fun needsSignIn(storageString: String?): Boolean =
+        storageString != null && storageString.startsWith(WEBDAV_PREFIX) && storage.webDavLogin?.folder != storageString.removePrefix(WEBDAV_PREFIX)
+
+    /** One round through the relay or WebDAV folder. Also run by [RemoteSyncWorker] in the background. */
     suspend fun remoteRound() {
         val url = storage.remoteStorage ?: return
+        val store = storeFor(url)
+        if (store == null) {
+            status.update { it.copy(needsWebDavSignIn = true) }
+            return
+        }
         if (status.value.wasRemoved || isDemo || !remoteMutex.tryLock()) return
         status.update { it.copy(syncingRemotely = true) }
         val round = generation
         try {
             val local = snapshot() ?: return
-            val store = RelayMailboxStore(url)
             var key = storage.remoteKey
             if (key == null) {
                 key = RemoteSync.receiveGrant(store, identity, local.membership, null)?.cellarKey
@@ -636,13 +688,12 @@ class SyncManager(
             // The device left or joined another cellar meanwhile: drop the result.
             if (round != generation) return
             result.newKey?.let(::storeRemoteKey)
-            // The device that gave the new key moved the files: follow it (an HTTPS relay only).
-            val moved = result.storage
-            if (result.newKey != null && moved != null && moved != url && moved.lowercase(Locale.ROOT).startsWith("https://") &&
-                RelayMailboxStore.isAllowed(moved)
-            ) {
+            // The device that gave the new key moved the files: follow it (an HTTPS relay or
+            // WebDAV folder only; a WebDAV folder then asks for a login on this device).
+            val moved = result.storage?.let(::acceptedFromPeer)
+            if (result.newKey != null && moved != null && moved != url) {
                 storage.remoteStorage = moved
-                status.update { it.copy(remoteStorage = moved) }
+                status.update { it.copy(remoteStorage = moved, needsWebDavSignIn = needsSignIn(moved)) }
             }
             synchronized(this) { progress = result.progress }
             withContext(Dispatchers.IO) { storage.saveRemoteProgress(result.progress) }
@@ -679,7 +730,7 @@ class SyncManager(
     }
 
     /** Rotates the remote key if a removal is waiting for it, and returns the key to use. */
-    private suspend fun rotateIfNeeded(store: RelayMailboxStore, key: CellarKey, local: SyncSnapshot, url: String): CellarKey {
+    private suspend fun rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot, url: String): CellarKey {
         // Builds before this one kept only a flag.
         if (storage.hadRotationFlag) {
             storage.clearRotationFlag()
@@ -710,6 +761,21 @@ class SyncManager(
     // endregion
 
     companion object {
+        /** A WebDAV folder's storage string: this prefix and the folder URL (docs/SYNC.md §8). */
+        const val WEBDAV_PREFIX = "webdav:"
+
+        /**
+         * A storage told by another device, as this device keeps it, if it can use it: an
+         * HTTPS relay or WebDAV folder (WebDAV over HTTP only on the local network). Null
+         * otherwise; iCloud ("icloud") is Apple-only.
+         */
+        fun acceptedFromPeer(storage: String): String? =
+            if (storage.startsWith(WEBDAV_PREFIX)) {
+                WebDavMailboxStore.folderUrl(storage.removePrefix(WEBDAV_PREFIX))?.let { WEBDAV_PREFIX + it }
+            } else {
+                storage.takeIf { it.lowercase(Locale.ROOT).startsWith("https://") && RelayMailboxStore.isAllowed(it) }
+            }
+
         const val LOCAL_DELAY_MS = 2_000L
         private const val HANDSHAKE_DEADLINE_MS = 10_000L
         private const val SESSION_DEADLINE_MS = 300_000L

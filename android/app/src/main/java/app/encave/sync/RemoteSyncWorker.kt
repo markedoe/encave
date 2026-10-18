@@ -12,7 +12,7 @@ import app.encave.EncaveApplication
 import java.util.concurrent.TimeUnit
 
 /**
- * While a relay is set: a relay round every 15 minutes (the shortest period Android
+ * While a relay or WebDAV folder is set: a round every 15 minutes (the shortest period Android
  * allows) when the device is online, so changes arrive while the app is closed.
  */
 class RemoteSyncWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {

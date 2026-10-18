@@ -36,10 +36,11 @@ it with.
             └──────────────────────┬───────────────────┘
                                    │  away from home: encrypted files only
                           ┌────────▼────────┐
-                          │  Storage         │  relay (self-hosted, Node or
-                          │  (never has keys)│  Cloudflare); iCloud (built, off
-                          └─────────────────┘  until the container is set up);
-                                               later Google Drive
+                          │  Storage         │  WebDAV folder (NAS, Nextcloud,
+                          │  (never has keys)│  pCloud); relay (self-hosted,
+                          └─────────────────┘  Node or Cloudflare); iCloud (built,
+                                               off until the container is set
+                                               up); later Google Drive
 ```
 
 - **One model, two native implementations.**
@@ -64,8 +65,9 @@ it with.
   - Devices on the same network sync directly.
   - Apart, they exchange encrypted files through a storage that never has a key.
     [REMOTE_SYNC.md](REMOTE_SYNC.md) compares the options: CloudKit for Apple
-    devices, Google Drive across platforms, and a relay anyone can host for
-    mixed households.
+    devices, a WebDAV folder people already have (NAS, Nextcloud, pCloud),
+    Google Drive across platforms, and a relay anyone can host for mixed
+    households.
 - **Encryption.**
   - X25519 identity keys per device (Keychain, Android Keystore-protected
     storage).
@@ -85,8 +87,10 @@ it with.
    in the middle.
 3. B joins A's cellar (combining or replacing its own bottles); from then on,
    changes sync automatically when the devices are on the same Wi-Fi.
-4. Away from home: once a relay is set on one device, the key and address reach
-   the others at their next meeting, and they sync through encrypted files.
+4. Away from home: once a WebDAV folder, a relay or iCloud is set on one device,
+   the key and address reach the others at their next meeting, and they sync
+   through encrypted files. A WebDAV login stays on each device: the others ask
+   to sign in to the folder.
 5. **Removing a device** removes its identity key from the cellar (it can no
    longer connect) and rotates the key of the remote files (it can no longer
    read anything new). It keeps what it already had.
@@ -199,7 +203,8 @@ kept within the privacy rules: everything is worked out on the device.
 | Search Pictures of the bottle (cover picture; the label photo is kept) | Done | Done |
 | Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
 | Watch app | Later | Later (Wear OS tile) |
-| More places to sync through: Google Drive, Dropbox, pCloud, Proton Drive (depends on its API), a NAS over WebDAV (Synology, QNAP, Nextcloud). Each is a thin adapter of the same encrypted mailbox protocol | Later | Later |
+| More places to sync through: a WebDAV folder (Synology, QNAP, Nextcloud, pCloud) with a login kept on each device. Each is a thin adapter of the same encrypted mailbox protocol | WebDAV done | WebDAV done |
+| Google Drive and Dropbox (need an OAuth app registered and verified with each provider), Proton Drive (no public API yet) | Later | Later |
 
 ### Ask your cellar (on the device)
 

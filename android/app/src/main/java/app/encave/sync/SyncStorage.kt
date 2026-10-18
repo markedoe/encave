@@ -15,6 +15,7 @@ import app.encave.data.ai.SecretStore
 import java.io.File
 import java.time.Instant
 import java.util.UUID
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -24,9 +25,9 @@ import kotlinx.serialization.json.Json
  * - `files/sync/`: the change stamps (sync.json), the devices with their public keys
  *   (devices.json), when each device last synced and the remote progress. Left out of
  *   backups and device transfers: a copy on another phone would not be that device.
- * - the identity private key and the remote cellar key, encrypted with an Android
- *   Keystore key (as the AI key is);
- * - the device ID and the relay address, in private preferences.
+ * - the identity private key, the remote cellar key and the WebDAV login, encrypted
+ *   with an Android Keystore key (as the AI key is);
+ * - the device ID and the storage address (relay or WebDAV folder), in private preferences.
  */
 class SyncStorage(private val context: Context) {
     private val folder = File(context.filesDir, "sync")
@@ -71,7 +72,7 @@ class SyncStorage(private val context: Context) {
 
     fun saveRemoteProgress(progress: RemoteProgress) = write(REMOTE, Json.encodeToString(RemoteProgress.serializer(), progress).toByteArray())
 
-    /** The relay URL, or null when syncing away from home is off. */
+    /** The relay URL, "webdav:" and the folder URL, or null when syncing away from home is off. */
     var remoteStorage: String?
         get() = prefs.getString(KEY_STORAGE, null)
         set(value) = prefs.edit { if (value == null) remove(KEY_STORAGE) else putString(KEY_STORAGE, value) }
@@ -84,6 +85,13 @@ class SyncStorage(private val context: Context) {
         get() = runCatching { secrets.get(KEY_PENDING_KEY)?.let { SyncJson.decode(CellarKey.serializer(), it.toByteArray()) } }.getOrNull()
         set(value) {
             runCatching { secrets.set(KEY_PENDING_KEY, value?.let { SyncJson.encode(CellarKey.serializer(), it).decodeToString() }) }
+        }
+
+    /** The login for a WebDAV folder, on this device only: other devices sign in with their own. */
+    var webDavLogin: WebDavLogin?
+        get() = runCatching { secrets.get(KEY_WEBDAV_LOGIN)?.let { Json.decodeFromString(WebDavLogin.serializer(), it) } }.getOrNull()
+        set(value) {
+            runCatching { secrets.set(KEY_WEBDAV_LOGIN, value?.let { Json.encodeToString(WebDavLogin.serializer(), it) }) }
         }
 
     var remoteKey: CellarKey?
@@ -125,10 +133,11 @@ class SyncStorage(private val context: Context) {
         resetRemote()
     }
 
-    /** Forgets the remote key, the pending one and the progress (leaving, or joining another cellar). */
+    /** Forgets the remote key, the pending one, the WebDAV login and the progress (leaving, or joining another cellar). */
     fun resetRemote() {
         remoteKey = null
         pendingKey = null
+        webDavLogin = null
         file(REMOTE).delete()
         prefs.edit { remove(KEY_ROTATION) }
     }
@@ -150,6 +159,7 @@ class SyncStorage(private val context: Context) {
         private const val KEY_ROTATION = "rotationPending"
         private const val KEY_IDENTITY = "sync.identity"
         private const val KEY_CELLAR_KEY = "sync.cellarKey"
+        private const val KEY_WEBDAV_LOGIN = "sync.webDavLogin"
 
         /** The name other devices show for this one: the name set in system settings, or the model. */
         fun deviceName(context: Context): String =
@@ -157,3 +167,12 @@ class SyncStorage(private val context: Context) {
                 ?.takeIf { it.isNotBlank() } ?: Build.MODEL ?: "Android"
     }
 }
+
+/** A username and (app) password for one WebDAV folder. */
+@Serializable
+data class WebDavLogin(
+    /** The folder URL the login belongs to; a login for another folder is not used. */
+    val folder: String,
+    val username: String,
+    val password: String,
+)

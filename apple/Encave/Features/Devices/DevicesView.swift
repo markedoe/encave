@@ -81,6 +81,7 @@ struct DevicesView: View {
                             switch sync.remoteStorage {
                             case nil: Text("Off")
                             case .iCloud: Text(verbatim: "iCloud")
+                            case .webDAV: Text(verbatim: "WebDAV")
                             case .relay: Text("Relay")
                             }
                         } label: {
@@ -88,8 +89,18 @@ struct DevicesView: View {
                         }
                     }
                     .accessibilityIdentifier("devices.remote")
+                    if sync.needsWebDAVSignIn {
+                        // The folder came from another device: this one needs its own login.
+                        NavigationLink {
+                            RemoteSyncView()
+                        } label: {
+                            Label("Sign in to this WebDAV folder", systemImage: "person.badge.key")
+                                .foregroundStyle(.orange)
+                        }
+                        .accessibilityIdentifier("devices.webdavSignIn")
+                    }
                 } footer: {
-                    Text("Keeps devices in sync when they are not on the same Wi-Fi, through a relay that only stores encrypted data.")
+                    Text("Keeps devices in sync when they are not on the same Wi-Fi, through storage that only holds encrypted data: iCloud, a WebDAV folder or a relay.")
                 }
             }
 
@@ -177,10 +188,14 @@ private struct DeviceRow: View {
 
 // MARK: - Away from home
 
-/// Syncing away from home: through the user's iCloud, or a relay; and what each can see.
+/// Syncing away from home: through the user's iCloud, a WebDAV folder or a relay; and what each can see.
 struct RemoteSyncView: View {
     @Environment(CellarModel.self) private var model
     @State private var address = ""
+    @State private var webDAVAddress = ""
+    @State private var username = ""
+    @State private var password = ""
+    @State private var changingLogin = false
     @State private var checking = false
     @State private var error: String?
 
@@ -192,6 +207,8 @@ struct RemoteSyncView: View {
                     switch storage {
                     case .iCloud:
                         LabeledContent("Storage") { Text(verbatim: "iCloud") }
+                    case .webDAV(let url):
+                        LabeledContent("WebDAV folder") { Text(verbatim: url.host() ?? url.absoluteString) }
                     case .relay(let url):
                         LabeledContent("Relay") { Text(verbatim: url.host() ?? url.absoluteString) }
                     }
@@ -218,6 +235,33 @@ struct RemoteSyncView: View {
                 } footer: {
                     Text("Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.")
                 }
+                if case .webDAV = storage {
+                    if sync.needsWebDAVSignIn || changingLogin {
+                        Section {
+                            loginFields
+                            Button {
+                                signIn()
+                            } label: {
+                                if checking { ProgressView() } else { Text("Check and Sign In") }
+                            }
+                            .disabled(checking || trimmedUsername.isEmpty || password.isEmpty)
+                            .accessibilityIdentifier("remote.webdavSignIn")
+                        } header: {
+                            Text("Sign in to this WebDAV folder")
+                        } footer: {
+                            Text("Each device signs in with its own username and password, kept in the Keychain on that device. An app password is recommended.")
+                        }
+                    } else {
+                        Section {
+                            Button("Change Username or Password") { changingLogin = true }
+                        }
+                    }
+                    if let error {
+                        Section {
+                            Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                        }
+                    }
+                }
             } else {
                 if CloudKitMailboxStore.isConfigured {
                     Section {
@@ -233,6 +277,27 @@ struct RemoteSyncView: View {
                     } footer: {
                         Text("For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.")
                     }
+                }
+                Section {
+                    TextField("Server address", text: $webDAVAddress, prompt: Text(verbatim: "https://"))
+                        .urlField()
+                        .accessibilityIdentifier("remote.webdavAddress")
+                    loginFields
+                    Button {
+                        if let url = WebDAVMailboxStore.folderURL(webDAVAddress) {
+                            turnOn(.webDAV(url), login: WebDAVLogin(folder: url.absoluteString, username: trimmedUsername,
+                                                                     password: password))
+                        }
+                    } label: {
+                        if checking { ProgressView() } else { Text("Check and Turn On") }
+                    }
+                    .disabled(checking || WebDAVMailboxStore.folderURL(webDAVAddress) == nil || trimmedUsername.isEmpty
+                              || password.isEmpty)
+                    .accessibilityIdentifier("remote.webdavTurnOn")
+                } header: {
+                    Text("WebDAV folder (NAS, Nextcloud, pCloud…)")
+                } footer: {
+                    Text("Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays in the Keychain on this device. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.")
                 }
                 Section {
                     TextField("Relay address", text: $address, prompt: Text(verbatim: "https://"))
@@ -257,9 +322,9 @@ struct RemoteSyncView: View {
             }
 
             Section {
-                Label("Only encrypted files are stored. Neither Apple nor a relay can see your wines, photos or device names.",
+                Label("Only encrypted files are stored. Neither Apple, the WebDAV server nor a relay can see your wines, photos or device names.",
                       systemImage: "lock.shield")
-                Label("The storage sees when devices sync, how much they send and, for a relay, their IP addresses.",
+                Label("The storage sees when devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.",
                       systemImage: "eye")
                 Label("Removing a device gives the others a new key, so it can no longer read anything new.",
                       systemImage: "key")
@@ -290,19 +355,63 @@ struct RemoteSyncView: View {
         return nil
     }
 
-    private func turnOn(_ storage: RemoteStorage) {
+    private var trimmedUsername: String { username.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// Username and password, for turning on a WebDAV folder or signing in to one.
+    @ViewBuilder private var loginFields: some View {
+        TextField("Username", text: $username)
+            .plainInput()
+            .textContentType(.username)
+            .accessibilityIdentifier("remote.webdavUsername")
+        SecureField("Password", text: $password)
+            .plainInput()
+            .textContentType(.password)
+            .fieldHelp("An app password created on the server is recommended. Stored in the Keychain on this device.")
+            .accessibilityIdentifier("remote.webdavPassword")
+    }
+
+    private func turnOn(_ storage: RemoteStorage, login: WebDAVLogin? = nil) {
         checking = true
         error = nil
         Task {
             do {
-                try await model.sync.setRemoteStorage(storage)
+                try await model.sync.setRemoteStorage(storage, login: login)
+                password = ""
             } catch {
                 switch storage {
                 case .iCloud: self.error = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
+                case .webDAV: self.error = Self.webDAVMessage(error)
                 case .relay: self.error = String(localized: "This address does not answer as an Encave relay.")
                 }
             }
             checking = false
+        }
+    }
+
+    private func signIn() {
+        checking = true
+        error = nil
+        Task {
+            do {
+                try await model.sync.signInToWebDAV(username: trimmedUsername, password: password)
+                password = ""
+                changingLogin = false
+            } catch {
+                self.error = Self.webDAVMessage(error)
+            }
+            checking = false
+        }
+    }
+
+    /// What went wrong when checking a WebDAV folder.
+    static func webDAVMessage(_ error: Error) -> String {
+        switch error as? RemoteSyncError {
+        case .unauthorized:
+            String(localized: "The server refused this username or password. With two-step verification, use an app password.")
+        case .quotaExceeded:
+            String(localized: "The WebDAV folder is full. Free some space on the server.")
+        default:
+            String(localized: "This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.")
         }
     }
 }

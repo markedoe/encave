@@ -9,8 +9,8 @@ test vectors at the end are checked by `ProtocolVectorTests`.
 - **Local network (this document, sections 1–7):** devices on the same network
   find each other with Bonjour/mDNS and talk directly over TCP. No server.
 - **Remote sync (section 8):** devices that are apart exchange encrypted files
-  through storage that holds only ciphertext (iCloud, a relay). The choice of
-  storage is explained in [REMOTE_SYNC.md](REMOTE_SYNC.md).
+  through storage that holds only ciphertext (iCloud, a WebDAV folder, a relay).
+  The choice of storage is explained in [REMOTE_SYNC.md](REMOTE_SYNC.md).
 
 ## 1. Data model and merge
 
@@ -314,14 +314,15 @@ details that matter for exact round trips:
 
 ## 8. Remote sync
 
-Devices that are apart exchange encrypted files through a **storage**: a relay
+Devices that are apart exchange encrypted files through a **storage**: a
+WebDAV folder the user already has (a NAS, Nextcloud, pCloud…), a relay
 (`relay/`, an HTTP service anyone can host) or, between Apple devices, the
 user's iCloud (CloudKit private database, offered when the app is built with an
-iCloud container); Google Drive is planned (see [REMOTE_SYNC.md](REMOTE_SYNC.md)
-for the analysis). Any storage that
+iCloud container). Google Drive, Dropbox and Proton Drive may follow (see
+[REMOTE_SYNC.md](REMOTE_SYNC.md) for the analysis). Any storage that
 can list, read, create (never replace) and delete files works, because every
 file is written once by one device. Implementation: `RemoteSync.swift`,
-`RelayMailbox.swift`.
+`RelayMailbox.swift`, `WebDAVMailbox.swift` (and their Kotlin ports).
 
 ### Keys
 
@@ -381,6 +382,34 @@ checks that the grant's path names the same cellar, epoch and sender as its
 content. It uses a grant only if its key supersedes the current one, and it
 deletes the grants of its cellar with an older epoch than the key it keeps.
 
+### Storages
+
+Each storage keeps the files of a mailbox or inbox under its ID:
+
+- **Relay:** `/v1/m/<mailbox ID>/<path>`; requests carry the mailbox's token,
+  which the relay checks against the ID (`relay/README.md`).
+- **iCloud:** one CloudKit zone per mailbox in the user's private database.
+- **WebDAV:** `<folder>/<mailbox ID>/<path>` under the folder the user chose,
+  with the server's own login (HTTP Basic, ideally an app password); tokens are
+  not sent.
+  - List: `PROPFIND` with `Depth: 1`, folder by folder (`Depth: infinity` is
+    off on most servers), from the deepest folder the prefix names. Hrefs may
+    be absolute URLs, absolute paths or relative, percent-encoded; entries
+    outside the mailbox folder or with an invalid path are ignored.
+  - Read: `GET` (404: no such file). Delete: `DELETE` (404 is fine).
+  - Create: `PUT` with `If-None-Match: *`; 412 means the file exists. A missing
+    folder (409, or 404 on some servers) is made with `MKCOL` (405: it exists)
+    and the `PUT` is tried once more.
+  - 401 and 403 mean the login was refused, 507 that the storage is full, 413
+    that the file is too large; redirects are not followed, so the login is
+    never sent to another address.
+  - Only mailbox IDs and paths that pass the rules above become part of a URL.
+  - A server that ignores `If-None-Match` replaces an existing file instead of
+    answering 412. The protocol does not depend on it: snapshot names carry a
+    random part, photos are named after their content, and a grant's name
+    (cellar, epoch, sender) is only ever written again by its sender with the
+    same key.
+
 ### One round
 
 1. Read the inbox; adopt a granted key that supersedes the current one (and
@@ -425,10 +454,23 @@ and leaves a grant for every other member that has an inbox. The key and the
 storage also travel in the `sync-keys` step of every network sync (section 7),
 so devices pick up the setting when they meet.
 
-`storage` is `"icloud"` or the relay's URL. A device uses a storage told by
-another device only if it has none yet, and only an `https://` relay, or
-iCloud on Apple devices that support it. A device that receives a new key in a
-grant also moves to the grant's storage.
+`storage` is one of:
+
+- `"icloud"`;
+- `"webdav:"` followed by the folder URL, ending with `/`, for example
+  `"webdav:https://nas.example.com/encave/"`;
+- the relay's URL.
+
+A device uses a storage told by another device only if it has none yet, and
+only an `https://` relay, a WebDAV folder over `https://` (or `http://` for a
+local-network address: `localhost`, a `.local` or `.home.arpa` name, a private
+or link-local IP address), or iCloud on Apple devices that support it. A device
+that receives a new key in a grant also moves to the grant's storage.
+
+The WebDAV login never travels: not in grants, `sync-keys` or snapshots. Each
+device keeps its own username and password (Keychain, Android Keystore) for one
+folder URL; a device told about a folder it has no login for asks the user to
+sign in to it, and syncs through it once they have.
 
 ## 9. Security notes
 
@@ -449,6 +491,10 @@ grant also moves to the grant's storage.
   IDs are the same before and after a key rotation, so the relay can link the
   old and new mailboxes. A mailbox opens only with the token its ID is derived
   from, so someone who learns a mailbox ID cannot read it or lock its owner out.
+- **A WebDAV server** sees the same as a relay, and its account holders can
+  read the encrypted files and delete or replace them: a damaged or replaced
+  file fails to open and is skipped. Anyone who can open the folder can do the
+  same, since mailbox tokens are not checked there.
 - **On the local network,** the Bonjour records (`d`, `c`) stay the same on
   every network, so they can track a device across networks. During pairing,
   device names cross the network in plain text in steps 2 and 3 (the names

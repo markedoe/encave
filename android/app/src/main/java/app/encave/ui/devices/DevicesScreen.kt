@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Tablet
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -72,6 +73,8 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -81,6 +84,9 @@ import app.encave.R
 import app.encave.ui.components.readableWidth
 import app.encave.core.sync.Member
 import app.encave.core.sync.RelayMailboxStore
+import app.encave.core.sync.RemoteSyncError
+import app.encave.core.sync.RemoteSyncException
+import app.encave.core.sync.WebDavMailboxStore
 import app.encave.sync.SyncManager
 import app.encave.ui.AppNavigator
 import app.encave.ui.components.ActionContent
@@ -134,6 +140,14 @@ internal val SyncManager.Problem.text: Int
         SyncManager.Problem.Unfinished -> R.string.sync_problem_unfinished
         SyncManager.Problem.CannotListen -> R.string.sync_problem_cannot_listen
     }
+
+/** For a WebDAV folder, the problems that differ from a relay's. */
+private fun SyncManager.RemoteProblem.text(webDav: Boolean): Int = when {
+    webDav && this == SyncManager.RemoteProblem.Refused -> R.string.remote_problem_webdav_refused
+    webDav && this == SyncManager.RemoteProblem.Full -> R.string.remote_webdav_full
+    webDav && this == SyncManager.RemoteProblem.FileTooLarge -> R.string.remote_problem_webdav_too_large
+    else -> text
+}
 
 private val SyncManager.RemoteProblem.text: Int
     get() = when (this) {
@@ -238,10 +252,28 @@ fun DevicesScreen(navigator: AppNavigator) {
                     leadingContent = { Icon(Icons.Outlined.Public, contentDescription = null) },
                     headlineContent = { Text(stringResource(R.string.devices_remote)) },
                     supportingContent = {
-                        Text(stringResource(if (status.remoteStorage == null) R.string.devices_remote_off else R.string.devices_remote_relay))
+                        val storage = status.remoteStorage
+                        Text(
+                            stringResource(
+                                when {
+                                    storage == null -> R.string.devices_remote_off
+                                    storage.startsWith(SyncManager.WEBDAV_PREFIX) -> R.string.devices_remote_webdav
+                                    else -> R.string.devices_remote_relay
+                                },
+                            ),
+                        )
                     },
                     trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 )
+                if (status.needsWebDavSignIn) {
+                    // The folder came from another device: this one needs its own login.
+                    ListItem(
+                        modifier = Modifier.testTag("devices.webdav_sign_in").clickable { navigator.open(RemoteSyncRoute) },
+                        leadingContent = { Icon(Icons.Outlined.Key, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        headlineContent = { Text(stringResource(R.string.devices_webdav_sign_in), color = MaterialTheme.colorScheme.error) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+                    )
+                }
                 Footer(stringResource(R.string.devices_remote_footer))
             }
 
@@ -345,7 +377,45 @@ private fun RemovableDeviceRow(member: Member, status: String, onRemove: () -> U
     }
 }
 
-/** Syncing away from home through a relay, and what it can see. */
+/** What went wrong when checking a WebDAV folder or its login. */
+private fun webDavError(error: Throwable): Int = when ((error as? RemoteSyncException)?.error) {
+    RemoteSyncError.Unauthorized -> R.string.remote_webdav_refused
+    RemoteSyncError.QuotaExceeded -> R.string.remote_webdav_full
+    else -> R.string.remote_webdav_not_webdav
+}
+
+/** Username and password for a WebDAV folder; the password can be shown, with a TalkBack label. */
+@Composable
+private fun LoginFields(username: String, onUsername: (String) -> Unit, password: String, onPassword: (String) -> Unit) {
+    var visible by remember { mutableStateOf(false) }
+    OutlinedTextField(
+        value = username,
+        onValueChange = onUsername,
+        label = { Text(stringResource(R.string.remote_webdav_username)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrectEnabled = false),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).testTag("remote.webdav_username"),
+    )
+    OutlinedTextField(
+        value = password,
+        onValueChange = onPassword,
+        label = { Text(stringResource(R.string.remote_webdav_password)) },
+        singleLine = true,
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+        trailingIcon = {
+            IconButton(onClick = { visible = !visible }) {
+                Icon(
+                    if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = stringResource(if (visible) R.string.remote_hide_password else R.string.remote_show_password),
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).testTag("remote.webdav_password"),
+    )
+}
+
+/** Syncing away from home through a WebDAV folder or a relay, and what they can see. */
 @Composable
 fun RemoteSyncScreen(navigator: AppNavigator) {
     val sync = syncManager()
@@ -357,6 +427,13 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
     var error by remember { mutableStateOf<Int?>(null) }
     val candidate = address.trim().let { if (it.contains("://")) it else "https://$it" }
     val valid = address.isNotBlank() && RelayMailboxStore.isAllowed(candidate)
+    var folder by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    // Not saved with the screen's state: it is a secret.
+    var password by remember { mutableStateOf("") }
+    var changingLogin by remember { mutableStateOf(false) }
+    var webDavError by remember { mutableStateOf<Int?>(null) }
+    val folderValid = WebDavMailboxStore.folderUrl(folder) != null
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.remote_title)) }, navigationIcon = { Back(navigator) }) },
@@ -364,10 +441,13 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             val storage = status.remoteStorage
             if (storage != null) {
-                SectionHeader(stringResource(R.string.devices_remote_relay))
+                val isWebDav = storage.startsWith(SyncManager.WEBDAV_PREFIX)
+                val kind = if (isWebDav) R.string.devices_remote_webdav else R.string.devices_remote_relay
+                val shown = storage.removePrefix(SyncManager.WEBDAV_PREFIX)
+                SectionHeader(stringResource(kind))
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.devices_remote_relay)) },
-                    supportingContent = { Text(runCatching { URI(storage).host }.getOrNull() ?: storage) },
+                    headlineContent = { Text(stringResource(kind)) },
+                    supportingContent = { Text(runCatching { URI(shown).host }.getOrNull() ?: shown) },
                 )
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.remote_status)) },
@@ -375,7 +455,7 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                         val problem = status.remoteProblem
                         when {
                             status.syncingRemotely -> Text(stringResource(R.string.devices_status_syncing))
-                            problem != null -> Text(stringResource(problem.text), color = MaterialTheme.colorScheme.error)
+                            problem != null -> Text(stringResource(problem.text(isWebDav)), color = MaterialTheme.colorScheme.error)
                             status.lastRemoteSync != null -> Text(stringResource(R.string.devices_status_synced, relative(status.lastRemoteSync!!)))
                             else -> Text(stringResource(R.string.devices_status_never))
                         }
@@ -390,7 +470,73 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                     }
                 }
                 Footer(stringResource(R.string.remote_on_footer))
+                if (isWebDav) {
+                    if (status.needsWebDavSignIn || changingLogin) {
+                        SectionHeader(stringResource(R.string.devices_webdav_sign_in))
+                        LoginFields(username, { username = it; webDavError = null }, password, { password = it; webDavError = null })
+                        webDavError?.let { ErrorText(it) }
+                        Button(
+                            onClick = {
+                                checking = true
+                                webDavError = null
+                                scope.launch {
+                                    runCatching { sync.signInToWebDav(username.trim(), password) }
+                                        .onSuccess {
+                                            password = ""
+                                            changingLogin = false
+                                        }
+                                        .onFailure { webDavError = webDavError(it) }
+                                    checking = false
+                                }
+                            },
+                            enabled = username.isNotBlank() && password.isNotEmpty() && !checking,
+                            modifier = Modifier.padding(horizontal = Dimens.l).fillMaxWidth().testTag("action.webdav_sign_in"),
+                        ) {
+                            ActionContent(stringResource(R.string.remote_webdav_sign_in))
+                        }
+                        Footer(stringResource(R.string.remote_webdav_sign_in_footer))
+                    } else {
+                        TextButton(onClick = { changingLogin = true }, modifier = Modifier.padding(horizontal = Dimens.s)) {
+                            Text(stringResource(R.string.remote_webdav_change_login))
+                        }
+                    }
+                }
             } else {
+                SectionHeader(stringResource(R.string.remote_webdav))
+                OutlinedTextField(
+                    value = folder,
+                    onValueChange = {
+                        folder = it
+                        webDavError = null
+                    },
+                    label = { Text(stringResource(R.string.remote_webdav_address)) },
+                    placeholder = { Text("https://") },
+                    singleLine = true,
+                    isError = folder.isNotBlank() && !folderValid,
+                    supportingText = { if (folder.isNotBlank() && !folderValid) Text(stringResource(R.string.remote_webdav_invalid)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).testTag("remote.webdav_address"),
+                )
+                LoginFields(username, { username = it; webDavError = null }, password, { password = it; webDavError = null })
+                webDavError?.let { ErrorText(it) }
+                Button(
+                    onClick = {
+                        checking = true
+                        webDavError = null
+                        scope.launch {
+                            runCatching { sync.setWebDav(folder, username.trim(), password) }
+                                .onSuccess { password = "" }
+                                .onFailure { webDavError = webDavError(it) }
+                            checking = false
+                        }
+                    },
+                    enabled = folderValid && username.isNotBlank() && password.isNotEmpty() && !checking,
+                    modifier = Modifier.padding(horizontal = Dimens.l).fillMaxWidth().testTag("action.webdav_check"),
+                ) {
+                    ActionContent(stringResource(R.string.remote_check))
+                }
+                Footer(stringResource(R.string.remote_webdav_footer))
+
                 SectionHeader(stringResource(R.string.devices_remote_relay))
                 OutlinedTextField(
                     value = address,
@@ -444,6 +590,16 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
             Spacer(Modifier.width(1.dp).padding(bottom = Dimens.xl))
         }
     }
+}
+
+@Composable
+private fun ErrorText(text: Int) {
+    Text(
+        stringResource(text),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.xs),
+    )
 }
 
 @Composable
