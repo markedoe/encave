@@ -191,7 +191,8 @@ final class ScreenTourTests: XCTestCase {
         field.press()
         field.typeText(language == "fr" ? "Quelque chose de léger pour une ratatouille\n" : "Something light for a ratatouille\n")
         // The model answers on the device; it can take a while the first time.
-        let answer = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", language == "fr" ? "Réponse" : "Answer")).firstMatch
+        // The answer itself, not the footer that also says "Answered".
+        let answer = element("ask.answer")
         if answer.waitForExistence(timeout: 60) {
             sleep(1)
             snapshot("ask-answer")

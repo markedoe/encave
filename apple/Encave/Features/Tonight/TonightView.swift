@@ -12,7 +12,7 @@ struct TonightView: View {
         if let selection {
             list(selection: selection)
                 .navigationTitle("Tonight")
-                .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
+                .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView(selection: selection) }
                 .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView(selection: selection) }
         } else {
             NavigationStack {
