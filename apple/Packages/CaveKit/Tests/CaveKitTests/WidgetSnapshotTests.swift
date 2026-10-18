@@ -47,7 +47,10 @@ import Testing
         #expect(pick.color == .red)
         #expect(pick.maturity == .drinkSoon)
         #expect(pick.bottles == 2)
-        #expect(pick.place == cellar.locationLabel(for: cellar.bottles(of: wine.id)[0]))
+        // One bottle has a place, the other none: the pick names that place.
+        let placed = try #require(cellar.bottles(of: wine.id).first { $0.slot != nil })
+        #expect(pick.place == cellar.locationLabel(for: placed))
+        #expect(pick.place != nil)
         #expect(snapshot.drinkSoon == 2)
     }
 
