@@ -45,9 +45,10 @@ where each bottle sits in your racks, and when it is ready to drink.
   - wines discovered elsewhere, with tags and a shopping list.
 - **Your devices:**
   - Pair them with a QR code or a 6-digit code.
-  - They sync directly on the same Wi-Fi, or away from home through a relay you
-    choose (iCloud too, in builds set up with an iCloud container). Everything
-    is encrypted from end to end.
+  - They sync directly on the same Wi-Fi, or away from home through a WebDAV
+    folder you already have (NAS, Nextcloud, pCloud) or a relay you choose
+    (iCloud too, in builds set up with an iCloud container). Everything is
+    encrypted from end to end.
 - **Reminders and Siri:** a monthly reminder of the bottles to drink, a reminder
   on delivery days, "What should I open tonight?", wines in Spotlight, and on
   the Mac a glass in the menu bar. Everything is worked out on the device.
@@ -55,7 +56,8 @@ where each bottle sits in your racks, and when it is ready to drink.
 
 Android has the same features, apart from Siri and Spotlight, label reading on
 the device (barcodes only), Ask your cellar and the Mac menu bar; iCloud sync is
-Apple-only, relays work for both (see the [roadmap](docs/ROADMAP.md)).
+Apple-only, WebDAV folders and relays work for both (see the
+[roadmap](docs/ROADMAP.md)).
 
 ## Principles
 

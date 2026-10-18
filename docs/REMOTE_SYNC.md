@@ -17,8 +17,12 @@ from a primary source and should be tested before anything depends on them.
 >     which keeps no tokens: a mailbox ID is derived from its token;
 >   - its client in the Apple app;
 >   - CloudKit (the user's private database, one zone per mailbox) in the Apple
->     app, shown only in builds that declare an iCloud container.
+>     app, shown only in builds that declare an iCloud container;
+>   - WebDAV (section 6.3) in the Apple and Android apps: a folder on a NAS
+>     (Synology, QNAP), Nextcloud, pCloud or any WebDAV server, with a username
+>     and app password kept on each device (no Login Flow v2 yet).
 > - Planned: Google Drive, the community relay decision, and signatures on files.
+>   Dropbox later; Proton Drive only if it publishes an API.
 >
 > **Corrections to the analysis below:**
 > - Pairing on the local network uses a commit-then-reveal key exchange with a
@@ -455,6 +459,17 @@ invitee pairs once.
 
 ### 6.3 WebDAV / Nextcloud (direct HTTP)
 
+**Status: done** (`WebDAVMailbox.swift`, `WebDavMailbox.kt`; mapping in
+[SYNC.md](SYNC.md), section 8, "Storages"). Generic WebDAV with a username and
+app password covers NAS boxes, Nextcloud and pCloud
+(`webdav.pcloud.com`, or `ewebdav.pcloud.com` for accounts in the EU region)
+without registering any app. Each device signs in with its own login; only the
+folder URL travels in grants. `If-None-Match: *` is sent on every `PUT`, but
+the protocol stays safe on a server that ignores it (overwrites are by the
+same writer with the same content). Not yet tried on real servers: Nextcloud,
+Synology, QNAP and pCloud behaviour (status codes for missing folders,
+`If-None-Match`, PROPFIND hrefs) is covered by tests against a fake server only.
+
 - **Auth:** Nextcloud Login Flow v2 opens the server's login page in the
   browser and returns an **app password** the user can revoke
   ([Nextcloud Login Flow](https://docs.nextcloud.com/server/stable/developer_manual/client_apis/LoginFlow/index.html)).
@@ -823,7 +838,7 @@ magic "ENCV" | version u8 | kind u8 | epoch u32 | deviceId 16B | seq/lamport u64
 | **3a. CKShare** | Zone-wide share, accept flow, participant list, view-only via roster roles + signatures | 1 to 2 weeks | Apple-only households |
 | **3b. Self-hostable relay** | Worker + DO + R2 template, Docker image, rate limits, quotas, TTLs, PAKE rendezvous endpoint; "Custom relay URL" setting; relay URL in the pairing QR | 2 to 3 weeks | Mixed households; remote 6-digit pairing |
 | **3c. Decision** | Run a capped community relay or not; publish a budget and a shutdown policy if yes | — | — |
-| **4. WebDAV / Nextcloud** | Login Flow v2, PROPFIND / PUT; test on 3 to 4 servers | 1 to 2 weeks | Power users, Nextcloud households |
+| **4. WebDAV / Nextcloud** (done, without Login Flow v2) | Login Flow v2, PROPFIND / PUT; test on 3 to 4 servers | 1 to 2 weeks | Power users, Nextcloud households |
 | **5. Dropbox app folder** (only if asked) | PKCE OAuth, REST adapter; production review at 50 users | 1 to 2 weeks | — |
 | **Always** | Encrypted backup export/import to any Files/SAF location (one file, manual) | 3 to 5 days | Recovery for single-device users |
 
@@ -874,7 +889,8 @@ magic "ENCV" | version u8 | kind u8 | epoch u32 | deviceId 16B | seq/lamport u64
 7. CloudKit Web Services / JS access to private or shared databases from
    Android in 2026.
 8. Dropbox: sharing app folders between users; current OAuth details.
-9. WebDAV `If-None-Match: *` support on specific servers.
+9. WebDAV `If-None-Match: *` support on specific servers (the protocol no
+   longer depends on it, see section 6.3).
 10. R2 payment-method requirement; Deno Deploy, Supabase and Pinata
     free-tier figures (secondary sources).
 11. Nostr relay size and retention defaults (strfry upstream); Syncthing
