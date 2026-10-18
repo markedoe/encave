@@ -135,12 +135,17 @@ struct WinePhoto: View {
                 Color.secondary.opacity(0.08)
             }
         }
-        .task(id: data.map { "\($0.hashValue)" } ?? photoID) {
-            let source = data ?? PhotoStore.data(for: photoID)
-            let size = maxPixelSize
+        // Compared by content (a hash can collide), and the file is read off the main thread.
+        .task(id: Source(data: data, photoID: photoID)) {
+            let data = data, photoID = photoID, size = maxPixelSize
             image = await Task.detached(priority: .userInitiated) {
-                source.flatMap { PhotoStore.cgImage(from: $0, maxPixelSize: size) }
+                (data ?? PhotoStore.data(for: photoID)).flatMap { PhotoStore.cgImage(from: $0, maxPixelSize: size) }
             }.value
         }
+    }
+
+    private struct Source: Equatable {
+        var data: Data?
+        var photoID: String?
     }
 }
