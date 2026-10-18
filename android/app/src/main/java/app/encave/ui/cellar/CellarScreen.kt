@@ -122,6 +122,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.UuidSetSaver
 import app.encave.ui.components.WineColorDot
 import app.encave.ui.components.WineGroupRow
 import app.encave.ui.components.icon
@@ -172,6 +173,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         viewModel, navigator, selectedId,
                         showBack = !twoPane,
                         onBack = { scope.launch { paneNavigator.navigateBack() } },
+                        showMessages = !twoPane,
                     )
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -214,7 +216,7 @@ private fun CellarList(
     val reservations = remember(cellar) { cellar.reservations }
     // Choosing several wines: a contextual top bar acts on all of them, with one Undo.
     var selecting by rememberSaveable { mutableStateOf(false) }
-    var picked by remember { mutableStateOf(setOf<java.util.UUID>()) }
+    var picked by rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(setOf<java.util.UUID>()) }
     var confirmBulkDelete by remember { mutableStateOf(false) }
     var namingSearch by remember { mutableStateOf(false) }
     var confirmSample by remember { mutableStateOf(false) }
