@@ -3511,6 +3511,16 @@
         }
       }
     },
+    "From the Internet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depuis Internet"
+          }
+        }
+      }
+    },
     "From your cellar": {
       "localizations": {
         "fr": {
@@ -4941,6 +4951,16 @@
         }
       }
     },
+    "No pictures found. Try fewer words.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune image trouvée. Essayez avec moins de mots."
+          }
+        }
+      }
+    },
     "No price in %@ was found. Tap a price below to use it with its currency.": {
       "localizations": {
         "fr": {
@@ -5281,6 +5301,16 @@
         }
       }
     },
+    "On a wine's page, **Change Picture…** then **Search Pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur la fiche d’un vin, **Changer l’image…** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé."
+          }
+        }
+      }
+    },
     "On a wine's page, **Find Current Price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save Price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**. With Apple Intelligence, **Estimate on This Device** reads the prices on the device.": {
       "localizations": {
         "fr": {
@@ -5567,6 +5597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seul le nom est obligatoire. Le producteur et le millésime distinguent les vins du même nom."
+          }
+        }
+      }
+    },
+    "Only the search terms are sent to %@. The thumbnails and the picture you choose are downloaded from the sites that host them, which see the request and your IP address. Pictures from shops are for your private use. The label photo is kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuls les termes de recherche sont envoyés à %@. Les miniatures et l’image que vous choisissez sont téléchargées depuis les sites qui les hébergent, qui voient la requête et votre adresse IP. Les images des boutiques sont pour votre usage privé. La photo de l’étiquette est conservée."
           }
         }
       }
@@ -5897,6 +5937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photos"
+          }
+        }
+      }
+    },
+    "Pictures": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Images"
           }
         }
       }
@@ -6917,6 +6967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chercher en ligne"
+          }
+        }
+      }
+    },
+    "Search Pictures": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher des images"
           }
         }
       }
@@ -8761,6 +8821,16 @@
         }
       }
     },
+    "This picture could not be downloaded. Try another one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette image n’a pas pu être téléchargée. Essayez-en une autre."
+          }
+        }
+      }
+    },
     "This place is full.": {
       "localizations": {
         "fr": {
@@ -9207,6 +9277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sert à la valeur de votre cave dans les Statistiques. La devise se règle dans les réglages."
+          }
+        }
+      }
+    },
+    "Uses this picture for the wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilise cette image pour le vin."
           }
         }
       }
@@ -9967,6 +10047,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "derrière"
+          }
+        }
+      }
+    },
+    "bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille"
           }
         }
       }

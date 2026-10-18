@@ -196,6 +196,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
+| Search Pictures of the bottle (cover picture; the label photo is kept) | Done | Done |
 | Suggest Details from the search results (on-device model) | Done (Apple Intelligence devices) | Later |
 | Watch app | Later | Later (Wear OS tile) |
 | More places to sync through: Google Drive, Dropbox, pCloud, Proton Drive (depends on its API), a NAS over WebDAV (Synology, QNAP, Nextcloud). Each is a thin adapter of the same encrypted mailbox protocol | Later | Later |

@@ -15,6 +15,15 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    "On a wine's page, **Change Picture…** then **Search Pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.": "Sur la fiche d’un vin, **Changer l’image…** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé.",
+    "Pictures": "Images",
+    "bottle": "bouteille",
+    "From the Internet": "Depuis Internet",
+    "Search Pictures": "Chercher des images",
+    "No pictures found. Try fewer words.": "Aucune image trouvée. Essayez avec moins de mots.",
+    "This picture could not be downloaded. Try another one.": "Cette image n’a pas pu être téléchargée. Essayez-en une autre.",
+    "Uses this picture for the wine.": "Utilise cette image pour le vin.",
+    "Only the search terms are sent to %@. The thumbnails and the picture you choose are downloaded from the sites that host them, which see the request and your IP address. Pictures from shops are for your private use. The label photo is kept.": "Seuls les termes de recherche sont envoyés à %@. Les miniatures et l’image que vous choisissez sont téléchargées depuis les sites qui les hébergent, qui voient la requête et votre adresse IP. Les images des boutiques sont pour votre usage privé. La photo de l’étiquette est conservée.",
     "price": "prix",
     "Find Current Price": "Trouver le prix actuel",
     "Price today": "Prix actuel",

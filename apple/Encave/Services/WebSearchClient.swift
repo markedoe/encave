@@ -62,6 +62,43 @@ enum WebSearchClient {
         return try provider.results(from: data, status: status)
     }
 
+    /// Pictures for the query, from the image search of the same service.
+    static func searchImages(_ query: String, settings: WebSearchSettings = .load(), count: Int = 30) async throws -> [WebImageResult] {
+        let provider = try settings.service.imageProvider(apiKey: settings.apiKey, serverURL: settings.serverURL)
+        let described = try provider.imageRequest(for: query, count: count)
+        var request = URLRequest(url: described.url)
+        request.httpMethod = described.method
+        request.timeoutInterval = 30
+        for (field, value) in described.headers {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
+        request.httpBody = described.body
+        let (data, response) = try await session.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        return try provider.imageResults(from: data, status: status)
+    }
+
+    /// Downloads a chosen picture from its host: https only, an image type, at most 8 MB.
+    static func downloadImage(_ url: URL) async throws -> Data {
+        guard WebImageDownload.isAllowed(url) else { throw WebSearchError.invalidResponse }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = WebImageDownload.timeout
+        let (bytes, response) = try await session.bytes(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
+              http.url.map(WebImageDownload.isAllowed) ?? true,
+              WebImageDownload.isImage(contentType: http.value(forHTTPHeaderField: "Content-Type")),
+              WebImageDownload.acceptsLength(response.expectedContentLength) else {
+            throw WebSearchError.invalidResponse
+        }
+        var data = Data()
+        data.reserveCapacity(Int(min(max(response.expectedContentLength, 0), Int64(WebImageDownload.maxBytes))))
+        for try await byte in bytes {
+            data.append(byte)
+            if data.count > WebImageDownload.maxBytes { throw WebSearchError.invalidResponse }
+        }
+        return data
+    }
+
     /// What went wrong, in words.
     static func message(for error: Error) -> String {
         guard let error = error as? WebSearchError else {

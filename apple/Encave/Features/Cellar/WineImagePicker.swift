@@ -103,14 +103,139 @@ struct WineImagePicker: View {
     }
 }
 
-/// Pictures found on the internet, when a search service is set up in Settings.
-/// Filled in by the web search feature; shows nothing until then.
+/// Pictures found on the internet, when a search service is set up in Settings. The
+/// search terms are shown and editable, and sent only on Search Pictures; the chosen
+/// picture is downloaded from its host and becomes the cover. The label photo is kept.
 struct WebImageSection: View {
     let wine: Wine
     let onPick: @MainActor (Data) async -> Void
 
+    @State private var settings = WebSearchSettings.load()
+    @State private var query = ""
+    @State private var images: [WebImageResult] = []
+    @State private var searching = false
+    @State private var searched = false
+    @State private var problem: String?
+    @State private var downloading: String?
+
     var body: some View {
-        EmptyView()
+        if settings.isEnabled {
+            Section {
+                TextField("Search terms", text: $query)
+                    .autocorrectionDisabled()
+                    .submitLabel(.search)
+                    .onSubmit(search)
+                Button(action: search) {
+                    if searching {
+                        HStack { ProgressView(); Text("Searching…") }
+                    } else {
+                        Label("Search Pictures", systemImage: "photo.on.rectangle.angled")
+                    }
+                }
+                .disabled(searching || query.trimmingCharacters(in: .whitespaces).isEmpty)
+                .accessibilityIdentifier("picture.search")
+                if let problem {
+                    Label(problem, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.secondary)
+                }
+                if searched, images.isEmpty, problem == nil, !searching {
+                    Text("No pictures found. Try fewer words.")
+                        .foregroundStyle(.secondary)
+                }
+                if !images.isEmpty {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 12) {
+                        ForEach(images) { image in
+                            thumbnail(image)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            } header: {
+                Text("From the Internet")
+            } footer: {
+                let serviceName = settings.service.name
+                Text("Only the search terms are sent to \(serviceName). The thumbnails and the picture you choose are downloaded from the sites that host them, which see the request and your IP address. Pictures from shops are for your private use. The label photo is kept.")
+            }
+            .onAppear {
+                if query.isEmpty {
+                    query = WebSearchQuery.pictureTerms(for: wine, bottleWord: String(localized: "bottle", comment: "Added to picture search terms"))
+                }
+            }
+        }
+    }
+
+    private func thumbnail(_ image: WebImageResult) -> some View {
+        Button {
+            pick(image)
+        } label: {
+            VStack(spacing: 4) {
+                Color.clear
+                    .frame(height: 120)
+                    .overlay {
+                        AsyncImage(url: image.thumbnailURL) { phase in
+                            switch phase {
+                            case .success(let picture):
+                                picture.resizable().scaledToFill()
+                            case .failure:
+                                Image(systemName: "photo").foregroundStyle(.secondary)
+                            default:
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay {
+                        if downloading == image.id {
+                            ProgressView()
+                                .padding(8)
+                                .background(.regularMaterial, in: Capsule())
+                        }
+                    }
+                Text(verbatim: image.domain)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(downloading != nil)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: image.title.isEmpty ? image.domain : "\(image.title), \(image.domain)"))
+        .accessibilityHint(Text("Uses this picture for the wine."))
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private func search() {
+        let terms = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !terms.isEmpty, !searching else { return }
+        searching = true
+        problem = nil
+        let settings = settings
+        Task {
+            defer { searching = false }
+            do {
+                images = try await WebSearchClient.searchImages(terms, settings: settings)
+            } catch {
+                images = []
+                problem = WebSearchClient.message(for: error)
+            }
+            searched = true
+        }
+    }
+
+    private func pick(_ image: WebImageResult) {
+        guard downloading == nil else { return }
+        downloading = image.id
+        problem = nil
+        Task {
+            defer { downloading = nil }
+            do {
+                let data = try await WebSearchClient.downloadImage(image.imageURL)
+                await onPick(data)
+            } catch {
+                problem = String(localized: "This picture could not be downloaded. Try another one.")
+            }
+        }
     }
 }
 

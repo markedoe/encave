@@ -31,7 +31,10 @@ There are two exceptions, both off by default:
   are sent to it: by default the producer, name, appellation and vintage (and
   the bottle size, for a price), shown and editable first. The cellar, notes, prices and places are never sent. The
   results are read on the device; on Apple devices, Suggest Details uses only the
-  on-device Apple Intelligence model.
+  on-device Apple Intelligence model. For Search Pictures, the thumbnails and
+  the picture you choose are downloaded from the sites that host them, which
+  see the request (your IP address); the picture is checked (https, an image,
+  at most 8 MB) and saved as a re-encoded JPEG without metadata.
 
 Keys are kept in the Keychain (Apple) or encrypted with the Android Keystore,
 on the device.

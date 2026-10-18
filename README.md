@@ -27,6 +27,9 @@ where each bottle sits in your racks, and when it is ready to drink.
     (producer, name, appellation, vintage, bottle size) are sent, after you see
     and can edit them. On Apple Intelligence devices, **Suggest Details** reads
     the results on the device and proposes details you accept one by one.
+  - **Search Pictures** finds a picture of the bottle with the same service;
+    the one you choose is downloaded from its site and shown as the wine's
+    picture. The label photo is always kept.
 - **Racks drawn as they look:** grids, honeycombs, wine fridges with depth, diamond
   bins, irregular rows.
   - See which bottle is where.
