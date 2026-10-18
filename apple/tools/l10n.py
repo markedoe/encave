@@ -754,7 +754,6 @@ FR = {
     "Label photo": "Photo de l’étiquette",
     "Model": "Modèle",
     "Not needed": "Inutile",
-    "Off": "Désactivée",
     "Only the label photo is sent, directly to this service, when you scan a label or tap “Complete with AI”. Your cellar is never sent. The key is stored in the Keychain on this device.": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil.",
     "OpenAI-compatible": "Compatible OpenAI",
     "Optional. Reads the label from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit l’étiquette sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
