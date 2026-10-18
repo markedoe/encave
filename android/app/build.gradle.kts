@@ -92,6 +92,9 @@ dependencies {
     implementation(libs.adaptive.navigation)
     // Device sync: relay rounds in the background.
     implementation(libs.androidx.work)
+    // Home screen widgets (Jetpack Glance), drawn from a summary kept on the device.
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
     // Pairing: scanning the other device's QR code on the device (no ML Kit, which reports to Google).
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.lifecycle)
@@ -108,4 +111,5 @@ dependencies {
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.glance.appwidget.testing)
 }

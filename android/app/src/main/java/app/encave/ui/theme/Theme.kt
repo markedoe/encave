@@ -43,7 +43,7 @@ private fun winePalette(dark: Boolean, unknown: Color) = WinePalette(
  * derived from the accent token by mixing with white or black, so no color
  * is written here.
  */
-private fun brandScheme(dark: Boolean): ColorScheme {
+internal fun brandScheme(dark: Boolean): ColorScheme {
     val accent = DesignTokens.accent.resolve(dark)
     val ink = if (dark) Color.White else Color.Black
     val paper = if (dark) Color.Black else Color.White

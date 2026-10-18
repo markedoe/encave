@@ -38,7 +38,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- encave://wine/<id>, encave://tonight and encave://scan: reminders, shortcuts, links. -->
+            <!-- encave://wine/<id>, encave://tonight, encave://scan and encave://add: reminders, shortcuts, widgets, links. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -47,6 +47,26 @@
             </intent-filter>
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- Home screen widgets (Glance): drawn from a summary of the cellar kept on the device. -->
+        <receiver
+            android:name=".widget.TonightWidgetReceiver"
+            android:exported="true"
+            android:label="@string/nav_tonight">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_tonight_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.CellarWidgetReceiver"
+            android:exported="true"
+            android:label="@string/nav_cellar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_cellar_info" />
+        </receiver>
 
         <!-- Hands the camera app a file in our cache for "Take a photo". -->
         <provider

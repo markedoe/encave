@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Background of the widget picker previews (Android 12 to 14): the launcher's theme colors. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?android:attr/colorBackground" />
+    <corners android:radius="16dp" />
+</shape>

@@ -2,12 +2,16 @@ package app.encave
 
 import android.app.Application
 import app.encave.core.JsonFileCellarStore
+import app.encave.core.WidgetSnapshot
 import app.encave.data.CellarRepository
 import app.encave.data.PhotoStore
 import app.encave.data.Preferences
 import app.encave.data.ai.AiPreferences
 import app.encave.data.search.WebSearchPreferences
 import app.encave.sync.SyncManager
+import app.encave.widget.WidgetPublisher
+import app.encave.widget.WidgetSnapshotStore
+import app.encave.widget.Widgets
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,9 +36,15 @@ class EncaveApplication : Application() {
     /** Pairing and sync with the user's other devices (off until a device is added). */
     val sync: SyncManager by lazy { SyncManager(this, repository, photos, scope) }
 
+    /** The home screen widgets' summary of the cellar (`files/widget-snapshot.json`). */
+    val widgetSnapshots: WidgetSnapshotStore by lazy { WidgetSnapshotStore(File(filesDir, WidgetSnapshot.FILE_NAME)) }
+
     override fun onCreate() {
         super.onCreate()
         sync.start()
+        // Widgets follow every change, made here or synced from another device.
+        WidgetPublisher(repository, widgetSnapshots, scope, onChanged = { Widgets.update(this) }).start()
+        scope.launch { Widgets.publishPreviews(this@EncaveApplication) }
         if (app.encave.reminders.Reminders.isEnabled(this)) app.encave.reminders.Reminders.schedule(this)
         // Photos no wine refers to any more (deleted or replaced) are removed at launch.
         scope.launch(Dispatchers.IO) {
