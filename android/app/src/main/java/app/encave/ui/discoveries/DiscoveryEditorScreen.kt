@@ -72,6 +72,8 @@ import app.encave.ui.help.HelpLink
 import app.encave.ui.help.HelpTopic
 import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.WhenLoaded
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.RatingInput
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
@@ -85,18 +87,28 @@ import java.time.Instant
  */
 @Composable
 fun DiscoveryEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, discoveryId: String?) {
+    WhenLoaded(viewModel) { DiscoveryEditorForm(viewModel, navigator, discoveryId) }
+}
+
+@Composable
+private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator, discoveryId: String?) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val existing = remember(discoveryId) { discoveryId?.let { id -> cellar.discoveries.values.firstOrNull { it.id.toString() == id } } }
+    // Removed meanwhile (on another device): nothing to edit, and saving would add it again.
+    if (discoveryId != null && existing == null) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { navigator.back() }
+        return
+    }
     val wine = existing?.let { cellar.wines[it.wineId] }
-    val form = remember(existing) { WineFormState(wine, viewModel.year) }
+    val form = rememberRetained("discovery.form") { WineFormState(wine, viewModel.year) }
     val known = remember(cellar) { cellar.knownValues() }
     var setting by rememberSaveable { mutableStateOf(existing?.setting) }
     var place by rememberSaveable { mutableStateOf(existing?.place.orEmpty()) }
-    var date by remember { mutableStateOf(existing?.date ?: app.encave.core.ReferenceDates.now()) }
+    var date by rememberSaveable { mutableStateOf(existing?.date ?: app.encave.core.ReferenceDates.now()) }
     var pickingDate by remember { mutableStateOf(false) }
     var rating by rememberSaveable { mutableStateOf(existing?.rating) }
     var note by rememberSaveable { mutableStateOf(existing?.note.orEmpty()) }
-    val tags = remember { mutableStateListOf<String>().apply { existing?.tags?.let { addAll(it) } } }
+    val tags = rememberRetained("discovery.tags") { mutableStateListOf<String>().apply { existing?.tags?.let { addAll(it) } } }
     var pendingTag by rememberSaveable { mutableStateOf("") }
     var wantsToBuy by rememberSaveable { mutableStateOf(existing?.wantsToBuy ?: false) }
     var price by rememberSaveable { mutableStateOf(existing?.price?.toPlainString().orEmpty()) }

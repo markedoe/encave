@@ -92,7 +92,7 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
     var reading by remember { mutableStateOf(false) }
     var filled by rememberSaveable { mutableStateOf(false) }
     // Created when needed: the camera app writes the photo to this file in our cache.
-    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     fun cameraTarget(): Uri? = cameraUri ?: runCatching {
         val file = File(context.cacheDir, "camera/label.jpg").apply { parentFile?.mkdirs() }
         FileProvider.getUriForFile(context, "${context.packageName}.files", file)
