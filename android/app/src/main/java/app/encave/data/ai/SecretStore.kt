@@ -32,14 +32,18 @@ class SecretStore(context: Context) {
         return generator.generateKey()
     }
 
-    fun get(name: String): String? {
+    fun get(name: String): String? = runCatching { read(name) }.getOrNull()
+
+    /**
+     * The secret, or null if none is stored. Throws if one is stored but cannot be read (the
+     * Keystore failed), so a caller can tell a missing secret from one it could not read.
+     */
+    fun read(name: String): String? {
         val stored = prefs.getString(name, null) ?: return null
-        return runCatching {
-            val bytes = Base64.decode(stored, Base64.NO_WRAP)
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes, 0, IV_SIZE))
-            String(cipher.doFinal(bytes, IV_SIZE, bytes.size - IV_SIZE), Charsets.UTF_8)
-        }.getOrNull()
+        val bytes = Base64.decode(stored, Base64.NO_WRAP)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes, 0, IV_SIZE))
+        return String(cipher.doFinal(bytes, IV_SIZE, bytes.size - IV_SIZE), Charsets.UTF_8)
     }
 
     fun set(name: String, value: String?) {
