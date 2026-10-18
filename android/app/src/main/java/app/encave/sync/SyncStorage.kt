@@ -37,9 +37,14 @@ class SyncStorage(private val context: Context) {
     private fun file(name: String) = File(folder, name)
 
     private fun write(name: String, bytes: ByteArray) {
+        // Written for another identity than the stored one: kept for when it can be read again.
+        if (identityUnreadable) return
         folder.mkdirs()
         val temp = File(folder, "$name.tmp")
-        temp.writeBytes(bytes)
+        temp.outputStream().use { stream ->
+            stream.write(bytes)
+            stream.fd.sync()
+        }
         if (!temp.renameTo(file(name))) {
             file(name).delete()
             temp.renameTo(file(name))
@@ -101,12 +106,26 @@ class SyncStorage(private val context: Context) {
         }
 
     /**
+     * Set when this device's stored identity could not be read (the Keystore failed): this
+     * process uses a temporary one and saves no sync files, so nothing stored is lost or
+     * replaced; the identity is read again the next time Encave opens.
+     */
+    @Volatile var identityUnreadable = false
+        private set
+
+    /**
      * This device's identity: a random ID and an X25519 key, created once. If the
      * Keystore cannot be used (tests), the identity lives only as long as the process.
      */
     fun loadIdentity(): DeviceIdentity {
         val id = prefs.getString(KEY_DEVICE, null)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
-        val key = runCatching { secrets.get(KEY_IDENTITY)?.let { Base64.decode(it, Base64.NO_WRAP) } }.getOrNull()
+        val stored = runCatching { secrets.read(KEY_IDENTITY) }
+        if (stored.isFailure) {
+            // Stored but unreadable now: never replaced (that would end this device's membership).
+            identityUnreadable = true
+            return DeviceIdentity.generate().first
+        }
+        val key = stored.getOrNull()?.let { runCatching { Base64.decode(it, Base64.NO_WRAP) }.getOrNull() }
         if (id != null && key != null && key.size == 32) return DeviceIdentity(id, key)
         return newIdentity()
     }
@@ -119,6 +138,7 @@ class SyncStorage(private val context: Context) {
         val (identity, privateKey) = DeviceIdentity.generate()
         val stored = runCatching { secrets.set(KEY_IDENTITY, Base64.encodeToString(privateKey, Base64.NO_WRAP)) }.isSuccess
         if (stored) {
+            identityUnreadable = false
             prefs.edit { putString(KEY_DEVICE, identity.id.toString()) }
             // A new identity cannot use files written for another one.
             deleteAll()

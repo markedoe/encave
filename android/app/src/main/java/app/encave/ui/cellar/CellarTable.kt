@@ -199,7 +199,7 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
             if (id != null) {
                 VerticalDivider()
                 Box(Modifier.width(380.dp).fillMaxHeight()) {
-                    WineDetailScreen(viewModel, navigator, id, showBack = true, onBack = { selectedId = null })
+                    WineDetailScreen(viewModel, navigator, id, showBack = true, onBack = { selectedId = null }, showMessages = false)
                 }
             }
         }

@@ -88,7 +88,10 @@ fun WineImage(
 
 /** Studio versions of label photos, made once per size and kept in memory. */
 private object StudioBitmaps {
-    private val cache = LruCache<String, Bitmap>(32)
+    // Sized by memory, not by count: a large label photo weighs megabytes.
+    private val cache = object : LruCache<String, Bitmap>((Runtime.getRuntime().maxMemory() / 1024 / 8).toInt()) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / 1024
+    }
 
     fun get(photos: PhotoStore, id: String, maxPixelSize: Int): Bitmap? {
         val key = "$id@$maxPixelSize"

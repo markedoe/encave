@@ -91,6 +91,7 @@ import app.encave.ui.components.ActionContent
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.MaturityLabel
 import app.encave.ui.components.displayLabel
 import app.encave.ui.drink.DrinkSheet
@@ -127,7 +128,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var drinking by remember { mutableStateOf<Bottle?>(null) }
     // Checking the rack: the places whose bottles were found.
     var auditing by rememberSaveable { mutableStateOf(false) }
-    var checked by remember { mutableStateOf(setOf<Slot>()) }
+    var checked by rememberRetained("rack.audit.checked") { mutableStateOf(setOf<Slot>()) }
     var confirmingAudit by remember { mutableStateOf(false) }
     fun endAudit() {
         auditing = false

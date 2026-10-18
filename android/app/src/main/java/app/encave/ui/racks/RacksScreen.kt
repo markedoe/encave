@@ -124,7 +124,7 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     supportingContent = {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                             Text(
-                                "${stringResource(rack.kind.labelRes)} · ${stringResource(R.string.rack_holds, rack.capacity)}",
+                                "${stringResource(rack.kind.labelRes)} · ${androidx.compose.ui.res.pluralStringResource(R.plurals.rack_holds, rack.capacity, rack.capacity)}",
                             )
                             Text(stringResource(R.string.rack_occupancy, used, rack.capacity))
                             LinearProgressIndicator(

@@ -121,6 +121,8 @@ fun WineDetailScreen(
     wineId: String,
     showBack: Boolean,
     onBack: (() -> Unit)? = null,
+    /** False beside a list that shows the messages already (two panes). */
+    showMessages: Boolean = true,
 ) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val id = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull() }
@@ -171,7 +173,7 @@ fun WineDetailScreen(
                 scrollBehavior = scrollBehavior,
             )
         },
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+        snackbarHost = { if (showMessages) SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
         if (wine == null) {
             EmptyState(

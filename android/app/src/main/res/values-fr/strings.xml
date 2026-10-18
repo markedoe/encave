@@ -35,7 +35,6 @@
     <string name="action_surprise">Surprenez-moi</string>
     <string name="action_remove_from_rack">Sortir du casier</string>
     <string name="action_clear_filters">Retirer les filtres</string>
-    <string name="action_replace">Remplacer</string>
     <string name="action_change">Changer</string>
     <string name="action_put_back">Remettre en cave</string>
     <string name="search_hint">Vin, producteur, région, millésime</string>
@@ -160,7 +159,15 @@
     <string name="msg_saved">Enregistré</string>
     <string name="msg_put_back">%1$s est de retour en cave</string>
     <string name="msg_save_failed">La modification n’a pas pu être enregistrée.</string>
-    <string name="msg_load_failed">Impossible de charger votre cave.</string>
+    <string name="msg_load_failed">Impossible de charger votre cave. Rien n’est enregistré avant la prochaine ouverture d’Encave, pour ne pas écraser le fichier.</string>
+    <string name="msg_load_set_aside">Le fichier de votre cave n’a pas pu être lu. Il est conservé sur cet appareil sous le nom %1$s et Encave a démarré avec une cave vide. Pour en garder une copie ailleurs, utilisez Enregistrer le fichier de cave illisible dans les Réglages.</string>
+    <string name="settings_save_unreadable">Enregistrer le fichier de cave illisible</string>
+    <string name="settings_save_unreadable_body">%1$s n’a pas pu être lu à l’ouverture d’Encave et a été conservé tel quel. Enregistrez-en une copie pour le garder, ou pour l’importer une fois réparé.</string>
+    <string name="settings_delete_unreadable">Supprimer le fichier de cave illisible</string>
+    <string name="settings_delete_unreadable_body">Tant qu’il est conservé, les photos qu’aucun vin n’utilise le sont aussi, au cas où il serait réparé.</string>
+    <string name="settings_delete_unreadable_title">Supprimer le fichier de cave illisible ?</string>
+    <string name="settings_delete_unreadable_confirm">%1$s est supprimé de cet appareil. Enregistrez-en d’abord une copie si vous pourriez en avoir besoin.</string>
+    <string name="msg_photo_removed">Photo retirée</string>
     <string name="err_slot_taken">Cet emplacement est déjà occupé.</string>
     <string name="err_slot_range">Cet emplacement est hors du casier.</string>
     <string name="err_rack_not_empty">Retirez d’abord les bouteilles des rangées ou colonnes supprimées.</string>
@@ -255,11 +262,13 @@
     <string name="settings_import">Importer un fichier JSON ou CSV</string>
     <string name="settings_import_body">Ajoute ce qui n’est pas déjà dans votre cave</string>
     <string name="settings_test_data">Données de test</string>
-    <string name="settings_sample_confirm_title">Remplacer votre cave par l’exemple ?</string>
-    <string name="settings_sample_confirm_body">Vos bouteilles, casiers et dégustations actuels seront effacés.</string>
+    <string name="settings_sample_confirm_title">Charger la cave d’exemple ?</string>
+    <string name="settings_sample_confirm_body">Des bouteilles, casiers, dégustations et découvertes d’exemple remplissent votre cave vide pour découvrir chaque écran. Effacer toutes les données les supprime quand vous êtes prêt à ajouter les vôtres.</string>
+    <string name="settings_sample_body">Proposée tant que la cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci.</string>
     <string name="settings_erase">Effacer toutes les données</string>
     <string name="settings_erase_title">Effacer toutes les données ?</string>
-    <string name="settings_erase_body">Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil.</string>
+    <string name="settings_erase_body">Cela efface toutes les bouteilles, tous les vins, casiers, dégustations et découvertes de cet appareil. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
+    <string name="settings_erase_body_devices">Cela efface toutes les bouteilles, tous les vins, casiers, dégustations et découvertes de cet appareil et des autres appareils synchronisés avec lui. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
     <string name="settings_privacy">Confidentialité</string>
     <string name="settings_privacy_stored">Votre cave est enregistrée uniquement sur cet appareil.</string>
     <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave.</string>
@@ -270,8 +279,8 @@
     <string name="settings_source_body">github.com/markedoe/encave</string>
     <string name="msg_exported">Export enregistré</string>
     <string name="msg_export_failed">L’export a échoué.</string>
-    <string name="msg_imported">Importé : %1$d vins, %2$d bouteilles</string>
-    <string name="msg_imported_skipped">Importé : %1$d vins, %2$d bouteilles (%3$d lignes ignorées)</string>
+    <string name="msg_imported">Importé. Vins : %1$d, bouteilles : %2$d</string>
+    <string name="msg_imported_skipped">Importé. Vins : %1$d, bouteilles : %2$d, lignes ignorées : %3$d</string>
     <string name="msg_sample_loaded">Cave d’exemple chargée</string>
     <string name="msg_erased">Toutes les données ont été effacées</string>
     <string name="settings_ai">Reconnaissance des étiquettes par IA</string>
@@ -291,7 +300,6 @@
     <string name="ai_server_url">Adresse du serveur</string>
     <string name="ai_key_optional">Clé d’API (facultative)</string>
     <string name="ai_check">Vérifier la clé et charger les modèles</string>
-    <string name="ai_models_count">%1$d modèles</string>
     <string name="ai_not_valid">Non valide</string>
     <string name="ai_choose_model">Choisir…</string>
     <string name="ai_enter_model">Saisir un nom de modèle</string>
@@ -394,7 +402,6 @@
     <string name="rack_custom_rows">Rangées de longueurs différentes</string>
     <string name="rack_custom_rows_body">Pour un casier sous pente, sous un escalier ou contre un mur irrégulier.</string>
     <string name="rack_row">Rangée %1$s</string>
-    <string name="rack_holds">Contient %1$d bouteilles.</string>
     <string name="rack_quick_start">Démarrage rapide</string>
     <string name="rack_size_title">Taille</string>
     <string name="preset_grid_6x8">6 rangées de 8</string>
@@ -491,7 +498,7 @@
     <string name="help_start_tonight">Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat.</string>
     <string name="help_start_journal">Les bouteilles ouvertes avec vos notes, les vins découverts ailleurs, votre liste d’achats et vos statistiques.</string>
     <string name="help_start_try_title">Essayer</string>
-    <string name="help_start_try">Dans les **Réglages**, chargez la cave d’exemple pour découvrir chaque écran, puis effacez-la quand vous êtes prêt à ajouter vos bouteilles.</string>
+    <string name="help_start_try">Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci, **Charger une cave d’exemple** (sur l’écran Cave ou dans les **Réglages**) la remplit d’exemples pour découvrir chaque écran. **Effacer toutes les données** dans les **Réglages** les supprime quand vous êtes prêt à ajouter vos bouteilles ; cela efface aussi la cave des appareils synchronisés avec celui-ci.</string>
     <string name="help_adding_title">Ajouter des bouteilles</string>
     <string name="help_adding_summary">Un nouveau vin, ou d’autres bouteilles d’un vin que vous avez déjà.</string>
     <string name="help_adding_existing_title">Déjà dans votre cave ?</string>
@@ -611,7 +618,6 @@
     <string name="devices_status_synced">Synchronisé %1$s</string>
     <string name="devices_status_nearby">Sur ce réseau</string>
     <string name="devices_status_never">Pas encore synchronisé</string>
-    <string name="devices_local_network">Encave a besoin d’accéder au réseau local pour trouver vos autres appareils.</string>
     <string name="sync_problem_removed">Cet appareil a été retiré de la cave depuis un autre appareil.</string>
     <string name="sync_problem_says_removed">Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.</string>
     <string name="sync_problem_not_verified">Un appareil n’a pas pu prouver qu’il fait partie de cette cave. Rien n’a été échangé.</string>
@@ -760,7 +766,6 @@
     <string name="insights_year_opened">bouteilles ouvertes</string>
     <string name="insights_year_wines">vins différents</string>
     <string name="insights_year_discoveries">découvertes</string>
-    <string name="insights_year_favorite">Préféré : %1$s, %2$d étoiles</string>
     <string name="insights_year_region">Région la plus ouverte : %1$s</string>
     <string name="insights_year_style">Style le plus ouvert : %1$s</string>
     <string name="insights_year_occasion">Occasion préférée : %1$s</string>
@@ -812,14 +817,13 @@
     <string name="settings_import_other">Importer depuis une autre app</string>
     <string name="settings_import_other_body">Un CSV de CellarTracker, Vivino ou d’un tableur, lu sur cet appareil</string>
     <string name="pdf_title">Inventaire de la cave</string>
-    <string name="pdf_subtitle">%1$s · %2$d bouteilles</string>
     <string name="pdf_value">Valeur d’achat : %1$s</string>
     <string name="pdf_wine">Vin</string>
     <string name="pdf_bottles">Bouteilles</string>
     <string name="pdf_purchase_value">Valeur d’achat</string>
     <string name="pdf_made_with">Réalisé avec Encave</string>
     <string name="pdf_page">Page %1$d sur %2$d</string>
-    <string name="msg_imported_discoveries">Importé : %1$d découvertes</string>
+    <string name="msg_imported_discoveries">Découvertes importées : %1$d</string>
     <string name="help_data_pdf_title">Inventaire imprimé</string>
     <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché.</string>
     <string name="help_data_other_title">Venir d’une autre app</string>
@@ -997,5 +1001,25 @@
         <item quantity="one">%d bouteille en cave</item>
         <item quantity="many">%d bouteilles en cave</item>
         <item quantity="other">%d bouteilles en cave</item>
+    </plurals>
+    <plurals name="ai_models_count">
+        <item quantity="one">%d modèle</item>
+        <item quantity="many">%d modèles</item>
+        <item quantity="other">%d modèles</item>
+    </plurals>
+    <plurals name="rack_holds">
+        <item quantity="one">Contient %d bouteille.</item>
+        <item quantity="many">Contient %d bouteilles.</item>
+        <item quantity="other">Contient %d bouteilles.</item>
+    </plurals>
+    <plurals name="insights_year_favorite">
+        <item quantity="one">Préféré : %1$s, %2$d étoile</item>
+        <item quantity="many">Préféré : %1$s, %2$d étoiles</item>
+        <item quantity="other">Préféré : %1$s, %2$d étoiles</item>
+    </plurals>
+    <plurals name="pdf_subtitle">
+        <item quantity="one">%1$s · %2$d bouteille</item>
+        <item quantity="many">%1$s · %2$d bouteilles</item>
+        <item quantity="other">%1$s · %2$d bouteilles</item>
     </plurals>
 </resources>

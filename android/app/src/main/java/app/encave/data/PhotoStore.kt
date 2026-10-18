@@ -10,7 +10,12 @@ import app.encave.core.sync.PhotoAccess
 import app.encave.core.sync.PhotoId
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.time.Duration
+import java.time.Instant
 import java.util.UUID
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 
 /**
  * Wine photos stored as JPEG files in app-private storage, resized on the device.
@@ -20,10 +25,11 @@ class PhotoStore(context: Context) {
     private val folder = File(context.filesDir, "photos").apply { mkdirs() }
     private val resolver = context.contentResolver
 
-    fun file(id: String): File = File(folder, "$id.jpg")
+    /** The photo's file; null for an ID that is not a safe file name (IDs come from other devices too). */
+    fun file(id: String): File? = if (PhotoId.isValid(id)) File(folder, "$id.jpg") else null
 
     /** False when a wine refers to a photo that is not on this device (after importing a backup). */
-    fun exists(id: String?): Boolean = id != null && file(id).exists()
+    fun exists(id: String?): Boolean = id != null && file(id)?.exists() == true
 
     /** Reads an image (picker or camera), applies its orientation and returns a resized JPEG. */
     fun prepare(uri: Uri, maxPixelSize: Int = MAX_PIXEL_SIZE): ByteArray? = runCatching {
@@ -82,8 +88,7 @@ class PhotoStore(context: Context) {
 
     /** Writes a photo under an ID (a received one). False if the ID is not a safe file name. */
     fun store(id: String, jpeg: ByteArray): Boolean = runCatching {
-        if (!PhotoId.isValid(id)) return false
-        val target = file(id)
+        val target = file(id) ?: return false
         if (target.exists()) return true
         val temp = File(folder, "$id.${UUID.randomUUID()}.tmp")
         temp.writeBytes(jpeg)
@@ -92,7 +97,7 @@ class PhotoStore(context: Context) {
     }.getOrDefault(false)
 
     /** The photo's bytes, for sync. */
-    fun data(id: String): ByteArray? = if (PhotoId.isValid(id)) file(id).takeIf { it.exists() }?.readBytes() else null
+    fun data(id: String): ByteArray? = file(id)?.takeIf { it.exists() }?.readBytes()
 
     /** Photos for a sync session: read and saved by ID. */
     val syncAccess: PhotoAccess = object : PhotoAccess {
@@ -102,22 +107,49 @@ class PhotoStore(context: Context) {
         }
     }
 
-    fun delete(id: String?) {
-        if (id != null) file(id).delete()
-    }
-
-    /** Removes photo files no wine refers to any more. */
-    fun removeOrphans(keeping: Set<String>) {
+    /**
+     * Removes photo files no wine has referred to for [ORPHAN_GRACE_DAYS]. A wine can refer to
+     * one again in the meantime: an Undo, or a device that has not synced yet sending an older
+     * copy of the wine. When each file was first seen unreferenced is kept in
+     * `unreferenced.json` next to the photos (as on Apple devices).
+     */
+    fun removeOrphans(keeping: Set<String>, now: Instant = Instant.now()) {
+        val list = File(folder, UNREFERENCED)
+        val seen = runCatching {
+            Json.decodeFromString(MapSerializer(String.serializer(), Long.serializer()), list.readText())
+        }.getOrDefault(emptyMap())
+        val unreferenced = HashMap<String, Long>()
+        val grace = Duration.ofDays(ORPHAN_GRACE_DAYS)
         folder.listFiles().orEmpty().forEach { file ->
-            if (file.extension == "tmp" || (file.extension == "jpg" && file.nameWithoutExtension !in keeping)) file.delete()
+            when {
+                file.extension == "tmp" -> file.delete()
+                file.extension == "jpg" && file.nameWithoutExtension !in keeping -> {
+                    val id = file.nameWithoutExtension
+                    val since = seen[id] ?: now.epochSecond
+                    if (Duration.between(Instant.ofEpochSecond(since), now) >= grace) file.delete() else unreferenced[id] = since
+                }
+            }
+        }
+        runCatching {
+            if (unreferenced.isEmpty()) {
+                list.delete()
+            } else if (unreferenced != seen) {
+                val temp = File(folder, "$UNREFERENCED.${UUID.randomUUID()}.tmp")
+                temp.writeText(Json.encodeToString(MapSerializer(String.serializer(), Long.serializer()), unreferenced))
+                if (!temp.renameTo(list)) temp.delete()
+            }
         }
     }
 
     /** A downscaled bitmap for display. */
-    fun load(id: String, maxPixelSize: Int = 900): Bitmap? = decode(file(id).takeIf { it.exists() }?.readBytes(), maxPixelSize)
+    fun load(id: String, maxPixelSize: Int = 900): Bitmap? = decode(file(id)?.takeIf { it.exists() }?.readBytes(), maxPixelSize)
 
     companion object {
         const val MAX_PIXEL_SIZE = 1600
+
+        /** How long a photo no wine refers to is kept before its file is removed. */
+        const val ORPHAN_GRACE_DAYS = 30L
+        private const val UNREFERENCED = "unreferenced.json"
         private const val JPEG_QUALITY = 80
 
         fun decode(bytes: ByteArray?, maxPixelSize: Int): Bitmap? {

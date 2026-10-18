@@ -9,6 +9,7 @@ import app.encave.core.sync.SyncExchange
 import java.io.Closeable
 import java.net.ServerSocket
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ class PairingSession private constructor(
     /** When the code stops working. */
     val expiresAt: Instant = Instant.now().plusSeconds(LIFETIME_SECONDS)
 
-    private var decision: CompletableDeferred<Boolean>? = null
+    @Volatile private var decision: CompletableDeferred<Boolean>? = null
     private var job: Job? = null
     private var timer: Job? = null
     private var server: ServerSocket? = null
@@ -80,7 +81,8 @@ class PairingSession private constructor(
             "Encave-pair-" + code.rendezvous.take(6), socket.localPort, mapOf("p" to code.rendezvous),
             onFailure = { phaseFlow.value = Phase.Failed(Failure.CannotListen) },
         )
-        job = scope.launch {
+        // Key exchange, merging and photos run off the main thread.
+        job = scope.launch(Dispatchers.Default) {
             // One pairing per code: the first device to connect is the only one.
             val accepted = withContext(Dispatchers.IO) { runCatching { socket.accept() }.getOrNull() } ?: return@launch
             timer?.cancel()
@@ -109,6 +111,9 @@ class PairingSession private constructor(
                 sync.adoptRemote(remote)
                 sync.resume()
                 phaseFlow.value = Phase.Done(member.name)
+            } catch (error: CancellationException) {
+                stop()
+                throw error
             } catch (error: Exception) {
                 added?.let(::finishWithoutSync) ?: fail(error)
             } finally {
@@ -148,7 +153,7 @@ class PairingSession private constructor(
     private fun connect(service: LocalNetwork.Found, commitment: ByteArray?, replace: Boolean) {
         synchronized(this) {
             if (job != null) return
-            job = scope.launch {
+            job = scope.launch(Dispatchers.Default) {
                 timer?.cancel()
                 browsing?.close()
                 browsing = null
@@ -175,6 +180,9 @@ class PairingSession private constructor(
                     sync.adoptRemote(remote)
                     sync.resume()
                     phaseFlow.value = Phase.Done(keys.peer.name)
+                } catch (error: CancellationException) {
+                    stop()
+                    throw error
                 } catch (error: Exception) {
                     added?.let(::finishWithoutSync) ?: fail(error)
                 } finally {

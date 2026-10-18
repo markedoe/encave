@@ -33,7 +33,15 @@ object InventoryPdf {
     private const val HEIGHT = 842
     private const val MARGIN = 40f
     const val ROWS_PER_PAGE = 26
+
+    /** The first page also has the title, the date and the value: fewer rows fit above the footer. */
+    const val ROWS_ON_FIRST_PAGE = 24
     private const val ROW_HEIGHT = 26f
+
+    /** Rows split into pages: [ROWS_ON_FIRST_PAGE] on the first, [ROWS_PER_PAGE] on the others. */
+    fun <T> paged(rows: List<T>): List<List<T>> =
+        (listOf(rows.take(ROWS_ON_FIRST_PAGE)) + rows.drop(ROWS_ON_FIRST_PAGE).chunked(ROWS_PER_PAGE)).filter { it.isNotEmpty() }
+            .ifEmpty { listOf(emptyList()) }
 
     data class Row(
         val id: UUID,
@@ -102,7 +110,7 @@ object InventoryPdf {
         private val rows = rows(cellar, resources, locale)
         private val stats = cellar.statistics(year)
         private val value = total(stats.valueByCurrency, locale)
-        private val pages = rows.chunked(ROWS_PER_PAGE).ifEmpty { listOf(emptyList()) }
+        private val pages = paged(rows)
         val count: Int get() = pages.size
 
         // Printed: black text on the white page, whatever the app's theme.
@@ -128,7 +136,7 @@ object InventoryPdf {
                 canvas.drawText(resources.getString(R.string.pdf_title), MARGIN, y + 20, title)
                 y += 34
                 val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).format(today)
-                canvas.drawText(resources.getString(R.string.pdf_subtitle, date, stats.bottleCount), MARGIN, y + 10, text.withSize(11f))
+                canvas.drawText(resources.getQuantityString(R.plurals.pdf_subtitle, stats.bottleCount, date, stats.bottleCount), MARGIN, y + 10, text.withSize(11f))
                 y += 16
                 if (value.isNotEmpty()) {
                     canvas.drawText(resources.getString(R.string.pdf_value, value), MARGIN, y + 10, text.withSize(11f))

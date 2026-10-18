@@ -67,7 +67,7 @@ class WidgetPublisherTest {
         val store = WidgetSnapshotStore(file())
         WidgetPublisher(repository, store, scope, onChanged = {}, io = dispatcher, year = { year }).start()
         advanceUntilIdle()
-        repository.applySynced { Cellar().apply { addBottles(Wine(name = "From the other device"), quantity = 2) } }
+        repository.applySynced(merge = { Cellar().apply { addBottles(Wine(name = "From the other device"), quantity = 2) } })
         advanceUntilIdle()
         assertEquals(2, store.snapshot.value!!.bottles)
         scope.cancel()

@@ -114,6 +114,8 @@ fun CameraCodeReader(
     val owner = LocalLifecycleOwner.current
     val executor = remember { Executors.newSingleThreadExecutor() }
     var done by remember { mutableStateOf(false) }
+    // The camera is set up once: it calls the latest callback, not the first one.
+    val currentOnScan by androidx.compose.runtime.rememberUpdatedState(onScan)
     DisposableEffect(Unit) { onDispose { executor.shutdown() } }
     AndroidView(
         modifier = modifier,
@@ -133,7 +135,7 @@ fun CameraCodeReader(
                             .firstNotNullOfOrNull { result -> result.text?.takeIf(accept) }
                         if (text != null && !done) {
                             done = true
-                            ContextCompat.getMainExecutor(viewContext).execute { onScan(text) }
+                            ContextCompat.getMainExecutor(viewContext).execute { currentOnScan(text) }
                         }
                     }
                 }

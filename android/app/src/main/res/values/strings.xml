@@ -36,7 +36,6 @@
     <string name="action_surprise">Surprise me</string>
     <string name="action_remove_from_rack">Take out of the rack</string>
     <string name="action_clear_filters">Clear filters</string>
-    <string name="action_replace">Replace</string>
     <string name="action_change">Change</string>
     <string name="action_put_back">Put back in the cellar</string>
     <string name="search_hint">Wine, producer, region, vintage</string>
@@ -161,7 +160,15 @@
     <string name="msg_saved">Saved</string>
     <string name="msg_put_back">%1$s is back in the cellar</string>
     <string name="msg_save_failed">The change could not be saved.</string>
-    <string name="msg_load_failed">Your cellar could not be loaded.</string>
+    <string name="msg_load_failed">Your cellar could not be loaded. Nothing is saved until Encave is opened again, so the file is not overwritten.</string>
+    <string name="msg_load_set_aside">Your cellar file could not be read. It is kept on this device as %1$s and Encave started with an empty cellar. To keep a copy elsewhere, use Save the unreadable cellar file in Settings.</string>
+    <string name="settings_save_unreadable">Save the unreadable cellar file</string>
+    <string name="settings_save_unreadable_body">%1$s could not be read when Encave opened and was kept as it is. Save a copy to keep it, or to import it once it is repaired.</string>
+    <string name="settings_delete_unreadable">Delete the unreadable cellar file</string>
+    <string name="settings_delete_unreadable_body">While it is kept, photos no wine uses are kept too, in case it is repaired.</string>
+    <string name="settings_delete_unreadable_title">Delete the unreadable cellar file?</string>
+    <string name="settings_delete_unreadable_confirm">%1$s is deleted from this device. Save a copy first if you may need it.</string>
+    <string name="msg_photo_removed">Photo removed</string>
     <string name="err_slot_taken">That slot is already taken.</string>
     <string name="err_slot_range">That slot is outside the rack.</string>
     <string name="err_rack_not_empty">Take the bottles out of the rows or columns you remove first.</string>
@@ -256,11 +263,13 @@
     <string name="settings_import">Import a JSON or CSV file</string>
     <string name="settings_import_body">Adds what is not already in your cellar</string>
     <string name="settings_test_data">Test data</string>
-    <string name="settings_sample_confirm_title">Replace your cellar with the sample?</string>
-    <string name="settings_sample_confirm_body">Your current bottles, racks and tastings will be erased.</string>
+    <string name="settings_sample_confirm_title">Load the sample cellar?</string>
+    <string name="settings_sample_confirm_body">Sample bottles, racks, tastings and discoveries fill your empty cellar so you can explore every screen. Erase all data removes them when you are ready to add your own.</string>
+    <string name="settings_sample_body">Offered while the cellar is empty and no other device syncs with this one.</string>
     <string name="settings_erase">Erase all data</string>
     <string name="settings_erase_title">Erase all data?</string>
-    <string name="settings_erase_body">This removes every bottle, rack and tasting from this device.</string>
+    <string name="settings_erase_body">This erases every bottle, wine, rack, tasting and discovery on this device. Your settings (currency, saved searches) are kept.</string>
+    <string name="settings_erase_body_devices">This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings (currency, saved searches) are kept.</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_stored">Your cellar is stored only on this device.</string>
     <string name="settings_privacy_body">No account, no tracking, no advertising. Devices sync directly on your network, encrypted from end to end; no server ever sees your cellar.</string>
@@ -271,8 +280,8 @@
     <string name="settings_source_body">github.com/markedoe/encave</string>
     <string name="msg_exported">Export saved</string>
     <string name="msg_export_failed">The export failed.</string>
-    <string name="msg_imported">Imported: %1$d wines, %2$d bottles</string>
-    <string name="msg_imported_skipped">Imported: %1$d wines, %2$d bottles (%3$d rows skipped)</string>
+    <string name="msg_imported">Imported. Wines: %1$d, bottles: %2$d</string>
+    <string name="msg_imported_skipped">Imported. Wines: %1$d, bottles: %2$d, rows skipped: %3$d</string>
     <string name="msg_sample_loaded">Sample cellar loaded</string>
     <string name="msg_erased">All data erased</string>
     <string name="settings_ai">AI label recognition</string>
@@ -292,7 +301,6 @@
     <string name="ai_server_url">Server URL</string>
     <string name="ai_key_optional">API key (optional)</string>
     <string name="ai_check">Check key and load models</string>
-    <string name="ai_models_count">%1$d models</string>
     <string name="ai_not_valid">Not valid</string>
     <string name="ai_choose_model">Choose…</string>
     <string name="ai_enter_model">Enter a model name</string>
@@ -395,7 +403,6 @@
     <string name="rack_custom_rows">Rows of different lengths</string>
     <string name="rack_custom_rows_body">For a rack with a sloped top, a staircase or an irregular cellar wall.</string>
     <string name="rack_row">Row %1$s</string>
-    <string name="rack_holds">Holds %1$d bottles.</string>
     <string name="rack_quick_start">Quick start</string>
     <string name="rack_size_title">Size</string>
     <string name="preset_grid_6x8">6 rows of 8</string>
@@ -492,7 +499,7 @@
     <string name="help_start_tonight">What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.</string>
     <string name="help_start_journal">The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.</string>
     <string name="help_start_try_title">Try it</string>
-    <string name="help_start_try">In **Settings**, load the sample cellar to explore every screen, then erase it when you are ready to add your own bottles.</string>
+    <string name="help_start_try">While your cellar is empty and no other device syncs with this one, **Load sample cellar** (on the Cellar screen or in **Settings**) fills it with examples to explore every screen. **Erase all data** in **Settings** removes them when you are ready to add your own bottles; it also erases the cellar on the devices that sync with this one.</string>
     <string name="help_adding_title">Adding bottles</string>
     <string name="help_adding_summary">A new wine, or more bottles of one you already have.</string>
     <string name="help_adding_existing_title">Already in your cellar?</string>
@@ -612,7 +619,6 @@
     <string name="devices_status_synced">Synced %1$s</string>
     <string name="devices_status_nearby">On this network</string>
     <string name="devices_status_never">Not synced yet</string>
-    <string name="devices_local_network">Encave needs access to the local network to find your other devices.</string>
     <string name="sync_problem_removed">This device was removed from the cellar on another device.</string>
     <string name="sync_problem_says_removed">Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.</string>
     <string name="sync_problem_not_verified">A device could not prove it belongs to this cellar. Nothing was exchanged.</string>
@@ -637,7 +643,7 @@
     <string name="remote_webdav_footer">Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays on this device, encrypted with the Android Keystore. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.</string>
     <string name="remote_webdav_invalid">Use an https:// address (http only on the local network).</string>
     <string name="remote_webdav_refused">The server refused this username or password. With two-step verification, use an app password.</string>
-    <string name="remote_webdav_not_webdav">This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.</string>
+    <string name="remote_webdav_not_webdav">This address does not answer as a WebDAV folder. Check the address and that the server has WebDAV turned on.</string>
     <string name="remote_webdav_full">The WebDAV folder is full. Free some space on the server.</string>
     <string name="remote_webdav_sign_in">Check and sign in</string>
     <string name="remote_webdav_sign_in_footer">Each device signs in with its own username and password, kept on that device. An app password is recommended.</string>
@@ -761,7 +767,6 @@
     <string name="insights_year_opened">bottles opened</string>
     <string name="insights_year_wines">different wines</string>
     <string name="insights_year_discoveries">discoveries</string>
-    <string name="insights_year_favorite">Favorite: %1$s, %2$d stars</string>
     <string name="insights_year_region">Most opened region: %1$s</string>
     <string name="insights_year_style">Most opened style: %1$s</string>
     <string name="insights_year_occasion">Favorite occasion: %1$s</string>
@@ -813,14 +818,13 @@
     <string name="settings_import_other">Import from another app</string>
     <string name="settings_import_other_body">A CSV from CellarTracker, Vivino or a spreadsheet, read on this device</string>
     <string name="pdf_title">Cellar inventory</string>
-    <string name="pdf_subtitle">%1$s · %2$d bottles</string>
     <string name="pdf_value">Purchase value: %1$s</string>
     <string name="pdf_wine">Wine</string>
     <string name="pdf_bottles">Bottles</string>
     <string name="pdf_purchase_value">Purchase value</string>
     <string name="pdf_made_with">Made with Encave</string>
     <string name="pdf_page">Page %1$d of %2$d</string>
-    <string name="msg_imported_discoveries">Imported: %1$d discoveries</string>
+    <string name="msg_imported_discoveries">Discoveries imported: %1$d</string>
     <string name="help_data_pdf_title">Printed inventory</string>
     <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.</string>
     <string name="help_data_other_title">Coming from another app</string>
@@ -990,5 +994,21 @@
     <plurals name="widget_bottles_in_cellar">
         <item quantity="one">%d bottle in the cellar</item>
         <item quantity="other">%d bottles in the cellar</item>
+    </plurals>
+    <plurals name="ai_models_count">
+        <item quantity="one">%d model</item>
+        <item quantity="other">%d models</item>
+    </plurals>
+    <plurals name="rack_holds">
+        <item quantity="one">Holds %d bottle.</item>
+        <item quantity="other">Holds %d bottles.</item>
+    </plurals>
+    <plurals name="insights_year_favorite">
+        <item quantity="one">Favorite: %1$s, %2$d star</item>
+        <item quantity="other">Favorite: %1$s, %2$d stars</item>
+    </plurals>
+    <plurals name="pdf_subtitle">
+        <item quantity="one">%1$s · %2$d bottle</item>
+        <item quantity="other">%1$s · %2$d bottles</item>
     </plurals>
 </resources>

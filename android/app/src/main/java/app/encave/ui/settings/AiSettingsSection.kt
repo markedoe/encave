@@ -142,7 +142,7 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                 onValueChange = { key ->
                     apiKey = key
                     if (check != KeyCheck.Checking) check = KeyCheck.Idle
-                    scope.launch(Dispatchers.IO) { viewModel.ai.setApiKey(provider, key) }
+                    viewModel.ai.saveApiKey(provider, key)
                 },
                 label = { Text(stringResource(if (provider.requiresKey) R.string.ai_key else R.string.ai_key_optional)) },
                 supportingText = { Text(stringResource(R.string.help_field_ai_key)) },
@@ -173,7 +173,7 @@ fun AiSettingsSection(viewModel: AppViewModel) {
                         KeyCheck.Checking -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                         is KeyCheck.Valid -> {
                             Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Text(stringResource(R.string.ai_models_count, state.count), Modifier.padding(start = Dimens.xs))
+                            Text(androidx.compose.ui.res.pluralStringResource(R.plurals.ai_models_count, state.count, state.count), Modifier.padding(start = Dimens.xs))
                         }
                         is KeyCheck.Failed -> {
                             Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
