@@ -886,7 +886,7 @@
     <string name="search_open_in_browser">Open in browser</string>
     <string name="search_wine_word">wine</string>
     <string name="search_price_word">price</string>
-    <string name="search_err_server_url">Enter the full server address, starting with http:// or https://.</string>
+    <string name="search_err_server_url">Enter the full server address, starting with https:// (http:// only for a server on your local network).</string>
     <string name="search_err_unauthorized">The search service refused the key. Check it in Settings.</string>
     <string name="search_err_json">This SearXNG server does not answer in JSON. Add json under search: formats: in its settings.yml, then restart it.</string>
     <string name="search_err_rate">Too many searches for now, or the free allowance is used up. Try again later.</string>

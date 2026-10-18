@@ -979,7 +979,7 @@ S = [
  ('search_open_in_browser', 'Open in browser', 'Ouvrir dans le navigateur'),
  ('search_wine_word', 'wine', 'vin'),
  ('search_price_word', 'price', 'prix'),
- ('search_err_server_url', 'Enter the full server address, starting with http:// or https://.', 'Saisissez l’adresse complète du serveur, commençant par http:// ou https://.'),
+ ('search_err_server_url', 'Enter the full server address, starting with https:// (http:// only for a server on your local network).', 'Saisissez l’adresse complète du serveur, commençant par https:// (http:// seulement pour un serveur de votre réseau local).'),
  ('search_err_unauthorized', 'The search service refused the key. Check it in Settings.', 'Le service de recherche a refusé la clé. Vérifiez-la dans les réglages.'),
  ('search_err_json', 'This SearXNG server does not answer in JSON. Add json under search: formats: in its settings.yml, then restart it.', 'Ce serveur SearXNG ne répond pas en JSON. Ajoutez json sous search: formats: dans son settings.yml, puis redémarrez-le.'),
  ('search_err_rate', 'Too many searches for now, or the free allowance is used up. Try again later.', 'Trop de recherches pour le moment, ou le quota gratuit est épuisé. Réessayez plus tard.'),

@@ -885,7 +885,7 @@
     <string name="search_open_in_browser">Ouvrir dans le navigateur</string>
     <string name="search_wine_word">vin</string>
     <string name="search_price_word">prix</string>
-    <string name="search_err_server_url">Saisissez l’adresse complète du serveur, commençant par http:// ou https://.</string>
+    <string name="search_err_server_url">Saisissez l’adresse complète du serveur, commençant par https:// (http:// seulement pour un serveur de votre réseau local).</string>
     <string name="search_err_unauthorized">Le service de recherche a refusé la clé. Vérifiez-la dans les réglages.</string>
     <string name="search_err_json">Ce serveur SearXNG ne répond pas en JSON. Ajoutez json sous search: formats: dans son settings.yml, puis redémarrez-le.</string>
     <string name="search_err_rate">Trop de recherches pour le moment, ou le quota gratuit est épuisé. Réessayez plus tard.</string>
