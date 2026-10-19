@@ -214,6 +214,10 @@ private fun CellarList(
     val showOrders = orders.isNotEmpty() && !filter.isActive && filter.query.isEmpty()
     val wineTags = remember(cellar) { cellar.wineTags }
     val reservations = remember(cellar) { cellar.reservations }
+    // Only the styles and maturities of bottles in the cellar get a filter chip.
+    val presentStats = remember(cellar, viewModel.year) { cellar.statistics(viewModel.year) }
+    val presentColors = remember(presentStats) { presentStats.byColor.mapNotNull { it.color }.toSet() }
+    val presentMaturities = remember(presentStats) { presentStats.byMaturity.filterValues { it > 0 }.keys }
     // Choosing several wines: a contextual top bar acts on all of them, with one Undo.
     var selecting by rememberSaveable { mutableStateOf(false) }
     var picked by rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(setOf<java.util.UUID>()) }
@@ -299,6 +303,8 @@ private fun CellarList(
                 FilterBar(
                     colors = filter.colors,
                     maturities = filter.maturities,
+                    presentColors = presentColors,
+                    presentMaturities = presentMaturities,
                     tags = wineTags,
                     tag = filter.tag,
                     reservations = reservations,
@@ -570,6 +576,8 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
 private fun FilterBar(
     colors: Set<WineColor>,
     maturities: Set<Maturity>,
+    presentColors: Set<WineColor>,
+    presentMaturities: Set<Maturity>,
     tags: List<String>,
     tag: String?,
     reservations: List<String>,
@@ -630,7 +638,8 @@ private fun FilterBar(
         savedSearches.forEach { search ->
             SavedSearchChip(search, selected = current == search.filter, onClick = { onApplySearch(search) }, onDelete = { onDeleteSearch(search) })
         }
-        WineColor.entries.forEach { color ->
+        // A chip for a style or maturity no bottle has left stays while it filters the list.
+        WineColor.entries.filter { it in presentColors || it in colors }.forEach { color ->
             FilterChip(
                 selected = color in colors,
                 onClick = { onToggleColor(color) },
@@ -638,7 +647,8 @@ private fun FilterBar(
                 leadingIcon = { WineColorDot(color) },
             )
         }
-        listOf(Maturity.DrinkSoon, Maturity.Ready, Maturity.PastPeak, Maturity.Young).forEach { maturity ->
+        listOf(Maturity.DrinkSoon, Maturity.Ready, Maturity.PastPeak, Maturity.Young)
+            .filter { it in presentMaturities || it in maturities }.forEach { maturity ->
             FilterChip(
                 selected = maturity in maturities,
                 onClick = { onToggleMaturity(maturity) },
