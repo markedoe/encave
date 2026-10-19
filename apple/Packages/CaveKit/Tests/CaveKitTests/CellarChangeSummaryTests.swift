@@ -71,10 +71,34 @@ import Testing
 
     @Test func deletingAWineRemovesItsBottles() throws {
         let s = try shared()
-        let summary = try sync(s.cellar, s.local, remote: s.remote) { $0.deleteWine(s.wine.id) }
+        let summary = sync(s.cellar, s.local, remote: s.remote) { $0.deleteWine(s.wine.id) }
+        // The wine itself is not counted: its bottles are.
         #expect(summary.bottlesRemoved == 3)
-        #expect(summary.otherChanges == 1)
+        #expect(summary.otherChanges == 0)
         #expect(summary.devices == [marc])
+    }
+
+    @Test func aBottleGivenAwayOrDeletedIsRemoved() throws {
+        let s = try shared()
+        var opened = s.cellar
+        try opened.drink(s.bottles[0].id, tasting: Tasting(rating: 8))
+        var stamps = s.local.stamps
+        let key = SyncKey(.bottle, s.bottles[0].id).string
+        stamps[key] = Stamp(counter: 90, device: marc)
+        // An opened bottle that disappears, or is then marked given away, is removed.
+        var deleted = opened
+        deleted.deleteBottle(s.bottles[0].id)
+        #expect(CellarChangeSummary.between(opened, deleted, stamps: stamps, localDevice: here).bottlesRemoved == 1)
+        var gone = opened
+        try gone.markGone(s.bottles[0].id)
+        #expect(CellarChangeSummary.between(opened, gone, stamps: stamps, localDevice: here).bottlesRemoved == 1)
+        // A new bottle already given away is another change.
+        var added = s.cellar
+        let extra = try #require(try added.addBottles(of: s.wine, quantity: 1).first)
+        try added.markGone(extra.id)
+        stamps[SyncKey(.bottle, extra.id).string] = Stamp(counter: 91, device: marc)
+        let summary = CellarChangeSummary.between(s.cellar, added, stamps: stamps, localDevice: here)
+        #expect(summary.otherChanges == 1 && summary.bottlesAdded == 0 && summary.bottlesRemoved == 0)
     }
 
     @Test func onlyOpenedPointsToTheJournal() throws {
@@ -88,26 +112,30 @@ import Testing
 
     @Test func nothingNewIsEmpty() throws {
         let s = try shared()
-        let summary = try sync(s.cellar, s.local, remote: s.remote) { _ in }
+        let summary = sync(s.cellar, s.local, remote: s.remote) { _ in }
         #expect(summary.isEmpty)
         #expect(summary.devices.isEmpty)
         #expect(CellarChangeSummary.between(s.cellar, s.cellar, stamps: s.local.stamps, localDevice: here).isEmpty)
     }
 
-    @Test func thisDeviceAndUnstampedObjectsAreNotCredited() throws {
+    @Test func changesOfThisDeviceAreLeftOutAndUnstampedOnesHaveNoKnownDevice() throws {
         let s = try shared()
         var after = s.cellar
         try after.drink(s.bottles[0].id, tasting: Tasting(rating: 8))
         try after.addBottles(of: s.wine, quantity: 1)
         var stamps = s.local.stamps
         stamps[SyncKey(.bottle, s.bottles[0].id).string] = Stamp(counter: 50, device: here)
-        // The new bottle has no stamp at all; the first one is this device's own.
-        let summary = CellarChangeSummary.between(s.cellar, after, stamps: stamps, localDevice: here)
-        #expect(summary.bottlesOpened == 1)
+        // The opened bottle is this device's own change; the new bottle has no stamp at all.
+        var summary = CellarChangeSummary.between(s.cellar, after, stamps: stamps, localDevice: here)
+        #expect(summary.bottlesOpened == 0)
         #expect(summary.bottlesAdded == 1)
         #expect(summary.devices.isEmpty)
+        #expect(summary.hasUnknownDevice)
+        // A stamp from before sync was set up does not name a device either.
         stamps[SyncKey(.bottle, s.bottles[0].id).string] = .zero
-        #expect(CellarChangeSummary.between(s.cellar, after, stamps: stamps, localDevice: here).devices.isEmpty)
+        summary = CellarChangeSummary.between(s.cellar, after, stamps: stamps, localDevice: here)
+        #expect(summary.bottlesOpened == 1)
+        #expect(summary.devices.isEmpty && summary.hasUnknownDevice)
     }
 
     @Test func namesTheDeviceOnlyWhenThereIsOneKnownDevice() throws {
@@ -125,6 +153,10 @@ import Testing
         summary.devices = [marc, julie]
         #expect(summary.device(in: membership) == nil)
         summary.devices = [julie]
+        #expect(summary.device(in: membership) == nil)
+        // Marc's changes and some whose device is not known.
+        summary.devices = [marc]
+        summary.hasUnknownDevice = true
         #expect(summary.device(in: membership) == nil)
     }
 
@@ -157,10 +189,12 @@ import Testing
         second.otherChanges = 3
         second.bottlesRemoved = 1
         second.devices = [julie]
+        second.hasUnknownDevice = true
         first.add(second)
         #expect(first.bottlesOpened == 1 && first.bottlesAdded == 2 && first.winesAdded == 1)
         #expect(first.bottlesRemoved == 1 && first.otherChanges == 3)
         #expect(first.devices == [marc, julie])
+        #expect(first.hasUnknownDevice)
         let decoded = try JSONDecoder().decode(CellarChangeSummary.self, from: JSONEncoder().encode(first))
         #expect(decoded == first)
     }

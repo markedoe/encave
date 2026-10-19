@@ -4141,12 +4141,12 @@
         }
       }
     },
-    "From %@: %@.": {
+    "From %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur %1$@ : %2$@."
+            "value": "Depuis %@"
           }
         }
       }
@@ -4181,12 +4181,12 @@
         }
       }
     },
-    "From your other devices: %@.": {
+    "From your other devices": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur vos autres appareils : %@."
+            "value": "Depuis vos autres appareils"
           }
         }
       }
@@ -10161,12 +10161,12 @@
         }
       }
     },
-    "Turn on **Tell Me About Changes from Other Devices** in **Devices** for a notification on this device when bottles are opened, added or removed on another one, for example “From Marc’s iPhone: 2 bottles opened.” Repeated syncs update the same notification. While Encave is in front, a short banner says where the changes come from instead. It is worked out on this device: nothing is sent anywhere.": {
+    "Turn on **Tell Me About Changes from Other Devices** in **Devices** for a notification on this device when bottles are opened, added or removed on another one, for example “2 bottles opened, 1 bottle added” from Marc’s iPhone. Repeated syncs update the same notification. While Encave is in front, a short banner says where the changes come from instead. It is worked out on this device: nothing is sent anywhere.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre, par exemple « Sur l’iPhone de Marc : 2 bouteilles ouvertes. » Les synchronisations suivantes mettent à jour la même notification. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Tout est calculé sur cet appareil : rien n’est envoyé nulle part."
+            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre, par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Tout est calculé sur cet appareil : rien n’est envoyé nulle part."
           }
         }
       }

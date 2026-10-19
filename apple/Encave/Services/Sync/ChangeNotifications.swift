@@ -8,8 +8,8 @@ import UIKit
 #endif
 
 /// Optional (off by default): one local notification when a sync brings changes made
-/// on another device while Encave is not in the foreground ("From Marc’s iPhone:
-/// 2 bottles opened and 3 bottles added."). Worked out and posted on the device:
+/// on another device while Encave is not in the foreground ("From Marc’s iPhone",
+/// "2 bottles opened, 3 bottles added."). Worked out and posted on the device:
 /// nothing is sent anywhere.
 @MainActor
 enum ChangeNotifications {
@@ -84,7 +84,8 @@ enum ChangeNotifications {
         if let data = try? JSONEncoder().encode(total) { UserDefaults.standard.set(data, forKey: shownKey) }
 
         let content = UNMutableNotificationContent()
-        content.body = body(for: total, membership: membership)
+        content.title = title(for: total, membership: membership)
+        content.body = body(for: total)
         content.threadIdentifier = identifier
         // Tapping it opens the Journal when bottles were only opened, else the Cellar.
         content.userInfo = [Reminders.tabKey: (total.isOnlyOpened ? AppTab.journal : AppTab.cellar).rawValue]
@@ -101,18 +102,23 @@ enum ChangeNotifications {
             .flatMap { try? JSONDecoder().decode(CellarChangeSummary.self, from: $0) } ?? CellarChangeSummary()
     }
 
-    /// "From Marc’s iPhone: 2 bottles opened and 3 bottles added."
-    static func body(for summary: CellarChangeSummary, membership: Membership?) -> String {
+    /// "From Marc’s iPhone", or "From your other devices" when there are several or
+    /// they are not known.
+    static func title(for summary: CellarChangeSummary, membership: Membership?) -> String {
+        if let deviceName = summary.device(in: membership)?.name {
+            return String(localized: "From \(deviceName)")
+        }
+        return String(localized: "From your other devices")
+    }
+
+    /// "2 bottles opened, 3 bottles added."
+    static func body(for summary: CellarChangeSummary) -> String {
         var parts: [String] = []
         if summary.bottlesOpened > 0 { parts.append(String(localized: "\(summary.bottlesOpened) bottles opened")) }
         if summary.bottlesAdded > 0 { parts.append(String(localized: "\(summary.bottlesAdded) bottles added")) }
         if summary.bottlesRemoved > 0 { parts.append(String(localized: "\(summary.bottlesRemoved) bottles removed")) }
         if summary.winesAdded > 0 { parts.append(String(localized: "\(summary.winesAdded) wines added")) }
         if summary.otherChanges > 0 { parts.append(String(localized: "\(summary.otherChanges) other changes")) }
-        let changesLabel = parts.formatted(.list(type: .and))
-        if let deviceName = summary.device(in: membership)?.name {
-            return String(localized: "From \(deviceName): \(changesLabel).")
-        }
-        return String(localized: "From your other devices: \(changesLabel).")
+        return parts.joined(separator: ", ") + "."
     }
 }
