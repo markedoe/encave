@@ -332,7 +332,7 @@ final class SyncService {
                 transport.allowLargeFrames()
                 guard let local = snapshot() else { return }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
-                                                                       photos: Self.photos, remote: remoteInfo)
+                                                                       files: Self.photos, remote: remoteInfo)
                 apply(result, from: peer.id)
                 adoptRemote(remote)
             } catch {
@@ -361,7 +361,7 @@ final class SyncService {
                 defer { syncing.remove(peer.id) }
                 guard let local = snapshot() else { return }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
-                                                                       photos: Self.photos, remote: remoteInfo)
+                                                                       files: Self.photos, remote: remoteInfo)
                 apply(result, from: peer.id)
                 adoptRemote(remote)
             } catch {
@@ -392,9 +392,11 @@ final class SyncService {
         }
     }
 
-    nonisolated static var photos: PhotoAccess {
-        PhotoAccess(data: { PhotoStore.data(for: $0) }, save: { PhotoStore.store($1, id: $0) },
-                    exists: { PhotoStore.exists($0) })
+    /// Photos and documents, each kept in its own folder.
+    nonisolated static var photos: FileAccess {
+        FileAccess(data: { id, kind in kind == .photo ? PhotoStore.data(for: id) : DocumentStore.data(for: id) },
+                   save: { id, kind, data in kind == .photo ? PhotoStore.store(data, id: id) : DocumentStore.store(data, id: id) },
+                   exists: { id, kind in kind == .photo ? PhotoStore.exists(id) : DocumentStore.exists(id) })
     }
 
     // MARK: Away from home
@@ -564,7 +566,7 @@ final class SyncService {
                 return
             }
             let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: local,
-                                                  progress: remoteProgress, photos: Self.photos, storage: remoteStorage?.string)
+                                                  progress: remoteProgress, files: Self.photos, storage: remoteStorage?.string)
             // The device left or joined another cellar meanwhile: drop the result.
             guard round == generation else { return }
             if let newKey = result.newKey { storeRemoteKey(newKey) }
@@ -600,9 +602,9 @@ final class SyncService {
             }
         } catch RemoteSyncError.fileTooLarge {
             if case .webDAV = remoteStorage {
-                remoteProblem = String(localized: "The cellar is larger than this WebDAV server accepts in one file. Raise its upload limit.")
+                remoteProblem = String(localized: "The cellar or a document is larger than this WebDAV server accepts in one file. Raise its upload limit.")
             } else {
-                remoteProblem = String(localized: "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.")
+                remoteProblem = String(localized: "The cellar or a document is larger than this relay accepts in one file. Use a relay with a higher limit.")
             }
         } catch RemoteSyncError.quotaExceeded {
             switch remoteStorage {

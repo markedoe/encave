@@ -15,6 +15,37 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Documents': 'Documents',
+    "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page or in a rack and choose **Attach a Document…**; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": 'Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin ou dans un casier et choisissez **Joindre un document…** ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web.',
+    'Photos and documents': 'Photos et documents',
+    'Label photos and documents stay on your devices and sync between them, but backups do not include their files yet: a backup lists the documents, and they show as not on this device until a device that has them syncs.': 'Les photos d’étiquettes et les documents restent sur vos appareils et se synchronisent entre eux, mais les sauvegardes n’incluent pas encore leurs fichiers : une sauvegarde liste les documents, qui apparaissent comme absents de cet appareil jusqu’à la synchronisation avec un appareil qui les a.',
+    'PDF': 'PDF',
+    'Image': 'Image',
+    'Text': 'Texte',
+    'Presentation': 'Présentation',
+    'Document': 'Document',
+    'Document removed': 'Document supprimé',
+    'This document is not on this device yet. It arrives with the next sync with the device it was added on.': 'Ce document n’est pas encore sur cet appareil. Il arrivera à la prochaine synchronisation avec l’appareil où il a été ajouté.',
+    'This document could not be opened.': 'Ce document n’a pas pu être ouvert.',
+    'Scan %@': 'Numérisation %@',
+    'A document can be at most 8 MB. Choose a smaller file, or scan fewer pages.': 'Un document peut faire au plus 8 Mo. Choisissez un fichier plus petit, ou numérisez moins de pages.',
+    'This file could not be read.': 'Ce fichier n’a pas pu être lu.',
+    'Rename Document': 'Renommer le document',
+    'Rename': 'Renommer',
+    'Add a Document…': 'Ajouter un document…',
+    'A PDF, an image, a text or an office document, up to 8 MB.': 'Un PDF, une image, un texte ou un document bureautique, jusqu’à 8 Mo.',
+    'Scan a Document': 'Numériser un document',
+    'Takes pictures of a paper and keeps them as a PDF.': 'Photographie un papier et le garde en PDF.',
+    '%@ · %@ · Not on this device yet': '%@ · %@ · Pas encore sur cet appareil',
+    'Opens the document.': 'Ouvre le document.',
+    'Share…': 'Partager…',
+    'Rename…': 'Renommer…',
+    'Invoices, certificates, technical sheets, articles: for every bottle of this wine. They sync with your devices, encrypted.': 'Factures, certificats, fiches techniques, articles : pour toutes les bouteilles de ce vin. Ils se synchronisent avec vos appareils, chiffrés.',
+    "An invoice, a certificate, a technical sheet: kept with the wine, for all its bottles. You can add more later on the wine's page or on a bottle.": 'Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille.',
+    "Documents of this bottle only, such as its certificate or its receipt. Those for every bottle of the wine are on the wine's page.": 'Documents de cette bouteille seulement, comme son certificat ou son ticket. Ceux de toutes les bouteilles du vin sont sur la fiche du vin.',
+    'Shows the documents of this bottle.': 'Affiche les documents de cette bouteille.',
+    'Documents…': 'Documents…',
+    'Attach a Document…': 'Joindre un document…',
     'How many bottles fit one behind the other in each cell.': 'Combien de bouteilles tiennent l’une derrière l’autre dans chaque case.',
     'Beta': 'Bêta',
     'Beta version': 'Version bêta',
@@ -51,7 +82,7 @@ FR = {
     "The storage sees when devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": "Le stockage voit quand les appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP.",
     "The WebDAV folder is full. Free some space on the server.": "Le dossier WebDAV est plein. Libérez de l’espace sur le serveur.",
     "The WebDAV server refused the username or password. Sign in again.": "Le serveur WebDAV a refusé le nom d’utilisateur ou le mot de passe. Reconnectez-vous.",
-    "The cellar is larger than this WebDAV server accepts in one file. Raise its upload limit.": "La cave dépasse ce que ce serveur WebDAV accepte en un seul fichier. Augmentez sa limite d’envoi.",
+    "The cellar or a document is larger than this WebDAV server accepts in one file. Raise its upload limit.": "La cave ou un document dépasse ce que ce serveur WebDAV accepte en un seul fichier. Augmentez sa limite d’envoi.",
     "The server refused this username or password. With two-step verification, use an app password.": "Le serveur a refusé ce nom d’utilisateur ou ce mot de passe. Avec la validation en deux étapes, utilisez un mot de passe d’application.",
     "This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.": "Cette adresse ne répond pas comme un dossier WebDAV. Vérifiez l’adresse et que WebDAV est activé sur le serveur.",
     "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only.": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil.",
@@ -251,7 +282,7 @@ FR = {
     'Page %lld of %lld': 'Page %1$lld sur %2$lld',
     'Purchase value': 'Valeur d’achat',
     'Purchase value: %@': 'Valeur d’achat : %@',
-    'The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.': 'La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.',
+    'The cellar or a document is larger than this relay accepts in one file. Use a relay with a higher limit.': 'La cave ou un document dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.',
     'Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.': 'Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.',
     'Changes from another device could not be read. Update Encave on all your devices.': 'Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.',
     'This bottle is on order: mark it received first.': 'Cette bouteille est en commande : marquez-la d’abord comme reçue.',
@@ -1118,6 +1149,7 @@ FR = {
 
 # Keys with plural forms: English one/other and French one/other.
 PLURALS = {
+    "%lld documents": (("%lld document", "%lld documents"), ("%lld document", "%lld documents")),
     "%lld bottles": (("%lld bottle", "%lld bottles"), ("%lld bouteille", "%lld bouteilles")),
     "%lld bottles in the cellar": (("%lld bottle in the cellar", "%lld bottles in the cellar"),
                                    ("%lld bouteille en cave", "%lld bouteilles en cave")),
@@ -1143,8 +1175,8 @@ PLURALS = {
 
 INFO_PLIST = {
     "NSCameraUsageDescription": (
-        "Encave uses the camera to read wine labels. Images stay on this device.",
-        "Encave utilise l’appareil photo pour lire les étiquettes. Les images restent sur cet appareil.",
+        "Encave uses the camera to read wine labels and scan documents. Images stay on your devices.",
+        "Encave utilise l’appareil photo pour lire les étiquettes et numériser des documents. Les images restent sur vos appareils.",
     ),
     "NSLocalNetworkUsageDescription": (
         "Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI or search server you may set in Settings.",

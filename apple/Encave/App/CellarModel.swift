@@ -104,11 +104,14 @@ final class CellarModel {
         }
         if let store = try? JSONFileCellarStore.defaultStore() {
             let model = CellarModel(store: store, demo: false)
-            // Photo files no wine refers to are removed after a grace period (PhotoStore);
-            // not while a cellar file that could not be read is kept, as its photos may be needed.
+            // Photo and document files nothing refers to are removed after a grace period
+            // (PhotoStore); not while a cellar file that could not be read is kept, as its
+            // files may be needed.
             if model.errorMessage == nil, store.unreadableFiles().isEmpty {
                 PhotoStore.removeOrphans(keeping: model.cellar.photoIDs)
+                DocumentStore.removeOrphans(keeping: model.cellar.attachmentIDs)
             }
+            DocumentStore.removeTemporaryCopies()
             return model
         }
         return CellarModel(store: InMemoryCellarStore())
@@ -438,6 +441,8 @@ enum AppSheet: Identifiable {
     case wineImage(wineID: UUID)
     /// Remember a wine found elsewhere (nil: a new one).
     case discovery(discoveryID: UUID?)
+    /// The documents of one bottle; `importing` opens the file picker right away.
+    case bottleDocuments(bottleID: UUID, importing: Bool)
     case settings
 
     var id: String {
@@ -450,6 +455,7 @@ enum AppSheet: Identifiable {
         case .moveBottle(let id): "move-\(id)"
         case .wineImage(let id): "image-\(id)"
         case .discovery(let id): "discovery-\(id?.uuidString ?? "new")"
+        case .bottleDocuments(let id, _): "documents-\(id)"
         case .settings: "settings"
         }
     }

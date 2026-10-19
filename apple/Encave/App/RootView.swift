@@ -91,6 +91,8 @@ private struct SheetContent: View {
             WineImagePicker(wineID: wineID)
         case .discovery(let discoveryID):
             DiscoveryEditor(discoveryID: discoveryID)
+        case .bottleDocuments(let bottleID, let importing):
+            BottleDocumentsView(bottleID: bottleID, startsImporting: importing)
         case .settings:
             NavigationStack { SettingsView() }
         }

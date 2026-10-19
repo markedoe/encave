@@ -41,6 +41,16 @@
         }
       }
     },
+    "%@ · %@ · Not on this device yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@ · Pas encore sur cet appareil"
+          }
+        }
+      }
+    },
     "%@, %@": {
       "localizations": {
         "fr": {
@@ -274,6 +284,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld découvertes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld documents": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld document"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld documents"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld document"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld documents"
                 }
               }
             }
@@ -631,6 +681,16 @@
         }
       }
     },
+    "A PDF, an image, a text or an office document, up to 8 MB.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un PDF, une image, un texte ou un document bureautique, jusqu’à 8 Mo."
+          }
+        }
+      }
+    },
     "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.": {
       "localizations": {
         "fr": {
@@ -677,6 +737,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un losange d’environ 30 cm contient une dizaine de bouteilles standard."
+          }
+        }
+      }
+    },
+    "A document can be at most 8 MB. Choose a smaller file, or scan fewer pages.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un document peut faire au plus 8 Mo. Choisissez un fichier plus petit, ou numérisez moins de pages."
           }
         }
       }
@@ -921,6 +991,16 @@
         }
       }
     },
+    "Add a Document…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un document…"
+          }
+        }
+      }
+    },
     "Add a Photo": {
       "localizations": {
         "fr": {
@@ -1157,6 +1237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un mot de passe d’application créé sur le serveur est recommandé. Stocké dans le trousseau de cet appareil."
+          }
+        }
+      }
+    },
+    "An invoice, a certificate, a technical sheet: kept with the wine, for all its bottles. You can add more later on the wine's page or on a bottle.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
           }
         }
       }
@@ -1437,6 +1527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À la maison, sur le même Wi-Fi"
+          }
+        }
+      }
+    },
+    "Attach a Document…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joindre un document…"
           }
         }
       }
@@ -3051,6 +3151,56 @@
         }
       }
     },
+    "Document": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Document"
+          }
+        }
+      }
+    },
+    "Document removed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Document supprimé"
+          }
+        }
+      }
+    },
+    "Documents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Documents"
+          }
+        }
+      }
+    },
+    "Documents of this bottle only, such as its certificate or its receipt. Those for every bottle of the wine are on the wine's page.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Documents de cette bouteille seulement, comme son certificat ou son ticket. Ceux de toutes les bouteilles du vin sont sur la fiche du vin."
+          }
+        }
+      }
+    },
+    "Documents…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Documents…"
+          }
+        }
+      }
+    },
     "Does %@ show the same code?": {
       "localizations": {
         "fr": {
@@ -4321,6 +4471,16 @@
         }
       }
     },
+    "Image": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        }
+      }
+    },
     "Import": {
       "localizations": {
         "fr": {
@@ -4447,6 +4607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inventaire à imprimer (PDF)"
+          }
+        }
+      }
+    },
+    "Invoices, certificates, technical sheets, articles: for every bottle of this wine. They sync with your devices, encrypted.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Factures, certificats, fiches techniques, articles : pour toutes les bouteilles de ce vin. Ils se synchronisent avec vos appareils, chiffrés."
           }
         }
       }
@@ -4597,6 +4767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gardez une copie et transférez votre cave."
+          }
+        }
+      }
+    },
+    "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page or in a rack and choose **Attach a Document…**; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin ou dans un casier et choisissez **Joindre un document…** ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
           }
         }
       }
@@ -4767,6 +4947,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photo de l’étiquette"
+          }
+        }
+      }
+    },
+    "Label photos and documents stay on your devices and sync between them, but backups do not include their files yet: a backup lists the documents, and they show as not on this device until a device that has them syncs.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos d’étiquettes et les documents restent sur vos appareils et se synchronisent entre eux, mais les sauvegardes n’incluent pas encore leurs fichiers : une sauvegarde liste les documents, qui apparaissent comme absents de cet appareil jusqu’à la synchronisation avec un appareil qui les a."
           }
         }
       }
@@ -6211,6 +6401,16 @@
         }
       }
     },
+    "Opens the document.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre le document."
+          }
+        }
+      }
+    },
     "Opens the page in your browser.": {
       "localizations": {
         "fr": {
@@ -6351,6 +6551,16 @@
         }
       }
     },
+    "PDF": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PDF"
+          }
+        }
+      }
+    },
     "Page %lld of %lld": {
       "localizations": {
         "fr": {
@@ -6481,6 +6691,16 @@
         }
       }
     },
+    "Photos and documents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos et documents"
+          }
+        }
+      }
+    },
     "Pictures": {
       "localizations": {
         "fr": {
@@ -6607,6 +6827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Préférences"
+          }
+        }
+      }
+    },
+    "Presentation": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Présentation"
           }
         }
       }
@@ -7191,6 +7421,36 @@
         }
       }
     },
+    "Rename": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renommer"
+          }
+        }
+      }
+    },
+    "Rename Document": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renommer le document"
+          }
+        }
+      }
+    },
+    "Rename…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renommer…"
+          }
+        }
+      }
+    },
     "Replace Photo": {
       "localizations": {
         "fr": {
@@ -7451,12 +7711,32 @@
         }
       }
     },
+    "Scan %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numérisation %@"
+          }
+        }
+      }
+    },
     "Scan Again": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Scanner à nouveau"
+          }
+        }
+      }
+    },
+    "Scan a Document": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numériser un document"
           }
         }
       }
@@ -7791,6 +8071,16 @@
         }
       }
     },
+    "Share…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager…"
+          }
+        }
+      }
+    },
     "Shelf %@, %lld": {
       "localizations": {
         "fr": {
@@ -8017,6 +8307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affiche les bouteilles gardées pour cette occasion."
+          }
+        }
+      }
+    },
+    "Shows the documents of this bottle.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les documents de cette bouteille."
           }
         }
       }
@@ -8521,6 +8821,16 @@
         }
       }
     },
+    "Takes pictures of a paper and keeps them as a PDF.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photographie un papier et le garde en PDF."
+          }
+        }
+      }
+    },
     "Tap **Check Key and Load Models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.": {
       "localizations": {
         "fr": {
@@ -8681,6 +8991,16 @@
         }
       }
     },
+    "Text": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte"
+          }
+        }
+      }
+    },
     "Text, One Line per Wine": {
       "localizations": {
         "fr": {
@@ -8811,32 +9131,32 @@
         }
       }
     },
-    "The cellar is larger than this WebDAV server accepts in one file. Raise its upload limit.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La cave dépasse ce que ce serveur WebDAV accepte en un seul fichier. Augmentez sa limite d’envoi."
-          }
-        }
-      }
-    },
-    "The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute."
-          }
-        }
-      }
-    },
     "The cellar it holds cannot be recovered afterwards.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La cave qu’il contient ne pourra plus être récupérée."
+          }
+        }
+      }
+    },
+    "The cellar or a document is larger than this WebDAV server accepts in one file. Raise its upload limit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave ou un document dépasse ce que ce serveur WebDAV accepte en un seul fichier. Augmentez sa limite d’envoi."
+          }
+        }
+      }
+    },
+    "The cellar or a document is larger than this relay accepts in one file. Use a relay with a higher limit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave ou un document dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute."
           }
         }
       }
@@ -9471,6 +9791,26 @@
         }
       }
     },
+    "This document could not be opened.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce document n’a pas pu être ouvert."
+          }
+        }
+      }
+    },
+    "This document is not on this device yet. It arrives with the next sync with the device it was added on.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce document n’est pas encore sur cet appareil. Il arrivera à la prochaine synchronisation avec l’appareil où il a été ajouté."
+          }
+        }
+      }
+    },
     "This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
       "localizations": {
         "fr": {
@@ -9487,6 +9827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
+    "This file could not be read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier n’a pas pu être lu."
           }
         }
       }
