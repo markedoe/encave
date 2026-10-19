@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.outlined.ZoomIn
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
 
@@ -36,7 +37,7 @@ import app.encave.R
  * Topics of the in-app help, the same as on Apple. The keyboard-shortcuts topic is
  * left out: the Android app has no keyboard shortcuts.
  */
-enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Devices, Ai, WebSearch, Data, Privacy }
+enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Devices, Sync, Ai, WebSearch, Data, Privacy }
 
 /** A paragraph of help with an optional heading. Text can use **bold** and `code`. */
 data class HelpSection(@StringRes val body: Int, @StringRes val title: Int? = null, val icon: ImageVector? = null)
@@ -143,6 +144,17 @@ data class HelpArticle(
                     HelpSection(R.string.help_devices_away, R.string.help_devices_away_title),
                     HelpSection(R.string.help_devices_webdav, R.string.help_devices_webdav_title),
                     HelpSection(R.string.help_devices_privacy, R.string.help_devices_privacy_title),
+                ),
+            ),
+            HelpArticle(
+                HelpTopic.Sync, R.string.help_sync_title, R.string.help_sync_summary, Icons.Outlined.Sync,
+                listOf(
+                    HelpSection(R.string.help_sync_steps, R.string.help_sync_steps_title),
+                    HelpSection(R.string.help_sync_home, R.string.help_sync_home_title),
+                    HelpSection(R.string.help_sync_away, R.string.help_sync_away_title),
+                    HelpSection(R.string.help_sync_merge, R.string.help_sync_merge_title),
+                    HelpSection(R.string.help_sync_remove, R.string.help_sync_remove_title),
+                    HelpSection(R.string.help_sync_local, R.string.help_sync_local_title),
                 ),
             ),
             HelpArticle(

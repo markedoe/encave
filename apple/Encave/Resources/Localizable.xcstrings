@@ -1431,6 +1431,16 @@
         }
       }
     },
+    "At home, on the same Wi-Fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la maison, sur le même Wi-Fi"
+          }
+        }
+      }
+    },
     "Automatic": {
       "localizations": {
         "fr": {
@@ -3471,6 +3481,16 @@
         }
       }
     },
+    "Every bottle, wine, rack, tasting, discovery and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque bouteille, vin, casier, dégustation, découverte et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
+          }
+        }
+      }
+    },
     "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row.": {
       "localizations": {
         "fr": {
@@ -3637,6 +3657,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Finale"
+          }
+        }
+      }
+    },
+    "First you pair your devices, once (see **Your devices**). After that they exchange their changes by themselves: directly when they are on the same Wi-Fi, or through a storage you choose when they are apart. Your cellar is encrypted from end to end all the way.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’abord, vous appairez vos appareils, une seule fois (voir **Vos appareils**). Ensuite, ils échangent leurs modifications d’eux-mêmes : directement quand ils sont sur le même Wi-Fi, ou par un stockage de votre choix quand ils sont éloignés. Votre cave est chiffrée de bout en bout tout du long."
           }
         }
       }
@@ -4131,6 +4161,16 @@
         }
       }
     },
+    "How changes come together": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment les modifications se combinent"
+          }
+        }
+      }
+    },
     "How long the flavors last after swallowing.": {
       "localizations": {
         "fr": {
@@ -4157,6 +4197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Combien de bouteilles identiques vous ajoutez."
+          }
+        }
+      }
+    },
+    "How sync works": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment marche la synchronisation"
           }
         }
       }
@@ -6131,6 +6181,16 @@
         }
       }
     },
+    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there and reads the others’ about once a minute while Encave is open. The storage only ever sees encrypted files.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres environ une fois par minute quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
+          }
+        }
+      }
+    },
     "Optional. Helps you remember where to buy a wine again and what your cellar is worth.": {
       "localizations": {
         "fr": {
@@ -6247,6 +6307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Page %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "Paired devices find each other on the local network and connect directly, without going through the internet. A moment after each change (a bottle opened, added or moved), they send it to each other, photos included, over an encrypted connection. Encave must be open on both.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils appairés se trouvent sur le réseau local et se connectent directement, sans passer par internet. Peu après chaque modification (une bouteille ouverte, ajoutée ou déplacée), ils se l’envoient, photos comprises, par une connexion chiffrée. Encave doit être ouvert sur les deux."
           }
         }
       }
@@ -9471,12 +9541,12 @@
         }
       }
     },
-    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. The other devices receive the setting the next time they meet on the same Wi-Fi, or when you enter the same storage on them.": {
+    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les autres appareils reçoivent le réglage la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, ou quand vous y saisissez le même stockage."
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil."
           }
         }
       }
@@ -9637,6 +9707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu. Quand vous l’achetez, balayez-le et choisissez **Ajouter à la cave** : il quitte la liste une fois les bouteilles ajoutées."
+          }
+        }
+      }
+    },
+    "Two steps": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deux étapes"
           }
         }
       }
@@ -10031,6 +10111,16 @@
         }
       }
     },
+    "What stays on each device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qui reste propre à chaque appareil"
+          }
+        }
+      }
+    },
     "What to Open Tonight": {
       "localizations": {
         "fr": {
@@ -10047,6 +10137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat."
+          }
+        }
+      }
+    },
+    "What travels between your devices, and how changes come together.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qui circule entre vos appareils, et comment les modifications se combinent."
           }
         }
       }
@@ -10107,6 +10207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quand boire"
+          }
+        }
+      }
+    },
+    "When you remove a device (lost or sold), the cellar’s key changes by itself and the remaining devices receive the new one in an encrypted message. The removed device keeps what it already had but cannot read anything new.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand vous retirez un appareil (perdu ou vendu), la clé de la cave change d’elle-même et les appareils restants reçoivent la nouvelle dans un message chiffré. L’appareil retiré garde ce qu’il avait déjà mais ne peut plus rien lire de nouveau."
           }
         }
       }
@@ -10377,6 +10487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Année"
+          }
+        }
+      }
+    },
+    "Your AI and web search keys, your WebDAV login, the studio look and other display settings, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
           }
         }
       }
