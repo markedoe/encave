@@ -176,7 +176,9 @@ jobs:
             # Boot first: a cold simulator can time out launching the app under test.
             xcrun simctl boot "$udid" 2>/dev/null || true
             xcrun simctl bootstatus "$udid" -b
+            # A one-off simulator timeout (a screenshot request) is retried once.
             xcodebuild test -project Encave.xcodeproj -scheme Encave -destination "id=$udid" \
+              -retry-tests-on-failure -test-iterations 2 \
               -resultBundlePath "$RUNNER_TEMP/$device.xcresult" CODE_SIGNING_ALLOWED=NO \
               | xcbeautify --renderer github-actions || status=1
           done

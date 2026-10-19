@@ -66,6 +66,11 @@ public struct WineGroup: Identifiable, Hashable, Sendable {
     public var count: Int { bottles.count }
 }
 
+public extension Collection where Element == Bottle {
+    /// The bottle a quick "Drink" opens: one not kept for an occasion when there is one.
+    var bottleToOpen: Bottle? { first { $0.reservedFor == nil } ?? first }
+}
+
 public struct MaturitySection: Identifiable, Hashable, Sendable {
     public var maturity: Maturity
     public var groups: [WineGroup]
@@ -174,7 +179,7 @@ public extension Cellar {
 
     /// Wines that still have bottles in the cellar, sorted by name then vintage.
     func groups(matching query: String = "") -> [WineGroup] {
-        groups(filter: CellarFilter(query: query), sort: .name, year: Calendar.current.component(.year, from: .now))
+        groups(filter: CellarFilter(query: query), sort: .name, year: CellarYear.current)
     }
 
     func groups(filter: CellarFilter, sort: CellarSort, year: Int) -> [WineGroup] {
@@ -238,6 +243,22 @@ public extension Cellar {
     /// Bottles of a wine still in the cellar.
     func bottles(of wineID: UUID) -> [Bottle] {
         bottlesInCellar.filter { $0.wineID == wineID }.sorted { $0.addedAt < $1.addedAt }
+    }
+
+    /// Opened bottles whose wine (name, producer, origin, grapes, tags) or tasting
+    /// (note, occasion, full note, food) contains `query`, most recent first.
+    func tastings(matching query: String) -> [Bottle] {
+        let needle = query.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty else { return consumedBottles }
+        return consumedBottles.filter { bottle in
+            if wines[bottle.wineID]?.matches(needle) == true { return true }
+            let tasting = bottle.tasting
+            let fields = [tasting?.note, tasting?.occasion, tasting?.appearance, tasting?.nose, tasting?.palate,
+                          tasting?.finish, tasting?.foodPairing]
+            return fields.compactMap { $0 }.contains {
+                $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
+        }
     }
 
     /// Past tastings of a wine, most recent first.

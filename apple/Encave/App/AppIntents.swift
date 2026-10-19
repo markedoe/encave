@@ -15,7 +15,7 @@ enum CellarAccess {
         return (try? JSONFileCellarStore.defaultStore().load()) ?? Cellar()
     }
 
-    static var year: Int { Calendar.current.component(.year, from: .now) }
+    static var year: Int { CellarYear.current }
 
     /// "Main rack · B3", or the storage note.
     static func location(of bottle: Bottle, in cellar: Cellar) -> String? {

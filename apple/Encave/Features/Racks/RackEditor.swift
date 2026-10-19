@@ -171,13 +171,21 @@ struct RackEditor: View {
             }
             .confirmationDialog("Delete this rack?", isPresented: $confirmingDelete, titleVisibility: .visible) {
                 Button("Delete Rack", role: .destructive) {
-                    if let rackID { model.update { $0.removeRack(rackID) } }
+                    if let rackID { model.deleteRack(rackID) }
                     dismiss()
                 }
             }
             .onAppear(perform: load)
-            .onChange(of: rows) { _, count in resizeRows(count) }
-            .onChange(of: customRows) { _, on in if on { rowColumns = Array(repeating: columns, count: rows) } }
+            .onChange(of: rows) { _, count in if customRows { resizeRows(count) } }
+            // Turned on by hand: every row starts at the rack's width. Loading an irregular
+            // rack sets its rows first, so they are kept.
+            .onChange(of: customRows) { _, on in
+                if !on {
+                    rowColumns = []
+                } else if rowColumns.count != rows {
+                    rowColumns = Array(repeating: columns, count: rows)
+                }
+            }
         }
         .macSheetFrame(width: 560, height: 760)
     }

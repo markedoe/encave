@@ -102,7 +102,10 @@ struct AISettingsSection: View {
         }
         .onChange(of: settings.provider) { _, _ in settings.saveProvider() }
         .onChange(of: settings.model) { _, model in AISettings.saveModel(model, for: settings.provider) }
-        .onChange(of: settings.baseURL) { _, url in AISettings.saveBaseURL(url, for: settings.provider) }
+        .onChange(of: settings.baseURL) { _, url in
+            AISettings.saveBaseURL(url, for: settings.provider)
+            if check != .checking { check = .idle }
+        }
         .onChange(of: apiKey) { _, key in
             AISettings.setAPIKey(key, for: settings.provider)
             if check != .checking { check = .idle }
@@ -190,6 +193,8 @@ struct AISettingsSection: View {
         Task {
             do {
                 let list = try await AIService.models(settings: settings, apiKey: key)
+                // Changed while checking: the answer is about settings that are gone.
+                guard isCurrent(settings, key: key) else { check = .idle; return }
                 models = list
                 check = .valid(list.count)
                 if self.settings.model.isEmpty || !list.contains(self.settings.model) {
@@ -198,8 +203,12 @@ struct AISettingsSection: View {
                 }
                 customModel = list.isEmpty
             } catch {
-                check = .failed(error.localizedDescription)
+                check = isCurrent(settings, key: key) ? .failed(error.localizedDescription) : .idle
             }
         }
+    }
+
+    private func isCurrent(_ checked: AISettings, key: String) -> Bool {
+        checked.provider == settings.provider && checked.baseURL == settings.baseURL && key == AISettings.cleanKey(apiKey)
     }
 }

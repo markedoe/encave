@@ -11,6 +11,33 @@ import Testing
         return cellar
     }
 
+    @Test func journalSearchLooksInTheWineAndTheTasting() throws {
+        var cellar = cellarWithRack()
+        let wine = Wine(name: "Clos Test", producer: "Domaine Été", grapes: ["Gamay"])
+        let bottles = try cellar.addBottles(of: wine, quantity: 2)
+        try cellar.drink(bottles[0].id, tasting: Tasting(date: .now, occasion: "Picnic", foodPairing: "Roast duck"))
+        try cellar.drink(bottles[1].id, tasting: Tasting(date: .now, note: "Silky"))
+        #expect(cellar.tastings(matching: "").count == 2)
+        #expect(cellar.tastings(matching: "gamay").count == 2)
+        #expect(cellar.tastings(matching: "ete").count == 2, "diacritics are ignored")
+        #expect(cellar.tastings(matching: "duck").map(\.id) == [bottles[0].id])
+        #expect(cellar.tastings(matching: "picnic").map(\.id) == [bottles[0].id])
+        #expect(cellar.tastings(matching: "silky ").map(\.id) == [bottles[1].id])
+        #expect(cellar.tastings(matching: "Bordeaux").isEmpty)
+    }
+
+    @Test func quickDrinkSkipsBottlesKeptForAnOccasion() throws {
+        var cellar = cellarWithRack()
+        let wine = Wine(name: "Test", vintage: 2015, color: .red)
+        let added = try cellar.addBottles(of: wine, quantity: 2, addedAt: Date(timeIntervalSince1970: 0))
+        try cellar.reserve([added[0].id], for: "Birthday")
+        let bottles = cellar.bottles(of: wine.id)
+        #expect(bottles.bottleToOpen?.id == added[1].id)
+        try cellar.reserve([added[1].id], for: "Birthday")
+        #expect(cellar.bottles(of: wine.id).bottleToOpen != nil, "all kept: still one to open")
+        #expect([Bottle]().bottleToOpen == nil)
+    }
+
     @Test func addBottlesGroupsByWine() throws {
         var cellar = cellarWithRack()
         let wine = Wine(name: "Test", vintage: 2015, color: .red)
@@ -123,6 +150,16 @@ import Testing
     }
 }
 
+@Suite struct CellarYearTests {
+    @Test func yearsAreGregorianWhateverTheUserCalendar() {
+        #expect(CellarYear.calendar.identifier == .gregorian)
+        // 2026-07-01 12:00 UTC: 2569 in the Buddhist calendar, Reiwa 8 in the Japanese one.
+        let date = Date(timeIntervalSince1970: 1_782_907_200)
+        #expect(CellarYear.of(date) == 2026)
+        #expect(Calendar(identifier: .buddhist).component(.year, from: date) != 2026)
+    }
+}
+
 @Suite struct StoreTests {
     @Test func jsonStoreRoundTrips() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("cellar-\(UUID()).json")
@@ -133,6 +170,37 @@ import Testing
         let cellar = SampleData.cellar(year: 2026)
         try store.save(cellar)
         #expect(try store.load() == cellar)
+    }
+
+    @Test func unreadableFileIsSetAsideNotOverwritten() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("store-\(UUID())")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let url = folder.appendingPathComponent("cellar.json")
+        let store = JSONFileCellarStore(fileURL: url)
+        let damaged = Data("{\"wines\": [".utf8)
+        try damaged.write(to: url)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+        let first = try store.loadSettingAsideUnreadable(now: now)
+        #expect(first.cellar.isEmpty)
+        let kept = try #require(first.setAside)
+        #expect(kept.lastPathComponent.hasPrefix("cellar-unreadable-"))
+        #expect(try Data(contentsOf: kept) == damaged)
+        #expect(!FileManager.default.fileExists(atPath: url.path))
+
+        // A second damaged file in the same second gets its own name.
+        try damaged.write(to: url)
+        let second = try #require(try store.loadSettingAsideUnreadable(now: now).setAside)
+        #expect(second != kept)
+        #expect(store.unreadableFiles() == [kept, second].sorted { $0.lastPathComponent < $1.lastPathComponent })
+
+        // A readable file loads as usual and nothing is moved.
+        let cellar = SampleData.cellar(year: 2026)
+        try store.save(cellar)
+        let loaded = try store.loadSettingAsideUnreadable(now: now)
+        #expect(loaded.setAside == nil)
+        #expect(loaded.cellar == cellar)
     }
 
     @Test func sampleDataIsConsistent() {

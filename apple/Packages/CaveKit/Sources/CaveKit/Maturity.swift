@@ -149,7 +149,8 @@ public extension Cellar {
         var leaving: [Int: Int] = [:]
         var pastPeak = 0, withoutWindow = 0
         for bottle in bottlesInCellar {
-            guard let wine = wines[bottle.wineID], let until = wine.drinkUntil else {
+            // The same windows as maturity: both years, in order.
+            guard let wine = wines[bottle.wineID], let from = wine.drinkFrom, let until = wine.drinkUntil, from <= until else {
                 withoutWindow += 1
                 continue
             }
@@ -205,10 +206,11 @@ public extension Cellar {
             let parts: [String?] = [
                 wine.displayName, wine.producer, wine.color?.rawValue, origin.isEmpty ? nil : origin,
                 wine.grapes.isEmpty ? nil : wine.grapes.joined(separator: ", "), maturity,
-                "\(group.count) bottle\(group.count == 1 ? "" : "s")", group.bottles.first.flatMap(place),
+                "\(group.count) bottle\(group.count == 1 ? "" : "s")", group.bottles.bottleToOpen.flatMap(place),
             ]
+            // A missing field keeps its column ("–"), so the model reads every line against the header.
             entries.append(.init(number: index + 1, wineID: wine.id,
-                                 line: "\(index + 1). " + parts.compactMap { $0 }.joined(separator: " | ")))
+                                 line: "\(index + 1). " + parts.map { $0 ?? "–" }.joined(separator: " | ")))
         }
         return AssistantCatalog(entries: entries, omitted: max(0, groups.count - limit))
     }

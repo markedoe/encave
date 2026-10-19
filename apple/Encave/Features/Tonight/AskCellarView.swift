@@ -26,7 +26,7 @@ enum CellarAssistant {
     }
 
     enum Failure: Error {
-        case unavailable, refused, tooLarge, other
+        case unavailable, refused, tooLarge, unsupportedLanguage, other
     }
 
     @MainActor
@@ -91,6 +91,7 @@ private enum Generator {
             switch error {
             case .guardrailViolation: throw CellarAssistant.Failure.refused
             case .exceededContextWindowSize: throw CellarAssistant.Failure.tooLarge
+            case .unsupportedLanguageOrLocale: throw CellarAssistant.Failure.unsupportedLanguage
             default: throw CellarAssistant.Failure.other
             }
         }
@@ -148,6 +149,7 @@ struct AskCellarView: View {
                 Section {
                     Text(answer.text)
                         .textSelection(.enabled)
+                        .accessibilityIdentifier("ask.answer")
                     ForEach(answer.wineIDs, id: \.self) { id in
                         if let group = model.cellar.groups().first(where: { $0.wine.id == id }) {
                             if let selection {
@@ -184,6 +186,8 @@ struct AskCellarView: View {
         guard !text.isEmpty, !asking else { return }
         asking = true
         problem = nil
+        // The previous answer goes: it was for another question.
+        answer = nil
         focused = false
         Task {
             defer { asking = false }
@@ -195,6 +199,8 @@ struct AskCellarView: View {
                 problem = String(localized: "Your cellar or the question is too large for the model on this device. Try a shorter question.")
             } catch CellarAssistant.Failure.unavailable {
                 problem = String(localized: "Apple Intelligence is not available on this device right now.")
+            } catch CellarAssistant.Failure.unsupportedLanguage {
+                problem = String(localized: "Apple Intelligence does not answer in the language of this device yet.")
             } catch {
                 problem = String(localized: "No answer this time. Try again.")
             }

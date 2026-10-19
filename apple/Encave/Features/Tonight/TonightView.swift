@@ -12,7 +12,7 @@ struct TonightView: View {
         if let selection {
             list(selection: selection)
                 .navigationTitle("Tonight")
-                .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
+                .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView(selection: selection) }
                 .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView(selection: selection) }
         } else {
             NavigationStack {
@@ -128,14 +128,14 @@ private struct TonightPick: View {
                         .font(.footnote.weight(.medium))
                 }
             }
-            if let location = group.bottles.first.flatMap({ model.locationLabel(for: $0) }) {
+            if let location = group.bottles.bottleToOpen.flatMap({ model.locationLabel(for: $0) }) {
                 Label(location, systemImage: "square.grid.3x3")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             HStack(spacing: 12) {
                 Button {
-                    if let bottle = group.bottles.first { model.sheet = .drink(bottleID: bottle.id) }
+                    if let bottle = group.bottles.bottleToOpen { model.sheet = .drink(bottleID: bottle.id) }
                 } label: {
                     ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                 }

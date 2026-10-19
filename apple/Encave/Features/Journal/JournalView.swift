@@ -60,11 +60,7 @@ private struct TastingSections: View {
     var showsInsights = true
 
     var body: some View {
-        let bottles = model.cellar.consumedBottles.filter { bottle in
-            guard !query.isEmpty, let wine = model.cellar.wines[bottle.wineID] else { return true }
-            return wine.displayName.localizedCaseInsensitiveContains(query)
-                || (bottle.tasting?.note ?? "").localizedCaseInsensitiveContains(query)
-        }
+        let bottles = model.cellar.tastings(matching: query)
         let months = Dictionary(grouping: bottles) { bottle in
             Calendar.current.dateInterval(of: .month, for: bottle.tasting?.date ?? bottle.addedAt)?.start ?? .distantPast
         }
@@ -85,12 +81,17 @@ private struct TastingSections: View {
         }
         }
         if bottles.isEmpty {
-            ContentUnavailableView(
-                "No tastings yet",
-                systemImage: "book.closed",
-                description: Text("Bottles you open and your notes will appear here.")
-            )
-            .listRowBackground(Color.clear)
+            if model.cellar.consumedBottles.isEmpty {
+                ContentUnavailableView(
+                    "No tastings yet",
+                    systemImage: "book.closed",
+                    description: Text("Bottles you open and your notes will appear here.")
+                )
+                .listRowBackground(Color.clear)
+            } else {
+                ContentUnavailableView.search(text: query)
+                    .listRowBackground(Color.clear)
+            }
         }
         ForEach(months.keys.sorted(by: >), id: \.self) { month in
             Section {
@@ -147,6 +148,10 @@ struct TastingRow: View {
                         .lineLimit(3)
                 }
                 HStack(spacing: 10) {
+                    // The style in words, not only by the bottle's color.
+                    if showsWine, let style = wine?.color?.name {
+                        Text(style)
+                    }
                     if let occasion = tasting?.occasion {
                         Label(occasion, systemImage: "person.2")
                     }

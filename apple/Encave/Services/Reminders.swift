@@ -51,7 +51,7 @@ enum Reminders {
         let calendar = Calendar.current
         guard let next = calendar.nextDate(after: .now, matching: DateComponents(day: 1, hour: 10, minute: 0),
                                            matchingPolicy: .nextTime) else { return }
-        let digest = cellar.drinkingDigest(year: calendar.component(.year, from: next))
+        let digest = cellar.drinkingDigest(year: CellarYear.of(next))
         guard !digest.isEmpty else { return }
 
         let content = UNMutableNotificationContent()
@@ -79,7 +79,8 @@ enum Reminders {
                 let content = UNMutableNotificationContent()
                 content.title = String(localized: "Delivery expected today")
                 let wineName = group.wine.displayName
-                content.body = String(localized: "\(wineName): \(dates.count) bottles. Mark them received when they arrive.")
+                let bottlesLabel = String(localized: "\(dates.count) bottles")
+                content.body = String(localized: "\(wineName): \(bottlesLabel). Mark them received when they arrive.")
                 content.sound = .default
                 content.userInfo = [tabKey: AppTab.cellar.rawValue, wineKey: group.wine.id.uuidString]
                 content.threadIdentifier = deliveryPrefix
@@ -112,6 +113,8 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unc
         let tab = info[Reminders.tabKey] as? String
         let wineID = (info[Reminders.wineKey] as? String).flatMap(UUID.init(uuidString:))
         await MainActor.run {
+            // Tapped while the app was not running: the window may not have set `model` yet.
+            let model = self.model ?? CellarModel.current
             if let wineID, model?.cellar.wines[wineID] != nil {
                 model?.open(wine: wineID)
             } else if let tab, let section = AppTab(rawValue: tab) {

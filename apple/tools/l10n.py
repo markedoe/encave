@@ -112,7 +112,7 @@ FR = {
     "These results are too long for the model on this device.": "Ces résultats sont trop longs pour le modèle de cet appareil.",
     "No suggestions this time. Try again.": "Pas de suggestion cette fois. Réessayez.",
     "The search service could not be reached. Check the connection and the address.": "Le service de recherche est injoignable. Vérifiez la connexion et l’adresse.",
-    "Enter the full server address, starting with http:// or https://.": "Saisissez l’adresse complète du serveur, commençant par http:// ou https://.",
+    "Enter the full server address, starting with https:// (http:// only for a server on your local network).": "Saisissez l’adresse complète du serveur, commençant par https:// (http:// seulement pour un serveur de votre réseau local).",
     "The search service refused the key. Check it in Settings.": "Le service de recherche a refusé la clé. Vérifiez-la dans les réglages.",
     "This SearXNG server does not answer in JSON. Add json under search: formats: in its settings.yml, then restart it.": "Ce serveur SearXNG ne répond pas en JSON. Ajoutez json sous search: formats: dans son settings.yml, puis redémarrez-le.",
     "Too many searches for now, or the free allowance is used up. Try again later.": "Trop de recherches pour le moment, ou le quota gratuit est épuisé. Réessayez plus tard.",
@@ -123,11 +123,11 @@ FR = {
     "Off by default": "Désactivée par défaut",
     "Nothing is looked up online until you choose a service in **Settings → Web Search**.": "Rien n’est cherché en ligne tant que vous n’avez pas choisi un service dans **Réglages → Recherche web**.",
     "Choose a service": "Choisir un service",
-    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080`. Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080`. Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier.",
+    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier.",
     "On a wine's page, or while adding or editing a wine, tap **Search Online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.": "Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur.",
     "On devices with Apple Intelligence, **Suggest Details** reads the results on the device and proposes the producer, region, appellation, country, grapes and drinking window. Each suggestion is shown next to the current value, and only the ones you select are used. The results are not sent to any AI service.": "Sur les appareils avec Apple Intelligence, **Suggérer des détails** lit les résultats sur l’appareil et propose le producteur, la région, l’appellation, le pays, les cépages et la fenêtre de dégustation. Chaque suggestion s’affiche à côté de la valeur actuelle, et seules celles que vous choisissez sont utilisées. Les résultats ne sont envoyés à aucun service d’IA.",
     "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device.": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, et pour un prix le format de la bouteille et le mot « prix ». Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil.",
-    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher.",
+    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête.",
     'Reading the label…': 'Lecture de l’étiquette…',
     'Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.': 'Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment.',
     'Details completed by AI: %@': 'Fiche complétée par l’IA : %@',
@@ -224,15 +224,14 @@ FR = {
     'Opens the wine in Encave.': 'Ouvre le vin dans Encave.',
     'Show Tonight in the Menu Bar': 'Afficher Ce soir dans la barre des menus',
     'Printed inventory': 'Inventaire imprimé',
-    '**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.': '**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché.',
-    'A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.': 'Une sauvegarde contient tout et s’importe sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement.',
+    "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory.": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.",
+    "A backup contains your whole cellar, without the photos, and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": "Une sauvegarde contient toute votre cave, sans les photos, et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour une assurance ou un déménagement.",
     'Cellar inventory': 'Inventaire de la cave',
     'Inventory for Printing (PDF)': 'Inventaire à imprimer (PDF)',
     'Made with Encave': 'Réalisé avec Encave',
     'Page %lld of %lld': 'Page %1$lld sur %2$lld',
     'Purchase value': 'Valeur d’achat',
     'Purchase value: %@': 'Valeur d’achat : %@',
-    '%@ · %lld bottles': '%1$@ · %2$lld bouteilles',
     'The cellar is larger than this relay accepts in one file. Use a relay with a higher limit.': 'La cave dépasse la taille de fichier acceptée par ce relais. Utilisez un relais avec une limite plus haute.',
     'Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.': 'Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.',
     'Changes from another device could not be read. Update Encave on all your devices.': 'Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.',
@@ -285,8 +284,6 @@ FR = {
     'Received bottles join the cellar without a place; move them to a rack from here.': 'Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page.',
     'Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.': 'Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil.',
     'Wine merchant': 'Caviste',
-    '%lld bottles on order': '%lld bouteilles en commande',
-    '%@: %lld bottles. Mark them received when they arrive.': '%1$@ : %2$lld bouteilles. Marquez-les comme reçues à leur arrivée.',
     'Coming from another app': 'Venir d’une autre app',
     'Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.': 'Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil.',
     'Label photos stay on your devices and sync between them, but are not included in backups yet.': 'Les photos d’étiquettes restent sur vos appareils et se synchronisent entre eux, mais ne sont pas encore incluses dans les sauvegardes.',
@@ -296,9 +293,7 @@ FR = {
     'bottles opened': 'bouteilles ouvertes',
     'different wines': 'vins différents',
     'discoveries': 'découvertes',
-    'Favorite: %@, %lld stars': 'Préféré : %1$@, %2$lld étoiles',
     'Most opened region: %@': 'Région la plus ouverte : %@',
-    'Most opened style: ': 'Style le plus ouvert : ',
     'Favorite occasion: %@': 'Occasion préférée : %@',
     'Busiest month: %@': 'Mois le plus actif : %@',
     'Check This Rack': 'Vérifier ce casier',
@@ -366,7 +361,7 @@ FR = {
     'Use iCloud': 'Utiliser iCloud',
     'For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.': 'Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés.',
     'For iPhone, iPad and Mac today, and Android later. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.': 'Pour iPhone, iPad et Mac aujourd’hui, et Android plus tard. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance.',
-    'Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.': 'Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi.',
+    'Your other devices that do not sync away from home yet receive this setting the next time they sync on the same Wi-Fi. Turning it off, or choosing another storage, applies to this device only: do the same on the others.': 'Vos autres appareils qui ne se synchronisent pas encore à distance recevront ce réglage à leur prochaine synchronisation sur le même Wi-Fi. La désactiver, ou choisir un autre stockage, ne concerne que cet appareil : faites de même sur les autres.',
     'Without syncing away from home, devices still sync on the same Wi-Fi.': 'Sans synchronisation à distance, les appareils se synchronisent toujours sur le même Wi-Fi.',
     'iCloud is not available. Check that you are signed in to iCloud.': 'iCloud n’est pas disponible. Vérifiez que vous êtes connecté à iCloud.',
     'Your iCloud storage is full.': 'Votre stockage iCloud est plein.',
@@ -395,7 +390,7 @@ FR = {
     'Your devices': 'Vos appareils',
     'The same cellar on your iPhone, iPad and Mac.': 'La même cave sur votre iPhone, iPad et Mac.',
     'Add a device': 'Ajouter un appareil',
-    'On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar** and scan the QR code, or type the code (on a Mac). Both devices must be on the same Wi-Fi.': 'Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un code QR et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil** et scannez le code QR, ou saisissez le code (sur un Mac). Les deux appareils doivent être sur le même Wi-Fi.',
+    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar**, then scan the QR code (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi.": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil**, puis scannez le QR code (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi.",
     'Compare the codes': 'Comparer les codes',
     'Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network.': 'Les deux appareils affichent alors les mêmes 6 chiffres et demandent s’ils sont identiques. Vérifiez-les avant de répondre **Ils sont identiques** : des codes différents signifient qu’un autre appareil s’est glissé entre les deux, répondez alors **Non**. C’est ce qui protège votre cave, même sur un réseau partagé.',
     'Staying in sync': 'Rester synchronisé',
@@ -588,7 +583,6 @@ FR = {
     "Half bottle": "Demi-bouteille",
     "How was it?": "C’était comment ?",
     "Import": "Importer",
-    "Imported %lld bottles of %lld new wines.": "%1$lld bouteilles importées, dont %2$lld nouveaux vins.",
     "Import…": "Importer…",
     "Insights": "Statistiques",
     "Its bottles, drinking window and tastings appear here.": "Ses bouteilles, sa fenêtre de dégustation et vos dégustations apparaissent ici.",
@@ -627,8 +621,6 @@ FR = {
     "Nothing to suggest yet": "Rien à suggérer pour l’instant",
     "OK": "OK",
     "Occasion": "Occasion",
-    "Only %lld free positions: the other bottles will have no position.":
-        "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement.",
     "Orange": "Orange",
     "Origin": "Origine",
     "Palate": "Bouche",
@@ -708,8 +700,6 @@ FR = {
     "This file is not an Encave backup or a CSV with a name column.":
         "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name ».",
     "This item no longer exists.": "Cet élément n’existe plus.",
-    "This removes every bottle, rack and tasting from this device.":
-        "Cela supprime toutes les bouteilles, tous les casiers et toutes les dégustations de cet appareil.",
     "Today": "Aujourd’hui",
     "Tonight": "Ce soir",
     "Tonight, open…": "Ce soir, ouvrez…",
@@ -718,7 +708,6 @@ FR = {
     "Unknown wine": "Vin inconnu",
     "Until": "À",
     "Use This Label": "Utiliser cette étiquette",
-    "Use this if the bottle was logged by mistake.": "À utiliser si la bouteille a été notée par erreur.",
     "Used by Tonight to suggest what to open. You can adjust it anytime.":
         "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment.",
     "Used for new purchases. Prices already entered keep their currency.":
@@ -735,7 +724,6 @@ FR = {
     "Wine or note": "Vin ou note",
     "Wine, producer, region, grape, vintage": "Vin, producteur, région, cépage, millésime",
     "With friends": "Entre amis",
-    "Your cellar could not be loaded.": "Impossible de charger votre cave.",
     "Your cellar in figures": "Votre cave en chiffres",
     "Your cellar is empty": "Votre cave est vide",
     "Your cellar is stored only on this device.": "Votre cave est enregistrée uniquement sur cet appareil.",
@@ -743,7 +731,6 @@ FR = {
     "Zoom In": "Agrandir",
     "Zoom Out": "Réduire",
     "%@ and %lld more": "%1$@ et %2$lld autres",
-    "%lld stars": "%lld étoiles",
     "%@, %@": "%1$@, %2$@",
     "%@, empty": "%@, vide",
     "%lld of %lld": "%1$lld sur %2$lld",
@@ -791,7 +778,7 @@ FR = {
     "The model declined to read this photo.": "Le modèle a refusé de lire cette photo.",
     "%lld min": "%lld min",
     # Help
-    '**Back Up (JSON)** saves everything: wines, bottles, racks, tastings and discoveries. Import it on another device to restore it; nothing already there is replaced.': '**Sauvegarder (JSON)** enregistre tout : vins, bouteilles, casiers, dégustations et découvertes. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve déjà n’est remplacé.',
+    "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, tastings, discoveries and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced.": "**Sauvegarder (JSON)** enregistre toute votre cave : vins, bouteilles, casiers, dégustations, découvertes et réglages, mais pas les photos. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve n’est remplacé.",
     '**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.': '**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.',
     'A diamond bin of about 30 cm holds around 10 standard bottles.': 'Un losange d’environ 30 cm contient une dizaine de bouteilles standard.',
     'A few words to remember the bottle.': 'Quelques mots pour vous souvenir de la bouteille.',
@@ -828,7 +815,7 @@ FR = {
     'Discoveries are not counted as bottles in your cellar and do not appear in racks or Tonight.': 'Les découvertes ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans les casiers ni dans Ce soir.',
     'Drinking a bottle': 'Boire une bouteille',
     'Each bottle is tracked on its own, so you can drink or move them one by one.': 'Chaque bouteille est suivie séparément : vous pouvez les boire ou les déplacer une par une.',
-    'Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color.': 'Chaque vin est **trop jeune**, **prêt**, **à boire bientôt** (dernière année de sa fenêtre) ou **sur le déclin**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur.',
+    "Each wine is **too young**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color. A wine without a drinking window shows none of these and comes last in Tonight: set its window on its page.": "Chaque vin est **trop jeune**, **prêt**, **à boire bientôt** (dernière année de sa fenêtre) ou **après son apogée**. L’étiquette et le symbole le disent toujours, pas seulement la couleur. Un vin sans fenêtre de dégustation n’affiche rien de cela et passe en dernier dans Ce soir : fixez sa fenêtre sur sa fiche.",
     'Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant.': 'La fiche de chaque vin propose une température de service et, pour les rouges jeunes et corsés, une durée de carafage.',
     'Encave Help': 'Aide Encave',
     'Encave is open source. Questions and ideas are welcome on the project page.': 'Encave est open source. Questions et idées sont les bienvenues sur la page du projet.',
@@ -847,14 +834,12 @@ FR = {
     'Help with discoveries': 'Aide sur les découvertes',
     'Help with racks': 'Aide sur les casiers',
     'Help with tasting notes': 'Aide sur les notes de dégustation',
-    'Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.': 'Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.',
     'How long the flavors last after swallowing.': 'Combien de temps les saveurs persistent après avoir avalé.',
     'How many bottles fit one behind the other on a shelf.': 'Combien de bouteilles tiennent l’une derrière l’autre sur une clayette.',
     'How many identical bottles you add.': 'Combien de bouteilles identiques vous ajoutez.',
     'How to set up AI': 'Comment configurer l’IA',
     'If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar.': 'Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour compléter le type, la région, les cépages et la fenêtre de dégustation. Seule cette photo est envoyée, jamais votre cave.',
     'In **Settings → AI**, choose a provider. You need an account with it and an API key; the provider bills you directly for what you use, usually a fraction of a cent per label.': 'Dans **Réglages → IA**, choisissez un fournisseur. Il vous faut un compte chez lui et une clé d’API ; le fournisseur vous facture directement ce que vous utilisez, en général une fraction de centime par étiquette.',
-    'In **Settings**, load the sample cellar to explore every screen, then erase it when you are ready to add your own bottles.': 'Dans les **Réglages**, chargez la cave d’exemple pour découvrir chaque écran, puis effacez-la quand vous êtes prêt à ajouter vos bouteilles.',
     'Install a local server (Ollama)': 'Installer un serveur local (Ollama)',
     'Irregular racks': 'Casiers irréguliers',
     'Keep a copy and move your cellar.': 'Gardez une copie et transférez votre cave.',
@@ -869,7 +854,7 @@ FR = {
     'Not in the cellar': 'Hors de la cave',
     'On the Mac, and on iPad with a keyboard.': 'Sur Mac, et sur iPad avec un clavier.',
     'On this device': 'Sur cet appareil',
-    'One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.': 'Une bouteille par case, en rangées et colonnes. Choisissez **deux bouteilles par case** pour les casiers assez profonds pour en mettre une derrière l’autre.',
+    "One bottle per cell, in rows and columns. For racks deep enough to hold one bottle behind the other, set **Bottles per cell** to **Two, one behind the other**.": "Une bouteille par case, en rangées et colonnes. Pour les casiers assez profonds pour tenir une bouteille derrière l’autre, réglez **Bouteilles par case** sur **Deux, l’une derrière l’autre**.",
     'Only the **name** is required. The producer and the vintage help tell wines apart; leave the vintage on **Non-vintage** for champagnes and blends without a year.': 'Seul le **nom** est obligatoire. Le producteur et le millésime aident à distinguer les vins ; laissez le millésime sur **Non millésimé** pour les champagnes et assemblages sans année.',
     'Only the label photo, when you scan a label or tap **Complete with AI**. Your cellar, notes and prices are never sent.': 'Seulement la photo de l’étiquette, quand vous scannez une étiquette ou touchez **Compléter avec l’IA**. Votre cave, vos notes et vos prix ne sont jamais envoyés.',
     'Only the name is required. Producer and vintage tell apart wines with the same name.': 'Seul le nom est obligatoire. Le producteur et le millésime distinguent les vins du même nom.',
@@ -974,7 +959,6 @@ FR = {
     "Leave the server URL empty to use the provider’s usual address.": "Laissez l’adresse du serveur vide pour utiliser l’adresse habituelle du fournisseur.",
     "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": "Sur iPhone et iPad, utilisez l’adresse de votre ordinateur sur le réseau au lieu de localhost. Choisissez un modèle qui lit les images pour reconnaître les étiquettes.",
     "Optional. Reads labels from a photo with the AI service you choose, using your own API key.": "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.",
-    "%lld models": "%lld modèles",
     # Scan summary
     "Name not found": "Nom non trouvé",
     "Not found": "Non trouvé",
@@ -1081,6 +1065,36 @@ FR = {
     "Wine, place, note or tag": "Vin, lieu, note ou tag",
     "Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.": "Les vins à acheter apparaissent dans la liste d’achats du Journal. Les découvertes ne comptent pas comme des bouteilles de votre cave.",
     "Your impression": "Votre impression",
+    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings**) fills it with example wines to explore every screen. **Erase all data** in Settings removes them when you are ready to add your own bottles; in a cellar shared with other devices, it erases it on them too.": "Tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec elle, **Charger une cave d’exemple** (sur l’écran Cave vide ou dans les **Réglages**) la remplit de vins d’exemple pour découvrir chaque écran. **Effacer toutes les données** dans les Réglages les supprime quand vous êtes prêt à ajouter vos bouteilles ; dans une cave partagée avec d’autres appareils, elle est aussi effacée sur ceux-ci.",
+    "Cellar files that could not be read": "Fichiers de cave illisibles",
+    "Delete File": "Supprimer le fichier",
+    "Delete this file?": "Supprimer ce fichier ?",
+    "Example wines, racks and tastings to try Encave. Erase them later with Erase all data.": "Des vins, casiers et dégustations d’exemple pour essayer Encave. Effacez-les ensuite avec Effacer toutes les données.",
+    "Kept when Encave could not read your cellar at launch. Share one to keep it elsewhere or to report the problem; delete it when you no longer need it.": "Conservés quand Encave n’a pas pu lire votre cave au lancement. Partagez-en un pour le garder ailleurs ou signaler le problème ; supprimez-le quand vous n’en avez plus besoin.",
+    "Load the sample cellar?": "Charger la cave d’exemple ?",
+    "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.": "Aucun autre appareil ne s’est encore synchronisé via iCloud. Vos appareils doivent être connectés au même compte Apple, avec la synchronisation loin de la maison activée.",
+    "Share %@": "Partager %@",
+    "The cellar it holds cannot be recovered afterwards.": "La cave qu’il contient ne pourra plus être récupérée.",
+    "The sample cellar is offered while your cellar is empty and no other device syncs with this one.": "La cave d’exemple est proposée tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec celui-ci.",
+    "This device is no longer part of the synced cellar: its key changed, for example after restoring a backup. The cellar stays here. Join the cellar again from another device.": "Cet appareil ne fait plus partie de la cave synchronisée : sa clé a changé, par exemple après la restauration d’une sauvegarde. La cave reste ici. Rejoignez de nouveau la cave depuis un autre appareil.",
+    "This device’s key could not be read from the Keychain, so sync is paused. Open Encave again once the device is unlocked.": "La clé de cet appareil n’a pas pu être lue dans le trousseau, la synchronisation est donc suspendue. Rouvrez Encave une fois l’appareil déverrouillé.",
+    "This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes sur cet appareil et sur les autres appareils synchronisés avec lui. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après.",
+    "This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après.",
+    "Your cellar could not be loaded. Nothing is saved until Encave is opened again.": "Impossible de charger votre cave. Rien n’est enregistré avant la prochaine ouverture d’Encave.",
+    "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Vos données.",
+    "Bottle put back in the cellar": "Bouteille remise en cave",
+    "Use this if the bottle was logged by mistake. Its tasting note is deleted; you can undo right after.": "À utiliser si la bouteille a été notée par erreur. Sa note de dégustation est supprimée ; vous pouvez annuler juste après.",
+    "Favorite: %@, %@": "Préféré : %1$@, %2$@",
+    "Most opened style: %@": "Style le plus ouvert : %@",
+    "%@: %@. Mark them received when they arrive.": "%1$@ : %2$@. Marquez-les comme reçues à leur arrivée.",
+    "Imported %@.": "Importé : %@.",
+    "Nothing new: everything in this file is already in your cellar.": "Rien de nouveau : tout ce que contient ce fichier est déjà dans votre cave.",
+    "Rows without a wine name, skipped: %lld": "Lignes sans nom de vin, ignorées : %lld",
+    "%@: %@": "%1$@ : %2$@",
+    "Apple Intelligence does not answer in the language of this device yet.": "Apple Intelligence ne répond pas encore dans la langue de cet appareil.",
+    "%llds": "années %lld",
+    "Decade": "Décennie",
+    "Month": "Mois",
 }
 
 # Keys with plural forms: English one/other and French one/other.
@@ -1090,6 +1104,22 @@ PLURALS = {
                                    ("%lld bouteille en cave", "%lld bouteilles en cave")),
     "%lld positions": (("%lld position", "%lld positions"), ("%lld emplacement", "%lld emplacements")),
     "%lld results": (("%lld result", "%lld results"), ("%lld résultat", "%lld résultats")),
+    "%lld stars": (("%lld star", "%lld stars"), ("%lld étoile", "%lld étoiles")),
+    "%lld models": (("%lld model", "%lld models"), ("%lld modèle", "%lld modèles")),
+    "%lld bottles on order": (("%lld bottle on order", "%lld bottles on order"),
+                              ("%lld bouteille en commande", "%lld bouteilles en commande")),
+    "%lld new wines": (("%lld new wine", "%lld new wines"), ("%lld nouveau vin", "%lld nouveaux vins")),
+    "%lld discoveries": (("%lld discovery", "%lld discoveries"), ("%lld découverte", "%lld découvertes")),
+    "Only %lld free positions: the other bottles will have no position.": (
+        ("Only %lld free position: the other bottles will have no position.",
+         "Only %lld free positions: the other bottles will have no position."),
+        ("Seulement %lld emplacement libre : les autres bouteilles n’auront pas d’emplacement.",
+         "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement.")),
+    "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.": (
+        ("Holds %lld bottle. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.",
+         "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."),
+        ("Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.",
+         "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.")),
 }
 
 INFO_PLIST = {
@@ -1154,7 +1184,8 @@ def extract():
     return {k for k in keys if k.strip() and not re.fullmatch(r"[a-z0-9.]+", k)}
 
 
-def write():
+def catalogs():
+    """The catalog files, as written: {path: text}."""
     strings = {key: {"localizations": {"fr": unit(value)}} for key, value in FR.items() if key.strip() == key}
     for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
         strings[key] = {"localizations": {
@@ -1162,22 +1193,58 @@ def write():
             "fr": {"variations": {"plural": {"one": unit(fr_one), "other": unit(fr_other)}}},
         }}
     catalog = {"sourceLanguage": "en", "strings": dict(sorted(strings.items())), "version": "1.0"}
-    (RES / "Localizable.xcstrings").write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
     info = {key: {"localizations": {"en": unit(en), "fr": unit(fr)}} for key, (en, fr) in INFO_PLIST.items()}
-    (RES / "InfoPlist.xcstrings").write_text(
-        json.dumps({"sourceLanguage": "en", "strings": info, "version": "1.0"}, indent=2, ensure_ascii=False) + "\n")
     shortcuts = {key: {"localizations": {"fr": unit(value)}} for key, value in APP_SHORTCUTS.items()}
-    (RES / "AppShortcuts.xcstrings").write_text(
-        json.dumps({"sourceLanguage": "en", "strings": shortcuts, "version": "1.0"}, indent=2, ensure_ascii=False) + "\n")
-    print(f"Wrote {len(strings)} strings")
+
+    def text(value):
+        return json.dumps(value, indent=2, ensure_ascii=False) + "\n"
+    return {
+        RES / "Localizable.xcstrings": text(catalog),
+        RES / "InfoPlist.xcstrings": text({"sourceLanguage": "en", "strings": info, "version": "1.0"}),
+        RES / "AppShortcuts.xcstrings": text({"sourceLanguage": "en", "strings": shortcuts, "version": "1.0"}),
+    }
+
+
+def write():
+    files = catalogs()
+    for path, text in files.items():
+        path.write_text(text)
+    count = len(json.loads(files[RES / "Localizable.xcstrings"])["strings"])
+    print(f"Wrote {count} strings")
+
+
+PLACEHOLDER = re.compile(r"%(?:\d+\$)?(?:lld|ld|d|@|lf|f)")
+
+
+def placeholders(text):
+    """Format placeholders without their positions: "%1$@ %2$lld" -> ["%@", "%lld"]."""
+    return sorted(re.sub(r"\d+\$", "", p) for p in PLACEHOLDER.findall(text))
 
 
 def check():
     known = set(FR) | set(PLURALS)
-    missing = sorted(k for k in extract() if to_key(k) not in known and k not in known)
-    for key in missing:
-        print(f"missing French: {key!r} (key {to_key(key)!r})")
-    return 1 if missing else 0
+    problems = []
+    for key in sorted(k for k in extract() if to_key(k) not in known and k not in known):
+        problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
+    # A translation must use the same placeholders as its key, or it shows the wrong value or crashes.
+    for key, value in FR.items():
+        if placeholders(key) != placeholders(value):
+            problems.append(f"placeholders differ: {key!r} -> {value!r}")
+    for key, forms in PLURALS.items():
+        for form in forms[0] + forms[1]:
+            if placeholders(form) != placeholders(key):
+                problems.append(f"placeholders differ in a plural form: {key!r} -> {form!r}")
+    # Keys with spaces around them are dropped from the catalog: the text would stay in English.
+    for key in FR:
+        if key.strip() != key:
+            problems.append(f"key with leading or trailing spaces is not written: {key!r}")
+    # The committed catalogs must be the ones this script writes.
+    for path, text in catalogs().items():
+        if not path.exists() or path.read_text() != text:
+            problems.append(f"{path.name} is not up to date: run python3 apple/tools/l10n.py")
+    for problem in problems:
+        print(problem)
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":

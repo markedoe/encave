@@ -442,7 +442,7 @@ import Testing
         let catalog = cellar.assistantCatalog(year: 2026, limit: 1)
         #expect(catalog.entries.count == 1)
         #expect(catalog.omitted == 1)
-        #expect(catalog.text == "1. Soon 2018 | white | Loire | drink soon | 1 bottle")
+        #expect(catalog.text == "1. Soon 2018 | – | white | Loire | – | drink soon | 1 bottle | –")
         #expect(catalog.wineID(number: 1) == cellar.wines.values.first { $0.name == "Soon" }?.id)
         #expect(catalog.wineID(number: 2) == nil)
     }

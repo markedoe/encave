@@ -4,6 +4,8 @@ import SwiftUI
 /// Pick a dish, see which of your bottles go with it and why.
 struct FoodPairingView: View {
     @Environment(CellarModel.self) private var model
+    /// Mac columns: the wine opens beside the list, as from Tonight, instead of being pushed.
+    var selection: Binding<UUID?>?
     @State private var dish: DishCategory = .redMeat
 
     var body: some View {
@@ -49,14 +51,21 @@ struct FoodPairingView: View {
                         .foregroundStyle(.secondary)
                 }
                 ForEach(suggestions) { suggestion in
-                    NavigationLink {
-                        WineDetailView(wineID: suggestion.group.wine.id)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            WineRow(group: suggestion.group)
-                            Text(reasonText(suggestion.reasons))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                    let row = VStack(alignment: .leading, spacing: 6) {
+                        WineRow(group: suggestion.group)
+                        Text(reasonText(suggestion.reasons))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let selection {
+                        Button { selection.wrappedValue = suggestion.group.wine.id } label: { row }
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(selection.wrappedValue == suggestion.group.wine.id ? .isSelected : [])
+                    } else {
+                        NavigationLink {
+                            WineDetailView(wineID: suggestion.group.wine.id)
+                        } label: {
+                            row
                         }
                     }
                 }

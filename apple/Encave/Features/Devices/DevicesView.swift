@@ -233,7 +233,7 @@ struct RemoteSyncView: View {
                         Task { try? await sync.setRemoteStorage(nil) }
                     }
                 } footer: {
-                    Text("Your other devices receive this setting and the key the next time they sync on the same Wi-Fi.")
+                    Text("Your other devices that do not sync away from home yet receive this setting the next time they sync on the same Wi-Fi. Turning it off, or choosing another storage, applies to this device only: do the same on the others.")
                 }
                 if case .webDAV = storage {
                     if sync.needsWebDAVSignIn || changingLogin {

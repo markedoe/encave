@@ -40,7 +40,8 @@ struct WineDraft: Equatable {
         notes = wine.notes ?? ""
         drinkFrom = wine.drinkFrom
         drinkUntil = wine.drinkUntil
-        windowIsAutomatic = wine.drinkFrom == nil
+        // Automatic unless the years were entered: an estimate follows the vintage and style.
+        windowIsAutomatic = wine.windowSource != .entered
         photoID = wine.photoID
         barcodes = wine.barcodes ?? []
         tags = wine.tags ?? []
@@ -55,12 +56,22 @@ struct WineDraft: Equatable {
         Wine(name: name, vintage: vintage, color: color).estimatedWindow()
     }
 
+    /// The years entered by hand, as the form shows them: a year not set yet shows
+    /// (and is saved as) the estimate, or this year and five years on.
+    var manualWindow: (from: Int, until: Int) {
+        let year = CellarYear.current
+        let from = drinkFrom ?? estimatedWindow?.from ?? year
+        return (from, max(from, drinkUntil ?? estimatedWindow?.until ?? year + 5))
+    }
+
+    /// The window saved with the wine.
+    var window: (from: Int, until: Int)? { windowIsAutomatic ? estimatedWindow : manualWindow }
+
     func makeWine() -> Wine {
         func clean(_ text: String) -> String? {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed.isEmpty ? nil : trimmed
         }
-        let window = windowIsAutomatic ? estimatedWindow : drinkFrom.flatMap { from in drinkUntil.map { (from, max(from, $0)) } }
         var wine = Wine(
             id: id, name: clean(name) ?? name, producer: clean(producer), vintage: vintage, color: color,
             region: clean(region), country: clean(country), appellation: clean(appellation),
@@ -80,6 +91,8 @@ struct WineFormSections: View {
     @Environment(CellarModel.self) private var model
     @Binding var draft: WineDraft
     @FocusState private var nameFocused: Bool
+    /// The name is focused once, when the form opens, not each time its section reappears.
+    @State private var focusedOnce = false
     var focusName = false
     /// Drinking window and wine notes, hidden when noting a wine found elsewhere.
     var showsCellarDetails = true
@@ -87,7 +100,7 @@ struct WineFormSections: View {
     var onSearchOnline: (() -> Void)?
     private let webSearch = WebSearchSettings.load()
 
-    private let currentYear = Calendar.current.component(.year, from: .now)
+    private let currentYear = CellarYear.current
 
     var body: some View {
         Section {
@@ -100,7 +113,8 @@ struct WineFormSections: View {
                 .fieldHelp("The estate, domaine or house that made the wine.")
             Picker("Vintage", selection: $draft.vintage) {
                 Text("Non-vintage").tag(Int?.none)
-                ForEach((1950...(currentYear + 1)).reversed(), id: \.self) { year in
+                // From 1900: old vintages of port, Madeira or Bordeaux are still in cellars.
+                ForEach((1900...(currentYear + 1)).reversed(), id: \.self) { year in
                     Text(verbatim: "\(year)").tag(Int?.some(year))
                 }
             }
@@ -110,7 +124,11 @@ struct WineFormSections: View {
         } footer: {
             Text("Only the name is required. Producer and vintage tell apart wines with the same name.")
         }
-        .onAppear { if focusName { nameFocused = true } }
+        .onAppear {
+            guard focusName, !focusedOnce else { return }
+            focusedOnce = true
+            nameFocused = true
+        }
 
         Section {
             FlowLayout(spacing: 8) {
@@ -176,7 +194,7 @@ struct WineFormSections: View {
                         .foregroundStyle(.secondary)
                 }
             } else {
-                Stepper(value: fromBinding, in: 1950...(currentYear + 60)) {
+                Stepper(value: fromBinding, in: 1900...(currentYear + 60)) {
                     LabeledContent("From") { Text(verbatim: "\(fromBinding.wrappedValue)").monospacedDigit() }
                 }
                 Stepper(value: untilBinding, in: fromBinding.wrappedValue...(currentYear + 80)) {
@@ -209,14 +227,14 @@ struct WineFormSections: View {
 
     private var fromBinding: Binding<Int> {
         Binding(
-            get: { draft.drinkFrom ?? draft.estimatedWindow?.from ?? currentYear },
+            get: { draft.manualWindow.from },
             set: { draft.drinkFrom = $0; if (draft.drinkUntil ?? $0) < $0 { draft.drinkUntil = $0 } }
         )
     }
 
     private var untilBinding: Binding<Int> {
         Binding(
-            get: { max(draft.drinkUntil ?? draft.estimatedWindow?.until ?? currentYear + 5, fromBinding.wrappedValue) },
+            get: { draft.manualWindow.until },
             set: { draft.drinkUntil = $0; if draft.drinkFrom == nil { draft.drinkFrom = fromBinding.wrappedValue } }
         )
     }
@@ -314,14 +332,22 @@ struct EditWineView: View {
         } else if photoRemoved {
             wine.photoID = nil
         }
-        // Photos added elsewhere while the form was open (another window, sync) stay.
-        if let live = model.cellar.wines[wine.id] {
-            wine.extraPhotoIDs = live.extraPhotoIDs
-            wine.coverPhotoID = live.coverPhotoID
-        }
+        if let live = model.cellar.wines[wine.id] { wine.keepUnedited(from: live) }
         // A replaced photo file is removed by the cleanup at launch, after a grace period.
         guard model.update({ try $0.updateWine(wine) }) else { return }
         dismiss()
+    }
+}
+
+extension Wine {
+    /// Takes the fields the form does not edit from the wine as it is now: photos added
+    /// elsewhere while the form was open (another window, sync) and the current price.
+    mutating func keepUnedited(from live: Wine) {
+        extraPhotoIDs = live.extraPhotoIDs
+        coverPhotoID = live.coverPhotoID
+        currentPrice = live.currentPrice
+        currentPriceCurrency = live.currentPriceCurrency
+        currentPriceDate = live.currentPriceDate
     }
 }
 

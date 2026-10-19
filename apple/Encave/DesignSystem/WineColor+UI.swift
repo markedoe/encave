@@ -14,6 +14,19 @@ extension WineColor {
         }
     }
 
+    /// The style as text, next to its color wherever a wine is shown, so color is never the only cue.
+    var name: String {
+        switch self {
+        case .red: String(localized: "Red")
+        case .white: String(localized: "White")
+        case .rose: String(localized: "Rosé")
+        case .sparkling: String(localized: "Sparkling")
+        case .dessert: String(localized: "Dessert")
+        case .fortified: String(localized: "Fortified")
+        case .orange: String(localized: "Orange")
+        }
+    }
+
     /// Light wine colors need dark text written on them; red and fortified need light text.
     var prefersDarkLabel: Bool {
         switch self {

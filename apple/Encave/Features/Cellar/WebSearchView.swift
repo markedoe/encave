@@ -190,7 +190,7 @@ struct WebSearchView: View {
         suggestionProblem = nil
         let terms = searchedTerms ?? trimmedQuery
         let results = results
-        let year = Calendar.current.component(.year, from: .now)
+        let year = CellarYear.current
         Task {
             defer { suggesting = false }
             do {
@@ -295,7 +295,6 @@ extension WineDetailField {
 extension WineDraft {
     /// The details that a search can complete, from the form.
     var webSearchDetails: WineDetails {
-        let window = windowIsAutomatic ? estimatedWindow : drinkFrom.flatMap { from in drinkUntil.map { (from: from, until: $0) } }
         return WineDetails(
             producer: producer, region: region, appellation: appellation, country: country,
             grapes: grapes.split(whereSeparator: { $0 == "," || $0 == ";" })

@@ -30,7 +30,7 @@ public enum SampleData {
     }
 
     public static func cellar(
-        year: Int = Calendar.current.component(.year, from: .now),
+        year: Int = CellarYear.current,
         labels: Labels = Labels()
     ) -> Cellar {
         var cellar = Cellar()

@@ -6,6 +6,8 @@ struct SettingsView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingErase = false
+    @State private var confirmingSample = false
+    @State private var deletingUnreadable: URL?
     @State private var exportDocument: ExportDocument?
     @State private var importing = false
     @State private var importMessage: String?
@@ -105,7 +107,10 @@ struct SettingsView: View {
 
             Section {
                 Picker("Currency", selection: currencyBinding) {
-                    ForEach(Self.currencies, id: \.self) { code in
+                    // The cellar's currency is always listed, even if set elsewhere (import, another device).
+                    let current = model.cellar.settings.currency
+                    let codes = Self.currencies.contains(current) ? Self.currencies : Self.currencies + [current]
+                    ForEach(codes, id: \.self) { code in
                         Text(Locale.current.localizedString(forCurrencyCode: code).map { "\($0) (\(code))" } ?? code).tag(code)
                     }
                 }
@@ -140,7 +145,30 @@ struct SettingsView: View {
             } header: {
                 Text("Your data")
             } footer: {
-                Text("A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                Text("A backup contains your whole cellar, without the photos, and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+            }
+
+            let unreadable = model.unreadableFiles
+            if !unreadable.isEmpty {
+                Section {
+                    ForEach(unreadable, id: \.self) { url in
+                        let fileName = url.lastPathComponent
+                        ShareLink(item: url) {
+                            Label("Share \(fileName)", systemImage: "square.and.arrow.up")
+                        }
+                        .contextMenu {
+                            Button("Delete File", systemImage: "trash", role: .destructive) { deletingUnreadable = url }
+                        }
+                        .swipeActions {
+                            Button("Delete", role: .destructive) { deletingUnreadable = url }
+                        }
+                        .accessibilityAction(named: Text("Delete File")) { deletingUnreadable = url }
+                    }
+                } header: {
+                    Text("Cellar files that could not be read")
+                } footer: {
+                    Text("Kept when Encave could not read your cellar at launch. Share one to keep it elsewhere or to report the problem; delete it when you no longer need it.")
+                }
             }
 
             AISettingsSection()
@@ -159,9 +187,18 @@ struct SettingsView: View {
                 Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
             }
 
-            Section("Test data") {
-                Button("Load sample cellar") { model.loadSample() }
+            Section {
+                if model.canLoadSample {
+                    Button("Load sample cellar") { confirmingSample = true }
+                }
                 Button("Erase all data", role: .destructive) { confirmingErase = true }
+                    .disabled(model.cellar.isEmpty)
+            } header: {
+                Text("Test data")
+            } footer: {
+                if model.canLoadSample {
+                    Text("The sample cellar is offered while your cellar is empty and no other device syncs with this one.")
+                }
             }
 
             Section("About") {
@@ -184,7 +221,27 @@ struct SettingsView: View {
         .confirmationDialog("Erase all data?", isPresented: $confirmingErase, titleVisibility: .visible) {
             Button("Erase all data", role: .destructive) { model.eraseAll() }
         } message: {
-            Text("This removes every bottle, rack and tasting from this device.")
+            if model.sync.otherDevices.isEmpty {
+                Text("This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+            } else {
+                Text("This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+            }
+        }
+        .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
+            Button("Load sample cellar") { model.loadSample() }
+        } message: {
+            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
+        }
+        .confirmationDialog(
+            "Delete this file?",
+            isPresented: Binding(get: { deletingUnreadable != nil }, set: { if !$0 { deletingUnreadable = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Delete File", role: .destructive) {
+                if let deletingUnreadable { model.deleteUnreadableFile(deletingUnreadable) }
+            }
+        } message: {
+            Text("The cellar it holds cannot be recovered afterwards.")
         }
         .fileExporter(
             isPresented: Binding(get: { exportDocument != nil }, set: { if !$0 { exportDocument = nil } }),
@@ -237,21 +294,37 @@ struct SettingsView: View {
             importMessage = String(localized: "The file could not be read.")
             return
         }
-        var summary: ImportSummary?
-        let ok = model.update { cellar in
+        // Read first: a file that cannot be read says so; a failed save shows its own error.
+        var imported = model.cellar
+        let summary: ImportSummary
+        do {
             if url.pathExtension.lowercased() == "json" {
-                summary = cellar.merge(try CellarExport.backup(fromJSON: data).cellar)
+                summary = imported.merge(try CellarExport.backup(fromJSON: data).cellar)
             } else {
-                summary = try cellar.importCSV(String(decoding: data, as: UTF8.self))
+                summary = try imported.importCSV(String(decoding: data, as: UTF8.self))
             }
-        }
-        if ok, let summary {
-            importMessage = String(localized: "Imported \(summary.bottlesAdded) bottles of \(summary.winesAdded) new wines.")
-            model.errorMessage = nil
-        } else {
-            model.errorMessage = nil
+        } catch {
             importMessage = String(localized: "This file is not an Encave backup or a CSV with a name column.")
+            return
         }
+        let discoveriesAdded = imported.discoveries.count - model.cellar.discoveries.count
+        guard model.update({ $0 = imported }) else { return }
+        importMessage = Self.importMessage(summary, discoveriesAdded: discoveriesAdded)
+    }
+
+    /// "Imported 12 bottles, 3 new wines and 2 discoveries. Rows skipped: 1".
+    static func importMessage(_ summary: ImportSummary, discoveriesAdded: Int) -> String {
+        var parts: [String] = []
+        if summary.bottlesAdded > 0 { parts.append(String(localized: "\(summary.bottlesAdded) bottles")) }
+        if summary.winesAdded > 0 { parts.append(String(localized: "\(summary.winesAdded) new wines")) }
+        if discoveriesAdded > 0 { parts.append(String(localized: "\(discoveriesAdded) discoveries")) }
+        let importedLabel = parts.formatted(.list(type: .and))
+        var message = parts.isEmpty ? String(localized: "Nothing new: everything in this file is already in your cellar.")
+            : String(localized: "Imported \(importedLabel).")
+        if summary.rowsSkipped > 0 {
+            message += " " + String(localized: "Rows without a wine name, skipped: \(summary.rowsSkipped)")
+        }
+        return message
     }
 }
 

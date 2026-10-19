@@ -108,7 +108,7 @@ enum WebSearchClient {
         case .missingKey:
             return String(localized: "Add your API key in Settings.")
         case .invalidServerURL:
-            return String(localized: "Enter the full server address, starting with http:// or https://.")
+            return String(localized: "Enter the full server address, starting with https:// (http:// only for a server on your local network).")
         case .unauthorized:
             return String(localized: "The search service refused the key. Check it in Settings.")
         case .jsonFormatDisabled:

@@ -419,7 +419,12 @@ struct RackCellView: View {
         if rack.kind == .bins {
             return Text("\(place), \(bottles.count) of \(rack.positionsPerCell) bottles")
         }
-        let names = bottles.compactMap { model.cellar.wines[$0.wineID]?.displayName }
+        // The style in words too: in the drawing it is only the bottle's color.
+        let names = bottles.compactMap { bottle in
+            model.cellar.wines[bottle.wineID].map { wine in
+                [wine.displayName, wine.color?.name].compactMap { $0 }.joined(separator: ", ")
+            }
+        }
         if names.isEmpty { return Text("\(place), empty") }
         return Text(verbatim: "\(place), \(names.joined(separator: ", "))")
     }

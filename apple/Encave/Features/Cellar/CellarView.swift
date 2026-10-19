@@ -162,7 +162,7 @@ struct CellarList: View {
                             .accessibilityIdentifier("wine.row")
                             .tag(group.wine.id)
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                if let bottle = group.bottles.first {
+                                if let bottle = group.bottles.bottleToOpen {
                                     Button {
                                         model.sheet = .drink(bottleID: bottle.id)
                                     } label: {
@@ -433,7 +433,7 @@ struct WineContextMenu: View {
     let group: WineGroup
 
     var body: some View {
-        if let bottle = group.bottles.first {
+        if let bottle = group.bottles.bottleToOpen {
             Button("Drink a Bottle", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
             if bottle.slot != nil {
                 Button("Show in Rack", systemImage: "square.grid.3x3") { model.showInRack(bottle) }
@@ -491,6 +491,7 @@ struct OrdersSection: View {
 /// First launch: explain the app and offer the sample cellar.
 struct EmptyCellarView: View {
     @Environment(CellarModel.self) private var model
+    @State private var confirmingSample = false
 
     var body: some View {
         ContentUnavailableView {
@@ -513,8 +514,17 @@ struct EmptyCellarView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 Button("Remember a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
-                Button("Load sample cellar") { model.loadSample() }
+                // Only for a cellar with nothing at all in it, that no other device syncs with:
+                // the sample replaces everything.
+                if model.canLoadSample {
+                    Button("Load sample cellar") { confirmingSample = true }
+                }
             }
+        }
+        .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
+            Button("Load sample cellar") { model.loadSample() }
+        } message: {
+            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
         }
     }
 }

@@ -48,7 +48,8 @@ struct HelpArticleView: View {
                     }
                     .padding(.vertical, 4)
                 }
-                ForEach(article.sections) { section in
+                ForEach(article.sections.indices, id: \.self) { index in
+                    let section = article.sections[index]
                     Section {
                         VStack(alignment: .leading, spacing: 6) {
                             if let title = section.title {
