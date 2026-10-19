@@ -622,6 +622,26 @@
     <string name="devices_status_synced">Synchronisé %1$s</string>
     <string name="devices_status_nearby">Sur ce réseau</string>
     <string name="devices_status_never">Pas encore synchronisé</string>
+    <string name="sync_status_local">Sur le même Wi-Fi</string>
+    <string name="sync_status_away">Loin de la maison</string>
+    <string name="sync_no_device_nearby">Aucun appareil trouvé sur ce Wi-Fi</string>
+    <string name="sync_unsent">Modifications de cet appareil pas encore envoyées</string>
+    <string name="sync_last_failed">Dernière tentative échouée : %1$s</string>
+    <string name="sync_next_manual">Seulement quand vous touchez Synchroniser</string>
+    <string name="sync_background">En arrière-plan, environ toutes les 15 minutes</string>
+    <string name="sync_frequency_title">Fréquence</string>
+    <string name="sync_frequency_1">Toutes les minutes</string>
+    <string name="sync_frequency_5">Toutes les 5 minutes</string>
+    <string name="sync_frequency_15">Toutes les 15 minutes</string>
+    <string name="sync_frequency_manual">Seulement quand je touche Synchroniser</string>
+    <string name="sync_frequency_footer">Sur le même Wi-Fi, les modifications partent quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil.</string>
+    <string name="sync_notify">Me prévenir des modifications des autres appareils</string>
+    <string name="sync_notify_footer">Une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre appareil. Rien n’est envoyé nulle part.</string>
+    <string name="sync_changes_channel">Modifications des autres appareils</string>
+    <string name="sync_changes_from">Depuis %1$s</string>
+    <string name="sync_changes_from_others">Depuis vos autres appareils</string>
+    <string name="sync_updated_from">Mis à jour depuis %1$s</string>
+    <string name="sync_updated_from_others">Mis à jour depuis vos autres appareils</string>
     <string name="sync_problem_removed">Cet appareil a été retiré de la cave depuis un autre appareil.</string>
     <string name="sync_problem_says_removed">Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.</string>
     <string name="sync_problem_not_verified">Un appareil n’a pas pu prouver qu’il fait partie de cette cave. Rien n’a été échangé.</string>
@@ -631,7 +651,7 @@
     <string name="remote_title">Loin de la maison</string>
     <string name="remote_status">État</string>
     <string name="remote_turn_off">Désactiver</string>
-    <string name="remote_on_footer">Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi. Tant qu’elle est activée, cet appareil se synchronise aussi toutes les 15 minutes en arrière-plan.</string>
+    <string name="remote_on_footer">Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi. Tant qu’elle est activée, cet appareil se synchronise aussi en arrière-plan environ toutes les 15 minutes, sauf s’il ne se synchronise que quand vous touchez Synchroniser.</string>
     <string name="remote_address">Adresse du relais</string>
     <string name="remote_check">Vérifier et activer</string>
     <string name="remote_relay_footer">Pour tous les appareils, iPhone et Mac compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance.</string>
@@ -709,13 +729,21 @@
     <string name="help_sync_home_title">À la maison, sur le même Wi-Fi</string>
     <string name="help_sync_home">Les appareils appairés se trouvent sur le réseau local et se connectent directement, sans passer par internet. Peu après chaque modification (une bouteille ouverte, ajoutée ou déplacée), ils se l’envoient, photos comprises, par une connexion chiffrée. Encave doit être ouvert sur les deux.</string>
     <string name="help_sync_away_title">Loin de la maison</string>
-    <string name="help_sync_away">Facultatif, dans **Appareils › Synchroniser loin de la maison** : un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance (iCloud est réservé aux appareils Apple). Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres environ une fois par minute quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés.</string>
+    <string name="help_sync_away">Facultatif, dans **Appareils › Synchroniser loin de la maison** : un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance (iCloud est réservé aux appareils Apple). Chaque appareil y dépose une copie chiffrée de la cave quelques secondes après une modification, et lit celles des autres quand Encave est ouvert, toutes les minutes sauf si vous choisissez autrement (voir plus bas). Le stockage ne voit jamais que des fichiers chiffrés.</string>
+    <string name="help_sync_now_title">Synchroniser et l’état</string>
+    <string name="help_sync_now">**Synchroniser** dans **Appareils** synchronise tout de suite avec les appareils du même Wi-Fi et avec le stockage à distance. **État** indique, pour chacun, si une synchronisation est en cours, quand la dernière a abouti, ce qui n’a pas marché si la dernière tentative a échoué, si des modifications de cet appareil ne sont pas encore envoyées, et quand vient la prochaine synchronisation à distance.</string>
+    <string name="help_sync_frequency_title">Fréquence</string>
+    <string name="help_sync_frequency">Dans **Appareils**, **Fréquence** règle la fréquence à laquelle cet appareil se synchronise à distance quand Encave est ouvert : toutes les minutes (par défaut), toutes les 5 ou 15 minutes, ou seulement quand vous touchez **Synchroniser**. Sur le même Wi-Fi, les modifications partent toujours quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil.</string>
+    <string name="help_sync_background_title">En arrière-plan</string>
+    <string name="help_sync_background">Quand Encave est fermé, un appareil Android se synchronise à distance environ toutes les 15 minutes s’il est connecté, sauf s’il ne se synchronise que quand vous touchez **Synchroniser**. Un iPhone ou un iPad le fait quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise tant que l’app est ouverte. Sur le même Wi-Fi, les appareils se synchronisent quand Encave est ouvert sur les deux.</string>
+    <string name="help_sync_notify_title">Modifications des autres appareils</string>
+    <string name="help_sync_notify">Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour une notification sur cet appareil quand une synchronisation apporte des bouteilles ouvertes, ajoutées ou retirées sur un autre appareil, par exemple « Depuis l’iPhone de Marc : 2 bouteilles ouvertes. » Une seule notification résume les modifications jusqu’à ce que vous la voyiez ; la toucher ouvre la Cave, ou le Journal si des bouteilles ont seulement été ouvertes. Quand Encave est ouvert, un court message indique plutôt d’où vient la mise à jour. Désactivée par défaut, elle n’envoie rien nulle part.</string>
     <string name="help_sync_merge_title">Comment les modifications se combinent</string>
     <string name="help_sync_merge">Chaque bouteille, vin, casier, dégustation, découverte et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations.</string>
     <string name="help_sync_remove_title">Retirer un appareil</string>
     <string name="help_sync_remove">Quand vous retirez un appareil (perdu ou vendu), la clé de la cave change d’elle-même et les appareils restants reçoivent la nouvelle dans un message chiffré. L’appareil retiré garde ce qu’il avait déjà mais ne peut plus rien lire de nouveau.</string>
     <string name="help_sync_local_title">Ce qui reste propre à chaque appareil</string>
-    <string name="help_sync_local">Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres.</string>
+    <string name="help_sync_local">Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance et les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres.</string>
     <string name="help_devices_title">Vos appareils</string>
     <string name="help_devices_summary">La même cave sur votre téléphone, votre tablette, votre iPhone et votre Mac.</string>
     <string name="help_devices_add_title">Ajouter un appareil</string>
@@ -1039,5 +1067,30 @@
         <item quantity="one">%1$s · %2$d bouteille</item>
         <item quantity="many">%1$s · %2$d bouteilles</item>
         <item quantity="other">%1$s · %2$d bouteilles</item>
+    </plurals>
+    <plurals name="sync_changes_opened">
+        <item quantity="one">%d bouteille ouverte</item>
+        <item quantity="many">%d bouteilles ouvertes</item>
+        <item quantity="other">%d bouteilles ouvertes</item>
+    </plurals>
+    <plurals name="sync_changes_removed">
+        <item quantity="one">%d bouteille retirée</item>
+        <item quantity="many">%d bouteilles retirées</item>
+        <item quantity="other">%d bouteilles retirées</item>
+    </plurals>
+    <plurals name="sync_changes_wines">
+        <item quantity="one">%d vin ajouté</item>
+        <item quantity="many">%d vins ajoutés</item>
+        <item quantity="other">%d vins ajoutés</item>
+    </plurals>
+    <plurals name="sync_changes_other">
+        <item quantity="one">%d autre modification</item>
+        <item quantity="many">%d autres modifications</item>
+        <item quantity="other">%d autres modifications</item>
+    </plurals>
+    <plurals name="sync_next_in">
+        <item quantity="one">Prochaine synchronisation dans environ %d minute</item>
+        <item quantity="many">Prochaine synchronisation dans environ %d minutes</item>
+        <item quantity="other">Prochaine synchronisation dans environ %d minutes</item>
     </plurals>
 </resources>

@@ -153,14 +153,24 @@ class SyncStorage(private val context: Context) {
         resetRemote()
     }
 
-    /** Forgets the remote key, the pending one, the WebDAV login and the progress (leaving, or joining another cellar). */
+    /** Forgets the remote key, the pending one, the WebDAV login, the progress and its status (leaving, or joining another cellar). */
     fun resetRemote() {
         remoteKey = null
         pendingKey = null
         webDavLogin = null
         file(REMOTE).delete()
-        prefs.edit { remove(KEY_ROTATION) }
+        prefs.edit { remove(KEY_ROTATION).remove(KEY_LAST_REMOTE).remove(KEY_UNSENT) }
     }
+
+    /** The last round away from home that went through, for the status. */
+    var lastRemoteSync: Instant?
+        get() = prefs.getLong(KEY_LAST_REMOTE, 0).takeIf { it > 0 }?.let(Instant::ofEpochMilli)
+        set(value) = prefs.edit { if (value == null) remove(KEY_LAST_REMOTE) else putLong(KEY_LAST_REMOTE, value.toEpochMilli()) }
+
+    /** Changes were made on this device since the last round away from home that went through. */
+    var unsentChanges: Boolean
+        get() = prefs.getBoolean(KEY_UNSENT, false)
+        set(value) = prefs.edit { putBoolean(KEY_UNSENT, value) }
 
     /** Builds before the pending key kept only a flag. */
     val hadRotationFlag: Boolean get() = prefs.getBoolean(KEY_ROTATION, false)
@@ -177,6 +187,8 @@ class SyncStorage(private val context: Context) {
         private const val KEY_DEVICE = "deviceID"
         private const val KEY_STORAGE = "remoteStorage"
         private const val KEY_ROTATION = "rotationPending"
+        private const val KEY_LAST_REMOTE = "lastRemoteSync"
+        private const val KEY_UNSENT = "unsentChanges"
         private const val KEY_IDENTITY = "sync.identity"
         private const val KEY_CELLAR_KEY = "sync.cellarKey"
         private const val KEY_WEBDAV_LOGIN = "sync.webDavLogin"

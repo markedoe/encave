@@ -2,6 +2,7 @@ package app.encave.sync
 
 import android.content.Context
 import app.encave.core.Cellar
+import app.encave.core.sync.CellarChangeSummary
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
 import app.encave.core.sync.DeviceIdentity
@@ -25,6 +26,8 @@ import app.encave.core.sync.SyncState
 import app.encave.core.sync.WebDavMailboxStore
 import app.encave.data.CellarRepository
 import app.encave.data.PhotoStore
+import app.encave.data.Preferences
+import app.encave.data.SyncFrequency
 import java.io.Closeable
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -37,8 +40,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -59,6 +65,7 @@ class SyncManager(
     private val context: Context,
     private val repository: CellarRepository,
     private val photos: PhotoStore,
+    private val preferences: Preferences,
     private val scope: CoroutineScope,
 ) {
     /** What the Devices screens show. */
@@ -69,6 +76,8 @@ class SyncManager(
         val syncing: Set<UUID> = emptySet(),
         val lastSync: Map<UUID, Instant> = emptyMap(),
         val problem: Problem? = null,
+        /** When [problem] happened; cleared with it by the next sync that goes through. */
+        val problemAt: Instant? = null,
         /** This device was removed from the cellar by another device. */
         val wasRemoved: Boolean = false,
         /** The relay URL, or "webdav:" and the folder URL, when syncing away from home is on. */
@@ -82,6 +91,11 @@ class SyncManager(
         val lastRemoteSync: Instant? = null,
         val syncingRemotely: Boolean = false,
         val remoteProblem: RemoteProblem? = null,
+        val remoteProblemAt: Instant? = null,
+        /** Changes were made on this device after the last round away from home that went through. */
+        val unsentChanges: Boolean = false,
+        /** When the in-app loop runs its next round away from home; null when it does not run. */
+        val nextRemoteSync: Instant? = null,
     )
 
     enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen }
@@ -114,6 +128,18 @@ class SyncManager(
     private val status = MutableStateFlow(Status())
     val state: StateFlow<Status> = status.asStateFlow()
 
+    private val changes = MutableSharedFlow<CellarChangeSummary>(extraBufferCapacity = 4)
+
+    /**
+     * Changes from other devices taken in while the app is in the foreground, when the user
+     * asked to be told about them (the app shows a short message; in the background, a
+     * notification is posted instead).
+     */
+    val changesFromOthers: SharedFlow<CellarChangeSummary> = changes.asSharedFlow()
+
+    /** How often this device syncs away from home (a device-only setting). */
+    val frequency: SyncFrequency get() = preferences.syncFrequency.value
+
     // Guarded by `this`.
     private var syncState: SyncState? = null
     private var progress = RemoteProgress()
@@ -128,6 +154,9 @@ class SyncManager(
     private var remoteLoop: Job? = null
     private val remoteMutex = Mutex()
     private var started = false
+
+    /** Counts local changes, so a round only clears [Status.unsentChanges] if none came during it. */
+    private val localChanges = java.util.concurrent.atomic.AtomicLong(0)
 
     val isSetUp: Boolean get() = status.value.membership != null
     val me: Member get() = Member(identity.id, deviceName, identity.publicKey, platform, inbox = identity.inboxId)
@@ -165,12 +194,14 @@ class SyncManager(
                     needsWebDavSignIn = needsSignIn(storage.remoteStorage),
                     hasRemoteKey = storage.remoteKey != null,
                     wasRemoved = membership != null && !membership.members.containsKey(identity.id),
+                    lastRemoteSync = storage.lastRemoteSync,
+                    unsentChanges = storage.remoteStorage != null && storage.unsentChanges,
                 )
             }
             repository.onLocalChange = { old, new -> record(old, new) }
             publishInbox()
             ready.value = true
-            if (status.value.remoteStorage != null) RemoteSyncWorker.schedule(context)
+            if (status.value.remoteStorage != null) scheduleBackground()
             // The app came to the foreground before this was read (cold start): start now.
             if (foreground) {
                 resume()
@@ -191,6 +222,8 @@ class SyncManager(
     @Synchronized
     fun resume() {
         foreground = true
+        // The changes told in the notification are now in sight.
+        ChangeNotifications.clear(context)
         if (!ready.value || !isSetUp || isDemo || otherDevices.isEmpty() || status.value.wasRemoved) return
         startListener()
         startBrowser()
@@ -218,7 +251,7 @@ class SyncManager(
             endpoints.clear()
             serviceDevices.clear()
         }
-        status.update { it.copy(nearby = emptySet()) }
+        status.update { it.copy(nearby = emptySet(), nextRemoteSync = null) }
     }
 
     /** Syncs now with every device of the cellar on the network. */
@@ -226,6 +259,31 @@ class SyncManager(
         val targets = synchronized(endpoints) { endpoints.toMap() }
         for ((device, address) in targets) sync(device, address)
     }
+
+    /** Sync now (Devices): with the devices on the network, and away from home if it is set up. */
+    fun syncEverywhereNow() {
+        syncNow()
+        if (storage.remoteStorage != null) scope.launch { remoteRound() }
+    }
+
+    /**
+     * Changes how often this device syncs away from home: the in-app loop starts again with
+     * the new interval, and the background work follows (none for Sync now only).
+     */
+    fun setFrequency(value: SyncFrequency) {
+        if (value == frequency) return
+        preferences.setSyncFrequency(value)
+        if (storage.remoteStorage != null) scheduleBackground()
+        synchronized(this) {
+            remoteLoop?.cancel()
+            remoteLoop = null
+        }
+        status.update { it.copy(nextRemoteSync = null) }
+        if (foreground && ready.value && isSetUp && otherDevices.isNotEmpty() && !status.value.wasRemoved) startRemoteLoop(sinceLastRound = true)
+    }
+
+    /** The background work, as often as the frequency allows (none for Sync now only). */
+    private fun scheduleBackground() = RemoteSyncWorker.schedule(context, frequency)
 
     // endregion
 
@@ -295,6 +353,7 @@ class SyncManager(
         }
         storage.deleteAll()
         RemoteSyncWorker.cancel(context)
+        ChangeNotifications.clear(context)
         status.value = Status()
     }
 
@@ -310,7 +369,10 @@ class SyncManager(
             storage.remoteStorage = null
             synchronized(this) { progress = RemoteProgress() }
             status.update {
-                it.copy(remoteStorage = null, needsWebDavSignIn = false, hasRemoteKey = false, remoteProblem = null, lastRemoteSync = null)
+                it.copy(
+                    remoteStorage = null, needsWebDavSignIn = false, hasRemoteKey = false, remoteProblem = null, remoteProblemAt = null,
+                    lastRemoteSync = null, unsentChanges = false, nextRemoteSync = null,
+                )
             }
         }
         if (replace) {
@@ -360,6 +422,11 @@ class SyncManager(
             current.recording(old, new).also { syncState = it }
         }
         runCatching { storage.saveState(state) }
+        localChanges.incrementAndGet()
+        if (storage.remoteStorage != null && !status.value.unsentChanges) {
+            runCatching { storage.unsentChanges = true }
+            status.update { it.copy(unsentChanges = true) }
+        }
         // Wait for a pause in editing, then send the change to the devices around.
         pendingSync?.cancel()
         pendingSync = scope.launch {
@@ -384,10 +451,12 @@ class SyncManager(
      */
     suspend fun apply(result: SyncSnapshot, from: UUID?): Boolean {
         var merged: CellarMerge.Result? = null
+        var before: Cellar? = null
         var membership: Membership? = null
         val saved = repository.applySynced(
             merge = { current ->
                 val state = synchronized(this) { syncState } ?: return@applySynced current
+                before = current
                 CellarMerge.merge(current, state, result.cellar, result.state).also { merged = it }.cellar
             },
             // The stamps follow the saved cellar: if saving fails, nothing is taken in.
@@ -411,11 +480,26 @@ class SyncManager(
                 lastSync = if (from != null) it.lastSync + (from to Instant.now()) else it.lastSync,
                 wasRemoved = removed,
                 problem = if (removed) Problem.Removed else null,
+                problemAt = if (removed) Instant.now() else null,
             )
         }
         save()
         if (removed) stopNetwork()
+        val merge = merged
+        val old = before
+        if (saved && merge != null && old != null) tell(old, merge, members)
         return saved
+    }
+
+    /**
+     * When the user asked for it: what came from other devices, in a short message while the
+     * app is open, in a notification otherwise (also from [RemoteSyncWorker]).
+     */
+    private fun tell(before: Cellar, merge: CellarMerge.Result, membership: Membership) {
+        if (!preferences.syncNotifications.value || isDemo) return
+        val summary = runCatching { CellarChangeSummary.between(before, merge.cellar, merge.stamps, identity.id) }.getOrNull() ?: return
+        if (summary.isEmpty) return
+        if (foreground) changes.tryEmit(summary) else ChangeNotifications.post(context, summary, membership)
     }
 
     private fun save() {
@@ -524,13 +608,13 @@ class SyncManager(
             is SyncError.UnsupportedVersion -> Problem.OtherVersion
             else -> Problem.Unfinished
         }
-        status.update { if (it.wasRemoved) it else it.copy(problem = problem) }
+        status.update { if (it.wasRemoved) it else it.copy(problem = problem, problemAt = Instant.now()) }
     }
 
     private fun startListener() {
         if (listener != null) return
         val server = runCatching { ServerSocket(0) }.getOrElse {
-            status.update { it.copy(problem = Problem.CannotListen) }
+            status.update { it.copy(problem = Problem.CannotListen, problemAt = Instant.now()) }
             return
         }
         listener = server
@@ -595,7 +679,16 @@ class SyncManager(
                 remoteLoop = null
             }
             RemoteSyncWorker.cancel(context)
-            status.update { it.copy(remoteStorage = null, needsWebDavSignIn = false, remoteProblem = null) }
+            runCatching {
+                storage.unsentChanges = false
+                storage.lastRemoteSync = null
+            }
+            status.update {
+                it.copy(
+                    remoteStorage = null, needsWebDavSignIn = false, remoteProblem = null, remoteProblemAt = null,
+                    unsentChanges = false, lastRemoteSync = null, nextRemoteSync = null,
+                )
+            }
             return
         }
         val store = RelayMailboxStore(url)
@@ -620,8 +713,8 @@ class SyncManager(
         val url = storage.remoteStorage?.takeIf { it.startsWith(WEBDAV_PREFIX) }?.removePrefix(WEBDAV_PREFIX) ?: return
         WebDavMailboxStore(url, username, password).check()
         storage.webDavLogin = WebDavLogin(url, username, password)
-        status.update { it.copy(needsWebDavSignIn = false, remoteProblem = null) }
-        RemoteSyncWorker.schedule(context)
+        status.update { it.copy(needsWebDavSignIn = false, remoteProblem = null, remoteProblemAt = null) }
+        scheduleBackground()
         startRemoteLoop()
         remoteRound()
     }
@@ -642,7 +735,7 @@ class SyncManager(
                 RemoteSync.grant(key, membership.active, store, identity, storageString)
             }
         }
-        RemoteSyncWorker.schedule(context)
+        scheduleBackground()
         startRemoteLoop()
         remoteRound()
     }
@@ -658,14 +751,14 @@ class SyncManager(
         if (storage.remoteStorage == null && offered != null) {
             storage.remoteStorage = offered
             status.update { it.copy(remoteStorage = offered, needsWebDavSignIn = needsSignIn(offered)) }
-            RemoteSyncWorker.schedule(context)
+            scheduleBackground()
             startRemoteLoop()
         }
     }
 
-    /** Soon after a change, sends it away from home. */
+    /** Soon after a change (or back in the foreground), sends it away from home; not when syncing only with Sync now. */
     fun syncRemotely() {
-        if (storage.remoteStorage == null) return
+        if (storage.remoteStorage == null || frequency == SyncFrequency.Manual) return
         pendingRemote?.cancel()
         pendingRemote = scope.launch {
             delay(REMOTE_DELAY_MS)
@@ -673,14 +766,30 @@ class SyncManager(
         }
     }
 
-    /** While the app is open: a round every minute, to pick up changes from devices away. */
+    /**
+     * While the app is open: a round at the chosen frequency (every minute by default), to
+     * pick up changes from devices away. None when syncing only with Sync now.
+     * [sinceLastRound]: the first round comes one interval after the last one, not now.
+     */
     @Synchronized
-    private fun startRemoteLoop() {
-        if (storage.remoteStorage == null || remoteLoop != null || isDemo) return
+    private fun startRemoteLoop(sinceLastRound: Boolean = false) {
+        val interval = frequency.intervalMs
+        if (storage.remoteStorage == null || remoteLoop != null || isDemo || interval == null) return
+        val first = if (sinceLastRound) {
+            val last = status.value.lastRemoteSync?.toEpochMilli() ?: 0
+            (last + interval - System.currentTimeMillis()).coerceIn(0, interval)
+        } else {
+            0
+        }
         remoteLoop = scope.launch {
+            var wait = first
             while (isActive) {
+                if (wait > 0) {
+                    status.update { it.copy(nextRemoteSync = Instant.now().plusMillis(wait)) }
+                    delay(wait)
+                }
                 remoteRound()
-                delay(REMOTE_INTERVAL_MS)
+                wait = interval
             }
         }
     }
@@ -715,6 +824,7 @@ class SyncManager(
         if (status.value.wasRemoved || isDemo || !remoteMutex.tryLock()) return
         status.update { it.copy(syncingRemotely = true) }
         val round = generation
+        val changesBefore = localChanges.get()
         try {
             val local = snapshot() ?: return
             var key = storage.remoteKey
@@ -729,7 +839,7 @@ class SyncManager(
             } catch (error: CancellationException) {
                 throw error
             } catch (_: Exception) {
-                status.update { it.copy(remoteProblem = RemoteProblem.RemovalPending) }
+                status.update { it.copy(remoteProblem = RemoteProblem.RemovalPending, remoteProblemAt = Instant.now()) }
                 return
             }
             val current = synchronized(this) { progress }
@@ -762,8 +872,21 @@ class SyncManager(
                 }
             }
             if (raised) save()
+            val now = Instant.now()
+            // Everything recorded before the round was sent; changes made during it wait for the next.
+            val sent = localChanges.get() == changesBefore
+            runCatching {
+                storage.lastRemoteSync = now
+                if (sent) storage.unsentChanges = false
+            }
             status.update {
-                it.copy(lastRemoteSync = Instant.now(), remoteProblem = if (result.unreadable.isEmpty()) null else RemoteProblem.Unreadable)
+                val unreadable = result.unreadable.isNotEmpty()
+                it.copy(
+                    lastRemoteSync = now,
+                    remoteProblem = if (unreadable) RemoteProblem.Unreadable else null,
+                    remoteProblemAt = if (unreadable) now else null,
+                    unsentChanges = it.unsentChanges && !sent,
+                )
             }
         } catch (error: RemoteSyncException) {
             val problem = when (error.error) {
@@ -772,11 +895,11 @@ class SyncManager(
                 RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
             }
-            status.update { it.copy(remoteProblem = problem) }
+            status.update { it.copy(remoteProblem = problem, remoteProblemAt = Instant.now()) }
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
-            status.update { it.copy(remoteProblem = RemoteProblem.Unreachable) }
+            status.update { it.copy(remoteProblem = RemoteProblem.Unreachable, remoteProblemAt = Instant.now()) }
         } finally {
             status.update { it.copy(syncingRemotely = false) }
             remoteMutex.unlock()
@@ -835,6 +958,5 @@ class SyncManager(
         private const val SESSION_DEADLINE_MS = 300_000L
         private const val MAX_INBOUND_SESSIONS = 4
         const val REMOTE_DELAY_MS = 3_000L
-        const val REMOTE_INTERVAL_MS = 60_000L
     }
 }

@@ -3,6 +3,7 @@ package app.encave.ui.devices
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.os.Build
 import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,20 +26,25 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Laptop
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Tablet
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -59,6 +65,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,10 +74,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -87,10 +96,12 @@ import app.encave.core.sync.RelayMailboxStore
 import app.encave.core.sync.RemoteSyncError
 import app.encave.core.sync.RemoteSyncException
 import app.encave.core.sync.WebDavMailboxStore
+import app.encave.data.SyncFrequency
 import app.encave.sync.SyncManager
 import app.encave.ui.AppNavigator
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.ConfirmDialog
+import app.encave.ui.components.NotificationSwitch
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.help.HelpLink
 import app.encave.ui.help.HelpTopic
@@ -100,6 +111,7 @@ import app.encave.ui.navigation.RemoteSyncRoute
 import app.encave.ui.theme.Dimens
 import java.net.URI
 import java.time.Instant
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -160,9 +172,121 @@ private val SyncManager.RemoteProblem.text: Int
     }
 
 /** "2 minutes ago", lowercase to go inside "Synced …" (French writes "Il y a…"). */
-private fun relative(date: Instant): String =
-    DateUtils.getRelativeTimeSpanString(date.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
-        .replaceFirstChar { it.lowercase() }
+private fun relative(date: Instant, now: Long = System.currentTimeMillis()): String =
+    ago(date, now).replaceFirstChar { it.lowercase() }
+
+/** "2 minutes ago", on its own. */
+private fun ago(date: Instant, now: Long): String =
+    DateUtils.getRelativeTimeSpanString(minOf(date.toEpochMilli(), now), now, DateUtils.MINUTE_IN_MILLIS).toString()
+
+private val SyncFrequency.label: Int
+    get() = when (this) {
+        SyncFrequency.EveryMinute -> R.string.sync_frequency_1
+        SyncFrequency.Every5Minutes -> R.string.sync_frequency_5
+        SyncFrequency.Every15Minutes -> R.string.sync_frequency_15
+        SyncFrequency.Manual -> R.string.sync_frequency_manual
+    }
+
+/** Problems shown at the top of Devices, with a way out; the others are in the status. */
+private val SyncManager.Problem.isRemoval: Boolean
+    get() = this == SyncManager.Problem.Removed || this == SyncManager.Problem.SaysRemoved
+
+/** A line of a status row; [isError] lines are also shown in the error color (their words say it too). */
+private data class StatusLine(val text: String, val isError: Boolean = false)
+
+/** On the same Wi-Fi: running, the last success or failure, and whether a device is around. */
+private fun localStatus(resources: Resources, status: SyncManager.Status, others: List<Member>, now: Long): List<StatusLine> = buildList {
+    val problem = status.problem?.takeUnless { it.isRemoval }
+    val last = others.mapNotNull { status.lastSync[it.id] }.maxOrNull()
+    when {
+        status.syncing.isNotEmpty() -> add(StatusLine(resources.getString(R.string.devices_status_syncing)))
+        problem != null -> {
+            add(StatusLine(resources.getString(R.string.sync_last_failed, resources.getString(problem.text)), isError = true))
+            status.problemAt?.let { add(StatusLine(ago(it, now))) }
+        }
+        last != null -> add(StatusLine(resources.getString(R.string.devices_status_synced, relative(last, now))))
+        else -> add(StatusLine(resources.getString(R.string.devices_status_never)))
+    }
+    if (status.nearby.isEmpty() && status.syncing.isEmpty()) add(StatusLine(resources.getString(R.string.sync_no_device_nearby)))
+}
+
+/** Away from home: running, the last success or failure, changes not sent yet, and the next sync. */
+private fun remoteStatus(resources: Resources, status: SyncManager.Status, frequency: SyncFrequency, now: Long): List<StatusLine> = buildList {
+    val isWebDav = status.remoteStorage?.startsWith(SyncManager.WEBDAV_PREFIX) == true
+    val problem = status.remoteProblem
+    val last = status.lastRemoteSync
+    when {
+        status.syncingRemotely -> add(StatusLine(resources.getString(R.string.devices_status_syncing)))
+        problem != null -> {
+            add(StatusLine(resources.getString(R.string.sync_last_failed, resources.getString(problem.text(isWebDav))), isError = true))
+            status.remoteProblemAt?.let { add(StatusLine(ago(it, now))) }
+        }
+        last != null -> add(StatusLine(resources.getString(R.string.devices_status_synced, relative(last, now))))
+        else -> add(StatusLine(resources.getString(R.string.devices_status_never)))
+    }
+    if (status.unsentChanges) add(StatusLine(resources.getString(R.string.sync_unsent)))
+    if (frequency == SyncFrequency.Manual) {
+        add(StatusLine(resources.getString(R.string.sync_next_manual)))
+    } else {
+        val next = status.nextRemoteSync
+        if (next != null && !status.syncingRemotely) {
+            val minutes = ((next.toEpochMilli() - now + 59_999) / 60_000).toInt().coerceAtLeast(1)
+            add(StatusLine(resources.getQuantityString(R.plurals.sync_next_in, minutes, minutes)))
+        }
+        add(StatusLine(resources.getString(R.string.sync_background)))
+    }
+}
+
+@Composable
+private fun StatusRow(icon: ImageVector, title: String, lines: List<StatusLine>, syncing: Boolean, tag: String) {
+    ListItem(
+        // Read as one by TalkBack: the title, then each line.
+        modifier = Modifier.testTag(tag).semantics(mergeDescendants = true) {},
+        leadingContent = { Icon(icon, contentDescription = null) },
+        headlineContent = { Text(title) },
+        supportingContent = {
+            Column {
+                lines.forEach { line ->
+                    Text(line.text, color = if (line.isError) MaterialTheme.colorScheme.error else androidx.compose.ui.graphics.Color.Unspecified)
+                }
+            }
+        },
+        trailingContent = if (syncing) {
+            { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) }
+        } else {
+            null
+        },
+    )
+}
+
+/** How often this device syncs away from home: a menu of the four choices, the current one checked. */
+@Composable
+private fun FrequencyRow(frequency: SyncFrequency, onChange: (SyncFrequency) -> Unit) {
+    var choosing by remember { mutableStateOf(false) }
+    Box {
+        ListItem(
+            modifier = Modifier.testTag("devices.frequency").clickable { choosing = true },
+            leadingContent = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
+            headlineContent = { Text(stringResource(R.string.sync_frequency_title)) },
+            supportingContent = { Text(stringResource(frequency.label)) },
+        )
+        DropdownMenu(expanded = choosing, onDismissRequest = { choosing = false }) {
+            SyncFrequency.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(option.label)) },
+                    leadingIcon = {
+                        if (option == frequency) Icon(Icons.Outlined.Check, contentDescription = null) else Spacer(Modifier.size(24.dp))
+                    },
+                    modifier = Modifier.testTag("devices.frequency.${option.raw}").semantics { selected = option == frequency },
+                    onClick = {
+                        choosing = false
+                        onChange(option)
+                    },
+                )
+            }
+        }
+    }
+}
 
 private val Member.icon: ImageVector
     get() = when (platform) {
@@ -183,13 +307,23 @@ private fun Back(navigator: AppNavigator) {
 fun DevicesScreen(navigator: AppNavigator) {
     val sync = syncManager()
     val status by sync.state.collectAsStateWithLifecycle()
+    val preferences = (LocalContext.current.applicationContext as EncaveApplication).preferences
+    val frequency by preferences.syncFrequency.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
+    // The status says "3 minutes ago" and "in about 4 minutes": kept current.
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            delay(15_000)
+            value = System.currentTimeMillis()
+        }
+    }
     var removing by remember { mutableStateOf<Member?>(null) }
     var confirmingLeave by rememberSaveable { mutableStateOf(false) }
     val others = status.membership?.active.orEmpty().filter { it.id != sync.identity.id }
     val withNetwork = rememberLocalNetworkAccess { }
     val invite = rememberLocalNetworkAccess { navigator.open(InviteDeviceRoute) }
     val join = rememberLocalNetworkAccess { navigator.open(JoinDeviceRoute) }
-    val syncNow = rememberLocalNetworkAccess { sync.syncNow() }
+    val syncNow = rememberLocalNetworkAccess { sync.syncEverywhereNow() }
     LaunchedEffect(others.isEmpty()) { if (others.isNotEmpty()) withNetwork() }
 
     Scaffold(
@@ -197,7 +331,7 @@ fun DevicesScreen(navigator: AppNavigator) {
         snackbarHost = { androidx.compose.material3.SnackbarHost(app.encave.ui.components.LocalSnackbarHostState.current) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
-            status.problem?.let { problem ->
+            status.problem?.takeIf { it.isRemoval || status.wasRemoved }?.let { problem ->
                 ListItem(
                     leadingContent = { Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                     headlineContent = { Text(stringResource(problem.text)) },
@@ -233,9 +367,9 @@ fun DevicesScreen(navigator: AppNavigator) {
                 headlineContent = { Text(stringResource(R.string.devices_join), color = MaterialTheme.colorScheme.primary) },
             )
             if (others.isNotEmpty()) {
-                val enabled = status.nearby.isNotEmpty() && status.syncing.isEmpty()
+                val enabled = (status.nearby.isNotEmpty() || status.remoteStorage != null) && status.syncing.isEmpty() && !status.syncingRemotely
                 ListItem(
-                    modifier = Modifier.clickable(enabled = enabled) { syncNow() },
+                    modifier = Modifier.testTag("devices.sync_now").clickable(enabled = enabled) { syncNow() },
                     leadingContent = { Icon(Icons.Outlined.Sync, contentDescription = null) },
                     headlineContent = {
                         Text(
@@ -246,6 +380,26 @@ fun DevicesScreen(navigator: AppNavigator) {
                 )
             }
             Footer(stringResource(R.string.devices_add_footer))
+
+            if (others.isNotEmpty() && !status.wasRemoved) {
+                SectionHeader(stringResource(R.string.remote_status))
+                StatusRow(
+                    Icons.Outlined.Wifi,
+                    stringResource(R.string.sync_status_local),
+                    localStatus(resources, status, others, now),
+                    syncing = status.syncing.isNotEmpty(),
+                    tag = "devices.status_local",
+                )
+                if (status.remoteStorage != null) {
+                    StatusRow(
+                        Icons.Outlined.Public,
+                        stringResource(R.string.sync_status_away),
+                        remoteStatus(resources, status, frequency, now),
+                        syncing = status.syncingRemotely,
+                        tag = "devices.status_away",
+                    )
+                }
+            }
 
             if (others.isNotEmpty()) {
                 ListItem(
@@ -276,6 +430,20 @@ fun DevicesScreen(navigator: AppNavigator) {
                     )
                 }
                 Footer(stringResource(R.string.devices_remote_footer))
+                if (status.remoteStorage != null) {
+                    FrequencyRow(frequency) { sync.setFrequency(it) }
+                    Footer(stringResource(R.string.sync_frequency_footer))
+                }
+
+                SectionHeader(stringResource(R.string.sync_changes_channel))
+                NotificationSwitch(
+                    title = stringResource(R.string.sync_notify),
+                    footer = stringResource(R.string.sync_notify_footer),
+                    icon = Icons.Outlined.NotificationsActive,
+                    tag = "devices.notify",
+                    isOn = { preferences.syncNotifications.value },
+                    onChange = { preferences.setSyncNotifications(it) },
+                )
             }
 
             SectionHeader(stringResource(R.string.devices_e2e))

@@ -53,6 +53,19 @@ class LinksTest {
     }
 
     @Test
+    fun journal() {
+        // The notification of bottles opened on another device.
+        open(MainActivity.LINK_JOURNAL)
+        compose.onNodeWithTag("nav.Journal").assertIsSelected()
+    }
+
+    @Test
+    fun cellar() {
+        open(MainActivity.LINK_CELLAR)
+        compose.onNodeWithTag("nav.Cellar").assertIsSelected()
+    }
+
+    @Test
     fun wine() {
         val port = app.repository.cellar.value.wines.values.first { it.name == "Vintage Port" }
         open(MainActivity.wineLink(port.id.toString()))
