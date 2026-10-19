@@ -462,7 +462,11 @@ Each storage keeps the files of a mailbox or inbox under its ID:
 
 Rounds run a few seconds after a change, every minute while the app is open,
 and when it comes back to the foreground. Each device can choose a longer
-interval, or to sync only when the user asks (a device-only setting).
+interval, or to sync only when the user asks (a device-only setting, which
+also stops the rounds after a change and on returning to the foreground). In
+the background, where the system allows it: on Android a periodic worker at
+the chosen interval, at least 15 minutes apart; on iPhone and iPad an app
+refresh task, no sooner than 15 minutes, when iOS decides.
 
 ### Removing a device
 

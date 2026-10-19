@@ -337,7 +337,11 @@ final class CellarModel {
 
     func sceneDidEnterBackground() {
         activeScenes = max(0, activeScenes - 1)
-        if activeScenes == 0 { sync.pause() }
+        guard activeScenes == 0 else { return }
+        sync.pause()
+        #if os(iOS)
+        sync.scheduleBackgroundSync()
+        #endif
     }
 
     func showInRack(_ bottle: Bottle) {
