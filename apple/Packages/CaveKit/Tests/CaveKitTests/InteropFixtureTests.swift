@@ -68,7 +68,7 @@ enum InteropFixture {
         let searches = [
             SavedSearch(id: id("000000000051"), name: "Burgundy, ready",
                         filter: CellarFilter(query: "bourgogne", colors: [.white, .red], maturities: [.ready, .drinkSoon],
-                                             rackID: grid, tag: "Gift", reservation: "Paul's 40th")),
+                                             rackID: grid, tag: "Gift", reservation: "Paul's 40th", grape: "Pinot Noir")),
             SavedSearch(id: id("000000000052"), name: "All", filter: CellarFilter()),
         ]
         return Cellar(wines: [wine, plain], bottles: [placed, drunk, ordered, gone, inBin], racks: racks,

@@ -25,18 +25,27 @@ public struct JSONFileCellarStore: CellarStore {
     }
 
     public func load() throws -> Cellar {
-        guard FileManager.default.fileExists(atPath: fileURL.path) else { return Cellar() }
-        let data = try Data(contentsOf: fileURL)
+        guard let data = try readData() else { return Cellar() }
         return try Self.makeDecoder().decode(Cellar.self, from: data)
     }
 
-    /// Loads the cellar. A file that exists but cannot be read is moved aside, as
-    /// `cellar-unreadable-<date>.json` next to it, before anything can be saved over
-    /// it: the result is then an empty cellar and the file's new place. Throws only
-    /// if the file could not be moved (nothing must then be saved to `fileURL`).
+    /// The file's bytes, or nil if there is no file yet.
+    private func readData() throws -> Data? {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return nil }
+        return try Data(contentsOf: fileURL)
+    }
+
+    /// Loads the cellar. A file whose content cannot be read as a cellar is moved aside,
+    /// as `cellar-unreadable-<date>.json` next to it, before anything can be saved over
+    /// it: the result is then an empty cellar and the file's new place. Throws if the
+    /// file could not be moved, or could not be opened at all (for example before the
+    /// first unlock after a restart, when the system may launch the app in the
+    /// background): that file is not damaged and stays where it is. Nothing must then
+    /// be saved to `fileURL`.
     public func loadSettingAsideUnreadable(now: Date = .now) throws -> (cellar: Cellar, setAside: URL?) {
+        guard let data = try readData() else { return (Cellar(), nil) }
         do {
-            return (try load(), nil)
+            return (try Self.makeDecoder().decode(Cellar.self, from: data), nil)
         } catch {
             let folder = fileURL.deletingLastPathComponent()
             let formatter = DateFormatter()

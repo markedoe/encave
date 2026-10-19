@@ -94,7 +94,7 @@ object InteropFixture {
         val searches = listOf(
             SavedSearch.of(
                 "Burgundy, ready",
-                CellarFilter("bourgogne", setOf(WineColor.White, WineColor.Red), setOf(Maturity.Ready, Maturity.DrinkSoon), grid, "Gift", "Paul's 40th"),
+                CellarFilter("bourgogne", setOf(WineColor.White, WineColor.Red), setOf(Maturity.Ready, Maturity.DrinkSoon), grid, "Gift", "Paul's 40th", "Pinot Noir"),
                 id("000000000051"),
             ),
             SavedSearch.of("All", CellarFilter(), id("000000000052")),

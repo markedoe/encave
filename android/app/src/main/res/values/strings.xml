@@ -499,7 +499,7 @@
     <string name="help_create_key">Create an API key</string>
     <string name="help_start_title">Getting started</string>
     <string name="help_start_summary">The four sections and how they work together.</string>
-    <string name="help_start_cellar">Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.</string>
+    <string name="help_start_cellar">Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.</string>
     <string name="help_start_racks">Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.</string>
     <string name="help_start_tonight">What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.</string>
     <string name="help_start_journal">The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.</string>

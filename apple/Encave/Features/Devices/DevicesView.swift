@@ -12,11 +12,14 @@ struct DevicesView: View {
     @State private var joining = false
     @State private var removing: Member?
     @State private var confirmingLeave = false
+    @State private var notifiesChanges = ChangeNotifications.isEnabled
+    @State private var notificationsRefused = false
 
     var body: some View {
         let sync = model.sync!
         Form {
-            if let problem = sync.problem {
+            // A failed session is shown with the status below instead.
+            if let problem = sync.problem, sync.localFailedAt == nil {
                 Section {
                     Label(problem, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
@@ -47,6 +50,10 @@ struct DevicesView: View {
                 }
             }
 
+            if !sync.otherDevices.isEmpty {
+                SyncStatusSection(sync: sync)
+            }
+
             Section {
                 Button {
                     inviting = true
@@ -62,11 +69,13 @@ struct DevicesView: View {
                 .accessibilityIdentifier("devices.join")
                 if !sync.otherDevices.isEmpty {
                     Button {
-                        sync.syncNow()
+                        sync.syncEverywhereNow()
                     } label: {
                         Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                     }
-                    .disabled(sync.nearby.isEmpty || !sync.syncing.isEmpty)
+                    .disabled((sync.nearby.isEmpty && sync.remoteStorage == nil) || !sync.syncing.isEmpty
+                              || sync.isSyncingRemotely)
+                    .accessibilityIdentifier("devices.syncNow")
                 }
             } footer: {
                 Text("Adding a device shows a code on this one; type or scan it on the other. Both must be on the same Wi-Fi.")
@@ -101,6 +110,19 @@ struct DevicesView: View {
                     }
                 } footer: {
                     Text("Keeps devices in sync when they are not on the same Wi-Fi, through storage that only holds encrypted data: iCloud, a WebDAV folder or a relay.")
+                }
+
+                Section {
+                    Toggle(isOn: notificationsBinding) {
+                        Label("Tell Me About Changes from Other Devices", systemImage: "bell.badge")
+                    }
+                    .accessibilityIdentifier("devices.notifyChanges")
+                } footer: {
+                    if notificationsRefused {
+                        Text("Notifications are off for Encave. Turn them on in the system settings.")
+                    } else {
+                        Text("A notification on this device when bottles are opened, added or removed on another device. Nothing is sent anywhere.")
+                    }
                 }
             }
 
@@ -142,6 +164,23 @@ struct DevicesView: View {
 
     private var removingName: String { removing?.name ?? "" }
 
+    /// Asks for permission when turned on, as for reminders.
+    private var notificationsBinding: Binding<Bool> {
+        Binding(get: { notifiesChanges }, set: { on in
+            notifiesChanges = on
+            if on {
+                Task {
+                    let granted = await ChangeNotifications.enable()
+                    notifiesChanges = granted
+                    notificationsRefused = !granted
+                }
+            } else {
+                ChangeNotifications.disable()
+                notificationsRefused = false
+            }
+        })
+    }
+
     private func status(of member: Member, _ sync: SyncService) -> Text {
         if sync.syncing.contains(member.id) { return Text("Syncing…") }
         if let date = sync.lastSync[member.id] {
@@ -149,6 +188,127 @@ struct DevicesView: View {
         }
         if sync.nearby.contains(member.id) { return Text("On this network") }
         return Text("Not synced yet")
+    }
+}
+
+/// Where sync stands, on the same Wi-Fi and away from home: what is happening now,
+/// the last success or failure, changes not sent yet and the next automatic sync.
+/// Said in words and symbols, never by color alone.
+private struct SyncStatusSection: View {
+    let sync: SyncService
+
+    var body: some View {
+        Section {
+            LabeledContent("On the same Wi-Fi") {
+                if !sync.syncing.isEmpty {
+                    SyncingLabel()
+                } else if let date = sync.lastSync.values.max() {
+                    Ticking { Text("Synced \(date.formatted(.relative(presentation: .named)))") }
+                } else {
+                    Text("Not synced yet")
+                }
+            }
+            if let failureLabel = sync.problem, let date = sync.localFailedAt {
+                FailureRow(failureLabel: failureLabel, date: date)
+            } else if sync.nearby.isEmpty, sync.syncing.isEmpty {
+                Label("No device found on this Wi-Fi", systemImage: "wifi.exclamationmark")
+                    .foregroundStyle(.secondary)
+            }
+
+            if sync.remoteStorage != nil {
+                LabeledContent("Away from home") {
+                    if sync.needsWebDAVSignIn {
+                        Text("Sign in to this WebDAV folder")
+                    } else if sync.isSyncingRemotely {
+                        SyncingLabel()
+                    } else if let date = sync.lastRemoteSync {
+                        Ticking { Text("Synced \(date.formatted(.relative(presentation: .named)))") }
+                    } else {
+                        Text("Not synced yet")
+                    }
+                }
+                if let failureLabel = sync.remoteProblem, let date = sync.remoteFailedAt {
+                    FailureRow(failureLabel: failureLabel, date: date)
+                } else if let problem = sync.remoteProblem {
+                    Label(problem, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
+                }
+                if sync.hasUnsentChanges {
+                    Label("Changes on this device not sent yet", systemImage: "arrow.up.circle")
+                }
+                if sync.remoteFrequency.interval == nil {
+                    Label("Only when you tap Sync Now", systemImage: "hand.tap")
+                        .foregroundStyle(.secondary)
+                } else {
+                    if let next = sync.nextRemoteRound, !sync.isSyncingRemotely {
+                        Ticking {
+                            Label {
+                                let durationLabel = Self.minutes(until: next)
+                                Text("Next sync in about \(durationLabel)")
+                            } icon: {
+                                Image(systemName: "clock")
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                    #if os(iOS)
+                    Label("In the background, when iOS allows", systemImage: "moon.zzz")
+                        .foregroundStyle(.secondary)
+                    #endif
+                }
+            }
+        } header: {
+            Text("Status")
+        }
+    }
+
+    /// "4 minutes": rounded up, one minute at least.
+    private static func minutes(until date: Date) -> String {
+        let minutes = max(1, Int((date.timeIntervalSinceNow / 60).rounded(.up)))
+        return Duration.seconds(minutes * 60).formatted(.units(allowed: [.minutes], width: .wide))
+    }
+}
+
+/// Refreshed now and then, for "3 minutes ago" and "in about 4 minutes".
+private struct Ticking<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 15)) { _ in content() }
+    }
+}
+
+private struct SyncingLabel: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            ProgressView()
+                .controlSize(.small)
+                .accessibilityHidden(true)
+            Text("Syncing…")
+        }
+    }
+}
+
+/// "Last attempt failed: The relay could not be reached." and when.
+private struct FailureRow: View {
+    let failureLabel: String
+    let date: Date
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Last attempt failed: \(failureLabel)")
+                Ticking {
+                    Text(date.formatted(.relative(presentation: .named)))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } icon: {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.orange)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -234,6 +394,18 @@ struct RemoteSyncView: View {
                     }
                 } footer: {
                     Text("Your other devices that do not sync away from home yet receive this setting the next time they sync on the same Wi-Fi. Turning it off, or choosing another storage, applies to this device only: do the same on the others.")
+                }
+                Section {
+                    Picker("How often", selection: Binding(get: { sync.remoteFrequency },
+                                                           set: { sync.setRemoteFrequency($0) })) {
+                        Text("Every minute").tag(RemoteSyncFrequency.everyMinute)
+                        Text("Every 5 minutes").tag(RemoteSyncFrequency.everyFiveMinutes)
+                        Text("Every 15 minutes").tag(RemoteSyncFrequency.everyFifteenMinutes)
+                        Text("Only when I tap Sync Now").tag(RemoteSyncFrequency.manual)
+                    }
+                    .accessibilityIdentifier("remote.frequency")
+                } footer: {
+                    Text("On the same Wi-Fi, changes are sent a few seconds after you make them. This setting is for this device only.")
                 }
                 if case .webDAV = storage {
                     if sync.needsWebDAVSignIn || changingLogin {

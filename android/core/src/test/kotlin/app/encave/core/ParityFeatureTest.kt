@@ -84,6 +84,19 @@ class WineTagTest {
     }
 
     @Test
+    fun grapesFilterTheCellarAndAreListedByUse() {
+        val cellar = Cellar()
+        cellar.addBottles(Wine(name = "Burgundy", grapes = listOf("Pinot Noir")))
+        cellar.addBottles(Wine(name = "Beaujolais", grapes = listOf("Gamay", "Pinot Noir")))
+        cellar.addBottles(Wine(name = "Plain"))
+        assertEquals(listOf("Pinot Noir", "Gamay"), cellar.wineGrapes)
+        val pinot = cellar.groups(CellarFilter(grape = " pinot noir"), CellarSort.Name, 2026)
+        assertEquals(listOf("Beaujolais", "Burgundy"), pinot.map { it.wine.name })
+        assertTrue(CellarFilter(grape = "Gamay").isActive)
+        assertEquals(CellarFilter(grape = "Gamay"), SavedSearch.of("Gamay", CellarFilter(grape = "Gamay")).filter)
+    }
+
+    @Test
     fun tagsFilterSearchAndStayOutOfOldFiles() {
         val cellar = Cellar()
         val gift = Wine(name = "Gift wine", tags = listOf(" Gift ", "gift", "Birth year"))

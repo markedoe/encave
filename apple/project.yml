@@ -76,6 +76,9 @@ targets:
               NSExceptionAllowsInsecureHTTPLoads: true
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
+        # Sync away from home in the background (an app refresh task), when iOS allows.
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers: [app.encave.sync.refresh]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

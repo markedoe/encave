@@ -22,10 +22,16 @@ enum Reminders {
 
     /// Asks for permission, then schedules. Returns false if the user refused.
     static func enable(for cellar: Cellar) async -> Bool {
-        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+        let granted = await requestPermission()
         UserDefaults.standard.set(granted, forKey: enabledKey)
         if granted { await schedule(for: cellar) }
         return granted
+    }
+
+    /// Permission to post notifications, asked once by the system. Also used for the
+    /// notifications of changes from other devices (`ChangeNotifications`).
+    static func requestPermission() async -> Bool {
+        (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
     static func disable() {

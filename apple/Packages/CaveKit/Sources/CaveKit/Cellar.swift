@@ -92,14 +92,18 @@ public struct CellarFilter: Equatable, Sendable {
     public var tag: String?
     /// Only bottles reserved for this occasion.
     public var reservation: String?
+    /// Only wines made with this grape.
+    public var grape: String?
 
     public init(query: String = "", colors: Set<WineColor> = [], maturities: Set<Maturity> = [], rackID: UUID? = nil,
-                tag: String? = nil, reservation: String? = nil) {
+                tag: String? = nil, reservation: String? = nil, grape: String? = nil) {
         self.query = query; self.colors = colors; self.maturities = maturities; self.rackID = rackID; self.tag = tag
-        self.reservation = reservation
+        self.reservation = reservation; self.grape = grape
     }
 
-    public var isActive: Bool { !colors.isEmpty || !maturities.isEmpty || rackID != nil || tag != nil || reservation != nil }
+    public var isActive: Bool {
+        !colors.isEmpty || !maturities.isEmpty || rackID != nil || tag != nil || reservation != nil || grape != nil
+    }
 }
 
 public extension Cellar {
@@ -153,6 +157,22 @@ public extension Cellar {
             .map(\.name)
     }
 
+    /// Grapes of the wines in the cellar, the most used first (for the filter chips).
+    var wineGrapes: [String] {
+        var counts: [String: (name: String, count: Int)] = [:]
+        let inCellar = Set(bottlesInCellar.map(\.wineID))
+        for wine in wines.values where inCellar.contains(wine.id) {
+            for grape in wine.grapes {
+                let name = grape.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { continue }
+                counts[name.lowercased(), default: (name, 0)].count += 1
+            }
+        }
+        return counts.values
+            .sorted { $0.count == $1.count ? $0.name.localizedStandardCompare($1.name) == .orderedAscending : $0.count > $1.count }
+            .map(\.name)
+    }
+
     /// Bottles bought but not delivered yet.
     var bottlesOnOrder: [Bottle] { bottles.values.filter { $0.status == .ordered } }
 
@@ -193,6 +213,7 @@ public extension Cellar {
             }
             if !filter.maturities.isEmpty, !filter.maturities.contains(Maturity.of(wine, year: year)) { return nil }
             if let tag = filter.tag, !wine.hasTag(tag) { return nil }
+            if let grape = filter.grape, !wine.hasGrape(grape) { return nil }
             var kept = bottles
             if let rackID = filter.rackID {
                 kept = kept.filter { $0.slot?.rackID == rackID }

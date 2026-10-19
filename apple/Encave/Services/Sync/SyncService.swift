@@ -3,6 +3,7 @@ import Foundation
 import Network
 import Observation
 #if os(iOS)
+import BackgroundTasks
 import UIKit
 #endif
 
@@ -24,6 +25,9 @@ final class SyncService {
     private(set) var lastSync: [UUID: Date] = [:]
     /// The last problem, to show in Devices.
     private(set) var problem: String?
+    /// When the last session on the network failed (`problem` then says why); nil
+    /// after a success, or when `problem` is not about a session.
+    private(set) var localFailedAt: Date?
     /// This device was removed from the cellar by another device (kept in the list of
     /// devices, so it stays known after a relaunch).
     private(set) var wasRemoved = false
@@ -39,9 +43,21 @@ final class SyncService {
     private(set) var webDAVLogin: WebDAVLogin?
     /// The key of the cellar's remote files (Keychain).
     private(set) var remoteKey: CellarKey?
+    /// Kept across launches, like the two dates below (`keep`).
     private(set) var lastRemoteSync: Date?
     private(set) var isSyncingRemotely = false
     private(set) var remoteProblem: String?
+    /// When the last round away from home failed (`remoteProblem` then says why); nil after a success.
+    private(set) var remoteFailedAt: Date?
+    /// How often this device syncs away from home by itself (this device only).
+    private(set) var remoteFrequency = RemoteSyncFrequency.stored
+    /// When the loop away from home runs its next round, while it waits.
+    private(set) var nextRemoteRound: Date?
+    /// The last change made on this device, and the start of the last round away from
+    /// home that succeeded (its copy of the cellar was taken then): changes made after
+    /// it are not on the storage yet.
+    private(set) var lastLocalChange: Date?
+    private(set) var remoteSentThrough: Date?
 
     /// This device's ID and key. Replaced when it leaves a cellar: a removal is
     /// final for an ID, so joining again needs a new one.
@@ -67,10 +83,18 @@ final class SyncService {
     /// Sessions opened by other devices right now; a few at most.
     @ObservationIgnored private var inboundSessions = 0
     static let maxInboundSessions = 4
+    /// The notification of changes being posted, awaited before a background run ends.
+    @ObservationIgnored private var announcing: Task<Void, Never>?
 
     var isSetUp: Bool { membership != nil }
     /// Other devices of the cellar.
     var otherDevices: [Member] { (membership?.active ?? []).filter { $0.id != identity.id } }
+
+    /// Changes made on this device are not on the storage away from home yet.
+    var hasUnsentChanges: Bool {
+        guard remoteStorage != nil, let lastLocalChange else { return false }
+        return lastLocalChange > remoteSentThrough ?? .distantPast
+    }
 
     init(model: CellarModel, demo: Bool) {
         self.model = model
@@ -89,6 +113,9 @@ final class SyncService {
         remoteKey = Keychain.getData(Self.cellarKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) }
         webDAVLogin = Keychain.getData(Self.webDAVLoginAccount).flatMap { try? JSONDecoder().decode(WebDAVLogin.self, from: $0) }
         remoteProgress = files.loadRemoteProgress()
+        lastRemoteSync = UserDefaults.standard.object(forKey: Self.lastRemoteSyncKey) as? Date
+        lastLocalChange = UserDefaults.standard.object(forKey: Self.lastLocalChangeKey) as? Date
+        remoteSentThrough = UserDefaults.standard.object(forKey: Self.remoteSentKey) as? Date
         model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
         if identityUnavailable {
             // Changes are still stamped (with the device ID kept in the sync state); only
@@ -144,7 +171,7 @@ final class SyncService {
 
     /// Stops the network (the app goes to the background, where iOS would suspend it anyway).
     func pause() {
-        remoteLoop?.cancel(); remoteLoop = nil
+        stopRemoteLoop()
         listener?.cancel(); listener = nil
         browser?.cancel(); browser = nil
         nearby = []
@@ -154,6 +181,27 @@ final class SyncService {
     /// Syncs now with every device of the cellar on the network.
     func syncNow() {
         for (device, endpoint) in endpoints { sync(with: device, at: endpoint) }
+    }
+
+    /// Sync Now in Devices: on the network, and away from home if it is set up.
+    func syncEverywhereNow() {
+        syncNow()
+        if remoteStorage != nil { Task { await remoteRound() } }
+    }
+
+    /// How often to sync away from home, on this device only. On the same Wi-Fi,
+    /// changes are still sent a few seconds after they are made.
+    func setRemoteFrequency(_ frequency: RemoteSyncFrequency) {
+        guard frequency != remoteFrequency else { return }
+        remoteFrequency = frequency
+        UserDefaults.standard.set(frequency.rawValue, forKey: RemoteSyncFrequency.key)
+        stopRemoteLoop()
+        // Changed in Devices, so the app is open: the next round after the new interval.
+        startRemoteLoop(roundFirst: false)
+        if frequency.interval == nil { pendingRemote?.cancel() }
+        #if os(iOS)
+        scheduleBackgroundSync()
+        #endif
     }
 
     // MARK: Setting up and leaving
@@ -223,6 +271,7 @@ final class SyncService {
     func leave() {
         forgetCellar()
         problem = nil
+        localFailedAt = nil
         if !isDemo {
             if let fresh = Self.newIdentity() {
                 identity = fresh
@@ -242,6 +291,8 @@ final class SyncService {
         state = nil
         lastSync = [:]
         wasRemoved = false
+        localFailedAt = nil
+        keep(nil, in: \.lastLocalChange, key: Self.lastLocalChangeKey)
         resetRemote()
         files?.deleteAll()
     }
@@ -250,7 +301,8 @@ final class SyncService {
     private func resetRemote() {
         useStorage(nil)
         remoteProblem = nil
-        lastRemoteSync = nil
+        remoteFailedAt = nil
+        keep(nil, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         pendingKey = nil
@@ -270,13 +322,15 @@ final class SyncService {
         state.record(from: old, to: new)
         self.state = state
         try? files?.syncState.save(state)
-        // Wait for a pause in editing, then send the change to the devices around.
+        keep(.now, in: \.lastLocalChange, key: Self.lastLocalChangeKey)
+        // Wait for a pause in editing, then send the change to the devices around, and
+        // away from home unless the user syncs there only when they tap Sync Now.
         pendingSync?.cancel()
         pendingSync = Task { [weak self] in
             try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
-            self?.syncNow()
-            self?.syncRemotely()
+            guard !Task.isCancelled, let self else { return }
+            self.syncNow()
+            if self.remoteFrequency.interval != nil { self.syncRemotely() }
         }
     }
 
@@ -298,10 +352,12 @@ final class SyncService {
         newState.stamps = merge.stamps
         newState.clock = max(merge.clock, newState.clock)
         self.state = newState
+        let before = model.cellar
         model.applySynced(merge.cellar)
         let members = membership.merged(with: result.membership)
         self.membership = members
         if let peer { lastSync[peer] = .now }
+        localFailedAt = nil
         if members.members[identity.id] == nil {
             // Learned from an authenticated list of devices: this device was removed.
             wasRemoved = true
@@ -311,6 +367,11 @@ final class SyncService {
             problem = nil
         }
         save()
+        // Changes from other devices: a notification if the user asked for one.
+        if model.cellar != before, !isDemo {
+            let summary = CellarChangeSummary.between(before, model.cellar, stamps: merge.stamps, localDevice: identity.id)
+            if let task = ChangeNotifications.announce(summary, membership: members, model: model) { announcing = task }
+        }
     }
 
     private func sync(with device: UUID, at endpoint: NWEndpoint) {
@@ -374,6 +435,7 @@ final class SyncService {
     }
 
     func report(_ error: Error) {
+        if case SyncError.unknownDevice = error {} else { localFailedAt = .now }
         switch error {
         case SyncError.removedDevice:
             // Said before any authentication, so anyone on the network could say it:
@@ -388,7 +450,7 @@ final class SyncService {
         case SyncError.unsupportedVersion:
             problem = String(localized: "Another device runs a different version of Encave. Update both devices.")
         default:
-            problem = String(localized: "The last sync did not finish. It will try again.")
+            problem = String(localized: "The connection to the other device was lost. Encave will try again.")
         }
     }
 
@@ -409,6 +471,15 @@ final class SyncService {
     static let webDAVLoginAccount = "sync.webDAVLogin"
     /// The user turned syncing away from home off on this device.
     static let remoteOffKey = "sync.remoteTurnedOff"
+    static let lastRemoteSyncKey = "sync.lastRemoteSync"
+    static let lastLocalChangeKey = "sync.lastLocalChange"
+    static let remoteSentKey = "sync.remoteSentThrough"
+
+    /// Sets one of the dates kept across launches.
+    private func keep(_ date: Date?, in property: ReferenceWritableKeyPath<SyncService, Date?>, key: String) {
+        self[keyPath: property] = date
+        UserDefaults.standard.set(date, forKey: key)
+    }
 
     var remoteInfo: RemoteInfo? {
         remoteKey.map { RemoteInfo(key: $0, storage: remoteStorage?.string) }
@@ -435,7 +506,8 @@ final class SyncService {
             UserDefaults.standard.set(true, forKey: Self.remoteOffKey)
             storeWebDAVLogin(nil)
             remoteProblem = nil
-            lastRemoteSync = nil
+            remoteFailedAt = nil
+            keep(nil, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
             return
         }
         guard let store = storage.store(login: login) else { throw RemoteSyncError.unauthorized }
@@ -470,8 +542,9 @@ final class SyncService {
     private func useStorage(_ storage: RemoteStorage?) {
         guard storage != remoteStorage else { return }
         generation += 1
-        remoteLoop?.cancel(); remoteLoop = nil
+        stopRemoteLoop()
         remoteStorage = storage
+        keep(nil, in: \.remoteSentThrough, key: Self.remoteSentKey)
         if let storage {
             UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
         } else {
@@ -489,6 +562,7 @@ final class SyncService {
         try await RemoteStorage.webDAV(url).check(login: login)
         storeWebDAVLogin(login)
         remoteProblem = nil
+        remoteFailedAt = nil
         startRemoteLoop()
         await remoteRound()
     }
@@ -533,16 +607,56 @@ final class SyncService {
         }
     }
 
-    /// While the app is open: a round every minute, to pick up changes from devices away.
-    private func startRemoteLoop() {
-        guard remoteStorage != nil, remoteLoop == nil, !isDemo else { return }
+    /// While the app is open: a round at the chosen frequency (every minute by default),
+    /// to pick up changes from devices away. None when the user syncs there only when
+    /// they tap Sync Now.
+    private func startRemoteLoop(roundFirst: Bool = true) {
+        guard remoteStorage != nil, remoteLoop == nil, !isDemo, let interval = remoteFrequency.interval else { return }
         remoteLoop = Task { [weak self] in
+            if roundFirst { await self?.remoteRound() }
             while !Task.isCancelled {
+                self?.nextRemoteRound = .now.addingTimeInterval(TimeInterval(interval.components.seconds))
+                try? await Task.sleep(for: interval)
+                guard !Task.isCancelled else { break }
+                self?.nextRemoteRound = nil
                 await self?.remoteRound()
-                try? await Task.sleep(for: .seconds(60))
             }
         }
     }
+
+    private func stopRemoteLoop() {
+        remoteLoop?.cancel()
+        remoteLoop = nil
+        nextRemoteRound = nil
+    }
+
+    #if os(iOS)
+    /// iPhone and iPad: one round away from home while the app is in the background,
+    /// when iOS runs the app refresh task (`BackgroundSync`); then asks for the next one.
+    /// iOS cancels the task if it ends it early: the round then stops and keeps nothing.
+    func backgroundRound() async {
+        defer { scheduleBackgroundSync() }
+        guard !isDemo, isSetUp, !otherDevices.isEmpty, remoteFrequency.interval != nil else { return }
+        await remoteRound()
+        // The notification of the changes, if any, is posted before iOS suspends the app.
+        await announcing?.value
+    }
+
+    /// Asks iOS for a background round, no sooner than the chosen frequency and never
+    /// within 15 minutes; iOS decides when. Cancels it when there is nothing to sync.
+    func scheduleBackgroundSync() {
+        guard !isDemo, isSetUp, !otherDevices.isEmpty, !wasRemoved, remoteStorage != nil,
+              let interval = remoteFrequency.interval else {
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: BackgroundSync.identifier)
+            return
+        }
+        let request = BGAppRefreshTaskRequest(identifier: BackgroundSync.identifier)
+        request.earliestBeginDate = .now.addingTimeInterval(max(15 * 60, TimeInterval(interval.components.seconds)))
+        // Refused in the simulator and when Background App Refresh is off: the app then
+        // syncs when it is opened.
+        try? BGTaskScheduler.shared.submit(request)
+    }
+    #endif
 
     func remoteRound() async {
         guard let store = remoteStorage?.store(login: webDAVLogin), !isSyncingRemotely, !wasRemoved,
@@ -550,6 +664,8 @@ final class SyncService {
         isSyncingRemotely = true
         defer { isSyncingRemotely = false }
         let round = generation
+        // The copy sent is the one taken now: later changes wait for the next round.
+        let started = Date.now
         do {
             var key = remoteKey
             if key == nil {
@@ -562,6 +678,8 @@ final class SyncService {
             do {
                 key = try await rotateIfNeeded(store: store, key: key, local: local, round: round)
             } catch {
+                guard !Task.isCancelled else { return }
+                remoteFailedAt = .now
                 remoteProblem = String(localized: "The removed device could not be shut out of syncing away from home yet. It will be tried again.")
                 return
             }
@@ -585,7 +703,9 @@ final class SyncService {
                 useStorage(storage)
                 startRemoteLoop()
             }
-            lastRemoteSync = .now
+            keep(.now, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
+            keep(started, in: \.remoteSentThrough, key: Self.remoteSentKey)
+            remoteFailedAt = nil
             if !result.unreadable.isEmpty {
                 remoteProblem = String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
             } else if remoteStorage == .iCloud, remoteProgress.seen.isEmpty, !otherDevices.isEmpty {
@@ -594,26 +714,37 @@ final class SyncService {
             } else {
                 remoteProblem = nil
             }
+        } catch _ where Task.isCancelled {
+            // iOS ended the background task early: not a failure, the next round retries.
+            return
         } catch RemoteSyncError.unauthorized {
+            remoteFailedAt = .now
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
             case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
             default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
             }
         } catch RemoteSyncError.fileTooLarge {
+            remoteFailedAt = .now
             if case .webDAV = remoteStorage {
                 remoteProblem = String(localized: "The cellar or a document is larger than this WebDAV server accepts in one file. Raise its upload limit.")
             } else {
                 remoteProblem = String(localized: "The cellar or a document is larger than this relay accepts in one file. Use a relay with a higher limit.")
             }
         } catch RemoteSyncError.quotaExceeded {
+            remoteFailedAt = .now
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "Your iCloud storage is full.")
             case .webDAV: remoteProblem = String(localized: "The WebDAV folder is full. Free some space on the server.")
             default: remoteProblem = String(localized: "The relay is full. Remove old photos or use another relay.")
             }
         } catch {
-            remoteProblem = String(localized: "The storage cannot be reached. Syncing will resume when it can.")
+            remoteFailedAt = .now
+            switch remoteStorage {
+            case .iCloud: remoteProblem = String(localized: "iCloud could not be reached.")
+            case .webDAV: remoteProblem = String(localized: "The WebDAV folder could not be reached.")
+            default: remoteProblem = String(localized: "The relay could not be reached.")
+            }
         }
     }
 
@@ -654,6 +785,7 @@ final class SyncService {
             listener.start(queue: .main)
             self.listener = listener
         } catch {
+            localFailedAt = nil
             problem = String(localized: "Sync could not start on this network.")
         }
     }
@@ -710,6 +842,7 @@ final class SyncService {
         membership = members
         wasRemoved = false
         problem = nil
+        localFailedAt = nil
         save()
     }
 
@@ -822,6 +955,44 @@ final class SyncService {
         }
     }
 }
+
+/// How often a device syncs away from home by itself. Kept on the device, not synced.
+enum RemoteSyncFrequency: String, CaseIterable, Identifiable, Sendable {
+    case everyMinute, everyFiveMinutes, everyFifteenMinutes
+    /// Only when the user taps Sync Now.
+    case manual
+
+    static let key = "sync.remoteFrequency"
+
+    var id: String { rawValue }
+
+    /// Nil: never by itself.
+    var interval: Duration? {
+        switch self {
+        case .everyMinute: .seconds(60)
+        case .everyFiveMinutes: .seconds(5 * 60)
+        case .everyFifteenMinutes: .seconds(15 * 60)
+        case .manual: nil
+        }
+    }
+
+    static var stored: Self {
+        UserDefaults.standard.string(forKey: key).flatMap(Self.init(rawValue:)) ?? .everyMinute
+    }
+}
+
+#if os(iOS)
+/// iPhone and iPad: the app refresh task that syncs away from home in the background
+/// (declared in the Info.plist, run by the `.backgroundTask` of the app's scene).
+enum BackgroundSync {
+    static let identifier = "app.encave.sync.refresh"
+
+    @MainActor
+    static func run() async {
+        await CellarModel.current?.sync.backgroundRound()
+    }
+}
+#endif
 
 /// Where a cellar's encrypted files are kept for devices that are apart.
 enum RemoteStorage: Equatable {

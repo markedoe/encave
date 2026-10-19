@@ -535,7 +535,7 @@ S = [
 
  ("help_start_title", "Getting started", "Prise en main"),
  ("help_start_summary", "The four sections and how they work together.", "Les quatre sections et comment elles fonctionnent ensemble."),
- ("help_start_cellar", "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.", "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type ou par moment où les boire."),
+ ("help_start_cellar", "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.", "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont."),
  ("help_start_racks", "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.", "Vos casiers, caves à vin et losanges dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille."),
  ("help_start_tonight", "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.", "Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat."),
  ("help_start_journal", "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.", "Les bouteilles ouvertes avec vos notes, les vins découverts ailleurs, votre liste d’achats et vos statistiques."),

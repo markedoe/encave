@@ -33,6 +33,7 @@ struct RootView: View {
             case .active:
                 if !isCounted { isCounted = true; model.sceneDidBecomeActive() }
                 model.sync.resume()
+                ChangeNotifications.appBecameActive()
                 Task { await Reminders.schedule(for: model.cellar) }
             case .background:
                 if isCounted { isCounted = false; model.sceneDidEnterBackground() }

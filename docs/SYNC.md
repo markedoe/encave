@@ -59,7 +59,9 @@ implementations:
   `wine.currentPriceCurrency` (an ISO code) and `wine.currentPriceDate` (a date)
   are optional: the price of a bottle today, accepted by the user from a web
   search or typed. `bottle.reservedFor` is an optional string (the occasion a bottle
-  is kept for).
+  is kept for). `settings.savedSearches` is an optional array of
+  `{id, name, query, colors, maturities, rackID?, tag?, reservation?, grape?}`, with
+  `colors` and `maturities` sorted by their string value.
 - `wine.attachments` and `bottle.attachments` are optional arrays of documents
   (an invoice, a certificate, a technical sheet…), left out when empty:
   `{id, name, contentType, byteCount, addedAt}`. `id` is a file ID (section 7)
@@ -69,9 +71,7 @@ implementations:
   `byteCount` the file's size in bytes (an integer); `addedAt` a date. A
   wine's documents are for all its bottles; a bottle's are for that bottle.
   They are part of their wine or bottle object, so if two devices change the
-  documents of the same object before syncing, the later change wins. `settings.savedSearches` is an optional array of
-  `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
-  `colors` and `maturities` sorted by their string value.
+  documents of the same object before syncing, the later change wins.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it
   with a default. A device that does not know a new value refuses the sync
@@ -494,7 +494,11 @@ Each storage keeps the files of a mailbox or inbox under its ID:
 
 Rounds run a few seconds after a change, every minute while the app is open,
 and when it comes back to the foreground. Each device can choose a longer
-interval, or to sync only when the user asks (a device-only setting).
+interval, or to sync only when the user asks (a device-only setting, which
+also stops the rounds after a change and on returning to the foreground). In
+the background, where the system allows it: on Android a periodic worker at
+the chosen interval, at least 15 minutes apart; on iPhone and iPad an app
+refresh task, no sooner than 15 minutes, when iOS decides.
 
 ### Removing a device
 
