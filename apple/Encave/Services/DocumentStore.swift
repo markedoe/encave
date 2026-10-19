@@ -97,13 +97,16 @@ enum DocumentStore {
 
     // MARK: Opening and sharing
 
-    /// Temporary copies of documents, to preview, share and pick, removed at each launch.
+    /// Temporary copies of documents, to preview and share, removed at each launch.
     static var temporaryFolder: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("Documents", isDirectory: true)
     }
 
+    /// At launch: copies made to preview or share, and pending ones left by a cancelled or
+    /// interrupted Add Bottles.
     static func removeTemporaryCopies() {
         try? FileManager.default.removeItem(at: temporaryFolder)
+        try? FileManager.default.removeItem(at: PendingDocument.folder)
     }
 
     /// A copy of the document with its name and an extension that matches its type, in a
@@ -142,8 +145,11 @@ struct PendingDocument: Identifiable, Hashable, Sendable {
     var contentType: String
     var byteCount: Int
 
+    static var folder: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("PendingDocuments", isDirectory: true)
+    }
+
     var url: URL? {
-        let base = FileManager.default.temporaryDirectory.appendingPathComponent("PendingDocuments", isDirectory: true)
-        return base.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent("file")
+        PendingDocument.folder.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent("file")
     }
 }

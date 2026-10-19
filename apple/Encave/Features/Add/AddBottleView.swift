@@ -223,8 +223,9 @@ struct AddBottleView: View {
                 scan.matchedWine = nil
             }
             .onAppear(perform: prepare)
-            // Cancelled (or added: nothing is left): the temporary copies go.
-            .onDisappear { documents.discardPending() }
+            // Cancelled (or added: nothing is left): the temporary copies go. Not while the
+            // document camera covers the screen, which also makes the form disappear.
+            .onDisappear { if !documents.scanning { documents.discardPending() } }
         }
         .macSheetFrame(width: 520, height: 720)
     }
