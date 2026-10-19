@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="camera" path="camera/" />
+    <!-- Copies of documents, with their names, handed to the app that opens or receives them. -->
+    <cache-path name="documents" path="documents/" />
 </paths>

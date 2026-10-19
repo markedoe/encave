@@ -137,6 +137,8 @@ fun WineDetailScreen(
     var findingPrice by remember { mutableStateOf(false) }
     var searchingOnline by remember { mutableStateOf(false) }
     var choosingPicture by remember { mutableStateOf(false) }
+    /** A bottle whose documents are shown, and whether the file picker opens at once. */
+    var bottleDocuments by remember { mutableStateOf<Pair<UUID, Boolean>?>(null) }
     val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -273,6 +275,7 @@ fun WineDetailScreen(
                     onDelete = { deletingBottle = bottle },
                     onReserve = { reserving = bottle },
                     onFree = { viewModel.reserve(listOf(bottle.id), null) },
+                    onDocuments = { importing -> bottleDocuments = bottle.id to importing },
                 )
             }
             ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice) } }
@@ -298,6 +301,7 @@ fun WineDetailScreen(
                 }
             }
             item { MorePhotosSection(viewModel, wine) }
+            item { WineDocumentsSection(viewModel, wine) }
             if (tastings.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.detail_tastings)) }
                 items(tastings, key = { "t" + it.id }) { bottle ->
@@ -360,6 +364,9 @@ fun WineDetailScreen(
             initialQuery = WebSearchQuery.terms(wine, stringResource(R.string.search_wine_word)),
             onDismiss = { searchingOnline = false },
         )
+    }
+    bottleDocuments?.let { (bottleId, importing) ->
+        BottleDocumentsSheet(viewModel, bottleId, startPicking = importing, onDismiss = { bottleDocuments = null })
     }
     reserving?.let { bottle ->
         ReserveDialog(
@@ -571,6 +578,8 @@ private fun BottleRow(
     onDelete: () -> Unit,
     onReserve: () -> Unit,
     onFree: () -> Unit,
+    /** Opens the bottle's documents; true opens the file picker at once. */
+    onDocuments: (Boolean) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
     val details = buildList {
@@ -597,47 +606,53 @@ private fun BottleRow(
             }
         },
         trailingContent = {
-            Box {
-                IconButton(onClick = { menu = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                bottle.attachments?.size?.let { count ->
+                    DocumentCount(count, Modifier.clickable(onClickLabel = stringResource(R.string.action_documents)) { onDocuments(false) }.padding(Dimens.xs))
                 }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_drink)) },
-                        leadingIcon = { Icon(Icons.Outlined.LocalBar, contentDescription = null) },
-                        onClick = { menu = false; onDrink() },
-                    )
-                    if (onShowInRack != null) {
+                Box {
+                    IconButton(onClick = { menu = true }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_show_in_rack)) },
-                            leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
-                            onClick = { menu = false; onShowInRack() },
+                            text = { Text(stringResource(R.string.action_drink)) },
+                            leadingIcon = { Icon(Icons.Outlined.LocalBar, contentDescription = null) },
+                            onClick = { menu = false; onDrink() },
+                        )
+                        if (onShowInRack != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_show_in_rack)) },
+                                leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
+                                onClick = { menu = false; onShowInRack() },
+                            )
+                        }
+                        if (bottle.reservedFor == null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_keep_for_occasion)) },
+                                leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                                onClick = { menu = false; onReserve() },
+                                modifier = Modifier.testTag("action.reserve"),
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_free_bottle)) },
+                                leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                                onClick = { menu = false; onFree() },
+                            )
+                        }
+                        BottleDocumentMenuItems(bottle.attachments != null, onDocuments) { menu = false }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_mark_gone)) },
+                            leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                            onClick = { menu = false; onGone() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                            onClick = { menu = false; onDelete() },
                         )
                     }
-                    if (bottle.reservedFor == null) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_keep_for_occasion)) },
-                            leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
-                            onClick = { menu = false; onReserve() },
-                            modifier = Modifier.testTag("action.reserve"),
-                        )
-                    } else {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_free_bottle)) },
-                            leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
-                            onClick = { menu = false; onFree() },
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_mark_gone)) },
-                        leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
-                        onClick = { menu = false; onGone() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                        onClick = { menu = false; onDelete() },
-                    )
                 }
             }
         },

@@ -164,7 +164,9 @@ class ScreenTourTest(private val device: String, private val language: String) {
     private fun checkActionButtons(screen: String) {
         compose.onAllNodes(actionButton, useUnmergedTree = true).fetchSemanticsNodes().forEach { button ->
             val tag = tagOf(button)!!
-            val content = compose.onAllNodes(hasTestTag("action.content").and(hasAnyAncestor(hasTestTag(tag))), useUnmergedTree = true)
+            // Partly scrolled under the top bar: its visible part is not centered on it.
+            if (button.boundsInWindow.height < button.size.height - 1 || button.boundsInWindow.width < button.size.width - 1) return@forEach
+            val content =compose.onAllNodes(hasTestTag("action.content").and(hasAnyAncestor(hasTestTag(tag))), useUnmergedTree = true)
                 .fetchSemanticsNodes().firstOrNull() ?: return@forEach
             val offset = (content.boundsInWindow.center.x - button.boundsInWindow.center.x) / density
             assertTrue("$screen: $tag content is ${"%.1f".format(offset)}dp off center", kotlin.math.abs(offset) <= 3f)

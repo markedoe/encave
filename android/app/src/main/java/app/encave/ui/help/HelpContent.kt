@@ -3,6 +3,7 @@ package app.encave.ui.help
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Bedtime
@@ -78,6 +79,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_adding_purchase, R.string.help_adding_purchase_title),
                     HelpSection(R.string.help_adding_tags, R.string.field_tags, Icons.Outlined.Tag),
                     HelpSection(R.string.help_adding_orders, R.string.help_adding_orders_title, Icons.Outlined.LocalShipping),
+                    HelpSection(R.string.help_adding_documents, R.string.help_adding_documents_title, Icons.Outlined.AttachFile),
                 ),
             ),
             HelpArticle(

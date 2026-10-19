@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
-import app.encave.core.sync.PhotoAccess
 import app.encave.core.sync.PhotoId
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -99,32 +98,54 @@ class PhotoStore(context: Context) {
     /** The photo's bytes, for sync. */
     fun data(id: String): ByteArray? = file(id)?.takeIf { it.exists() }?.readBytes()
 
-    /** Photos for a sync session: read and saved by ID. */
-    val syncAccess: PhotoAccess = object : PhotoAccess {
-        override fun data(id: String): ByteArray? = this@PhotoStore.data(id)
-        override fun exists(id: String): Boolean = this@PhotoStore.exists(id)
-        override fun save(id: String, data: ByteArray) {
-            store(id, data)
-        }
-    }
-
     /**
      * Removes photo files no wine has referred to for [ORPHAN_GRACE_DAYS]. A wine can refer to
      * one again in the meantime: an Undo, or a device that has not synced yet sending an older
      * copy of the wine. When each file was first seen unreferenced is kept in
      * `unreferenced.json` next to the photos (as on Apple devices).
      */
-    fun removeOrphans(keeping: Set<String>, now: Instant = Instant.now()) {
+    fun removeOrphans(keeping: Set<String>, now: Instant = Instant.now()) = OrphanFiles.remove(folder, "jpg", keeping, now)
+
+    /** A downscaled bitmap for display. */
+    fun load(id: String, maxPixelSize: Int = 900): Bitmap? = decode(file(id)?.takeIf { it.exists() }?.readBytes(), maxPixelSize)
+
+    companion object {
+        const val MAX_PIXEL_SIZE = 1600
+
+        /** How long a photo no wine refers to is kept before its file is removed (documents too). */
+        const val ORPHAN_GRACE_DAYS = 30L
+        private const val JPEG_QUALITY = 80
+
+        fun decode(bytes: ByteArray?, maxPixelSize: Int): Bitmap? {
+            if (bytes == null) return null
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            var sample = 1
+            while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxPixelSize) sample *= 2
+            return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
+        }
+    }
+}
+
+/**
+ * Files named after their ID (photos, documents) that nothing has referred to for
+ * [PhotoStore.ORPHAN_GRACE_DAYS] are removed. When each was first seen unreferenced is kept
+ * in `unreferenced.json` in its folder (as on Apple devices). Leftover temporary files go.
+ */
+internal object OrphanFiles {
+    private const val UNREFERENCED = "unreferenced.json"
+
+    fun remove(folder: File, extension: String, keeping: Set<String>, now: Instant) {
         val list = File(folder, UNREFERENCED)
         val seen = runCatching {
             Json.decodeFromString(MapSerializer(String.serializer(), Long.serializer()), list.readText())
         }.getOrDefault(emptyMap())
         val unreferenced = HashMap<String, Long>()
-        val grace = Duration.ofDays(ORPHAN_GRACE_DAYS)
+        val grace = Duration.ofDays(PhotoStore.ORPHAN_GRACE_DAYS)
         folder.listFiles().orEmpty().forEach { file ->
             when {
                 file.extension == "tmp" -> file.delete()
-                file.extension == "jpg" && file.nameWithoutExtension !in keeping -> {
+                file.extension == extension && file.nameWithoutExtension !in keeping -> {
                     val id = file.nameWithoutExtension
                     val since = seen[id] ?: now.epochSecond
                     if (Duration.between(Instant.ofEpochSecond(since), now) >= grace) file.delete() else unreferenced[id] = since
@@ -139,27 +160,6 @@ class PhotoStore(context: Context) {
                 temp.writeText(Json.encodeToString(MapSerializer(String.serializer(), Long.serializer()), unreferenced))
                 if (!temp.renameTo(list)) temp.delete()
             }
-        }
-    }
-
-    /** A downscaled bitmap for display. */
-    fun load(id: String, maxPixelSize: Int = 900): Bitmap? = decode(file(id)?.takeIf { it.exists() }?.readBytes(), maxPixelSize)
-
-    companion object {
-        const val MAX_PIXEL_SIZE = 1600
-
-        /** How long a photo no wine refers to is kept before its file is removed. */
-        const val ORPHAN_GRACE_DAYS = 30L
-        private const val UNREFERENCED = "unreferenced.json"
-        private const val JPEG_QUALITY = 80
-
-        fun decode(bytes: ByteArray?, maxPixelSize: Int): Bitmap? {
-            if (bytes == null) return null
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-            var sample = 1
-            while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxPixelSize) sample *= 2
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
         }
     }
 }

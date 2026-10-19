@@ -27,12 +27,14 @@ import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.OpenWith
 import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
@@ -87,6 +89,8 @@ import app.encave.core.Wine
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.UiText
+import app.encave.ui.cellar.BottleDocumentsSheet
+import app.encave.ui.cellar.DocumentCount
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.EmptyState
@@ -126,6 +130,8 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var highlightId by rememberSaveable { mutableStateOf(route.highlightBottleId) }
     var showsList by rememberSaveable { mutableStateOf(false) }
     var drinking by remember { mutableStateOf<Bottle?>(null) }
+    /** A bottle whose documents are shown, and whether the file picker opens at once. */
+    var bottleDocuments by remember { mutableStateOf<Pair<UUID, Boolean>?>(null) }
     // Checking the rack: the places whose bottles were found.
     var auditing by rememberSaveable { mutableStateOf(false) }
     var checked by rememberRetained("rack.audit.checked") { mutableStateOf(setOf<Slot>()) }
@@ -347,6 +353,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                                 movingId = bottle.id.toString()
                             },
                             onWinePage = { navigator.open(WineDetailRoute(bottle.wineId.toString())) },
+                            onDocuments = { importing -> bottleDocuments = bottle.id to importing },
                             onClose = { selectedKey = null },
                             modifier = Modifier.padding(horizontal = Dimens.l).padding(bottom = Dimens.s),
                         )
@@ -395,7 +402,11 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             onMove = { movingId = actionBottle.id.toString() },
             onTakeOut = { viewModel.move(actionBottle.id, null) },
             onGone = { viewModel.markGone(actionBottle.id) },
+            onDocuments = { importing -> bottleDocuments = actionBottle.id to importing },
         )
+    }
+    bottleDocuments?.let { (bottleId, importing) ->
+        BottleDocumentsSheet(viewModel, bottleId, startPicking = importing, onDismiss = { bottleDocuments = null })
     }
     if (confirmingAudit && missing.isNotEmpty()) {
         androidx.compose.material3.AlertDialog(
@@ -437,6 +448,8 @@ private fun SelectedBottleCard(
     onDrink: () -> Unit,
     onMove: () -> Unit,
     onWinePage: () -> Unit,
+    /** The bottle's documents; true opens the file picker at once. */
+    onDocuments: (Boolean) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -481,6 +494,16 @@ private fun SelectedBottleCard(
                     ActionContent(stringResource(R.string.action_move), Icons.Outlined.OpenWith)
                 }
                 Spacer(Modifier.weight(1f))
+                val documents = bottle.attachments?.size
+                if (documents != null) {
+                    TextButton(onClick = { onDocuments(false) }, modifier = Modifier.testTag("rack.selection.documents")) {
+                        DocumentCount(documents)
+                    }
+                } else {
+                    IconButton(onClick = { onDocuments(true) }, modifier = Modifier.testTag("rack.selection.documents")) {
+                        Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.action_attach_document))
+                    }
+                }
                 FilledTonalIconButton(onClick = onWinePage, modifier = Modifier.testTag("rack.selection.wine")) {
                     Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.action_wine_page))
                 }
@@ -596,6 +619,7 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
                         },
                         headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         supportingContent = wine?.producer?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+                        trailingContent = bottle.attachments?.size?.let { { DocumentCount(it) } },
                         modifier = Modifier.clickable { onPick(bottle) }.testTag("rack.list.row"),
                     )
                 }
@@ -615,6 +639,7 @@ private fun BottleActionsSheet(
     onMove: () -> Unit,
     onTakeOut: () -> Unit,
     onGone: () -> Unit,
+    onDocuments: (Boolean) -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l)) {
@@ -628,7 +653,14 @@ private fun BottleActionsSheet(
                 Triple(Icons.Outlined.OpenWith, R.string.action_move, onMove),
                 Triple(Icons.AutoMirrored.Outlined.Logout, R.string.action_remove_from_rack, onTakeOut),
                 Triple(Icons.Outlined.VolunteerActivism, R.string.action_mark_gone, onGone),
-            ).forEach { (icon, label, action) ->
+            ).let { actions ->
+                // The documents before the bottle leaves: "Documents…" when it has some.
+                val documents = listOfNotNull(
+                    if (bottle.attachments != null) Triple(Icons.Outlined.AttachFile, R.string.action_documents, { onDocuments(false) }) else null,
+                    Triple(Icons.Outlined.UploadFile, R.string.action_attach_document, { onDocuments(true) }),
+                )
+                actions.dropLast(1) + documents + actions.last()
+            }.forEach { (icon, label, action) ->
                 ListItem(
                     leadingContent = { Icon(icon, contentDescription = null) },
                     headlineContent = { Text(stringResource(label)) },
@@ -662,6 +694,7 @@ private fun CellSheet(
                     leadingContent = { app.encave.ui.components.WineColorDot(wine?.color, size = 28.dp) },
                     headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
                     supportingContent = { Text(bottle.slot?.let { rack.displayLabel(it, resources) }.orEmpty()) },
+                    trailingContent = bottle.attachments?.size?.let { { DocumentCount(it) } },
                     modifier = Modifier.clickable { onDismiss(); onBottle(bottle) },
                 )
             }

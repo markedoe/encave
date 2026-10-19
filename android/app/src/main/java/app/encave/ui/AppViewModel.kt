@@ -11,6 +11,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.encave.EncaveApplication
 import app.encave.R
+import app.encave.core.Attachment
+import app.encave.core.AttachmentTarget
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.CellarError
@@ -36,6 +38,8 @@ import app.encave.core.Wine
 import app.encave.core.importCsv
 import app.encave.core.merge
 import app.encave.data.CellarRepository
+import app.encave.data.DocumentStore
+import app.encave.data.PendingDocument
 import app.encave.data.PhotoStore
 import app.encave.data.Preferences
 import app.encave.data.ai.AiError
@@ -78,6 +82,7 @@ class AppViewModel(
     private val repository: CellarRepository,
     val preferences: Preferences,
     val photos: PhotoStore,
+    val documents: DocumentStore,
     val ai: AiPreferences,
     /** True while other devices sync with this one: erasing reaches them, the sample is not offered. */
     sharedWithDevices: Flow<Boolean> = flowOf(false),
@@ -160,16 +165,21 @@ class AppViewModel(
         purchase: PurchaseInfo,
         photo: ByteArray? = null,
         boughtDiscoveryId: UUID? = null,
+        /** Documents picked while adding: stored and attached to the wine, for all its bottles. */
+        pendingDocuments: List<PendingDocument> = emptyList(),
     ) {
         viewModelScope.launch {
             val photoId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
-            val record = if (photoId != null) wine.copy(photoId = photoId) else wine
+            val attachments = withContext(Dispatchers.IO) { pendingDocuments.mapNotNull { documents.commit(it) } }
+            var record = if (photoId != null) wine.copy(photoId = photoId) else wine
+            if (attachments.isNotEmpty()) record = record.copy(attachments = record.attachments.orEmpty() + attachments)
             repository.update { cellar ->
                 cellar.addBottles(record, quantity, slots, purchase).also {
                     if (boughtDiscoveryId != null && cellar.discoveries[boughtDiscoveryId] != null) cellar.markBought(boughtDiscoveryId)
                 }
             }
                 .onSuccess {
+                    withContext(Dispatchers.IO) { pendingDocuments.forEach(documents::discard) }
                     if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
                     else post(UiText.Plural(R.plurals.bottles_added, it.size))
                 }
@@ -351,7 +361,9 @@ class AppViewModel(
                 removePhoto -> wine.copy(photoId = null)
                 else -> wine
             }
-            repository.update { it.updateWine(record) }
+            // The form does not show documents: those of the wine as it is now are kept
+            // (added meanwhile on another device, for example).
+            repository.update { c -> c.updateWine(record.copy(attachments = c.wines[record.id]?.attachments ?: record.attachments)) }
                 .onSuccess { if (!quiet) post(UiText.Res(R.string.msg_saved)) }
                 .onFailure { post(errorText(it)) }
         }
@@ -481,6 +493,86 @@ class AppViewModel(
     suspend fun loadModels(key: String?): Result<List<String>> = runCatching { AiService.models(ai.settings.value, key) }
 
     fun showMessage(text: UiText) = post(text)
+
+    // region Documents
+
+    // Document files are never deleted right away either: an Undo, or another device that
+    // has not synced yet, may refer to them again (DocumentStore.removeOrphans, at launch).
+
+    /** Copies picked files to a temporary place, checking their size; problems are reported. */
+    suspend fun stageDocuments(uris: List<Uri>): List<PendingDocument> {
+        val problems = mutableSetOf<DocumentStore.Problem>()
+        val staged = withContext(Dispatchers.IO) {
+            uris.mapNotNull { uri ->
+                try {
+                    documents.stage(uri)
+                } catch (error: DocumentStore.AddException) {
+                    problems += error.problem
+                    null
+                }
+            }
+        }
+        reportDocumentProblems(problems)
+        return staged
+    }
+
+    /** A photo of a paper (taken with the camera app) as an image document, resized like photos. */
+    suspend fun stagePhotoOfPaper(uri: Uri): PendingDocument? {
+        val jpeg = withContext(Dispatchers.IO) { photos.prepare(uri, PAPER_PIXEL_SIZE) }
+        if (jpeg == null) {
+            post(UiText.Res(R.string.err_document_unreadable))
+            return null
+        }
+        return try {
+            withContext(Dispatchers.IO) { documents.stagePhoto(jpeg) }
+        } catch (error: DocumentStore.AddException) {
+            reportDocumentProblems(setOf(error.problem))
+            null
+        }
+    }
+
+    private fun reportDocumentProblems(problems: Set<DocumentStore.Problem>) {
+        when {
+            DocumentStore.Problem.TooLarge in problems -> post(UiText.Res(R.string.err_document_too_large))
+            DocumentStore.Problem.Unreadable in problems -> post(UiText.Res(R.string.err_document_unreadable))
+        }
+    }
+
+    /** Stores staged documents and attaches them to a wine (for all its bottles) or a bottle. */
+    fun attachDocuments(target: AttachmentTarget, staged: List<PendingDocument>, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            val attachments = withContext(Dispatchers.IO) {
+                staged.mapNotNull { documents.commit(it) }.also { staged.forEach(documents::discard) }
+            }
+            if (attachments.size < staged.size) post(UiText.Res(R.string.err_document_unreadable))
+            if (attachments.isNotEmpty()) {
+                repository.update { it.attach(attachments, target) }.onFailure { post(errorText(it)) }
+            }
+            onDone()
+        }
+    }
+
+    fun discardDocuments(staged: List<PendingDocument>) {
+        viewModelScope.launch(Dispatchers.IO) { staged.forEach(documents::discard) }
+    }
+
+    fun renameDocument(target: AttachmentTarget, id: String, name: String) = change<Unit> { it.renameAttachment(id, target, name) }
+
+    /** Removes a document, with Undo (the file stays for a while). */
+    fun removeDocument(target: AttachmentTarget, id: String) {
+        change<Pair<Attachment, Int>?>({ removed ->
+            if (removed != null) {
+                post(UiText.Res(R.string.msg_document_removed)) {
+                    change<Unit> { c -> c.attach(listOf(removed.first), target, removed.second) }
+                }
+            }
+        }) { it.removeAttachment(id, target) }
+    }
+
+    /** A copy of the document with its name, for another app to open or receive; null if it is not here. */
+    suspend fun documentUri(attachment: Attachment): Uri? = withContext(Dispatchers.IO) { documents.sharedUri(attachment) }
+
+    // endregion
 
     // endregion
 
@@ -622,6 +714,9 @@ class AppViewModel(
     // endregion
 
     companion object {
+        /** Photos of papers keep more pixels than label photos, so small print stays legible. */
+        const val PAPER_PIXEL_SIZE = 2400
+
         fun factory(app: EncaveApplication): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val shared = app.sync.state.map { (it.membership?.active?.size ?: 0) > 1 }
@@ -629,7 +724,7 @@ class AppViewModel(
                     val name = ChangeNotifications.deviceName(summary, app.sync.state.value.membership)
                     if (name != null) UiText.Res(R.string.sync_updated_from, listOf(name)) else UiText.Res(R.string.sync_updated_from_others)
                 }
-                AppViewModel(app.repository, app.preferences, app.photos, app.ai, shared, updates)
+                AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, shared, updates)
             }
         }
     }
