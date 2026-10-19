@@ -151,6 +151,46 @@
         }
       }
     },
+    "%lld bottles added": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle added"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles added"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille ajoutée"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles ajoutées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld bottles in the cellar": {
       "localizations": {
         "en": {
@@ -224,6 +264,86 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld bouteilles en commande"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld bottles opened": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle opened"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles opened"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille ouverte"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles ouvertes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld bottles removed": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle removed"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles removed"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille retirée"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles retirées"
                 }
               }
             }
@@ -411,6 +531,46 @@
         }
       }
     },
+    "%lld other changes": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld other change"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld other changes"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autre modification"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autres modifications"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld positions": {
       "localizations": {
         "en": {
@@ -531,6 +691,46 @@
         }
       }
     },
+    "%lld wines added": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld wine added"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld wines added"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vin ajouté"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vins ajoutés"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%llds": {
       "localizations": {
         "fr": {
@@ -557,6 +757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
+          }
+        }
+      }
+    },
+    "**Devices** shows where sync stands, on the same Wi-Fi and away from home: syncing now, the last sync, the last attempt that failed and why, changes on this device not sent yet, and when the next sync is due. **Sync Now** syncs right away, with the devices on the same Wi-Fi and through the storage away from home.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Appareils** montre où en est la synchronisation, sur le même Wi-Fi et loin de la maison : synchronisation en cours, dernière synchronisation, dernière tentative échouée et pourquoi, modifications de cet appareil pas encore envoyées, et prochaine synchronisation prévue. **Synchroniser** synchronise tout de suite, avec les appareils du même Wi-Fi et par le stockage à distance."
           }
         }
       }
@@ -727,6 +937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un nouveau vin, ou d’autres bouteilles d’un vin que vous avez déjà."
+          }
+        }
+      }
+    },
+    "A notification on this device when bottles are opened, added or removed on another device. Nothing is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre appareil. Rien n’est envoyé nulle part."
           }
         }
       }
@@ -2057,6 +2277,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils."
+          }
+        }
+      }
+    },
+    "Changes from other devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifications des autres appareils"
+          }
+        }
+      }
+    },
+    "Changes on this device not sent yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifications de cet appareil pas encore envoyées"
           }
         }
       }
@@ -3501,6 +3741,26 @@
         }
       }
     },
+    "Every 15 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 15 minutes"
+          }
+        }
+      }
+    },
+    "Every 5 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 5 minutes"
+          }
+        }
+      }
+    },
     "Every bottle is where it should be.": {
       "localizations": {
         "fr": {
@@ -3527,6 +3787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chaque bouteille, vin, casier, dégustation, découverte et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
+          }
+        }
+      }
+    },
+    "Every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les minutes"
           }
         }
       }
@@ -3871,6 +4141,16 @@
         }
       }
     },
+    "From %@: %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur %1$@ : %2$@."
+          }
+        }
+      }
+    },
     "From one star (disappointing) to five (exceptional). Tap the same star again to clear it.": {
       "localizations": {
         "fr": {
@@ -3897,6 +4177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dans votre cave"
+          }
+        }
+      }
+    },
+    "From your other devices: %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur vos autres appareils : %@."
           }
         }
       }
@@ -4241,6 +4531,16 @@
         }
       }
     },
+    "How often": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fréquence"
+          }
+        }
+      }
+    },
     "How sync works": {
       "localizations": {
         "fr": {
@@ -4341,6 +4641,16 @@
         }
       }
     },
+    "In **Devices › Sync Away from Home**, **How often** sets how often this device syncs away from home by itself: every minute, every 5 or 15 minutes, or only when you tap **Sync Now**. Background sync on iPhone and iPad follows it, no more often than iOS allows. On the same Wi-Fi, changes are still sent a few seconds after you make them. The setting is for this device only.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans **Appareils › Synchroniser loin de la maison**, **Fréquence** règle la fréquence à laquelle cet appareil se synchronise à distance de lui-même : toutes les minutes, toutes les 5 ou 15 minutes, ou seulement quand vous touchez **Synchroniser**. La synchronisation en arrière-plan sur iPhone et iPad la suit, sans dépasser ce qu’iOS permet. Sur le même Wi-Fi, les modifications partent toujours quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil."
+          }
+        }
+      }
+    },
     "In **Settings → AI**, choose a provider. You need an account with it and an API key; the provider bills you directly for what you use, usually a fraction of a cent per label.": {
       "localizations": {
         "fr": {
@@ -4377,6 +4687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dans la liste de la Cave (pas le tableau), choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."
+          }
+        }
+      }
+    },
+    "In the background, when iOS allows": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En arrière-plan, quand iOS le permet"
           }
         }
       }
@@ -4807,6 +5127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Grand, 10 × 12"
+          }
+        }
+      }
+    },
+    "Last attempt failed: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière tentative échouée : %@"
           }
         }
       }
@@ -5281,6 +5611,16 @@
         }
       }
     },
+    "Next sync in about %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prochaine synchronisation dans environ %@"
+          }
+        }
+      }
+    },
     "No": {
       "localizations": {
         "fr": {
@@ -5327,6 +5667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune bouteille"
+          }
+        }
+      }
+    },
+    "No device found on this Wi-Fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun appareil trouvé sur ce Wi-Fi"
           }
         }
       }
@@ -5931,6 +6281,26 @@
         }
       }
     },
+    "On the same Wi-Fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le même Wi-Fi"
+          }
+        }
+      }
+    },
+    "On the same Wi-Fi, changes are sent a few seconds after you make them. This setting is for this device only.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le même Wi-Fi, les modifications partent quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil."
+          }
+        }
+      }
+    },
     "On the same Wi-Fi, devices talk directly; no server is involved. Through iCloud, a WebDAV folder or a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.": {
       "localizations": {
         "fr": {
@@ -6141,6 +6511,26 @@
         }
       }
     },
+    "Only when I tap Sync Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement quand je touche Synchroniser"
+          }
+        }
+      }
+    },
+    "Only when you tap Sync Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement quand vous touchez Synchroniser"
+          }
+        }
+      }
+    },
     "Open Encave": {
       "localizations": {
         "fr": {
@@ -6221,12 +6611,12 @@
         }
       }
     },
-    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there and reads the others’ about once a minute while Encave is open. The storage only ever sees encrypted files.": {
+    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there and reads the others’, every minute while Encave is open unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres environ une fois par minute quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
+            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres, toutes les minutes quand Encave est ouvert, sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
           }
         }
       }
@@ -8381,6 +8771,16 @@
         }
       }
     },
+    "Sync Now and the status": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser et l’état"
+          }
+        }
+      }
+    },
     "Sync between your devices and with the people you share a cellar with will be end-to-end encrypted.": {
       "localizations": {
         "fr": {
@@ -8641,6 +9041,16 @@
         }
       }
     },
+    "Tell Me About Changes from Other Devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me prévenir des modifications des autres appareils"
+          }
+        }
+      }
+    },
     "Temperature": {
       "localizations": {
         "fr": {
@@ -8717,6 +9127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le service d’IA qui lit les photos d’étiquettes. Il vous faut un compte et une clé d’API chez lui."
+          }
+        }
+      }
+    },
+    "The WebDAV folder could not be reached.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier WebDAV est injoignable."
           }
         }
       }
@@ -8871,6 +9291,16 @@
         }
       }
     },
+    "The connection to the other device was lost. Encave will try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion avec l’autre appareil a été perdue. Encave réessaiera."
+          }
+        }
+      }
+    },
     "The connection was lost. Try again with a new code.": {
       "localizations": {
         "fr": {
@@ -8971,16 +9401,6 @@
         }
       }
     },
-    "The last sync did not finish. It will try again.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La dernière synchronisation n’a pas abouti. Elle sera retentée."
-          }
-        }
-      }
-    },
     "The middle value of %lld prices found in %@. Change it if you like.": {
       "localizations": {
         "fr": {
@@ -9077,6 +9497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le relais est injoignable. La synchronisation reprendra dès que possible."
+          }
+        }
+      }
+    },
+    "The relay could not be reached.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le relais est injoignable."
           }
         }
       }
@@ -9187,16 +9617,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le serveur a refusé ce nom d’utilisateur ou ce mot de passe. Avec la validation en deux étapes, utilisez un mot de passe d’application."
-          }
-        }
-      }
-    },
-    "The storage cannot be reached. Syncing will resume when it can.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le stockage est injoignable. La synchronisation reprendra dès que possible."
           }
         }
       }
@@ -9741,6 +10161,16 @@
         }
       }
     },
+    "Turn on **Tell Me About Changes from Other Devices** in **Devices** for a notification on this device when bottles are opened, added or removed on another one, for example “From Marc’s iPhone: 2 bottles opened.” Repeated syncs update the same notification. While Encave is in front, a short banner says where the changes come from instead. It is worked out on this device: nothing is sent anywhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre, par exemple « Sur l’iPhone de Marc : 2 bouteilles ouvertes. » Les synchronisations suivantes mettent à jour la même notification. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Tout est calculé sur cet appareil : rien n’est envoyé nulle part."
+          }
+        }
+      }
+    },
     "Turn on **To buy** to add the wine to your shopping list, with the price you saw. When you buy it, swipe it and choose **Add to Cellar**: it leaves the list once the bottles are added.": {
       "localizations": {
         "fr": {
@@ -9847,6 +10277,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "À"
+          }
+        }
+      }
+    },
+    "Updated from %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis à jour depuis %@"
+          }
+        }
+      }
+    },
+    "Updated from your other devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis à jour depuis vos autres appareils"
           }
         }
       }
@@ -10531,12 +10981,12 @@
         }
       }
     },
-    "Your AI and web search keys, your WebDAV login, the studio look and other display settings, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
+    "Your AI and web search keys, your WebDAV login, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
+            "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
           }
         }
       }
@@ -10927,6 +11377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "iCloud"
+          }
+        }
+      }
+    },
+    "iCloud could not be reached.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud est injoignable."
           }
         }
       }

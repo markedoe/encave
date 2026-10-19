@@ -28,6 +28,13 @@ struct EncaveApp: App {
         }
         .windowToolbarStyle(.unified)
         #endif
+        #if os(iOS)
+        // iPhone and iPad: a round away from home in the background, when iOS allows
+        // (requested by `SyncService.scheduleBackgroundSync`). The Mac syncs while open.
+        .backgroundTask(.appRefresh(BackgroundSync.identifier)) {
+            await BackgroundSync.run()
+        }
+        #endif
         .commands {
             CellarCommands(model: model)
         }
