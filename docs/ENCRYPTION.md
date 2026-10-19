@@ -40,11 +40,13 @@ Only standard, published algorithms; nothing proprietary:
   platforms is CryptoKit itself (BoringSSL is used only on Linux, for the
   tests). Keys in the Keychain; HTTPS through `URLSession`. All of the app's
   encryption is the one built into Apple's operating systems.
-- **Android**: BouncyCastle (`bcprov`, see `android/gradle/libs.versions.toml`)
-  for X25519 and ChaCha20-Poly1305; the platform's `javax.crypto` for
-  HMAC-SHA256, SHA-256 and AES-GCM with the Android Keystore; the platform's
-  TLS for HTTPS. BouncyCastle is a library shipped inside the app, not the
-  operating system's encryption.
+- **Android** (Android 15 and later): only the platform's encryption, through
+  the standard Java names: `XDH` (X25519) and `ChaCha20/Poly1305/NoPadding`,
+  served by Conscrypt, the system's provider; `javax.crypto` for HMAC-SHA256,
+  SHA-256 and AES-GCM with the Android Keystore; the platform's TLS for HTTPS.
+  No crypto library is shipped in the app. The unit tests run the same code on
+  the JDK's provider and on Conscrypt (`SystemCryptoTest`, a test-only
+  dependency).
 
 ## Apple: App Store Connect
 
@@ -70,15 +72,11 @@ Sources: Apple, "Complying with Encryption Export Regulations" and
 
 ## Android: Google Play
 
-Google Play does not ask export questions for each build, but the same rules
-apply to whoever distributes the app. Because the Android app ships
-BouncyCastle (standard algorithms not provided by the operating system), its
-distribution in France needs a declaration of supply of a cryptology means to
-ANSSI (the case Apple's table describes as "an industry standard algorithm, not
-provided within the Apple operating system"). Before the Android app is
-distributed in France, either:
-
-- file that declaration with ANSSI, or
-- move the Android app to the platform's encryption only. X25519 is not part of
-  the platform at the current minimum version (Android 8, API 26), so this
-  would mean raising the minimum version; check the exact level first.
+Google Play does not ask export questions for each build. Like the Apple apps,
+the Android app uses only the encryption of the operating system, with
+standard algorithms: the case for which Apple's table asks no French
+declaration on its store. The same reasoning should hold for Android, but
+confirm it against ANSSI's rules before distributing the Android app in France.
+Keep it that way: a crypto library shipped in the Android app (BouncyCastle,
+Tink, libsodium…) would be "an industry standard algorithm, not provided within
+the operating system", the case that needs a declaration to ANSSI.

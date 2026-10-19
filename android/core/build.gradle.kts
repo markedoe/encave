@@ -23,15 +23,15 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     // Sync protocol: suspend functions over a transport.
     api(libs.kotlinx.coroutines.core)
-    // X25519 and ChaCha20-Poly1305 on every Android version (the platform has them
-    // only from API 33 and 28). Lightweight API only; no provider is registered.
-    implementation(libs.bouncycastle)
     // WebDAV sync (PROPFIND, MKCOL, which HttpURLConnection refuses). Sends only
     // what the store asks for, to the server the user chose.
     implementation(libs.okhttp)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
+    // Conscrypt, Android's crypto provider, so the tests also run the sync
+    // primitives on it (and not only on the JDK's).
+    testImplementation(libs.conscrypt.openjdk)
 }
 
 tasks.test {

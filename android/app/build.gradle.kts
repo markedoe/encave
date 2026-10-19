@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "app.encave"
-        minSdk = 26
+        minSdk = 35
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"

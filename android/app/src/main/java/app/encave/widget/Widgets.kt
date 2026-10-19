@@ -1,7 +1,6 @@
 package app.encave.widget
 
 import android.content.Context
-import android.os.Build
 import androidx.core.content.edit
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
@@ -19,12 +18,10 @@ object Widgets {
     }
 
     /**
-     * Android 15+: gives the widget picker previews drawn from the sample cellar, once per
-     * app version (the system limits how often they can be set). Earlier versions show
-     * the preview layouts of the widget info files.
+     * Gives the widget picker previews drawn from the sample cellar, once per app
+     * version (the system limits how often they can be set).
      */
     suspend fun publishPreviews(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.getInt(KEY_PREVIEWS, -1) == BuildConfig.VERSION_CODE) return
         val manager = GlanceAppWidgetManager(context)

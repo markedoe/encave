@@ -23,7 +23,7 @@ import org.robolectric.annotation.Config
 
 /** The notification of changes from other devices, and the background schedule. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "en")
+@Config(sdk = [35], qualifiers = "en")
 class ChangeNotificationsTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
     private val manager get() = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

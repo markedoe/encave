@@ -3,7 +3,6 @@ package app.encave.widget
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
-import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
@@ -49,7 +48,7 @@ private val brandColors: ColorProviders by lazy { ColorProviders(light = brandSc
 /** Material You colors when the app uses them (Android 12+), the Encave colors otherwise; light and dark. */
 @Composable
 fun EncaveGlanceTheme(dynamicColor: Boolean, content: @Composable @GlanceComposable () -> Unit) {
-    val colors = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) GlanceTheme.colors else brandColors
+    val colors = if (dynamicColor) GlanceTheme.colors else brandColors
     GlanceTheme(colors = colors, content = content)
 }
 

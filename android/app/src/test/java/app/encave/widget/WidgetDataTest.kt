@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config
 
 /** What a widget reads when the app is not running. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class WidgetDataTest {
     private val app get() = ApplicationProvider.getApplicationContext<EncaveApplication>()
 

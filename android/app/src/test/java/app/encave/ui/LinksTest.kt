@@ -22,7 +22,7 @@ import org.robolectric.annotation.Config
 
 /** Reminders and app shortcuts open the app on a section, a wine or the scanner. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "en-w411dp-h891dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "en-w411dp-h891dp-xxhdpi")
 class LinksTest {
     @get:Rule
     val compose = createEmptyComposeRule()
