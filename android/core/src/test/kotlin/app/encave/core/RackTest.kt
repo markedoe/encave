@@ -24,8 +24,12 @@ class RackTest {
         val rack = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 5, depth = 2)
         assertEquals(5, rack.columnsInRow(0))
         assertEquals(4, rack.columnsInRow(1))
-        assertEquals(1, rack.positionsPerCell, "a honeycomb cell holds one bottle")
+        assertEquals(2, rack.positionsPerCell, "a deep honeycomb cell holds bottles one behind the other")
         assertFalse(rack.contains(Slot(rack.id, 1, 4)))
+        val deep = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 4, depth = 3)
+        val one = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 4)
+        assertEquals(one.allSlots.size * 3, deep.allSlots.size)
+        assertTrue(deep.contains(Slot(deep.id, 1, 0, 2)))
     }
 
     @Test

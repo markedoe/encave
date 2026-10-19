@@ -1766,7 +1766,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles par clayette"
+            "value": "Bouteilles par étagère"
           }
         }
       }
@@ -1936,7 +1936,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Armoire, 10 clayettes de 8, 2 en profondeur"
+            "value": "Armoire, 10 étagères de 8, 2 en profondeur"
           }
         }
       }
@@ -3531,12 +3531,12 @@
         }
       }
     },
-    "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row.": {
+    "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row. A deep cell can hold up to three bottles, one behind the other: choose it in **Bottles per cell**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large."
+            "value": "Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large. Une case profonde peut contenir jusqu’à trois bouteilles l’une derrière l’autre : choisissez-le dans **Bouteilles par case**."
           }
         }
       }
@@ -3846,7 +3846,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, 2 en profondeur, 6 clayettes de 7"
+            "value": "Cave à vin, 2 en profondeur, 6 étagères de 7"
           }
         }
       }
@@ -3856,7 +3856,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, 6 clayettes de 6"
+            "value": "Cave à vin, 6 étagères de 6"
           }
         }
       }
@@ -4221,12 +4221,22 @@
         }
       }
     },
+    "How many bottles fit one behind the other in each cell.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Combien de bouteilles tiennent l’une derrière l’autre dans chaque case."
+          }
+        }
+      }
+    },
     "How many bottles fit one behind the other on a shelf.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Combien de bouteilles tiennent l’une derrière l’autre sur une clayette."
+            "value": "Combien de bouteilles tiennent l’une derrière l’autre sur une étagère."
           }
         }
       }
@@ -7786,7 +7796,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clayette %@, %lld"
+            "value": "Étagère %@, %lld"
           }
         }
       }
@@ -7806,7 +7816,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clayettes"
+            "value": "Étagères"
           }
         }
       }
@@ -7816,7 +7826,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clayettes d’une rangée de bouteilles, sur un à trois rangs"
+            "value": "Étagères d’une rangée de bouteilles, sur un à trois rangs"
           }
         }
       }
@@ -7826,7 +7836,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des clayettes d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière."
+            "value": "Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière."
           }
         }
       }

@@ -97,7 +97,13 @@ struct RackEditor: View {
                         }
                         .fieldHelp("A diamond bin of about 30 cm holds around 10 standard bottles.")
                     case .staggered:
-                        EmptyView()
+                        Picker("Bottles per cell", selection: $depth) {
+                            Text(verbatim: "1").tag(1)
+                            Text(verbatim: "2").tag(2)
+                            Text(verbatim: "3").tag(3)
+                        }
+                        .pickerStyle(.segmented)
+                        .fieldHelp("How many bottles fit one behind the other in each cell.")
                     }
                 } header: {
                     Text("Size")
@@ -223,7 +229,7 @@ struct RackEditor: View {
 
     private func matches(_ preset: RackPreset) -> Bool {
         !customRows && rows == preset.rows && columns == preset.columns
-            && (kind == .bins ? binCapacity == preset.binCapacity : (kind == .staggered || depth == preset.depth))
+            && (kind == .bins ? binCapacity == preset.binCapacity : depth == preset.depth)
     }
 
     private func apply(_ preset: RackPreset) {

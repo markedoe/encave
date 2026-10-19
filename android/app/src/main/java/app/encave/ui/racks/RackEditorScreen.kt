@@ -167,7 +167,6 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
 
     fun matches(preset: RackPreset) = !customRows && rows == preset.rows && columns == preset.columns && when (kind) {
         RackKind.Bins -> binCapacity == preset.binCapacity
-        RackKind.Staggered -> true
         else -> depth == preset.depth
     }
 
@@ -268,7 +267,18 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     SizeRow(stringResource(R.string.rack_bottles_per_bin), binCapacity, { binCapacity = it }, 2..40)
                     Hint(stringResource(R.string.help_field_bin))
                 }
-                RackKind.Staggered -> Unit
+                RackKind.Staggered -> {
+                    Text(stringResource(R.string.rack_bottles_per_cell), style = MaterialTheme.typography.bodyLarge)
+                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                        (1..Rack.MAX_DEPTH).forEach { value ->
+                            SegmentedButton(
+                                selected = depth == value, onClick = { depth = value },
+                                shape = SegmentedButtonDefaults.itemShape(value - 1, Rack.MAX_DEPTH),
+                            ) { Text("$value") }
+                        }
+                    }
+                    Hint(stringResource(R.string.help_field_staggered_depth))
+                }
             }
 
             if (kind != RackKind.Staggered) {

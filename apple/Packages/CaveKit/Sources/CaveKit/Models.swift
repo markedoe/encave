@@ -176,7 +176,8 @@ public struct RackCell: Hashable, Sendable {
 public enum RackKind: String, Codable, CaseIterable, Sendable {
     /// Classic rack: one bottle per cell in rows and columns, possibly two deep.
     case grid
-    /// Honeycomb rack: every other row is offset by half a bottle and holds one fewer.
+    /// Honeycomb rack: every other row is offset by half a bottle and holds one fewer;
+    /// a cell can hold up to three bottles one behind the other.
     case staggered
     /// Wine fridge or cabinet: shelves holding a row of bottles, one or more deep.
     case shelves
@@ -194,7 +195,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var rows: Int
     /// Cells per row (the widest row for honeycomb racks).
     public var columns: Int
-    /// Bottles one behind the other in a cell (grid and shelves).
+    /// Bottles one behind the other in a cell (grid, honeycomb and shelves).
     public var depth: Int
     /// Bottles per bin (bins only).
     public var binCapacity: Int
@@ -262,7 +263,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var maxColumns: Int { (0..<rows).map(columns(inRow:)).max() ?? columns }
 
     /// Bottles that fit in one cell.
-    public var positionsPerCell: Int { kind == .bins ? binCapacity : (kind == .staggered ? 1 : depth) }
+    public var positionsPerCell: Int { kind == .bins ? binCapacity : depth }
 
     public var cellCount: Int { (0..<rows).reduce(0) { $0 + columns(inRow: $1) } }
 

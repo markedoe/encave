@@ -237,7 +237,6 @@ data class Rack(
     val positionsPerCell: Int
         get() = when (kind) {
             RackKind.Bins -> binCapacity
-            RackKind.Staggered -> 1
             else -> depth
         }
 

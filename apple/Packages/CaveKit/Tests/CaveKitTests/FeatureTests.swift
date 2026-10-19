@@ -549,3 +549,20 @@ import Testing
         #expect(old.coverPhotoID == nil && old.shownPhotoID == nil)
     }
 }
+
+@Suite struct HoneycombDepthTests {
+    @Test func honeycombCellsCanHoldSeveralBottles() throws {
+        let one = Rack(name: "H", kind: .staggered, rows: 3, columns: 4)
+        let deep = Rack(name: "H", kind: .staggered, rows: 3, columns: 4, depth: 3)
+        #expect(one.positionsPerCell == 1)
+        #expect(deep.positionsPerCell == 3)
+        #expect(deep.allSlots.count == one.allSlots.count * 3)
+        let back = Slot(rackID: deep.id, row: 1, column: 0, depth: 2)
+        #expect(deep.contains(back))
+        #expect(deep.label(for: back).hasSuffix("-3"))
+        var cellar = Cellar()
+        try cellar.addRack(deep)
+        try cellar.addBottles(of: Wine(name: "W"), quantity: 2, slots: [Slot(rackID: deep.id, row: 0, column: 0, depth: 0), back])
+        #expect(cellar.freeSlots(in: deep).count == deep.allSlots.count - 2)
+    }
+}
