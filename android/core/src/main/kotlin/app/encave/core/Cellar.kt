@@ -105,6 +105,25 @@ class Cellar(
                 .map { it.first }
         }
 
+    /** Grapes of the wines in the cellar, the most used first (for the filter chips). */
+    val wineGrapes: List<String>
+        get() {
+            val inCellar = bottlesInCellar.map { it.wineId }.toSet()
+            val counts = LinkedHashMap<String, Pair<String, Int>>()
+            for (wine in wineMap.values) {
+                if (wine.id !in inCellar) continue
+                for (grape in wine.grapes) {
+                    val name = grape.trim()
+                    if (name.isEmpty()) continue
+                    val key = name.lowercase(java.util.Locale.ROOT)
+                    counts[key] = (counts[key]?.first ?: name) to ((counts[key]?.second ?: 0) + 1)
+                }
+            }
+            val collator = collator()
+            return counts.values.sortedWith { a, b -> if (a.second != b.second) b.second - a.second else collator.compare(a.first, b.first) }
+                .map { it.first }
+        }
+
     val consumedBottles: List<Bottle>
         get() = bottleMap.values
             .filter { it.status == Bottle.Status.Consumed }
@@ -122,6 +141,7 @@ class Cellar(
             if (filter.colors.isNotEmpty() && (wine.color == null || wine.color !in filter.colors)) return@mapNotNull null
             if (filter.maturities.isNotEmpty() && Maturity.of(wine, year) !in filter.maturities) return@mapNotNull null
             if (filter.tag != null && !wine.hasTag(filter.tag)) return@mapNotNull null
+            if (filter.grape != null && !wine.hasGrape(filter.grape)) return@mapNotNull null
             var kept = bottles
             if (filter.rackId != null) {
                 kept = kept.filter { it.slot?.rackId == filter.rackId }
@@ -517,9 +537,11 @@ data class CellarFilter(
     val tag: String? = null,
     /** Only bottles reserved for this occasion (ignoring case). */
     val reservation: String? = null,
+    /** Only wines made with this grape (ignoring case). */
+    val grape: String? = null,
 ) {
     val isActive: Boolean
-        get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null || tag != null || reservation != null
+        get() = colors.isNotEmpty() || maturities.isNotEmpty() || rackId != null || tag != null || reservation != null || grape != null
 }
 
 enum class CellarError {

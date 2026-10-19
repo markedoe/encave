@@ -60,7 +60,7 @@ implementations:
   are optional: the price of a bottle today, accepted by the user from a web
   search or typed. `bottle.reservedFor` is an optional string (the occasion a bottle
   is kept for). `settings.savedSearches` is an optional array of
-  `{id, name, query, colors, maturities, rackID?, tag?, reservation?}`, with
+  `{id, name, query, colors, maturities, rackID?, tag?, reservation?, grape?}`, with
   `colors` and `maturities` sorted by their string value.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it

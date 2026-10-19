@@ -3511,12 +3511,12 @@
         }
       }
     },
-    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.": {
+    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type ou par moment où les boire."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont."
           }
         }
       }
@@ -8037,6 +8037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affiche les termes de recherche avant tout envoi."
+          }
+        }
+      }
+    },
+    "Shows the wines made with this grape.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les vins faits avec ce cépage."
           }
         }
       }

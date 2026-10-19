@@ -498,7 +498,7 @@
     <string name="help_create_key">Créer une clé d’API</string>
     <string name="help_start_title">Prise en main</string>
     <string name="help_start_summary">Les quatre sections et comment elles fonctionnent ensemble.</string>
-    <string name="help_start_cellar">Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type ou par moment où les boire.</string>
+    <string name="help_start_cellar">Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont.</string>
     <string name="help_start_racks">Vos casiers, caves à vin et losanges dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille.</string>
     <string name="help_start_tonight">Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat.</string>
     <string name="help_start_journal">Les bouteilles ouvertes avec vos notes, les vins découverts ailleurs, votre liste d’achats et vos statistiques.</string>

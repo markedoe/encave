@@ -326,7 +326,7 @@ private struct CellarSummary: View {
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
         let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil && filter.tag == nil
-            && filter.reservation == nil
+            && filter.reservation == nil && filter.grape == nil
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Button(action: onBottles) {
@@ -392,6 +392,23 @@ private struct CellarSummary: View {
                             toggle(maturity, in: \.maturities)
                         } leading: {
                             Image(systemName: maturity.systemImage).foregroundStyle(maturity.tint)
+                        }
+                    }
+                    // A grape no longer in the cellar stays visible while it filters the list.
+                    let grapesInCellar: [String] = model.cellar.wineGrapes
+                    let grapes: [String] = grapesInCellar + [filter.grape].compactMap { $0 }.filter { (grape: String) -> Bool in
+                        !grapesInCellar.contains { $0.caseInsensitiveCompare(grape) == .orderedSame }
+                    }
+                    if !grapes.isEmpty {
+                        Divider().frame(height: 24)
+                        ForEach(grapes, id: \.self) { grape in
+                            let isOn = filter.grape?.caseInsensitiveCompare(grape) == .orderedSame
+                            ChoiceChip(verbatim: grape, isSelected: isOn) {
+                                withAnimation(.snappy) { filter.grape = isOn ? nil : grape }
+                            } leading: {
+                                Image(systemName: "laurel.leading")
+                            }
+                            .accessibilityHint(Text("Shows the wines made with this grape."))
                         }
                     }
                     let reservations = model.cellar.reservations

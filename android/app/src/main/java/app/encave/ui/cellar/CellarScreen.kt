@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Grass
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Checklist
@@ -214,6 +215,7 @@ private fun CellarList(
     val showOrders = orders.isNotEmpty() && !filter.isActive && filter.query.isEmpty()
     val wineTags = remember(cellar) { cellar.wineTags }
     val reservations = remember(cellar) { cellar.reservations }
+    val wineGrapes = remember(cellar) { cellar.wineGrapes }
     // Only the styles and maturities of bottles in the cellar get a filter chip.
     val presentStats = remember(cellar, viewModel.year) { cellar.statistics(viewModel.year) }
     val presentColors = remember(presentStats) { presentStats.byColor.mapNotNull { it.color }.toSet() }
@@ -307,6 +309,11 @@ private fun CellarList(
                     presentMaturities = presentMaturities,
                     tags = wineTags,
                     tag = filter.tag,
+                    grapes = wineGrapes,
+                    grape = filter.grape,
+                    onToggleGrape = { g ->
+                        viewModel.filter.value = filter.copy(grape = if (filter.grape.equals(g, ignoreCase = true)) null else g)
+                    },
                     reservations = reservations,
                     reservation = filter.reservation,
                     onToggleReservation = { r ->
@@ -580,6 +587,9 @@ private fun FilterBar(
     presentMaturities: Set<Maturity>,
     tags: List<String>,
     tag: String?,
+    grapes: List<String>,
+    grape: String?,
+    onToggleGrape: (String) -> Unit,
     reservations: List<String>,
     reservation: String?,
     onToggleReservation: (String) -> Unit,
@@ -654,6 +664,16 @@ private fun FilterBar(
                 onClick = { onToggleMaturity(maturity) },
                 label = { Text(stringResource(maturity.labelRes)) },
                 leadingIcon = { Icon(maturity.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            )
+        }
+        // A grape no longer in the cellar stays visible while it filters the list.
+        (grapes + listOfNotNull(grape?.takeIf { g -> grapes.none { it.equals(g, ignoreCase = true) } })).forEach { option ->
+            FilterChip(
+                selected = grape.equals(option, ignoreCase = true),
+                onClick = { onToggleGrape(option) },
+                label = { Text(option) },
+                leadingIcon = { Icon(Icons.Outlined.Grass, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.testTag("filter.grape"),
             )
         }
         // A tag no longer used by a wine in the cellar stays visible while it filters the list.
@@ -947,7 +967,7 @@ private fun CellarSummary(
 ) {
     val stats = remember(cellar, year) { cellar.statistics(year) }
     val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null &&
-        filter.reservation == null
+        filter.reservation == null && filter.grape == null
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
         horizontalArrangement = Arrangement.spacedBy(Dimens.s),

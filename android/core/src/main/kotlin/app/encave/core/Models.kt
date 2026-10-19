@@ -91,6 +91,8 @@ data class Wine(
     /** True if the wine has this tag, ignoring case. */
     fun hasTag(tag: String): Boolean = tags.orEmpty().any { it.equals(tag, ignoreCase = true) }
 
+    fun hasGrape(grape: String): Boolean = grapes.any { it.trim().equals(grape.trim(), ignoreCase = true) }
+
     /**
      * Tags normalized and empty lists left out, as Swift's initializer keeps them. Extra
      * photos are named after their content, so the same picture added twice is kept once.
@@ -421,9 +423,10 @@ data class SavedSearch(
     @SerialName("rackID") @Serializable(with = UuidSerializer::class) val rackId: UUID? = null,
     val tag: String? = null,
     val reservation: String? = null,
+    val grape: String? = null,
 ) {
     val filter: CellarFilter
-        get() = CellarFilter(query, colors.toSet(), maturities.toSet(), rackId, tag, reservation)
+        get() = CellarFilter(query, colors.toSet(), maturities.toSet(), rackId, tag, reservation, grape)
 
     companion object {
         /** By name (ignoring case), then by ID: the same order on every device, as in Swift. */
@@ -434,7 +437,7 @@ data class SavedSearch(
         fun of(name: String, filter: CellarFilter, id: UUID = UUID.randomUUID()) = SavedSearch(
             id = id, name = name.trim(), query = filter.query.trim(),
             colors = filter.colors.sortedBy { it.raw }, maturities = filter.maturities.sortedBy { it.raw },
-            rackId = filter.rackId, tag = filter.tag, reservation = filter.reservation,
+            rackId = filter.rackId, tag = filter.tag, reservation = filter.reservation, grape = filter.grape,
         )
     }
 }

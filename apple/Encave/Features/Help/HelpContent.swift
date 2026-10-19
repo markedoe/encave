@@ -28,7 +28,7 @@ struct HelpArticle: Identifiable {
             HelpArticle(topic: .start, title: "Getting started",
                         summary: "The four sections and how they work together.", systemImage: "sparkles", sections: [
                 HelpSection(title: "Beta version", body: "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.", systemImage: "testtube.2"),
-                HelpSection(title: "Cellar", body: "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style or by when to drink.", systemImage: "wineglass"),
+                HelpSection(title: "Cellar", body: "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.", systemImage: "wineglass"),
                 HelpSection(title: "Racks", body: "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.", systemImage: "square.grid.3x3"),
                 HelpSection(title: "Tonight", body: "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.", systemImage: "moon.stars"),
                 HelpSection(title: "Journal", body: "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.", systemImage: "book.closed"),

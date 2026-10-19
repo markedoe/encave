@@ -108,6 +108,11 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         (tags ?? []).contains { $0.caseInsensitiveCompare(tag) == .orderedSame }
     }
 
+    public func hasGrape(_ grape: String) -> Bool {
+        let name = grape.trimmingCharacters(in: .whitespacesAndNewlines)
+        return grapes.contains { $0.trimmingCharacters(in: .whitespacesAndNewlines).caseInsensitiveCompare(name) == .orderedSame }
+    }
+
     /// Digits only: "3 760 1234 5678 9" and "3760123456789" are the same barcode.
     public static func normalizedBarcode(_ code: String) -> String {
         String(code.filter(\.isNumber).prefix(20))
@@ -463,6 +468,7 @@ public struct SavedSearch: Codable, Hashable, Sendable, Identifiable {
     public var rackID: UUID?
     public var tag: String?
     public var reservation: String?
+    public var grape: String?
 
     public init(id: UUID = UUID(), name: String, filter: CellarFilter) {
         self.id = id
@@ -474,10 +480,11 @@ public struct SavedSearch: Codable, Hashable, Sendable, Identifiable {
         rackID = filter.rackID
         tag = filter.tag
         reservation = filter.reservation
+        grape = filter.grape
     }
 
     public var filter: CellarFilter {
         CellarFilter(query: query, colors: Set(colors), maturities: Set(maturities), rackID: rackID, tag: tag,
-                     reservation: reservation)
+                     reservation: reservation, grape: grape)
     }
 }

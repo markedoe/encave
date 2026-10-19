@@ -566,3 +566,19 @@ import Testing
         #expect(cellar.freeSlots(in: deep).count == deep.allSlots.count - 2)
     }
 }
+
+@Suite struct GrapeFilterTests {
+    @Test func grapesFilterTheCellarAndAreListedByUse() throws {
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "Burgundy", grapes: ["Pinot Noir"]))
+        try cellar.addBottles(of: Wine(name: "Beaujolais", grapes: ["Gamay", "Pinot Noir"]))
+        try cellar.addBottles(of: Wine(name: "Plain"))
+        #expect(cellar.wineGrapes == ["Pinot Noir", "Gamay"])
+        let pinot = cellar.groups(filter: CellarFilter(grape: " pinot noir"), sort: .name, year: 2026)
+        #expect(pinot.map(\.wine.name) == ["Beaujolais", "Burgundy"])
+        #expect(CellarFilter(grape: "Gamay").isActive)
+        #expect(SavedSearch(name: "Gamay", filter: CellarFilter(grape: "Gamay")).filter == CellarFilter(grape: "Gamay"))
+        let all = try JSONEncoder().encode(SavedSearch(name: "All", filter: CellarFilter()))
+        #expect(!String(decoding: all, as: UTF8.self).contains("grape"))
+    }
+}
