@@ -247,10 +247,39 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                     }
                 }
             }
+            // Where the bottles go: right under the quantity, near the top of the form.
+            val location: @Composable () -> Unit = {
+                if (!ordered) LocationSection(
+                    cellar = cellar,
+                    inRack = inRack && cellar.racks.isNotEmpty(),
+                    onInRack = { inRack = it },
+                    rack = rack,
+                    onRack = { rackId = it.id.toString(); slotsTouched = false; pickedSlots.clear() },
+                    slots = slots,
+                    quantity = quantity,
+                    onToggleCell = { cell ->
+                        if (!slotsTouched) {
+                            pickedSlots.clear()
+                            slotsTouched = true
+                        }
+                        // A tap takes the next free place in the cell; once the cell is full of picks, it clears them.
+                        val next = freeSlots.firstOrNull { it.cell == cell && it !in pickedSlots }
+                        if (next != null) {
+                            pickedSlots.add(next)
+                            if (pickedSlots.size > quantity) quantity = pickedSlots.size
+                        } else {
+                            pickedSlots.removeAll { it.cell == cell }
+                        }
+                    },
+                    storage = storage,
+                    onStorage = { storage = it },
+                )
+            }
             // Wine: existing one, or search + new wine form.
             if (existing != null) {
                 ExistingWineCard(existing, onChange = if (routeWine == null) ({ existingId = null }) else null)
                 QuantityRow(quantity) { quantity = it }
+                location()
             } else {
                 if (cellar.wines.isNotEmpty()) {
                     OutlinedTextField(
@@ -282,6 +311,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 Header(R.string.photo_section)
                 PhotoSection(viewModel, form)
                 QuantityRow(quantity) { quantity = it }
+                location()
                 Header(R.string.add_section_wine)
                 WineEssentials(form, known)
             }
@@ -299,32 +329,6 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 },
                 date = expectedAt,
                 onPickDate = { pickingExpected = true },
-            )
-
-            if (!ordered) LocationSection(
-                cellar = cellar,
-                inRack = inRack && cellar.racks.isNotEmpty(),
-                onInRack = { inRack = it },
-                rack = rack,
-                onRack = { rackId = it.id.toString(); slotsTouched = false; pickedSlots.clear() },
-                slots = slots,
-                quantity = quantity,
-                onToggleCell = { cell ->
-                    if (!slotsTouched) {
-                        pickedSlots.clear()
-                        slotsTouched = true
-                    }
-                    // A tap takes the next free place in the cell; once the cell is full of picks, it clears them.
-                    val next = freeSlots.firstOrNull { it.cell == cell && it !in pickedSlots }
-                    if (next != null) {
-                        pickedSlots.add(next)
-                        if (pickedSlots.size > quantity) quantity = pickedSlots.size
-                    } else {
-                        pickedSlots.removeAll { it.cell == cell }
-                    }
-                },
-                storage = storage,
-                onStorage = { storage = it },
             )
 
             TextButton(onClick = { moreDetails = !moreDetails }) {
