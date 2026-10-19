@@ -474,6 +474,7 @@
     <string name="help_field_rows">Counted from the top. Rows are lettered A, B, C…</string>
     <string name="help_field_columns">Counted from the left. Places are numbered 1, 2, 3…</string>
     <string name="help_field_grid_depth">Deep racks hold a second bottle behind the first one.</string>
+    <string name="help_field_staggered_depth">How many bottles fit one behind the other in each cell.</string>
     <string name="help_field_shelf_depth">How many bottles fit one behind the other on a shelf.</string>
     <string name="help_field_bin">A diamond bin of about 30 cm holds around 10 standard bottles.</string>
     <string name="help_rack_holds">Holds %1$d bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.</string>
@@ -529,7 +530,7 @@
     <string name="help_racks_title">Racks</string>
     <string name="help_racks_summary">Describe your storage so every bottle has a place.</string>
     <string name="help_racks_grid">One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.</string>
-    <string name="help_racks_staggered">Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row.</string>
+    <string name="help_racks_staggered">Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row. A deep cell can hold up to three bottles, one behind the other: choose it in **Bottles per cell**.</string>
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.</string>
     <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
     <string name="help_racks_places_title">Places</string>

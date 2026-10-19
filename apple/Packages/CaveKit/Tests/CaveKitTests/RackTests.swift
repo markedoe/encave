@@ -17,7 +17,7 @@ import Testing
         let rack = Rack(name: "H", kind: .staggered, rows: 3, columns: 5, depth: 2)
         #expect(rack.columns(inRow: 0) == 5)
         #expect(rack.columns(inRow: 1) == 4)
-        #expect(rack.positionsPerCell == 1, "a honeycomb cell holds one bottle")
+        #expect(rack.positionsPerCell == 2, "a deep honeycomb cell holds bottles one behind the other")
         #expect(!rack.contains(Slot(rackID: rack.id, row: 1, column: 4)))
     }
 

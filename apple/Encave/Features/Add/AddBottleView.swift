@@ -31,6 +31,58 @@ struct AddBottleView: View {
 
     private var wineIsValid: Bool { existingWine != nil || draft.isValid }
 
+    /// Near the top, right after the label or the wine: how many bottles, then where they go.
+    @ViewBuilder
+    private var quantitySection: some View {
+        Section {
+            Stepper(value: $quantity, in: 1...48) {
+                LabeledContent("Quantity") {
+                    Text(verbatim: "\(quantity)").monospacedDigit().font(.headline)
+                }
+            }
+            .fieldHelp("How many identical bottles you add.")
+            .accessibilityIdentifier("add.quantity")
+        }
+        if !isOrdered {
+            Section {
+                Picker("Rack", selection: $rackID) {
+                    Text("No rack").tag(UUID?.none)
+                    ForEach(model.cellar.racks) { rack in
+                        Text(rack.name).tag(UUID?.some(rack.id))
+                    }
+                }
+                if let rack = selectedRack {
+                    let free = model.cellar.freeSlots(in: rack).count
+                    Button {
+                        choosingSlots = true
+                    } label: {
+                        LabeledContent("Positions") {
+                            Text(slotSummary(rack: rack))
+                                .foregroundStyle(chosenSlots.isEmpty ? Color.secondary : Color.primary)
+                        }
+                    }
+                    if free < quantity {
+                        Label("Only \(free) free positions: the other bottles will have no position.",
+                              systemImage: "exclamationmark.triangle")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
+                } else {
+                    TextField("Where is it?", text: $storageNote, prompt: Text("Kitchen, box in the garage…"))
+                        .fieldHelp("For bottles that are not in a rack.")
+                }
+            } header: {
+                Text("Location")
+            } footer: {
+                if selectedRack != nil, chosenSlots.isEmpty {
+                    Text("The first free positions are used unless you choose them. Tap Positions to pick them on the rack.")
+                } else if selectedRack == nil {
+                    Text("Choose a rack to see exactly where the bottles are, or note where they are kept.")
+                }
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -53,11 +105,14 @@ struct AddBottleView: View {
                     } header: {
                         Text("Wine")
                     }
+                    quantitySection
                 } else {
                     LabelScanSection(scan: scan, draft: $draft)
                     if scan.showsSummary {
                         WineSummarySections(draft: $draft, scan: scan)
+                        quantitySection
                     } else {
+                    quantitySection
                     if !model.cellar.wines.isEmpty {
                         Section {
                             TextField("Search your wines", text: $search)
@@ -88,12 +143,6 @@ struct AddBottleView: View {
                 }
 
                 Section {
-                    Stepper(value: $quantity, in: 1...48) {
-                        LabeledContent("Quantity") {
-                            Text(verbatim: "\(quantity)").monospacedDigit().font(.headline)
-                        }
-                    }
-                    .fieldHelp("How many identical bottles you add.")
                     Picker("Size", selection: $sizeML) {
                         ForEach(BottleSize.all, id: \.self) { size in
                             Text(BottleSize.label(for: size)).tag(size)
@@ -116,45 +165,6 @@ struct AddBottleView: View {
                         Text("Bottles on order are listed apart and are not suggested for tonight until they arrive.")
                     } else {
                         Text("Each bottle is tracked on its own, so you can drink or move them one by one.")
-                    }
-                }
-
-                if !isOrdered {
-                    Section {
-                        Picker("Rack", selection: $rackID) {
-                            Text("No rack").tag(UUID?.none)
-                            ForEach(model.cellar.racks) { rack in
-                                Text(rack.name).tag(UUID?.some(rack.id))
-                            }
-                        }
-                        if let rack = selectedRack {
-                            let free = model.cellar.freeSlots(in: rack).count
-                            Button {
-                                choosingSlots = true
-                            } label: {
-                                LabeledContent("Positions") {
-                                    Text(slotSummary(rack: rack))
-                                        .foregroundStyle(chosenSlots.isEmpty ? Color.secondary : Color.primary)
-                                }
-                            }
-                            if free < quantity {
-                                Label("Only \(free) free positions: the other bottles will have no position.",
-                                      systemImage: "exclamationmark.triangle")
-                                    .font(.footnote)
-                                    .foregroundStyle(.orange)
-                            }
-                        } else {
-                            TextField("Where is it?", text: $storageNote, prompt: Text("Kitchen, box in the garage…"))
-                                .fieldHelp("For bottles that are not in a rack.")
-                        }
-                    } header: {
-                        Text("Location")
-                    } footer: {
-                        if selectedRack != nil, chosenSlots.isEmpty {
-                            Text("The first free positions are used unless you choose them. Tap Positions to pick them on the rack.")
-                        } else if selectedRack == nil {
-                            Text("Choose a rack to see exactly where the bottles are, or note where they are kept.")
-                        }
                     }
                 }
 

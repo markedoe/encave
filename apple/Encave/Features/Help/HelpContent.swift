@@ -59,7 +59,7 @@ struct HelpArticle: Identifiable {
             HelpArticle(topic: .racks, title: "Racks",
                         summary: "Describe your storage so every bottle has a place.", systemImage: "square.grid.3x3", sections: [
                 HelpSection(title: "Grid rack", body: "One bottle per cell, in rows and columns. For racks deep enough to hold one bottle behind the other, set **Bottles per cell** to **Two, one behind the other**.", systemImage: "square.grid.3x3"),
-                HelpSection(title: "Honeycomb rack", body: "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row.", systemImage: "circle.hexagongrid"),
+                HelpSection(title: "Honeycomb rack", body: "Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row. A deep cell can hold up to three bottles, one behind the other: choose it in **Bottles per cell**.", systemImage: "circle.hexagongrid"),
                 HelpSection(title: "Wine fridge or cabinet", body: "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.", systemImage: "refrigerator"),
                 HelpSection(title: "Bins or crates", body: "Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.", systemImage: "diamond"),
                 HelpSection(title: "Places", body: "Rows are lettered from the top and cells numbered from the left: **B3** is the second row, third cell. When a cell holds several bottles, **B3-2** is the second one (behind, or in the pile)."),
