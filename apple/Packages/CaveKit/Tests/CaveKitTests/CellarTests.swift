@@ -203,6 +203,19 @@ import Testing
         #expect(loaded.cellar == cellar)
     }
 
+    @Test func fileThatCannotBeOpenedIsNotSetAside() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("store-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        // A directory where the file should be: it exists but cannot be read as a file,
+        // like a protected file before the first unlock.
+        let url = folder.appendingPathComponent("cellar.json")
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        let store = JSONFileCellarStore(fileURL: url)
+        #expect(throws: (any Error).self) { try store.loadSettingAsideUnreadable() }
+        #expect(FileManager.default.fileExists(atPath: url.path))
+        #expect(store.unreadableFiles().isEmpty)
+    }
+
     @Test func sampleDataIsConsistent() {
         let cellar = SampleData.cellar(year: 2026)
         #expect(cellar.racks.count == 6)
