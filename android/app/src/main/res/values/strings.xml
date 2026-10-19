@@ -275,6 +275,10 @@
     <string name="settings_privacy_body">No account, no tracking, no advertising. Devices sync directly on your network, encrypted from end to end; no server ever sees your cellar.</string>
     <string name="settings_privacy_stored_devices">Your cellar is stored only on your devices.</string>
     <string name="settings_about">About</string>
+    <string name="settings_beta">Beta</string>
+    <string name="settings_beta_note">Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.</string>
+    <string name="help_start_beta_title">Beta version</string>
+    <string name="help_start_beta">Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Source code</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>

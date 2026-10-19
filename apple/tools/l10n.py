@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "Encave" / "Resources"
 
 FR = {
+    'Beta': 'Bêta',
+    'Beta version': 'Version bêta',
+    'Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.': 'Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet.',
+    'Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.': 'Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps.',
     'How sync works': 'Comment marche la synchronisation',
     'What travels between your devices, and how changes come together.': 'Ce qui circule entre vos appareils, et comment les modifications se combinent.',
     'Two steps': 'Deux étapes',

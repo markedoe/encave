@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
 
@@ -54,6 +55,7 @@ data class HelpArticle(
             HelpArticle(
                 HelpTopic.Start, R.string.help_start_title, R.string.help_start_summary, Icons.Outlined.AutoAwesome,
                 listOf(
+                    HelpSection(R.string.help_start_beta, R.string.help_start_beta_title, Icons.Outlined.Science),
                     HelpSection(R.string.help_start_cellar, R.string.nav_cellar, Icons.Outlined.WineBar),
                     HelpSection(R.string.help_start_racks, R.string.nav_racks, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),

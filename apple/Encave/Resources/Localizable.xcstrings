@@ -1511,6 +1511,26 @@
         }
       }
     },
+    "Beta": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bêta"
+          }
+        }
+      }
+    },
+    "Beta version": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version bêta"
+          }
+        }
+      }
+    },
     "Bin %@": {
       "localizations": {
         "fr": {
@@ -3317,6 +3337,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide Encave"
+          }
+        }
+      }
+    },
+    "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet."
+          }
+        }
+      }
+    },
+    "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps."
           }
         }
       }

@@ -69,6 +69,7 @@ import app.encave.ui.components.commonCurrencies
 import app.encave.ui.components.sampleLabels
 import java.time.LocalDate
 import androidx.compose.material.icons.outlined.AutoAwesome
+import app.encave.ui.theme.Dimens
 
 private const val SOURCE_URL = "https://github.com/markedoe/encave"
 
@@ -255,7 +256,9 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             ListItem(
                 leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_version)) },
-                supportingContent = { Text("${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})") },
+                supportingContent = {
+                    Text("${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · " + stringResource(R.string.settings_beta))
+                },
             )
             ListItem(
                 modifier = Modifier.clickable {
@@ -265,6 +268,12 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 headlineContent = { Text(stringResource(R.string.settings_source)) },
                 supportingContent = { Text(stringResource(R.string.settings_source_body)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+            )
+            Text(
+                stringResource(R.string.settings_beta_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
             )
             HorizontalDivider()
         }

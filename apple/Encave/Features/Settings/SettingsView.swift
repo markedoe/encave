@@ -24,7 +24,7 @@ struct SettingsView: View {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "–"
         let build = info?["CFBundleVersion"] as? String ?? "–"
-        return "\(short) (\(build))"
+        return "\(short) (\(build)) · " + String(localized: "Beta")
     }
 
     private var remindersBinding: Binding<Bool> {
@@ -201,11 +201,15 @@ struct SettingsView: View {
                 }
             }
 
-            Section("About") {
+            Section {
                 LabeledContent("Version", value: version)
                 Link(destination: URL(string: "https://github.com/markedoe/encave")!) {
                     Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
                 }
+            } header: {
+                Text("About")
+            } footer: {
+                Text("Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.")
             }
         }
         .formStyle(.grouped)

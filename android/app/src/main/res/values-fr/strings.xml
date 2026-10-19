@@ -274,6 +274,10 @@
     <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave.</string>
     <string name="settings_privacy_stored_devices">Votre cave est enregistrée uniquement sur vos appareils.</string>
     <string name="settings_about">À propos</string>
+    <string name="settings_beta">Bêta</string>
+    <string name="settings_beta_note">Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps.</string>
+    <string name="help_start_beta_title">Version bêta</string>
+    <string name="help_start_beta">Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet.</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Code source</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
