@@ -244,6 +244,9 @@ jobs:
     needs: [cavekit, l10n]
     runs-on: macos-latest
     timeout-minutes: 60
+    outputs:
+      # The build number, set only when this run uploads (the testers job needs it).
+      build: ${{ steps.key.outputs.build }}
     defaults:
       run:
         working-directory: apple
@@ -283,39 +286,21 @@ jobs:
             -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
 
       - name: App Store Connect key
+        id: key
         if: env.UPLOAD == 'true'
         env:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
           key="$RUNNER_TEMP/AuthKey.p8"
-          # Rebuild a clean PEM whatever the paste looks like: lost line breaks,
-          # CRLF, literal "\n", quotes, missing BEGIN/END lines, or base64 of the file.
-          python3 - "$key" <<'PY'
-          import base64, os, re, sys
-          raw = os.environ["ASC_PRIVATE_KEY"].replace("\r", "").strip().strip('"').strip("'")
-          if "BEGIN" not in raw:
-              try:
-                  decoded = base64.b64decode(re.sub(r"\s", "", raw), validate=True).decode()
-                  if "BEGIN" in decoded:
-                      raw = decoded
-              except Exception:
-                  pass
-          body = re.sub(r"-----(BEGIN|END)[A-Z ]*-----", "", raw.replace("\\n", "\n"))
-          body = re.sub(r"\s", "", body)
-          try:
-              base64.b64decode(body, validate=True)
-          except Exception:
-              sys.exit("ASC_PRIVATE_KEY is not a valid .p8 key: paste the full content of AuthKey_XXXX.p8")
-          lines = [body[i:i + 64] for i in range(0, len(body), 64)]
-          with open(sys.argv[1], "w") as f:
-              f.write("-----BEGIN PRIVATE KEY-----\n" + "\n".join(lines) + "\n-----END PRIVATE KEY-----\n")
-          PY
+          python3 tools/asc_key.py "$key"
           chmod 600 "$key"
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
           cp ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
           /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
           # Build numbers must always increase: run number plus attempt.
-          echo "BUILD_NUMBER=$(( 1000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT ))" >> "$GITHUB_ENV"
+          number=$(( 1000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT ))
+          echo "BUILD_NUMBER=$number" >> "$GITHUB_ENV"
+          echo "build=$number" >> "$GITHUB_OUTPUT"
 
       - name: Archive and upload (iPhone, iPad)
         if: env.UPLOAD == 'true'
@@ -348,6 +333,38 @@ jobs:
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
+
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"
+
+  testers:
+    name: TestFlight external testers
+    needs: apps
+    if: needs.apps.outputs.build != ''
+    runs-on: ubuntu-latest
+    # App Store Connect takes 5 to 30 minutes to process a build.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 30
+
+      - name: Give the build to the external testers
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BUILD_NUMBER: ${{ needs.apps.outputs.build }}
+          BUNDLE_ID: app.encave
+        run: |
+          export ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          python3 apple/tools/asc_key.py "$ASC_KEY_PATH"
+          # "What to Test": the latest changes, as in the commit history.
+          WHATS_NEW="Beta build $BUILD_NUMBER. Latest changes:
+          $(git log --no-merges -n 10 --format='- %s')"
+          export WHATS_NEW
+          python3 apple/tools/testflight_testers.py
 
       - name: Remove key
         if: always()
