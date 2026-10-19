@@ -78,6 +78,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -217,6 +218,9 @@ private fun remoteStatus(resources: Resources, status: SyncManager.Status, frequ
     val last = status.lastRemoteSync
     when {
         status.syncingRemotely -> add(StatusLine(resources.getString(R.string.devices_status_syncing)))
+        // Rounds wait for a login on this device.
+        status.needsWebDavSignIn ->
+            add(StatusLine(resources.getString(R.string.sync_last_failed, resources.getString(R.string.devices_webdav_sign_in)), isError = true))
         problem != null -> {
             add(StatusLine(resources.getString(R.string.sync_last_failed, resources.getString(problem.text(isWebDav))), isError = true))
             status.remoteProblemAt?.let { add(StatusLine(ago(it, now))) }
@@ -225,6 +229,7 @@ private fun remoteStatus(resources: Resources, status: SyncManager.Status, frequ
         else -> add(StatusLine(resources.getString(R.string.devices_status_never)))
     }
     if (status.unsentChanges) add(StatusLine(resources.getString(R.string.sync_unsent)))
+    if (status.needsWebDavSignIn) return@buildList
     if (frequency == SyncFrequency.Manual) {
         add(StatusLine(resources.getString(R.string.sync_next_manual)))
     } else {
@@ -265,7 +270,7 @@ private fun FrequencyRow(frequency: SyncFrequency, onChange: (SyncFrequency) -> 
     var choosing by remember { mutableStateOf(false) }
     Box {
         ListItem(
-            modifier = Modifier.testTag("devices.frequency").clickable { choosing = true },
+            modifier = Modifier.testTag("devices.frequency").clickable(role = Role.DropdownList) { choosing = true },
             leadingContent = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
             headlineContent = { Text(stringResource(R.string.sync_frequency_title)) },
             supportingContent = { Text(stringResource(frequency.label)) },
