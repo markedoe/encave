@@ -393,7 +393,7 @@ final class SyncService {
                 transport.allowLargeFrames()
                 guard let local = snapshot() else { return }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
-                                                                       files: Self.photos, remote: remoteInfo)
+                                                                       files: Self.files, remote: remoteInfo)
                 apply(result, from: peer.id)
                 adoptRemote(remote)
             } catch {
@@ -422,7 +422,7 @@ final class SyncService {
                 defer { syncing.remove(peer.id) }
                 guard let local = snapshot() else { return }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
-                                                                       files: Self.photos, remote: remoteInfo)
+                                                                       files: Self.files, remote: remoteInfo)
                 apply(result, from: peer.id)
                 adoptRemote(remote)
             } catch {
@@ -455,7 +455,7 @@ final class SyncService {
     }
 
     /// Photos and documents, each kept in its own folder.
-    nonisolated static var photos: FileAccess {
+    nonisolated static var files: FileAccess {
         FileAccess(data: { id, kind in kind == .photo ? PhotoStore.data(for: id) : DocumentStore.data(for: id) },
                    save: { id, kind, data in kind == .photo ? PhotoStore.store(data, id: id) : DocumentStore.store(data, id: id) },
                    exists: { id, kind in kind == .photo ? PhotoStore.exists(id) : DocumentStore.exists(id) })
@@ -684,7 +684,7 @@ final class SyncService {
                 return
             }
             let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: local,
-                                                  progress: remoteProgress, files: Self.photos, storage: remoteStorage?.string)
+                                                  progress: remoteProgress, files: Self.files, storage: remoteStorage?.string)
             // The device left or joined another cellar meanwhile: drop the result.
             guard round == generation else { return }
             if let newKey = result.newKey { storeRemoteKey(newKey) }
