@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
 
 /** Opens every screen with the sample cellar, so a crash in any of them fails the build. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
 class SmokeTest {
     @get:Rule
     val compose = createAndroidComposeRule<MainActivity>()

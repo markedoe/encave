@@ -39,7 +39,8 @@ There are two exceptions, both off by default:
   at most 8 MB) and saved as a re-encoded JPEG without metadata.
 
 Keys are kept in the Keychain (Apple) or encrypted with the Android Keystore,
-on the device.
+on the device. The algorithms and libraries, and how the apps declare their
+encryption to the stores, are in [docs/ENCRYPTION.md](docs/ENCRYPTION.md).
 
 ## Keeping the repo clean
 

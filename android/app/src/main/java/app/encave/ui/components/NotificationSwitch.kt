@@ -1,7 +1,7 @@
 package app.encave.ui.components
 
 import android.Manifest
-import android.os.Build
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.selection.toggleable
@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.core.content.ContextCompat
 import app.encave.R
 import app.encave.reminders.Reminders
 
@@ -53,7 +54,7 @@ fun NotificationSwitch(
             enabled = false
             refused = false
             onChange(false)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Reminders.canNotify(context)) {
+        } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             permission.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else if (!Reminders.canNotify(context)) {
             refused = true

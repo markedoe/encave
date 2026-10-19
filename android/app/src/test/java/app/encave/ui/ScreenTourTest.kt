@@ -55,7 +55,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class ScreenTourTest(private val device: String, private val language: String) {
     companion object {
         private val devices = mapOf(

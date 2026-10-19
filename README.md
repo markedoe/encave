@@ -77,7 +77,7 @@ Apple-only, WebDAV folders and relays work for both (see the
 | `android/` | Kotlin and Jetpack Compose app, with its core module |
 | `relay/` | Self-hostable relay for syncing away from home ([README](relay/README.md)) |
 | `design/` | Design tokens and asset generators shared by all platforms |
-| `docs/` | [Roadmap](docs/ROADMAP.md), [sync protocol](docs/SYNC.md), [remote sync options](docs/REMOTE_SYNC.md), [development guide](docs/development.md) |
+| `docs/` | [Roadmap](docs/ROADMAP.md), [sync protocol](docs/SYNC.md), [remote sync options](docs/REMOTE_SYNC.md), [encryption and export compliance](docs/ENCRYPTION.md), [development guide](docs/development.md) |
 
 ## Getting started
 

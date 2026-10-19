@@ -2,7 +2,6 @@ package app.encave.ui.settings
 
 import androidx.compose.ui.platform.testTag
 import android.content.Intent
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -158,16 +157,14 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 
             RemindersSection()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                SectionHeader(stringResource(R.string.settings_appearance))
-                ListItem(
-                    modifier = Modifier.toggleable(dynamicColor, role = Role.Switch) { viewModel.setDynamicColor(it) },
-                    leadingContent = { Icon(Icons.Outlined.Palette, contentDescription = null) },
-                    headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) },
-                    supportingContent = { Text(stringResource(R.string.settings_dynamic_color_body)) },
-                    trailingContent = { Switch(checked = dynamicColor, onCheckedChange = null) },
-                )
-            }
+            SectionHeader(stringResource(R.string.settings_appearance))
+            ListItem(
+                modifier = Modifier.toggleable(dynamicColor, role = Role.Switch) { viewModel.setDynamicColor(it) },
+                leadingContent = { Icon(Icons.Outlined.Palette, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) },
+                supportingContent = { Text(stringResource(R.string.settings_dynamic_color_body)) },
+                trailingContent = { Switch(checked = dynamicColor, onCheckedChange = null) },
+            )
             ListItem(
                 modifier = Modifier.toggleable(studioLook, role = Role.Switch) { viewModel.setStudioLook(it) },
                 leadingContent = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },

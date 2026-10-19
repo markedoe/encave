@@ -11,7 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class InventoryPdfTest {
     private val resources = ApplicationProvider.getApplicationContext<Application>().resources
     private val cellar = SampleData.cellar(year = 2026)

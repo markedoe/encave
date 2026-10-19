@@ -18,7 +18,7 @@ import org.robolectric.annotation.Config
 
 /** The widgets' content in English, from a small cellar. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "en")
+@Config(sdk = [35], qualifiers = "en")
 class WidgetContentTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
     private val year = 2026

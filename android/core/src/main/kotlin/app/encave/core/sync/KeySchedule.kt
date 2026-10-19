@@ -1,11 +1,19 @@
 package app.encave.core.sync
 
 import java.nio.ByteBuffer
+import java.security.GeneralSecurityException
+import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 import java.util.Locale
+import javax.crypto.AEADBadTagException
+import javax.crypto.Cipher
+import javax.crypto.KeyAgreement
 import javax.crypto.Mac
+import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
@@ -13,15 +21,11 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.bouncycastle.crypto.InvalidCipherTextException
-import org.bouncycastle.crypto.modes.ChaCha20Poly1305
-import org.bouncycastle.crypto.params.AEADParameters
-import org.bouncycastle.crypto.params.KeyParameter
-import org.bouncycastle.math.ec.rfc7748.X25519
 
 // The primitives of docs/SYNC.md §3, byte for byte as CaveKit computes them with
-// CryptoKit. X25519 and ChaCha20-Poly1305 come from Bouncy Castle's lightweight
-// API, which works on every Android version.
+// CryptoKit. Only the system's encryption is used (see docs/ENCRYPTION.md): the
+// standard Java names, served by Conscrypt on Android (X25519 since Android 13)
+// and by the JDK in the unit tests.
 
 internal val random = SecureRandom()
 
@@ -31,21 +35,49 @@ class X25519Key(private val raw: ByteArray) {
         require(raw.size == 32) { "X25519 keys are 32 bytes" }
     }
 
-    val publicKey: ByteArray by lazy { ByteArray(32).also { X25519.scalarMultBase(raw, 0, it, 0) } }
+    /** X25519(private, 9): the agreement with the base point is the public key. */
+    val publicKey: ByteArray by lazy { Xdh.agree(raw, BASE_POINT) }
 
     /** The raw private key, to store it (encrypted) on the device. */
     val rawRepresentation: ByteArray get() = raw.copyOf()
 
     companion object {
-        fun generate(): X25519Key = X25519Key(ByteArray(32).also { X25519.generatePrivateKey(random, it) })
+        /** 32 random bytes: X25519 clamps any of them into a valid private key (RFC 7748). */
+        fun generate(): X25519Key = X25519Key(ByteArray(32).also { random.nextBytes(it) })
+
+        private val BASE_POINT = ByteArray(32).also { it[0] = 9 }
     }
 
     /** `DH(this, publicKey)`; an all-zero result (low-order point) is refused. */
     fun agree(publicKey: ByteArray): ByteArray {
         if (publicKey.size != 32) throw SyncException(SyncError.ProtocolViolation("bad key"))
-        val shared = ByteArray(32)
-        if (!X25519.calculateAgreement(raw, 0, publicKey, 0, shared, 0)) throw SyncException(SyncError.AuthenticationFailed)
+        val shared = try {
+            Xdh.agree(raw, publicKey)
+        } catch (_: GeneralSecurityException) {
+            throw SyncException(SyncError.AuthenticationFailed)
+        } catch (_: IllegalStateException) {
+            throw SyncException(SyncError.AuthenticationFailed) // some providers refuse low-order points this way
+        }
+        if (shared.all { it == 0.toByte() }) throw SyncException(SyncError.AuthenticationFailed)
         return shared
+    }
+}
+
+/** X25519 through the system's "XDH" key agreement, with keys as 32 raw bytes. */
+internal object Xdh {
+    // DER prefixes of an X25519 key (OID 1.3.101.110) followed by its 32 raw bytes.
+    private val PUBLIC_PREFIX = "302a300506032b656e032100".hexBytes()
+    private val PRIVATE_PREFIX = "302e020100300506032b656e04220420".hexBytes()
+
+    fun agree(privateKey: ByteArray, publicKey: ByteArray): ByteArray {
+        val factory = KeyFactory.getInstance("XDH")
+        val private = factory.generatePrivate(PKCS8EncodedKeySpec(PRIVATE_PREFIX + privateKey))
+        val public = factory.generatePublic(X509EncodedKeySpec(PUBLIC_PREFIX + publicKey))
+        return KeyAgreement.getInstance("XDH").run {
+            init(private)
+            doPhase(public, true)
+            generateSecret()
+        }
     }
 }
 
@@ -99,28 +131,33 @@ object KeySchedule {
 
 /** ChaCha20-Poly1305 with a 32-byte key and a 12-byte nonce; output and input are ciphertext ‖ tag. */
 object ChaChaPoly {
-    fun seal(plaintext: ByteArray, key: ByteArray, nonce: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray {
-        val cipher = ChaCha20Poly1305()
-        cipher.init(true, AEADParameters(KeyParameter(key), 128, nonce, aad))
-        val out = ByteArray(cipher.getOutputSize(plaintext.size))
-        val written = cipher.processBytes(plaintext, 0, plaintext.size, out, 0)
-        cipher.doFinal(out, written)
-        return out
-    }
+    fun seal(plaintext: ByteArray, key: ByteArray, nonce: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray =
+        cipher(Cipher.ENCRYPT_MODE, key, nonce, aad).doFinal(plaintext)
 
     /** Null if the tag does not match. */
     fun open(sealed: ByteArray, key: ByteArray, nonce: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray? {
         if (sealed.size < 16) return null
-        val cipher = ChaCha20Poly1305()
-        cipher.init(false, AEADParameters(KeyParameter(key), 128, nonce, aad))
-        val out = ByteArray(cipher.getOutputSize(sealed.size))
         return try {
-            val written = cipher.processBytes(sealed, 0, sealed.size, out, 0)
-            cipher.doFinal(out, written)
-            out
-        } catch (_: InvalidCipherTextException) {
+            cipher(Cipher.DECRYPT_MODE, key, nonce, aad).doFinal(sealed)
+        } catch (_: AEADBadTagException) {
             null
         }
+    }
+
+    /** A new cipher for each message (a key and nonce are never reused on one instance). */
+    private fun cipher(mode: Int, key: ByteArray, nonce: ByteArray, aad: ByteArray): Cipher {
+        require(key.size == 32 && nonce.size == 12) { "ChaCha20-Poly1305 takes a 32-byte key and a 12-byte nonce" }
+        return newCipher().apply {
+            init(mode, SecretKeySpec(key, "ChaCha20"), IvParameterSpec(nonce))
+            if (aad.isNotEmpty()) updateAAD(aad)
+        }
+    }
+
+    /** Android (Conscrypt) knows the cipher under its first name, the JDK (unit tests) under the second. */
+    private fun newCipher(): Cipher = try {
+        Cipher.getInstance("ChaCha20/Poly1305/NoPadding")
+    } catch (_: GeneralSecurityException) {
+        Cipher.getInstance("ChaCha20-Poly1305")
     }
 
     fun randomNonce(): ByteArray = ByteArray(12).also { random.nextBytes(it) }

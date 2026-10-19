@@ -3,7 +3,6 @@ package app.encave.sync
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
-import android.os.Build
 import app.encave.core.sync.SyncProtocol
 import java.io.Closeable
 import java.net.InetSocketAddress
@@ -94,7 +93,7 @@ class LocalNetwork(context: Context) {
                 override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) = done()
 
                 override fun onServiceResolved(info: NsdServiceInfo) {
-                    val host = if (Build.VERSION.SDK_INT >= 34) info.hostAddresses.firstOrNull() else @Suppress("DEPRECATION") info.host
+                    val host = info.hostAddresses.firstOrNull()
                     if (host != null && info.port > 0) {
                         val attributes = info.attributes.mapValues { (_, value) -> value?.toString(Charsets.UTF_8).orEmpty() }
                         runCatching { onFound(Found(info.serviceName, attributes, InetSocketAddress(host, info.port))) }
