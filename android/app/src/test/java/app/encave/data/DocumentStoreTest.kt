@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 // A plain application: Encave's own cleans files at launch, at the real date.
-@Config(sdk = [34], application = android.app.Application::class)
+@Config(sdk = [35], application = android.app.Application::class)
 class DocumentStoreTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
