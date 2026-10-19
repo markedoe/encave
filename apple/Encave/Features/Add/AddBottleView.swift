@@ -31,6 +31,19 @@ struct AddBottleView: View {
 
     private var wineIsValid: Bool { existingWine != nil || draft.isValid }
 
+    /// Near the top, right after the label or the wine: the first thing to set after scanning.
+    private var quantitySection: some View {
+        Section {
+            Stepper(value: $quantity, in: 1...48) {
+                LabeledContent("Quantity") {
+                    Text(verbatim: "\(quantity)").monospacedDigit().font(.headline)
+                }
+            }
+            .fieldHelp("How many identical bottles you add.")
+            .accessibilityIdentifier("add.quantity")
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -53,11 +66,14 @@ struct AddBottleView: View {
                     } header: {
                         Text("Wine")
                     }
+                    quantitySection
                 } else {
                     LabelScanSection(scan: scan, draft: $draft)
                     if scan.showsSummary {
                         WineSummarySections(draft: $draft, scan: scan)
+                        quantitySection
                     } else {
+                    quantitySection
                     if !model.cellar.wines.isEmpty {
                         Section {
                             TextField("Search your wines", text: $search)
@@ -88,12 +104,6 @@ struct AddBottleView: View {
                 }
 
                 Section {
-                    Stepper(value: $quantity, in: 1...48) {
-                        LabeledContent("Quantity") {
-                            Text(verbatim: "\(quantity)").monospacedDigit().font(.headline)
-                        }
-                    }
-                    .fieldHelp("How many identical bottles you add.")
                     Picker("Size", selection: $sizeML) {
                         ForEach(BottleSize.all, id: \.self) { size in
                             Text(BottleSize.label(for: size)).tag(size)

@@ -250,6 +250,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             // Wine: existing one, or search + new wine form.
             if (existing != null) {
                 ExistingWineCard(existing, onChange = if (routeWine == null) ({ existingId = null }) else null)
+                QuantityRow(quantity) { quantity = it }
             } else {
                 if (cellar.wines.isNotEmpty()) {
                     OutlinedTextField(
@@ -280,21 +281,12 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 }
                 Header(R.string.photo_section)
                 PhotoSection(viewModel, form)
+                QuantityRow(quantity) { quantity = it }
                 Header(R.string.add_section_wine)
                 WineEssentials(form, known)
             }
 
             Header(R.string.add_section_bottles)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.field_quantity), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                Stepper(
-                    value = quantity, onChange = { quantity = it }, range = 1..48,
-                    decreaseLabel = stringResource(R.string.quantity_decrease),
-                    increaseLabel = stringResource(R.string.quantity_increase),
-                    valueText = quantity.toString(),
-                )
-            }
-            Hint("${pluralStringResource(R.plurals.bottle_count, quantity, quantity)} · ${stringResource(R.string.help_field_quantity)}")
             Hint(stringResource(R.string.help_bottles_footer))
 
             OrderSection(
@@ -652,5 +644,22 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
             Header(R.string.add_more_details)
             WineMoreDetails(form, known)
         }
+    }
+}
+
+/** How many bottles: near the top of the form, right after the label photo or the chosen wine. */
+@Composable
+private fun QuantityRow(quantity: Int, onChange: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.field_quantity), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            Stepper(
+                value = quantity, onChange = onChange, range = 1..48,
+                decreaseLabel = stringResource(R.string.quantity_decrease),
+                increaseLabel = stringResource(R.string.quantity_increase),
+                valueText = quantity.toString(),
+            )
+        }
+        Hint("${pluralStringResource(R.plurals.bottle_count, quantity, quantity)} · ${stringResource(R.string.help_field_quantity)}")
     }
 }
