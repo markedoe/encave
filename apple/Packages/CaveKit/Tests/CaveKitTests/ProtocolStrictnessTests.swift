@@ -23,10 +23,10 @@ final class CountingPhotos: @unchecked Sendable {
     private var reads = 0
     init(_ photos: [String: Data]) { self.photos = photos }
     var readCount: Int { lock.withLock { reads } }
-    var access: PhotoAccess {
-        PhotoAccess(data: { id in self.lock.withLock { self.reads += 1; return self.photos[id] } },
-                    save: { id, data in self.lock.withLock { self.photos[id] = data } },
-                    exists: { id in self.lock.withLock { self.photos[id] != nil } })
+    var access: FileAccess {
+        FileAccess(data: { id, _ in self.lock.withLock { self.reads += 1; return self.photos[id] } },
+                   save: { id, _, data in self.lock.withLock { self.photos[id] = data } },
+                   exists: { id, _ in self.lock.withLock { self.photos[id] != nil } })
     }
 }
 
@@ -128,7 +128,7 @@ final class CountingPhotos: @unchecked Sendable {
                                                            key: key.dataKey))
         let result = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
                                               local: devices[0].snapshot, progress: devices[0].progress,
-                                              photos: devices[0].photos.access)
+                                              files: devices[0].photos.access)
         #expect(result.unreadable == [devices[1].identity.id])
     }
 
@@ -137,10 +137,10 @@ final class CountingPhotos: @unchecked Sendable {
         let devices = household(2)
         let key = try #require(devices[0].key)
         let first = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
-                                             local: devices[0].snapshot, progress: RemoteProgress(), photos: .none)
+                                             local: devices[0].snapshot, progress: RemoteProgress(), files: .none)
         // The progress of that round was lost (the app stopped before saving it).
         let second = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
-                                              local: devices[0].snapshot, progress: RemoteProgress(), photos: .none)
+                                              local: devices[0].snapshot, progress: RemoteProgress(), files: .none)
         #expect(second.clock == first.clock + 1)
         let mine = try await store.mailbox(id: key.mailboxID, token: key.token)
             .list(prefix: "snap/\(devices[0].identity.id.uuidString.lowercased())/").compactMap(SnapshotPath.init)
@@ -156,14 +156,14 @@ final class CountingPhotos: @unchecked Sendable {
         try await RemoteSync.grant(new, to: devices[0].snapshot.membership.active, store: store,
                                    identity: devices[0].identity, storage: "https://new.example/")
         let result = try await RemoteSync.run(store: store, identity: devices[1].identity, key: old,
-                                              local: devices[1].snapshot, progress: RemoteProgress(), photos: .none,
+                                              local: devices[1].snapshot, progress: RemoteProgress(), files: .none,
                                               storage: "https://old.example/")
         #expect(result.newKey == new && result.storage == "https://new.example/")
         #expect(result.progress.uploadedClock == nil && result.progress.epoch == 2)
         #expect(store.allFiles[new.mailboxID] == nil, "nothing written under the new key on the old storage")
         // On the same storage, the round goes on with the new key.
         let same = try await RemoteSync.run(store: store, identity: devices[1].identity, key: old,
-                                            local: devices[1].snapshot, progress: RemoteProgress(), photos: .none,
+                                            local: devices[1].snapshot, progress: RemoteProgress(), files: .none,
                                             storage: "https://new.example/")
         #expect(same.newKey == new && same.progress.uploadedClock != nil)
     }
@@ -201,10 +201,10 @@ final class CountingPhotos: @unchecked Sendable {
         try devices[0].edit { try $0.addBottles(of: Wine(name: "Pictured", photoID: id), quantity: 1) }
         let key = try #require(devices[0].key)
         let first = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
-                                             local: devices[0].snapshot, progress: RemoteProgress(), photos: photos.access)
+                                             local: devices[0].snapshot, progress: RemoteProgress(), files: photos.access)
         #expect(photos.readCount == 1, "read once, to upload it")
         _ = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
-                                     local: devices[0].snapshot, progress: first.progress, photos: photos.access)
+                                     local: devices[0].snapshot, progress: first.progress, files: photos.access)
         #expect(photos.readCount == 1, "a round with nothing new reads no photo")
     }
 }

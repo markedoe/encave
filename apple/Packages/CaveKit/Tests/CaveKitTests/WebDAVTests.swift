@@ -317,7 +317,7 @@ final class FakeWebDAVProtocol: URLProtocol {
                                    identity: devices[0].identity, storage: "webdav:" + store.baseURL.absoluteString)
         let label = Data("label".utf8)
         let photo = PhotoID.make(for: label)
-        devices[0].photos.access.save(photo, label)
+        devices[0].photos.access.save(photo, .photo, label)
         try devices[0].edit { try $0.addBottles(of: Wine(name: "Château WebDAV", photoID: photo), quantity: 2) }
         try await devices[0].sync(store)
         try await devices[1].sync(store)

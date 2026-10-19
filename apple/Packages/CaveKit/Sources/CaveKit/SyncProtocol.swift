@@ -13,7 +13,7 @@ public enum SyncProtocol {
     public static let version = 1
     /// Bonjour service type.
     public static let serviceType = "_encave._tcp"
-    /// Largest frame accepted (a label photo is well under this).
+    /// Largest frame accepted: a document of `Attachment.maxByteCount`, in Base64, fits.
     public static let maxFrameSize = 16 * 1024 * 1024
 }
 
@@ -622,7 +622,7 @@ public enum SyncHandshake {
 
 // MARK: - Exchange
 
-/// What a device brings to a sync: its copy of the cellar, and its photos.
+/// What a device brings to a sync: its copy of the cellar, and its files.
 public struct SyncSnapshot: Sendable {
     public var cellar: Cellar
     public var state: SyncState
@@ -633,21 +633,42 @@ public struct SyncSnapshot: Sendable {
     }
 }
 
-/// Access to label photos for a sync (content-addressed by their ID).
-public struct PhotoAccess: Sendable {
-    public var data: @Sendable (String) -> Data?
-    public var save: @Sendable (String, Data) -> Void
-    /// Whether the device has the photo, without reading it: each round checks every
-    /// photo of the cellar. Defaults to reading it.
-    public var exists: @Sendable (String) -> Bool
+/// Access to the files of a sync, photos and documents, content-addressed by their ID.
+/// The kind says where the app keeps the file.
+public struct FileAccess: Sendable {
+    public var data: @Sendable (String, FileKind) -> Data?
+    public var save: @Sendable (String, FileKind, Data) -> Void
+    /// Whether the device has the file, without reading it: each round checks every
+    /// file of the cellar. Defaults to reading it.
+    public var exists: @Sendable (String, FileKind) -> Bool
 
-    public init(data: @escaping @Sendable (String) -> Data?, save: @escaping @Sendable (String, Data) -> Void,
-                exists: (@Sendable (String) -> Bool)? = nil) {
+    public init(data: @escaping @Sendable (String, FileKind) -> Data?, save: @escaping @Sendable (String, FileKind, Data) -> Void,
+                exists: (@Sendable (String, FileKind) -> Bool)? = nil) {
         self.data = data; self.save = save
-        self.exists = exists ?? { data($0) != nil }
+        self.exists = exists ?? { data($0, $1) != nil }
     }
 
-    public static let none = PhotoAccess(data: { _ in nil }, save: { _, _ in })
+    public static let none = FileAccess(data: { _, _ in nil }, save: { _, _, _ in })
+
+    /// The IDs of the files this device lacks, valid IDs only, sorted.
+    func missing(_ refs: Set<FileRef>) -> [String] {
+        Set(refs.filter { PhotoID.isValid($0.id) && !exists($0.id, $0.kind) }.map(\.id)).sorted()
+    }
+
+    /// The file's content, from whichever place has it.
+    func data(_ id: String, in refs: Set<FileRef>) -> Data? {
+        for kind in FileKind.allCases where refs.contains(FileRef(id: id, kind: kind)) {
+            if let data = data(id, kind) { return data }
+        }
+        return nil
+    }
+
+    /// Saves a received file in every place the cellar refers to it from and lacks it.
+    func save(_ id: String, _ data: Data, in refs: Set<FileRef>) {
+        for kind in FileKind.allCases where refs.contains(FileRef(id: id, kind: kind)) && !exists(id, kind) {
+            save(id, kind, data)
+        }
+    }
 }
 
 /// Remote sync settings shared between devices that meet on the network: the
@@ -663,19 +684,19 @@ public struct RemoteInfo: Codable, Equatable, Sendable {
 
 public enum SyncExchange {
     /// Sends this device's copy, receives the other's, and returns the merge (the
-    /// same on both sides), then swaps the photos each side is missing. The
+    /// same on both sides), then swaps the files (photos and documents) each side is missing. The
     /// initiator sends first at every step, so neither side waits on a full buffer.
     public static func run(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
-                           photos: PhotoAccess) async throws -> SyncSnapshot {
-        try await exchange(over: channel, isInitiator: isInitiator, local: local, photos: photos, remote: nil).snapshot
+                           files: FileAccess) async throws -> SyncSnapshot {
+        try await exchange(over: channel, isInitiator: isInitiator, local: local, files: files, remote: nil).snapshot
     }
 
     /// `run`, then a last step where each side sends its remote sync key and storage
     /// (or nothing), so a device that turned remote sync on passes it to the others.
     public static func exchange(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
-                                photos: PhotoAccess,
+                                files: FileAccess,
                                 remote: RemoteInfo?) async throws -> (snapshot: SyncSnapshot, remote: RemoteInfo?) {
-        let snapshot = try await mergeAndSwapPhotos(over: channel, isInitiator: isInitiator, local: local, photos: photos)
+        let snapshot = try await mergeAndSwapFiles(over: channel, isInitiator: isInitiator, local: local, files: files)
         let mine = WireMessage.make("sync-keys") { $0.syncData = remote.flatMap { try? JSONEncoder.sync.encode($0) } }
         let theirs: WireMessage
         if isInitiator {
@@ -690,8 +711,8 @@ public enum SyncExchange {
         return (snapshot, received?.key.cellarID == snapshot.membership.cellarID ? received : nil)
     }
 
-    static func mergeAndSwapPhotos(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
-                                   photos: PhotoAccess) async throws -> SyncSnapshot {
+    static func mergeAndSwapFiles(over channel: SecureChannel, isInitiator: Bool, local: SyncSnapshot,
+                                  files: FileAccess) async throws -> SyncSnapshot {
         let mine = WireMessage.make("sync-state") {
             $0.cellarData = try? JSONFileCellarStore.makeEncoder().encode(local.cellar)
             $0.syncData = try? JSONEncoder.sync.encode(local.state)
@@ -721,9 +742,10 @@ public enum SyncExchange {
         state.clock = max(state.clock, membership.stamps.values.map(\.counter).max() ?? 0)
         let result = SyncSnapshot(cellar: merge.cellar, state: state, membership: membership)
 
-        // Photos: each side asks for the ones it is missing.
-        let wanted = merge.cellar.photoIDs
-            .filter { PhotoID.isValid($0) && !photos.exists($0) }.sorted()
+        // Files (photos and documents, in the "photo" messages): each side asks for the
+        // ones it is missing.
+        let refs = merge.cellar.fileRefs
+        let wanted = files.missing(refs)
         let ask = WireMessage.make("photos-want") { $0.photos = wanted }
         let request: WireMessage
         if isInitiator {
@@ -733,13 +755,13 @@ public enum SyncExchange {
             request = try await channel.receive().require("photos-want")
             try await channel.send(ask)
         }
-        // Only photos of the merged cellar are sent, whatever is asked.
-        let known = merge.cellar.photoIDs
+        // Only files of the merged cellar are sent, whatever is asked.
+        let known = Set(refs.map(\.id))
         let toSend = (request.photos ?? []).filter { known.contains($0) && PhotoID.isValid($0) }
 
         func sendPhotos() async throws {
             for id in toSend {
-                guard let data = photos.data(id) else { continue }
+                guard let data = files.data(id, in: refs) else { continue }
                 try await channel.send(WireMessage.make("photo") { $0.photoID = id; $0.photoData = data })
             }
             try await channel.send(WireMessage(type: "photos-end"))
@@ -752,7 +774,7 @@ public enum SyncExchange {
                 let photo = try message.require("photo")
                 guard let id = photo.photoID, expected.contains(id), let data = photo.photoData,
                       PhotoID.matches(id, data) else { continue }
-                photos.save(id, data)
+                files.save(id, data, in: refs)
             }
         }
         if isInitiator {
@@ -766,8 +788,8 @@ public enum SyncExchange {
     }
 }
 
-/// Label photos are named after their content when synced, so a device can check
-/// that a photo it receives is the one it asked for.
+/// Photos and documents are named after their content, so a device can check that a
+/// file it receives is the one it asked for.
 public enum PhotoID {
     /// Letters, digits and dashes, at most 80 characters: anything else is never
     /// fetched or sent, so it cannot reach a file path or a URL.

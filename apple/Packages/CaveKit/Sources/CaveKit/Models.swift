@@ -42,6 +42,11 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     /// The picture shown for the wine instead of the label photo: one found on the
     /// internet or an illustration made on the device. Nil shows the label photo.
     public var coverPhotoID: String?
+    /// Documents kept with the wine, so with all its bottles (an invoice, a technical sheet).
+    /// Nil rather than empty, and each once by ID.
+    public var attachments: [Attachment]? {
+        didSet { attachments = Attachment.unique(attachments) }
+    }
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -82,6 +87,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         currentPriceCurrency = try c.decodeIfPresent(String.self, forKey: .currentPriceCurrency)
         currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
         coverPhotoID = try c.decodeIfPresent(String.self, forKey: .coverPhotoID)
+        attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
     }
 
     /// The label photo first, then the others, then the cover.
@@ -386,6 +392,11 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
     public var expectedAt: Date?
     /// Kept for an occasion ("Paul's 40th"): not suggested for tonight.
     public var reservedFor: String?
+    /// Documents of this bottle only (its certificate, its receipt). Nil rather than empty,
+    /// and each once by ID.
+    public var attachments: [Attachment]? {
+        didSet { attachments = Attachment.unique(attachments) }
+    }
 
     public init(
         id: UUID = UUID(), wineID: UUID, status: Status = .inCellar, slot: Slot? = nil,
@@ -418,6 +429,7 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
         tasting = try c.decodeIfPresent(Tasting.self, forKey: .tasting)
         expectedAt = try c.decodeIfPresent(Date.self, forKey: .expectedAt)
         reservedFor = try c.decodeIfPresent(String.self, forKey: .reservedFor)
+        attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
     }
 }
 

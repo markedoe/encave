@@ -8,7 +8,7 @@ import Testing
 /// `kotlin-*.json`; `InteropFixtureTest.kt` checks the reverse. Run with
 /// `ENCAVE_WRITE_FIXTURES=1` to write the files again after a format change.
 ///
-/// The cellar has every optional field, deleted objects, saved searches, a removed
+/// The cellar has every optional field (documents of a wine and of a bottle among them), deleted objects, saved searches, a removed
 /// device, prices such as 12.30 and dates with fractions of a second and before 2001.
 enum InteropFixture {
     static func id(_ suffix: String) -> UUID { UUID(uuidString: "00000000-0000-4000-8000-" + suffix)! }
@@ -21,6 +21,7 @@ enum InteropFixture {
     static let grid = id("000000000031"), bins = id("000000000032")
     static let label = PhotoID.make(for: Data("label".utf8)), back = PhotoID.make(for: Data("back".utf8))
     static let cover = PhotoID.make(for: Data("cover".utf8))
+    static let invoice = PhotoID.make(for: Data("invoice".utf8)), certificate = PhotoID.make(for: Data("certificate".utf8))
 
     static var cellar: Cellar {
         var wine = Wine(id: fullWine, name: "Château Test", producer: "Domaine d'Exemple", vintage: 2015, color: .red,
@@ -33,12 +34,19 @@ enum InteropFixture {
         wine.currentPriceCurrency = "EUR"
         wine.currentPriceDate = date(790_000_000.5)
         wine.coverPhotoID = cover
+        wine.attachments = [
+            Attachment(id: invoice, name: "Facture n°12 – Cave du coin.pdf", contentType: "application/pdf",
+                       byteCount: 245_760, addedAt: date(782_000_000.75)),
+            Attachment(id: back, name: "Back label.jpg", contentType: "image/jpeg", byteCount: 4, addedAt: date(-12.5)),
+        ]
         let plain = Wine(id: plainWine, name: "Vin de table")
 
         var placed = Bottle(id: id("000000000021"), wineID: fullWine, slot: Slot(rackID: grid, row: 1, column: 2, depth: 1),
                             addedAt: date(782_000_000.25), purchaseDate: date(-1000.75), purchasePrice: price("12.30"),
                             currency: "EUR", purchasePlace: "Cave du coin", receivedFrom: "Paul", sizeML: 1500)
         placed.reservedFor = "Paul's 40th"
+        placed.attachments = [Attachment(id: certificate, name: "Certificate", contentType: "application/octet-stream",
+                                         byteCount: 11, addedAt: date(782_000_001))]
         let drunk = Bottle(id: id("000000000022"), wineID: fullWine, status: .consumed, storageNote: "Kitchen",
                            addedAt: date(782_000_100), purchasePrice: price("1234.5"), currency: "CHF",
                            tasting: Tasting(date: date(785_000_000.125), rating: 4, note: "Lovely", occasion: "Dinner",

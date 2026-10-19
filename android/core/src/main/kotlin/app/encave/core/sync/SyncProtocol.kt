@@ -1,6 +1,8 @@
 package app.encave.core.sync
 
 import app.encave.core.Cellar
+import app.encave.core.FileKind
+import app.encave.core.FileRef
 import app.encave.core.UuidSerializer
 import java.net.URI
 import java.net.URLDecoder
@@ -512,20 +514,36 @@ object SyncHandshake {
 /** What a device brings to a sync: its copy of the cellar, its sync state and the devices. */
 data class SyncSnapshot(val cellar: Cellar, val state: SyncState, val membership: Membership)
 
-/** Access to label photos for a sync (content-addressed by their ID). */
-interface PhotoAccess {
-    fun data(id: String): ByteArray?
-    fun save(id: String, data: ByteArray)
+/**
+ * Access to the files of a sync, photos and documents, content-addressed by their ID.
+ * The kind says where the app keeps the file.
+ */
+interface FileAccess {
+    fun data(id: String, kind: FileKind): ByteArray?
+    fun save(id: String, kind: FileKind, data: ByteArray)
 
-    /** Whether the device has the photo, without reading it: each round checks every photo of the cellar. */
-    fun exists(id: String): Boolean = data(id) != null
+    /** Whether the device has the file, without reading it: each round checks every file of the cellar. */
+    fun exists(id: String, kind: FileKind): Boolean = data(id, kind) != null
 
     companion object {
-        val NONE = object : PhotoAccess {
-            override fun data(id: String): ByteArray? = null
-            override fun save(id: String, data: ByteArray) = Unit
+        val NONE = object : FileAccess {
+            override fun data(id: String, kind: FileKind): ByteArray? = null
+            override fun save(id: String, kind: FileKind, data: ByteArray) = Unit
         }
     }
+}
+
+/** The IDs of the files this device lacks, valid IDs only, sorted. */
+internal fun FileAccess.missing(refs: Set<FileRef>): List<String> =
+    refs.filter { PhotoId.isValid(it.id) && !exists(it.id, it.kind) }.map { it.id }.toSortedSet().toList()
+
+/** The file's content, from whichever place has it. */
+internal fun FileAccess.data(id: String, refs: Set<FileRef>): ByteArray? =
+    FileKind.entries.filter { FileRef(id, it) in refs }.firstNotNullOfOrNull { data(id, it) }
+
+/** Saves a received file in every place the cellar refers to it from and lacks it. */
+internal fun FileAccess.save(id: String, data: ByteArray, refs: Set<FileRef>) {
+    for (kind in FileKind.entries) if (FileRef(id, kind) in refs && !exists(id, kind)) save(id, kind, data)
 }
 
 /**
@@ -539,20 +557,20 @@ data class RemoteInfo(val key: CellarKey, val storage: String? = null)
 object SyncExchange {
     /**
      * Sends this device's copy, receives the other's, returns the merge (the same on
-     * both sides) and swaps the photos each side is missing. The initiator sends first
+     * both sides) and swaps the files (photos and documents) each side is missing. The initiator sends first
      * at every step, so neither side waits on a full buffer.
      */
-    suspend fun run(channel: SecureChannel, isInitiator: Boolean, local: SyncSnapshot, photos: PhotoAccess): SyncSnapshot =
-        exchange(channel, isInitiator, local, photos, remote = null).first
+    suspend fun run(channel: SecureChannel, isInitiator: Boolean, local: SyncSnapshot, files: FileAccess): SyncSnapshot =
+        exchange(channel, isInitiator, local, files, remote = null).first
 
     /**
      * [run], then a last step where each side sends its remote sync key and storage
      * (or nothing), so a device that turned remote sync on passes it to the others.
      */
     suspend fun exchange(
-        channel: SecureChannel, isInitiator: Boolean, local: SyncSnapshot, photos: PhotoAccess, remote: RemoteInfo?,
+        channel: SecureChannel, isInitiator: Boolean, local: SyncSnapshot, files: FileAccess, remote: RemoteInfo?,
     ): Pair<SyncSnapshot, RemoteInfo?> {
-        val snapshot = mergeAndSwapPhotos(channel, isInitiator, local, photos)
+        val snapshot = mergeAndSwapFiles(channel, isInitiator, local, files)
         val mine = WireMessage("sync-keys", syncData = remote?.let { SyncJson.encode(RemoteInfo.serializer(), it) })
         val theirs = swap(channel, isInitiator, mine, "sync-keys")
         val received = theirs.syncData?.let { runCatching { SyncJson.decode(RemoteInfo.serializer(), it) }.getOrNull() }
@@ -568,7 +586,7 @@ object SyncExchange {
             channel.receive().require(type).also { channel.send(mine) }
         }
 
-    private suspend fun mergeAndSwapPhotos(channel: SecureChannel, isInitiator: Boolean, local: SyncSnapshot, photos: PhotoAccess): SyncSnapshot {
+    private suspend fun mergeAndSwapFiles(channel: SecureChannel, isInitiator: Boolean, local: SyncSnapshot, files: FileAccess): SyncSnapshot {
         val mine = WireMessage(
             "sync-state",
             cellarData = SyncJson.encodeCellar(local.cellar),
@@ -591,16 +609,18 @@ object SyncExchange {
         val clock = maxOf(merge.clock, membership.stamps.values.maxOfOrNull { it.counter } ?: 0)
         val result = SyncSnapshot(merge.cellar, local.state.copy(stamps = merge.stamps, clock = clock), membership)
 
-        // Photos: each side asks for the ones it is missing (valid IDs only).
-        val known = merge.cellar.photoIds
-        val wanted = known.filter { PhotoId.isValid(it) && !photos.exists(it) }.sorted()
+        // Files (photos and documents, in the "photo" messages): each side asks for the ones
+        // it is missing (valid IDs only).
+        val refs = merge.cellar.fileRefs
+        val known = refs.map { it.id }.toSet()
+        val wanted = files.missing(refs)
         val request = swap(channel, isInitiator, WireMessage("photos-want", photos = wanted), "photos-want")
-        // Only photos of the merged cellar are sent, whatever is asked.
+        // Only files of the merged cellar are sent, whatever is asked.
         val toSend = request.photos.orEmpty().filter { it in known && PhotoId.isValid(it) }
 
         suspend fun sendPhotos() {
             for (id in toSend) {
-                val data = photos.data(id) ?: continue
+                val data = files.data(id, refs) ?: continue
                 channel.send(WireMessage("photo", photoId = id, photoData = data))
             }
             channel.send(WireMessage("photos-end"))
@@ -613,7 +633,7 @@ object SyncExchange {
                 val photo = message.require("photo")
                 val id = photo.photoId ?: continue
                 val data = photo.photoData ?: continue
-                if (id in expected && PhotoId.matches(id, data)) photos.save(id, data)
+                if (id in expected && PhotoId.matches(id, data)) files.save(id, data, refs)
             }
         }
         if (isInitiator) {
@@ -628,8 +648,8 @@ object SyncExchange {
 }
 
 /**
- * Label photos are named after their content when synced, so a device can check
- * that a photo it receives is the one it asked for.
+ * Photos and documents are named after their content, so a device can check that a
+ * file it receives is the one it asked for.
  */
 object PhotoId {
     private val allowed = Regex("^[A-Za-z0-9-]{1,80}$")

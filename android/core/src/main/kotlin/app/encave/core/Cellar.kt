@@ -25,7 +25,7 @@ class Cellar(
     // The first object of each ID, as Swift's initializer keeps: data from another device
     // or a backup must not break the assumptions of the merge and the UI.
     private val wineMap = LinkedHashMap<UUID, Wine>().apply { wines.forEach { putIfAbsent(it.id, it.normalized()) } }
-    private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { putIfAbsent(it.id, it) } }
+    private val bottleMap = LinkedHashMap<UUID, Bottle>().apply { bottles.forEach { putIfAbsent(it.id, it.normalized()) } }
     private val rackList = racks.distinctBy { it.id }.map { it.normalized() }.toMutableList()
     private val discoveryMap = LinkedHashMap<UUID, Discovery>().apply { discoveries.forEach { putIfAbsent(it.id, it.normalized()) } }
 
@@ -59,6 +59,21 @@ class Cellar(
     /** Bottles bought but not delivered yet. */
     /** Every photo the cellar refers to: each wine's label photo and its other photos. */
     val photoIds: Set<String> get() = wineMap.values.flatMap { it.allPhotoIds }.toSet()
+
+    /** Every document of the wines and bottles (to sync, and to keep when cleaning up). */
+    val attachmentIds: Set<String>
+        get() = (wineMap.values.flatMap { it.attachments.orEmpty() } + bottleMap.values.flatMap { it.attachments.orEmpty() })
+            .map { it.id }.toSet()
+
+    /** Every file the cellar refers to, photos and documents: what a sync exchanges. */
+    val fileRefs: Set<FileRef>
+        get() = photoIds.map { FileRef(it, FileKind.Photo) }.toSet() + attachmentIds.map { FileRef(it, FileKind.Document) }
+
+    /** The documents of a wine or a bottle, in the order they were added. */
+    fun attachments(target: AttachmentTarget): List<Attachment> = when (target) {
+        is AttachmentTarget.OfWine -> wineMap[target.id]?.attachments.orEmpty()
+        is AttachmentTarget.OfBottle -> bottleMap[target.id]?.attachments.orEmpty()
+    }
 
     val bottlesOnOrder: List<Bottle> get() = bottleMap.values.filter { it.status == Bottle.Status.Ordered }
 
@@ -368,7 +383,7 @@ class Cellar(
             val occupant = bottleAt(slot)
             if (occupant != null && occupant.id != bottle.id) throw CellarException(CellarError.SlotTaken)
         }
-        bottleMap[bottle.id] = bottle.copy(tasting = bottle.tasting?.normalized())
+        bottleMap[bottle.id] = bottle.normalized().copy(tasting = bottle.tasting?.normalized())
     }
 
     fun move(bottleId: UUID, slot: Slot?) {
@@ -439,6 +454,48 @@ class Cellar(
         }
     }
 
+    /** Adds documents at the end, or at [index] (one already there, by ID, is kept as it is). */
+    fun attach(attachments: List<Attachment>, target: AttachmentTarget, index: Int? = null) = changeAttachments(target) { list ->
+        val new = attachments.filter { item -> list.none { it.id == item.id } }
+        list.addAll(minOf(index ?: list.size, list.size), new)
+    }
+
+    /** Renames a document. A blank name keeps the old one. */
+    fun renameAttachment(id: String, target: AttachmentTarget, name: String) {
+        if (Attachment.normalizedName(name).isEmpty()) return
+        changeAttachments(target) { list ->
+            val index = list.indexOfFirst { it.id == id }
+            if (index >= 0) list[index] = list[index].copy(name = name).normalized()
+        }
+    }
+
+    /** Removes a document; returns it and where it was, for Undo (the file stays for a while). */
+    fun removeAttachment(id: String, target: AttachmentTarget): Pair<Attachment, Int>? {
+        var removed: Pair<Attachment, Int>? = null
+        changeAttachments(target) { list ->
+            val index = list.indexOfFirst { it.id == id }
+            if (index >= 0) removed = list.removeAt(index) to index
+        }
+        return removed
+    }
+
+    private fun changeAttachments(target: AttachmentTarget, change: (MutableList<Attachment>) -> Unit) {
+        when (target) {
+            is AttachmentTarget.OfWine -> {
+                val wine = wineMap[target.id] ?: throw CellarException(CellarError.UnknownWine)
+                val list = wine.attachments.orEmpty().toMutableList()
+                change(list)
+                wineMap[wine.id] = wine.copy(attachments = list).normalized()
+            }
+            is AttachmentTarget.OfBottle -> {
+                val bottle = bottleMap[target.id] ?: throw CellarException(CellarError.UnknownBottle)
+                val list = bottle.attachments.orEmpty().toMutableList()
+                change(list)
+                bottleMap[bottle.id] = bottle.copy(attachments = list).normalized()
+            }
+        }
+    }
+
     internal fun removeOrphanWines() {
         val used = bottleMap.values.map { it.wineId }.toSet() + discoveryMap.values.map { it.wineId }
         wineMap.keys.retainAll(used)
@@ -463,7 +520,7 @@ class Cellar(
     }
 
     internal fun putBottle(bottle: Bottle) {
-        bottleMap[bottle.id] = bottle
+        bottleMap[bottle.id] = bottle.normalized()
     }
 
     internal fun putDiscovery(discovery: Discovery) {

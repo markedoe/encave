@@ -23,7 +23,7 @@ struct RemoteDevice {
         }
         guard let key else { return }
         let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: snapshot,
-                                              progress: progress, photos: photos.access)
+                                              progress: progress, files: photos.access)
         if let merged = result.snapshot {
             snapshot.cellar = merged.cellar
             snapshot.state = merged.state
@@ -65,8 +65,8 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
         let hashed = PhotoID.make(for: label), legacy = UUID().uuidString
         try devices[0].edit { try $0.addBottles(of: Wine(name: "Château Test", photoID: hashed), quantity: 2) }
         try devices[0].edit { try $0.addBottles(of: Wine(name: "Older photo", photoID: legacy), quantity: 1) }
-        devices[0].photos.access.save(hashed, label)
-        devices[0].photos.access.save(legacy, Data("old".utf8))
+        devices[0].photos.access.save(hashed, .photo, label)
+        devices[0].photos.access.save(legacy, .photo, Data("old".utf8))
         try await devices[0].sync(store)
         try await devices[1].sync(store)
         try await devices[2].sync(store)
@@ -211,7 +211,7 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
         try await devices[1].sync(store)
         let result = try await RemoteSync.run(store: store, identity: devices[0].identity, key: key,
                                               local: devices[0].snapshot, progress: devices[0].progress,
-                                              photos: devices[0].photos.access)
+                                              files: devices[0].photos.access)
         #expect(result.unreadable == [devices[2].identity.id])
         #expect(result.snapshot?.cellar.wines.values.contains { $0.name == "From B" } == true)
     }
@@ -244,7 +244,7 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
                                    identity: devices[0].identity, storage: nil)
         let back = Data("back label".utf8)
         let id = PhotoID.make(for: back)
-        devices[0].photos.access.save(id, back)
+        devices[0].photos.access.save(id, .photo, back)
         var wine = Wine(name: "With a back label")
         wine.extraPhotoIDs = [id]
         try devices[0].edit { try $0.addBottles(of: wine, quantity: 1) }
@@ -322,7 +322,7 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
                                    identity: devices[0].identity, storage: url.absoluteString)
         let label = Data("relay label".utf8)
         let photo = PhotoID.make(for: label)
-        devices[0].photos.access.save(photo, label)
+        devices[0].photos.access.save(photo, .photo, label)
         try devices[0].edit { try $0.addBottles(of: Wine(name: "Through the relay", photoID: photo), quantity: 2) }
         try await devices[0].sync(store)
         try await devices[1].sync(store)

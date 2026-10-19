@@ -65,6 +65,8 @@ data class Wine(
      * illustration made on an Apple device); null shows the label photo. Synced.
      */
     @SerialName("coverPhotoID") val coverPhotoId: String? = null,
+    /** Documents kept with the wine, so with all its bottles (an invoice, a technical sheet). Null rather than empty. */
+    val attachments: List<Attachment>? = null,
 ) {
     /** The label photo, then the others, then the cover. */
     val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty() + listOfNotNull(coverPhotoId)
@@ -93,14 +95,16 @@ data class Wine(
 
     /**
      * Tags normalized and empty lists left out, as Swift's initializer keeps them. Extra
-     * photos are named after their content, so the same picture added twice is kept once.
+     * photos and documents are named after their content, so the same file added twice is
+     * kept once.
      */
     fun normalized(): Wine {
         val cleanTags = normalizedTags(tags)
         val cleanBarcodes = barcodes?.ifEmpty { null }
         val cleanExtras = extraPhotoIds?.distinct()?.ifEmpty { null }
-        return if (cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds) this
-        else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras)
+        val cleanAttachments = Attachment.unique(attachments)
+        return if (cleanTags == tags && cleanBarcodes == barcodes && cleanExtras == extraPhotoIds && cleanAttachments == attachments) this
+        else copy(tags = cleanTags, barcodes = cleanBarcodes, extraPhotoIds = cleanExtras, attachments = cleanAttachments)
     }
 
     /** Where the window comes from, to explain it. */
@@ -383,7 +387,15 @@ data class Bottle(
     @Serializable(with = InstantSerializer::class) val expectedAt: Instant? = null,
     /** Kept for an occasion ("Paul's 40th"): not suggested for tonight. */
     val reservedFor: String? = null,
+    /** Documents of this bottle only (its certificate, its receipt). Null rather than empty. */
+    val attachments: List<Attachment>? = null,
 ) {
+    /** Documents once each, names normalized, null rather than empty, as CaveKit reads them. */
+    fun normalized(): Bottle {
+        val cleanAttachments = Attachment.unique(attachments)
+        return if (cleanAttachments == attachments) this else copy(attachments = cleanAttachments)
+    }
+
     @Serializable
     enum class Status(val raw: String) {
         @SerialName("inCellar") InCellar("inCellar"),
