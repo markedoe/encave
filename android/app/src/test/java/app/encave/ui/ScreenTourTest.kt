@@ -517,6 +517,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         scrollTo("settings.devices")
         tap("settings.devices")
         compose.onNodeWithTag("devices.add").assertExists()
+        compose.onNodeWithTag("devices.status_local").assertExists()
+        compose.onNodeWithTag("devices.notify").assertExists()
         capture("22-devices")
         tap("devices.add")
         compose.onNodeWithTag("devices.code").assertExists()

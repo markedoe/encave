@@ -461,7 +461,8 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    upload, it is raised by one first, so readers see a newer snapshot.
 
 Rounds run a few seconds after a change, every minute while the app is open,
-and when it comes back to the foreground.
+and when it comes back to the foreground. Each device can choose a longer
+interval, or to sync only when the user asks (a device-only setting).
 
 ### Removing a device
 
