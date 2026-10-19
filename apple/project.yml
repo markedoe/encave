@@ -59,6 +59,8 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, fr]
+        # Encrypted, with CryptoKit only (the OS's encryption): Apple's value for
+        # that case, no documents to upload. See docs/ENCRYPTION.md.
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Encave uses the camera to read wine labels. Images stay on this device.
         NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
@@ -112,6 +114,8 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, fr]
+        # Encrypted, with CryptoKit only (the OS's encryption): Apple's value for
+        # that case, no documents to upload. See docs/ENCRYPTION.md.
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
