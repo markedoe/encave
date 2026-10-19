@@ -42,6 +42,7 @@ import app.encave.data.ai.AiError
 import app.encave.data.ai.AiPreferences
 import app.encave.data.ai.AiService
 import app.encave.data.ai.LabelAnalysis
+import app.encave.sync.ChangeNotifications
 import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -79,6 +81,8 @@ class AppViewModel(
     val ai: AiPreferences,
     /** True while other devices sync with this one: erasing reaches them, the sample is not offered. */
     sharedWithDevices: Flow<Boolean> = flowOf(false),
+    /** "Updated from Marc's iPhone": changes from other devices taken in while the app is open. */
+    syncUpdates: Flow<UiText> = emptyFlow(),
 ) : ViewModel() {
     val sharedWithDevices: StateFlow<Boolean> = sharedWithDevices.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -107,6 +111,7 @@ class AppViewModel(
                 repository.loadFailed -> messageChannel.trySend(UiMessage(UiText.Res(R.string.msg_load_failed), persistent = true))
             }
         }
+        viewModelScope.launch { syncUpdates.collect { post(it) } }
     }
 
     private fun post(text: UiText, undo: (() -> Unit)? = null) {
@@ -620,7 +625,11 @@ class AppViewModel(
         fun factory(app: EncaveApplication): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val shared = app.sync.state.map { (it.membership?.active?.size ?: 0) > 1 }
-                AppViewModel(app.repository, app.preferences, app.photos, app.ai, shared)
+                val updates = app.sync.changesFromOthers.map { summary ->
+                    val name = ChangeNotifications.deviceName(summary, app.sync.state.value.membership)
+                    if (name != null) UiText.Res(R.string.sync_updated_from, listOf(name)) else UiText.Res(R.string.sync_updated_from_others)
+                }
+                AppViewModel(app.repository, app.preferences, app.photos, app.ai, shared, updates)
             }
         }
     }

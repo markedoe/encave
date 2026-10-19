@@ -460,11 +460,13 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    then delete its older snapshots. If the clock did not move since the last
    upload, it is raised by one first, so readers see a newer snapshot.
 
-Rounds run at the frequency chosen on each device (every minute by default,
-every 5 or 15 minutes, or only when the user asks): while the app is open, a
-few seconds after a change and when it comes back to the foreground; and in
-the background where the system allows it (iPhone and iPad: an app refresh
-task, at most every 15 minutes, when iOS decides; Android: a periodic worker).
+Rounds run a few seconds after a change, every minute while the app is open,
+and when it comes back to the foreground. Each device can choose a longer
+interval, or to sync only when the user asks (a device-only setting, which
+also stops the rounds after a change and on returning to the foreground). In
+the background, where the system allows it: on Android a periodic worker at
+the chosen interval, at least 15 minutes apart; on iPhone and iPad an app
+refresh task, no sooner than 15 minutes, when iOS decides.
 
 ### Removing a device
 

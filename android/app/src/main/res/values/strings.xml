@@ -623,6 +623,26 @@
     <string name="devices_status_synced">Synced %1$s</string>
     <string name="devices_status_nearby">On this network</string>
     <string name="devices_status_never">Not synced yet</string>
+    <string name="sync_status_local">On the same Wi-Fi</string>
+    <string name="sync_status_away">Away from home</string>
+    <string name="sync_no_device_nearby">No device found on this Wi-Fi</string>
+    <string name="sync_unsent">Changes on this device not sent yet</string>
+    <string name="sync_last_failed">Last attempt failed: %1$s</string>
+    <string name="sync_next_manual">Only when you tap Sync now</string>
+    <string name="sync_background">In the background, every 15 minutes or so</string>
+    <string name="sync_frequency_title">How often</string>
+    <string name="sync_frequency_1">Every minute</string>
+    <string name="sync_frequency_5">Every 5 minutes</string>
+    <string name="sync_frequency_15">Every 15 minutes</string>
+    <string name="sync_frequency_manual">Only when I tap Sync now</string>
+    <string name="sync_frequency_footer">On the same Wi-Fi, changes are sent a few seconds after you make them. This setting is for this device only.</string>
+    <string name="sync_notify">Tell me about changes from other devices</string>
+    <string name="sync_notify_footer">A notification on this device when bottles are opened, added or removed on another device. Nothing is sent anywhere.</string>
+    <string name="sync_changes_channel">Changes from other devices</string>
+    <string name="sync_changes_from">From %1$s</string>
+    <string name="sync_changes_from_others">From your other devices</string>
+    <string name="sync_updated_from">Updated from %1$s</string>
+    <string name="sync_updated_from_others">Updated from your other devices</string>
     <string name="sync_problem_removed">This device was removed from the cellar on another device.</string>
     <string name="sync_problem_says_removed">Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.</string>
     <string name="sync_problem_not_verified">A device could not prove it belongs to this cellar. Nothing was exchanged.</string>
@@ -632,7 +652,7 @@
     <string name="remote_title">Away from home</string>
     <string name="remote_status">Status</string>
     <string name="remote_turn_off">Turn off</string>
-    <string name="remote_on_footer">Your other devices receive this setting and the key the next time they sync on the same Wi-Fi. While it is on, this device also syncs every 15 minutes in the background.</string>
+    <string name="remote_on_footer">Your other devices receive this setting and the key the next time they sync on the same Wi-Fi. While it is on, this device also syncs in the background about every 15 minutes, unless it syncs only when you tap Sync now.</string>
     <string name="remote_address">Relay address</string>
     <string name="remote_check">Check and turn on</string>
     <string name="remote_relay_footer">For any devices, iPhone and Mac included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.</string>
@@ -710,13 +730,21 @@
     <string name="help_sync_home_title">At home, on the same Wi-Fi</string>
     <string name="help_sync_home">Paired devices find each other on the local network and connect directly, without going through the internet. A moment after each change (a bottle opened, added or moved), they send it to each other, photos included, over an encrypted connection. Encave must be open on both.</string>
     <string name="help_sync_away_title">Away from home</string>
-    <string name="help_sync_away">Optional, in **Devices › Sync away from home**: a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust (iCloud is for Apple devices only). Each device leaves an encrypted copy of the cellar there and reads the others’ about once a minute while Encave is open. The storage only ever sees encrypted files.</string>
+    <string name="help_sync_away">Optional, in **Devices › Sync away from home**: a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust (iCloud is for Apple devices only). Each device leaves an encrypted copy of the cellar there a few seconds after a change, and reads the others’ while Encave is open, every minute unless you choose otherwise (see below). The storage only ever sees encrypted files.</string>
+    <string name="help_sync_now_title">Sync now and the status</string>
+    <string name="help_sync_now">**Sync now** in **Devices** syncs at once with the devices on the same Wi-Fi and with the storage away from home. **Status** shows, for each, whether a sync is running, when the last one went through, what went wrong if the last attempt failed, whether changes made on this device are not sent yet, and when the next sync away from home comes.</string>
+    <string name="help_sync_frequency_title">How often</string>
+    <string name="help_sync_frequency">In **Devices**, **How often** sets how often this device syncs away from home while Encave is open: every minute (the default), every 5 or 15 minutes, or only when you tap **Sync now**. On the same Wi-Fi, changes are still sent a few seconds after you make them. This setting is for this device only.</string>
+    <string name="help_sync_background_title">In the background</string>
+    <string name="help_sync_background">When Encave is closed, an Android device syncs away from home about every 15 minutes while it is online, unless it syncs only when you tap **Sync now**. An iPhone or iPad does so when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while the app is open. On the same Wi-Fi, devices sync while Encave is open on both.</string>
+    <string name="help_sync_notify_title">Changes from other devices</string>
+    <string name="help_sync_notify">Turn on **Tell me about changes from other devices** in **Devices** for a notification on this device when a sync brings bottles opened, added or removed on another device, for example “From Marc’s iPhone: 2 bottles opened.” A single notification sums up the changes until you see it; tapping it opens the Cellar, or the Journal if bottles were only opened. While Encave is open, a short message says where the update came from instead. It is off by default, and nothing is sent anywhere.</string>
     <string name="help_sync_merge_title">How changes come together</string>
     <string name="help_sync_merge">Every bottle, wine, rack, tasting, discovery and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.</string>
     <string name="help_sync_remove_title">Removing a device</string>
     <string name="help_sync_remove">When you remove a device (lost or sold), the cellar’s key changes by itself and the remaining devices receive the new one in an encrypted message. The removed device keeps what it already had but cannot read anything new.</string>
     <string name="help_sync_local_title">What stays on each device</string>
-    <string name="help_sync_local">Your AI and web search keys, your WebDAV login, the studio look and other display settings, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.</string>
+    <string name="help_sync_local">Your AI and web search keys, your WebDAV login, the studio look and other display settings, how often it syncs away from home and the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.</string>
     <string name="help_devices_title">Your devices</string>
     <string name="help_devices_summary">The same cellar on your phone, tablet, iPhone and Mac.</string>
     <string name="help_devices_add_title">Add a device</string>
@@ -1028,5 +1056,25 @@
     <plurals name="pdf_subtitle">
         <item quantity="one">%1$s · %2$d bottle</item>
         <item quantity="other">%1$s · %2$d bottles</item>
+    </plurals>
+    <plurals name="sync_changes_opened">
+        <item quantity="one">%d bottle opened</item>
+        <item quantity="other">%d bottles opened</item>
+    </plurals>
+    <plurals name="sync_changes_removed">
+        <item quantity="one">%d bottle removed</item>
+        <item quantity="other">%d bottles removed</item>
+    </plurals>
+    <plurals name="sync_changes_wines">
+        <item quantity="one">%d wine added</item>
+        <item quantity="other">%d wines added</item>
+    </plurals>
+    <plurals name="sync_changes_other">
+        <item quantity="one">%d other change</item>
+        <item quantity="other">%d other changes</item>
+    </plurals>
+    <plurals name="sync_next_in">
+        <item quantity="one">Next sync in about %d minute</item>
+        <item quantity="other">Next sync in about %d minutes</item>
     </plurals>
 </resources>
