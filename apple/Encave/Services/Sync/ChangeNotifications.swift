@@ -79,8 +79,7 @@ enum ChangeNotifications {
         let center = UNUserNotificationCenter.current()
         // Added to what the notification still shown says; a fresh count once it was
         // opened or dismissed.
-        let shown = await center.deliveredNotifications().contains { $0.request.identifier == identifier }
-        var total = shown ? stored : CellarChangeSummary()
+        var total = await isShown() ? stored : CellarChangeSummary()
         total.add(summary)
         if let data = try? JSONEncoder().encode(total) { UserDefaults.standard.set(data, forKey: shownKey) }
 
@@ -90,6 +89,11 @@ enum ChangeNotifications {
         // Tapping it opens the Journal when bottles were only opened, else the Cellar.
         content.userInfo = [Reminders.tabKey: (total.isOnlyOpened ? AppTab.journal : AppTab.cellar).rawValue]
         try? await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: nil))
+    }
+
+    /// The notification is still in Notification Center.
+    private nonisolated static func isShown() async -> Bool {
+        await UNUserNotificationCenter.current().deliveredNotifications().contains { $0.request.identifier == identifier }
     }
 
     private static var stored: CellarChangeSummary {
