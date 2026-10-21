@@ -115,7 +115,12 @@ struct AddTastingMenu<MenuLabel: View>: View {
                 model.sheet = .drink(bottleID: nil)
             } label: {
                 Label("A Bottle from My Cellar", systemImage: "house")
-                Text("It leaves your cellar.")
+                // Says why it is off, rather than only dimming it.
+                if model.cellar.bottlesInCellar.isEmpty {
+                    Text("Your cellar has no bottle to open.")
+                } else {
+                    Text("It leaves your cellar.")
+                }
             }
             .disabled(model.cellar.bottlesInCellar.isEmpty)
             .accessibilityIdentifier("journal.add.cellar")

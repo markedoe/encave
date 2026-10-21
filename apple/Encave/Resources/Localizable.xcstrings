@@ -12141,6 +12141,16 @@
         }
       }
     },
+    "Your cellar has no bottle to open.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave n’a aucune bouteille à ouvrir."
+          }
+        }
+      }
+    },
     "Your cellar in figures": {
       "localizations": {
         "fr": {
