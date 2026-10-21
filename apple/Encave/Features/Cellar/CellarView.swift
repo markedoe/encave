@@ -231,7 +231,7 @@ struct CellarList: View {
             .accessibilityIdentifier("cellar.sort")
             Menu {
                 Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext()) }
-                Button("Remember a Wine", systemImage: "sparkles") { model.sheet = .discovery(discoveryID: nil) }
+                Button("Note a Wine Tasted Elsewhere", systemImage: "mappin.and.ellipse") { model.sheet = .discovery(discoveryID: nil) }
             } label: {
                 Label("Add Bottle", systemImage: "plus")
             } primaryAction: {
@@ -539,7 +539,7 @@ struct EmptyCellarView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                Button("Remember a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
+                Button("Note a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
                 // Only for a cellar with nothing at all in it, that no other device syncs with:
                 // the sample replaces everything.
                 if model.canLoadSample {

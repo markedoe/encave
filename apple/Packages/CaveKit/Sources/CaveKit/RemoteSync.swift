@@ -209,7 +209,7 @@ public struct RemoteProgress: Codable, Equatable, Sendable {
     /// Digest of the stamps of the last snapshot written: a merge on the local
     /// network can change the cellar without moving the clock.
     public var uploadedDigest: String?
-    /// Photos already uploaded in the current epoch.
+    /// Files (photos and documents) already uploaded in the current epoch.
     public var uploadedPhotos: Set<String> = []
     /// Epoch the progress refers to; a new epoch starts afresh.
     public var epoch: UInt32 = 0
@@ -247,7 +247,7 @@ public enum RemoteSync {
     /// storage and a fresh progress for the next round).
     public static func run(store: MailboxStore, identity: DeviceIdentity, key currentKey: CellarKey,
                            local: SyncSnapshot, progress currentProgress: RemoteProgress,
-                           photos: PhotoAccess, storage currentStorage: String? = nil) async throws -> Result {
+                           files: FileAccess, storage currentStorage: String? = nil) async throws -> Result {
         var key = currentKey
         var progress = currentProgress
         var storage: String?
@@ -306,18 +306,18 @@ public enum RemoteSync {
             received = true
         }
 
-        // 3. Missing photos.
-        let referenced = merged.cellar.photoIDs
-        for id in referenced.sorted() where PhotoID.isValid(id) && !photos.exists(id) {
+        // 3. Missing files: photos and documents, both under "photo/".
+        let refs = merged.cellar.fileRefs
+        for id in files.missing(refs) {
             let path = photoPath(id)
             guard let file = try? await mailbox.get(path),
                   let data = try? Envelope.open(file, kind: .photo, path: path, key: key.dataKey),
                   PhotoID.matches(id, data) else { continue }
-            photos.save(id, data)
+            files.save(id, data, in: refs)
             progress.uploadedPhotos.insert(id)
         }
 
-        // 4. This device's snapshot and photos, if something changed since the last upload.
+        // 4. This device's snapshot and files, if something changed since the last upload.
         let digest = stampDigest(merged)
         if progress.uploadedClock != merged.state.clock || progress.uploadedDigest != digest || newKey != nil {
             // Other devices read a snapshot only if its clock is newer than the last one,
@@ -327,8 +327,8 @@ public enum RemoteSync {
             if let written, merged.state.clock <= written {
                 merged.state.clock = written + 1
             }
-            for id in referenced.sorted() where PhotoID.isValid(id) && !progress.uploadedPhotos.contains(id) {
-                guard let data = photos.data(id) else { continue }
+            for id in Set(refs.map(\.id)).sorted() where PhotoID.isValid(id) && !progress.uploadedPhotos.contains(id) {
+                guard let data = files.data(id, in: refs) else { continue }
                 let path = photoPath(id)
                 try await mailbox.create(path, data: Envelope.seal(data, kind: .photo, path: path, key: key.dataKey))
                 progress.uploadedPhotos.insert(id)
@@ -434,7 +434,7 @@ public enum RemoteSync {
         return Data(hash.finalize()).hexString
     }
 
-    /// Photo IDs from before sync are UUIDs in uppercase; paths are lowercase.
+    /// A photo or a document. Photo IDs from before sync are UUIDs in uppercase; paths are lowercase.
     static func photoPath(_ id: String) -> String { "photo/\(id.lowercased())" }
 
     static func write(_ snapshot: SyncSnapshot, to mailbox: Mailbox, key: CellarKey, device: UUID) async throws {

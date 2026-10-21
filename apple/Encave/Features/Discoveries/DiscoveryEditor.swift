@@ -1,8 +1,8 @@
 import CaveKit
 import SwiftUI
 
-/// Remember a wine tasted or seen elsewhere: scan it, say where, add notes and tags,
-/// and put it on the shopping list. Also edits an existing discovery.
+/// Note a wine tasted elsewhere (restaurant, friends, a fair): scan it, say where, add notes and tags,
+/// and put it on the shopping list. The cellar does not change. Also edits an existing one.
 struct DiscoveryEditor: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -26,6 +26,15 @@ struct DiscoveryEditor: View {
     @State private var confirmingDelete = false
 
     private var existing: Discovery? { discoveryID.flatMap { model.cellar.discoveries[$0] } }
+
+    /// "Tasted Elsewhere" for a new one; the wine's name when editing.
+    private var title: Text {
+        if let name = existing.flatMap({ model.cellar.wines[$0.wineID]?.displayName }) {
+            Text(verbatim: name)
+        } else {
+            Text("Tasted Elsewhere")
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -84,23 +93,23 @@ struct DiscoveryEditor: View {
                         .numericKeyboard()
                         .fieldHelp("The price on the wine list or in the shop, to compare when you buy it.")
                 } footer: {
-                    Text("Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.")
+                    Text("Wines to buy appear under To buy in the Journal. Wines tasted elsewhere are not counted as bottles in your cellar.")
                 }
 
                 if discoveryID != nil {
                     PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
                     Section {
-                        Button("Delete Discovery", role: .destructive) { confirmingDelete = true }
+                        Button("Delete from Journal", role: .destructive) { confirmingDelete = true }
                     }
                 }
                 Section {
-                    HelpLink(topic: .discoveries, title: "Help with discoveries")
+                    HelpLink(topic: .journal, title: "Help with the Journal")
                 }
             }
             .formStyle(.grouped)
             .labelScanner(scan, draft: $draft)
             .webSearchSheet(isPresented: $searchingOnline, draft: $draft, includesWindow: false)
-            .navigationTitle(discoveryID == nil ? Text("Remember a Wine") : Text("Discovery"))
+            .navigationTitle(title)
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -113,8 +122,8 @@ struct DiscoveryEditor: View {
                         .keyboardShortcut(.defaultAction)
                 }
             }
-            .confirmationDialog("Delete this discovery?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                Button("Delete Discovery", role: .destructive) {
+            .confirmationDialog("Delete this entry from your journal?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                Button("Delete from Journal", role: .destructive) {
                     if let discoveryID { model.deleteDiscovery(discoveryID) }
                     dismiss()
                 }

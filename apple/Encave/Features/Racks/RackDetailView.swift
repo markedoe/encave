@@ -220,6 +220,7 @@ struct RackDetailView: View {
             moving = bottle
         case .remove(let bottle): model.markGone(bottle.id)
         case .add(let slot): model.sheet = .addBottle(AddBottleContext(slot: slot))
+        case .documents(let bottle, let importing): model.sheet = .bottleDocuments(bottleID: bottle.id, importing: importing)
         }
     }
 
@@ -353,6 +354,19 @@ private struct SelectedBottleCard: View {
                     .buttonStyle(.bordered)
                     .accessibilityIdentifier("action.rack.move")
                 Spacer(minLength: 0)
+                Button {
+                    onAction(.documents(bottle, importing: bottle.attachments == nil))
+                } label: {
+                    if let count = bottle.attachments?.count {
+                        DocumentCount(count: count).font(.body)
+                    } else {
+                        Label("Attach a Document…", systemImage: "paperclip").labelStyle(.iconOnly).font(.title3)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel(bottle.attachments == nil ? Text("Attach a Document…")
+                                    : Text("\(bottle.attachments?.count ?? 0) documents"))
+                .accessibilityIdentifier("rack.selection.documents")
                 NavigationLink(value: WineRoute(id: bottle.wineID)) {
                     Label("Wine Page", systemImage: "info.circle")
                         .labelStyle(.iconOnly)
@@ -459,6 +473,8 @@ private struct RackKey: View {
 
 enum CellAction {
     case drink(Bottle), move(Bottle), remove(Bottle), add(Slot)
+    /// The bottle's documents; `importing` opens the file picker right away.
+    case documents(Bottle, importing: Bool)
 }
 
 /// What is in one place of a rack: one bottle, front and back, or a whole bin.
@@ -542,6 +558,10 @@ private struct BottleInCellRow: View {
                             .font(.caption)
                     }
                 }
+                if let documents = bottle.attachments?.count {
+                    Spacer(minLength: 4)
+                    DocumentCount(count: documents)
+                }
             }
             HStack(spacing: 10) {
                 Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
@@ -550,6 +570,11 @@ private struct BottleInCellRow: View {
                     .buttonStyle(.bordered)
                 Spacer()
                 Menu {
+                    if bottle.attachments != nil {
+                        Button("Documents…", systemImage: "paperclip") { onAction(.documents(bottle, importing: false)) }
+                    }
+                    Button("Attach a Document…", systemImage: "doc.badge.plus") { onAction(.documents(bottle, importing: true)) }
+                    Divider()
                     Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { onAction(.remove(bottle)) }
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")

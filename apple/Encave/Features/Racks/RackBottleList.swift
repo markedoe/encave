@@ -79,6 +79,7 @@ extension RackBottleList {
                 Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
                     open(.moveBottle(bottleID: bottle.id))
                 }
+                BottleDocumentButtons(bottle: bottle) { open($0) }
                 Divider()
                 Button("Given away or broken", systemImage: "minus.circle", role: .destructive) {
                     model.markGone(bottle.id)
@@ -125,6 +126,10 @@ private struct RackBottleRow: View {
                 if !line.isEmpty {
                     Text(line).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
+            }
+            if let documents = bottle.attachments?.count {
+                Spacer(minLength: 4)
+                DocumentCount(count: documents)
             }
         }
         .padding(.vertical, 2)

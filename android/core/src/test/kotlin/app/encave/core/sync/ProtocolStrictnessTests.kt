@@ -1,5 +1,7 @@
 package app.encave.core.sync
 
+import app.encave.core.FileKind
+
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.CellarError
@@ -38,14 +40,14 @@ private class FullInboxStore : MailboxStore {
 }
 
 /** Counts the photos read in full. */
-private class CountingPhotos(initial: Map<String, ByteArray>) : PhotoAccess {
+private class CountingPhotos(initial: Map<String, ByteArray>) : FileAccess {
     private val photos = initial.toMutableMap()
     var reads = 0
-    override fun data(id: String): ByteArray? = photos[id].also { reads++ }
-    override fun save(id: String, data: ByteArray) {
+    override fun data(id: String, kind: FileKind): ByteArray? = photos[id].also { reads++ }
+    override fun save(id: String, kind: FileKind, data: ByteArray) {
         photos[id] = data
     }
-    override fun exists(id: String): Boolean = id in photos
+    override fun exists(id: String, kind: FileKind): Boolean = id in photos
 }
 
 /** Mirrors CaveKit's ProtocolStrictnessTests. */
@@ -142,9 +144,9 @@ class ProtocolStrictnessTests {
         val store = MemoryMailboxStore()
         val devices = household(2)
         val key = devices[0].key!!
-        val first = RemoteSync.run(store, devices[0].identity, key, devices[0].snapshot, RemoteProgress(), PhotoAccess.NONE)
+        val first = RemoteSync.run(store, devices[0].identity, key, devices[0].snapshot, RemoteProgress(), FileAccess.NONE)
         // The progress of that round was lost (the app stopped before saving it).
-        val second = RemoteSync.run(store, devices[0].identity, key, devices[0].snapshot, RemoteProgress(), PhotoAccess.NONE)
+        val second = RemoteSync.run(store, devices[0].identity, key, devices[0].snapshot, RemoteProgress(), FileAccess.NONE)
         assertEquals(first.clock + 1, second.clock)
         val mine = store.mailbox(key.mailboxId, key.token).list("snap/${devices[0].identity.id}/").mapNotNull { SnapshotPath.parse(it) }
         assertEquals(mine.size, mine.map { it.clock }.toSet().size)
@@ -157,13 +159,13 @@ class ProtocolStrictnessTests {
         val old = devices[0].key!!
         val new = CellarKey.random(old.cellarId, 2)
         RemoteSync.grant(new, devices[0].snapshot.membership.active, store, devices[0].identity, "https://new.example/")
-        val result = RemoteSync.run(store, devices[1].identity, old, devices[1].snapshot, RemoteProgress(), PhotoAccess.NONE, "https://old.example/")
+        val result = RemoteSync.run(store, devices[1].identity, old, devices[1].snapshot, RemoteProgress(), FileAccess.NONE, "https://old.example/")
         assertEquals(new, result.newKey)
         assertEquals("https://new.example/", result.storage)
         assertNull(result.progress.uploadedClock)
         assertEquals(2L, result.progress.epoch)
         assertNull(store.allFiles[new.mailboxId], "nothing written under the new key on the old storage")
-        val same = RemoteSync.run(store, devices[1].identity, old, devices[1].snapshot, RemoteProgress(), PhotoAccess.NONE, "https://new.example/")
+        val same = RemoteSync.run(store, devices[1].identity, old, devices[1].snapshot, RemoteProgress(), FileAccess.NONE, "https://new.example/")
         assertEquals(new, same.newKey)
         assertNotNull(same.progress.uploadedClock)
     }

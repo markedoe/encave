@@ -72,7 +72,7 @@ struct CellarCommands: Commands {
                 .keyboardShortcut("n")
             Button("New Rack…") { model.sheet = .editRack(rackID: nil) }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
-            Button("Remember a Wine…") { model.sheet = .discovery(discoveryID: nil) }
+            Button("Note a Wine Tasted Elsewhere…") { model.sheet = .discovery(discoveryID: nil) }
                 .keyboardShortcut("n", modifiers: [.command, .option])
         }
         #if os(macOS)

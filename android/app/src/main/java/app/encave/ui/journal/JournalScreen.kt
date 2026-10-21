@@ -8,19 +8,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import app.encave.core.DiscoveryFilter
 import app.encave.ui.discoveries.DiscoveryActions
-import app.encave.ui.discoveries.DiscoveryFilterBar
-import app.encave.ui.discoveries.discoveryItems
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +44,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -85,22 +76,64 @@ import app.encave.ui.theme.SerifDisplay
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import app.encave.core.Bottle
+import app.encave.core.Tasting
+import app.encave.core.Cellar
+import app.encave.core.WineGroup
+import app.encave.core.DiaryEntry
+import app.encave.core.DiaryFilter
+import app.encave.core.diary
+import app.encave.core.discoveryTags
+import app.encave.core.shoppingListCount
+import app.encave.ui.discoveries.ElsewhereRow
+import app.encave.ui.components.WineGroupRow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.Tag
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.pluralStringResource
+import app.encave.ui.drink.DrinkSheet
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.ui.graphics.Color
 
-/** Tastings grouped by month, most recent first. */
+/**
+ * The diary: bottles opened from the cellar and wines tasted elsewhere, newest first,
+ * grouped by month, with filters. "Add a tasting" first asks where the wine was drunk.
+ */
 @Composable
 fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
+    val filter by viewModel.journalFilter.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+    var chosenTag by rememberSaveable { mutableStateOf<String?>(null) }
+    // The chosen tag while some wine tasted elsewhere still has it and the filter shows them.
+    val tag = chosenTag?.takeIf { filter.showsElsewhere && it in cellar.discoveryTags }
     val zone = ZoneId.systemDefault()
-    val months = remember(cellar) {
-        cellar.consumedBottles.filter { it.tasting != null }
-            .groupBy { YearMonth.from(it.tasting!!.date.atZone(zone)) }
-            .toList()
+    val months = remember(cellar, filter, query, tag) {
+        cellar.diary(filter, query, tag).groupBy { YearMonth.from(it.date.atZone(zone)) }.toList()
     }
+    val isEmpty = cellar.consumedBottles.isEmpty() && cellar.discoveries.isEmpty()
     val locale = LocalConfiguration.current.locales[0]
     val monthFormat = remember(locale) { DateTimeFormatter.ofPattern("LLLL yyyy", locale) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    var showDiscoveries by rememberSaveable { mutableStateOf(false) }
-    var discoveryFilter by remember { mutableStateOf(DiscoveryFilter()) }
+    var choosing by rememberSaveable { mutableStateOf(false) }
+    var picking by rememberSaveable { mutableStateOf(false) }
+    var drinking by remember { mutableStateOf<WineGroup?>(null) }
     val actions = remember(viewModel, navigator) {
         DiscoveryActions(
             open = { navigator.open(DiscoveryEditorRoute(it.id.toString())) },
@@ -114,10 +147,10 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                modifier = Modifier.testTag("action.remember"),
-                onClick = { navigator.open(DiscoveryEditorRoute()) },
+                modifier = Modifier.testTag("action.add_tasting"),
+                onClick = { choosing = true },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.discovery_new)) },
+                text = { Text(stringResource(R.string.journal_add)) },
             )
         },
         topBar = {
@@ -137,89 +170,232 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
         Column(Modifier.padding(top = padding.calculateTopPadding()).fillMaxSize()) {
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s)) {
-                SegmentedButton(selected = !showDiscoveries, onClick = { showDiscoveries = false }, shape = SegmentedButtonDefaults.itemShape(0, 2)) {
-                    Text(stringResource(R.string.journal_tastings))
-                }
-                SegmentedButton(
-                    selected = showDiscoveries, onClick = { showDiscoveries = true }, shape = SegmentedButtonDefaults.itemShape(1, 2),
-                    modifier = Modifier.testTag("journal.discoveries"),
-                ) {
-                    Text(stringResource(R.string.journal_discoveries))
-                }
-            }
-            if (showDiscoveries) {
-                if (cellar.discoveries.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Outlined.AutoAwesome,
-                        title = stringResource(R.string.discovery_empty_title),
-                        body = stringResource(R.string.discovery_empty_body),
-                    ) {
-                        Button(onClick = { navigator.open(DiscoveryEditorRoute()) }) { Text(stringResource(R.string.discovery_new)) }
-                    }
-                } else {
-                    OutlinedTextField(
-                        value = discoveryFilter.query,
-                        onValueChange = { discoveryFilter = discoveryFilter.copy(query = it) },
-                        placeholder = { Text(stringResource(R.string.discovery_search_hint)) },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (discoveryFilter.query.isNotEmpty()) {
-                                IconButton(onClick = { discoveryFilter = discoveryFilter.copy(query = "") }) {
-                                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = CircleShape,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.xs),
-                    )
-                    DiscoveryFilterBar(cellar, discoveryFilter) { discoveryFilter = it }
-                    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
-                        discoveryItems(cellar, viewModel.photos, discoveryFilter, actions)
-                    }
-                }
-            } else if (months.isEmpty()) {
+            if (isEmpty) {
                 EmptyState(
                     icon = Icons.Outlined.AutoStories,
                     title = stringResource(R.string.journal_empty_title),
                     body = stringResource(R.string.journal_empty_body),
                 ) {
+                    Button(onClick = { choosing = true }) { Text(stringResource(R.string.journal_add)) }
                     if (cellar.bottlesInCellar.isNotEmpty()) {
                         OutlinedButton(onClick = { navigator.open(InsightsRoute) }) { Text(stringResource(R.string.action_insights)) }
                     }
                 }
-            } else {
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
-                    months.forEach { (month, bottles) ->
-                        item(key = month.toString()) {
-                            SectionHeader(monthFormat.format(month).replaceFirstChar { it.titlecase(locale) })
-                        }
-                        items(bottles, key = { it.id.toString() }) { bottle ->
-                            TastingRow(cellar, bottle) { navigator.open(TastingRoute(bottle.id.toString())) }
-                            HorizontalDivider(Modifier.padding(start = 56.dp))
-                        }
+                return@Column
+            }
+            SearchField(query, onChange = { query = it }, hint = stringResource(R.string.discovery_search_hint))
+            DiaryFilterBar(
+                cellar, filter, tag,
+                onFilter = { viewModel.journalFilter.value = it },
+                onTag = { chosenTag = if (tag == it) null else it },
+            )
+            if (months.isEmpty()) {
+                when {
+                    query.isNotBlank() -> Text(
+                        stringResource(R.string.journal_none_match),
+                        Modifier.padding(Dimens.l), color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    filter == DiaryFilter.Elsewhere -> EmptyState(
+                        Icons.Outlined.Place, stringResource(R.string.journal_elsewhere_empty_title), stringResource(R.string.journal_elsewhere_empty_body),
+                    )
+                    filter == DiaryFilter.ToBuy -> EmptyState(
+                        Icons.Filled.ShoppingCart, stringResource(R.string.journal_to_buy_empty_title), stringResource(R.string.journal_to_buy_empty_body),
+                    )
+                    else -> EmptyState(
+                        Icons.Outlined.Home, stringResource(R.string.journal_cellar_empty_title), stringResource(R.string.journal_cellar_empty_body),
+                    )
+                }
+            }
+            LazyColumn(Modifier.fillMaxSize().testTag("journal.list"), contentPadding = PaddingValues(bottom = 96.dp)) {
+                months.forEach { (month, entries) ->
+                    item(key = month.toString()) {
+                        SectionHeader(monthFormat.format(month).replaceFirstChar { it.titlecase(locale) })
                     }
+                    items(entries, key = { it.id.toString() }) { entry ->
+                        when (entry) {
+                            is DiaryEntry.Opened -> TastingRow(
+                                cellar, entry.bottle, Modifier.animateItem().testTag("journal.row.cellar"),
+                            ) { navigator.open(TastingRoute(entry.bottle.id.toString())) }
+                            is DiaryEntry.Elsewhere -> ElsewhereRow(
+                                cellar, viewModel.photos, entry.discovery, actions, Modifier.animateItem().testTag("journal.row.elsewhere"),
+                            )
+                        }
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    if (choosing) {
+        AddTastingSheet(
+            canOpenBottle = cellar.bottlesInCellar.isNotEmpty(),
+            onDismiss = { choosing = false },
+            onCellar = { choosing = false; picking = true },
+            onElsewhere = { choosing = false; navigator.open(DiscoveryEditorRoute()) },
+        )
+    }
+    if (picking) {
+        BottlePickerSheet(cellar, viewModel.year, onDismiss = { picking = false }) { group ->
+            picking = false
+            drinking = group
+        }
+    }
+    drinking?.let { group ->
+        DrinkSheet(cellar, group.bottles, onDismiss = { drinking = null }, onDrink = { b, t -> viewModel.drink(b.id, t) })
+    }
+}
+
+@Composable
+private fun SearchField(query: String, onChange: (String) -> Unit, hint: String) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onChange,
+        placeholder = { Text(hint) },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onChange("") }) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
+                }
+            }
+        },
+        singleLine = true,
+        shape = CircleShape,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.xs),
+    )
+}
+
+/** All · From my cellar · Tasted elsewhere · To buy, then the tags of wines tasted elsewhere. */
+@Composable
+private fun DiaryFilterBar(cellar: Cellar, filter: DiaryFilter, tag: String?, onFilter: (DiaryFilter) -> Unit, onTag: (String) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Dimens.l),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+    ) {
+        val chips = listOf(
+            Triple(DiaryFilter.All, stringResource(R.string.journal_filter_all), Icons.Outlined.AutoStories),
+            Triple(DiaryFilter.Cellar, stringResource(R.string.journal_from_cellar), Icons.Outlined.Home),
+            Triple(DiaryFilter.Elsewhere, stringResource(R.string.journal_tasted_elsewhere), Icons.Outlined.Place),
+            Triple(DiaryFilter.ToBuy, stringResource(R.string.discovery_to_buy_count, cellar.shoppingListCount), Icons.Filled.ShoppingCart),
+        )
+        chips.forEach { (value, label, icon) ->
+            FilterChip(
+                selected = filter == value,
+                onClick = { onFilter(value) },
+                label = { Text(label) },
+                leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.testTag("journal.filter.${value.name.lowercase()}"),
+            )
+        }
+        if (filter.showsElsewhere) {
+            cellar.discoveryTags.forEach { name ->
+                FilterChip(
+                    selected = tag == name,
+                    onClick = { onTag(name) },
+                    label = { Text(name) },
+                    leadingIcon = { Icon(Icons.Outlined.Tag, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                )
+            }
+        }
+    }
+}
+
+/** Where was it drunk? From the cellar (the bottle leaves it) or somewhere else (it does not change). */
+@Composable
+private fun AddTastingSheet(canOpenBottle: Boolean, onDismiss: () -> Unit, onCellar: () -> Unit, onElsewhere: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l)) {
+            Text(
+                stringResource(R.string.journal_add_where),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = Dimens.xl, vertical = Dimens.s).semantics { heading() },
+            )
+            ListItem(
+                modifier = Modifier.testTag("journal.add.cellar").clickable(enabled = canOpenBottle, onClick = onCellar).alpha(if (canOpenBottle) 1f else 0.5f),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = { Icon(Icons.Outlined.Home, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.journal_add_cellar)) },
+                supportingContent = {
+                    Text(stringResource(if (canOpenBottle) R.string.journal_add_cellar_body else R.string.journal_add_cellar_none))
+                },
+            )
+            ListItem(
+                modifier = Modifier.testTag("journal.add.elsewhere").clickable(onClick = onElsewhere),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = { Icon(Icons.Outlined.Place, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.journal_add_elsewhere)) },
+                supportingContent = { Text(stringResource(R.string.journal_add_elsewhere_body)) },
+            )
+        }
+    }
+}
+
+/** The wines with bottles in the cellar, searchable, to choose the one opened. */
+@Composable
+private fun BottlePickerSheet(cellar: Cellar, year: Int, onDismiss: () -> Unit, onPick: (WineGroup) -> Unit) {
+    var query by rememberSaveable { mutableStateOf("") }
+    val groups = remember(cellar, query) { cellar.groups(query) }
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.navigationBarsPadding().imePadding()) {
+            Text(
+                stringResource(R.string.drink_pick_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = Dimens.xl, vertical = Dimens.s).semantics { heading() },
+            )
+            Text(
+                stringResource(R.string.drink_pick_footer),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = Dimens.xl),
+            )
+            SearchField(query, onChange = { query = it }, hint = stringResource(R.string.search_hint))
+            LazyColumn(Modifier.fillMaxWidth()) {
+                if (groups.isEmpty()) {
+                    item { Text(stringResource(R.string.cellar_no_match), Modifier.padding(Dimens.l), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+                items(groups, key = { it.id.toString() }) { group ->
+                    WineGroupRow(
+                        group = group, cellar = cellar, year = year,
+                        onClick = { onPick(group) },
+                        modifier = Modifier.testTag("drink.pick.row"),
+                    )
+                    HorizontalDivider(Modifier.padding(start = 56.dp))
                 }
             }
         }
     }
 }
 
+/** A bottle opened from the cellar, saying so; TalkBack reads it as one sentence. */
 @Composable
-private fun TastingRow(cellar: app.encave.core.Cellar, bottle: app.encave.core.Bottle, onClick: () -> Unit) {
-    val tasting = bottle.tasting ?: return
+private fun TastingRow(cellar: Cellar, bottle: Bottle, modifier: Modifier, onClick: () -> Unit) {
+    val tasting = bottle.tasting
     val wine = cellar.wines[bottle.wineId]
+    val source = stringResource(R.string.journal_from_cellar)
+    val date = tasting?.date ?: bottle.addedAt
+    val description = listOfNotNull(
+        source,
+        wine?.displayName ?: stringResource(R.string.unknown_wine),
+        tasting?.rating?.let { pluralStringResource(R.plurals.journal_rating_stars, it, it) },
+        Formats.day(date),
+        tasting?.occasion?.takeIf { it.isNotBlank() },
+        tasting?.note?.takeIf { it.isNotBlank() },
+    ).joinToString(", ")
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = modifier.clearAndSetSemantics { contentDescription = description }.clickable(onClick = onClick),
         leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
+        overlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))
+                Text("$source · ${Formats.day(date)}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        },
         headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
-        overlineContent = { Text(Formats.day(tasting.date)) },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                RatingStars(tasting.rating)
-                tasting.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-                tasting.occasion?.takeIf { it.isNotBlank() }?.let {
+                tasting?.rating?.let { RatingStars(it) }
+                tasting?.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                tasting?.occasion?.takeIf { it.isNotBlank() }?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -237,10 +413,12 @@ fun TastingScreen(viewModel: AppViewModel, navigator: AppNavigator, bottleId: St
 private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottleId: String) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val bottle = cellar.bottles.values.firstOrNull { it.id.toString() == bottleId }
-    val tasting = bottle?.tasting
     val wine = bottle?.let { cellar.wines[it.wineId] }
-    // Kept while the activity is recreated; started from the tasting once it is there.
-    val form = tasting?.let { rememberRetained("tasting.form") { TastingFormState(it) } }
+    // Kept while the activity is recreated; started from the tasting once it is there
+    // (a bottle opened without one, such as an imported one, starts from the day it was added).
+    val form = bottle?.takeIf { it.status == Bottle.Status.Consumed }?.let { opened ->
+        rememberRetained("tasting.form") { TastingFormState(opened.tasting ?: Tasting(date = opened.addedAt)) }
+    }
 
     Scaffold(
         topBar = {

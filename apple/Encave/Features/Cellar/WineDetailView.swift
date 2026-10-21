@@ -8,6 +8,7 @@ struct WineDetailView: View {
     @State private var findingPrice = false
     /// "Search the Web" on one detail.
     @State private var searchingDetail: WebSearchTerms?
+    @State private var documents = DocumentActions()
     private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
@@ -147,6 +148,8 @@ struct WineDetailView: View {
 
                 MorePhotosSection(wine: wine)
 
+                WineDocumentsSection(wineID: wineID, actions: documents)
+
                 let orders = model.cellar.bottlesOnOrder.filter { $0.wineID == wineID }
                     .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
                 if !bottles.isEmpty || orders.isEmpty {
@@ -176,7 +179,7 @@ struct WineDetailView: View {
 
                 let discoveries = model.cellar.discoveries(of: wineID)
                 if !discoveries.isEmpty {
-                    Section("Discoveries") {
+                    Section("Tasted elsewhere") {
                         ForEach(discoveries) { discovery in
                             Button {
                                 model.sheet = .discovery(discoveryID: discovery.id)
@@ -201,6 +204,7 @@ struct WineDetailView: View {
                     }
                 }
             }
+            .documentActions(documents)
             .navigationTitle(wine.displayName)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -491,6 +495,16 @@ struct BottleRow: View {
                 }
             }
             Spacer()
+            if let documents = bottle.attachments?.count {
+                Button {
+                    model.sheet = .bottleDocuments(bottleID: bottle.id, importing: false)
+                } label: {
+                    DocumentCount(count: documents)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(Text("\(documents) documents"))
+                .accessibilityHint(Text("Shows the documents of this bottle."))
+            }
             if bottle.slot != nil {
                 Button {
                     model.showInRack(bottle)
@@ -522,6 +536,12 @@ struct BottleRow: View {
                 Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
             }
             .tint(.indigo)
+            Button {
+                model.sheet = .bottleDocuments(bottleID: bottle.id, importing: bottle.attachments == nil)
+            } label: {
+                Label("Documents", systemImage: "paperclip")
+            }
+            .tint(.gray)
         }
         .contextMenu {
             Button("Drink", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
@@ -537,6 +557,7 @@ struct BottleRow: View {
             if bottle.slot != nil {
                 Button("Show in Rack", systemImage: "scope") { model.showInRack(bottle) }
             }
+            BottleDocumentButtons(bottle: bottle) { model.sheet = $0 }
             Divider()
             Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { model.markGone(bottle.id) }
         }

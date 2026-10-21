@@ -62,6 +62,16 @@ implementations:
   is kept for). `settings.savedSearches` is an optional array of
   `{id, name, query, colors, maturities, rackID?, tag?, reservation?, grape?}`, with
   `colors` and `maturities` sorted by their string value.
+- `wine.attachments` and `bottle.attachments` are optional arrays of documents
+  (an invoice, a certificate, a technical sheet…), left out when empty:
+  `{id, name, contentType, byteCount, addedAt}`. `id` is a file ID (section 7)
+  and each ID appears once in an array (a reader keeps the first); `name` is
+  the file name shown; `contentType` a MIME type such as `application/pdf`
+  (`application/octet-stream` when the type is unknown), kept as written;
+  `byteCount` the file's size in bytes (an integer); `addedAt` a date. A
+  wine's documents are for all its bottles; a bottle's are for that bottle.
+  They are part of their wine or bottle object, so if two devices change the
+  documents of the same object before syncing, the later change wins.
 - Readers are strict: an unknown value of `wine.color`, `bottle.status`,
   `rack.kind` or `discovery.setting` fails decoding; readers never replace it
   with a default. A device that does not know a new value refuses the sync
@@ -71,7 +81,8 @@ implementations:
   - required fields are never filled in by the reader: every `id`, `wineID`,
     `bottle.addedAt`, `discovery.date`, `tasting.date`, `member.addedAt`,
     `settings.currency`, `cellarID`, `members` and `stamps` of a membership, the
-    three fields of a stamp and the four of a `SyncState`. Fields that may be
+    three fields of a stamp, the four of a `SyncState` and the five of a
+    document. Fields that may be
     left out are read with their stated default
     (`bottle.status` `inCellar`, `sizeML` 750, `depth` 0 or 1, `binCapacity` 12,
     `grapes` and `discovery.tags` empty, `wantsToBuy` false);
@@ -82,7 +93,14 @@ implementations:
   - a rack's `rows`, `columns`, `binCapacity` and each `rowColumns` value are
     brought into 1…100 (`depth` into 1…3), and `rowColumns` keeps at most 100
     values, so a damaged or hostile rack cannot make a device allocate millions
-    of cells. Every device applies the same rule, so they read the same rack.
+    of cells. Every device applies the same rule, so they read the same rack;
+  - a document's `name` is normalized the same way on every device, when read
+    and when set: each control character (Unicode category Cc) becomes a
+    space, `/` and `\` become `-`, white space (Unicode `White_Space`) is
+    trimmed at both ends, at most 200 Unicode scalar values (code points) are
+    kept, and the result is trimmed again. A name can still be empty, `.` or
+    `..`: apps never use it as a path, only as the name shown or given to a
+    copy they make.
 - Readers key each wine, bottle and discovery by its own `id`, not by the map
   key; if two entries have the same `id`, the one whose map key sorts first
   (uppercase UUID string) is kept. Racks with a repeated `id` keep the first.
@@ -295,12 +313,17 @@ neither side waits on a full buffer.
    cellar, the `SyncState` and the `Membership`. A device refuses a membership
    with another cellar ID. Both check the bounds, merge (section 1) and merge
    memberships.
-2. `{"type":"photos-want","photos":[ids]}` each way: the photos referenced by
-   the merged cellar (`photoID` and `extraPhotoIDs` of every wine) that the
-   device does not have.
+2. `{"type":"photos-want","photos":[ids]}` each way: the files referenced by
+   the merged cellar that the device does not have, each ID once, sorted.
+   The files are the photos (`photoID`, `extraPhotoIDs` and `coverPhotoID` of
+   every wine) and the documents (the `id` of every entry of
+   `wine.attachments` and `bottle.attachments`). The messages keep their
+   "photo" names, but carry documents the same way.
 3. The initiator sends `{"type":"photo","photoID":…,"photoData":…}` for each
-   requested photo that the merged cellar references, then
-   `{"type":"photos-end"}`; then the responder does the same.
+   requested file that the merged cellar references, then
+   `{"type":"photos-end"}`; then the responder does the same. A device keeps a
+   received file where the cellar uses it: with its photos, with its
+   documents, or in both places when the same file is both.
 
 4. `{"type":"sync-keys","syncData":R}` each way, where `R` is a standard Base64
    string of the `RemoteInfo` JSON, or is left out (initiator first): the
@@ -311,12 +334,20 @@ neither side waits on a full buffer.
    another cellar is ignored; a device adopts a key that supersedes its own
    (section 8). This key is never written into a snapshot.
 
-Photo IDs of new photos are `sha256-` + the lowercase hex SHA-256 of the JPEG,
-and a received photo that was not asked for, or whose content does not match
-its ID, is ignored. IDs from
-before sync (UUIDs) are accepted as they are. Photo IDs are restricted to
-ASCII letters, digits and dashes, at most 80 characters; a photo with any other ID is
-never requested, sent, uploaded or downloaded.
+File IDs of new photos are `sha256-` + the lowercase hex SHA-256 of the JPEG,
+and those of documents the same of the file as it was added. A received file
+that was not asked for, or whose content does not match its ID, is ignored.
+IDs from before sync (UUIDs) are accepted as they are. File IDs are restricted
+to ASCII letters, digits and dashes, at most 80 characters; a file with any
+other ID is never requested, sent, uploaded or downloaded.
+
+**Sizes.** A frame holds at most 16 MiB, so a file travels in one `photo`
+message only if its Base64 fits. Photos are resized JPEGs (at most 1600
+pixels, a few hundred KB). Apps accept a document of at most 8 MB
+(8,000,000 bytes) when it is added: in Base64 it fits a frame, and sealed for
+remote sync (34 more bytes) it stays under a relay's 8 MiB per file. A file
+that would not fit is never sent; one received over a frame's size ends the
+session.
 
 JSON uses the same structure as the cellar file shared with Android, with two
 details that matter for exact round trips:
@@ -379,7 +410,7 @@ path (UTF-8)` as additional data, so a file cannot be moved to another name.
 | Path | Kind | Content |
 |---|---|---|
 | `snap/<device>/<clock, 16 digits>-<8 hex>` | 1 | `{"type":"snapshot","cellarData","syncData","membersData"}` as in the exchange |
-| `photo/<photo ID, lowercase>` | 2 | the JPEG |
+| `photo/<file ID, lowercase>` | 2 | the photo's JPEG, or the document's file as it was added |
 
 Each device writes only under its own `snap/<device>/` and keeps its newest two
 snapshots. The clock in a snapshot's name is its `syncData` clock, written with
@@ -452,11 +483,12 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    the same clock as its path and its `membersData` the same cellar ID. A snapshot that cannot be
    read, decrypted, decoded or checked is skipped for this round; the other
    devices still sync.
-3. Fetch the photos the merged cellar references and this device lacks (valid
-   photo IDs only).
+3. Fetch the files (photos and documents, section 7) the merged cellar
+   references and this device lacks (valid file IDs only).
 4. If anything changed since this device's last upload (its clock, or any
    stamp: a merge on the local network can change the cellar without moving
-   the clock): upload its missing photos, then a snapshot of the merged state,
+   the clock): upload the files it has not uploaded yet in this epoch (once
+   each, even if a file is both a photo and a document), then a snapshot of the merged state,
    then delete its older snapshots. If the clock did not move since the last
    upload, it is raised by one first, so readers see a newer snapshot.
 
@@ -524,7 +556,8 @@ sign in to it, and syncs through it once they have.
   addresses; never contents, names or keys. It also sees file paths: device
   IDs and Lamport clocks in snapshot names (how often the cellar changes), the
   cellar ID, epoch and sender in grant names (and their random part), and the
-  hashes of photos. Device
+  hashes of photos and documents, with each file's size (a document's size
+  and the moment it was added say a little about it). Device
   IDs are the same before and after a key rotation, so the relay can link the
   old and new mailboxes. A mailbox opens only with the token its ID is derived
   from, so someone who learns a mailbox ID cannot read it or lock its owner out.

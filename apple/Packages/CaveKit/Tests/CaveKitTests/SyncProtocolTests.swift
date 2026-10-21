@@ -148,12 +148,12 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         async let sideA: SyncSnapshot = {
             let (channel, peer) = try await SyncHandshake.initiate(over: endA, identity: a, membership: membership)
             #expect(peer.id == b.id)
-            return try await SyncExchange.run(over: channel, isInitiator: true, local: snapshotA, photos: photosA.access)
+            return try await SyncExchange.run(over: channel, isInitiator: true, local: snapshotA, files: photosA.access)
         }()
         async let sideB: SyncSnapshot = {
             let (channel, peer) = try await SyncHandshake.respond(over: endB, identity: b, membership: membership)
             #expect(peer.id == a.id)
-            return try await SyncExchange.run(over: channel, isInitiator: false, local: snapshotB, photos: photosB.access)
+            return try await SyncExchange.run(over: channel, isInitiator: false, local: snapshotB, files: photosB.access)
         }()
         let (resultA, resultB) = try await (sideA, sideB)
         #expect(resultA.cellar == resultB.cellar)
@@ -170,10 +170,10 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
         let (endA, endB) = Pipe.pair()
         let sideA = Task {
             let (channel, _) = try await SyncHandshake.initiate(over: endA, identity: a, membership: membership)
-            return try await SyncExchange.exchange(over: channel, isInitiator: true, local: snapshotA, photos: .none, remote: info)
+            return try await SyncExchange.exchange(over: channel, isInitiator: true, local: snapshotA, files: .none, remote: info)
         }
         let (channel, _) = try await SyncHandshake.respond(over: endB, identity: b, membership: membership)
-        let resultB = try await SyncExchange.exchange(over: channel, isInitiator: false, local: snapshotB, photos: .none, remote: nil)
+        let resultB = try await SyncExchange.exchange(over: channel, isInitiator: false, local: snapshotB, files: .none, remote: nil)
         let resultA = try await sideA.value
         #expect(resultB.remote == info)
         #expect(resultA.remote == nil)
@@ -259,7 +259,7 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
             var state = stateHost
             members.add(member, clock: &state.clock, by: hostID.id)
             return try await SyncExchange.run(over: channel, isInitiator: true,
-                                              local: SyncSnapshot(cellar: cellar, state: state, membership: members), photos: .none)
+                                              local: SyncSnapshot(cellar: cellar, state: state, membership: members), files: .none)
         }
         let joinerSide = Task { () -> SyncSnapshot in
             let (channel, received) = try await joiner.finish(over: joinerEnd, keys: joinerKeys, accepted: true)
@@ -269,7 +269,7 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
             members.add(Member(id: joinerID.id, name: "Mac", publicKey: joinerID.publicKey, platform: "macos"),
                         clock: &state.clock, by: joinerID.id)
             return try await SyncExchange.run(over: channel, isInitiator: false,
-                                              local: SyncSnapshot(cellar: Cellar(), state: state, membership: members), photos: .none)
+                                              local: SyncSnapshot(cellar: Cellar(), state: state, membership: members), files: .none)
         }
         let (resultHost, resultJoiner) = try await (hostSide.value, joinerSide.value)
         #expect(resultHost.membership == resultJoiner.membership)
@@ -297,14 +297,18 @@ private func identity() -> DeviceIdentity { DeviceIdentity.generate().identity }
     }
 }
 
-/// Photos of a test device.
+/// Photos and documents of a test device, each in its own place.
 final class PhotoBox: @unchecked Sendable {
     private let lock = NSLock()
     private var photos: [String: Data]
-    init(_ photos: [String: Data]) { self.photos = photos }
+    private var documents: [String: Data]
+    init(_ photos: [String: Data], documents: [String: Data] = [:]) { self.photos = photos; self.documents = documents }
     var stored: [String: Data] { lock.withLock { photos } }
-    var access: PhotoAccess {
-        PhotoAccess(data: { id in self.lock.withLock { self.photos[id] } },
-                    save: { id, data in self.lock.withLock { self.photos[id] = data } })
+    var storedDocuments: [String: Data] { lock.withLock { documents } }
+    var access: FileAccess {
+        FileAccess(data: { id, kind in self.lock.withLock { kind == .photo ? self.photos[id] : self.documents[id] } },
+                   save: { id, kind, data in
+                       self.lock.withLock { if kind == .photo { self.photos[id] = data } else { self.documents[id] = data } }
+                   })
     }
 }

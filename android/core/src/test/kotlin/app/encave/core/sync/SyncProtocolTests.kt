@@ -1,5 +1,7 @@
 package app.encave.core.sync
 
+import app.encave.core.FileKind
+
 import app.encave.core.Cellar
 import app.encave.core.Wine
 import java.util.UUID
@@ -49,14 +51,21 @@ class Pipe private constructor(private val inbox: Channel<ByteArray>) : FrameTra
     }
 }
 
-/** Photos of a test device. */
-class PhotoBox(initial: Map<String, ByteArray> = emptyMap()) : PhotoAccess {
+/** Photos and documents of a test device, each in its own place. */
+class PhotoBox(initial: Map<String, ByteArray> = emptyMap(), documents: Map<String, ByteArray> = emptyMap()) : FileAccess {
     private val photos = initial.toMutableMap()
-    val stored: Map<String, ByteArray> get() = synchronized(photos) { photos.toMap() }
-    override fun data(id: String): ByteArray? = synchronized(photos) { photos[id] }
-    override fun save(id: String, data: ByteArray) {
-        synchronized(photos) { photos[id] = data }
+    private val documents = documents.toMutableMap()
+    val stored: Map<String, ByteArray> get() = synchronized(this) { photos.toMap() }
+    val storedDocuments: Map<String, ByteArray> get() = synchronized(this) { documents.toMap() }
+    override fun data(id: String, kind: FileKind): ByteArray? = synchronized(this) { place(kind)[id] }
+    override fun save(id: String, kind: FileKind, data: ByteArray) {
+        synchronized(this) { place(kind)[id] = data }
     }
+
+    /** Saves a photo. */
+    fun save(id: String, data: ByteArray) = save(id, FileKind.Photo, data)
+
+    private fun place(kind: FileKind) = if (kind == FileKind.Photo) photos else documents
 }
 
 internal fun identity(): DeviceIdentity = DeviceIdentity.generate().first
@@ -262,10 +271,10 @@ class SyncProtocolTests {
         coroutineScope {
             val sideA = async {
                 val (channel, _) = SyncHandshake.initiate(endA, a, membership)
-                SyncExchange.exchange(channel, true, snapshotA, PhotoAccess.NONE, info)
+                SyncExchange.exchange(channel, true, snapshotA, FileAccess.NONE, info)
             }
             val (channel, _) = SyncHandshake.respond(endB, b, membership)
-            val resultB = SyncExchange.exchange(channel, false, snapshotB, PhotoAccess.NONE, null)
+            val resultB = SyncExchange.exchange(channel, false, snapshotB, FileAccess.NONE, null)
             assertEquals(info, resultB.second)
             assertNull(sideA.await().second)
         }
@@ -349,13 +358,13 @@ class SyncProtocolTests {
             val hostSide = async {
                 val (channel, member) = host.finish(hostEnd, hostKeys, true, hostMembers)
                 val (members, next) = hostMembers.adding(member, hostState.clock, hostId.id)
-                SyncExchange.run(channel, true, SyncSnapshot(cellar, hostState.copy(clock = next), members), PhotoAccess.NONE)
+                SyncExchange.run(channel, true, SyncSnapshot(cellar, hostState.copy(clock = next), members), FileAccess.NONE)
             }
             val joinerSide = async {
                 val (channel, received) = joiner.finish(joinerEnd, joinerKeys, true)
                 val start = received.stamps.values.maxOfOrNull { it.counter } ?: 0
                 val (members, next) = received.adding(Member(joinerId.id, "Pixel", joinerId.publicKey, "android"), start, joinerId.id)
-                SyncExchange.run(channel, false, SyncSnapshot(Cellar(), SyncState(device = joinerId.id, clock = next), members), PhotoAccess.NONE)
+                SyncExchange.run(channel, false, SyncSnapshot(Cellar(), SyncState(device = joinerId.id, clock = next), members), FileAccess.NONE)
             }
             val resultHost = hostSide.await()
             val resultJoiner = joinerSide.await()

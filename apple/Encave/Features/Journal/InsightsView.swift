@@ -273,7 +273,7 @@ private struct YearInWineCard: View {
         return renderer.cgImage.map { Image(decorative: $0, scale: 3) }
     }
 
-    /// Years with tastings or discoveries, most recent first.
+    /// Years with tastings, from the cellar or elsewhere, most recent first.
     private var availableYears: [Int] {
         let dates = model.cellar.consumedBottles.compactMap { $0.tasting?.date } + model.cellar.discoveries.values.map(\.date)
         return Set(dates.map(CellarYear.of)).sorted(by: >)
@@ -291,7 +291,7 @@ private struct YearInWineFacts: View {
                 figure("\(recap.bottlesOpened)", caption: "bottles opened")
                 figure("\(recap.differentWines)", caption: "different wines")
                 if recap.discoveries > 0 {
-                    figure("\(recap.discoveries)", caption: "discoveries")
+                    figure("\(recap.discoveries)", caption: "tasted elsewhere")
                 }
             }
             VStack(alignment: .leading, spacing: 8) {

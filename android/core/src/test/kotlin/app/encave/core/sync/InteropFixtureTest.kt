@@ -1,5 +1,6 @@
 package app.encave.core.sync
 
+import app.encave.core.Attachment
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.CellarFilter
@@ -46,6 +47,8 @@ object InteropFixture {
     val label = PhotoId.make("label".toByteArray())
     val back = PhotoId.make("back".toByteArray())
     val cover = PhotoId.make("cover".toByteArray())
+    val invoice = PhotoId.make("invoice".toByteArray())
+    val certificate = PhotoId.make("certificate".toByteArray())
 
     fun cellar(): Cellar {
         val wine = Wine(
@@ -54,6 +57,10 @@ object InteropFixture {
             drinkFrom = 2022, drinkUntil = 2035, notes = "1/2 bottle, \"quoted\"\nsecond line", photoId = label,
             barcodes = listOf("3760123456789"), tags = listOf("Gift", "for summer"), currentPrice = BigDecimal("45.9"),
             currentPriceCurrency = "EUR", currentPriceDate = date(790_000_000.5), extraPhotoIds = listOf(back), coverPhotoId = cover,
+            attachments = listOf(
+                Attachment(invoice, "Facture n°12 – Cave du coin.pdf", "application/pdf", 245_760, date(782_000_000.75)),
+                Attachment(back, "Back label.jpg", "image/jpeg", 4, date(-12.5)),
+            ),
         )
         val plain = Wine(id = plainWine, name = "Vin de table")
         val bottles = listOf(
@@ -61,6 +68,7 @@ object InteropFixture {
                 id = id("000000000021"), wineId = fullWine, slot = Slot(grid, 1, 2, 1), addedAt = date(782_000_000.25),
                 purchaseDate = date(-1000.75), purchasePrice = BigDecimal("12.3"), currency = "EUR", purchasePlace = "Cave du coin",
                 receivedFrom = "Paul", sizeML = 1500, reservedFor = "Paul's 40th",
+                attachments = listOf(Attachment(certificate, "Certificate", "application/octet-stream", 11, date(782_000_001.0))),
             ),
             Bottle(
                 id = id("000000000022"), wineId = fullWine, status = Bottle.Status.Consumed, storageNote = "Kitchen",

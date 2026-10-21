@@ -378,9 +378,11 @@ struct EditWineView: View {
 
 extension Wine {
     /// Takes the fields the form does not edit from the wine as it is now: photos added
-    /// elsewhere while the form was open (another window, sync) and the current price.
+    /// elsewhere while the form was open (another window, sync), the documents and the
+    /// current price.
     mutating func keepUnedited(from live: Wine) {
         extraPhotoIDs = live.extraPhotoIDs
+        attachments = live.attachments
         coverPhotoID = live.coverPhotoID
         currentPrice = live.currentPrice
         currentPriceCurrency = live.currentPriceCurrency

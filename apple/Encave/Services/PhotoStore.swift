@@ -48,13 +48,18 @@ enum PhotoStore {
     /// Removes photo files no wine has referred to for `orphanGracePeriod`. When a
     /// file was first seen unreferenced is kept in a small list next to the photos.
     static func removeOrphans(keeping ids: Set<String>, now: Date = .now) {
-        guard let folder,
-              let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+        guard let folder else { return }
+        removeOrphans(in: folder, pathExtension: "jpg", keeping: ids, now: now)
+    }
+
+    /// The same for any folder of files named after their ID (the documents too).
+    static func removeOrphans(in folder: URL, pathExtension: String, keeping ids: Set<String>, now: Date) {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
         else { return }
         let listURL = folder.appendingPathComponent("unreferenced.json")
         let seen = (try? JSONDecoder().decode([String: Date].self, from: Data(contentsOf: listURL))) ?? [:]
         var unreferenced: [String: Date] = [:]
-        for file in files where file.pathExtension == "jpg" {
+        for file in files where file.pathExtension == pathExtension {
             let id = file.deletingPathExtension().lastPathComponent
             guard !ids.contains(id) else { continue }
             let since = seen[id] ?? now

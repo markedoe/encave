@@ -438,7 +438,7 @@ private fun YearInWineCard(cellar: Cellar) {
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
                 YearFigure(recap.bottlesOpened, stringResource(R.string.insights_year_opened))
                 YearFigure(recap.differentWines, stringResource(R.string.insights_year_wines))
-                if (recap.discoveries > 0) YearFigure(recap.discoveries, stringResource(R.string.insights_year_discoveries))
+                if (recap.discoveries > 0) YearFigure(recap.discoveries, stringResource(R.string.insights_year_elsewhere))
             }
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
                 recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, androidx.compose.ui.res.pluralStringResource(R.plurals.insights_year_favorite, rating, name, rating)) }
