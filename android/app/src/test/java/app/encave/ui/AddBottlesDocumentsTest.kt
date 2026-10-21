@@ -24,7 +24,7 @@ class AddBottlesDocumentsTest {
     @Test
     fun aDocumentThatCouldNotBeStoredIsReported() {
         val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
-        val viewModel = AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai)
+        val viewModel = AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, app.backups)
         val messages = mutableListOf<UiMessage>()
         val collector = CoroutineScope(Dispatchers.Unconfined)
         collector.launch { viewModel.messages.collect { messages += it } }
