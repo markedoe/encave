@@ -128,7 +128,10 @@ val RackKind.columnsRes: Int
         RackKind.Bins -> R.string.columns_bins
     }
 
-/** "B3", "B3, back", "Shelf B, 3, front" or "Bin B3", for people (files use "B3-2"). */
+/**
+ * "B3", "B3, back", "Shelf B, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
+ * for people (files use "B3-2").
+ */
 fun Rack.displayLabel(slot: Slot, resources: Resources): String {
     val cell = displayLabel(slot.cell, resources)
     if (kind == RackKind.Bins || positionsPerCell <= 1) return cell
@@ -142,7 +145,21 @@ fun Rack.displayLabel(slot: Slot, resources: Resources): String {
     return resources.getString(R.string.place_with_depth, cell, depthName)
 }
 
-fun Rack.displayLabel(cell: RackCell, resources: Resources): String = when (kind) {
+fun Rack.displayLabel(cell: RackCell, resources: Resources): String {
+    // A fridge with bottles in layers: "Shelf 1, top layer, place 3".
+    shelfPlace(cell.row)?.let { place ->
+        val res = when {
+            place.layers == 1 -> R.string.place_shelf_layer_single
+            place.layer == 0 -> R.string.place_shelf_layer_bottom
+            place.layer == place.layers - 1 -> R.string.place_shelf_layer_top
+            else -> R.string.place_shelf_layer_middle
+        }
+        return resources.getString(res, place.shelf + 1, cell.column + 1)
+    }
+    return displayLabelByKind(cell, resources)
+}
+
+private fun Rack.displayLabelByKind(cell: RackCell, resources: Resources): String = when (kind) {
     RackKind.Grid, RackKind.Staggered -> label(cell)
     RackKind.Shelves -> resources.getString(R.string.place_shelf, Rack.rowLetters(cell.row), cell.column + 1)
     RackKind.Bins -> resources.getString(R.string.place_bin, label(cell))

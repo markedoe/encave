@@ -95,6 +95,7 @@ data class HelpArticle(
                 listOf(
                     HelpSection(R.string.help_racks_grid, R.string.kind_grid, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_racks_staggered, R.string.kind_staggered, Icons.Outlined.Hive),
+                    HelpSection(R.string.help_racks_layers, R.string.help_racks_layers_title, Icons.Outlined.Hive),
                     HelpSection(R.string.help_racks_shelves, R.string.kind_shelves, Icons.Outlined.Kitchen),
                     HelpSection(R.string.help_racks_bins, R.string.kind_bins, Icons.Outlined.Diamond),
                     HelpSection(R.string.help_racks_places, R.string.help_racks_places_title),

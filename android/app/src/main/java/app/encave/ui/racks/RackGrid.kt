@@ -102,12 +102,11 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
         RackKind.Shelves -> cell * 0.1f
         RackKind.Bins -> 0.dp
     }
-    val pad = if (rack.kind == RackKind.Grid || rack.kind == RackKind.Staggered) cell * 0.12f else 0.dp
+    val pad = if (rack.isFramed) cell * 0.12f else 0.dp
     val header = if (showHeaders) maxOf(18.dp, cell * 0.42f) else 0.dp
-    val offsets = rack.kind == RackKind.Staggered || rack.kind == RackKind.Bins
     val width = (0 until rack.rows).maxOf { row ->
         val n = rack.columnsInRow(row)
-        val offset = if (offsets && row % 2 == 1) (size + spacing) / 2 else 0.dp
+        val offset = if (rack.isOffset(row)) (size + spacing) / 2 else 0.dp
         header + offset + size * n + spacing * (n - 1)
     } + pad * 2
     val overlap = when (rack.kind) {
@@ -120,7 +119,15 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
         RackKind.Shelves -> cell * 0.42f
         else -> 0.dp
     }
-    val shelf = if (rack.kind == RackKind.Shelves) maxOf(4.dp, cell * 0.09f) else 0.dp
+    if (rack.hasShelfLayers) {
+        // Each shelf: its layers nesting into each other, the shelf under them, a gap to the next.
+        val shelves = rack.shelfRows
+        val height = shelves.fold(0.dp) { total, rows ->
+            total + cellHeight * rows.count() - overlap * (rows.count() - 1) + cell * SHELF_BAR_GAP + shelfBar(cell)
+        } + cell * SHELF_GAP * (shelves.size - 1)
+        return width to height
+    }
+    val shelf = if (rack.kind == RackKind.Shelves) shelfBar(cell) else 0.dp
     val headerRow = if (showHeaders && (rack.kind == RackKind.Grid || rack.kind == RackKind.Shelves)) labelHeight + gap else 0.dp
     val height = headerRow + (cellHeight + shelf) * rack.rows - overlap * (rack.rows - 1) + gap * (rack.rows - 1) + pad * 2
     return width to height
@@ -152,6 +159,15 @@ fun fittingCellSize(rack: Rack, width: Dp, height: Dp, showHeaders: Boolean = tr
     return search(16f, if (withNames) nameSize - 0.01f else 80f).dp
 }
 
+/** A continuous honeycomb or a grid, drawn inside a frame. */
+private val Rack.isFramed: Boolean get() = kind == RackKind.Grid || (kind == RackKind.Staggered && !hasShelfLayers)
+
+/** Fridge with bottles in layers: the space above each shelf bar and between two shelves, in cell sizes. */
+private const val SHELF_BAR_GAP = 0.04f
+private const val SHELF_GAP = 0.12f
+
+private fun shelfBar(cell: Dp): Dp = maxOf(4.dp, cell * 0.09f)
+
 /** Light wine colors need dark text written on them; red and fortified need light text. */
 val WineColor?.prefersDarkLabel: Boolean
     get() = this != WineColor.Red && this != WineColor.Fortified
@@ -175,7 +191,8 @@ private fun Modifier.overlapUp(overlap: Dp) = layout { measurable, constraints -
 /**
  * Draws a rack as it looks in real life:
  * - grid: square cells with row letters and column numbers,
- * - honeycomb: touching round holes, every other row offset by half,
+ * - honeycomb: touching round holes, every other row offset by half; on shelves (a wine
+ *   fridge), each shelf's layers nest into each other in quincunx above a shelf,
  * - shelves: a row of bottles on a shelf, with dots for the places behind,
  * - bins: diamond bins showing a small pile of bottles and a count.
  * From [RackLabels.vintageSize] bottles show their vintage, and from [RackLabels.nameSize]
@@ -237,7 +254,6 @@ fun RackGrid(
         RackKind.Shelves -> cellSize * 0.42f
         else -> 0.dp
     }
-    val offsetsOddRows = rack.kind == RackKind.Staggered || rack.kind == RackKind.Bins
     val headerWidth = maxOf(18.dp, cellSize * 0.42f)
     val scheme = MaterialTheme.colorScheme
     // No touch-target minimum here: the rack screen fits the rack to the screen and zooms from there.
@@ -279,7 +295,7 @@ fun RackGrid(
         Column(
             Modifier
                 .then(
-                    if (rack.kind == RackKind.Grid || rack.kind == RackKind.Staggered) {
+                    if (rack.isFramed) {
                         Modifier.background(scheme.surfaceContainer, RoundedCornerShape(cellSize * 0.22f)).padding(cellSize * 0.12f)
                     } else {
                         Modifier
@@ -300,14 +316,24 @@ fun RackGrid(
                 }
             }
             for (row in 0 until rack.rows) {
-                Column(if (row > 0 && overlap > 0.dp) Modifier.overlapUp(overlap) else Modifier) {
+                // On a fridge with layers, a shelf's top layer starts below the previous shelf.
+                val place = rack.shelfPlace(row)
+                val startsShelf = place != null && place.layer == place.layers - 1
+                if (startsShelf && row > 0) Spacer(Modifier.height(cellSize * SHELF_GAP))
+                Column(if (row > 0 && overlap > 0.dp && !startsShelf) Modifier.overlapUp(overlap) else Modifier) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (showHeaders) {
                             Box(Modifier.width(headerWidth).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
-                                Text(Rack.rowLetters(row), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                                // Shelves are numbered beside their bottom layer; other racks letter their rows.
+                                val header = when {
+                                    place == null -> Rack.rowLetters(row)
+                                    place.layer == 0 -> "${place.shelf + 1}"
+                                    else -> ""
+                                }
+                                Text(header, style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
                             }
                         }
-                        if (offsetsOddRows && row % 2 == 1) Spacer(Modifier.width((cellWidth + spacing) / 2))
+                        if (rack.isOffset(row)) Spacer(Modifier.width((cellWidth + spacing) / 2))
                         Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
                             for (column in 0 until rack.columnsInRow(row)) {
                                 val cell = RackCell(rack.id, row, column)
@@ -333,9 +359,21 @@ fun RackGrid(
                             Box(
                                 Modifier
                                     .width(cellWidth * rack.columnsInRow(row) + spacing * (rack.columnsInRow(row) - 1))
-                                    .height(maxOf(4.dp, cellSize * 0.09f))
+                                    .height(shelfBar(cellSize))
                                     .background(scheme.outlineVariant, CircleShape),
                             )
+                        }
+                    }
+                    if (place != null && place.layer == 0) {
+                        // The shelf under its layers, as wide as the widest of them.
+                        val shelfWidth = rack.shelfRows[place.shelf].maxOf { layer ->
+                            val n = rack.columnsInRow(layer)
+                            (if (rack.isOffset(layer)) (cellWidth + spacing) / 2 else 0.dp) + cellWidth * n + spacing * (n - 1)
+                        }
+                        Spacer(Modifier.height(cellSize * SHELF_BAR_GAP))
+                        Row {
+                            if (showHeaders) Spacer(Modifier.width(headerWidth))
+                            Box(Modifier.width(shelfWidth).height(shelfBar(cellSize)).background(scheme.outlineVariant, CircleShape))
                         }
                     }
                 }
@@ -595,18 +633,41 @@ private fun Pile(colors: List<app.encave.core.WineColor?>, bottle: Dp) {
 @Composable
 fun RackThumbnail(rack: Rack, cellar: Cellar, modifier: Modifier = Modifier) {
     val byCell = cellar.bottlesByCell(rack)
-    val palette = LocalWinePalette.current
-    val empty = MaterialTheme.colorScheme.outlineVariant
-    Column(modifier.clearAndSetSemantics { }, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        for (row in 0 until minOf(rack.rows, 6)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                if (rack.kind == RackKind.Staggered && row % 2 == 1) Spacer(Modifier.width(6.dp))
-                for (column in 0 until minOf(rack.columnsInRow(row), 10)) {
-                    val bottles = byCell[RackCell(rack.id, row, column)].orEmpty()
-                    val color = if (bottles.isEmpty()) empty else palette[bottles.first().let { cellar.wines[it.wineId]?.color }]
-                    Box(Modifier.size(9.dp).background(color, if (rack.kind == RackKind.Bins) DiamondShape else CircleShape))
+    if (rack.hasShelfLayers) {
+        // Shelves of layers nesting into each other, each above a shelf: up to eight layers.
+        val shown = mutableListOf<IntRange>()
+        for (rows in rack.shelfRows) {
+            if (shown.sumOf { it.count() } + rows.count() > 8) break
+            shown += rows
+        }
+        val bar = MaterialTheme.colorScheme.outlineVariant
+        Column(modifier.clearAndSetSemantics { }, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            for (rows in shown.ifEmpty { rack.shelfRows.take(1) }) {
+                Column {
+                    for (row in rows) {
+                        ThumbnailRow(rack, row, byCell, cellar, if (row > rows.first) Modifier.overlapUp(1.5.dp) else Modifier)
+                    }
+                    Box(Modifier.padding(top = 1.dp).width(12.dp * rack.maxColumns).height(2.dp).background(bar, CircleShape))
                 }
             }
+        }
+    } else {
+        Column(modifier.clearAndSetSemantics { }, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            for (row in 0 until minOf(rack.rows, 6)) ThumbnailRow(rack, row, byCell, cellar)
+        }
+    }
+}
+
+@Composable
+private fun ThumbnailRow(rack: Rack, row: Int, byCell: Map<RackCell, List<Bottle>>, cellar: Cellar, modifier: Modifier = Modifier) {
+    val palette = LocalWinePalette.current
+    val empty = MaterialTheme.colorScheme.outlineVariant
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        if (rack.kind == RackKind.Staggered && rack.isOffset(row)) Spacer(Modifier.width(6.dp))
+        for (column in 0 until minOf(rack.columnsInRow(row), 10)) {
+            val bottles = byCell[RackCell(rack.id, row, column)].orEmpty()
+            val color = if (bottles.isEmpty()) empty else palette[bottles.first().let { cellar.wines[it.wineId]?.color }]
+            Box(Modifier.size(9.dp).background(color, if (rack.kind == RackKind.Bins) DiamondShape else CircleShape))
         }
     }
 }

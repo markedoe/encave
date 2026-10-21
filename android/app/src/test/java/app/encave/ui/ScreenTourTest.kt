@@ -430,7 +430,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
     fun racks() {
         tab("Racks")
         capture("05-racks")
-        for (index in 0 until 6) {
+        for (index in 0 until 7) {
             scrollTo("rack.row.$index")
             tap("rack.row.$index")
             capture("06-rack-$index")

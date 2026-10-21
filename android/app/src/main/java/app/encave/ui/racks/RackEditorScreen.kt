@@ -90,8 +90,11 @@ import java.util.UUID
 
 private const val MAX_SIZE = 40
 
-/** A ready-made size for a kind of storage. */
-private data class RackPreset(val title: Int, val kind: RackKind, val rows: Int, val columns: Int, val depth: Int = 1, val binCapacity: Int = 10)
+/** A ready-made size for a kind of storage; [shelfLayers] for a honeycomb on shelves. */
+private data class RackPreset(
+    val title: Int, val kind: RackKind, val rows: Int, val columns: Int, val depth: Int = 1, val binCapacity: Int = 10,
+    val shelfLayers: List<Int>? = null,
+)
 
 private val presets = listOf(
     RackPreset(R.string.preset_grid_6x8, RackKind.Grid, 6, 8),
@@ -99,6 +102,7 @@ private val presets = listOf(
     RackPreset(R.string.preset_grid_large, RackKind.Grid, 10, 12),
     RackPreset(R.string.preset_staggered_5x8, RackKind.Staggered, 5, 8),
     RackPreset(R.string.preset_staggered_8x10, RackKind.Staggered, 8, 10),
+    RackPreset(R.string.preset_fridge_layers, RackKind.Staggered, 10, 6, depth = 2, shelfLayers = List(5) { 2 }),
     RackPreset(R.string.preset_fridge_6x6, RackKind.Shelves, 6, 6),
     RackPreset(R.string.preset_fridge_2deep, RackKind.Shelves, 6, 7, depth = 2),
     RackPreset(R.string.preset_cabinet, RackKind.Shelves, 10, 8, depth = 2),
@@ -106,6 +110,53 @@ private val presets = listOf(
     RackPreset(R.string.preset_crates_6, RackKind.Bins, 3, 4, binCapacity = 6),
     RackPreset(R.string.preset_crates_12, RackKind.Bins, 2, 4, binCapacity = 12),
 )
+
+/**
+ * One shelf of a fridge with bottles in layers, while editing: 1 to 3 layers, and the
+ * bottles of each layer from the bottom (always three values, so changing the number of
+ * layers keeps what was typed).
+ */
+data class ShelfDraft(val layers: Int = 2, val counts: List<Int> = quincunx(6)) {
+    /** A new bottom layer; the layers above follow it while they keep their usual count. */
+    fun withBottom(value: Int): ShelfDraft {
+        val old = counts[0]
+        return copy(
+            counts = listOf(
+                value,
+                if (counts[1] == maxOf(1, old - 1)) maxOf(1, value - 1) else counts[1],
+                if (counts[2] == old) value else counts[2],
+            ),
+        )
+    }
+
+    fun withLayer(layer: Int, value: Int): ShelfDraft =
+        if (layer == 0) withBottom(value) else copy(counts = counts.toMutableList().also { it[layer] = value })
+
+    /** The rows of this shelf, from the top: its top layer first. */
+    val widths: List<Int> get() = counts.take(layers).reversed()
+
+    companion object {
+        /** A bottom layer of [bottom] bottles, each layer above resting in the gaps of the one below. */
+        fun quincunx(bottom: Int) = listOf(bottom, maxOf(1, bottom - 1), bottom)
+
+        /** The shelves of a fridge with layers, as the editor shows them. */
+        fun of(rack: Rack): List<ShelfDraft> = rack.shelfRows.map { rows ->
+            val fromBottom = rows.reversed().map { rack.columnsInRow(it) }
+            val bottom = fromBottom.first()
+            ShelfDraft(rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3))
+        }
+
+        /** The rack these shelves make (rows are the layers, from the top). */
+        fun rack(id: UUID, name: String, depth: Int, shelves: List<ShelfDraft>): Rack {
+            val widths = shelves.flatMap { it.widths }
+            return Rack(
+                id = id, name = name, kind = RackKind.Staggered, rows = widths.size.coerceAtLeast(1),
+                columns = shelves.maxOfOrNull { it.counts[0] } ?: 1, depth = depth, rowColumns = widths,
+                shelfLayers = shelves.map { it.layers },
+            ).normalized()
+        }
+    }
+}
 
 val RackKind.icon: ImageVector
     get() = when (this) {
@@ -140,6 +191,10 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     var binCapacity by rememberSaveable { mutableIntStateOf(existing?.binCapacity ?: 10) }
     var customRows by rememberSaveable { mutableStateOf(existing?.rowColumns != null) }
     val rowColumns = rememberRetained("rack.rowColumns") { mutableStateListOf<Int>().apply { existing?.rowColumns?.let { addAll(it) } } }
+    // Honeycomb: on shelves (a wine fridge with bottles in layers) rather than continuous.
+    var onShelves by rememberSaveable { mutableStateOf(existing?.hasShelfLayers == true) }
+    val shelves = rememberRetained("rack.shelves") { mutableStateListOf<ShelfDraft>().apply { existing?.let { addAll(ShelfDraft.of(it)) } } }
+    val layered = kind == RackKind.Staggered && onShelves
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val id = rememberSaveable { existing?.id ?: UUID.randomUUID() }
@@ -149,12 +204,16 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         while (rowColumns.size > count) rowColumns.removeAt(rowColumns.lastIndex)
     }
 
-    fun preview() = Rack(
-        id = id, name = name.trim(), kind = kind, rows = rows,
-        columns = if (customRows && kind != RackKind.Staggered) rowColumns.maxOrNull() ?: columns else columns,
-        depth = depth, binCapacity = binCapacity,
-        rowColumns = if (customRows && kind != RackKind.Staggered) rowColumns.toList() else null,
-    ).normalized()
+    fun preview() = if (layered) {
+        ShelfDraft.rack(id, name.trim(), depth, shelves)
+    } else {
+        Rack(
+            id = id, name = name.trim(), kind = kind, rows = rows,
+            columns = if (customRows && kind != RackKind.Staggered) rowColumns.maxOrNull() ?: columns else columns,
+            depth = depth, binCapacity = binCapacity,
+            rowColumns = if (customRows && kind != RackKind.Staggered) rowColumns.toList() else null,
+        ).normalized()
+    }
 
     fun apply(preset: RackPreset) {
         kind = preset.kind
@@ -163,12 +222,26 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         depth = preset.depth
         binCapacity = preset.binCapacity
         customRows = false
+        onShelves = preset.shelfLayers != null
+        preset.shelfLayers?.let { layers ->
+            shelves.clear()
+            layers.forEach { shelves.add(ShelfDraft(it, ShelfDraft.quincunx(preset.columns))) }
+        }
     }
 
-    fun matches(preset: RackPreset) = !customRows && rows == preset.rows && columns == preset.columns && when (kind) {
-        RackKind.Bins -> binCapacity == preset.binCapacity
-        else -> depth == preset.depth
+    fun matches(preset: RackPreset): Boolean {
+        val layers = preset.shelfLayers
+        if (layers != null) {
+            return layered && depth == preset.depth &&
+                shelves.map { it.widths } == layers.map { ShelfDraft(it, ShelfDraft.quincunx(preset.columns)).widths }
+        }
+        return !customRows && !layered && rows == preset.rows && columns == preset.columns && when (kind) {
+            RackKind.Bins -> binCapacity == preset.binCapacity
+            else -> depth == preset.depth
+        }
     }
+
+    fun layerCount() = shelves.sumOf { it.layers }
 
     fun save() {
         showErrors = true
@@ -223,7 +296,10 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 RackKind.entries.forEach { option ->
                     KindCard(option, selected = kind == option, Modifier.weight(1f)) {
                         kind = option
-                        if (option == RackKind.Staggered) customRows = false
+                        if (option == RackKind.Staggered) {
+                            customRows = false
+                            depth = depth.coerceAtMost(Rack.MAX_STAGGERED_DEPTH)
+                        }
                         if (existing == null) presets.firstOrNull { it.kind == option }?.let(::apply)
                     }
                 }
@@ -232,9 +308,32 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
             Hint(stringResource(R.string.help_kind_footer))
 
             Header(R.string.rack_size_title)
-            SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
-            Hint(stringResource(R.string.help_field_rows))
-            if (!customRows) {
+            if (kind == RackKind.Staggered) {
+                Text(stringResource(R.string.rack_layout), style = MaterialTheme.typography.bodyLarge)
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    listOf(false to R.string.rack_layout_continuous, true to R.string.rack_layout_shelves).forEachIndexed { index, (value, label) ->
+                        SegmentedButton(
+                            selected = onShelves == value,
+                            onClick = {
+                                onShelves = value
+                                // A new fridge on shelves: five shelves of 6 bottles and 5 on top, two deep.
+                                if (value && shelves.isEmpty()) {
+                                    repeat(5) { shelves.add(ShelfDraft()) }
+                                    depth = 2
+                                }
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(index, 2),
+                            modifier = Modifier.testTag(if (value) "rack.layout.shelves" else "rack.layout.continuous"),
+                        ) { Text(stringResource(label)) }
+                    }
+                }
+                Hint(stringResource(R.string.help_field_layout))
+            }
+            if (!layered) {
+                SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
+                Hint(stringResource(R.string.help_field_rows))
+            }
+            if (!customRows && !layered) {
                 SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
                 Hint(stringResource(R.string.help_field_columns))
             }
@@ -268,17 +367,35 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     Hint(stringResource(R.string.help_field_bin))
                 }
                 RackKind.Staggered -> {
-                    Text(stringResource(R.string.rack_bottles_per_cell), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.rack_rows_deep), style = MaterialTheme.typography.bodyLarge)
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                        (1..Rack.MAX_DEPTH).forEach { value ->
+                        (1..Rack.MAX_STAGGERED_DEPTH).forEach { value ->
                             SegmentedButton(
                                 selected = depth == value, onClick = { depth = value },
-                                shape = SegmentedButtonDefaults.itemShape(value - 1, Rack.MAX_DEPTH),
+                                shape = SegmentedButtonDefaults.itemShape(value - 1, Rack.MAX_STAGGERED_DEPTH),
                             ) { Text("$value") }
                         }
                     }
-                    Hint(stringResource(R.string.help_field_staggered_depth))
+                    Hint(stringResource(if (layered) R.string.help_field_layer_depth else R.string.help_field_staggered_depth))
                 }
+            }
+
+            if (layered) {
+                Header(R.string.rack_shelves_title)
+                shelves.forEachIndexed { index, shelf ->
+                    ShelfCard(
+                        number = index + 1, shelf = shelf, onChange = { shelves[index] = it },
+                        canAdd = layerCount() + shelf.layers <= Rack.MAX_SIZE,
+                        onDuplicate = { shelves.add(index + 1, shelf) },
+                        onApplyToAll = { shelves.indices.forEach { shelves[it] = shelf } },
+                        onDelete = if (shelves.size > 1) ({ shelves.removeAt(index) }) else null,
+                    )
+                }
+                OutlinedButton(
+                    onClick = { shelves.add(shelves.lastOrNull() ?: ShelfDraft()) },
+                    enabled = layerCount() + Rack.MAX_LAYERS <= Rack.MAX_SIZE,
+                    modifier = Modifier.fillMaxWidth().testTag("rack.shelf.add"),
+                ) { Text(stringResource(R.string.rack_shelf_add)) }
             }
 
             if (kind != RackKind.Staggered) {
@@ -329,7 +446,10 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     RackGrid(rack, previewCellar(cellar, rack), cellSize = 26.dp, showHeaders = false)
                 }
             }
-            Text(stringResource(R.string.help_rack_holds, rack.capacity), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                stringResource(if (layered) R.string.help_rack_holds_shelves else R.string.help_rack_holds, rack.capacity),
+                style = MaterialTheme.typography.bodyMedium,
+            )
 
             if (existing != null) {
                 OutlinedButton(
@@ -377,6 +497,61 @@ private fun KindCard(kind: RackKind, selected: Boolean, modifier: Modifier = Mod
             Icon(kind.icon, contentDescription = null, tint = if (selected) scheme.primary else scheme.onSurfaceVariant)
             Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleSmall)
             Text(stringResource(kind.bodyRes), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** A shelf of a fridge with layers: its layers and the bottles of each, with what can be done to it. */
+@Composable
+private fun ShelfCard(
+    number: Int,
+    shelf: ShelfDraft,
+    onChange: (ShelfDraft) -> Unit,
+    canAdd: Boolean,
+    onDuplicate: () -> Unit,
+    onApplyToAll: () -> Unit,
+    onDelete: (() -> Unit)?,
+) {
+    OutlinedCard(Modifier.fillMaxWidth().testTag("rack.shelf")) {
+        Column(Modifier.padding(Dimens.m), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Text(
+                stringResource(R.string.rack_shelf, number), style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(stringResource(R.string.rack_layers_per_shelf), style = MaterialTheme.typography.bodyLarge)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                (1..Rack.MAX_LAYERS).forEach { value ->
+                    SegmentedButton(
+                        selected = shelf.layers == value, onClick = { onChange(shelf.copy(layers = value)) },
+                        shape = SegmentedButtonDefaults.itemShape(value - 1, Rack.MAX_LAYERS),
+                    ) { Text("$value") }
+                }
+            }
+            SizeRow(stringResource(R.string.rack_layer_bottom), shelf.counts[0], { onChange(shelf.withLayer(0, it)) }, 1..MAX_SIZE)
+            if (shelf.layers == 3) {
+                SizeRow(stringResource(R.string.rack_layer_middle), shelf.counts[1], { onChange(shelf.withLayer(1, it)) }, 1..MAX_SIZE)
+            }
+            if (shelf.layers > 1) {
+                val top = shelf.layers - 1
+                SizeRow(stringResource(R.string.rack_layer_top), shelf.counts[top], { onChange(shelf.withLayer(top, it)) }, 1..MAX_SIZE)
+            }
+            Hint(
+                when (shelf.layers) {
+                    1 -> stringResource(R.string.rack_layers_hint_1, shelf.counts[0])
+                    2 -> stringResource(R.string.rack_layers_hint_2, shelf.counts[0], shelf.counts[1])
+                    else -> stringResource(R.string.rack_layers_hint_3, shelf.counts[0], shelf.counts[1], shelf.counts[2])
+                },
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                TextButton(onClick = onDuplicate, enabled = canAdd) { Text(stringResource(R.string.rack_shelf_duplicate)) }
+                TextButton(onClick = onApplyToAll) { Text(stringResource(R.string.rack_shelf_apply_all)) }
+                if (onDelete != null) {
+                    TextButton(
+                        onClick = onDelete,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) { Text(stringResource(R.string.rack_shelf_delete)) }
+                }
+            }
         }
     }
 }
