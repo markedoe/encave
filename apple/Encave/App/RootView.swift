@@ -1,5 +1,8 @@
 import CaveKit
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 /// Four sections: a tab bar on iPhone, a sidebar on iPad and Mac.
 /// Sheets and the undo banner live here so every screen can use them.
@@ -43,6 +46,13 @@ struct RootView: View {
             default: break
             }
         }
+        #if os(macOS)
+        // A Mac window stays active behind other apps: coming back to Encave clears the
+        // notification of changes too.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            ChangeNotifications.appBecameActive()
+        }
+        #endif
         .onDisappear {
             if isCounted { isCounted = false; model.sceneDidEnterBackground() }
         }
