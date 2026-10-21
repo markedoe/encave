@@ -163,7 +163,7 @@ public extension Cellar {
 
     /// Names counted case-insensitively, the most used first. Each is shown with its most
     /// used spelling (ties: the first in UTF-16 order, as in Kotlin), so the label does not depend on
-    /// the order wines are stored in, and is the same on every platform.
+    /// the order records are stored in, and is the same on every platform.
     static func byUse(_ names: [String]) -> [String] {
         var spellings: [String: [String: Int]] = [:]
         for name in names { spellings[name.lowercased(), default: [:]][name, default: 0] += 1 }
