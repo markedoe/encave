@@ -36,6 +36,10 @@ object SampleData {
         val occasion2: String = "Christmas dinner",
     )
 
+    /** A wine fridge with two zones: layers of each shelf from the top, bottles of each row from the top. Also the editor's preset. */
+    val TWO_ZONE_FRIDGE_LAYERS = listOf(1, 2, 1, 1, 1, 2, 2, 2, 1, 1)
+    val TWO_ZONE_FRIDGE_ROWS = listOf(6, 5, 6, 6, 6, 6, 4, 5, 4, 5, 4, 5, 6, 6)
+
     fun cellar(year: Int = LocalDate.now().year, labels: Labels = Labels(), now: Instant = ReferenceDates.now()): Cellar {
         val cellar = Cellar()
         val main = Rack(name = labels.mainRack, rows = 6, columns = 8)
@@ -45,10 +49,11 @@ object SampleData {
         val deep = Rack(name = labels.deepRack, rows = 4, columns = 6, depth = 2)
         val honeycomb = Rack(name = labels.honeycomb, kind = RackKind.Staggered, rows = 5, columns = 8)
         val stairs = Rack(name = labels.stairs, rows = 5, columns = 6, rowColumns = listOf(2, 3, 4, 5, 6))
-        // A fridge whose top shelf holds bottles in two layers (6 and 5 on top), two deep.
+        // A fridge with two temperature zones (shelves 1–4, then 5–10), two deep: shelf 2 holds
+        // 6 bottles and 5 on top, shelves 6–8 hold 5 and 4 on top, the others one layer of 6.
         val largeFridge = Rack(
-            name = labels.largeFridge, kind = RackKind.Staggered, rows = 4, columns = 6, depth = 2,
-            shelfLayers = listOf(2, 1, 1),
+            name = labels.largeFridge, kind = RackKind.Staggered, rows = TWO_ZONE_FRIDGE_ROWS.size, columns = 6, depth = 2,
+            rowColumns = TWO_ZONE_FRIDGE_ROWS, shelfLayers = TWO_ZONE_FRIDGE_LAYERS, zoneBreaks = listOf(4),
         )
         listOf(main, small, bins, deep, honeycomb, stairs, largeFridge).forEach { cellar.addRack(it) }
 

@@ -613,6 +613,19 @@ import Testing
         #expect(decoded.rows == 3 && decoded.shelfLayers == [2, 1])
         let again = try JSONDecoder().decode(Rack.self, from: JSONEncoder().encode(fridge))
         #expect(again == fridge)
+        // Zones: breaks between kept shelves only, sorted, once.
+        let zoned = Rack(name: "Z", kind: .staggered, rows: 1, columns: 6, shelfLayers: [1, 2, 1, 1], zoneBreaks: [3, 0, 2, 2, 9])
+        #expect(zoned.zoneBreaks == [2, 3])
+        #expect([0, 1, 2, 3].map(zoned.zone(ofShelf:)) == [0, 0, 1, 2])
+        #expect(zoned.zoneCount == 3)
+        #expect(Rack(name: "N", kind: .staggered, rows: 1, columns: 6, shelfLayers: [1, 1], zoneBreaks: [0]).zoneBreaks == nil)
+        #expect(Rack(name: "C", kind: .staggered, rows: 2, columns: 6, zoneBreaks: [1]).zoneBreaks == nil)
+        let zonedAgain = try JSONDecoder().decode(Rack.self, from: JSONEncoder().encode(zoned))
+        #expect(zonedAgain == zoned)
+        // The sample fridge: two zones, shelves 1–4 then 5–10, as the editor's preset.
+        let sample = SampleData.cellar(year: 2026).racks.first { $0.hasShelfLayers }!
+        #expect(sample.shelfLayers?.count == 10 && sample.zoneBreaks == [4] && sample.depth == 2)
+        #expect(sample.rows == SampleData.twoZoneFridgeRows.count)
         // A continuous honeycomb writes no shelf layers.
         let plain = try JSONEncoder().encode(Rack(name: "H", kind: .staggered, rows: 2, columns: 2))
         #expect(!String(decoding: plain, as: UTF8.self).contains("shelfLayers"))

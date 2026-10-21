@@ -83,6 +83,20 @@ class RackTest {
         assertEquals(2, decoded.depth)
         assertEquals(listOf(2, 1), decoded.shelfLayers)
         assertEquals(fridge, CellarJson.decode(CellarJson.encode(Cellar(racks = listOf(fridge)))).racks.single())
+        // Zones: breaks between kept shelves only, sorted, once.
+        val zoned = Rack(name = "Z", kind = RackKind.Staggered, rows = 1, columns = 6, shelfLayers = listOf(1, 2, 1, 1),
+            zoneBreaks = listOf(3, 0, 2, 2, 9)).normalized()
+        assertEquals(listOf(2, 3), zoned.zoneBreaks)
+        assertEquals(listOf(0, 0, 1, 2), (0..3).map { zoned.zoneOfShelf(it) })
+        assertEquals(3, zoned.zoneCount)
+        assertNull(Rack(name = "N", kind = RackKind.Staggered, rows = 1, columns = 6, shelfLayers = listOf(1, 1), zoneBreaks = listOf(0)).normalized().zoneBreaks)
+        assertNull(Rack(name = "C", kind = RackKind.Staggered, rows = 2, columns = 6, zoneBreaks = listOf(1)).normalized().zoneBreaks)
+        assertEquals(zoned, CellarJson.decode(CellarJson.encode(Cellar(racks = listOf(zoned)))).racks.single())
+        // The sample fridge: two zones, shelves 1–4 then 5–10, as the editor's preset.
+        val sample = SampleData.cellar(year = 2026).racks.first { it.hasShelfLayers }
+        assertEquals(10, sample.shelfLayers?.size)
+        assertEquals(listOf(4), sample.zoneBreaks)
+        assertEquals(SampleData.TWO_ZONE_FRIDGE_ROWS.size, sample.rows)
         val plain = CellarJson.encode(Cellar(racks = listOf(Rack(name = "H", kind = RackKind.Staggered, rows = 2, columns = 2))))
         assertFalse(plain.contains("shelfLayers"))
     }

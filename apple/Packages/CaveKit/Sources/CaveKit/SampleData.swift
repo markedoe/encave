@@ -30,6 +30,11 @@ public enum SampleData {
         public init() {}
     }
 
+    /// A wine fridge with two zones: layers of each shelf from the top, and bottles of each
+    /// row (layer) from the top. Also the rack editor's preset.
+    public static let twoZoneFridgeLayers = [1, 2, 1, 1, 1, 2, 2, 2, 1, 1]
+    public static let twoZoneFridgeRows = [6, 5, 6, 6, 6, 6, 4, 5, 4, 5, 4, 5, 6, 6]
+
     public static func cellar(
         year: Int = CellarYear.current,
         labels: Labels = Labels()
@@ -42,9 +47,11 @@ public enum SampleData {
         let deep = Rack(name: labels.deepRack, rows: 4, columns: 6, depth: 2)
         let honeycomb = Rack(name: labels.honeycomb, kind: .staggered, rows: 5, columns: 8)
         let stairs = Rack(name: labels.stairs, rows: 5, columns: 6, rowColumns: [2, 3, 4, 5, 6])
-        // A fridge whose top shelf holds bottles in two layers (6 and 5 on top), two deep.
-        let largeFridge = Rack(name: labels.largeFridge, kind: .staggered, rows: 4, columns: 6, depth: 2,
-                               shelfLayers: [2, 1, 1])
+        // A fridge with two temperature zones (shelves 1–4, then 5–10), two deep: shelf 2 holds
+        // 6 bottles and 5 on top, shelves 6–8 hold 5 and 4 on top, the others one layer of 6.
+        let largeFridge = Rack(name: labels.largeFridge, kind: .staggered, rows: 14, columns: 6, depth: 2,
+                               rowColumns: SampleData.twoZoneFridgeRows, shelfLayers: SampleData.twoZoneFridgeLayers,
+                               zoneBreaks: [4])
         for rack in [main, small, bins, deep, honeycomb, stairs, largeFridge] { cellar.addRack(rack) }
 
         let entries: [(Wine, Int, Rack?)] = [

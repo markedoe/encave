@@ -239,7 +239,18 @@ data class Rack(
      * the top: a shelf's last row is its bottom layer. See [normalized].
      */
     val shelfLayers: List<Int>? = null,
+    /**
+     * Fridge with shelf layers and temperature zones: the shelves (0 is the top one) that
+     * start a new zone, below a divider. Null for a single zone.
+     */
+    val zoneBreaks: List<Int>? = null,
 ) {
+    /** The temperature zone of each shelf, 0 for the top one (only with shelf layers). */
+    fun zoneOfShelf(shelf: Int): Int = zoneBreaks.orEmpty().count { it <= shelf }
+
+    /** Zones of a fridge with shelf layers: 1 without breaks. */
+    val zoneCount: Int get() = (zoneBreaks?.size ?: 0) + 1
+
     /**
      * Cells in a row: custom widths first, then one fewer on offset honeycomb rows (on
      * shelves: one fewer on the layer above the bottom one, as bottles rest in the gaps).
@@ -372,12 +383,16 @@ data class Rack(
             }
             layers = kept
         }
+        // Breaks between kept shelves only, each once, in order.
+        val breaks = layers?.let { kept -> zoneBreaks.orEmpty().filter { it in 1 until kept.size }.toSortedSet().toList() }
+            ?.takeIf { it.isNotEmpty() }
         val fixed = copy(
             rows = if (layers != null) total else rows.coerceIn(1, MAX_SIZE), columns = columns.coerceIn(1, MAX_SIZE),
             depth = depth.coerceIn(1, if (kind == RackKind.Staggered) MAX_STAGGERED_DEPTH else MAX_DEPTH),
             binCapacity = binCapacity.coerceIn(1, MAX_SIZE),
             rowColumns = rowColumns?.take(MAX_SIZE)?.map { it.coerceIn(1, MAX_SIZE) },
             shelfLayers = layers,
+            zoneBreaks = breaks,
         )
         return if (fixed == this) this else fixed
     }

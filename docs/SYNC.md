@@ -102,6 +102,10 @@ implementations:
     from the top, a shelf's last row being its bottom layer). It is left out (and
     dropped when read) for other kinds and when empty. Without `rowColumns`, the
     second layer of a shelf holds `columns − 1` bottles and the others `columns`;
+  - `rack.zoneBreaks` (optional array of integers) marks temperature zones on such
+    a fridge: each value is a shelf (0 is the top one) that starts a new zone.
+    Only values from 1 to the number of kept shelves − 1 are kept, sorted, each
+    once; it is left out when none remain and whenever `shelfLayers` is;
   - a document's `name` is normalized the same way on every device, when read
     and when set: each control character (Unicode category Cc) becomes a
     space, `/` and `\` become `-`, white space (Unicode `White_Space`) is

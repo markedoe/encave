@@ -214,6 +214,9 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// shelf, each 1 to 3; nil for a continuous honeycomb. Rows are the layers, lettered from
     /// the top: a shelf's last row is its bottom layer.
     public var shelfLayers: [Int]?
+    /// Fridge with shelf layers and temperature zones: the shelves (0 is the top one) that
+    /// start a new zone, below a divider. Nil for a single zone.
+    public var zoneBreaks: [Int]?
     /// Bottles per bin (bins only).
     public var binCapacity: Int
     /// Cells in each row when rows differ (a triangle top, an irregular cellar).
@@ -231,17 +234,18 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     public init(
         id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
-        depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil, shelfLayers: [Int]? = nil
+        depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil, shelfLayers: [Int]? = nil,
+        zoneBreaks: [Int]? = nil
     ) {
         self.id = id; self.name = name; self.kind = kind
         self.rows = Rack.bounded(rows); self.columns = Rack.bounded(columns)
         self.depth = Rack.boundedDepth(depth, kind: kind); self.binCapacity = Rack.bounded(binCapacity)
         self.rowColumns = rowColumns.map { $0.prefix(Rack.maxSize).map(Rack.bounded) }
-        applyShelfLayers(shelfLayers)
+        applyShelfLayers(shelfLayers, zoneBreaks: zoneBreaks)
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers
+        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
     }
@@ -257,7 +261,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         depth = Rack.boundedDepth(try c.decodeIfPresent(Int.self, forKey: .depth) ?? 1, kind: kind)
         binCapacity = Rack.bounded(try c.decodeIfPresent(Int.self, forKey: .binCapacity) ?? 12)
         rowColumns = try c.decodeIfPresent([Int].self, forKey: .rowColumns)?.prefix(Rack.maxSize).map(Rack.bounded)
-        applyShelfLayers(try c.decodeIfPresent([Int].self, forKey: .shelfLayers))
+        applyShelfLayers(try c.decodeIfPresent([Int].self, forKey: .shelfLayers),
+                         zoneBreaks: try c.decodeIfPresent([Int].self, forKey: .zoneBreaks))
     }
 
     /// 1 to `maxSize`.
@@ -269,10 +274,12 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     }
 
     /// Keeps shelf layers only on a honeycomb, each brought into 1…3, as many shelves as fit
-    /// in `maxSize` rows; the rows are then the layers.
-    private mutating func applyShelfLayers(_ layers: [Int]?) {
+    /// in `maxSize` rows; the rows are then the layers. Zone breaks are kept only between
+    /// the kept shelves.
+    private mutating func applyShelfLayers(_ layers: [Int]?, zoneBreaks breaks: [Int]?) {
         guard kind == .staggered, let layers, !layers.isEmpty else {
             shelfLayers = nil
+            zoneBreaks = nil
             return
         }
         var kept: [Int] = [], total = 0
@@ -284,6 +291,9 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         }
         shelfLayers = kept
         rows = total
+        // Breaks between shelves only, each once, in order.
+        let between = Set((breaks ?? []).filter { (1..<kept.count).contains($0) }).sorted()
+        zoneBreaks = between.isEmpty ? nil : between
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -297,6 +307,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encode(binCapacity, forKey: .binCapacity)
         try c.encodeIfPresent(rowColumns, forKey: .rowColumns)
         try c.encodeIfPresent(shelfLayers, forKey: .shelfLayers)
+        try c.encodeIfPresent(zoneBreaks, forKey: .zoneBreaks)
     }
 
     /// Cells in a row: custom widths first, then one fewer on offset honeycomb rows (on
@@ -308,6 +319,12 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     /// A honeycomb on shelves, as a wine fridge with bottles laid in layers.
     public var hasShelfLayers: Bool { kind == .staggered && shelfLayers != nil }
+
+    /// The temperature zone of each shelf, 0 for the top one (only with shelf layers).
+    public func zone(ofShelf shelf: Int) -> Int { (zoneBreaks ?? []).filter { $0 <= shelf }.count }
+
+    /// Zones of a fridge with shelf layers: 1 without breaks.
+    public var zoneCount: Int { (zoneBreaks?.count ?? 0) + 1 }
 
     /// The rows of each shelf, from the top shelf (only with shelf layers).
     public var shelfRows: [Range<Int>] {

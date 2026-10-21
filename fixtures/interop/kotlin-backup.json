@@ -140,6 +140,9 @@
         "shelfLayers": [
           2,
           1
+        ],
+        "zoneBreaks": [
+          1
         ]
       }
     ],
