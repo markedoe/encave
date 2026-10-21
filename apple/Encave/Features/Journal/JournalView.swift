@@ -325,10 +325,13 @@ struct TastingRow: View {
     private func accessibilityText(wine: Wine?) -> String {
         let tasting = bottle.tasting
         var parts = [String(localized: "From my cellar"), wine?.displayName ?? String(localized: "Unknown wine")]
+        // The style in words, as shown under the note.
+        if let style = wine?.color?.name { parts.append(style) }
         if let rating = tasting?.rating { parts.append(String(localized: "\(rating) stars")) }
         parts.append((tasting?.date ?? bottle.addedAt).formatted(.dateTime.day().month(.wide)))
         if let occasion = tasting?.occasion { parts.append(occasion) }
         if let note = tasting?.note, !note.isEmpty { parts.append(note) }
+        if tasting?.isDetailed == true { parts.append(String(localized: "Full note")) }
         return parts.joined(separator: ", ")
     }
 }
