@@ -9,9 +9,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.encave.ui.AppViewModel
 
-/** Objects kept for one screen (its navigation entry) while the activity is recreated. */
+/**
+ * Objects kept for one screen (its navigation entry) while the activity is recreated. Those
+ * that are [AutoCloseable] are closed when the screen is left for good.
+ */
 class RetainedValues : ViewModel() {
     internal val values = HashMap<String, Any>()
+
+    override fun onCleared() {
+        values.values.filterIsInstance<AutoCloseable>().forEach { it.close() }
+    }
 }
 
 /**
