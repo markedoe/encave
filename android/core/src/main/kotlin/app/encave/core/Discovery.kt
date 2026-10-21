@@ -81,18 +81,7 @@ fun Cellar.discoveriesOf(wineId: UUID): List<Discovery> =
 
 /** Tags in use, most used first, for suggestions and filters. */
 val Cellar.discoveryTags: List<String>
-    get() {
-        val counts = LinkedHashMap<String, Pair<String, Int>>()
-        for (tag in discoveries.values.flatMap { it.tags }) {
-            val key = tag.lowercase(Locale.ROOT)
-            val (name, count) = counts[key] ?: (tag to 0)
-            counts[key] = name to count + 1
-        }
-        val collator = Cellar.collator()
-        return counts.values
-            .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.then { a, b -> collator.compare(a.first, b.first) })
-            .map { it.first }
-    }
+    get() = Cellar.byUse(discoveries.values.flatMap { it.tags })
 
 val Cellar.shoppingListCount: Int get() = discoveries.values.count { it.wantsToBuy }
 

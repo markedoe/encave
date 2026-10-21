@@ -1210,6 +1210,7 @@ FR = {
     "Add a Tasting": "Noter une dégustation",
     "A Bottle from My Cellar": "Une bouteille de ma cave",
     "It leaves your cellar.": "Elle sort de votre cave.",
+    "Your cellar has no bottle to open.": "Votre cave n’a aucune bouteille à ouvrir.",
     "Somewhere Else": "Ailleurs",
     "Restaurant, friends, a fair… Your cellar does not change.": "Restaurant, amis, salon… Votre cave ne change pas.",
     "Note a bottle opened from your cellar or a wine tasted elsewhere": "Noter une bouteille ouverte de votre cave ou un vin goûté ailleurs",

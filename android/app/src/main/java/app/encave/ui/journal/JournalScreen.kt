@@ -65,6 +65,7 @@ import app.encave.ui.components.RatingStars
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.StyleLabel
 import app.encave.ui.components.WineColorDot
+import app.encave.ui.components.labelRes
 import app.encave.ui.drink.TastingFields
 import app.encave.ui.drink.TastingFormState
 import app.encave.ui.navigation.InsightsRoute
@@ -120,7 +121,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val filter by viewModel.journalFilter.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
-    var chosenTag by rememberSaveable { mutableStateOf<String?>(null) }
+    val chosenTag by viewModel.journalTag.collectAsStateWithLifecycle()
     // The chosen tag while some wine tasted elsewhere still has it and the filter shows them.
     val tag = chosenTag?.takeIf { filter.showsElsewhere && it in cellar.discoveryTags }
     val zone = ZoneId.systemDefault()
@@ -187,7 +188,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             DiaryFilterBar(
                 cellar, filter, tag,
                 onFilter = { viewModel.journalFilter.value = it },
-                onTag = { chosenTag = if (tag == it) null else it },
+                onTag = { viewModel.journalTag.value = if (tag == it) null else it },
             )
             if (months.isEmpty()) {
                 when {
@@ -373,21 +374,25 @@ private fun TastingRow(cellar: Cellar, bottle: Bottle, modifier: Modifier, onCli
     val wine = cellar.wines[bottle.wineId]
     val source = stringResource(R.string.journal_from_cellar)
     val date = tasting?.date ?: bottle.addedAt
+    // The style in words, not only by the dot's color.
+    val style = wine?.color?.let { stringResource(it.labelRes) }
     val description = listOfNotNull(
         source,
         wine?.displayName ?: stringResource(R.string.unknown_wine),
+        style,
         tasting?.rating?.let { pluralStringResource(R.plurals.journal_rating_stars, it, it) },
         Formats.day(date),
         tasting?.occasion?.takeIf { it.isNotBlank() },
         tasting?.note?.takeIf { it.isNotBlank() },
     ).joinToString(", ")
     ListItem(
-        modifier = modifier.clearAndSetSemantics { contentDescription = description }.clickable(onClick = onClick),
+        // The click before clearAndSetSemantics, so TalkBack still finds the row's action.
+        modifier = modifier.clickable(onClick = onClick).clearAndSetSemantics { contentDescription = description },
         leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
         overlineContent = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                 Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))
-                Text("$source · ${Formats.day(date)}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(listOfNotNull(source, style, Formats.day(date)).joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         },
         headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },

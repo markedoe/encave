@@ -172,10 +172,19 @@ struct DiscoveryRow: View {
     /// "Tasted elsewhere · Lisbon, Alvarinho 2023, 5 stars, March 3, …".
     private func accessibilityText(wine: Wine?) -> String {
         var parts = [discovery.sourceText, wine?.displayName ?? String(localized: "Unknown wine")]
+        // The style in words, as shown under the name.
+        if let style = wine?.color?.name { parts.append(style) }
         if let rating = discovery.rating { parts.append(String(localized: "\(rating) stars")) }
         parts.append(discovery.date.formatted(.dateTime.day().month(.wide)))
-        if discovery.wantsToBuy { parts.append(String(localized: "To buy")) }
+        if discovery.wantsToBuy {
+            parts.append(String(localized: "To buy"))
+        } else if discovery.boughtAt != nil {
+            parts.append(String(localized: "Bought"))
+        }
         if let note = discovery.note { parts.append(note) }
+        if let price = discovery.price {
+            parts.append(price.formatted(.currency(code: discovery.currency ?? model.cellar.settings.currency)))
+        }
         if !discovery.tags.isEmpty { parts.append(discovery.tags.joined(separator: ", ")) }
         return parts.joined(separator: ", ")
     }

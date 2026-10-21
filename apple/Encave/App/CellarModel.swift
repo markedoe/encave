@@ -21,6 +21,8 @@ final class CellarModel {
     var selectedTab: AppTab = .cellar
     /// What the Journal shows; back to everything when a new entry would be hidden.
     var journalFilter: DiaryFilter = .all
+    /// The Journal's tag chip; cleared, like the filter, when a new entry would be hidden.
+    var journalTag: String?
 
     @ObservationIgnored private var store: any CellarStore = InMemoryCellarStore()
     /// Sync with the user's other devices. Replaced when the cellar loads late (`reloadIfLoadFailed`).
@@ -233,6 +235,8 @@ final class CellarModel {
         let previousSlot = bottle.slot
         guard update({ try $0.drink(bottleID, tasting: tasting) }) else { return false }
         if !journalFilter.showsTastings { journalFilter = .all }
+        // A tag only picks wines tasted elsewhere.
+        journalTag = nil
         successCount += 1
         showToast(String(localized: "Enjoy your \(wine.displayName)")) { [weak self] in
             self?.update { $0.undoDrink(bottleID, previousSlot: previousSlot) }
@@ -339,6 +343,9 @@ final class CellarModel {
         guard update({ $0.addDiscovery(discovery, wine: wine) }) else { return }
         successCount += 1
         if journalFilter == .cellar || (journalFilter == .toBuy && !discovery.wantsToBuy) { journalFilter = .all }
+        if let tag = journalTag, !discovery.tags.contains(where: { $0.caseInsensitiveCompare(tag) == .orderedSame }) {
+            journalTag = nil
+        }
         showToast(discovery.wantsToBuy
                   ? String(localized: "Added to your shopping list")
                   : String(localized: "Saved to your journal"))

@@ -147,28 +147,33 @@ public extension Cellar {
 
     /// Tags of wines with bottles in the cellar, most used first.
     var wineTags: [String] {
-        var counts: [String: (name: String, count: Int)] = [:]
         let inCellar = Set(bottlesInCellar.map(\.wineID))
-        for wine in wines.values where inCellar.contains(wine.id) {
-            for tag in wine.tags ?? [] { counts[tag.lowercased(), default: (tag, 0)].count += 1 }
-        }
-        return counts.values
-            .sorted { $0.count == $1.count ? $0.name.localizedStandardCompare($1.name) == .orderedAscending : $0.count > $1.count }
-            .map(\.name)
+        return Cellar.byUse(wines.values.filter { inCellar.contains($0.id) }.flatMap { $0.tags ?? [] })
     }
 
     /// Grapes of the wines in the cellar, the most used first (for the filter chips).
     var wineGrapes: [String] {
-        var counts: [String: (name: String, count: Int)] = [:]
         let inCellar = Set(bottlesInCellar.map(\.wineID))
-        for wine in wines.values where inCellar.contains(wine.id) {
-            for grape in wine.grapes {
-                let name = grape.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !name.isEmpty else { continue }
-                counts[name.lowercased(), default: (name, 0)].count += 1
-            }
+        let grapes = wines.values.filter { inCellar.contains($0.id) }
+            .flatMap(\.grapes)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return Cellar.byUse(grapes)
+    }
+
+    /// Names counted case-insensitively, the most used first. Each is shown with its most
+    /// used spelling (ties: the first in UTF-16 order, as in Kotlin), so the label does not depend on
+    /// the order records are stored in, and is the same on every platform.
+    static func byUse(_ names: [String]) -> [String] {
+        var spellings: [String: [String: Int]] = [:]
+        for name in names { spellings[name.lowercased(), default: [:]][name, default: 0] += 1 }
+        let entries = spellings.values.compactMap { counts -> (name: String, count: Int)? in
+            let shown = counts.sorted { a, b in
+                a.value != b.value ? a.value > b.value : a.key.utf16.lexicographicallyPrecedes(b.key.utf16)
+            }.first
+            return shown.map { ($0.key, counts.values.reduce(0, +)) }
         }
-        return counts.values
+        return entries
             .sorted { $0.count == $1.count ? $0.name.localizedStandardCompare($1.name) == .orderedAscending : $0.count > $1.count }
             .map(\.name)
     }
