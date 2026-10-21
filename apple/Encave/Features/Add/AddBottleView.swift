@@ -251,11 +251,12 @@ struct AddBottleView: View {
         // An existing wine as it is now: it may have been edited since it was chosen
         // (another window, sync), and adding bottles saves the wine record too.
         var wine = existingWine.map { model.cellar.wines[$0.id] ?? $0 } ?? draft.makeWine()
+        // Documents picked here go with the wine, for all its bottles. One that could not be
+        // stored is taken off the list: the form stays open under the alert.
+        guard let attachments = documents.commitPending() else { return }
         if existingWine == nil, let labelPhoto = scan.photo {
             wine.photoID = PhotoStore.save(labelPhoto)
         }
-        // Documents picked here go with the wine, for all its bottles.
-        let attachments = documents.commitPending()
         if !attachments.isEmpty {
             wine.attachments = (wine.attachments ?? []) + attachments
         }

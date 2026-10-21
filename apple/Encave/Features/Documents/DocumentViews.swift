@@ -176,9 +176,19 @@ final class DocumentActions {
         pending = []
     }
 
-    /// Stores the pending documents for good; they are attached by the caller.
-    func commitPending() -> [Attachment] {
-        let attachments = pending.compactMap { DocumentStore.commit($0) }
+    /// Stores the pending documents for good; they are attached by the caller. Nil if one
+    /// could not be stored (its copy is gone, or the disk is full): it is left out of the
+    /// list and the user is told, so the caller can stop and let them try again.
+    func commitPending() -> [Attachment]? {
+        var attachments: [Attachment] = [], failed: [PendingDocument] = []
+        for document in pending {
+            if let attachment = DocumentStore.commit(document) { attachments.append(attachment) } else { failed.append(document) }
+        }
+        guard failed.isEmpty else {
+            for document in failed { removePending(document) }
+            problem = String(localized: "This file could not be read.")
+            return nil
+        }
         return attachments
     }
 
@@ -365,6 +375,7 @@ struct DocumentRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(verbatim: document.spokenDescription))
+        .accessibilityValue(available ? Text(verbatim: "") : Text("Not on this device yet"))
         .accessibilityHint(Text("Opens the document."))
         .accessibilityAction(named: Text("Rename")) { actions.rename(document, of: target) }
         .accessibilityAction(named: Text("Delete")) { model.removeDocument(document.id, from: target) }
