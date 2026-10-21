@@ -309,7 +309,8 @@ struct AddDocumentButtons: View {
         }
         .disabled(actions.busy)
         .accessibilityHint(Text("A PDF, an image, a text or an office document, up to 8 MB."))
-        .accessibilityIdentifier("action.document.add")
+        // Not "action.": a list row is leading-aligned, not a centered button.
+        .accessibilityIdentifier("document.add")
         #if os(macOS)
         .dropDestination(for: URL.self) { urls, _ in actions.dropped(urls, to: destination) }
         #endif
