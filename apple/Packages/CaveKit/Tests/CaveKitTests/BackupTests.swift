@@ -334,7 +334,8 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         try setModified(day(-1, hour: 22))
         versions.keepCopy(of: store.fileURL, now: day(0, hour: 9))
         #expect(versions.versions().map(\.date) == [day(-1, hour: 22)])
-        #expect(try versions.cellar(of: versions.versions()[0]) == cellar)
+        let kept = try #require(versions.versions().first)
+        #expect(try versions.cellar(of: kept) == cellar)
         // Not twice.
         versions.keepCopy(of: store.fileURL, now: day(0, hour: 10))
         #expect(versions.versions().count == 1)
@@ -363,7 +364,8 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
                                               ofItemAtPath: store.fileURL.path)
         try store.save(Cellar())
         #expect(versions.versions().count == 1)
-        #expect(try versions.cellar(of: versions.versions()[0]) == before)
+        let kept = try #require(versions.versions().first)
+        #expect(try versions.cellar(of: kept) == before)
         #expect(try store.load() == Cellar())
         // The versions are not taken for cellar files that could not be read.
         #expect(store.unreadableFiles().isEmpty)

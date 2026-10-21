@@ -50,7 +50,9 @@ public struct CellarVersionFolder: CellarVersionSource {
     /// Then removes the versions no longer needed. Errors are ignored: a copy never stops
     /// a save.
     public func keepCopy(of cellarFile: URL, now: Date = .now) {
-        guard let modified = (try? cellarFile.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+        // Read from the file system each time: a URL's resource values are cached on Apple
+        // platforms, and the store saves to the same URL all day long.
+        guard let modified = (try? FileManager.default.attributesOfItem(atPath: cellarFile.path))?[.modificationDate] as? Date,
               calendar.startOfDay(for: modified) < calendar.startOfDay(for: now) else { return }
         let target = folder.appendingPathComponent(Self.name(for: modified))
         guard !FileManager.default.fileExists(atPath: target.path),
