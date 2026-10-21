@@ -47,6 +47,10 @@ struct RootView: View {
             "Something went wrong",
             isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
         ) {
+            // The cellar file could not be read: the newest previous version can be put back.
+            if model.offersRestoreAfterUnreadable {
+                Button("Restore Previous Version") { model.openLatestVersion() }
+            }
             Button("OK", role: .cancel) {}
         } message: {
             Text(model.errorMessage ?? "")
@@ -94,6 +98,9 @@ private struct SheetContent: View {
             DiscoveryEditor(discoveryID: discoveryID)
         case .bottleDocuments(let bottleID, let importing):
             BottleDocumentsView(bottleID: bottleID, startsImporting: importing)
+        case .restore(let source):
+            NavigationStack { RestorePreviewView(source: source, inSheet: true) }
+                .macSheetFrame(width: 520, height: 640)
         case .settings:
             NavigationStack { SettingsView() }
         }

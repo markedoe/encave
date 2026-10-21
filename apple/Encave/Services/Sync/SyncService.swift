@@ -989,7 +989,10 @@ enum BackgroundSync {
 
     @MainActor
     static func run() async {
-        await CellarModel.current?.sync.backgroundRound()
+        guard let model = CellarModel.current else { return }
+        await model.sync.backgroundRound()
+        // The weekly archive too, if it is due and time remains (it stops when iOS ends the task).
+        await model.backups.runAutomaticIfDue(cellar: model.cellar)
     }
 }
 #endif

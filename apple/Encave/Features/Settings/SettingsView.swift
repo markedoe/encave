@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var exportDocument: ExportDocument?
     @State private var importing = false
     @State private var importMessage: String?
+    @State private var restoreSource: RestoreSource?
     @State private var remindersOn = Reminders.isEnabled
     #if os(macOS)
     @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
@@ -121,13 +122,9 @@ struct SettingsView: View {
             }
 
             Section {
+                BackupRows()
                 Button {
-                    export(json: true)
-                } label: {
-                    Label("Back Up (JSON)", systemImage: "externaldrive")
-                }
-                Button {
-                    export(json: false)
+                    exportCSV()
                 } label: {
                     Label("Export Spreadsheet (CSV)", systemImage: "tablecells")
                 }
@@ -145,7 +142,11 @@ struct SettingsView: View {
             } header: {
                 Text("Your data")
             } footer: {
-                Text("A backup contains your whole cellar, without the photos, and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                #if os(iOS)
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, iPhone or Android. The weekly one stays in Files › On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                #else
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, Mac, iPhone or Android. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                #endif
             }
 
             let unreadable = model.unreadableFiles
@@ -166,6 +167,13 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("Cellar files that could not be read")
+                    if model.offersRestoreAfterUnreadable {
+                        Button {
+                            Task { restoreSource = await model.backups.latestVersionSource() }
+                        } label: {
+                            Label("Restore Previous Version…", systemImage: "clock.arrow.circlepath")
+                        }
+                    }
                 } footer: {
                     Text("Kept when Encave could not read your cellar at launch. Share one to keep it elsewhere or to report the problem; delete it when you no longer need it.")
                 }
@@ -255,8 +263,13 @@ struct SettingsView: View {
         ) { _ in
             exportDocument = nil
         }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .commaSeparatedText, .plainText]) { result in
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.zip, .json, .commaSeparatedText, .plainText]) { result in
             handleImport(result)
+        }
+        .sheet(item: $restoreSource) { source in
+            NavigationStack { RestorePreviewView(source: source, inSheet: true) }
+                .environment(model)
+                .macSheetFrame(width: 520, height: 640)
         }
         .alert("Import", isPresented: Binding(get: { importMessage != nil }, set: { if !$0 { importMessage = nil } })) {
             Button("OK", role: .cancel) {}
@@ -273,15 +286,10 @@ struct SettingsView: View {
         )
     }
 
-    private func export(json: Bool) {
+    private func exportCSV() {
         let date = Date.now.formatted(.iso8601.year().month().day())
-        if json {
-            guard let data = try? CellarExport.json(model.cellar) else { return }
-            exportDocument = ExportDocument(data: data, contentType: .json, filename: "Encave \(date).json")
-        } else {
-            let data = Data(CellarExport.csv(model.cellar).utf8)
-            exportDocument = ExportDocument(data: data, contentType: .commaSeparatedText, filename: "Encave \(date).csv")
-        }
+        let data = Data(CellarExport.csv(model.cellar).utf8)
+        exportDocument = ExportDocument(data: data, contentType: .commaSeparatedText, filename: "Encave \(date).csv")
     }
 
     private func exportInventory() {
@@ -292,6 +300,21 @@ struct SettingsView: View {
 
     private func handleImport(_ result: Result<URL, Error>) {
         guard case .success(let url) = result else { return }
+        // A backup (archive or JSON) is shown first, to add what is missing or replace the cellar.
+        if ["zip", "json"].contains(url.pathExtension.lowercased()) {
+            Task {
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    restoreSource = try await BackupCenter.source(forFileAt: url)
+                } catch let error as ImportError {
+                    importMessage = Self.message(for: error)
+                } catch {
+                    importMessage = String(localized: "The file could not be read.")
+                }
+            }
+            return
+        }
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         guard let data = try? Data(contentsOf: url) else {
@@ -302,11 +325,7 @@ struct SettingsView: View {
         var imported = model.cellar
         let summary: ImportSummary
         do {
-            if url.pathExtension.lowercased() == "json" {
-                summary = imported.merge(try CellarExport.backup(fromJSON: data).cellar)
-            } else {
-                summary = try imported.importCSV(String(decoding: data, as: UTF8.self))
-            }
+            summary = try imported.importCSV(String(decoding: data, as: UTF8.self))
         } catch {
             importMessage = String(localized: "This file is not an Encave backup or a CSV with a name column.")
             return
@@ -314,6 +333,20 @@ struct SettingsView: View {
         let discoveriesAdded = imported.discoveries.count - model.cellar.discoveries.count
         guard model.update({ $0 = imported }) else { return }
         importMessage = Self.importMessage(summary, discoveriesAdded: discoveriesAdded)
+    }
+
+    /// Why a backup could not be read.
+    static func message(for error: ImportError) -> String {
+        switch error {
+        case .newerVersion:
+            String(localized: "This backup was made by a newer version of Encave. Update Encave on this device, then import it again.")
+        case .unsupportedArchive:
+            String(localized: "This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.")
+        case .damagedArchive:
+            String(localized: "This backup is damaged: it could not be read in full.")
+        case .notAnEncaveBackup, .emptyFile, .missingNameColumn:
+            String(localized: "This file is not an Encave backup or a CSV with a name column.")
+        }
     }
 
     /// "Imported 12 bottles, 3 new wines and 2 wines tasted elsewhere. Rows skipped: 1".

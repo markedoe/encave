@@ -166,6 +166,7 @@ final class ScreenTourTests: XCTestCase {
                 goBack()
             }
             checkDevices()
+            checkPreviousVersions()
             closeSheet()
         }
         #endif
@@ -333,6 +334,39 @@ final class ScreenTourTests: XCTestCase {
             snapshot("devices-join")
             closeSheet()
         }
+        goBack()
+    }
+
+    // MARK: Previous versions
+
+    /// Settings › Your data › Previous Versions (sample versions), and a version's preview.
+    private func checkPreviousVersions() {
+        let versions = element("settings.versions")
+        scrollIntoView(versions)
+        guard versions.exists, versions.isHittable else {
+            XCTFail("settings: no Previous Versions entry")
+            return
+        }
+        snapshot("settings-backup")
+        versions.press()
+        let row = element("versions.row")
+        guard row.waitForExistence(timeout: 5) else {
+            XCTFail("previous versions: no version listed")
+            goBack()
+            return
+        }
+        snapshot("previous-versions")
+        row.press()
+        let replace = element("restore.replace")
+        if replace.waitForExistence(timeout: 5) || element("restore.add").waitForExistence(timeout: 2) {
+            snapshot("restore-preview")
+            scrollIntoView(replace)
+            XCTAssertTrue(replace.exists, "restore preview: no Replace This Cellar button")
+            snapshot("restore-actions")
+        } else {
+            XCTFail("previous versions: the preview did not open")
+        }
+        goBack()
         goBack()
     }
 

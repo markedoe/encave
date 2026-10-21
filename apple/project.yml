@@ -78,6 +78,10 @@ targets:
               NSExceptionAllowsInsecureHTTPLoads: true
         UILaunchScreen: {}
         UIApplicationSupportsMultipleScenes: true
+        # The weekly backup archive is kept in the app's Documents folder, shown by the
+        # Files app in On My iPhone › Encave (only archives are written there).
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
         # Sync away from home in the background (an app refresh task), when iOS allows.
         UIBackgroundModes: [fetch]
         BGTaskSchedulerPermittedIdentifiers: [app.encave.sync.refresh]

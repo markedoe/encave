@@ -31,8 +31,12 @@ final class CellarModel {
     /// The cellar file could not be read at launch: where it was kept (see `unreadableFiles`).
     @ObservationIgnored private(set) var unreadableFile: URL?
 
+    /// Previous versions, Back Up Now and the weekly archive.
+    @ObservationIgnored let backups: BackupCenter
+
     /// `demo`: screen tour and previews, where sync never touches the network or files.
-    init(store: any CellarStore, demo: Bool = true) {
+    /// `versions`: earlier versions of the cellar when the store keeps none (previews).
+    init(store: any CellarStore, demo: Bool = true, versions: (any CellarVersionSource)? = nil) {
         var store = store
         var demo = demo
         do {
@@ -55,7 +59,52 @@ final class CellarModel {
         if let fileName = unreadableFile?.lastPathComponent {
             errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
         }
+        let kept: any CellarVersionSource = (store as? JSONFileCellarStore)?.versions ?? versions ?? InMemoryCellarVersions([])
+        backups = BackupCenter(versions: kept, demo: demo)
         sync = SyncService(model: self, demo: demo)
+    }
+
+    /// The cellar file could not be read at launch and earlier versions are kept: one can be restored.
+    var offersRestoreAfterUnreadable: Bool {
+        unreadableFile != nil && !backups.versions.versions().isEmpty
+    }
+
+    /// Opens the preview of the newest previous version (after a cellar file could not be read).
+    func openLatestVersion() {
+        Task {
+            guard let source = await backups.latestVersionSource() else { return }
+            sheet = .restore(source)
+        }
+    }
+
+    /// Restores a backup or an earlier version, with Undo. Photos and documents of an
+    /// archive are copied first. Replace is a change made here like any other: sync takes
+    /// it to the other devices (what is not in the backup is deleted there too).
+    @discardableResult
+    func restore(_ source: RestoreSource, mode: RestoreMode) async -> Bool {
+        let files = source.files
+        if !files.isEmpty { await Task.detached(priority: .userInitiated) { BackupCenter.install(files) }.value }
+        let snapshot = cellar
+        var merged = cellar
+        let summary = merged.merge(source.cellar)
+        let restored = cellar.restoring(source.cellar, mode: mode)
+        guard update({ $0 = restored }) else { return false }
+        if let folder = source.workingFolder { try? FileManager.default.removeItem(at: folder) }
+        successCount += 1
+        let message: String
+        switch mode {
+        case .replace:
+            message = String(localized: "Cellar restored from the backup")
+        case .addMissing:
+            let discoveriesAdded = merged.discoveries.count - snapshot.discoveries.count
+            message = SettingsView.importMessage(summary, discoveriesAdded: discoveriesAdded)
+        }
+        if restored == snapshot {
+            showToast(message)
+        } else {
+            showToast(message) { [weak self] in self?.update { $0 = snapshot } }
+        }
+        return true
     }
 
     /// Cellar files set aside because they could not be read, to share or delete in Settings.
@@ -105,20 +154,26 @@ final class CellarModel {
         if let store = try? JSONFileCellarStore.defaultStore() {
             let model = CellarModel(store: store, demo: false)
             // Photo and document files nothing refers to are removed after a grace period
-            // (PhotoStore); not while a cellar file that could not be read is kept, as its
-            // files may be needed.
+            // (PhotoStore), and those of the previous versions are kept too; not while a
+            // cellar file that could not be read is kept, as its files may be needed.
             if model.errorMessage == nil, store.unreadableFiles().isEmpty {
-                PhotoStore.removeOrphans(keeping: model.cellar.photoIDs)
-                DocumentStore.removeOrphans(keeping: model.cellar.attachmentIDs)
+                let refs = model.cellar.fileRefs, versions = store.versions
+                Task.detached(priority: .background) {
+                    let kept = refs.union(versions?.fileRefs() ?? [])
+                    PhotoStore.removeOrphans(keeping: Set(kept.filter { $0.kind == .photo }.map(\.id)))
+                    DocumentStore.removeOrphans(keeping: Set(kept.filter { $0.kind == .document }.map(\.id)))
+                }
             }
             DocumentStore.removeTemporaryCopies()
+            BackupCenter.removeTemporaryFiles()
             return model
         }
         return CellarModel(store: InMemoryCellarStore())
     }
 
     static func preview() -> CellarModel {
-        CellarModel(store: InMemoryCellarStore(SampleData.cellar(labels: .localized)))
+        let sample = SampleData.cellar(labels: .localized)
+        return CellarModel(store: InMemoryCellarStore(sample), versions: DemoVersions.make(from: sample))
     }
 
     var currentYear: Int { CellarYear.current }
@@ -337,6 +392,9 @@ final class CellarModel {
 
     func sceneDidBecomeActive() {
         activeScenes += 1
+        // The weekly archive, when it is due.
+        let snapshot = cellar
+        Task { await backups.runAutomaticIfDue(cellar: snapshot) }
     }
 
     func sceneDidEnterBackground() {
@@ -450,6 +508,8 @@ enum AppSheet: Identifiable {
     case discovery(discoveryID: UUID?)
     /// The documents of one bottle; `importing` opens the file picker right away.
     case bottleDocuments(bottleID: UUID, importing: Bool)
+    /// A backup or an earlier version, previewed before restoring it.
+    case restore(RestoreSource)
     case settings
 
     var id: String {
@@ -463,6 +523,7 @@ enum AppSheet: Identifiable {
         case .wineImage(let id): "image-\(id)"
         case .discovery(let id): "discovery-\(id?.uuidString ?? "new")"
         case .bottleDocuments(let id, _): "documents-\(id)"
+        case .restore(let source): "restore-\(source.id)"
         case .settings: "settings"
         }
     }

@@ -831,12 +831,12 @@
         }
       }
     },
-    "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, the Journal and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced.": {
+    "**Back Up Now** makes a backup of your whole cellar, with its photos and documents, then shares it or saves it in Files, for example in iCloud Drive or on a computer. It is a standard ZIP file, not encrypted, named like “Encave Backup 2026-10-21.zip”: keep it somewhere safe.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder (JSON)** enregistre toute votre cave : vins, bouteilles, casiers, le Journal et les réglages, mais pas les photos. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve n’est remplacé."
+            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr."
           }
         }
       }
@@ -891,6 +891,16 @@
         }
       }
     },
+    "**cellar.json** is your cellar itself: wines, bottles, racks, the Journal and settings, readable by other programs. **photos** and **documents** hold the files under readable names, such as “Château X 2015.jpg” or “Invoice.pdf”, and **files.json** says which is which. **README.txt** explains it in English and French. A backup made on an iPhone, an iPad, a Mac or an Android device restores on any of them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
+          }
+        }
+      }
+    },
     "5 rows of 8": {
       "localizations": {
         "fr": {
@@ -931,6 +941,16 @@
         }
       }
     },
+    "A JSON backup holds no photo or document files: those not on this device show as missing until a device that has them syncs.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une sauvegarde JSON ne contient aucun fichier de photo ou de document : ceux qui ne sont pas sur cet appareil apparaissent comme absents jusqu’à la synchronisation avec un appareil qui les a."
+          }
+        }
+      }
+    },
     "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too.": {
       "localizations": {
         "fr": {
@@ -951,22 +971,32 @@
         }
       }
     },
-    "A backup contains everything and can be imported on another device. CSV opens in Numbers or Excel.": {
+    "A ZIP file with your whole cellar, its photos and documents. It is not encrypted: keep it somewhere safe, such as iCloud Drive or a computer.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde contient tout et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel."
+            "value": "Un fichier ZIP avec toute votre cave, ses photos et ses documents. Il n’est pas chiffré : gardez-le en lieu sûr, par exemple dans iCloud Drive ou sur un ordinateur."
           }
         }
       }
     },
-    "A backup contains your whole cellar, without the photos, and can be imported on another device. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, Mac, iPhone or Android. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde contient toute votre cave, sans les photos, et peut être importée sur un autre appareil. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour une assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, Mac, iPhone ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
+          }
+        }
+      }
+    },
+    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, iPhone or Android. The weekly one stays in Files › On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, iPhone ou Android. Celle de chaque semaine reste dans Fichiers › Sur mon iPhone › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -977,6 +1007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une bouteille à apporter à des amis qui aiment la Bourgogne"
+          }
+        }
+      }
+    },
+    "A copy of your cellar is kept on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. They stay on this device; the photos and documents they need are kept with them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une copie de votre cave est gardée chaque jour où elle change : une par jour pour les 7 derniers jours, puis une par semaine pendant 4 semaines. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles."
           }
         }
       }
@@ -1097,6 +1137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un relais est un petit service open source. Hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance. Sans relais, les appareils se synchronisent toujours sur le même Wi-Fi."
+          }
+        }
+      }
+    },
+    "A restore is a change made on this device: the devices that sync with this one take it too. After **Replace This Cellar**, what the backup brings back returns on them, and what is not in it is deleted on them. Their sync keys stay as they are: a backup never holds them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais."
           }
         }
       }
@@ -1257,6 +1307,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une étagère"
+          }
+        }
+      }
+    },
+    "Add What Is Missing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter ce qui manque"
+          }
+        }
+      }
+    },
+    "Add What Is Missing adds the wines, bottles, racks and Journal entries that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, casiers et entrées du Journal absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde. Vous pouvez annuler juste après."
           }
         }
       }
@@ -1921,22 +1991,52 @@
         }
       }
     },
-    "Back Up (JSON)": {
+    "Back Up Now": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sauvegarder (JSON)"
+            "value": "Sauvegarder maintenant"
           }
         }
       }
     },
-    "Back up": {
+    "Back up now": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sauvegarder"
+            "value": "Sauvegarder maintenant"
+          }
+        }
+      }
+    },
+    "Backing Up…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde…"
+          }
+        }
+      }
+    },
+    "Backup": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde"
+          }
+        }
+      }
+    },
+    "Backup Ready": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde prête"
           }
         }
       }
@@ -2117,6 +2217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles déjà sur le nouvel appareil"
+          }
+        }
+      }
+    },
+    "Bottles in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles en cave"
           }
         }
       }
@@ -2491,6 +2601,16 @@
         }
       }
     },
+    "Cellar restored from the backup": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave restaurée depuis la sauvegarde"
+          }
+        }
+      }
+    },
     "Cellar, Racks, Tonight, Journal": {
       "localizations": {
         "fr": {
@@ -2621,6 +2741,16 @@
         }
       }
     },
+    "Check that this device has enough free space, then try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez qu’il reste assez d’espace libre sur cet appareil, puis réessayez."
+          }
+        }
+      }
+    },
     "Check the key": {
       "localizations": {
         "fr": {
@@ -2727,6 +2857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez une photo de l’étiquette"
+          }
+        }
+      }
+    },
+    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks and Journal entries you no longer have and changes nothing else. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers et entrées du Journal que vous n’avez plus, sans rien changer d’autre. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après."
           }
         }
       }
@@ -2937,6 +3077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comparer les codes"
+          }
+        }
+      }
+    },
+    "Compared with Your Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par rapport à votre cave"
           }
         }
       }
@@ -3531,6 +3681,16 @@
         }
       }
     },
+    "Different": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Différents"
+          }
+        }
+      }
+    },
     "Dinner at home": {
       "localizations": {
         "fr": {
@@ -3971,6 +4131,26 @@
         }
       }
     },
+    "Encave keeps a copy of your cellar on each day it changes. The first one appears tomorrow.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave garde une copie de votre cave chaque jour où elle change. La première apparaîtra demain."
+          }
+        }
+      }
+    },
+    "Encave keeps a copy of your cellar on this device on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. Open **Settings › Your data › Previous Versions**, choose a date to see what it holds and how it differs from your cellar, then restore it. The photos and documents a version needs are kept with it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une par jour pour les 7 derniers jours, puis une par semaine pendant 4 semaines. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle."
+          }
+        }
+      }
+    },
     "Encrypted from end to end": {
       "localizations": {
         "fr": {
@@ -4237,6 +4417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Préféré : %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "File": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichier"
           }
         }
       }
@@ -5131,6 +5321,16 @@
         }
       }
     },
+    "In This Backup": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans cette sauvegarde"
+          }
+        }
+      }
+    },
     "In the Cellar list (not the table), choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
@@ -5147,6 +5347,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En arrière-plan, quand iOS le permet"
+          }
+        }
+      }
+    },
+    "In your cellar only": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement dans votre cave"
           }
         }
       }
@@ -5337,6 +5547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Journal et liste d’achats"
+          }
+        }
+      }
+    },
+    "Journal entries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrées du Journal"
           }
         }
       }
@@ -5571,42 +5791,12 @@
         }
       }
     },
-    "Label photos and documents stay on your devices and sync between them, but backups do not include their files yet: a backup lists the documents, and they show as not on this device until a device that has them syncs.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les photos d’étiquettes et les documents restent sur vos appareils et se synchronisent entre eux, mais les sauvegardes n’incluent pas encore leurs fichiers : une sauvegarde liste les documents, qui apparaissent comme absents de cet appareil jusqu’à la synchronisation avec un appareil qui les a."
-          }
-        }
-      }
-    },
     "Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise."
-          }
-        }
-      }
-    },
-    "Label photos stay on the device and are not included in backups yet.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les photos d’étiquettes restent sur l’appareil et ne sont pas encore incluses dans les sauvegardes."
-          }
-        }
-      }
-    },
-    "Label photos stay on your devices and sync between them, but are not included in backups yet.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les photos d’étiquettes restent sur vos appareils et se synchronisent entre eux, mais ne sont pas encore incluses dans les sauvegardes."
           }
         }
       }
@@ -5647,6 +5837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dernière tentative échouée : %@"
+          }
+        }
+      }
+    },
+    "Last backup: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière sauvegarde : %@"
           }
         }
       }
@@ -5857,6 +6057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zone basse"
+          }
+        }
+      }
+    },
+    "Made On": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faite le"
           }
         }
       }
@@ -6201,12 +6411,32 @@
         }
       }
     },
+    "No Previous Versions Yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore de version précédente"
+          }
+        }
+      }
+    },
     "No answer this time. Try again.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pas de réponse cette fois. Réessayez."
+          }
+        }
+      }
+    },
+    "No backup for more than a month. Back up now to keep a copy of your cellar, its photos and documents.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune sauvegarde depuis plus d’un mois. Sauvegardez maintenant pour garder une copie de votre cave, de ses photos et de ses documents."
           }
         }
       }
@@ -6497,6 +6727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hors de la cave"
+          }
+        }
+      }
+    },
+    "Not in your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Absents de votre cave"
           }
         }
       }
@@ -7581,12 +7821,12 @@
         }
       }
     },
-    "Photos and documents": {
+    "Photos and documents included": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Photos et documents"
+            "value": "Photos et documents inclus"
           }
         }
       }
@@ -7737,6 +7977,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aperçu"
+          }
+        }
+      }
+    },
+    "Previous Version": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version précédente"
+          }
+        }
+      }
+    },
+    "Previous Versions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versions précédentes"
+          }
+        }
+      }
+    },
+    "Previous versions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versions précédentes"
           }
         }
       }
@@ -8291,6 +8561,26 @@
         }
       }
     },
+    "Replace This Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer cette cave"
+          }
+        }
+      }
+    },
+    "Replace this cellar?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer cette cave ?"
+          }
+        }
+      }
+    },
     "Replace with the other cellar": {
       "localizations": {
         "fr": {
@@ -8337,6 +8627,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restaurant, amis, salon… Votre cave ne change pas."
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurer"
+          }
+        }
+      }
+    },
+    "Restore Previous Version": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurer une version précédente"
+          }
+        }
+      }
+    },
+    "Restore Previous Version…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurer une version précédente…"
+          }
+        }
+      }
+    },
+    "Restoring and your other devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La restauration et vos autres appareils"
           }
         }
       }
@@ -8461,6 +8791,16 @@
         }
       }
     },
+    "Same as your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identique à votre cave"
+          }
+        }
+      }
+    },
     "Sample cellar loaded": {
       "localizations": {
         "fr": {
@@ -8511,12 +8851,42 @@
         }
       }
     },
+    "Save to Files…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer dans Fichiers…"
+          }
+        }
+      }
+    },
+    "Saved On": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrée le"
+          }
+        }
+      }
+    },
     "Saved searches": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Recherches enregistrées"
+          }
+        }
+      }
+    },
+    "Saved to Files": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrée dans Fichiers"
           }
         }
       }
@@ -9117,6 +9487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher Ce soir dans la barre des menus"
+          }
+        }
+      }
+    },
+    "Show Weekly Backups in Finder": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher les sauvegardes hebdomadaires dans le Finder"
           }
         }
       }
@@ -9741,6 +10121,26 @@
         }
       }
     },
+    "Sync is not a backup": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation n’est pas une sauvegarde"
+          }
+        }
+      }
+    },
+    "Sync keeps the same cellar on your devices: a bottle deleted by mistake, or **Erase all data**, is deleted on all of them. Keep backups too: they hold your cellar as it was.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était."
+          }
+        }
+      }
+    },
     "Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.": {
       "localizations": {
         "fr": {
@@ -10207,6 +10607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées."
+          }
+        }
+      }
+    },
+    "The backup could not be made.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sauvegarde n’a pas pu être faite."
           }
         }
       }
@@ -10771,6 +11181,16 @@
         }
       }
     },
+    "This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier ZIP n’a pas été fait par Encave, ou une autre app l’a modifié. Importez l’archive telle qu’Encave l’a faite, ou le fichier cellar.json qu’elle contient."
+          }
+        }
+      }
+    },
     "This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.": {
       "localizations": {
         "fr": {
@@ -10787,6 +11207,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette adresse ne répond pas comme un relais Encave."
+          }
+        }
+      }
+    },
+    "This backup is damaged: it could not be read in full.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier."
+          }
+        }
+      }
+    },
+    "This backup was made by a newer version of Encave. Update Encave on this device, then import it again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette sauvegarde a été faite par une version plus récente d’Encave. Mettez Encave à jour sur cet appareil, puis importez-la à nouveau."
           }
         }
       }
@@ -11007,6 +11447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette question ne peut pas recevoir de réponse. Essayez avec un plat ou une occasion."
+          }
+        }
+      }
+    },
+    "This version could not be read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette version n’a pas pu être lue."
           }
         }
       }
@@ -11661,6 +12111,26 @@
         }
       }
     },
+    "Weekly Backup on This Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde hebdomadaire sur cet appareil"
+          }
+        }
+      }
+    },
+    "Weekly backup on this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde hebdomadaire sur cet appareil"
+          }
+        }
+      }
+    },
     "What a bottle sells for today. Counted in the estimated value of your cellar in Insights.": {
       "localizations": {
         "fr": {
@@ -11697,6 +12167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce qui reste propre à chaque appareil"
+          }
+        }
+      }
+    },
+    "What the backup holds": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que contient la sauvegarde"
           }
         }
       }
@@ -12031,6 +12511,16 @@
         }
       }
     },
+    "Wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vins"
+          }
+        }
+      }
+    },
     "Wines deleted: %lld": {
       "localizations": {
         "fr": {
@@ -12057,6 +12547,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les vins à acheter apparaissent sous À acheter dans le Journal. Les vins goûtés ailleurs ne comptent pas comme des bouteilles de votre cave."
+          }
+        }
+      }
+    },
+    "Wines, bottles, racks and wines tasted elsewhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vins, bouteilles, casiers et vins goûtés ailleurs."
+          }
+        }
+      }
+    },
+    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week when you open it, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, choose **Show Weekly Backups in Finder**. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine quand vous l’ouvrez, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
           }
         }
       }
@@ -12117,6 +12627,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
+          }
+        }
+      }
+    },
+    "Your cellar becomes exactly as in this backup, on this device and on the other devices that sync with it: what is not in it is deleted there too. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave devient exactement comme dans cette sauvegarde, sur cet appareil et sur les autres appareils synchronisés avec lui : ce qui n’y est pas y est aussi supprimé. Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
+    "Your cellar becomes exactly as in this backup: what is not in it is deleted. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave devient exactement comme dans cette sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après."
           }
         }
       }
