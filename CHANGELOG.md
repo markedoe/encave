@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Backups on every platform: Back Up Now makes a readable ZIP archive (the
+  cellar as JSON, photos and documents under their names) that restores on
+  iPhone, iPad, Mac and Android; previous versions of the cellar kept on the
+  device (7 daily, 4 weekly); a weekly archive in Files (On My iPhone ›
+  Encave) or Download/Encave; restore with a preview, Add What Is Missing or
+  Replace This Cellar (synced to the other devices), and Undo
 - SwiftUI app for iPhone, iPad and Mac: Cellar, Racks, Tonight and Journal
 - Local storage of the cellar, sample cellar, French and English
 - Design tokens shared across platforms

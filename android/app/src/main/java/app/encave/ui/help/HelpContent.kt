@@ -26,6 +26,11 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.SdStorage
+import androidx.compose.material.icons.outlined.SyncProblem
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.EventRepeat
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Widgets
@@ -197,11 +202,16 @@ data class HelpArticle(
             HelpArticle(
                 HelpTopic.Data, R.string.help_data_title, R.string.help_data_summary, Icons.Outlined.SdStorage,
                 listOf(
-                    HelpSection(R.string.help_data_backup, R.string.help_data_backup_title),
+                    HelpSection(R.string.help_data_sync, R.string.help_data_sync_title, Icons.Outlined.SyncProblem),
+                    HelpSection(R.string.help_data_versions, R.string.help_data_versions_title, Icons.Outlined.History),
+                    HelpSection(R.string.help_data_backup, R.string.help_data_backup_title, Icons.Outlined.Archive),
+                    HelpSection(R.string.help_data_contents, R.string.help_data_contents_title),
+                    HelpSection(R.string.help_data_weekly, R.string.help_data_weekly_title, Icons.Outlined.EventRepeat),
+                    HelpSection(R.string.help_data_restore, R.string.help_data_restore_title, Icons.Outlined.Restore),
+                    HelpSection(R.string.help_data_devices, R.string.help_data_devices_title),
                     HelpSection(R.string.help_data_csv, R.string.help_data_csv_title),
                     HelpSection(R.string.help_data_pdf, R.string.help_data_pdf_title),
                     HelpSection(R.string.help_data_other, R.string.help_data_other_title),
-                    HelpSection(R.string.help_data_photos, R.string.help_data_photos_title),
                 ),
             ),
             HelpArticle(

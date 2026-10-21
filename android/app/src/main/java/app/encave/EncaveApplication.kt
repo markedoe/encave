@@ -1,7 +1,12 @@
 package app.encave
 
 import android.app.Application
+import app.encave.core.CellarVersionFolder
+import app.encave.core.FileKind
 import app.encave.core.JsonFileCellarStore
+import app.encave.data.BackupManager
+import app.encave.data.BackupWorker
+import app.encave.data.DownloadsDestination
 import app.encave.core.WidgetSnapshot
 import app.encave.data.CellarRepository
 import app.encave.data.DocumentStore
@@ -25,9 +30,28 @@ class EncaveApplication : Application() {
     /** Application-wide scope, so saves are never cancelled with a screen. */
     private val scope = CoroutineScope(SupervisorJob())
 
+    /** Earlier versions of the cellar file, in `files/versions` (Previous versions in Settings). */
+    val versions: CellarVersionFolder by lazy { CellarVersionFolder(File(filesDir, "versions")) }
+
     /** `files/cellar.json` in app-private storage (sandboxed, encrypted at rest by Android). */
     val repository: CellarRepository by lazy {
-        CellarRepository(JsonFileCellarStore(File(filesDir, "cellar.json")), scope)
+        CellarRepository(JsonFileCellarStore(File(filesDir, "cellar.json"), versions), scope)
+    }
+
+    /** Back up now, previous versions and the weekly archive in Download/Encave. */
+    val backups: BackupManager by lazy {
+        BackupManager(
+            repository, photos, documents, versions, getSharedPreferences("backups", MODE_PRIVATE),
+            DownloadsDestination(this), File(cacheDir, "backups"),
+        )
+    }
+
+    /** Makes the weekly archive if it is due (when Encave opens, and once a day in the background). */
+    fun backUpIfDue() {
+        scope.launch(Dispatchers.IO) {
+            repository.loaded.first { it }
+            backups.runAutomaticIfDue()
+        }
     }
 
     val preferences: Preferences by lazy { Preferences(this) }
@@ -52,13 +76,17 @@ class EncaveApplication : Application() {
         // Photos and documents nothing has referred to for a while (deleted or replaced) are
         // removed at launch. Not while a cellar file that could not be read is kept: its files
         // may be needed.
+        // The files the previous versions refer to are kept too.
         scope.launch(Dispatchers.IO) {
             documents.removeTemporaryCopies()
+            backups.removeTemporaryFiles()
             repository.loaded.first { it }
             if (!repository.loadFailed && repository.keptAside().isEmpty()) {
-                photos.removeOrphans(repository.cellar.value.photoIds)
-                documents.removeOrphans(repository.cellar.value.attachmentIds)
+                val kept = repository.cellar.value.fileRefs + versions.fileRefs()
+                photos.removeOrphans(kept.filter { it.kind == FileKind.Photo }.map { it.id }.toSet())
+                documents.removeOrphans(kept.filter { it.kind == FileKind.Document }.map { it.id }.toSet())
             }
         }
+        BackupWorker.schedule(this)
     }
 }

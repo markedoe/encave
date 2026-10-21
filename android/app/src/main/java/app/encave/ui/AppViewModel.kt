@@ -37,7 +37,12 @@ import app.encave.core.Tasting
 import app.encave.core.Wine
 import app.encave.core.importCsv
 import app.encave.core.merge
+import app.encave.core.CellarVersion
+import app.encave.core.RestoreMode
+import app.encave.core.restoring
+import app.encave.data.BackupManager
 import app.encave.data.CellarRepository
+import app.encave.data.RestoreSource
 import app.encave.data.DocumentStore
 import app.encave.data.PendingDocument
 import app.encave.data.PhotoStore
@@ -85,6 +90,8 @@ class AppViewModel(
     val photos: PhotoStore,
     val documents: DocumentStore,
     val ai: AiPreferences,
+    /** Back up now, previous versions and the weekly archive. */
+    val backups: BackupManager,
     /** True while other devices sync with this one: erasing reaches them, the sample is not offered. */
     sharedWithDevices: Flow<Boolean> = flowOf(false),
     /** "Updated from Marc's iPhone": changes from other devices taken in while the app is open. */
@@ -657,7 +664,76 @@ class AppViewModel(
         }
     }
 
-    fun exportJson(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.json(it) }
+    // region Backups and restore
+
+    private val restoreState = MutableStateFlow<RestoreSource?>(null)
+
+    /** The backup or version shown before restoring it (RestorePreviewScreen). */
+    val pendingRestore: StateFlow<RestoreSource?> = restoreState
+
+    /** Back up now: the archive written to a file the user chose. */
+    fun backUpNow(resolver: ContentResolver, uri: Uri) {
+        viewModelScope.launch {
+            val result = runCatching {
+                val output = withContext(Dispatchers.IO) { requireNotNull(resolver.openOutputStream(uri, "wt")) }
+                output.use { backups.writeArchive(it).getOrThrow() }
+            }
+            post(UiText.Res(if (result.isSuccess) R.string.msg_backup_saved else R.string.err_backup_failed))
+        }
+    }
+
+    /** Reads an earlier version, then [onReady] opens its preview. */
+    fun openVersion(version: CellarVersion, onReady: () -> Unit) {
+        viewModelScope.launch {
+            runCatching { backups.source(version) }
+                .onSuccess { restoreState.value = it; onReady() }
+                .onFailure { post(UiText.Res(R.string.err_version_unreadable)) }
+        }
+    }
+
+    /** The newest earlier version (after a cellar file that could not be read), then [onReady]. */
+    fun openLatestVersion(onReady: () -> Unit) {
+        viewModelScope.launch {
+            val source = backups.latestVersion()
+            if (source == null) {
+                post(UiText.Res(R.string.err_version_unreadable))
+            } else {
+                restoreState.value = source
+                onReady()
+            }
+        }
+    }
+
+    /**
+     * Restores the backup or version shown, with Undo. An archive's photos and documents are
+     * copied first. Replace is a change made here like any other: sync takes it to the other
+     * devices (what is not in the backup is deleted there too).
+     */
+    fun restore(mode: RestoreMode, onDone: () -> Unit) {
+        val source = restoreState.value ?: return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { backups.install(source.files) }
+            val before = cellar.value.copy()
+            val restored = before.restoring(source.cellar, mode)
+            val summary = before.copy().merge(source.cellar)
+            repository.replace(restored)
+                .onSuccess {
+                    source.workingFolder?.let { folder -> withContext(Dispatchers.IO) { folder.deleteRecursively() } }
+                    restoreState.value = null
+                    val text = if (mode == RestoreMode.Replace) UiText.Res(R.string.msg_restored) else importText(summary)
+                    val undo: (() -> Unit)? = if (restored == before) null else ({ undoRestore(before) })
+                    messageChannel.trySend(UiMessage(text, undo))
+                    onDone()
+                }
+                .onFailure { post(errorText(it)) }
+        }
+    }
+
+    private fun undoRestore(before: Cellar) {
+        viewModelScope.launch { repository.replace(before).onFailure { post(errorText(it)) } }
+    }
+
+    // endregion
 
     fun exportCsv(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.csv(it) }
 
@@ -689,25 +765,34 @@ class AppViewModel(
         }
     }
 
-    /** Imports an Encave JSON backup (merged by id) or a CSV file (one row per bottle). */
-    fun import(resolver: ContentResolver, uri: Uri) {
+    /**
+     * Imports a file: an Encave archive (ZIP) or JSON backup is read and shown first, by
+     * [onBackup], to add what is missing or replace the cellar; a CSV file (one row per bottle)
+     * is added right away.
+     */
+    fun import(resolver: ContentResolver, uri: Uri, onBackup: () -> Unit = {}) {
         viewModelScope.launch {
+            val head = withContext(Dispatchers.IO) {
+                runCatching { requireNotNull(resolver.openInputStream(uri)).use { it.readNBytes(64) } }
+            }.getOrElse {
+                post(UiText.Res(R.string.err_generic))
+                return@launch
+            }
+            val isZip = head.size >= 4 && head[0] == 0x50.toByte() && head[1] == 0x4B.toByte() && head[2] == 3.toByte() && head[3] == 4.toByte()
+            val isJson = head.toString(Charsets.UTF_8).trimStart('\uFEFF', ' ', '\n', '\r', '\t').startsWith("{")
+            if (isZip || isJson) {
+                runCatching { backups.source(resolver, uri) }
+                    .onSuccess { restoreState.value = it; onBackup() }
+                    .onFailure { post(errorText(it)) }
+                return@launch
+            }
             val text = withContext(Dispatchers.IO) {
                 runCatching { requireNotNull(resolver.openInputStream(uri)).use { it.readBytes().toString(Charsets.UTF_8) } }
             }.getOrElse {
                 post(UiText.Res(R.string.err_generic))
                 return@launch
             }
-            val isJson = text.trimStart('\uFEFF', ' ', '\n', '\r', '\t').startsWith("{")
-            val backup = if (isJson) {
-                runCatching { CellarExport.backupFromJson(text) }.getOrElse {
-                    post(errorText(it))
-                    return@launch
-                }
-            } else {
-                null
-            }
-            repository.update { cellar -> if (backup != null) cellar.merge(backup.cellar) else cellar.importCsv(text) }
+            repository.update { cellar -> cellar.importCsv(text) }
                 .onSuccess { post(importText(it)) }
                 .onFailure { post(errorText(it)) }
         }
@@ -734,7 +819,7 @@ class AppViewModel(
                     val name = ChangeNotifications.deviceName(summary, app.sync.state.value.membership)
                     if (name != null) UiText.Res(R.string.sync_updated_from, listOf(name)) else UiText.Res(R.string.sync_updated_from_others)
                 }
-                AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, shared, updates)
+                AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, app.backups, shared, updates)
             }
         }
     }

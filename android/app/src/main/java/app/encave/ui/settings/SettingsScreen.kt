@@ -86,17 +86,15 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val resolver = context.contentResolver
     val today = LocalDate.now()
 
-    val exportJson = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        uri?.let { viewModel.exportJson(resolver, it) }
-    }
     val exportCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         uri?.let { viewModel.exportCsv(resolver, it) }
     }
     val exportPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
         uri?.let { viewModel.exportPdf(resolver, it, resources) }
     }
+    // A backup (archive or JSON) is shown first, to add what is missing or replace the cellar.
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { viewModel.import(resolver, it) }
+        uri?.let { viewModel.import(resolver, it) { navigator.open(app.encave.ui.navigation.RestoreRoute) } }
     }
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
     // A cellar file that could not be read at launch, kept aside: it can be saved elsewhere.
@@ -178,12 +176,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             WebSearchSettingsSection()
 
             SectionHeader(stringResource(R.string.settings_data))
-            ListItem(
-                modifier = Modifier.clickable { exportJson.launch("encave-$today.json") },
-                leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null) },
-                headlineContent = { Text(stringResource(R.string.settings_export_json)) },
-                supportingContent = { Text(stringResource(R.string.settings_export_json_body)) },
-            )
+            BackupSettingsItems(viewModel, navigator)
             ListItem(
                 modifier = Modifier.clickable { exportCsv.launch("encave-$today.csv") },
                 leadingContent = { Icon(Icons.Outlined.TableChart, contentDescription = null) },
@@ -198,8 +191,13 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             )
             ListItem(
                 modifier = Modifier.clickable {
-                    import.launch(arrayOf("application/json", "text/csv", "text/comma-separated-values", "text/plain", "application/octet-stream"))
-                },
+                    import.launch(
+                        arrayOf(
+                            "application/zip", "application/x-zip-compressed", "application/json", "text/csv",
+                            "text/comma-separated-values", "text/plain", "application/octet-stream",
+                        ),
+                    )
+                }.testTag("settings.import"),
                 leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_import)) },
                 supportingContent = { Text(stringResource(R.string.settings_import_body)) },
@@ -214,6 +212,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             )
 
             if (keptAside != null) {
+                RestoreLatestVersionItem(viewModel, navigator)
                 ListItem(
                     modifier = Modifier.clickable { saveKept.launch(keptAside.name) }.testTag("settings.save_unreadable"),
                     leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null) },

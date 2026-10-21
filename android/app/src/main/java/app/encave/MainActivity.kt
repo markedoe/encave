@@ -39,12 +39,13 @@ class MainActivity : ComponentActivity() {
         intent.dataString?.let { links.value = it }
     }
 
-    /** Devices sync while the app is open: on start (and back from the background). */
+    /** Devices sync while the app is open: on start (and back from the background); the weekly backup is made then if due. */
     override fun onStart() {
         super.onStart()
-        val sync = (application as EncaveApplication).sync
-        sync.resume()
-        sync.syncRemotely()
+        val app = application as EncaveApplication
+        app.sync.resume()
+        app.sync.syncRemotely()
+        app.backUpIfDue()
     }
 
     override fun onStop() {

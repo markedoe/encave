@@ -54,6 +54,12 @@ data class AddBottleRoute(
 @Serializable data object SettingsRoute
 @Serializable data class HelpRoute(val topic: String? = null)
 @Serializable data object DevicesRoute
+
+/** Settings › Your data › Previous versions. */
+@Serializable data object PreviousVersionsRoute
+
+/** The preview of the backup or version the view model holds, before restoring it. */
+@Serializable data object RestoreRoute
 @Serializable data object RemoteSyncRoute
 @Serializable data object InviteDeviceRoute
 @Serializable data object JoinDeviceRoute

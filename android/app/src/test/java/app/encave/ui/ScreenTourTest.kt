@@ -577,6 +577,31 @@ class ScreenTourTest(private val device: String, private val language: String) {
         capture("24-join-device")
     }
 
+    /** Settings › Your data › Previous versions, kept by saving the cellar on a new day, and a version's preview. */
+    @Test
+    fun previousVersionsAndRestorePreview() {
+        val encave = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        runBlocking {
+            // The sample saved two days ago, then changed today: the earlier state is kept.
+            File(encave.filesDir, "cellar.json").setLastModified(System.currentTimeMillis() - 2 * 86_400_000L)
+            val changed = encave.repository.cellar.value.copy()
+            changed.bottles.values.firstOrNull { it.status == app.encave.core.Bottle.Status.InCellar }?.let { changed.deleteBottle(it.id) }
+            encave.repository.replace(changed)
+        }
+        tap("action.settings")
+        scrollTo("settings.versions")
+        capture("48-settings-backup")
+        tap("settings.versions")
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("versions.row").fetchSemanticsNodes().isNotEmpty() }
+        capture("49-previous-versions")
+        tap("versions.row")
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("restore.preview").fetchSemanticsNodes().isNotEmpty() }
+        capture("50-restore-preview")
+        compose.onNodeWithTag("restore.preview").performScrollToNode(hasTestTag("restore.replace"))
+        compose.onNodeWithTag("restore.add").assertExists()
+        capture("51-restore-actions")
+    }
+
     @Test
     fun settingsAndHelp() {
         tap("action.settings")

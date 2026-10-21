@@ -82,6 +82,11 @@ class AppNavigator(private val nav: NavHostController) {
         nav.popBackStack()
     }
 
+    /** Back to [to] if it is on the stack (the screens opened from it close), else one step back. */
+    fun back(to: Any) {
+        if (!nav.popBackStack(to, inclusive = false)) nav.popBackStack()
+    }
+
     fun open(route: Any) = nav.navigate(route) { launchSingleTop = true }
 
     fun openTopLevel(destination: TopLevel) = nav.navigate(destination.route) {
@@ -193,6 +198,10 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 composable<SettingsRoute> { SettingsScreen(viewModel, navigator) }
                 composable<HelpRoute> { HelpScreen(navigator, it.toRoute<HelpRoute>().topic) }
                 composable<DevicesRoute> { DevicesScreen(navigator) }
+                composable<app.encave.ui.navigation.PreviousVersionsRoute> {
+                    app.encave.ui.settings.PreviousVersionsScreen(viewModel, navigator)
+                }
+                composable<app.encave.ui.navigation.RestoreRoute> { app.encave.ui.settings.RestorePreviewScreen(viewModel, navigator) }
                 composable<RemoteSyncRoute> { RemoteSyncScreen(navigator) }
                 composable<InviteDeviceRoute> { InviteDeviceScreen(navigator) }
                 composable<JoinDeviceRoute> { JoinDeviceScreen(viewModel, navigator) }
