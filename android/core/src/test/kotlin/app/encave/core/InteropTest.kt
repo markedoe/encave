@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test
  *
  * They predate the sample's bottles on order, tags, reservations and the newer fields
  * (`reservedFor`, `savedSearches`, `extraPhotoIDs`); only the `reserved_for` CSV column
- * was added by hand (empty, as Swift writes it). Regenerate both from Swift on a Mac to
- * cover the new fields, then drop the on-order exclusion in [decodesTheAppleBackup].
+ * was added by hand (empty, as Swift writes it), and so was the empty "Large wine fridge"
+ * rack (a honeycomb with `shelfLayers`). Regenerate both from Swift on a Mac to cover the
+ * new fields, then drop the on-order exclusion in [decodesTheAppleBackup].
  */
 class InteropTest {
     private fun resource(name: String): String =

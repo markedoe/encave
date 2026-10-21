@@ -26,10 +26,65 @@ class RackTest {
         assertEquals(4, rack.columnsInRow(1))
         assertEquals(2, rack.positionsPerCell, "a deep honeycomb cell holds bottles one behind the other")
         assertFalse(rack.contains(Slot(rack.id, 1, 4)))
-        val deep = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 4, depth = 3)
+        // At most two deep.
+        val deep = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 4, depth = 3).normalized()
         val one = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 4)
-        assertEquals(one.allSlots.size * 3, deep.allSlots.size)
-        assertTrue(deep.contains(Slot(deep.id, 1, 0, 2)))
+        assertEquals(2, deep.depth)
+        assertEquals(one.allSlots.size * 2, deep.allSlots.size)
+        assertTrue(deep.contains(Slot(deep.id, 1, 0, 1)))
+        assertFalse(deep.contains(Slot(deep.id, 1, 0, 2)))
+        assertEquals(3, Rack(name = "S", kind = RackKind.Shelves, rows = 1, columns = 1, depth = 3).normalized().depth)
+    }
+
+    /** A fridge: top shelf with 6 bottles and 5 on top, then a shelf of one layer of 6. */
+    private val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 1, columns = 6, depth = 2, shelfLayers = listOf(2, 1)).normalized()
+
+    @Test
+    fun shelfLayersAreRows() {
+        assertEquals(3, fridge.rows)
+        assertEquals(listOf(0..1, 2..2), fridge.shelfRows)
+        // Row A is the top layer of shelf 1, row B its bottom layer.
+        assertEquals(Rack.ShelfPlace(0, 1, 2), fridge.shelfPlace(0))
+        assertEquals(Rack.ShelfPlace(0, 0, 2), fridge.shelfPlace(1))
+        assertEquals(Rack.ShelfPlace(1, 0, 1), fridge.shelfPlace(2))
+        assertEquals(listOf(5, 6, 6), (0..2).map { fridge.columnsInRow(it) })
+        assertEquals(listOf(true, false, false), (0..2).map { fridge.isOffset(it) })
+        assertEquals((5 + 6 + 6) * 2, fridge.capacity)
+        val three = Rack(name = "T", kind = RackKind.Staggered, rows = 3, columns = 7, shelfLayers = listOf(3))
+        assertEquals(listOf(7, 6, 7), (0..2).map { three.columnsInRow(it) }, "quincunx: N, N-1, N from the bottom")
+    }
+
+    @Test
+    fun eachShelfFillsFromItsBottomLayer() {
+        val order = fridge.allSlots
+        assertEquals(fridge.capacity, order.size)
+        assertTrue(order.take(6).all { it.row == 1 && it.depth == 0 })
+        assertTrue(order.subList(6, 12).all { it.row == 1 && it.depth == 1 })
+        assertTrue(order.subList(12, 17).all { it.row == 0 && it.depth == 0 })
+        assertEquals(Slot(fridge.id, 2, 5, 1), order.last())
+        val cellar = Cellar(racks = listOf(fridge))
+        assertEquals(Slot(fridge.id, 1, 0), cellar.freeSlots(fridge).first())
+    }
+
+    @Test
+    fun shelfLayersAreBoundedAndOnlyForHoneycombs() {
+        val wild = Rack(name = "W", kind = RackKind.Staggered, rows = 1, columns = 3, shelfLayers = listOf(0, 9, 2)).normalized()
+        assertEquals(listOf(1, 3, 2), wild.shelfLayers)
+        assertEquals(6, wild.rows)
+        val many = Rack(name = "M", kind = RackKind.Staggered, rows = 1, columns = 3, shelfLayers = List(50) { 3 }).normalized()
+        assertTrue(many.rows <= Rack.MAX_SIZE)
+        assertEquals(33, many.shelfLayers?.size)
+        assertNull(Rack(name = "G", rows = 2, columns = 2, shelfLayers = listOf(2)).normalized().shelfLayers)
+        assertNull(Rack(name = "E", kind = RackKind.Staggered, rows = 2, columns = 2, shelfLayers = emptyList()).normalized().shelfLayers)
+        // Decoding applies the same rules: the rows are the layers.
+        val json = """{"schemaVersion":2,"racks":[{"id":"${UUID.randomUUID()}","name":"F","kind":"staggered","rows":40,"columns":6,"depth":3,"shelfLayers":[2,1]}]}"""
+        val decoded = CellarJson.decode(json).racks.single()
+        assertEquals(3, decoded.rows)
+        assertEquals(2, decoded.depth)
+        assertEquals(listOf(2, 1), decoded.shelfLayers)
+        assertEquals(fridge, CellarJson.decode(CellarJson.encode(Cellar(racks = listOf(fridge)))).racks.single())
+        val plain = CellarJson.encode(Cellar(racks = listOf(Rack(name = "H", kind = RackKind.Staggered, rows = 2, columns = 2))))
+        assertFalse(plain.contains("shelfLayers"))
     }
 
     @Test
@@ -132,6 +187,7 @@ class RackTest {
         assertEquals(RackKind.entries.toSet(), racks.map { it.kind }.toSet())
         assertTrue(racks.any { it.depth == 2 && it.kind == RackKind.Grid })
         assertTrue(racks.any { it.rowColumns != null })
+        assertTrue(racks.any { it.hasShelfLayers }, "a fridge with bottles in layers")
         racks.forEach { assertTrue(cellar.occupancy(it) > 0, "${it.name} has bottles") }
         assertTrue(cellar.bottlesInCellar.any { (it.slot?.depth ?: 0) > 0 }, "a bottle sits behind another")
     }

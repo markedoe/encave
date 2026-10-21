@@ -784,6 +784,20 @@
           6
         ],
         "rows" : 5
+      },
+      {
+        "binCapacity" : 12,
+        "columns" : 6,
+        "depth" : 2,
+        "id" : "6B3E0F52-2C4D-4E8A-9B1F-3A5C7D9E1F20",
+        "kind" : "staggered",
+        "name" : "Large wine fridge",
+        "rows" : 4,
+        "shelfLayers" : [
+          2,
+          1,
+          1
+        ]
       }
     ],
     "schemaVersion" : 2,

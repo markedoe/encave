@@ -219,6 +219,7 @@ fun sampleLabels(resources: Resources) = SampleData.Labels(
     deepRack = resources.getString(R.string.sample_deep_rack),
     honeycomb = resources.getString(R.string.sample_honeycomb),
     stairs = resources.getString(R.string.sample_stairs),
+    largeFridge = resources.getString(R.string.sample_large_fridge),
     friendsPlace = resources.getString(R.string.sample_friends_place),
     friendsNote = resources.getString(R.string.sample_friends_note),
     restaurantPlace = resources.getString(R.string.sample_restaurant_place),

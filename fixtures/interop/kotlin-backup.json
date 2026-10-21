@@ -119,6 +119,19 @@
         "kind": "bins",
         "name": "Bins",
         "rows": 2
+      },
+      {
+        "binCapacity": 12,
+        "columns": 6,
+        "depth": 2,
+        "id": "00000000-0000-4000-8000-000000000033",
+        "kind": "staggered",
+        "name": "Fridge",
+        "rows": 3,
+        "shelfLayers": [
+          2,
+          1
+        ]
       }
     ],
     "schemaVersion": 2,

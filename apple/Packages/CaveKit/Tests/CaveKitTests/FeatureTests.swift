@@ -551,34 +551,70 @@ import Testing
 }
 
 @Suite struct HoneycombDepthTests {
-    @Test func honeycombCellsCanHoldSeveralBottles() throws {
+    @Test func honeycombCellsHoldUpToTwoBottlesOneBehindTheOther() throws {
         let one = Rack(name: "H", kind: .staggered, rows: 3, columns: 4)
         let deep = Rack(name: "H", kind: .staggered, rows: 3, columns: 4, depth: 3)
         #expect(one.positionsPerCell == 1)
-        #expect(deep.positionsPerCell == 3)
-        #expect(deep.allSlots.count == one.allSlots.count * 3)
-        let back = Slot(rackID: deep.id, row: 1, column: 0, depth: 2)
+        #expect(deep.depth == 2, "a honeycomb is at most two deep")
+        #expect(deep.allSlots.count == one.allSlots.count * 2)
+        let back = Slot(rackID: deep.id, row: 1, column: 0, depth: 1)
         #expect(deep.contains(back))
-        #expect(deep.label(for: back).hasSuffix("-3"))
-        var cellar = Cellar()
-        try cellar.addRack(deep)
-        try cellar.addBottles(of: Wine(name: "W"), quantity: 2, slots: [Slot(rackID: deep.id, row: 0, column: 0, depth: 0), back])
-        #expect(cellar.freeSlots(in: deep).count == deep.allSlots.count - 2)
+        #expect(!deep.contains(Slot(rackID: deep.id, row: 1, column: 0, depth: 2)))
+        #expect(deep.label(for: back).hasSuffix("-2"))
+        let json = #"{"id":"\#(UUID())","name":"H","kind":"staggered","rows":2,"columns":3,"depth":3}"#
+        #expect(try JSONDecoder().decode(Rack.self, from: Data(json.utf8)).depth == 2)
+        #expect(Rack(name: "S", kind: .shelves, rows: 1, columns: 1, depth: 3).depth == 3)
     }
 }
 
-@Suite struct GrapeFilterTests {
-    @Test func grapesFilterTheCellarAndAreListedByUse() throws {
+@Suite struct ShelfLayerTests {
+    /// A fridge: top shelf with 6 bottles and 5 on top, then a shelf of one layer of 6.
+    let fridge = Rack(name: "F", kind: .staggered, rows: 1, columns: 6, depth: 2, shelfLayers: [2, 1])
+
+    @Test func rowsAreTheLayersOfEachShelf() {
+        #expect(fridge.rows == 3)
+        #expect(fridge.shelfRows == [0..<2, 2..<3])
+        // Row A is the top layer of shelf 1, row B its bottom layer.
+        #expect(fridge.shelfPlace(ofRow: 0)! == (0, 1, 2))
+        #expect(fridge.shelfPlace(ofRow: 1)! == (0, 0, 2))
+        #expect(fridge.shelfPlace(ofRow: 2)! == (1, 0, 1))
+        #expect([0, 1, 2].map(fridge.columns(inRow:)) == [5, 6, 6])
+        #expect([0, 1, 2].map(fridge.isOffset(row:)) == [true, false, false])
+        #expect(fridge.capacity == (5 + 6 + 6) * 2)
+        let three = Rack(name: "T", kind: .staggered, rows: 1, columns: 7, shelfLayers: [3])
+        #expect([0, 1, 2].map(three.columns(inRow:)) == [7, 6, 7], "quincunx: N, N-1, N from the bottom")
+    }
+
+    @Test func eachShelfFillsFromItsBottomLayer() {
+        let order = fridge.allSlots
+        #expect(order.count == fridge.capacity)
+        // Shelf 1: bottom layer front, then behind, then the top layer.
+        #expect(order.prefix(6).allSatisfy { $0.row == 1 && $0.depth == 0 })
+        #expect(order[6..<12].allSatisfy { $0.row == 1 && $0.depth == 1 })
+        #expect(order[12..<17].allSatisfy { $0.row == 0 && $0.depth == 0 })
+        #expect(order.last == Slot(rackID: fridge.id, row: 2, column: 5, depth: 1))
         var cellar = Cellar()
-        try cellar.addBottles(of: Wine(name: "Burgundy", grapes: ["Pinot Noir"]))
-        try cellar.addBottles(of: Wine(name: "Beaujolais", grapes: ["Gamay", "Pinot Noir"]))
-        try cellar.addBottles(of: Wine(name: "Plain"))
-        #expect(cellar.wineGrapes == ["Pinot Noir", "Gamay"])
-        let pinot = cellar.groups(filter: CellarFilter(grape: " pinot noir"), sort: .name, year: 2026)
-        #expect(pinot.map(\.wine.name) == ["Beaujolais", "Burgundy"])
-        #expect(CellarFilter(grape: "Gamay").isActive)
-        #expect(SavedSearch(name: "Gamay", filter: CellarFilter(grape: "Gamay")).filter == CellarFilter(grape: "Gamay"))
-        let all = try JSONEncoder().encode(SavedSearch(name: "All", filter: CellarFilter()))
-        #expect(!String(decoding: all, as: UTF8.self).contains("grape"))
+        cellar.addRack(fridge)
+        #expect(cellar.freeSlots(in: fridge).first == Slot(rackID: fridge.id, row: 1, column: 0))
+    }
+
+    @Test func layersAreBoundedAndOnlyForHoneycombs() throws {
+        let wild = Rack(name: "W", kind: .staggered, rows: 1, columns: 3, shelfLayers: [0, 9, 2])
+        #expect(wild.shelfLayers == [1, 3, 2])
+        #expect(wild.rows == 6)
+        let many = Rack(name: "M", kind: .staggered, rows: 1, columns: 3, shelfLayers: Array(repeating: 3, count: 50))
+        #expect(many.rows <= Rack.maxSize)
+        #expect(many.shelfLayers?.count == 33)
+        #expect(Rack(name: "G", kind: .grid, rows: 2, columns: 2, shelfLayers: [2]).shelfLayers == nil)
+        #expect(Rack(name: "E", kind: .staggered, rows: 2, columns: 2, shelfLayers: []).shelfLayers == nil)
+        // Decoding applies the same rules: the rows are the layers.
+        let json = #"{"id":"\#(UUID())","name":"F","kind":"staggered","rows":40,"columns":6,"depth":1,"shelfLayers":[2,1]}"#
+        let decoded = try JSONDecoder().decode(Rack.self, from: Data(json.utf8))
+        #expect(decoded.rows == 3 && decoded.shelfLayers == [2, 1])
+        let again = try JSONDecoder().decode(Rack.self, from: JSONEncoder().encode(fridge))
+        #expect(again == fridge)
+        // A continuous honeycomb writes no shelf layers.
+        let plain = try JSONEncoder().encode(Rack(name: "H", kind: .staggered, rows: 2, columns: 2))
+        #expect(!String(decoding: plain, as: UTF8.self).contains("shelfLayers"))
     }
 }

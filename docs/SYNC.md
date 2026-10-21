@@ -80,9 +80,17 @@ implementations:
     numbers in the cellar file and the sync payloads, ISO 8601 strings without
     fractional seconds in backups;
   - a rack's `rows`, `columns`, `binCapacity` and each `rowColumns` value are
-    brought into 1…100 (`depth` into 1…3), and `rowColumns` keeps at most 100
-    values, so a damaged or hostile rack cannot make a device allocate millions
-    of cells. Every device applies the same rule, so they read the same rack.
+    brought into 1…100 (`depth` into 1…3, 1…2 for a `staggered` rack), and
+    `rowColumns` keeps at most 100 values, so a damaged or hostile rack cannot
+    make a device allocate millions of cells. Every device applies the same rule,
+    so they read the same rack;
+  - `rack.shelfLayers` (optional array of integers) makes a `staggered` rack a
+    fridge whose shelves hold bottles in layers stacked in quincunx: one value
+    per shelf, from the top shelf, each brought into 1…3. Shelves are kept while
+    their total stays within 100; `rows` is then that total (the layers, lettered
+    from the top, a shelf's last row being its bottom layer). It is left out (and
+    dropped when read) for other kinds and when empty. Without `rowColumns`, the
+    second layer of a shelf holds `columns − 1` bottles and the others `columns`.
 - Readers key each wine, bottle and discovery by its own `id`, not by the map
   key; if two entries have the same `id`, the one whose map key sorts first
   (uppercase UUID string) is kept. Racks with a repeated `id` keep the first.

@@ -51,6 +51,7 @@ import Testing
         #expect(Set(racks.map(\.kind)) == Set(RackKind.allCases))
         #expect(racks.contains { $0.depth == 2 && $0.kind == .grid })
         #expect(racks.contains { $0.rowColumns != nil })
+        #expect(racks.contains { $0.hasShelfLayers }, "a fridge with bottles in layers")
         for rack in racks {
             #expect(cellar.occupancy(of: rack) > 0, "\(rack.name) has bottles")
         }

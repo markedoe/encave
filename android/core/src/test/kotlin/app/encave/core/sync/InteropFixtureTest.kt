@@ -43,6 +43,7 @@ object InteropFixture {
     val plainWine = id("000000000012")
     val grid = id("000000000031")
     val bins = id("000000000032")
+    val fridge = id("000000000033")
     val label = PhotoId.make("label".toByteArray())
     val back = PhotoId.make("back".toByteArray())
     val cover = PhotoId.make("cover".toByteArray())
@@ -82,6 +83,7 @@ object InteropFixture {
         val racks = listOf(
             Rack(grid, "Cave/left wall", RackKind.Grid, rows = 4, columns = 6, depth = 2, rowColumns = listOf(6, 6, 5, 4)),
             Rack(bins, "Bins", RackKind.Bins, rows = 2, columns = 3, binCapacity = 10),
+            Rack(fridge, "Fridge", RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1)),
         )
         val searches = listOf(
             SavedSearch.of(

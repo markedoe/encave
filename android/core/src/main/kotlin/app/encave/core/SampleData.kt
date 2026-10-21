@@ -18,6 +18,7 @@ object SampleData {
         val deepRack: String = "Double-depth rack",
         val honeycomb: String = "Honeycomb rack",
         val stairs: String = "Under the stairs",
+        val largeFridge: String = "Large wine fridge",
         val tastingNote: String = "Silky, red fruit, long finish.",
         val kitchen: String = "Kitchen",
         val occasion: String = "Dinner with friends",
@@ -44,7 +45,12 @@ object SampleData {
         val deep = Rack(name = labels.deepRack, rows = 4, columns = 6, depth = 2)
         val honeycomb = Rack(name = labels.honeycomb, kind = RackKind.Staggered, rows = 5, columns = 8)
         val stairs = Rack(name = labels.stairs, rows = 5, columns = 6, rowColumns = listOf(2, 3, 4, 5, 6))
-        listOf(main, small, bins, deep, honeycomb, stairs).forEach { cellar.addRack(it) }
+        // A fridge whose top shelf holds bottles in two layers (6 and 5 on top), two deep.
+        val largeFridge = Rack(
+            name = labels.largeFridge, kind = RackKind.Staggered, rows = 4, columns = 6, depth = 2,
+            shelfLayers = listOf(2, 1, 1),
+        )
+        listOf(main, small, bins, deep, honeycomb, stairs, largeFridge).forEach { cellar.addRack(it) }
 
         val entries: List<Triple<Wine, Int, Rack?>> = listOf(
             Triple(
@@ -104,7 +110,7 @@ object SampleData {
                 Wine(name = "Qvevri Amber", producer = "Marani Tsiskari", vintage = year - 3, color = WineColor.Orange,
                     region = "Kakheti", country = "Georgia", grapes = listOf("Rkatsiteli"),
                     drinkFrom = year - 1, drinkUntil = year + 4),
-                3, honeycomb,
+                3, largeFridge,
             ),
             Triple(
                 Wine(name = "Vintage Port", producer = "Quinta da Serra", vintage = year - 15, color = WineColor.Fortified,

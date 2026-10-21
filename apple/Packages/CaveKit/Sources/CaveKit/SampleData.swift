@@ -11,6 +11,7 @@ public enum SampleData {
         public var deepRack = "Double-depth rack"
         public var honeycomb = "Honeycomb rack"
         public var stairs = "Under the stairs"
+        public var largeFridge = "Large wine fridge"
         public var tastingNote = "Silky, red fruit, long finish."
         public var kitchen = "Kitchen"
         public var occasion = "Dinner with friends"
@@ -41,7 +42,10 @@ public enum SampleData {
         let deep = Rack(name: labels.deepRack, rows: 4, columns: 6, depth: 2)
         let honeycomb = Rack(name: labels.honeycomb, kind: .staggered, rows: 5, columns: 8)
         let stairs = Rack(name: labels.stairs, rows: 5, columns: 6, rowColumns: [2, 3, 4, 5, 6])
-        for rack in [main, small, bins, deep, honeycomb, stairs] { cellar.addRack(rack) }
+        // A fridge whose top shelf holds bottles in two layers (6 and 5 on top), two deep.
+        let largeFridge = Rack(name: labels.largeFridge, kind: .staggered, rows: 4, columns: 6, depth: 2,
+                               shelfLayers: [2, 1, 1])
+        for rack in [main, small, bins, deep, honeycomb, stairs, largeFridge] { cellar.addRack(rack) }
 
         let entries: [(Wine, Int, Rack?)] = [
             (Wine(name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 9, color: .red,
@@ -72,7 +76,7 @@ public enum SampleData {
                   drinkFrom: year - 2, drinkUntil: year + 6), 5, honeycomb),
             (Wine(name: "Qvevri Amber", producer: "Marani Tsiskari", vintage: year - 3, color: .orange,
                   region: "Kakheti", country: "Georgia", grapes: ["Rkatsiteli"],
-                  drinkFrom: year - 1, drinkUntil: year + 4), 3, honeycomb),
+                  drinkFrom: year - 1, drinkUntil: year + 4), 3, largeFridge),
             (Wine(name: "Vintage Port", producer: "Quinta da Serra", vintage: year - 15, color: .fortified,
                   region: "Douro", country: "Portugal", appellation: "Porto", grapes: ["Touriga Nacional"],
                   drinkFrom: year - 5, drinkUntil: year + 25, tags: [labels.tagBirthYear]), 4, stairs),

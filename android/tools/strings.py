@@ -470,6 +470,7 @@ S = [
  ("sample_deep_rack", "Double-depth rack", "Casier double profondeur"),
  ("sample_honeycomb", "Honeycomb rack", "Casier nid d’abeille"),
  ("sample_stairs", "Under the stairs", "Sous l’escalier"),
+ ("sample_large_fridge", "Large wine fridge", "Grande cave à vin"),
 
  # Field help (supporting text under fields and short lines under controls)
  ("help_field_search", "Type a few letters of the name to add bottles of a wine you already have.", "Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà."),

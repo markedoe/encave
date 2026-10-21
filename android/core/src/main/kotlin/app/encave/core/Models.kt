@@ -194,7 +194,12 @@ enum class RackKind(val raw: String) {
     /** Classic rack: one bottle per cell in rows and columns, possibly two deep. */
     @SerialName("grid") Grid("grid"),
 
-    /** Honeycomb rack: every other row is offset by half a bottle and holds one fewer. */
+    /**
+     * Honeycomb: rows offset by half a bottle, nesting into each other. Either continuous
+     * (a honeycomb rack: every other row holds one fewer) or on shelves (a wine fridge whose
+     * shelves hold bottles laid in layers stacked in quincunx, see [Rack.shelfLayers]).
+     * Up to two bottles one behind the other.
+     */
     @SerialName("staggered") Staggered("staggered"),
 
     /** Wine fridge or cabinet: shelves holding a row of bottles, one or more deep. */
@@ -218,18 +223,57 @@ data class Rack(
     val rows: Int,
     /** Cells per row (the widest row for honeycomb racks). */
     val columns: Int,
-    /** Bottles one behind the other in a cell (grid and shelves). */
+    /** Bottles one behind the other in a cell (grid, honeycomb and shelves). */
     val depth: Int = 1,
     /** Bottles per bin (bins only). */
     val binCapacity: Int = 12,
     /** Cells in each row when rows differ (a triangle top, an irregular cellar). */
     val rowColumns: List<Int>? = null,
+    /**
+     * Honeycomb on shelves (a wine fridge): how many layers each shelf holds, from the top
+     * shelf, each 1 to 3; null for a continuous honeycomb. Rows are the layers, lettered from
+     * the top: a shelf's last row is its bottom layer. See [normalized].
+     */
+    val shelfLayers: List<Int>? = null,
 ) {
-    /** Cells in a row: custom widths first, then one fewer on offset honeycomb rows. */
+    /**
+     * Cells in a row: custom widths first, then one fewer on offset honeycomb rows (on
+     * shelves: one fewer on the layer above the bottom one, as bottles rest in the gaps).
+     */
     fun columnsInRow(row: Int): Int {
         rowColumns?.getOrNull(row)?.let { return it }
-        if (kind == RackKind.Staggered && row % 2 == 1) return maxOf(1, columns - 1)
-        return columns
+        return if (kind == RackKind.Staggered && isOffset(row)) maxOf(1, columns - 1) else columns
+    }
+
+    /** A honeycomb on shelves, as a wine fridge with bottles laid in layers. */
+    val hasShelfLayers: Boolean get() = kind == RackKind.Staggered && shelfLayers != null
+
+    /** The rows of each shelf, from the top shelf (only with shelf layers). */
+    val shelfRows: List<IntRange>
+        get() {
+            val layers = shelfLayers?.takeIf { kind == RackKind.Staggered } ?: return emptyList()
+            var start = 0
+            return layers.map { count -> (start until start + count).also { start += count } }
+        }
+
+    /** Where a row is on a fridge with shelf layers: shelf 0 is the top one, layer 0 the bottom one. */
+    data class ShelfPlace(val shelf: Int, val layer: Int, val layers: Int)
+
+    fun shelfPlace(row: Int): ShelfPlace? {
+        val layers = shelfLayers?.takeIf { kind == RackKind.Staggered } ?: return null
+        var start = 0
+        layers.forEachIndexed { shelf, count ->
+            if (row < start + count) return ShelfPlace(shelf, start + count - 1 - row, count)
+            start += count
+        }
+        return null
+    }
+
+    /** Is this row drawn offset by half a bottle? Odd honeycomb rows, or upper layers resting in the gaps; bins too. */
+    fun isOffset(row: Int): Boolean = when (kind) {
+        RackKind.Bins -> row % 2 == 1
+        RackKind.Staggered -> shelfPlace(row)?.let { it.layer % 2 == 1 } ?: (row % 2 == 1)
+        RackKind.Grid, RackKind.Shelves -> false
     }
 
     /** The widest row, for drawing. */
@@ -257,10 +301,12 @@ data class Rack(
 
     /**
      * Every slot, in the order bottles are placed automatically: a bin is filled before
-     * the next one; elsewhere the front of a row is filled before the back.
+     * the next one; elsewhere the front of a row is filled before the back. On a fridge with
+     * shelf layers, shelves are filled from the top as rows are, each from its bottom layer
+     * up (an upper layer rests on the one below).
      */
     val allSlots: List<Slot>
-        get() = (0 until rows).flatMap { row ->
+        get() = (if (hasShelfLayers) shelfRows.flatMap { it.reversed() } else (0 until rows).toList()).flatMap { row ->
             val width = columnsInRow(row)
             if (kind == RackKind.Bins) {
                 (0 until width).flatMap { column -> (0 until positionsPerCell).map { Slot(id, row, column, it) } }
@@ -304,18 +350,42 @@ data class Rack(
         return if (contains(slot)) slot else null
     }
 
-    /** Limits applied by the Swift initializer and decoder. */
+    /**
+     * Limits applied by the Swift initializer and decoder. Shelf layers are kept only on a
+     * honeycomb, each brought into 1…3, as many shelves as fit in [MAX_SIZE] rows; the rows
+     * are then the layers.
+     */
     fun normalized(): Rack {
+        var layers: List<Int>? = null
+        var total = 0
+        if (kind == RackKind.Staggered && !shelfLayers.isNullOrEmpty()) {
+            val kept = mutableListOf<Int>()
+            for (value in shelfLayers) {
+                val count = value.coerceIn(1, MAX_LAYERS)
+                if (total + count > MAX_SIZE) break
+                kept += count
+                total += count
+            }
+            layers = kept
+        }
         val fixed = copy(
-            rows = rows.coerceIn(1, MAX_SIZE), columns = columns.coerceIn(1, MAX_SIZE),
-            depth = depth.coerceIn(1, MAX_DEPTH), binCapacity = binCapacity.coerceIn(1, MAX_SIZE),
+            rows = if (layers != null) total else rows.coerceIn(1, MAX_SIZE), columns = columns.coerceIn(1, MAX_SIZE),
+            depth = depth.coerceIn(1, if (kind == RackKind.Staggered) MAX_STAGGERED_DEPTH else MAX_DEPTH),
+            binCapacity = binCapacity.coerceIn(1, MAX_SIZE),
             rowColumns = rowColumns?.take(MAX_SIZE)?.map { it.coerceIn(1, MAX_SIZE) },
+            shelfLayers = layers,
         )
         return if (fixed == this) this else fixed
     }
 
     companion object {
         const val MAX_DEPTH = 3
+
+        /** Honeycomb racks hold at most two bottles one behind the other. */
+        const val MAX_STAGGERED_DEPTH = 2
+
+        /** Layers of bottles stacked on one shelf. */
+        const val MAX_LAYERS = 3
 
         /**
          * Largest number of rows, of cells in a row and of bottles in a bin. The editor

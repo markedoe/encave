@@ -18,7 +18,7 @@ enum InteropFixture {
     static let iphone = id("000000000001"), android = id("000000000002"), removed = id("000000000003")
     static let cellarID = id("0000000000aa")
     static let fullWine = id("000000000011"), plainWine = id("000000000012")
-    static let grid = id("000000000031"), bins = id("000000000032")
+    static let grid = id("000000000031"), bins = id("000000000032"), fridge = id("000000000033")
     static let label = PhotoID.make(for: Data("label".utf8)), back = PhotoID.make(for: Data("back".utf8))
     static let cover = PhotoID.make(for: Data("cover".utf8))
 
@@ -56,6 +56,7 @@ enum InteropFixture {
         let racks = [
             Rack(id: grid, name: "Cave/left wall", kind: .grid, rows: 4, columns: 6, depth: 2, rowColumns: [6, 6, 5, 4]),
             Rack(id: bins, name: "Bins", kind: .bins, rows: 2, columns: 3, binCapacity: 10),
+            Rack(id: fridge, name: "Fridge", kind: .staggered, rows: 3, columns: 6, depth: 2, shelfLayers: [2, 1]),
         ]
         let searches = [
             SavedSearch(id: id("000000000051"), name: "Burgundy, ready",

@@ -181,8 +181,10 @@ public struct RackCell: Hashable, Sendable {
 public enum RackKind: String, Codable, CaseIterable, Sendable {
     /// Classic rack: one bottle per cell in rows and columns, possibly two deep.
     case grid
-    /// Honeycomb rack: every other row is offset by half a bottle and holds one fewer;
-    /// a cell can hold up to three bottles one behind the other.
+    /// Honeycomb: rows offset by half a bottle, nesting into each other. Either continuous
+    /// (a honeycomb rack: every other row holds one fewer) or on shelves (a wine fridge whose
+    /// shelves hold bottles laid in layers stacked in quincunx, see `Rack.shelfLayers`).
+    /// Up to two bottles one behind the other.
     case staggered
     /// Wine fridge or cabinet: shelves holding a row of bottles, one or more deep.
     case shelves
@@ -202,12 +204,20 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var columns: Int
     /// Bottles one behind the other in a cell (grid, honeycomb and shelves).
     public var depth: Int
+    /// Honeycomb on shelves (a wine fridge): how many layers each shelf holds, from the top
+    /// shelf, each 1 to 3; nil for a continuous honeycomb. Rows are the layers, lettered from
+    /// the top: a shelf's last row is its bottom layer.
+    public var shelfLayers: [Int]?
     /// Bottles per bin (bins only).
     public var binCapacity: Int
     /// Cells in each row when rows differ (a triangle top, an irregular cellar).
     public var rowColumns: [Int]?
 
     public static let maxDepth = 3
+    /// Honeycomb racks hold at most two bottles one behind the other.
+    public static let maxStaggeredDepth = 2
+    /// Layers of bottles stacked on one shelf.
+    public static let maxLayers = 3
     /// Largest number of rows, of cells in a row and of bottles in a bin. The editors
     /// stay well below; a rack from another device or a file is cut to it, so a
     /// damaged or hostile one cannot make every device allocate millions of cells.
@@ -215,16 +225,17 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     public init(
         id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
-        depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil
+        depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil, shelfLayers: [Int]? = nil
     ) {
         self.id = id; self.name = name; self.kind = kind
         self.rows = Rack.bounded(rows); self.columns = Rack.bounded(columns)
-        self.depth = min(Rack.maxDepth, max(1, depth)); self.binCapacity = Rack.bounded(binCapacity)
+        self.depth = Rack.boundedDepth(depth, kind: kind); self.binCapacity = Rack.bounded(binCapacity)
         self.rowColumns = rowColumns.map { $0.prefix(Rack.maxSize).map(Rack.bounded) }
+        applyShelfLayers(shelfLayers)
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, rows, columns, depth, binCapacity, rowColumns
+        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
     }
@@ -237,13 +248,37 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         kind = try c.decodeIfPresent(RackKind.self, forKey: .kind) ?? .grid
         rows = Rack.bounded(try c.decode(Int.self, forKey: .rows))
         columns = Rack.bounded(try c.decode(Int.self, forKey: .columns))
-        depth = min(Rack.maxDepth, max(1, try c.decodeIfPresent(Int.self, forKey: .depth) ?? 1))
+        depth = Rack.boundedDepth(try c.decodeIfPresent(Int.self, forKey: .depth) ?? 1, kind: kind)
         binCapacity = Rack.bounded(try c.decodeIfPresent(Int.self, forKey: .binCapacity) ?? 12)
         rowColumns = try c.decodeIfPresent([Int].self, forKey: .rowColumns)?.prefix(Rack.maxSize).map(Rack.bounded)
+        applyShelfLayers(try c.decodeIfPresent([Int].self, forKey: .shelfLayers))
     }
 
     /// 1 to `maxSize`.
     static func bounded(_ value: Int) -> Int { min(maxSize, max(1, value)) }
+
+    /// 1 to 3, or to 2 for a honeycomb.
+    static func boundedDepth(_ value: Int, kind: RackKind) -> Int {
+        min(kind == .staggered ? maxStaggeredDepth : maxDepth, max(1, value))
+    }
+
+    /// Keeps shelf layers only on a honeycomb, each brought into 1…3, as many shelves as fit
+    /// in `maxSize` rows; the rows are then the layers.
+    private mutating func applyShelfLayers(_ layers: [Int]?) {
+        guard kind == .staggered, let layers, !layers.isEmpty else {
+            shelfLayers = nil
+            return
+        }
+        var kept: [Int] = [], total = 0
+        for count in layers {
+            let count = min(Rack.maxLayers, max(1, count))
+            guard total + count <= Rack.maxSize else { break }
+            kept.append(count)
+            total += count
+        }
+        shelfLayers = kept
+        rows = total
+    }
 
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -255,13 +290,49 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encode(depth, forKey: .depth)
         try c.encode(binCapacity, forKey: .binCapacity)
         try c.encodeIfPresent(rowColumns, forKey: .rowColumns)
+        try c.encodeIfPresent(shelfLayers, forKey: .shelfLayers)
     }
 
-    /// Cells in a row: custom widths first, then one fewer on offset honeycomb rows.
+    /// Cells in a row: custom widths first, then one fewer on offset honeycomb rows (on
+    /// shelves: one fewer on the layer above the bottom one, as bottles rest in the gaps).
     public func columns(inRow row: Int) -> Int {
         if let rowColumns, rowColumns.indices.contains(row) { return rowColumns[row] }
-        if kind == .staggered, !row.isMultiple(of: 2) { return max(1, columns - 1) }
-        return columns
+        return kind == .staggered && isOffset(row: row) ? max(1, columns - 1) : columns
+    }
+
+    /// A honeycomb on shelves, as a wine fridge with bottles laid in layers.
+    public var hasShelfLayers: Bool { kind == .staggered && shelfLayers != nil }
+
+    /// The rows of each shelf, from the top shelf (only with shelf layers).
+    public var shelfRows: [Range<Int>] {
+        guard kind == .staggered, let shelfLayers else { return [] }
+        var start = 0
+        return shelfLayers.map { count in
+            defer { start += count }
+            return start..<(start + count)
+        }
+    }
+
+    /// Where a row is on a fridge with shelf layers: its shelf (0 is the top one), its
+    /// layer on that shelf (0 is the bottom one) and the layers of that shelf.
+    public func shelfPlace(ofRow row: Int) -> (shelf: Int, layer: Int, layers: Int)? {
+        guard kind == .staggered, let shelfLayers else { return nil }
+        var start = 0
+        for (shelf, count) in shelfLayers.enumerated() {
+            if row < start + count { return (shelf, start + count - 1 - row, count) }
+            start += count
+        }
+        return nil
+    }
+
+    /// Is this row drawn offset by half a bottle? Odd honeycomb rows, or upper layers resting
+    /// in the gaps of the layer below; bins too.
+    public func isOffset(row: Int) -> Bool {
+        switch kind {
+        case .bins: return !row.isMultiple(of: 2)
+        case .staggered: return shelfPlace(ofRow: row).map { !$0.layer.isMultiple(of: 2) } ?? !row.isMultiple(of: 2)
+        case .grid, .shelves: return false
+        }
     }
 
     /// The widest row, for drawing.
@@ -289,9 +360,12 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     }
 
     /// Every slot, in the order bottles are placed automatically: a bin is filled before
-    /// the next one; elsewhere the front of a row is filled before the back.
+    /// the next one; elsewhere the front of a row is filled before the back. On a fridge with
+    /// shelf layers, shelves are filled from the top as rows are, each from its bottom layer
+    /// up (an upper layer rests on the one below).
     public var allSlots: [Slot] {
-        (0..<rows).flatMap { row -> [Slot] in
+        let order: [Int] = hasShelfLayers ? shelfRows.flatMap { $0.reversed() } : Array(0..<rows)
+        return order.flatMap { row -> [Slot] in
             let width = columns(inRow: row)
             if kind == .bins {
                 return (0..<width).flatMap { column in
