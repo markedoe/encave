@@ -114,7 +114,7 @@ final class ScreenTourTests: XCTestCase {
         openSection(1, "racks")
         snapshot("racks")
         // The sample cellar has one rack of every kind: open each one.
-        for index in 0..<6 {
+        for index in 0..<7 {
             let card = element("rack.card.\(index)")
             scrollIntoView(card)
             guard card.exists else {

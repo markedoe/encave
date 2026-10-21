@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Draws a rack as it looks in real life:
 /// - grid: square cells with row letters and column numbers,
-/// - honeycomb: touching round holes, every other row offset by half,
+/// - honeycomb: touching round holes, every other row offset by half; on shelves (a wine
+///   fridge), each shelf's layers nest into each other in quincunx above a shelf,
 /// - shelves: rows of bottles on a shelf, with how many are behind,
 /// - bins: diamond bins showing a small pile of bottles and a count.
 struct RackGrid: View {
@@ -42,40 +43,36 @@ struct RackGrid: View {
         }
     }
 
-    private var offsetsOddRows: Bool { rack.kind == .staggered || rack.kind == .bins }
+    /// A continuous honeycomb, drawn inside its frame.
+    private var isHoneycombFrame: Bool { rack.kind == .staggered && !rack.hasShelfLayers }
 
     var body: some View {
         let bottlesByCell = model.cellar.bottlesByCell(in: rack)
         let selectedByCell = Dictionary(grouping: selected.filter { $0.rackID == rack.id }, by: \.cell)
-        VStack(alignment: .leading, spacing: rowSpacing) {
-            if showsHeaders, rack.kind == .grid || rack.kind == .shelves {
-                columnHeader
-                    .padding(.bottom, rack.kind == .shelves ? -rowSpacing + spacing : 0)
-            }
-            ForEach(0..<rack.rows, id: \.self) { row in
-                HStack(spacing: 0) {
-                    if showsHeaders { rowHeader(row) }
-                    HStack(spacing: spacing) {
-                        ForEach(0..<rack.columns(inRow: row), id: \.self) { column in
-                            let cell = RackCell(rackID: rack.id, row: row, column: column)
-                            RackCellView(
-                                rack: rack, cell: cell, bottles: bottlesByCell[cell] ?? [],
-                                size: size, selectedCount: selectedByCell[cell]?.count ?? 0,
-                                isHighlighted: highlighted?.cell == cell || selectedCell == cell,
-                                focusWine: focusWine, onTap: onTap, onDrop: onDrop
-                            )
-                        }
+        Group {
+            if rack.hasShelfLayers {
+                layeredShelves(bottlesByCell, selectedByCell)
+            } else {
+                VStack(alignment: .leading, spacing: rowSpacing) {
+                    if showsHeaders, rack.kind == .grid || rack.kind == .shelves {
+                        columnHeader
+                            .padding(.bottom, rack.kind == .shelves ? -rowSpacing + spacing : 0)
                     }
-                    .padding(.leading, offsetsOddRows && !row.isMultiple(of: 2) ? (size + spacing) / 2 : 0)
-                    .background(alignment: .bottom) {
-                        if rack.kind == .shelves { ShelfBar(height: max(4, cellSize * 0.09)).offset(y: cellSize * 0.2) }
+                    ForEach(0..<rack.rows, id: \.self) { row in
+                        HStack(spacing: 0) {
+                            if showsHeaders { rowHeader(row) }
+                            cells(ofRow: row, bottlesByCell, selectedByCell)
+                                .background(alignment: .bottom) {
+                                    if rack.kind == .shelves { ShelfBar(height: max(4, cellSize * 0.09)).offset(y: cellSize * 0.2) }
+                                }
+                        }
                     }
                 }
             }
         }
-        .padding(rack.kind == .staggered ? cellSize * 0.18 : 0)
+        .padding(isHoneycombFrame ? cellSize * 0.18 : 0)
         .background {
-            if rack.kind == .staggered || rack.kind == .grid {
+            if isHoneycombFrame || rack.kind == .grid {
                 RoundedRectangle(cornerRadius: cellSize * 0.22, style: .continuous)
                     .fill(Color.secondary.opacity(rack.kind == .staggered ? 0.08 : 0.04))
                     .padding(.leading, showsHeaders ? headerWidth : 0)
@@ -85,6 +82,49 @@ struct RackGrid: View {
     }
 
     private var headerWidth: CGFloat { max(18, cellSize * 0.42) }
+
+    /// The places of one row, offset by half a place when the row nests into the one below.
+    private func cells(ofRow row: Int, _ bottlesByCell: [RackCell: [Bottle]], _ selectedByCell: [RackCell: [Slot]]) -> some View {
+        HStack(spacing: spacing) {
+            ForEach(0..<rack.columns(inRow: row), id: \.self) { column in
+                let cell = RackCell(rackID: rack.id, row: row, column: column)
+                RackCellView(
+                    rack: rack, cell: cell, bottles: bottlesByCell[cell] ?? [],
+                    size: size, selectedCount: selectedByCell[cell]?.count ?? 0,
+                    isHighlighted: highlighted?.cell == cell || selectedCell == cell,
+                    focusWine: focusWine, onTap: onTap, onDrop: onDrop
+                )
+            }
+        }
+        .padding(.leading, rack.isOffset(row: row) ? (size + spacing) / 2 : 0)
+    }
+
+    /// A fridge with bottles in layers: each shelf's layers nest into each other in
+    /// quincunx, above the shelf; shelves are numbered from the top.
+    private func layeredShelves(_ bottlesByCell: [RackCell: [Bottle]], _ selectedByCell: [RackCell: [Slot]]) -> some View {
+        let bar = max(4, cellSize * 0.09)
+        return VStack(alignment: .leading, spacing: cellSize * Self.shelfGap) {
+            ForEach(Array(rack.shelfRows.enumerated()), id: \.offset) { shelf, rows in
+                HStack(spacing: 0) {
+                    if showsHeaders {
+                        Text(verbatim: "\(shelf + 1)")
+                            .font(.system(size: max(10, cellSize * 0.24), weight: .semibold).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: headerWidth)
+                            .accessibilityHidden(true)
+                    }
+                    VStack(alignment: .leading, spacing: rowSpacing) {
+                        ForEach(rows, id: \.self) { row in cells(ofRow: row, bottlesByCell, selectedByCell) }
+                    }
+                    .padding(.bottom, bar + cellSize * 0.04)
+                    .background(alignment: .bottom) { ShelfBar(height: bar) }
+                }
+            }
+        }
+    }
+
+    /// Space between two shelves of layers, in places.
+    static let shelfGap: CGFloat = 0.12
 
     private func rowHeader(_ row: Int) -> some View {
         Text(verbatim: Rack.rowLetters(row))
@@ -123,6 +163,12 @@ extension RackGrid {
         case .grid:
             width = columns * 1.08
             height = rows * 1.08 + (showsHeaders ? 0.4 : 0)
+        case .staggered where rack.hasShelfLayers:
+            // Each shelf: its first layer, the others nesting at 0.87 of a place, the shelf
+            // bar, and a gap to the next shelf.
+            width = (columns + 0.5) * 1.04
+            height = rack.shelfRows.reduce(CGFloat(0)) { $0 + 1 + CGFloat($1.count - 1) * 0.87 + 0.15 }
+                + CGFloat(max(0, rack.shelfRows.count - 1)) * shelfGap
         case .staggered:
             width = (columns + 0.5) * 1.04 + 0.4
             height = rows * 0.9 + 0.4
@@ -500,31 +546,55 @@ struct RackThumbnail: View {
     let rack: Rack
 
     var body: some View {
-        let rows = min(rack.rows, 6)
         let byCell = model.cellar.bottlesByCell(in: rack)
-        VStack(alignment: .leading, spacing: 3) {
-            ForEach(0..<rows, id: \.self) { row in
-                HStack(spacing: 3) {
-                    ForEach(0..<min(rack.columns(inRow: row), 10), id: \.self) { column in
-                        let bottles = byCell[RackCell(rackID: rack.id, row: row, column: column)] ?? []
-                        let color = bottles.first.flatMap { model.cellar.wines[$0.wineID]?.color }
-                        Group {
-                            if rack.kind == .bins {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
-                                    .rotationEffect(.degrees(45))
-                                    .scaleEffect(0.75)
-                            } else {
-                                Circle()
-                                    .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
-                            }
-                        }
-                        .frame(width: 9, height: 9)
+        if rack.hasShelfLayers {
+            // Shelves of layers nesting into each other, each above a shelf.
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(Array(shownShelves.enumerated()), id: \.offset) { _, rows in
+                    VStack(alignment: .leading, spacing: -1.5) {
+                        ForEach(rows, id: \.self) { row in places(row, byCell) }
+                    }
+                    .padding(.bottom, 3)
+                    .background(alignment: .bottom) {
+                        Capsule().fill(Color.secondary.opacity(0.35)).frame(height: 2)
                     }
                 }
-                .padding(.leading, rack.kind == .staggered && !row.isMultiple(of: 2) ? 6 : 0)
+            }
+            .accessibilityHidden(true)
+        } else {
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(0..<min(rack.rows, 6), id: \.self) { row in places(row, byCell) }
+            }
+            .accessibilityHidden(true)
+        }
+    }
+
+    /// The shelves that fit in the card: up to eight layers.
+    private var shownShelves: [Range<Int>] {
+        var shown: [Range<Int>] = []
+        for rows in rack.shelfRows where (shown.last?.upperBound ?? 0) + rows.count <= 8 { shown.append(rows) }
+        return shown.isEmpty ? Array(rack.shelfRows.prefix(1)) : shown
+    }
+
+    private func places(_ row: Int, _ byCell: [RackCell: [Bottle]]) -> some View {
+        HStack(spacing: 3) {
+            ForEach(0..<min(rack.columns(inRow: row), 10), id: \.self) { column in
+                let bottles = byCell[RackCell(rackID: rack.id, row: row, column: column)] ?? []
+                let color = bottles.first.flatMap { model.cellar.wines[$0.wineID]?.color }
+                Group {
+                    if rack.kind == .bins {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
+                            .rotationEffect(.degrees(45))
+                            .scaleEffect(0.75)
+                    } else {
+                        Circle()
+                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
+                    }
+                }
+                .frame(width: 9, height: 9)
             }
         }
-        .accessibilityHidden(true)
+        .padding(.leading, rack.kind == .staggered && rack.isOffset(row: row) ? 6 : 0)
     }
 }

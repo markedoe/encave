@@ -30,8 +30,8 @@ where each bottle sits in your racks, and when it is ready to drink.
   - **Search Pictures** finds a picture of the bottle with the same service;
     the one you choose is downloaded from its site and shown as the wine's
     picture. The label photo is always kept.
-- **Racks drawn as they look:** grids, honeycombs, wine fridges with depth, diamond
-  bins, irregular rows.
+- **Racks drawn as they look:** grids, honeycombs, wine fridges with depth or with
+  bottles stacked in layers on each shelf, diamond bins, irregular rows.
   - See which bottle is where.
   - Find a wine with the key under the rack.
   - Pinch to zoom, and move bottles.

@@ -9,7 +9,9 @@ struct RackPreset: Identifiable {
     let columns: Int
     var depth = 1
     var binCapacity = 10
-    var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)" }
+    /// Honeycomb on shelves: the layers of each shelf, from the top.
+    var shelfLayers: [Int]?
+    var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)-\(shelfLayers ?? [])" }
 
     // Computed: LocalizedStringKey is not Sendable, so it cannot be a stored static.
     static var all: [RackPreset] {
@@ -19,6 +21,8 @@ struct RackPreset: Identifiable {
             RackPreset(title: "Large, 10 × 12", kind: .grid, rows: 10, columns: 12),
             RackPreset(title: "5 rows of 8", kind: .staggered, rows: 5, columns: 8),
             RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
+            RackPreset(title: "Wine fridge, shelves in layers", kind: .staggered, rows: 10, columns: 6, depth: 2,
+                       shelfLayers: Array(repeating: 2, count: 5)),
             RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
             RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
             RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
@@ -42,6 +46,9 @@ struct RackEditor: View {
     @State private var binCapacity = 10
     @State private var customRows = false
     @State private var rowColumns: [Int] = []
+    /// Honeycomb: on shelves (a wine fridge with bottles in layers) rather than continuous.
+    @State private var onShelves = false
+    @State private var shelves: [ShelfDraft] = []
     @State private var loaded = false
     @State private var confirmingDelete = false
 
@@ -66,11 +73,21 @@ struct RackEditor: View {
                 }
 
                 Section {
-                    Stepper(value: $rows, in: 1...40) {
-                        LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
+                    if kind == .staggered {
+                        Picker("Layout", selection: $onShelves.animation()) {
+                            Text("Continuous").tag(false)
+                            Text("On shelves").tag(true)
+                        }
+                        .pickerStyle(.segmented)
+                        .fieldHelp("A honeycomb rack, or the shelves of a wine fridge holding bottles stacked in quincunx.")
                     }
-                    .fieldHelp("Counted from the top. Rows are lettered A, B, C…")
-                    if !customRows {
+                    if !layered {
+                        Stepper(value: $rows, in: 1...40) {
+                            LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
+                        }
+                        .fieldHelp("Counted from the top. Rows are lettered A, B, C…")
+                    }
+                    if !customRows && !layered {
                         Stepper(value: $columns, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(columns)").monospacedDigit() } label: { Text(kind.columnTitle) }
                         }
@@ -97,18 +114,47 @@ struct RackEditor: View {
                         }
                         .fieldHelp("A diamond bin of about 30 cm holds around 10 standard bottles.")
                     case .staggered:
-                        Picker("Bottles per cell", selection: $depth) {
+                        Picker("Rows deep", selection: $depth) {
                             Text(verbatim: "1").tag(1)
                             Text(verbatim: "2").tag(2)
-                            Text(verbatim: "3").tag(3)
                         }
                         .pickerStyle(.segmented)
-                        .fieldHelp("How many bottles fit one behind the other in each cell.")
+                        .fieldHelp(depthHelp)
                     }
                 } header: {
                     Text("Size")
                 } footer: {
-                    Text("Holds \(preview.capacity) bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.")
+                    if layered {
+                        Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
+                    } else {
+                        Text("Holds \(preview.capacity) bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.")
+                    }
+                }
+
+                if layered {
+                    Section {
+                        ForEach($shelves) { $shelf in
+                            let index = shelves.firstIndex { $0.id == shelf.id } ?? 0
+                            ShelfRow(number: index + 1, shelf: $shelf)
+                                .contextMenu { shelfActions(index) }
+                                .swipeActions {
+                                    if shelves.count > 1 {
+                                        Button("Delete", role: .destructive) { removeShelf(index) }
+                                    }
+                                    Button("Duplicate") { duplicateShelf(index) }
+                                }
+                        }
+                        Button {
+                            withAnimation { shelves.append(shelves.last.map { ShelfDraft(copying: $0) } ?? ShelfDraft()) }
+                        } label: {
+                            Label("Add Shelf", systemImage: "plus.circle.fill")
+                        }
+                        .disabled(layerCount + Rack.maxLayers > Rack.maxSize)
+                    } header: {
+                        Text("Shelves, from the top")
+                    } footer: {
+                        Text("Holds \(preview.capacity) bottles. Touch and hold a shelf to duplicate it or apply it to all shelves.")
+                    }
                 }
 
                 if kind != .staggered {
@@ -183,6 +229,7 @@ struct RackEditor: View {
             }
             .onAppear(perform: load)
             .onChange(of: rows) { _, count in if customRows { resizeRows(count) } }
+            .onChange(of: onShelves) { _, on in if on { startShelves() } }
             // Turned on by hand: every row starts at the rack's width. Loading an irregular
             // rack sets its rows first, so they are kept.
             .onChange(of: customRows) { _, on in
@@ -196,9 +243,58 @@ struct RackEditor: View {
         .macSheetFrame(width: 560, height: 760)
     }
 
+    /// A honeycomb on shelves, edited shelf by shelf.
+    private var layered: Bool { kind == .staggered && onShelves }
+
+    private var depthHelp: LocalizedStringKey {
+        layered ? "Bottles one behind the other on the shelf." : "How many bottles fit one behind the other in each cell."
+    }
+
+    private var layerCount: Int { shelves.reduce(0) { $0 + $1.layers } }
+
     private var preview: Rack {
-        Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: rows, columns: customRows ? (rowColumns.max() ?? columns) : columns,
-             depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil)
+        if layered {
+            // Rows are the layers, from the top: each shelf's top layer first.
+            let widths = shelves.flatMap { $0.counts.prefix($0.layers).reversed() }
+            return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: max(1, widths.count),
+                        columns: shelves.map { $0.counts[0] }.max() ?? 1, depth: depth, rowColumns: widths,
+                        shelfLayers: shelves.map(\.layers))
+        }
+        return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: rows,
+                    columns: customRows ? (rowColumns.max() ?? columns) : columns,
+                    depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil)
+    }
+
+    @ViewBuilder
+    private func shelfActions(_ index: Int) -> some View {
+        Button("Duplicate", systemImage: "plus.square.on.square") { duplicateShelf(index) }
+        Button("Apply to All Shelves", systemImage: "square.stack.3d.down.right") { applyToAll(index) }
+        if shelves.count > 1 {
+            Button("Delete", systemImage: "trash", role: .destructive) { removeShelf(index) }
+        }
+    }
+
+    private func duplicateShelf(_ index: Int) {
+        guard shelves.indices.contains(index), layerCount + shelves[index].layers <= Rack.maxSize else { return }
+        withAnimation { shelves.insert(ShelfDraft(copying: shelves[index]), at: index + 1) }
+    }
+
+    private func removeShelf(_ index: Int) {
+        guard shelves.count > 1, shelves.indices.contains(index) else { return }
+        withAnimation { _ = shelves.remove(at: index) }
+    }
+
+    /// Every shelf takes the layers and bottles of this one.
+    private func applyToAll(_ index: Int) {
+        guard shelves.indices.contains(index) else { return }
+        let source = shelves[index]
+        withAnimation {
+            shelves = shelves.map { shelf in
+                var copy = source
+                copy.id = shelf.id
+                return copy
+            }
+        }
     }
 
     private func rowBinding(_ row: Int) -> Binding<Int> {
@@ -222,13 +318,20 @@ struct RackEditor: View {
     private func choose(_ option: RackKind) {
         withAnimation(.snappy) {
             kind = option
-            if option == .staggered { customRows = false }
+            if option == .staggered {
+                customRows = false
+                depth = min(depth, Rack.maxStaggeredDepth)
+            }
             if rackID == nil, let preset = RackPreset.all.first(where: { $0.kind == option }) { apply(preset) }
         }
     }
 
     private func matches(_ preset: RackPreset) -> Bool {
-        !customRows && rows == preset.rows && columns == preset.columns
+        if let layers = preset.shelfLayers {
+            return layered && depth == preset.depth
+                && shelves == layers.map { ShelfDraft(layers: $0, bottom: preset.columns) }
+        }
+        return !customRows && !layered && rows == preset.rows && columns == preset.columns
             && (kind == .bins ? binCapacity == preset.binCapacity : depth == preset.depth)
     }
 
@@ -236,7 +339,18 @@ struct RackEditor: View {
         withAnimation(.snappy) {
             kind = preset.kind; rows = preset.rows; columns = preset.columns
             depth = preset.depth; binCapacity = preset.binCapacity; customRows = false
+            onShelves = preset.shelfLayers != nil
+            if let layers = preset.shelfLayers {
+                shelves = layers.map { ShelfDraft(layers: $0, bottom: preset.columns) }
+            }
         }
+    }
+
+    /// A new fridge on shelves: five shelves of 6 bottles and 5 on top, two deep.
+    private func startShelves() {
+        guard shelves.isEmpty else { return }
+        shelves = (0..<5).map { _ in ShelfDraft() }
+        depth = 2
     }
 
     private func load() {
@@ -245,7 +359,13 @@ struct RackEditor: View {
         if let rackID, let rack = model.cellar.rack(rackID) {
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
-            if let custom = rack.rowColumns {
+            if rack.hasShelfLayers {
+                onShelves = true
+                shelves = rack.shelfRows.map { rows in
+                    // From the bottom layer up: the shelf's last row first.
+                    ShelfDraft(layers: rows.count, counts: rows.reversed().map { rack.columns(inRow: $0) })
+                }
+            } else if let custom = rack.rowColumns {
                 rowColumns = custom
                 customRows = true
             }
@@ -261,6 +381,100 @@ struct RackEditor: View {
             if rackID == nil { cellar.addRack(rack) } else { try cellar.updateRack(rack) }
         }
         if ok { dismiss() }
+    }
+}
+
+/// One shelf of a fridge with bottles in layers, while editing.
+struct ShelfDraft: Identifiable, Equatable {
+    var id = UUID()
+    /// 1 to 3 layers stacked in quincunx.
+    var layers: Int
+    /// Bottles in each layer, from the bottom; always three values, so changing the
+    /// number of layers keeps what was typed.
+    var counts: [Int]
+
+    /// A bottom layer of `bottom` bottles; each layer above rests in the gaps of the one below.
+    init(layers: Int = 2, bottom: Int = 6) {
+        self.layers = layers
+        counts = [bottom, max(1, bottom - 1), bottom]
+    }
+
+    /// Bottles of each layer from the bottom, completed with the usual quincunx.
+    init(layers: Int, counts: [Int]) {
+        self.layers = min(Rack.maxLayers, max(1, layers))
+        var all = counts
+        let bottom = all.first ?? 6
+        if all.isEmpty { all.append(bottom) }
+        if all.count < 2 { all.append(max(1, bottom - 1)) }
+        if all.count < 3 { all.append(bottom) }
+        self.counts = Array(all.prefix(3))
+    }
+
+    init(copying other: ShelfDraft) {
+        self = other
+        id = UUID()
+    }
+
+    /// Same layers and bottles, whatever the shelf.
+    static func == (a: ShelfDraft, b: ShelfDraft) -> Bool {
+        a.layers == b.layers && a.counts.prefix(a.layers) == b.counts.prefix(b.layers)
+    }
+}
+
+/// A shelf in the editor: its layers and the bottles of each.
+private struct ShelfRow: View {
+    let number: Int
+    @Binding var shelf: ShelfDraft
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Shelf \(number)")
+                .font(.headline)
+            Picker("Layers per shelf", selection: $shelf.layers) {
+                Text(verbatim: "1").tag(1)
+                Text(verbatim: "2").tag(2)
+                Text(verbatim: "3").tag(3)
+            }
+            .pickerStyle(.segmented)
+            .fieldHelp("Layers of bottles stacked on this shelf.")
+            Stepper(value: bottom, in: 1...40) {
+                LabeledContent("Bottom layer") { Text(verbatim: "\(shelf.counts[0])").monospacedDigit() }
+            }
+            if shelf.layers == 3 {
+                Stepper(value: $shelf.counts[1], in: 1...40) {
+                    LabeledContent("Middle layer") { Text(verbatim: "\(shelf.counts[1])").monospacedDigit() }
+                }
+            }
+            if shelf.layers > 1 {
+                let top = shelf.layers - 1
+                Stepper(value: $shelf.counts[top], in: 1...40) {
+                    LabeledContent("Top layer") { Text(verbatim: "\(shelf.counts[top])").monospacedDigit() }
+                }
+            }
+            hint
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    /// The bottom layer; the layers above follow it while they keep their usual count.
+    private var bottom: Binding<Int> {
+        Binding(get: { shelf.counts[0] }, set: { value in
+            let old = shelf.counts[0]
+            if shelf.counts[1] == max(1, old - 1) { shelf.counts[1] = max(1, value - 1) }
+            if shelf.counts[2] == old { shelf.counts[2] = value }
+            shelf.counts[0] = value
+        })
+    }
+
+    private var hint: Text {
+        let counts = shelf.counts
+        switch shelf.layers {
+        case 1: return Text("A single layer of \(counts[0]) bottles.")
+        case 2: return Text("Bottles stacked in quincunx: \(counts[0]) at the bottom, \(counts[1]) on top.")
+        default: return Text("Bottles stacked in quincunx: \(counts[0]) at the bottom, \(counts[1]) in the middle, \(counts[2]) on top.")
+        }
     }
 }
 

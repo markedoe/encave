@@ -14,7 +14,7 @@ extension RackKind {
     var subtitle: LocalizedStringKey {
         switch self {
         case .grid: "One bottle per cell, single or double depth"
-        case .staggered: "Offset rows, like metal or terracotta racks"
+        case .staggered: "Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves"
         case .shelves: "Shelves holding a row of bottles, one to three deep"
         case .bins: "Diamond bins or crates holding several bottles each"
         }
@@ -49,7 +49,8 @@ extension RackKind {
 }
 
 extension Rack {
-    /// "B3", "B3, back", "Shelf B, 3, front" or "Bin B3", for people (not for files).
+    /// "B3", "B3, back", "Shelf B, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
+    /// for people (not for files).
     func displayLabel(for slot: Slot) -> String {
         let cell = displayLabel(for: slot.cell)
         guard kind != .bins, positionsPerCell > 1 else { return cell }
@@ -57,6 +58,14 @@ extension Rack {
     }
 
     func displayLabel(for cell: RackCell) -> String {
+        if let place = shelfPlace(ofRow: cell.row) {
+            // A fridge with bottles in layers: "Shelf 1, top layer, place 3".
+            let shelf = place.shelf + 1, number = cell.column + 1
+            if place.layers == 1 { return String(localized: "Shelf \(shelf), place \(number)") }
+            if place.layer == 0 { return String(localized: "Shelf \(shelf), bottom layer, place \(number)") }
+            if place.layer == place.layers - 1 { return String(localized: "Shelf \(shelf), top layer, place \(number)") }
+            return String(localized: "Shelf \(shelf), middle layer, place \(number)")
+        }
         switch kind {
         case .grid, .staggered:
             return label(for: cell)
