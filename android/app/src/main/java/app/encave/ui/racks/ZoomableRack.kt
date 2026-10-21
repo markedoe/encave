@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -44,9 +45,9 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-/** What changes the drawing's shape: kind, depth and cells per row. Zoom starts again when it changes. */
+/** What changes the drawing's shape: kind, depth, cells per row and layers per shelf. Zoom starts again when it changes. */
 val Rack.shape: String
-    get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { columnsInRow(it).toString() }
+    get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { columnsInRow(it).toString() } + " ${shelfLayers.orEmpty()}"
 
 /**
  * How far a rack is zoomed in (1 = the whole rack fits) and which spot of it is in the
@@ -113,17 +114,20 @@ fun ZoomableRack(
     val measured = remember { Measured() }
     var lastDown by remember { mutableStateOf(Offset.Unspecified) }
     val scope = rememberCoroutineScope()
+    // The gestures below start once and read the latest state: a new rack shape (after
+    // editing the rack) brings a new state, which a pinch must zoom.
+    val current by rememberUpdatedState(state)
 
     fun topLeft(): Offset {
         val (view, content) = measured.view to measured.content
-        return Offset(place(view.width, content.width.toFloat(), state.center.x), place(view.height, content.height.toFloat(), state.center.y))
+        return Offset(place(view.width, content.width.toFloat(), current.center.x), place(view.height, content.height.toFloat(), current.center.y))
     }
 
     fun clamped(center: Offset, content: Size): Offset =
         Offset(clampCenter(measured.view.width, content.width, center.x), clampCenter(measured.view.height, content.height, center.y))
 
     fun zoomBy(factor: Float, centroid: Offset) {
-        val old = state.level
+        val old = current.level
         val new = (old * factor).coerceIn(1f, RackZoomState.MAX)
         val size = measured.content
         if (new == old || size.width == 0 || size.height == 0) return
@@ -132,8 +136,8 @@ fun ZoomableRack(
         val spot = Offset((centroid.x - origin.x) / size.width, (centroid.y - origin.y) / size.height)
         val grown = Size(size.width * new / old, size.height * new / old)
         val view = measured.view
-        state.level = new
-        state.center = clamped(
+        current.level = new
+        current.center = clamped(
             Offset((view.width / 2 - centroid.x) / grown.width + spot.x, (view.height / 2 - centroid.y) / grown.height + spot.y),
             grown,
         )
@@ -142,15 +146,15 @@ fun ZoomableRack(
     fun panBy(delta: Offset) {
         val size = measured.content
         if (size.width == 0 || size.height == 0) return
-        state.center = clamped(
-            Offset(state.center.x - delta.x / size.width, state.center.y - delta.y / size.height),
+        current.center = clamped(
+            Offset(current.center.x - delta.x / size.width, current.center.y - delta.y / size.height),
             Size(size.width.toFloat(), size.height.toFloat()),
         )
     }
 
     fun doubleTap(point: Offset) {
-        val fromLevel = state.level
-        val fromCenter = state.center
+        val fromLevel = current.level
+        val fromCenter = current.center
         val toLevel: Float
         val toCenter: Offset
         if (fromLevel > 1.01f) {
@@ -169,11 +173,11 @@ fun ZoomableRack(
         }
         scope.launch {
             animate(0f, 1f, animationSpec = tween(250)) { t, _ ->
-                state.level = fromLevel + (toLevel - fromLevel) * t
-                state.center = fromCenter + (toCenter - fromCenter) * t
+                current.level = fromLevel + (toLevel - fromLevel) * t
+                current.center = fromCenter + (toCenter - fromCenter) * t
             }
             val grown = measured.content.let { Size(it.width * toLevel / fromLevel, it.height * toLevel / fromLevel) }
-            state.center = clamped(toCenter, grown)
+            current.center = clamped(toCenter, grown)
         }
     }
 
