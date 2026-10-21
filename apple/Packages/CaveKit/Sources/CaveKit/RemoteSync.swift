@@ -211,10 +211,31 @@ public struct RemoteProgress: Codable, Equatable, Sendable {
     public var uploadedDigest: String?
     /// Files (photos and documents) already uploaded in the current epoch.
     public var uploadedPhotos: Set<String> = []
+    /// Files the storage refused (too large, or no room left): the cellar still syncs
+    /// without them, and they are tried again with the next snapshot this device writes.
+    public var refusedFiles: Set<String> = []
+    /// The last refusal was for lack of room rather than size.
+    public var storageFull = false
     /// Epoch the progress refers to; a new epoch starts afresh.
     public var epoch: UInt32 = 0
 
     public init() {}
+
+    enum CodingKeys: String, CodingKey {
+        case seen, uploadedClock, uploadedDigest, uploadedPhotos, refusedFiles, storageFull, epoch
+    }
+
+    // Progress saved before `refusedFiles` existed still reads.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        seen = try container.decode([UUID: UInt64].self, forKey: .seen)
+        uploadedClock = try container.decodeIfPresent(UInt64.self, forKey: .uploadedClock)
+        uploadedDigest = try container.decodeIfPresent(String.self, forKey: .uploadedDigest)
+        uploadedPhotos = try container.decode(Set<String>.self, forKey: .uploadedPhotos)
+        refusedFiles = try container.decodeIfPresent(Set<String>.self, forKey: .refusedFiles) ?? []
+        storageFull = try container.decodeIfPresent(Bool.self, forKey: .storageFull) ?? false
+        epoch = try container.decode(UInt32.self, forKey: .epoch)
+    }
 }
 
 public enum RemoteSync {
@@ -235,6 +256,9 @@ public enum RemoteSync {
         /// when the content changed without the clock moving (a merge on the local
         /// network), so readers see a newer snapshot. Keep it.
         public var clock: UInt64 = 0
+        /// Why the storage refused some of this device's files (`fileTooLarge` or
+        /// `quotaExceeded`), if it did: the cellar synced, those files stay here for now.
+        public var refusedFiles: RemoteSyncError?
     }
 
     /// One round: picks up key grants, reads the other devices' newest snapshots,
@@ -327,18 +351,32 @@ public enum RemoteSync {
             if let written, merged.state.clock <= written {
                 merged.state.clock = written + 1
             }
+            var full = false
             for id in Set(refs.map(\.id)).sorted() where PhotoID.isValid(id) && !progress.uploadedPhotos.contains(id) {
-                guard let data = files.data(id, in: refs) else { continue }
+                guard !full, let data = files.data(id, in: refs) else { continue }
                 let path = photoPath(id)
-                try await mailbox.create(path, data: Envelope.seal(data, kind: .photo, path: path, key: key.dataKey))
+                // A file the storage refuses (a large document) must not stop the cellar from syncing.
+                do {
+                    try await mailbox.create(path, data: Envelope.seal(data, kind: .photo, path: path, key: key.dataKey))
+                } catch let error as RemoteSyncError where error == .fileTooLarge || error == .quotaExceeded {
+                    progress.refusedFiles.insert(id)
+                    progress.storageFull = error == .quotaExceeded
+                    // No room: the other files would be refused too.
+                    full = error == .quotaExceeded
+                    continue
+                }
                 progress.uploadedPhotos.insert(id)
+                progress.refusedFiles.remove(id)
             }
             try await write(merged, to: mailbox, key: key, device: identity.id)
             progress.uploadedClock = merged.state.clock
             progress.uploadedDigest = digest
         }
+        progress.refusedFiles.formIntersection(refs.map(\.id))
+        let refused: RemoteSyncError? = progress.refusedFiles.isEmpty ? nil
+            : progress.storageFull ? .quotaExceeded : .fileTooLarge
         return Result(snapshot: received ? merged : nil, progress: progress, newKey: newKey, storage: storage,
-                      unreadable: unreadable, clock: merged.state.clock)
+                      unreadable: unreadable, clock: merged.state.clock, refusedFiles: refused)
     }
 
     /// The key left in this device's inbox by a current member that supersedes

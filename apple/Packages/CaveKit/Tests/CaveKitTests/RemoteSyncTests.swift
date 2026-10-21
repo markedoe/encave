@@ -16,12 +16,13 @@ struct RemoteDevice {
         snapshot.state.record(from: before, to: snapshot.cellar)
     }
 
-    mutating func sync(_ store: MailboxStore) async throws {
+    @discardableResult
+    mutating func sync(_ store: MailboxStore) async throws -> RemoteSync.Result? {
         if key == nil {
             key = try await RemoteSync.receiveGrant(store: store, identity: identity, membership: snapshot.membership,
                                                     current: nil)?.cellarKey
         }
-        guard let key else { return }
+        guard let key else { return nil }
         let result = try await RemoteSync.run(store: store, identity: identity, key: key, local: snapshot,
                                               progress: progress, files: photos.access)
         if let merged = result.snapshot {
@@ -32,6 +33,36 @@ struct RemoteDevice {
         if let newKey = result.newKey { self.key = newKey }
         snapshot.state.clock = max(snapshot.state.clock, result.clock)
         progress = result.progress
+        return result
+    }
+}
+
+/// Storage that refuses files under "photo/" larger than `limit` bytes, like a WebDAV
+/// server with a small upload limit (or, with `full`, one with no room left).
+final class RefusingStore: MailboxStore, @unchecked Sendable {
+    let base = MemoryMailboxStore()
+    private let lock = NSLock()
+    private var _limit: Int
+    let error: RemoteSyncError
+    init(limit: Int, error: RemoteSyncError = .fileTooLarge) { _limit = limit; self.error = error }
+    var limit: Int {
+        get { lock.withLock { _limit } }
+        set { lock.withLock { _limit = newValue } }
+    }
+
+    func mailbox(id: String, token: String) -> Mailbox { Box(store: self, base: base.mailbox(id: id, token: token)) }
+    func inbox(id: String, token: String) -> Mailbox { base.inbox(id: id, token: token) }
+
+    struct Box: Mailbox {
+        let store: RefusingStore
+        let base: Mailbox
+        func list(prefix: String) async throws -> [String] { try await base.list(prefix: prefix) }
+        func get(_ path: String) async throws -> Data? { try await base.get(path) }
+        func create(_ path: String, data: Data) async throws -> Bool {
+            if path.hasPrefix("photo/"), data.count > store.limit { throw store.error }
+            return try await base.create(path, data: data)
+        }
+        func delete(_ path: String) async throws { try await base.delete(path) }
     }
 }
 
@@ -235,6 +266,53 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
         try await devices[0].sync(store)
         try await devices[1].sync(store)
         #expect(devices[1].snapshot.cellar.wines[wine.id] != nil)
+    }
+
+    @Test(arguments: [RemoteSyncError.fileTooLarge, .quotaExceeded])
+    func aRefusedDocumentDoesNotStopSync(_ refusal: RemoteSyncError) async throws {
+        let store = RefusingStore(limit: 1000, error: refusal)
+        var devices = household(2)
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        let label = Data("label".utf8), invoice = Data(repeating: 7, count: 5000)
+        let photo = PhotoID.make(for: label), document = PhotoID.make(for: invoice)
+        devices[0].photos.access.save(photo, .photo, label)
+        devices[0].photos.access.save(document, .document, invoice)
+        var wine = Wine(name: "With a large invoice", photoID: photo)
+        wine.attachments = [Attachment(id: document, name: "Invoice.pdf", contentType: "application/pdf",
+                                       byteCount: invoice.count, addedAt: Date(timeIntervalSince1970: 0))]
+        try devices[0].edit { try $0.addBottles(of: wine, quantity: 1) }
+
+        // The cellar goes (and the small photo, unless the storage is full); the document
+        // stays here, and the reason is told.
+        let first = try #require(try await devices[0].sync(store))
+        #expect(first.refusedFiles == refusal)
+        try await devices[1].sync(store)
+        #expect(devices[1].snapshot.cellar.wines[wine.id] != nil)
+        if refusal == .fileTooLarge { #expect(devices[1].photos.stored[photo] == label) }
+        #expect(devices[1].photos.storedDocuments[document] == nil)
+        // Nothing new: the document is not sent again, and the reason is still told.
+        let idle = try #require(try await devices[0].sync(store))
+        #expect(idle.refusedFiles == refusal)
+
+        // The storage accepts it now: it goes with the next change.
+        store.limit = .max
+        try devices[0].edit { try $0.addBottles(of: Wine(name: "Another"), quantity: 1) }
+        let next = try #require(try await devices[0].sync(store))
+        #expect(next.refusedFiles == nil)
+        try await devices[1].sync(store)
+        #expect(devices[1].photos.storedDocuments[document] == invoice)
+        #expect(devices[1].photos.stored[photo] == label)
+    }
+
+    @Test func progressSavedBeforeRefusedFilesStillReads() throws {
+        let old = Data(#"{"seen":[],"uploadedPhotos":["a"],"epoch":3}"#.utf8)
+        let progress = try JSONDecoder().decode(RemoteProgress.self, from: old)
+        #expect(progress.uploadedPhotos == ["a"] && progress.epoch == 3 && progress.refusedFiles.isEmpty)
+        var refused = progress
+        refused.refusedFiles = ["b"]
+        refused.storageFull = true
+        #expect(try JSONDecoder().decode(RemoteProgress.self, from: JSONEncoder().encode(refused)) == refused)
     }
 
     @Test func extraPhotosTravelToo() async throws {
