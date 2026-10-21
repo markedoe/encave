@@ -245,8 +245,11 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     outputs:
-      # The build number, set only when this run uploads (the testers job needs it).
+      # The build number, set only when this run uploads (the testers job needs it),
+      # and which platforms were uploaded (each is set once its upload went through).
       build: ${{ steps.key.outputs.build }}
+      ios: ${{ steps.ios.outputs.uploaded }}
+      mac: ${{ steps.mac.outputs.uploaded }}
     defaults:
       run:
         working-directory: apple
@@ -255,7 +258,8 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       # Uploads on a push to main or a manual run, only when the secrets are available
-      # (never on forks). Pushes to other branches only build, so testers get main.
+      # (never on forks). Pushes to other branches only build. A manual run from another
+      # branch reaches the internal testers only: external testers get main (testers job).
       UPLOAD: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -303,6 +307,7 @@ jobs:
           echo "build=$number" >> "$GITHUB_OUTPUT"
 
       - name: Archive and upload (iPhone, iPad)
+        id: ios
         if: env.UPLOAD == 'true'
         run: |
           set -o pipefail
@@ -317,8 +322,10 @@ jobs:
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
+          echo "uploaded=true" >> "$GITHUB_OUTPUT"
 
       - name: Archive and upload (Mac)
+        id: mac
         if: env.UPLOAD == 'true'
         run: |
           set -o pipefail
@@ -333,6 +340,7 @@ jobs:
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
+          echo "uploaded=true" >> "$GITHUB_OUTPUT"
 
       - name: Remove key
         if: always()
@@ -341,7 +349,10 @@ jobs:
   testers:
     name: TestFlight external testers
     needs: apps
-    if: needs.apps.outputs.build != ''
+    # Builds from main only. Also when one upload failed (the Mac one runs after the
+    # iPhone one): the uploaded build still reaches the testers, and the apps job and
+    # the run stay failed, with a warning below.
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
     runs-on: ubuntu-latest
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60
@@ -357,7 +368,14 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           BUILD_NUMBER: ${{ needs.apps.outputs.build }}
           BUNDLE_ID: app.encave
+          IOS_UPLOADED: ${{ needs.apps.outputs.ios }}
+          MAC_UPLOADED: ${{ needs.apps.outputs.mac }}
         run: |
+          platforms=()
+          if [ "$IOS_UPLOADED" = true ]; then platforms+=(IOS); else echo "::warning::The iPhone and iPad build $BUILD_NUMBER was not uploaded: only the Mac build goes to the testers."; fi
+          if [ "$MAC_UPLOADED" = true ]; then platforms+=(MAC_OS); else echo "::warning::The Mac build $BUILD_NUMBER was not uploaded: only the iPhone and iPad build goes to the testers."; fi
+          PLATFORMS=$(IFS=,; echo "${platforms[*]}")
+          export PLATFORMS
           export ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           python3 apple/tools/asc_key.py "$ASC_KEY_PATH"
           # "What to Test": the latest changes, as in the commit history.
