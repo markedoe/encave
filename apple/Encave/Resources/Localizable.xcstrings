@@ -361,46 +361,6 @@
         }
       }
     },
-    "%lld discoveries": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld discovery"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld discoveries"
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld découverte"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld découvertes"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld min": {
       "localizations": {
         "fr": {
@@ -731,6 +691,46 @@
         }
       }
     },
+    "%lld wines tasted elsewhere": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld wine tasted elsewhere"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld wines tasted elsewhere"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vin goûté ailleurs"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vins goûtés ailleurs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%llds": {
       "localizations": {
         "fr": {
@@ -741,12 +741,12 @@
         }
       }
     },
-    "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, tastings, discoveries and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced.": {
+    "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, the Journal and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder (JSON)** enregistre toute votre cave : vins, bouteilles, casiers, dégustations, découvertes et réglages, mais pas les photos. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve n’est remplacé."
+            "value": "**Sauvegarder (JSON)** enregistre toute votre cave : vins, bouteilles, casiers, le Journal et les réglages, mais pas les photos. Importez-la sur un autre appareil pour la restaurer ; rien de ce qui s’y trouve n’est remplacé."
           }
         }
       }
@@ -827,6 +827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "8 rangées de 10"
+          }
+        }
+      }
+    },
+    "A Bottle from My Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille de ma cave"
           }
         }
       }
@@ -1161,6 +1171,16 @@
         }
       }
     },
+    "Add a Tasting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter une dégustation"
+          }
+        }
+      }
+    },
     "Add a device": {
       "localizations": {
         "fr": {
@@ -1201,12 +1221,32 @@
         }
       }
     },
+    "Add a tasting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter une dégustation"
+          }
+        }
+      }
+    },
     "Add bottles": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
+    "Add bottles to your cellar to open them here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des bouteilles à votre cave pour les ouvrir ici."
           }
         }
       }
@@ -1327,6 +1367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajout…"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout"
           }
         }
       }
@@ -1641,16 +1691,6 @@
         }
       }
     },
-    "At friends', in a restaurant or on a trip, tap **+** in the Journal and scan the bottle. Add where you were, a rating, notes and tags.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chez des amis, au restaurant ou en voyage, touchez **+** dans le Journal et scannez la bouteille. Ajoutez le lieu, une note, du texte et des tags."
-          }
-        }
-      }
-    },
     "At home, on the same Wi-Fi": {
       "localizations": {
         "fr": {
@@ -1941,6 +1981,16 @@
         }
       }
     },
+    "Bottles opened from your cellar and wines tasted elsewhere, in one diary.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, dans un seul carnet."
+          }
+        }
+      }
+    },
     "Bottles opened, last 12 months": {
       "localizations": {
         "fr": {
@@ -2061,12 +2111,12 @@
         }
       }
     },
-    "Bottles you open and your notes will appear here.": {
+    "Bottles you open from your cellar and your notes appear here.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les bouteilles ouvertes et vos notes apparaîtront ici."
+            "value": "Les bouteilles ouvertes de votre cave et vos notes apparaissent ici."
           }
         }
       }
@@ -2901,16 +2951,6 @@
         }
       }
     },
-    "Delete Discovery": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer la découverte"
-          }
-        }
-      }
-    },
     "Delete File": {
       "localizations": {
         "fr": {
@@ -2961,6 +3001,16 @@
         }
       }
     },
+    "Delete from Journal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer du journal"
+          }
+        }
+      }
+    },
     "Delete these wines?": {
       "localizations": {
         "fr": {
@@ -2971,12 +3021,12 @@
         }
       }
     },
-    "Delete this discovery?": {
+    "Delete this entry from your journal?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer cette découverte ?"
+            "value": "Supprimer cette entrée du journal ?"
           }
         }
       }
@@ -3007,6 +3057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ supprimé"
+          }
+        }
+      }
+    },
+    "Deleted from your journal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimé du journal"
           }
         }
       }
@@ -3237,56 +3297,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dîner entre amis"
-          }
-        }
-      }
-    },
-    "Discoveries": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Découvertes"
-          }
-        }
-      }
-    },
-    "Discoveries and shopping list": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Découvertes et liste d’achats"
-          }
-        }
-      }
-    },
-    "Discoveries are not counted as bottles in your cellar and do not appear in racks or Tonight.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les découvertes ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans les casiers ni dans Ce soir."
-          }
-        }
-      }
-    },
-    "Discovery": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Découverte"
-          }
-        }
-      }
-    },
-    "Discovery deleted": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Découverte supprimée"
           }
         }
       }
@@ -3781,12 +3791,12 @@
         }
       }
     },
-    "Every bottle, wine, rack, tasting, discovery and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.": {
+    "Every bottle, wine, rack, Journal entry and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille, vin, casier, dégustation, découverte et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
+            "value": "Chaque bouteille, vin, casier, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
           }
         }
       }
@@ -3861,12 +3871,12 @@
         }
       }
     },
-    "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device.": {
+    "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes wines tasted elsewhere in the Journal, with your ratings and notes. The file is read on this device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des découvertes, avec vos notes et commentaires. Le fichier est lu sur cet appareil."
+            "value": "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et commentaires. Le fichier est lu sur cet appareil."
           }
         }
       }
@@ -3897,6 +3907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplir un vin à partir d’une photo de son étiquette."
+          }
+        }
+      }
+    },
+    "Filters": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtres"
           }
         }
       }
@@ -4151,6 +4171,16 @@
         }
       }
     },
+    "From my cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De ma cave"
+          }
+        }
+      }
+    },
     "From one star (disappointing) to five (exceptional). Tap the same star again to clear it.": {
       "localizations": {
         "fr": {
@@ -4401,16 +4431,6 @@
         }
       }
     },
-    "Help with discoveries": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aide sur les découvertes"
-          }
-        }
-      }
-    },
     "Help with racks": {
       "localizations": {
         "fr": {
@@ -4427,6 +4447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide sur les notes de dégustation"
+          }
+        }
+      }
+    },
+    "Help with the Journal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide sur le Journal"
           }
         }
       }
@@ -4801,6 +4831,16 @@
         }
       }
     },
+    "It leaves your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elle sort de votre cave."
+          }
+        }
+      }
+    },
     "It sees when devices sync, how much they send and their IP addresses.": {
       "localizations": {
         "fr": {
@@ -4867,6 +4907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Journal"
+          }
+        }
+      }
+    },
+    "Journal and shopping list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Journal et liste d’achats"
           }
         }
       }
@@ -5221,12 +5271,12 @@
         }
       }
     },
-    "Liked a bottle at friends’ or in a restaurant? Scan it to remember it, add notes and tags, and put it on your shopping list.": {
+    "Liked a wine at friends’ or in a restaurant? Tap + and choose Somewhere Else to remember it, add notes and tags, and put it on your shopping list.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une bouteille vous a plu chez des amis ou au restaurant ? Scannez-la pour vous en souvenir, ajoutez des notes et des tags, et mettez-la sur votre liste d’achats."
+            "value": "Un vin vous a plu chez des amis ou au restaurant ? Touchez + et choisissez Ailleurs pour vous en souvenir, ajouter des notes et des tags, et le mettre sur votre liste d’achats."
           }
         }
       }
@@ -5561,6 +5611,16 @@
         }
       }
     },
+    "My Tasting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ma dégustation"
+          }
+        }
+      }
+    },
     "NV": {
       "localizations": {
         "fr": {
@@ -5681,6 +5741,26 @@
         }
       }
     },
+    "No bottles in your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille dans votre cave"
+          }
+        }
+      }
+    },
+    "No bottles opened yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille ouverte"
+          }
+        }
+      }
+    },
     "No device found on this Wi-Fi": {
       "localizations": {
         "fr": {
@@ -5697,16 +5777,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun appareil n’affiche ce code sur ce réseau. Vérifiez le code et que les deux appareils sont sur le même Wi-Fi."
-          }
-        }
-      }
-    },
-    "No discoveries yet": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune découverte"
           }
         }
       }
@@ -5831,22 +5901,22 @@
         }
       }
     },
-    "No tastings yet": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune dégustation"
-          }
-        }
-      }
-    },
     "No text found. Try a sharper photo.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Aucun texte trouvé. Essayez une photo plus nette."
+          }
+        }
+      }
+    },
+    "No wines tasted elsewhere yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun vin goûté ailleurs"
           }
         }
       }
@@ -5951,6 +6021,46 @@
         }
       }
     },
+    "Note a Wine Tasted Elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin goûté ailleurs"
+          }
+        }
+      }
+    },
+    "Note a Wine Tasted Elsewhere…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin goûté ailleurs…"
+          }
+        }
+      }
+    },
+    "Note a bottle opened from your cellar or a wine tasted elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter une bouteille ouverte de votre cave ou un vin goûté ailleurs"
+          }
+        }
+      }
+    },
+    "Note a wine tasted elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noter un vin goûté ailleurs"
+          }
+        }
+      }
+    },
     "Notes": {
       "localizations": {
         "fr": {
@@ -5967,6 +6077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notes sur ce vin"
+          }
+        }
+      }
+    },
+    "Nothing here yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien pour l’instant"
           }
         }
       }
@@ -6381,6 +6501,16 @@
         }
       }
     },
+    "One diary": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un seul carnet"
+          }
+        }
+      }
+    },
     "Only %lld free positions: the other bottles will have no position.": {
       "localizations": {
         "en": {
@@ -6557,6 +6687,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir le vin"
+          }
+        }
+      }
+    },
+    "Open a Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir une bouteille"
+          }
+        }
+      }
+    },
+    "Open a bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir une bouteille"
+          }
+        }
+      }
+    },
+    "Open a bottle from your cellar or note a wine tasted elsewhere.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez une bouteille de votre cave ou notez un vin goûté ailleurs."
           }
         }
       }
@@ -7421,66 +7581,6 @@
         }
       }
     },
-    "Remember a Wine": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noter un vin"
-          }
-        }
-      }
-    },
-    "Remember a Wine…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noter un vin…"
-          }
-        }
-      }
-    },
-    "Remember a wine": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noter un vin"
-          }
-        }
-      }
-    },
-    "Remember a wine tasted elsewhere": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noter un vin goûté ailleurs"
-          }
-        }
-      }
-    },
-    "Remember a wine tasted or seen elsewhere": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noter un vin goûté ou vu ailleurs"
-          }
-        }
-      }
-    },
-    "Remember wines you tasted elsewhere.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Souvenez-vous des vins goûtés ailleurs."
-          }
-        }
-      }
-    },
     "Reminders": {
       "localizations": {
         "fr": {
@@ -7627,6 +7727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restaurant, ville, prénoms des amis…"
+          }
+        }
+      }
+    },
+    "Restaurant, friends, a fair… Your cellar does not change.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurant, amis, salon… Votre cave ne change pas."
           }
         }
       }
@@ -7811,12 +7921,12 @@
         }
       }
     },
-    "Saved to your discoveries": {
+    "Saved to your journal": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistré dans vos découvertes"
+            "value": "Enregistré dans votre journal"
           }
         }
       }
@@ -8271,16 +8381,6 @@
         }
       }
     },
-    "Show": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afficher"
-          }
-        }
-      }
-    },
     "Show Photo as Taken": {
       "localizations": {
         "fr": {
@@ -8517,6 +8617,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une erreur est survenue"
+          }
+        }
+      }
+    },
+    "Somewhere Else": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ailleurs"
           }
         }
       }
@@ -8761,12 +8871,12 @@
         }
       }
     },
-    "Swipe a wine to the right, or use **Drink** on its page. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
+    "Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un vin vers la droite, ou utilisez **Boire** sur sa fiche. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
+            "value": "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
           }
         }
       }
@@ -8891,12 +9001,12 @@
         }
       }
     },
-    "Tags group discoveries your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested.": {
+    "Tags group wines tasted elsewhere your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested. In the Journal, their chips come after the filters.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les tags regroupent vos découvertes à votre façon : idées cadeaux, pour l’été, à regoûter. Touchez un tag pour le choisir ou tapez-en un nouveau ; ceux déjà utilisés sont proposés."
+            "value": "Les tags regroupent les vins goûtés ailleurs à votre façon : idées cadeaux, pour l’été, à regoûter. Touchez un tag pour le choisir ou tapez-en un nouveau ; ceux déjà utilisés sont proposés. Dans le Journal, ils suivent les filtres."
           }
         }
       }
@@ -8927,6 +9037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sorties, elles restent dans la cave sans emplacement. Parties, elles quittent la cave (offertes, bues ailleurs, cassées). Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
+    "Tap **+** in the Journal and choose where you drank it. **A Bottle from My Cellar**: choose the wine, then add your note; the bottle leaves your cellar. **Somewhere Else**: scan the bottle and add where you were, a rating, notes and tags; your cellar does not change.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez **+** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : scannez la bouteille et ajoutez le lieu, une note, du texte et des tags ; votre cave ne change pas."
           }
         }
       }
@@ -9021,22 +9141,42 @@
         }
       }
     },
+    "Tasted Elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vin goûté ailleurs"
+          }
+        }
+      }
+    },
+    "Tasted elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goûté ailleurs"
+          }
+        }
+      }
+    },
+    "Tasted elsewhere · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goûté ailleurs · %@"
+          }
+        }
+      }
+    },
     "Tasting": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Dégustation"
-          }
-        }
-      }
-    },
-    "Tasting Note": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Note de dégustation"
           }
         }
       }
@@ -9151,6 +9291,16 @@
         }
       }
     },
+    "The Journal lists everything you tasted, newest first and by month. Each entry says where it comes from: **From my cellar** for a bottle you opened, **Tasted elsewhere** and the place for a wine you had in a restaurant, at friends’ or at a fair.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Journal liste tout ce que vous avez goûté, du plus récent au plus ancien et par mois. Chaque entrée dit d’où elle vient : **De ma cave** pour une bouteille que vous avez ouverte, **Goûté ailleurs** et le lieu pour un vin bu au restaurant, chez des amis ou dans un salon."
+          }
+        }
+      }
+    },
     "The WebDAV folder could not be reached.": {
       "localizations": {
         "fr": {
@@ -9231,12 +9381,12 @@
         }
       }
     },
-    "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.": {
+    "The bottle you choose leaves your cellar, and its place in the rack becomes free.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les bouteilles ouvertes avec vos notes, les vins découverts ailleurs, votre liste d’achats et vos statistiques."
+            "value": "La bouteille choisie sort de votre cave et sa place dans le casier se libère."
           }
         }
       }
@@ -9287,6 +9437,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La modification n’a pas pu être enregistrée."
+          }
+        }
+      }
+    },
+    "The chips at the top show **All**, or only **From my cellar**, **Tasted elsewhere** or **To buy**. Search looks in the wines, notes, places and tags.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les filtres en haut montrent **Tout**, ou seulement **De ma cave**, **Goûté ailleurs** ou **À acheter**. La recherche porte sur les vins, les notes, les lieux et les tags."
           }
         }
       }
@@ -9901,22 +10061,22 @@
         }
       }
     },
-    "This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
+    "This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes sur cet appareil et sur les autres appareils synchronisés avec lui. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
+            "value": "Cela efface toutes les bouteilles, vins, casiers et entrées du Journal sur cet appareil et sur les autres appareils synchronisés avec lui. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
           }
         }
       }
     },
-    "This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
+    "This erases every bottle, wine, rack and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela efface toutes les bouteilles, vins, casiers, dégustations et découvertes. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
+            "value": "Cela efface toutes les bouteilles, vins, casiers et entrées du Journal. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
           }
         }
       }
@@ -10197,6 +10357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu. Quand vous l’achetez, balayez-le et choisissez **Ajouter à la cave** : il quitte la liste une fois les bouteilles ajoutées."
+          }
+        }
+      }
+    },
+    "Turn on To buy for a wine tasted elsewhere to find it here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez À acheter sur un vin goûté ailleurs pour le retrouver ici."
           }
         }
       }
@@ -10761,6 +10931,16 @@
         }
       }
     },
+    "Which Bottle?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quelle bouteille ?"
+          }
+        }
+      }
+    },
     "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.": {
       "localizations": {
         "fr": {
@@ -10941,12 +11121,22 @@
         }
       }
     },
-    "Wines to buy appear in the shopping list in Journal. Discoveries are not counted as bottles in your cellar.": {
+    "Wines tasted elsewhere are not counted as bottles in your cellar and do not appear in racks or Tonight.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les vins à acheter apparaissent dans la liste d’achats du Journal. Les découvertes ne comptent pas comme des bouteilles de votre cave."
+            "value": "Les vins goûtés ailleurs ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans les casiers ni dans Ce soir."
+          }
+        }
+      }
+    },
+    "Wines to buy appear under To buy in the Journal. Wines tasted elsewhere are not counted as bottles in your cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les vins à acheter apparaissent sous À acheter dans le Journal. Les vins goûtés ailleurs ne comptent pas comme des bouteilles de votre cave."
           }
         }
       }
@@ -11221,6 +11411,26 @@
         }
       }
     },
+    "Your shopping list is empty": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre liste d’achats est vide"
+          }
+        }
+      }
+    },
+    "Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques."
+          }
+        }
+      }
+    },
     "Your year in wine": {
       "localizations": {
         "fr": {
@@ -11361,16 +11571,6 @@
         }
       }
     },
-    "discoveries": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "découvertes"
-          }
-        }
-      }
-    },
     "estimated value today, %lld of %lld bottles": {
       "localizations": {
         "fr": {
@@ -11477,6 +11677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "cépage adapté"
+          }
+        }
+      }
+    },
+    "tasted elsewhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "goûtés ailleurs"
           }
         }
       }

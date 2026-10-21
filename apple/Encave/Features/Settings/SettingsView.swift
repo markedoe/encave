@@ -226,9 +226,9 @@ struct SettingsView: View {
             Button("Erase all data", role: .destructive) { model.eraseAll() }
         } message: {
             if model.sync.otherDevices.isEmpty {
-                Text("This erases every bottle, wine, rack, tasting and discovery. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+                Text("This erases every bottle, wine, rack and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
             } else {
-                Text("This erases every bottle, wine, rack, tasting and discovery on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+                Text("This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
             }
         }
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
@@ -316,12 +316,12 @@ struct SettingsView: View {
         importMessage = Self.importMessage(summary, discoveriesAdded: discoveriesAdded)
     }
 
-    /// "Imported 12 bottles, 3 new wines and 2 discoveries. Rows skipped: 1".
+    /// "Imported 12 bottles, 3 new wines and 2 wines tasted elsewhere. Rows skipped: 1".
     static func importMessage(_ summary: ImportSummary, discoveriesAdded: Int) -> String {
         var parts: [String] = []
         if summary.bottlesAdded > 0 { parts.append(String(localized: "\(summary.bottlesAdded) bottles")) }
         if summary.winesAdded > 0 { parts.append(String(localized: "\(summary.winesAdded) new wines")) }
-        if discoveriesAdded > 0 { parts.append(String(localized: "\(discoveriesAdded) discoveries")) }
+        if discoveriesAdded > 0 { parts.append(String(localized: "\(discoveriesAdded) wines tasted elsewhere")) }
         let importedLabel = parts.formatted(.list(type: .and))
         var message = parts.isEmpty ? String(localized: "Nothing new: everything in this file is already in your cellar.")
             : String(localized: "Imported \(importedLabel).")

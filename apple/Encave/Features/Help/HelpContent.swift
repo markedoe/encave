@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Topics of the in-app help. Screens open the topic that matches them.
 enum HelpTopic: String, CaseIterable, Identifiable, Hashable {
-    case start, adding, scanning, racks, tonight, drinking, discoveries, devices, sync, ai, webSearch, data, privacy, shortcuts
+    case start, adding, scanning, racks, tonight, drinking, journal, devices, sync, ai, webSearch, data, privacy, shortcuts
     var id: String { rawValue }
 }
 
@@ -31,7 +31,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Cellar", body: "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.", systemImage: "wineglass"),
                 HelpSection(title: "Racks", body: "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.", systemImage: "square.grid.3x3"),
                 HelpSection(title: "Tonight", body: "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.", systemImage: "moon.stars"),
-                HelpSection(title: "Journal", body: "The bottles you opened with your notes, the wines you discovered elsewhere, your shopping list and insights.", systemImage: "book.closed"),
+                HelpSection(title: "Journal", body: "Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.", systemImage: "book.closed"),
                 HelpSection(title: "List or table", body: "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.", systemImage: "tablecells"),
                 HelpSection(title: "Saved searches", body: "Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.", systemImage: "bookmark"),
                 HelpSection(title: "Try it", body: "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings**) fills it with example wines to explore every screen. **Erase all data** in Settings removes them when you are ready to add your own bottles; in a cellar shared with other devices, it erases it on them too."),
@@ -83,16 +83,18 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .drinking, title: "Drinking a bottle",
                         summary: "Keep track of what you opened and what you thought.", systemImage: "wineglass", sections: [
-                HelpSection(title: "Drink", body: "Swipe a wine to the right, or use **Drink** on its page. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds."),
+                HelpSection(title: "Open a bottle", body: "Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds."),
                 HelpSection(title: "Your note", body: "Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal."),
                 HelpSection(title: "Given away or broken", body: "Use **Given away or broken** for a bottle that left the cellar without being drunk by you."),
             ]),
-            HelpArticle(topic: .discoveries, title: "Discoveries and shopping list",
-                        summary: "Remember wines you tasted elsewhere.", systemImage: "cart", sections: [
-                HelpSection(title: "Remember a wine", body: "At friends', in a restaurant or on a trip, tap **+** in the Journal and scan the bottle. Add where you were, a rating, notes and tags."),
-                HelpSection(title: "Tags", body: "Tags group discoveries your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested."),
+            HelpArticle(topic: .journal, title: "Journal and shopping list",
+                        summary: "Bottles opened from your cellar and wines tasted elsewhere, in one diary.", systemImage: "book.closed", sections: [
+                HelpSection(title: "One diary", body: "The Journal lists everything you tasted, newest first and by month. Each entry says where it comes from: **From my cellar** for a bottle you opened, **Tasted elsewhere** and the place for a wine you had in a restaurant, at friends’ or at a fair."),
+                HelpSection(title: "Add a tasting", body: "Tap **+** in the Journal and choose where you drank it. **A Bottle from My Cellar**: choose the wine, then add your note; the bottle leaves your cellar. **Somewhere Else**: scan the bottle and add where you were, a rating, notes and tags; your cellar does not change.", systemImage: "plus"),
+                HelpSection(title: "Filters", body: "The chips at the top show **All**, or only **From my cellar**, **Tasted elsewhere** or **To buy**. Search looks in the wines, notes, places and tags.", systemImage: "line.3.horizontal.decrease"),
+                HelpSection(title: "Tags", body: "Tags group wines tasted elsewhere your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested. In the Journal, their chips come after the filters."),
                 HelpSection(title: "Shopping list", body: "Turn on **To buy** to add the wine to your shopping list, with the price you saw. When you buy it, swipe it and choose **Add to Cellar**: it leaves the list once the bottles are added."),
-                HelpSection(title: "Not in the cellar", body: "Discoveries are not counted as bottles in your cellar and do not appear in racks or Tonight."),
+                HelpSection(title: "Not in the cellar", body: "Wines tasted elsewhere are not counted as bottles in your cellar and do not appear in racks or Tonight."),
             ]),
             HelpArticle(topic: .devices, title: "Your devices",
                         summary: "The same cellar on your iPhone, iPad and Mac.", systemImage: "laptopcomputer.and.iphone", sections: [
@@ -113,7 +115,7 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "Sync Now and the status", body: "**Devices** shows where sync stands, on the same Wi-Fi and away from home: syncing now, the last sync, the last attempt that failed and why, changes on this device not sent yet, and when the next sync is due. **Sync Now** syncs right away, with the devices on the same Wi-Fi and through the storage away from home."),
                 HelpSection(title: "How often", body: "In **Devices › Sync Away from Home**, **How often** sets how often this device syncs away from home by itself: every minute, every 5 or 15 minutes, or only when you tap **Sync Now**. Background sync on iPhone and iPad follows it, no more often than iOS allows. On the same Wi-Fi, changes are still sent a few seconds after you make them. The setting is for this device only."),
                 HelpSection(title: "Changes from other devices", body: "Turn on **Tell Me About Changes from Other Devices** in **Devices** for a notification on this device when bottles are opened, added or removed on another one, for example “2 bottles opened, 1 bottle added” from Marc’s iPhone. Repeated syncs update the same notification. While Encave is in front, a short banner says where the changes come from instead. It is worked out on this device: nothing is sent anywhere."),
-                HelpSection(title: "How changes come together", body: "Every bottle, wine, rack, tasting, discovery and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs."),
+                HelpSection(title: "How changes come together", body: "Every bottle, wine, rack, Journal entry and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs."),
                 HelpSection(title: "Removing a device", body: "When you remove a device (lost or sold), the cellar’s key changes by itself and the remaining devices receive the new one in an encrypted message. The removed device keeps what it already had but cannot read anything new."),
                 HelpSection(title: "What stays on each device", body: "Your AI and web search keys, your WebDAV login, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others."),
             ]),
@@ -138,10 +140,10 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .data, title: "Backup, export and import",
                         summary: "Keep a copy and move your cellar.", systemImage: "externaldrive", sections: [
-                HelpSection(title: "Back up", body: "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, tastings, discoveries and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced."),
+                HelpSection(title: "Back up", body: "**Back Up (JSON)** saves your whole cellar: wines, bottles, racks, the Journal and settings, but not the photos. Import it on another device to restore it; nothing already there is replaced."),
                 HelpSection(title: "Spreadsheet", body: "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place."),
                 HelpSection(title: "Printed inventory", body: "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory."),
-                HelpSection(title: "Coming from another app", body: "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes discoveries, with your ratings and notes. The file is read on this device."),
+                HelpSection(title: "Coming from another app", body: "Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes wines tasted elsewhere in the Journal, with your ratings and notes. The file is read on this device."),
                 HelpSection(title: "Photos", body: "Label photos stay on your devices and sync between them, but are not included in backups yet."),
             ]),
             HelpArticle(topic: .privacy, title: "Privacy",
@@ -154,7 +156,7 @@ struct HelpArticle: Identifiable {
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",
                         summary: "Keyboard shortcuts, Siri, Shortcuts and Spotlight.", systemImage: "keyboard", sections: [
                 HelpSection(title: "⌘N", body: "Add bottles"),
-                HelpSection(title: "⌥⌘N", body: "Remember a wine tasted elsewhere"),
+                HelpSection(title: "⌥⌘N", body: "Note a wine tasted elsewhere"),
                 HelpSection(title: "⇧⌘N", body: "Add a rack"),
                 HelpSection(title: "⌘1 – ⌘4", body: "Cellar, Racks, Tonight, Journal"),
                 HelpSection(title: "⌘+ / ⌘–", body: "Zoom a rack in and out"),

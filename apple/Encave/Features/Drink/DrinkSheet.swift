@@ -2,14 +2,84 @@ import CaveKit
 import SwiftUI
 
 /// Log opening a bottle: rating, a quick note, and optionally a full tasting note.
+/// Without a bottle (from the Journal's "+"), the wines of the cellar are listed first.
 struct DrinkSheet: View {
-    @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    let bottleID: UUID
-    @State private var draft = TastingDraft()
+    /// nil: choose the bottle first.
+    let bottleID: UUID?
 
     var body: some View {
         NavigationStack {
+            if let bottleID {
+                DrinkForm(bottleID: bottleID, showsCancel: true) { dismiss() }
+            } else {
+                BottleToOpenPicker()
+                    .navigationDestination(for: UUID.self) { id in
+                        DrinkForm(bottleID: id, showsCancel: false) { dismiss() }
+                    }
+            }
+        }
+        .presentationDetents(bottleID == nil ? [.large] : [.medium, .large])
+        .solidSheetBackground()
+        .macSheetFrame(width: 480, height: 600)
+    }
+}
+
+/// The wines with bottles in the cellar, to choose the one opened.
+private struct BottleToOpenPicker: View {
+    @Environment(CellarModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+
+    var body: some View {
+        let groups = model.cellar.groups(matching: query)
+        List {
+            if groups.isEmpty {
+                if model.cellar.bottlesInCellar.isEmpty {
+                    ContentUnavailableView("No bottles in your cellar", systemImage: "wineglass",
+                                           description: Text("Add bottles to your cellar to open them here."))
+                        .listRowBackground(Color.clear)
+                } else {
+                    ContentUnavailableView.search(text: query)
+                        .listRowBackground(Color.clear)
+                }
+            } else {
+                Section {
+                    ForEach(groups) { group in
+                        if let bottle = group.bottles.bottleToOpen {
+                            NavigationLink(value: bottle.id) {
+                                WineRow(group: group)
+                            }
+                            .accessibilityIdentifier("drink.pick.row")
+                        }
+                    }
+                } footer: {
+                    Text("The bottle you choose leaves your cellar, and its place in the rack becomes free.")
+                }
+            }
+        }
+        .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
+        .navigationTitle("Which Bottle?")
+        .inlineTitle()
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+                    .accessibilityIdentifier("sheet.cancel")
+            }
+        }
+    }
+}
+
+/// Rating and notes for the bottle being opened.
+private struct DrinkForm: View {
+    @Environment(CellarModel.self) private var model
+    let bottleID: UUID
+    var showsCancel: Bool
+    /// Closes the whole sheet: in a pushed form, the dismiss action would only go back.
+    let close: () -> Void
+    @State private var draft = TastingDraft()
+
+    var body: some View {
             Group {
                 if let bottle = model.cellar.bottles[bottleID], let wine = model.cellar.wines[bottle.wineID] {
                     Form {
@@ -37,25 +107,23 @@ struct DrinkSheet: View {
                     ContentUnavailableView("Bottle not found", systemImage: "questionmark")
                 }
             }
-            .navigationTitle("Drink")
+            .navigationTitle("Open a Bottle")
             .inlineTitle()
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityIdentifier("sheet.cancel")
+                if showsCancel {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel", action: close)
+                            .accessibilityIdentifier("sheet.cancel")
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         // On failure the sheet stays open with what was typed, under the error.
-                        if model.drink(bottleID, tasting: draft.makeTasting()) { dismiss() }
+                        if model.drink(bottleID, tasting: draft.makeTasting()) { close() }
                     }
                     .keyboardShortcut(.defaultAction)
                 }
             }
-        }
-        .presentationDetents([.medium, .large])
-        .solidSheetBackground()
-        .macSheetFrame(width: 480, height: 600)
     }
 }
 
@@ -90,7 +158,7 @@ struct TastingEditor: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("Tasting Note")
+            .navigationTitle("My Tasting")
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

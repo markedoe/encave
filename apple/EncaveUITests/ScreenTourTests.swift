@@ -148,19 +148,10 @@ final class ScreenTourTests: XCTestCase {
         checkPair("action.tonight.drink", "action.tonight.next")
         askTheCellar()
 
-        // Journal: tastings, discoveries, remembering a wine.
+        // Journal: the diary, a filter, and the two ways to add a tasting.
         openSection(3, "journal")
         snapshot("journal")
-        let segments = app.segmentedControls.firstMatch
-        if segments.exists, segments.buttons.count > 1 {
-            segments.buttons.element(boundBy: 1).press()
-            snapshot("discoveries")
-        }
-        if element("journal.add").exists {
-            element("journal.add").press()
-            snapshot("remember-wine")
-            closeSheet()
-        }
+        checkJournal()
 
         #if os(iOS)
         // Settings and help (on the Mac they are in the app menu and the Help menu).
@@ -219,6 +210,70 @@ final class ScreenTourTests: XCTestCase {
             XCTFail("cellar table: the List/Table switch is missing in the table")
         }
         sleep(1)
+    }
+
+    // MARK: Journal
+
+    /// The diary mixes both kinds of entries; a filter keeps one; "+" asks where the wine was drunk.
+    private func checkJournal() {
+        XCTAssertTrue(element("journal.row.cellar").waitForExistence(timeout: 5), "journal: no tasting from the cellar")
+        XCTAssertTrue(element("journal.row.elsewhere").exists, "journal: no wine tasted elsewhere")
+        let elsewhere = element("journal.filter.elsewhere")
+        if !elsewhere.waitForExistence(timeout: 3) {
+            XCTFail("journal: no filter chips")
+        } else if elsewhere.isHittable {
+            elsewhere.press()
+            sleep(1)
+            snapshot("journal-tasted-elsewhere")
+            XCTAssertFalse(element("journal.row.cellar").exists, "journal: the filter still shows bottles from the cellar")
+            element("journal.filter.all").press()
+            sleep(1)
+        } else {
+            // The chips scroll sideways: at large sizes this one can be off screen.
+            print("journal: the Tasted elsewhere chip is off screen")
+        }
+        // From the cellar: the wines to choose from.
+        if openAddMenu(), pressMenuItem("journal.add.cellar") {
+            snapshot("journal-open-bottle")
+            XCTAssertTrue(element("drink.pick.row").waitForExistence(timeout: 3), "journal: no bottle to choose")
+            closeSheet()
+        }
+        // Somewhere else: the editor of a wine tasted elsewhere.
+        if openAddMenu() {
+            snapshot("journal-add-menu")
+            if pressMenuItem("journal.add.elsewhere") {
+                snapshot("journal-tasted-elsewhere-editor")
+                closeSheet()
+            }
+        }
+    }
+
+    private func openAddMenu() -> Bool {
+        let add = element("journal.add")
+        guard add.waitForExistence(timeout: 3), add.isHittable else {
+            XCTFail("journal: no + button")
+            return false
+        }
+        add.press()
+        sleep(1)
+        return true
+    }
+
+    private func pressMenuItem(_ identifier: String) -> Bool {
+        let item = element(identifier)
+        guard item.waitForExistence(timeout: 3) else {
+            XCTFail("journal: no menu item \(identifier)")
+            #if os(macOS)
+            app.typeKeyEscapeIfMac()
+            #else
+            // Away from the menu, which opens under the button at the top right.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.6)).tap()
+            #endif
+            return false
+        }
+        item.press()
+        sleep(1)
+        return true
     }
 
     // MARK: Selecting several wines
