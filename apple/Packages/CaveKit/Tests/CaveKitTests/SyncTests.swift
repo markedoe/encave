@@ -213,6 +213,43 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         syncBoth(&a, &b)
         #expect(b.cellar.wines[wine.id]?.notes == "A after sync")
     }
+
+    /// Restoring a backup with Replace is a change made on this device: what it brings back
+    /// returns on the other devices, even after they took the deletion, and what is not in
+    /// the backup is deleted there.
+    @Test func replacingWithABackupReachesTheOtherDevices() throws {
+        let (cellar, wine, _) = try sample()
+        var (a, b) = pair(cellar)
+        let backup = a.cellar
+        let bottle = backup.bottles.values.first!
+        // Deleted on A, and B takes the deletion.
+        a.edit { $0.deleteWine(wine.id) }
+        syncBoth(&a, &b)
+        #expect(b.cellar.wines[wine.id] == nil)
+        // Something added since the backup, on B.
+        let later = Wine(name: "Bought later")
+        try b.edit { try $0.addBottles(of: later, quantity: 1) }
+        syncBoth(&a, &b)
+
+        // A restores the backup with Replace.
+        a.edit { $0 = $0.restoring(backup, mode: .replace) }
+        syncBoth(&a, &b)
+        #expect(b.cellar.wines[wine.id] == wine)
+        #expect(b.cellar.bottles[bottle.id] == bottle)
+        #expect(b.cellar.wines[later.id] == nil)
+        #expect(a.cellar == b.cellar)
+        #expect(b.cellar == backup)
+
+        // Add What Is Missing brings back what was deleted, and keeps the rest.
+        a.edit { $0.deleteWine(wine.id) }
+        try b.edit { try $0.addBottles(of: later, quantity: 1) }
+        syncBoth(&a, &b)
+        a.edit { $0 = $0.restoring(backup, mode: .addMissing) }
+        syncBoth(&a, &b)
+        #expect(b.cellar.wines[wine.id] == wine)
+        #expect(b.cellar.wines[later.id] != nil)
+        #expect(a.cellar == b.cellar)
+    }
 }
 
 @Suite struct SyncHardeningTests {

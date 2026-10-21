@@ -116,6 +116,38 @@ enum InteropFixture {
         ]
     }
 
+    /// The photos and documents of the cellar, as an archive holds them.
+    static var archiveFiles: [FileRef: Data] {
+        var files: [FileRef: Data] = [:]
+        for name in ["label", "back", "cover"] { files[FileRef(id: PhotoID.make(for: Data(name.utf8)), kind: .photo)] = Data(name.utf8) }
+        for name in ["invoice", "back", "certificate"] {
+            files[FileRef(id: PhotoID.make(for: Data(name.utf8)), kind: .document)] = Data(name.utf8)
+        }
+        return files
+    }
+
+    /// The archive of the cellar and its files, as CaveKit writes it.
+    static func writeArchive(to url: URL, folder: URL) throws {
+        var urls: [FileRef: URL] = [:]
+        for (index, (ref, data)) in archiveFiles.enumerated() {
+            let file = folder.appendingPathComponent("file-\(index)")
+            try data.write(to: file)
+            urls[ref] = file
+        }
+        try CellarArchive.write(cellar, exportedAt: exportedAt, to: url, fileURL: { urls[$0] })
+    }
+
+    /// Each entry of an archive: JSON entries in canonical form, others as bytes.
+    static func entries(of url: URL) throws -> [String: NSObject] {
+        let reader = try ZipReader(url: url)
+        var entries: [String: NSObject] = [:]
+        for entry in reader.entries {
+            let data = try reader.data(of: entry, maxSize: 10_000_000)
+            entries[entry.name] = entry.name.hasSuffix(".json") ? try canonical(data) : data as NSData
+        }
+        return entries
+    }
+
     static var folder: URL {
         URL(fileURLWithPath: #filePath).deletingLastPathComponent() // CaveKitTests
             .deletingLastPathComponent().deletingLastPathComponent() // CaveKit
@@ -156,6 +188,36 @@ enum InteropFixture {
             }
             #expect(same || write, "\(name) changed: run the tests with ENCAVE_WRITE_FIXTURES=1, then the Kotlin tests")
         }
+    }
+
+    @Test func cavekitStillWritesTheSharedArchive() throws {
+        let temporary = try TemporaryFolder()
+        let fresh = temporary.file("archive.zip")
+        try InteropFixture.writeArchive(to: fresh, folder: temporary.url)
+        let url = InteropFixture.folder.appendingPathComponent("swift-archive.zip")
+        let same = (try? InteropFixture.entries(of: url)) == (try InteropFixture.entries(of: fresh))
+        if write, !same {
+            try? FileManager.default.removeItem(at: url)
+            try FileManager.default.copyItem(at: fresh, to: url)
+        }
+        #expect(same || write, "archive changed: run the tests with ENCAVE_WRITE_FIXTURES=1, then the Kotlin tests")
+    }
+
+    @Test func readsTheArchiveKotlinWrites() throws {
+        let url = InteropFixture.folder.appendingPathComponent("kotlin-archive.zip")
+        let temporary = try TemporaryFolder()
+        // The same entries, names and files as the archive CaveKit writes.
+        let ours = temporary.file("ours.zip")
+        try InteropFixture.writeArchive(to: ours, folder: temporary.url)
+        #expect(try InteropFixture.entries(of: url) == InteropFixture.entries(of: ours))
+        let contents = try CellarArchive.read(url, workingFolder: temporary.url)
+        #expect(contents.backup.exportedAt == InteropFixture.exportedAt)
+        let rewritten = try CellarExport.json(contents.backup.cellar, exportedAt: contents.backup.exportedAt)
+        #expect(try InteropFixture.canonical(rewritten) == InteropFixture.canonical(InteropFixture.files()["backup.json"]!))
+        #expect(Set(contents.files.keys) == Set(InteropFixture.archiveFiles.keys))
+        for (ref, file) in contents.files { #expect(try Data(contentsOf: file) == InteropFixture.archiveFiles[ref]) }
+        #expect(contents.skipped == 0)
+        if let result = try unzipTest(url) { #expect(result.status == 0, "unzip -t: \(result.output)") }
     }
 
     @Test func readsWhatKotlinWrites() throws {

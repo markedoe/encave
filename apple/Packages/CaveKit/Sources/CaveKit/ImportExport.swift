@@ -17,6 +17,12 @@ public struct CellarBackup: Codable, Sendable {
 
 public enum ImportError: Error, Equatable {
     case notAnEncaveBackup
+    /// Made by a newer version of Encave, in a format this one does not know.
+    case newerVersion
+    /// A ZIP file that is compressed, encrypted or split: not an archive Encave makes.
+    case unsupportedArchive
+    /// An archive whose cellar could not be read in full (cut short, or changed).
+    case damagedArchive
     case emptyFile
     case missingNameColumn
 }
@@ -38,13 +44,24 @@ public enum CellarExport {
         return try encoder.encode(CellarBackup(cellar: cellar, exportedAt: exportedAt))
     }
 
+    /// Reads a backup. One made by a newer version of Encave (a higher `version`) is
+    /// refused before anything else is read: its fields may have changed.
     public static func backup(fromJSON data: Data) throws -> CellarBackup {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        guard let backup = try? decoder.decode(CellarBackup.self, from: data), backup.format == "encave" else {
+        guard let envelope = try? decoder.decode(Envelope.self, from: data), envelope.format == "encave",
+              let version = envelope.version else {
             throw ImportError.notAnEncaveBackup
         }
+        guard version <= Cellar.currentSchemaVersion else { throw ImportError.newerVersion }
+        guard let backup = try? decoder.decode(CellarBackup.self, from: data) else { throw ImportError.notAnEncaveBackup }
         return backup
+    }
+
+    /// What a backup file says it is, read before the rest.
+    struct Envelope: Decodable {
+        var format: String?
+        var version: Int?
     }
 
     // MARK: CSV

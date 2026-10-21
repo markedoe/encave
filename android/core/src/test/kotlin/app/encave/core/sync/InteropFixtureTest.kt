@@ -3,7 +3,11 @@ package app.encave.core.sync
 import app.encave.core.Attachment
 import app.encave.core.Bottle
 import app.encave.core.Cellar
+import app.encave.core.CellarArchive
 import app.encave.core.CellarFilter
+import app.encave.core.FileKind
+import app.encave.core.FileRef
+import app.encave.core.unzipTest
 import app.encave.core.CellarJson
 import app.encave.core.CellarSettings
 import app.encave.core.Discovery
@@ -20,10 +24,12 @@ import java.io.File
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
+import java.util.zip.ZipFile
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 /**
  * The files shared with CaveKit, in `fixtures/interop` at the top of the repository:
@@ -140,6 +146,29 @@ object InteropFixture {
 
     /** Tests run in android/core. */
     val folder = File("../../fixtures/interop")
+
+    /** The photos and documents of the cellar, as an archive holds them. */
+    fun archiveFiles(): Map<FileRef, ByteArray> =
+        listOf("label", "back", "cover").associate { FileRef(PhotoId.make(it.toByteArray()), FileKind.Photo) to it.toByteArray() } +
+            listOf("invoice", "back", "certificate").associate { FileRef(PhotoId.make(it.toByteArray()), FileKind.Document) to it.toByteArray() }
+
+    /** The archive of the cellar and its files, as the Kotlin core writes it. */
+    fun writeArchive(target: File, work: File) {
+        val files = archiveFiles().entries.mapIndexed { index, (ref, data) -> ref to File(work, "file-$index").apply { writeBytes(data) } }.toMap()
+        target.outputStream().use { CellarArchive.write(cellar(), exportedAt, it, { ref -> files[ref] }) }
+    }
+
+    /** Each entry of an archive: the backup read from cellar.json, other JSON as a tree, the rest as bytes. */
+    fun entries(file: File): Map<String, Any> = ZipFile(file).use { zip ->
+        zip.entries().toList().associate { entry ->
+            val data = zip.getInputStream(entry).readBytes()
+            entry.name to when {
+                entry.name == "cellar.json" -> CellarJson.backupFrom(data.decodeToString())
+                entry.name.endsWith(".json") -> Json.parseToJsonElement(data.decodeToString())
+                else -> data.toList()
+            }
+        }
+    }
 }
 
 class InteropFixtureTest {
@@ -172,6 +201,33 @@ class InteropFixtureTest {
             val original = swift(name)
             assertEquals(tree(original), tree(rewrite(original)), name)
         }
+    }
+
+    @Test
+    fun theKotlinCoreStillWritesTheSharedArchive(@TempDir work: File) {
+        val fresh = File(work, "archive.zip")
+        InteropFixture.writeArchive(fresh, work)
+        val file = File(InteropFixture.folder, "kotlin-archive.zip")
+        val same = file.exists() && InteropFixture.entries(file) == InteropFixture.entries(fresh)
+        if (write && !same) fresh.copyTo(file, overwrite = true)
+        assertTrue(same || write, "archive changed: run the tests with ENCAVE_WRITE_FIXTURES=1, then the Swift tests")
+    }
+
+    @Test
+    fun readsTheArchiveCaveKitWrites(@TempDir work: File) {
+        val file = File(InteropFixture.folder, "swift-archive.zip")
+        // The same entries, names and files as the archive the Kotlin core writes.
+        val ours = File(work, "ours.zip")
+        InteropFixture.writeArchive(ours, work)
+        assertEquals(InteropFixture.entries(ours), InteropFixture.entries(file))
+        val contents = file.inputStream().use { CellarArchive.read(it, work) }
+        assertEquals(InteropFixture.exportedAt, contents.backup.exportedAt)
+        assertEquals(CellarJson.backupFrom(InteropFixture.files().getValue("backup.json")), contents.backup)
+        val expected = InteropFixture.archiveFiles()
+        assertEquals(expected.keys, contents.files.keys)
+        for ((ref, data) in contents.files) assertEquals(expected.getValue(ref).toList(), data.readBytes().toList())
+        assertEquals(0, contents.skipped)
+        unzipTest(file)?.let { (status, output) -> assertEquals(0, status, output) }
     }
 
     @Test

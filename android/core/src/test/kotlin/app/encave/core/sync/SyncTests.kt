@@ -6,6 +6,8 @@ import app.encave.core.Rack
 import app.encave.core.Slot
 import app.encave.core.Tasting
 import app.encave.core.Wine
+import app.encave.core.RestoreMode
+import app.encave.core.restoring
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -22,6 +24,13 @@ private class Device(initial: Cellar, device: UUID = UUID.randomUUID()) {
     fun edit(change: (Cellar) -> Unit) {
         val before = cellar.copy()
         change(cellar)
+        state = state.recording(before, cellar)
+    }
+
+    /** A local change that replaces the whole cellar (a restore), recorded the same way. */
+    fun replace(with: Cellar) {
+        val before = cellar.copy()
+        cellar = with.copy()
         state = state.recording(before, cellar)
     }
 
@@ -240,6 +249,42 @@ class SyncTests {
         assertTrue(Stamp(1, digit) < Stamp(1, digit, deleted = true))
         assertTrue(Stamp(2, digit) > Stamp(1, upperFirst, deleted = true))
         assertEquals(Bottle.Status.InCellar, Bottle(wineId = UUID.randomUUID()).status)
+    }
+
+    /**
+     * Restoring a backup with Replace is a change made on this device: what it brings back
+     * returns on the other devices, even after they took the deletion, and what is not in the
+     * backup is deleted there. Mirrors CaveKit's test.
+     */
+    @Test
+    fun replacingWithABackupReachesTheOtherDevices() {
+        val s = sample()
+        val (a, b) = pair(s.cellar)
+        val backup = a.cellar.copy()
+        val bottle = backup.bottles.values.first()
+        a.edit { it.deleteWine(s.wine.id) }
+        syncBoth(a, b)
+        assertNull(b.cellar.wines[s.wine.id])
+        val later = Wine(name = "Bought later")
+        b.edit { it.addBottles(later, 1) }
+        syncBoth(a, b)
+
+        a.replace(a.cellar.restoring(backup, RestoreMode.Replace))
+        syncBoth(a, b)
+        assertEquals(s.wine, b.cellar.wines[s.wine.id])
+        assertEquals(bottle, b.cellar.bottles[bottle.id])
+        assertNull(b.cellar.wines[later.id])
+        assertEquals(a.cellar, b.cellar)
+        assertEquals(backup, b.cellar)
+
+        a.edit { it.deleteWine(s.wine.id) }
+        b.edit { it.addBottles(later, 1) }
+        syncBoth(a, b)
+        a.replace(a.cellar.restoring(backup, RestoreMode.AddMissing))
+        syncBoth(a, b)
+        assertEquals(s.wine, b.cellar.wines[s.wine.id])
+        assertTrue(b.cellar.wines[later.id] != null)
+        assertEquals(a.cellar, b.cellar)
     }
 }
 

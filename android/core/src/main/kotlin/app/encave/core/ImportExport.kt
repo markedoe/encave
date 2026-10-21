@@ -7,7 +7,20 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-enum class ImportError { NotAnEncaveBackup, EmptyFile, MissingNameColumn }
+enum class ImportError {
+    NotAnEncaveBackup,
+
+    /** Made by a newer version of Encave, in a format this one does not know. */
+    NewerVersion,
+
+    /** A ZIP file that is encrypted or split: not an archive Encave makes. */
+    UnsupportedArchive,
+
+    /** An archive whose cellar could not be read in full (cut short, or changed). */
+    DamagedArchive,
+    EmptyFile,
+    MissingNameColumn,
+}
 
 class ImportException(val error: ImportError) : Exception(error.name)
 

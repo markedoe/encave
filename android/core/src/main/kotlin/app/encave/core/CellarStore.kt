@@ -30,7 +30,12 @@ interface CellarStore {
  * Stores the cellar as one JSON file (same encoding as backups), written atomically:
  * a temporary file is written and synced, then renamed over the previous one.
  */
-class JsonFileCellarStore(val file: File, private val now: () -> LocalDateTime = LocalDateTime::now) : CellarStore {
+class JsonFileCellarStore(
+    val file: File,
+    /** Earlier versions of the file, kept when it is saved on a new day (null: none). */
+    val versions: CellarVersionFolder? = null,
+    private val now: () -> LocalDateTime = LocalDateTime::now,
+) : CellarStore {
     override fun load(): Cellar {
         if (!file.exists()) return Cellar()
         return CellarJson.decode(file.readText(Charsets.UTF_8))
@@ -55,6 +60,8 @@ class JsonFileCellarStore(val file: File, private val now: () -> LocalDateTime =
 
     override fun save(cellar: Cellar) {
         file.parentFile?.mkdirs()
+        // The file as it was, kept first when it was last saved on an earlier day.
+        versions?.keepCopy(file)
         val temp = File(file.parentFile, "${file.name}.tmp")
         temp.outputStream().use { stream ->
             stream.write(CellarJson.encode(cellar).toByteArray(Charsets.UTF_8))

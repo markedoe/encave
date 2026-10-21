@@ -287,7 +287,17 @@ object CellarJson {
         return pretty.encodeToString(JsonElement.serializer(), sortKeys(element))
     }
 
+    /**
+     * Reads a backup. One made by a newer version of Encave (a higher `version`) is refused
+     * before anything else is read: its fields may have changed.
+     */
     fun backupFrom(text: String): CellarBackup {
+        val envelope = runCatching { json.parseToJsonElement(text) as JsonObject }.getOrNull()
+            ?: throw ImportException(ImportError.NotAnEncaveBackup)
+        val format = (envelope["format"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+        val version = (envelope["version"] as? JsonPrimitive)?.takeIf { !it.isString }?.content?.toIntOrNull()
+        if (format != CellarBackup.FORMAT || version == null) throw ImportException(ImportError.NotAnEncaveBackup)
+        if (version > Cellar.CURRENT_SCHEMA_VERSION) throw ImportException(ImportError.NewerVersion)
         val backup = try {
             json.decodeFromString(CellarBackup.serializer(), text)
         } catch (_: Exception) {

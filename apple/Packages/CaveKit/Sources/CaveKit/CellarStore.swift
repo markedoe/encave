@@ -11,17 +11,23 @@ public protocol CellarStore: Sendable {
 /// On Apple platforms the file is encrypted at rest until first unlock.
 public struct JSONFileCellarStore: CellarStore {
     public let fileURL: URL
+    /// Earlier versions of the file, kept when it is saved on a new day (nil: none).
+    public let versions: CellarVersionFolder?
 
-    public init(fileURL: URL) { self.fileURL = fileURL }
+    public init(fileURL: URL, versions: CellarVersionFolder? = nil) {
+        self.fileURL = fileURL
+        self.versions = versions
+    }
 
-    /// `<Application Support>/Encave/cellar.json`
+    /// `<Application Support>/Encave/cellar.json`, with its versions in `Encave/Versions`.
     public static func defaultStore() throws -> JSONFileCellarStore {
         let base = try FileManager.default.url(
             for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true
         )
         let folder = base.appendingPathComponent("Encave", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        return JSONFileCellarStore(fileURL: folder.appendingPathComponent("cellar.json"))
+        return JSONFileCellarStore(fileURL: folder.appendingPathComponent("cellar.json"),
+                                   versions: CellarVersionFolder(folder: folder.appendingPathComponent("Versions", isDirectory: true)))
     }
 
     public func load() throws -> Cellar {
@@ -76,6 +82,8 @@ public struct JSONFileCellarStore: CellarStore {
 
     public func save(_ cellar: Cellar) throws {
         let data = try Self.makeEncoder().encode(cellar)
+        // The file as it was, kept first when it was last saved on an earlier day.
+        versions?.keepCopy(of: fileURL)
         #if canImport(Darwin) && !os(macOS)
         try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         #else
