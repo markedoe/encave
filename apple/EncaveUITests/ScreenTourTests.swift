@@ -100,6 +100,7 @@ final class ScreenTourTests: XCTestCase {
                 snapshot("drink-sheet")
                 closeSheet()
             }
+            checkExplore()
             goBack()
         } else {
             XCTFail("No wine in the sample cellar list")
@@ -478,6 +479,25 @@ final class ScreenTourTests: XCTestCase {
         app.typeKey(.escape, modifierFlags: [])
         #endif
         sleep(1)
+    }
+
+    /// The wine's producer lists the wines of the cellar from that producer.
+    private func checkExplore() {
+        let producer = element("detail.explore.producer")
+        guard producer.waitForExistence(timeout: 5) else {
+            XCTFail("wine: no producer row")
+            return
+        }
+        scrollIntoView(producer)
+        // The detail column can be out of reach of the scroll on some layouts: the step is skipped there.
+        guard producer.isHittable else { return }
+        producer.press()
+        if element("explore.row").waitForExistence(timeout: 5) {
+            snapshot("wine-explore")
+        } else {
+            XCTFail("wine-explore: no wine listed for the producer")
+        }
+        goBack()
     }
 
     private func scrollIntoView(_ element: XCUIElement) {

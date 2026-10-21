@@ -434,7 +434,8 @@ enum AppTab: String, Hashable {
 enum AppSheet: Identifiable {
     case addBottle(AddBottleContext)
     case drink(bottleID: UUID)
-    case editWine(wineID: UUID)
+    /// Edit a wine, scrolled to one of its fields when given.
+    case editWine(wineID: UUID, field: WineFormField? = nil)
     case editTasting(bottleID: UUID)
     case editRack(rackID: UUID?)
     case moveBottle(bottleID: UUID)
@@ -448,7 +449,7 @@ enum AppSheet: Identifiable {
         switch self {
         case .addBottle(let context): "add-\(context.id)"
         case .drink(let id): "drink-\(id)"
-        case .editWine(let id): "wine-\(id)"
+        case .editWine(let id, _): "wine-\(id)"
         case .editTasting(let id): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"

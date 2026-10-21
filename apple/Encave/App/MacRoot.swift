@@ -37,7 +37,9 @@ struct MacRoot: View {
                     middle
                         .navigationSplitViewColumnWidth(min: 300, ideal: 360, max: 520)
                 } detail: {
+                    // A new stack for each wine: what was opened from the last one's details goes.
                     NavigationStack { detail }
+                        .id(wine)
                 }
             }
         }

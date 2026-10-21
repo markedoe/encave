@@ -6,6 +6,8 @@ struct WineDetailView: View {
     let wineID: UUID
     @State private var searchingOnline = false
     @State private var findingPrice = false
+    /// "Search the Web" on one detail.
+    @State private var searchingDetail: WebSearchTerms?
     private let webSearchEnabled = WebSearchSettings.load().isEnabled
 
     var body: some View {
@@ -44,33 +46,55 @@ struct WineDetailView: View {
                 }
 
                 Section("Drinking window") {
-                    MaturityLabel(maturity: maturity)
-                        .font(.headline)
-                    if let from = wine.drinkFrom, let until = wine.drinkUntil {
-                        MaturityGauge(from: from, until: until, year: model.currentYear, maturity: maturity)
-                            .padding(.vertical, 6)
+                    EditDetailRow(hint: Text("Edits the drinking window.")) {
+                        model.sheet = .editWine(wineID: wineID, field: .window)
+                    } content: {
+                        VStack(alignment: .leading, spacing: 0) {
+                            MaturityLabel(maturity: maturity)
+                                .font(.headline)
+                            if let from = wine.drinkFrom, let until = wine.drinkUntil {
+                                MaturityGauge(from: from, until: until, year: model.currentYear, maturity: maturity)
+                                    .padding(.top, 12)
+                                    .padding(.bottom, 6)
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("detail.edit.window")
+                    .contextMenu { editMenu(windowText(wine), field: .window) }
+                    if wine.drinkFrom != nil, wine.drinkUntil != nil {
                         WindowExplanation(wine: wine)
                     } else {
-                        Button("Set a drinking window") { model.sheet = .editWine(wineID: wineID) }
+                        Button("Set a drinking window") { model.sheet = .editWine(wineID: wineID, field: .window) }
                     }
                 }
 
                 if let advice = ServingAdvice.advice(for: wine, year: model.currentYear) {
+                    // Worked out from the style and the vintage: a tap edits the style.
                     Section("Serving") {
-                        LabeledContent {
-                            Text(verbatim: temperatureRange(advice)).monospacedDigit()
-                        } label: {
-                            Label("Temperature", systemImage: "thermometer.medium")
-                        }
-                        LabeledContent {
-                            if let minutes = advice.decantMinutes {
-                                Text("\(minutes) min")
-                            } else {
-                                Text("Not needed")
+                        EditDetailRow(hint: Text("Edits the style, which sets the serving advice.")) {
+                            model.sheet = .editWine(wineID: wineID, field: .style)
+                        } content: {
+                            LabeledContent {
+                                Text(verbatim: temperatureRange(advice)).monospacedDigit()
+                            } label: {
+                                Label("Temperature", systemImage: "thermometer.medium")
                             }
-                        } label: {
-                            Label("Decanting", systemImage: "drop")
                         }
+                        .contextMenu { editMenu(temperatureRange(advice), field: .style) }
+                        EditDetailRow(hint: Text("Edits the style, which sets the serving advice.")) {
+                            model.sheet = .editWine(wineID: wineID, field: .style)
+                        } content: {
+                            LabeledContent {
+                                if let minutes = advice.decantMinutes {
+                                    Text("\(minutes) min")
+                                } else {
+                                    Text("Not needed")
+                                }
+                            } label: {
+                                Label("Decanting", systemImage: "drop")
+                            }
+                        }
+                        .contextMenu { editMenu(nil, field: .style) }
                     }
                 }
 
@@ -79,30 +103,36 @@ struct WineDetailView: View {
                 }
 
                 Section("Details") {
+                    // Details other wines can share list them; the others edit the wine.
                     if let color = wine.color {
-                        LabeledContent("Style") {
+                        ExploreDetailRow(title: "Style", attribute: .color(color), wineID: wineID, content: {
                             HStack(spacing: 6) {
                                 BottleEnd(color: color, size: 16)
                                 Text(color.title)
                             }
-                        }
+                        })
                     }
-                    optionalRow("Producer", wine.producer)
-                    optionalRow("Appellation", wine.appellation)
-                    optionalRow("Region", wine.region)
-                    optionalRow("Country", wine.country)
-                    if !wine.grapes.isEmpty {
-                        LabeledContent("Grapes", value: wine.grapes.formatted(.list(type: .and)))
+                    exploreRow("Producer", wine.producer.map(WineAttribute.producer))
+                    exploreRow("Vintage", wine.vintage.map(WineAttribute.vintage))
+                    exploreRow("Appellation", wine.appellation.map(WineAttribute.appellation))
+                    exploreRow("Region", wine.region.map(WineAttribute.region))
+                    exploreRow("Country", wine.country.map(WineAttribute.country))
+                    ForEach(distinctValues(wine.grapes), id: \.self) { grape in
+                        exploreRow("Grape", .grape(grape))
                     }
-                    if let tags = wine.tags {
-                        LabeledContent("Tags") {
-                            Text(verbatim: tags.joined(separator: ", "))
-                        }
+                    ForEach(distinctValues(wine.tags ?? []), id: \.self) { tag in
+                        exploreRow("Tag", .tag(tag))
                     }
                     if let notes = wine.notes, !notes.isEmpty {
-                        Text(notes)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                        EditDetailRow(hint: Text("Edits the notes.")) {
+                            model.sheet = .editWine(wineID: wineID, field: .notes)
+                        } content: {
+                            Text(notes)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        .accessibilityIdentifier("detail.edit.notes")
+                        .contextMenu { editMenu(notes, field: .notes) }
                     }
                     if webSearchEnabled {
                         Button {
@@ -191,11 +221,13 @@ struct WineDetailView: View {
                     terms: WebSearchQuery.terms(for: wine, wineWord: String(localized: "wine", comment: "Added to web search terms")),
                     current: WineDetails(wine), vintage: wine.vintage
                 ) { details, fields in
-                    model.update { cellar in
-                        guard var updated = cellar.wines[wineID] else { return }
-                        updated.apply(details, fields: fields)
-                        try cellar.updateWine(updated)
-                    }
+                    apply(details, fields: fields)
+                }
+            }
+            // Only the detail's value, shown and editable before anything is sent.
+            .sheet(item: $searchingDetail) { search in
+                WebSearchView(terms: search.terms, current: WineDetails(wine), vintage: wine.vintage) { details, fields in
+                    apply(details, fields: fields)
                 }
             }
             .toolbar {
@@ -226,15 +258,32 @@ struct WineDetailView: View {
         return "\(low.formatted(style)) – \(high.formatted(style))"
     }
 
+    private func apply(_ details: WineDetails, fields: Set<WineDetailField>) {
+        model.update { cellar in
+            guard var updated = cellar.wines[wineID] else { return }
+            updated.apply(details, fields: fields)
+            try cellar.updateWine(updated)
+        }
+    }
+
     @ViewBuilder
     private func priceSection(_ wine: Wine) -> some View {
         Section {
             if let price = wine.currentPrice {
-                LabeledContent {
-                    Text(verbatim: price.formatted(.currency(code: wine.currentPriceCurrency ?? model.cellar.settings.currency)))
-                        .monospacedDigit()
-                } label: {
-                    Label("Price today", systemImage: "tag")
+                let priceText = price.formatted(.currency(code: wine.currentPriceCurrency ?? model.cellar.settings.currency))
+                EditDetailRow(hint: Text("Changes the price.")) {
+                    findingPrice = true
+                } content: {
+                    LabeledContent {
+                        Text(verbatim: priceText)
+                            .monospacedDigit()
+                    } label: {
+                        Label("Price today", systemImage: "tag")
+                    }
+                }
+                .accessibilityIdentifier("detail.edit.price")
+                .contextMenu {
+                    DetailMenu(value: priceText, onEdit: { findingPrice = true })
                 }
                 if let date = wine.currentPriceDate {
                     Text("Set on \(date.formatted(date: .abbreviated, time: .omitted)), for one bottle.")
@@ -279,11 +328,31 @@ struct WineDetailView: View {
         }
     }
 
+    /// A detail other wines can share, when the wine has it.
     @ViewBuilder
-    private func optionalRow(_ title: LocalizedStringKey, _ value: String?) -> some View {
-        if let value, !value.isEmpty {
-            LabeledContent(title, value: value)
+    private func exploreRow(_ title: LocalizedStringKey, _ attribute: WineAttribute?) -> some View {
+        if let attribute, !attribute.value.isEmpty {
+            ExploreDetailRow(title: title, attribute: attribute, wineID: wineID,
+                             onSearchWeb: webSearchEnabled ? { searchingDetail = WebSearchTerms(terms: $0) } : nil)
         }
+    }
+
+    /// Grapes or tags once each, as written first, without blanks.
+    private func distinctValues(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        return values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+    }
+
+    /// Copy and Edit for a detail with nothing to explore (never sent to a web search).
+    private func editMenu(_ value: String?, field: WineFormField) -> some View {
+        DetailMenu(value: value, onEdit: { model.sheet = .editWine(wineID: wineID, field: field) })
+    }
+
+    /// "2020 – 2030", to copy.
+    private func windowText(_ wine: Wine) -> String? {
+        guard let from = wine.drinkFrom, let until = wine.drinkUntil else { return nil }
+        return "\(from) – \(until)"
     }
 }
 
@@ -294,22 +363,47 @@ private struct WineHeader: View {
     @Environment(CellarModel.self) private var model
     @AppStorage(StudioPhoto.settingKey) private var studio = true
     @State private var asTaken = false
+    @State private var showsPhoto = false
+
+    /// The photo shown large: the label photo as taken, or the picture chosen for the wine.
+    private var largePhotoID: String? {
+        asTaken ? wine.photoID : wine.shownPhotoID
+    }
 
     var body: some View {
         VStack(spacing: 12) {
             if wine.hasShownPhoto {
-                Group {
-                    if asTaken, let photoID = wine.photoID {
-                        WinePhoto(photoID: photoID)
-                    } else {
-                        WineImage(wine: wine, inset: 18)
+                Button {
+                    showsPhoto = true
+                } label: {
+                    Group {
+                        if asTaken, let photoID = wine.photoID {
+                            WinePhoto(photoID: photoID)
+                        } else {
+                            WineImage(wine: wine, inset: 18)
+                        }
                     }
+                    .frame(maxWidth: 360)
+                    .frame(height: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
-                .frame(maxWidth: 360)
-                .frame(height: 220)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .buttonStyle(.plain)
                 .padding(.top, 4)
+                // VoiceOver reaches it through the header's "Show Photo" action.
                 .accessibilityHidden(true)
+                .sheet(isPresented: $showsPhoto) {
+                    NavigationStack {
+                        WinePhoto(photoID: largePhotoID, maxPixelSize: 1600, fits: true)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .accessibilityLabel(Text("Photo"))
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Done") { showsPhoto = false }
+                                }
+                            }
+                    }
+                    .macSheetFrame(width: 640, height: 720)
+                }
                 .contextMenu {
                     Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wine.id) }
                     if studio, wine.coverPhotoID == nil, PhotoStore.exists(wine.photoID) {
@@ -364,6 +458,11 @@ private struct WineHeader: View {
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)
         )
         .accessibilityElement(children: .combine)
+        .accessibilityActions {
+            if wine.hasShownPhoto {
+                Button("Show Photo") { showsPhoto = true }
+            }
+        }
     }
 }
 

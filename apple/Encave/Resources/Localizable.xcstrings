@@ -691,6 +691,46 @@
         }
       }
     },
+    "%lld wines": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld wine"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld wines"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vins"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld wines added": {
       "localizations": {
         "en": {
@@ -977,6 +1017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."
+          }
+        }
+      }
+    },
+    "A wine's page": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fiche d’un vin"
           }
         }
       }
@@ -2301,6 +2351,16 @@
         }
       }
     },
+    "Changes the price.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie le prix."
+          }
+        }
+      }
+    },
     "Check Key and Load Models": {
       "localizations": {
         "fr": {
@@ -2707,6 +2767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contenant"
+          }
+        }
+      }
+    },
+    "Copy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier"
           }
         }
       }
@@ -3541,6 +3611,36 @@
         }
       }
     },
+    "Edits the drinking window.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie la fenêtre de dégustation."
+          }
+        }
+      }
+    },
+    "Edits the notes.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie les notes."
+          }
+        }
+      }
+    },
+    "Edits the style, which sets the serving advice.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie le style, qui détermine les conseils de service."
+          }
+        }
+      }
+    },
     "Elsewhere": {
       "localizations": {
         "fr": {
@@ -4297,6 +4397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Donnée ou cassée"
+          }
+        }
+      }
+    },
+    "Grape": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cépage"
           }
         }
       }
@@ -5671,6 +5781,16 @@
         }
       }
     },
+    "No bottle with this detail is left in the cellar or on order.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus aucune bouteille avec ce détail n’est en cave ou en commande."
+          }
+        }
+      }
+    },
     "No bottles": {
       "localizations": {
         "fr": {
@@ -5847,6 +5967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun texte trouvé. Essayez une photo plus nette."
+          }
+        }
+      }
+    },
+    "No wine in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun vin en cave"
           }
         }
       }
@@ -7961,6 +8091,16 @@
         }
       }
     },
+    "Search the Web": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher sur le Web"
+          }
+        }
+      }
+    },
     "Search your wines": {
       "localizations": {
         "fr": {
@@ -8281,6 +8421,16 @@
         }
       }
     },
+    "Show Photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la photo"
+          }
+        }
+      }
+    },
     "Show Photo as Taken": {
       "localizations": {
         "fr": {
@@ -8407,6 +8557,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "Affiche les bouteilles gardées pour cette occasion."
+          }
+        }
+      }
+    },
+    "Shows the other wines from this country.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de ce pays."
+          }
+        }
+      }
+    },
+    "Shows the other wines from this producer.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de ce producteur."
+          }
+        }
+      }
+    },
+    "Shows the other wines from this region.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de cette région."
+          }
+        }
+      }
+    },
+    "Shows the other wines made with this grape.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de ce cépage."
+          }
+        }
+      }
+    },
+    "Shows the other wines of this appellation.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de cette appellation."
+          }
+        }
+      }
+    },
+    "Shows the other wines of this style.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de ce style."
+          }
+        }
+      }
+    },
+    "Shows the other wines of this vintage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins de ce millésime."
+          }
+        }
+      }
+    },
+    "Shows the other wines with this tag.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les autres vins avec ce tag."
           }
         }
       }
@@ -8881,6 +9111,16 @@
         }
       }
     },
+    "Tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag"
+          }
+        }
+      }
+    },
     "Tags": {
       "localizations": {
         "fr": {
@@ -8947,6 +9187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange."
+          }
+        }
+      }
+    },
+    "Tap a detail of a wine. Its producer, vintage, style, appellation, region, country, a grape or a tag lists the wines of your cellar that share it, with how many bottles; the other details open the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez un détail d’un vin. Son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag liste les vins de votre cave qui le partagent, avec le nombre de bouteilles ; les autres détails ouvrent le vin pour les modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
           }
         }
       }
