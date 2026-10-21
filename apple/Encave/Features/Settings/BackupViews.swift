@@ -312,6 +312,7 @@ struct RestorePreviewView: View {
             .disabled(working)
         }
         .formStyle(.grouped)
+        .accessibilityIdentifier("restore.preview")
         .navigationTitle(title)
         .toolbar {
             if inSheet {

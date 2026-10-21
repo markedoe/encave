@@ -358,7 +358,8 @@ final class ScreenTourTests: XCTestCase {
         snapshot("previous-versions")
         row.press()
         let replace = element("restore.replace")
-        if replace.waitForExistence(timeout: 5) || element("restore.add").waitForExistence(timeout: 2) {
+        // The buttons are at the bottom of the form: not there until scrolled to on iPhone.
+        if element("restore.preview").waitForExistence(timeout: 5) {
             snapshot("restore-preview")
             scrollIntoView(replace)
             XCTAssertTrue(replace.exists, "restore preview: no Replace This Cellar button")

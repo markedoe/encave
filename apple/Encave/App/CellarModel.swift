@@ -59,18 +59,23 @@ final class CellarModel {
         if let fileName = unreadableFile?.lastPathComponent {
             errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
         }
-        let kept: any CellarVersionSource = (store as? JSONFileCellarStore)?.versions ?? versions ?? InMemoryCellarVersions([])
+        let folder: (any CellarVersionSource)? = (store as? JSONFileCellarStore)?.versions.map { $0 as any CellarVersionSource }
+        let kept: any CellarVersionSource = folder ?? versions ?? InMemoryCellarVersions([])
         backups = BackupCenter(versions: kept, demo: demo)
         sync = SyncService(model: self, demo: demo)
     }
 
-    /// The cellar file could not be read at launch and earlier versions are kept: one can be restored.
+    /// The cellar file could not be read at launch and earlier versions are kept: one can be
+    /// restored (offered until one is restored, or the offer is taken up).
     var offersRestoreAfterUnreadable: Bool {
-        unreadableFile != nil && !backups.versions.versions().isEmpty
+        restoreOffered && unreadableFile != nil && !backups.versions.versions().isEmpty
     }
+
+    private var restoreOffered = true
 
     /// Opens the preview of the newest previous version (after a cellar file could not be read).
     func openLatestVersion() {
+        restoreOffered = false
         Task {
             guard let source = await backups.latestVersionSource() else { return }
             sheet = .restore(source)
@@ -89,6 +94,7 @@ final class CellarModel {
         let summary = merged.merge(source.cellar)
         let restored = cellar.restoring(source.cellar, mode: mode)
         guard update({ $0 = restored }) else { return false }
+        restoreOffered = false
         if let folder = source.workingFolder { try? FileManager.default.removeItem(at: folder) }
         successCount += 1
         let message: String

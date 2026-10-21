@@ -217,6 +217,11 @@ S = [
  ("err_already_consumed", "This bottle is no longer in the cellar.", "Cette bouteille n’est plus en cave."),
  ("err_generic", "Something went wrong", "Une erreur est survenue"),
  ("err_not_backup", "This file is not an Encave backup.", "Ce fichier n’est pas une sauvegarde Encave."),
+ ("err_newer_version", "This backup was made by a newer version of Encave. Update Encave on this device, then import it again.",
+  "Cette sauvegarde a été faite par une version plus récente d’Encave. Mettez Encave à jour sur cet appareil, puis importez-la à nouveau."),
+ ("err_unsupported_archive", "This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.",
+  "Ce fichier ZIP n’a pas été fait par Encave, ou une autre app l’a modifié. Importez l’archive telle qu’Encave l’a faite, ou le fichier cellar.json qu’elle contient."),
+ ("err_damaged_archive", "This backup is damaged: it could not be read in full.", "Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier."),
  ("err_empty_file", "The file is empty.", "Le fichier est vide."),
  ("err_missing_name", "The CSV file needs a “name” column.", "Le fichier CSV doit avoir une colonne « name »."),
 

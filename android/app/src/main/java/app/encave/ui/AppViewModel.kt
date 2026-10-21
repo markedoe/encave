@@ -139,6 +139,9 @@ class AppViewModel(
             }
             is ImportException -> when (error.error) {
                 ImportError.NotAnEncaveBackup -> R.string.err_not_backup
+                ImportError.NewerVersion -> R.string.err_newer_version
+                ImportError.UnsupportedArchive -> R.string.err_unsupported_archive
+                ImportError.DamagedArchive -> R.string.err_damaged_archive
                 ImportError.EmptyFile -> R.string.err_empty_file
                 ImportError.MissingNameColumn -> R.string.err_missing_name
             }
