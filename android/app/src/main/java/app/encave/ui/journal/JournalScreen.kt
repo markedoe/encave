@@ -121,7 +121,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val filter by viewModel.journalFilter.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
-    var chosenTag by rememberSaveable { mutableStateOf<String?>(null) }
+    val chosenTag by viewModel.journalTag.collectAsStateWithLifecycle()
     // The chosen tag while some wine tasted elsewhere still has it and the filter shows them.
     val tag = chosenTag?.takeIf { filter.showsElsewhere && it in cellar.discoveryTags }
     val zone = ZoneId.systemDefault()
@@ -188,7 +188,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             DiaryFilterBar(
                 cellar, filter, tag,
                 onFilter = { viewModel.journalFilter.value = it },
-                onTag = { chosenTag = if (tag == it) null else it },
+                onTag = { viewModel.journalTag.value = if (tag == it) null else it },
             )
             if (months.isEmpty()) {
                 when {

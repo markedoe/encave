@@ -8,7 +8,6 @@ struct JournalView: View {
     /// On the Mac the window shows Insights in its own column, and provides the navigation.
     var embedded = false
     @State private var query = ""
-    @State private var tag: String?
 
     var body: some View {
         if embedded {
@@ -22,7 +21,7 @@ struct JournalView: View {
     /// otherwise its chip is gone and the filter could not be cleared.
     private var activeTag: String? {
         guard model.journalFilter.showsElsewhere else { return nil }
-        return tag.flatMap { model.cellar.discoveryTags.contains($0) ? $0 : nil }
+        return model.journalTag.flatMap { model.cellar.discoveryTags.contains($0) ? $0 : nil }
     }
 
     private var journal: some View {
@@ -65,7 +64,7 @@ struct JournalView: View {
                 .listRowBackground(Color.clear)
             } else {
                 Section {
-                    DiaryFilterBar(tag: $tag, activeTag: activeTag)
+                    DiaryFilterBar(activeTag: activeTag)
                 }
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
@@ -140,7 +139,6 @@ struct AddTastingMenu<MenuLabel: View>: View {
 /// All · From my cellar · Tasted elsewhere · To buy, then the tags of wines tasted elsewhere.
 private struct DiaryFilterBar: View {
     @Environment(CellarModel.self) private var model
-    @Binding var tag: String?
     let activeTag: String?
 
     var body: some View {
@@ -176,7 +174,7 @@ private struct DiaryFilterBar: View {
                 if model.journalFilter.showsElsewhere {
                     ForEach(model.cellar.discoveryTags, id: \.self) { name in
                         ChoiceChip(verbatim: name, isSelected: activeTag == name) {
-                            withAnimation(.snappy) { tag = activeTag == name ? nil : name }
+                            withAnimation(.snappy) { model.journalTag = activeTag == name ? nil : name }
                         } leading: {
                             Image(systemName: "number").font(.caption.weight(.semibold))
                         }

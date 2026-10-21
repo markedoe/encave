@@ -12,6 +12,8 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasScrollAction
 import app.encave.EncaveApplication
@@ -133,6 +135,24 @@ class SmokeTest {
         compose.waitForIdle()
         compose.onAllNodesWithText("Open a bottle").onFirst().assertExists()
         compose.onAllNodesWithText("Clos des Tilleuls", substring = true).onFirst().assertExists()
+    }
+
+    @Test
+    fun aBottleOpenedWithATagChosenShowsInTheJournal() {
+        tab("Journal")
+        compose.onNodeWithText("Gift idea").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onAllNodes(hasContentDescription("From my cellar", substring = true)).assertCountEquals(0)
+        compose.onNodeWithText("Add a tasting", useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("A bottle from my cellar").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Clos des Tilleuls", substring = true).onFirst().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("action.drink_confirm").performScrollTo().performClick()
+        compose.waitForIdle()
+        // The tag only picks wines tasted elsewhere: it is cleared so the new entry shows.
+        compose.onAllNodes(hasContentDescription("From my cellar, Clos des Tilleuls", substring = true)).onFirst().assertExists()
     }
 
     @Test
