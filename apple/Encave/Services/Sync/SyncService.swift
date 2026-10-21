@@ -645,7 +645,9 @@ final class SyncService {
     /// Asks iOS for a background round, no sooner than the chosen frequency and never
     /// within 15 minutes; iOS decides when. Cancels it when there is nothing to sync.
     func scheduleBackgroundSync() {
-        guard !isDemo, isSetUp, !otherDevices.isEmpty, !wasRemoved, remoteStorage != nil,
+        // Screen tour, or a cellar that could not be loaded: the request stays as it is.
+        guard !isDemo else { return }
+        guard isSetUp, !otherDevices.isEmpty, !wasRemoved, remoteStorage != nil,
               let interval = remoteFrequency.interval else {
             BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: BackgroundSync.identifier)
             return
@@ -989,6 +991,8 @@ enum BackgroundSync {
 
     @MainActor
     static func run() async {
+        // Launched before the first unlock, then unlocked: the cellar can be loaded now.
+        CellarModel.current?.reloadIfLoadFailed()
         await CellarModel.current?.sync.backgroundRound()
     }
 }

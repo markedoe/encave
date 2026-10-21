@@ -11,7 +11,10 @@ import Foundation
 @MainActor
 enum CellarAccess {
     static func cellar() -> Cellar {
-        if let model = CellarModel.current { return model.cellar }
+        if let model = CellarModel.current {
+            model.reloadIfLoadFailed()
+            return model.cellar
+        }
         return (try? JSONFileCellarStore.defaultStore().load()) ?? Cellar()
     }
 

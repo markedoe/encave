@@ -21,7 +21,8 @@ struct RootView: View {
         // The monthly reminder reflects the cellar as it is now.
         .task(id: model.cellar) {
             try? await Task.sleep(for: .seconds(3))
-            guard !Task.isCancelled else { return }
+            // Not for a cellar that could not be loaded: that would remove the reminders.
+            guard !Task.isCancelled, !model.loadFailed else { return }
             await Reminders.schedule(for: model.cellar)
             // Spotlight: an on-device index of the wines (not for the sample cellar of the screen tour).
             if !model.sync.isDemo { await SpotlightIndex.update(model.cellar) }
@@ -31,10 +32,12 @@ struct RootView: View {
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
+                // Launched in the background before the first unlock: the cellar loads now.
+                model.reloadIfLoadFailed()
                 if !isCounted { isCounted = true; model.sceneDidBecomeActive() }
                 model.sync.resume()
                 ChangeNotifications.appBecameActive()
-                Task { await Reminders.schedule(for: model.cellar) }
+                if !model.loadFailed { Task { await Reminders.schedule(for: model.cellar) } }
             case .background:
                 if isCounted { isCounted = false; model.sceneDidEnterBackground() }
             default: break

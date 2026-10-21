@@ -16,7 +16,7 @@ struct DevicesView: View {
     @State private var notificationsRefused = false
 
     var body: some View {
-        let sync = model.sync!
+        let sync = model.sync
         Form {
             // A failed session is shown with the status below instead.
             if let problem = sync.problem, sync.localFailedAt == nil {
@@ -360,7 +360,7 @@ struct RemoteSyncView: View {
     @State private var error: String?
 
     var body: some View {
-        let sync = model.sync!
+        let sync = model.sync
         Form {
             if let storage = sync.remoteStorage {
                 Section {
