@@ -153,9 +153,9 @@ private fun Thumbnail(photos: PhotoStore, id: String, modifier: Modifier, descri
     }
 }
 
-/** The photo on its own, as large as the screen allows. */
+/** The photo on its own, as large as the screen allows, with Remove when it can be removed. */
 @Composable
-private fun LargePhoto(photos: PhotoStore, id: String, onRemove: () -> Unit, onDismiss: () -> Unit) {
+internal fun LargePhoto(photos: PhotoStore, id: String, onRemove: (() -> Unit)?, onDismiss: () -> Unit) {
     val bitmap by produceState<Bitmap?>(null, id) { value = withContext(Dispatchers.IO) { photos.load(id, 1600) } }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).safeDrawingPadding()) {
@@ -166,7 +166,9 @@ private fun LargePhoto(photos: PhotoStore, id: String, onRemove: () -> Unit, onD
                 )
             }
             Row(Modifier.align(Alignment.TopEnd).padding(Dimens.s)) {
-                TextButton(onClick = onRemove) { Text(stringResource(R.string.action_remove_photo), color = MaterialTheme.colorScheme.error) }
+                if (onRemove != null) {
+                    TextButton(onClick = onRemove) { Text(stringResource(R.string.action_remove_photo), color = MaterialTheme.colorScheme.error) }
+                }
                 TextButton(onClick = onDismiss, modifier = Modifier.testTag("photo.done")) { Text(stringResource(R.string.action_done)) }
             }
         }

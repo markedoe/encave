@@ -180,7 +180,10 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 composable<WineDetailRoute> {
                     WineDetailScreen(viewModel, navigator, it.toRoute<WineDetailRoute>().wineId, showBack = true)
                 }
-                composable<EditWineRoute> { EditWineScreen(viewModel, navigator, it.toRoute<EditWineRoute>().wineId) }
+                composable<EditWineRoute> {
+                    val route = it.toRoute<EditWineRoute>()
+                    EditWineScreen(viewModel, navigator, route.wineId, app.encave.ui.add.WineFormField.from(route.field))
+                }
                 composable<AddBottleRoute> { AddBottleScreen(viewModel, navigator, it.toRoute()) }
                 composable<RackDetailRoute> { RackDetailScreen(viewModel, navigator, it.toRoute()) }
                 composable<RackEditorRoute> { RackEditorScreen(viewModel, navigator, it.toRoute<RackEditorRoute>().rackId) }
@@ -195,6 +198,9 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 composable<JoinDeviceRoute> { JoinDeviceScreen(viewModel, navigator) }
                 composable<DiscoveryEditorRoute> {
                     DiscoveryEditorScreen(viewModel, navigator, it.toRoute<DiscoveryEditorRoute>().discoveryId)
+                }
+                composable<app.encave.ui.navigation.WineExploreRoute> {
+                    app.encave.ui.cellar.WineExploreScreen(viewModel, navigator, it.toRoute())
                 }
             }
         }

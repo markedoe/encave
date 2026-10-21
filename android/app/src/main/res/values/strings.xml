@@ -67,6 +67,28 @@
     <string name="maturity_unknown">No drinking window</string>
     <string name="detail_window">Drinking window</string>
     <string name="detail_window_range">%1$d – %2$d</string>
+    <string name="field_grape">Grape</string>
+    <string name="field_tag">Tag</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_search_web">Search the web</string>
+    <string name="detail_more_actions">show more actions</string>
+    <string name="detail_action_window">edit the drinking window</string>
+    <string name="detail_action_serving">edit the style, which sets the serving advice</string>
+    <string name="detail_action_style">edit the style</string>
+    <string name="detail_action_notes">edit the notes</string>
+    <string name="detail_action_price">change the price</string>
+    <string name="explore_action_producer">show the other wines from this producer</string>
+    <string name="explore_action_region">show the other wines from this region</string>
+    <string name="explore_action_appellation">show the other wines of this appellation</string>
+    <string name="explore_action_country">show the other wines from this country</string>
+    <string name="explore_action_grape">show the other wines made with this grape</string>
+    <string name="explore_action_vintage">show the other wines of this vintage</string>
+    <string name="explore_action_style">show the other wines of this style</string>
+    <string name="explore_action_tag">show the other wines with this tag</string>
+    <string name="explore_empty_title">No wine in the cellar</string>
+    <string name="explore_empty_body">No bottle with this detail is left in the cellar or on order.</string>
+    <string name="help_start_wine_title">A wine’s page</string>
+    <string name="help_start_wine">Tap a detail of a wine. Its style, producer, vintage, appellation, region, country, a grape or a tag lists the wines of your cellar that share it, with how many bottles; the other details open the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.</string>
     <string name="detail_window_now">Now</string>
     <string name="detail_window_description">Drinking window from %1$d to %2$d. %3$s.</string>
     <string name="detail_window_missing">Add a vintage or a drinking window to know when to open it.</string>
@@ -1013,6 +1035,10 @@
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
+    </plurals>
+    <plurals name="wine_count">
+        <item quantity="one">%d wine</item>
+        <item quantity="other">%d wines</item>
     </plurals>
     <plurals name="bottles_added">
         <item quantity="one">%d bottle added</item>

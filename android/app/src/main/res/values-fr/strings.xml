@@ -66,6 +66,28 @@
     <string name="maturity_unknown">Pas de fenêtre de dégustation</string>
     <string name="detail_window">Fenêtre de dégustation</string>
     <string name="detail_window_range">%1$d – %2$d</string>
+    <string name="field_grape">Cépage</string>
+    <string name="field_tag">Tag</string>
+    <string name="action_copy">Copier</string>
+    <string name="action_search_web">Chercher sur le Web</string>
+    <string name="detail_more_actions">afficher plus d’actions</string>
+    <string name="detail_action_window">modifier la fenêtre de dégustation</string>
+    <string name="detail_action_serving">modifier le style, qui détermine les conseils de service</string>
+    <string name="detail_action_style">modifier le style</string>
+    <string name="detail_action_notes">modifier les notes</string>
+    <string name="detail_action_price">modifier le prix</string>
+    <string name="explore_action_producer">afficher les autres vins de ce producteur</string>
+    <string name="explore_action_region">afficher les autres vins de cette région</string>
+    <string name="explore_action_appellation">afficher les autres vins de cette appellation</string>
+    <string name="explore_action_country">afficher les autres vins de ce pays</string>
+    <string name="explore_action_grape">afficher les autres vins de ce cépage</string>
+    <string name="explore_action_vintage">afficher les autres vins de ce millésime</string>
+    <string name="explore_action_style">afficher les autres vins de ce style</string>
+    <string name="explore_action_tag">afficher les autres vins avec ce tag</string>
+    <string name="explore_empty_title">Aucun vin en cave</string>
+    <string name="explore_empty_body">Plus aucune bouteille avec ce détail n’est en cave ou en commande.</string>
+    <string name="help_start_wine_title">La fiche d’un vin</string>
+    <string name="help_start_wine">Touchez un détail d’un vin. Son style, son producteur, son millésime, son appellation, sa région, son pays, un cépage ou un tag liste les vins de votre cave qui le partagent, avec le nombre de bouteilles ; les autres détails ouvrent le vin pour les modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web.</string>
     <string name="detail_window_now">Maintenant</string>
     <string name="detail_window_description">Fenêtre de dégustation de %1$d à %2$d. %3$s.</string>
     <string name="detail_window_missing">Ajoutez un millésime ou une fenêtre de dégustation pour savoir quand l’ouvrir.</string>
@@ -1013,6 +1035,11 @@
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>
         <item quantity="other">%d bouteilles</item>
+    </plurals>
+    <plurals name="wine_count">
+        <item quantity="one">%d vin</item>
+        <item quantity="many">%d vins</item>
+        <item quantity="other">%d vins</item>
     </plurals>
     <plurals name="bottles_added">
         <item quantity="one">%d bouteille ajoutée</item>

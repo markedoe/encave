@@ -1,6 +1,13 @@
 package app.encave.ui.add
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -173,6 +180,15 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
     }
 }
 
+/** A field of the wine form, to open "Edit wine" scrolled to it (a detail tapped on the wine's page). */
+enum class WineFormField {
+    Name, Producer, Vintage, Style, Appellation, Region, Country, Grapes, Window, Tags, Notes;
+
+    companion object {
+        fun from(name: String?): WineFormField? = entries.firstOrNull { it.name == name }
+    }
+}
+
 /** Name, producer, vintage and style first; the rest behind "More details". */
 @Composable
 fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier = Modifier) {
@@ -224,7 +240,21 @@ fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier =
 }
 
 @Composable
-fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier = Modifier, showsTags: Boolean = true) {
+fun WineMoreDetails(
+    form: WineFormState,
+    known: KnownValues,
+    modifier: Modifier = Modifier,
+    showsTags: Boolean = true,
+    /** Tags are scrolled to and notes focused when the form opens for them. */
+    target: WineFormField? = null,
+) {
+    val tagsRequester = remember { BringIntoViewRequester() }
+    val notesFocus = remember { FocusRequester() }
+    LaunchedEffect(target) {
+        if (target != WineFormField.Tags && target != WineFormField.Notes) return@LaunchedEffect
+        delay(FIELD_TARGET_DELAY_MS)
+        if (target == WineFormField.Tags) tagsRequester.bringIntoView() else runCatching { notesFocus.requestFocus() }
+    }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
             AutoCompleteField(
@@ -257,10 +287,13 @@ fun WineMoreDetails(form: WineFormState, known: KnownValues, modifier: Modifier 
             )
         }
         // Discoveries have tags of their own.
-        if (showsTags) WineTagsField(form, known.tags)
+        if (showsTags) {
+            Box(Modifier.bringIntoViewRequester(tagsRequester)) { WineTagsField(form, known.tags) }
+        }
         OutlinedTextField(
             value = form.notes, onValueChange = { form.notes = it },
-            label = { Text(stringResource(R.string.field_notes)) }, minLines = 2, modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.field_notes)) }, minLines = 2,
+            modifier = Modifier.fillMaxWidth().focusRequester(notesFocus).testTag("form.notes"),
             supportingText = { Text(stringResource(R.string.help_notes_footer)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         )
@@ -433,3 +466,6 @@ fun AutoCompleteField(
         }
     }
 }
+
+/** Lets the form be laid out before it scrolls to a field. */
+internal const val FIELD_TARGET_DELAY_MS = 250L

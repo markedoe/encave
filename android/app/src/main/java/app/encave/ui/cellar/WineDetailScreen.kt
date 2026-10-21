@@ -113,6 +113,19 @@ import app.encave.ui.search.WinePictureSheet
 import app.encave.ui.search.webSearchPreferences
 import java.util.UUID
 import app.encave.ui.components.hasPicture
+import android.content.ClipData
+import android.content.ClipboardManager
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Public
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import app.encave.core.WineAttribute
+import app.encave.core.winesSharing
+import app.encave.ui.add.WineFormField
+import app.encave.ui.components.WineColorDot
 
 @Composable
 fun WineDetailScreen(
@@ -137,7 +150,11 @@ fun WineDetailScreen(
     var findingPrice by remember { mutableStateOf(false) }
     var searchingOnline by remember { mutableStateOf(false) }
     var choosingPicture by remember { mutableStateOf(false) }
+    var showingPhoto by remember { mutableStateOf(false) }
+    /** "Search the web" on one detail: its value only, shown and editable before it is sent. */
+    var searchingDetail by remember { mutableStateOf<String?>(null) }
     val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
+    val edit: (WineFormField) -> Unit = { field -> navigator.open(EditWineRoute(wineId, field.name)) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -195,7 +212,9 @@ fun WineDetailScreen(
                         wine,
                         contentDescription = stringResource(R.string.photo_description, wine.displayName),
                         modifier = Modifier.padding(horizontal = Dimens.l).padding(top = Dimens.s)
-                            .fillMaxWidth().height(240.dp),
+                            .fillMaxWidth().height(240.dp)
+                            .clickable(onClickLabel = stringResource(R.string.photo_show_large), role = Role.Button) { showingPhoto = true }
+                            .testTag("detail.photo"),
                         inset = 18.dp,
                     )
                 }
@@ -211,6 +230,7 @@ fun WineDetailScreen(
                 WindowCard(
                     wine, viewModel.year,
                     onMoveEnd = { years -> viewModel.updateWine(wine.movingWindowEnd(years), quiet = true) },
+                    onEdit = { edit(WineFormField.Window) },
                 )
             }
             item {
@@ -275,7 +295,7 @@ fun WineDetailScreen(
                     onFree = { viewModel.reserve(listOf(bottle.id), null) },
                 )
             }
-            ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice) } }
+            ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice, onEdit = { edit(WineFormField.Style) }) } }
             val discoveries = cellar.discoveriesOf(wine.id)
             if (discoveries.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.journal_discoveries)) }
@@ -286,7 +306,14 @@ fun WineDetailScreen(
                     )
                 }
             }
-            item { Details(wine) }
+            item {
+                Details(
+                    cellar, wine,
+                    onExplore = { attribute -> navigator.open(attribute.route()) },
+                    onEdit = edit,
+                    onSearchWeb = if (webSearch.isEnabled) ({ value -> searchingDetail = value }) else null,
+                )
+            }
             if (wine.currentPrice != null || webSearch.isEnabled) {
                 item {
                     ValueSection(
@@ -361,6 +388,13 @@ fun WineDetailScreen(
             onDismiss = { searchingOnline = false },
         )
     }
+    searchingDetail?.let { terms ->
+        WebSearchSheet(initialQuery = terms, onDismiss = { searchingDetail = null })
+    }
+    if (showingPhoto && wine != null) {
+        val photoId = listOfNotNull(wine.coverPhotoId, wine.photoId).firstOrNull { viewModel.photos.exists(it) }
+        photoId?.let { LargePhoto(viewModel.photos, it, onRemove = null, onDismiss = { showingPhoto = false }) }
+    }
     reserving?.let { bottle ->
         ReserveDialog(
             initial = cellar.reservations.firstOrNull().orEmpty(),
@@ -402,25 +436,64 @@ private fun Hero(wine: Wine) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WindowCard(wine: Wine, year: Int, onMoveEnd: (Int) -> Unit) {
+private fun WindowCard(wine: Wine, year: Int, onMoveEnd: (Int) -> Unit, onEdit: () -> Unit) {
     val maturity = Maturity.of(wine, year)
+    val from = wine.drinkFrom
+    val until = wine.drinkUntil
+    val hasWindow = from != null && until != null && from <= until
+    var menu by remember { mutableStateOf(false) }
     Card(
         Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
         shape = RoundedCornerShape(Dimens.radiusCard),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
-        Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            // The maturity under the title: long labels ("No drinking window") never squeeze it.
-            Text(stringResource(R.string.detail_window), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-            MaturityLabel(maturity)
-            val from = wine.drinkFrom
-            val until = wine.drinkUntil
-            if (from != null && until != null && from <= until) {
-                DrinkingWindowGauge(from, until, year, maturity)
-                WindowExplanation(wine, onMoveEnd)
-            } else {
-                Text(stringResource(R.string.detail_window_missing), style = MaterialTheme.typography.bodyMedium)
+        Column(Modifier.padding(bottom = Dimens.s)) {
+            // The title, maturity and gauge edit the window; the buttons below move its end.
+            Box {
+                Column(
+                    Modifier.fillMaxWidth()
+                        .combinedClickable(
+                            role = Role.Button,
+                            onClickLabel = stringResource(R.string.detail_action_window),
+                            onLongClickLabel = stringResource(R.string.detail_more_actions),
+                            onLongClick = { menu = true },
+                            onClick = onEdit,
+                        )
+                        .testTag("detail.edit.window")
+                        .padding(start = Dimens.l, end = Dimens.l, top = Dimens.l),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.s),
+                ) {
+                    // The maturity under the title: long labels ("No drinking window") never squeeze it.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            stringResource(R.string.detail_window), style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f).semantics { heading() },
+                        )
+                        Icon(
+                            Icons.Outlined.Edit, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    MaturityLabel(maturity)
+                    if (hasWindow) {
+                        DrinkingWindowGauge(from!!, until!!, year, maturity)
+                    } else {
+                        Text(stringResource(R.string.detail_window_missing), style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Box(Modifier.height(Dimens.xs))
+                }
+                DetailMenu(
+                    expanded = menu, onDismiss = { menu = false },
+                    copyText = if (hasWindow) stringResource(R.string.detail_window_range, from!!, until!!) else null,
+                    onEdit = onEdit,
+                )
+            }
+            if (hasWindow) {
+                Column(Modifier.padding(horizontal = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                    WindowExplanation(wine, onMoveEnd)
+                }
             }
         }
     }
@@ -644,20 +717,23 @@ private fun BottleRow(
     )
 }
 
+/** Worked out from the style and the vintage: a tap edits the style. */
 @Composable
-private fun Serving(advice: ServingAdvice) {
+private fun Serving(advice: ServingAdvice, onEdit: () -> Unit) {
     SectionHeader(stringResource(R.string.detail_serving))
-    ListItem(
-        leadingContent = { Icon(Icons.Outlined.Thermostat, contentDescription = null) },
-        overlineContent = { Text(stringResource(R.string.serving_temperature)) },
-        headlineContent = { Text(stringResource(R.string.serving_temperature_value, advice.minTemperature, advice.maxTemperature)) },
+    val action = stringResource(R.string.detail_action_serving)
+    DetailItem(
+        label = stringResource(R.string.serving_temperature),
+        value = stringResource(R.string.serving_temperature_value, advice.minTemperature, advice.maxTemperature),
+        actionLabel = action, explores = false, onClick = onEdit, onEdit = onEdit,
+        leading = { Icon(Icons.Outlined.Thermostat, contentDescription = null) },
     )
-    ListItem(
-        leadingContent = { Icon(Icons.Outlined.WineBar, contentDescription = null) },
-        overlineContent = { Text(stringResource(R.string.serving_decanting)) },
-        headlineContent = {
-            Text(advice.decantMinutes?.let { stringResource(R.string.serving_decant_value, it) } ?: stringResource(R.string.serving_no_decant))
-        },
+    DetailItem(
+        label = stringResource(R.string.serving_decanting),
+        value = advice.decantMinutes?.let { stringResource(R.string.serving_decant_value, it) } ?: stringResource(R.string.serving_no_decant),
+        actionLabel = action, explores = false, onClick = onEdit, onEdit = onEdit,
+        copyText = null,
+        leading = { Icon(Icons.Outlined.WineBar, contentDescription = null) },
     )
 }
 
@@ -674,10 +750,16 @@ private fun ValueSection(
     SectionHeader(stringResource(R.string.detail_value))
     Column(Modifier.fillMaxWidth()) {
         wine.currentPrice?.let { price ->
-            ListItem(
-                overlineContent = { Text(stringResource(R.string.price_today)) },
-                headlineContent = { Text(Formats.money(price, wine.currentPriceCurrency ?: cellarCurrency)) },
-                supportingContent = { wine.currentPriceDate?.let { date -> Text(stringResource(R.string.price_set_on, Formats.day(date))) } },
+            // Opens the price sheet, which also takes a price typed in without searching.
+            DetailItem(
+                label = stringResource(R.string.price_today),
+                value = Formats.money(price, wine.currentPriceCurrency ?: cellarCurrency),
+                actionLabel = stringResource(R.string.detail_action_price),
+                explores = false,
+                onClick = onFindPrice,
+                onEdit = onFindPrice,
+                modifier = Modifier.testTag("detail.edit.price"),
+                supporting = wine.currentPriceDate?.let { date -> stringResource(R.string.price_set_on, Formats.day(date)) },
             )
         }
         Row(
@@ -707,24 +789,147 @@ private fun ValueSection(
     }
 }
 
+/**
+ * The wine's details. Those other wines can share (producer, vintage, style, origin, each
+ * grape and tag) list them; the others edit the wine. Touch and hold for Copy, Edit and,
+ * for the producer and the appellation when web search is on, Search the web.
+ */
 @Composable
-private fun Details(wine: Wine) {
-    val rows = listOfNotNull(
-        wine.producer?.let { R.string.field_producer to it },
-        wine.appellation?.let { R.string.field_appellation to it },
-        wine.region?.let { R.string.field_region to it },
-        wine.country?.let { R.string.field_country to it },
-        wine.grapes.takeIf { it.isNotEmpty() }?.let { R.string.field_grapes to it.joinToString(", ") },
-        wine.tags?.takeIf { it.isNotEmpty() }?.let { R.string.field_tags to it.joinToString(", ") },
-        R.string.field_style to stringResource(wine.color.labelRes),
-        wine.notes?.takeIf { it.isNotBlank() }?.let { R.string.field_notes to it },
-    ).filter { it.second.isNotBlank() }
+private fun Details(
+    cellar: Cellar,
+    wine: Wine,
+    onExplore: (WineAttribute) -> Unit,
+    onEdit: (WineFormField) -> Unit,
+    onSearchWeb: ((String) -> Unit)?,
+) {
+    fun distinct(values: List<String>): List<String> {
+        val seen = mutableSetOf<String>()
+        return values.map { it.trim() }.filter { it.isNotEmpty() && seen.add(it.lowercase()) }
+    }
+    val attributes = listOfNotNull(
+        wine.color?.let { R.string.field_style to WineAttribute.Color(it) },
+        wine.producer?.let { R.string.field_producer to WineAttribute.Producer(it) },
+        wine.vintage?.let { R.string.field_vintage to WineAttribute.Vintage(it) },
+        wine.appellation?.let { R.string.field_appellation to WineAttribute.Appellation(it) },
+        wine.region?.let { R.string.field_region to WineAttribute.Region(it) },
+        wine.country?.let { R.string.field_country to WineAttribute.Country(it) },
+    ) + distinct(wine.grapes).map { R.string.field_grape to WineAttribute.Grape(it) } +
+        distinct(wine.tags.orEmpty()).map { R.string.field_tag to WineAttribute.Tag(it) }
     SectionHeader(stringResource(R.string.detail_details))
     Column(Modifier.fillMaxWidth()) {
-        rows.forEach { (label, value) ->
-            ListItem(
-                overlineContent = { Text(stringResource(label)) },
-                headlineContent = { Text(value) },
+        if (wine.color == null) {
+            DetailItem(
+                label = stringResource(R.string.field_style), value = stringResource(wine.color.labelRes),
+                actionLabel = stringResource(R.string.detail_action_style), explores = false,
+                onClick = { onEdit(WineFormField.Style) }, onEdit = { onEdit(WineFormField.Style) }, copyText = null,
+            )
+        }
+        attributes.forEach { (label, attribute) ->
+            val value = attribute.displayValue()
+            if (value.isBlank()) return@forEach
+            DetailItem(
+                label = stringResource(label),
+                value = value,
+                actionLabel = attribute.actionLabel(),
+                explores = true,
+                onClick = { onExplore(attribute) },
+                onEdit = { onEdit(attribute.field) },
+                modifier = Modifier.testTag("detail.explore." + attribute.kind.name.lowercase()),
+                onSearchWeb = if (attribute.isSearchable) onSearchWeb?.let { search -> { search(value) } } else null,
+                supporting = sharedCount(cellar.winesSharing(attribute).size),
+                leading = if (attribute is WineAttribute.Color) ({ WineColorDot(attribute.color, size = 16.dp) }) else null,
+            )
+        }
+        wine.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+            DetailItem(
+                label = stringResource(R.string.field_notes), value = notes,
+                actionLabel = stringResource(R.string.detail_action_notes), explores = false,
+                onClick = { onEdit(WineFormField.Notes) }, onEdit = { onEdit(WineFormField.Notes) },
+                modifier = Modifier.testTag("detail.edit.notes"),
+            )
+        }
+    }
+}
+
+/**
+ * One detail of the wine's page: a tap explores ([explores], with a chevron) or edits (with
+ * a pencil); touch and hold for Copy, Edit and, when given, Search the web.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DetailItem(
+    label: String,
+    value: String,
+    actionLabel: String,
+    explores: Boolean,
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier,
+    copyText: String? = value,
+    onSearchWeb: (() -> Unit)? = null,
+    supporting: String? = null,
+    leading: (@Composable () -> Unit)? = null,
+) {
+    var menu by remember { mutableStateOf(false) }
+    Box {
+        ListItem(
+            modifier = modifier.combinedClickable(
+                role = Role.Button,
+                onClickLabel = actionLabel,
+                onLongClickLabel = stringResource(R.string.detail_more_actions),
+                onLongClick = { menu = true },
+                onClick = onClick,
+            ),
+            leadingContent = leading,
+            overlineContent = { Text(label) },
+            headlineContent = { Text(value) },
+            supportingContent = if (supporting == null) null else ({ Text(supporting) }),
+            trailingContent = {
+                Icon(
+                    if (explores) Icons.AutoMirrored.Filled.KeyboardArrowRight else Icons.Outlined.Edit,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(if (explores) 24.dp else 20.dp),
+                )
+            },
+        )
+        DetailMenu(expanded = menu, onDismiss = { menu = false }, copyText = copyText, onEdit = onEdit, onSearchWeb = onSearchWeb)
+    }
+}
+
+/** Copy, Edit and Search the web for one detail. */
+@Composable
+private fun DetailMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    copyText: String?,
+    onEdit: () -> Unit,
+    onSearchWeb: (() -> Unit)? = null,
+) {
+    val context = LocalContext.current
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        if (copyText != null) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_copy)) },
+                leadingIcon = { Icon(Icons.Outlined.ContentCopy, contentDescription = null) },
+                onClick = {
+                    onDismiss()
+                    // Android shows that the text was copied.
+                    context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(copyText, copyText))
+                },
+                modifier = Modifier.testTag("detail.menu.copy"),
+            )
+        }
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.action_edit)) },
+            leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
+            onClick = { onDismiss(); onEdit() },
+        )
+        if (onSearchWeb != null) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_search_web)) },
+                leadingIcon = { Icon(Icons.Outlined.Public, contentDescription = null) },
+                onClick = { onDismiss(); onSearchWeb() },
             )
         }
     }

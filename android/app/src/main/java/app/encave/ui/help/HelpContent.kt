@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.TableChart
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Devices
@@ -60,6 +61,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_racks, R.string.nav_racks, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
                     HelpSection(R.string.help_start_journal, R.string.nav_journal, Icons.Outlined.AutoStories),
+                    HelpSection(R.string.help_start_wine, R.string.help_start_wine_title, Icons.Outlined.TouchApp),
                     HelpSection(R.string.help_start_table, R.string.help_start_table_title, Icons.Outlined.TableChart),
                     HelpSection(R.string.help_start_saved, R.string.help_start_saved_title, Icons.Outlined.BookmarkBorder),
                     HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
