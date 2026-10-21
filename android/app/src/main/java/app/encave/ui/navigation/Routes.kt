@@ -22,7 +22,12 @@ import kotlinx.serialization.Serializable
 @Serializable data object JournalRoute
 
 @Serializable data class WineDetailRoute(val wineId: String)
-@Serializable data class EditWineRoute(val wineId: String)
+
+/** Edit a wine, scrolled to one of its fields ([app.encave.ui.add.WineFormField] name) when given. */
+@Serializable data class EditWineRoute(val wineId: String, val field: String? = null)
+
+/** The wines that share a detail: [kind] is a [app.encave.ui.cellar.ExploreKind] name, [value] its text. */
+@Serializable data class WineExploreRoute(val kind: String, val value: String)
 
 /** Add bottles, optionally of an existing wine or into a given rack slot. */
 @Serializable

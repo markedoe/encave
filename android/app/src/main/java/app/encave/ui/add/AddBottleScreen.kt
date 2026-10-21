@@ -52,6 +52,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -473,10 +477,10 @@ private fun OrderSection(
 }
 
 @Composable
-private fun Header(id: Int) {
+private fun Header(id: Int, modifier: Modifier = Modifier) {
     Text(
         stringResource(id), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = Dimens.s).semantics { heading() },
+        modifier = modifier.padding(top = Dimens.s).semantics { heading() },
     )
 }
 
@@ -617,12 +621,12 @@ fun CurrencyField(value: String, onChange: (String) -> Unit, modifier: Modifier 
 
 /** Edit the wine record itself (all its bottles share it). */
 @Composable
-fun EditWineScreen(viewModel: AppViewModel, navigator: AppNavigator, wineId: String) {
-    WhenLoaded(viewModel) { EditWineForm(viewModel, navigator, wineId) }
+fun EditWineScreen(viewModel: AppViewModel, navigator: AppNavigator, wineId: String, field: WineFormField? = null) {
+    WhenLoaded(viewModel) { EditWineForm(viewModel, navigator, wineId, field) }
 }
 
 @Composable
-private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineId: String) {
+private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineId: String, field: WineFormField?) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val wine = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull()?.let { cellar.wines[it] } }
     val form = rememberRetained("editWine.form") { WineFormState(wine, viewModel.year) }
@@ -656,13 +660,28 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
                 .padding(horizontal = Dimens.l, vertical = Dimens.s),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
+            // Opened from a detail of the wine's page: scroll to its part of the form.
+            val essentials = remember { BringIntoViewRequester() }
+            val window = remember { BringIntoViewRequester() }
+            val origin = remember { BringIntoViewRequester() }
+            LaunchedEffect(field) {
+                val requester = when (field) {
+                    WineFormField.Name, WineFormField.Producer, WineFormField.Vintage, WineFormField.Style -> essentials
+                    WineFormField.Window -> window
+                    WineFormField.Appellation, WineFormField.Region, WineFormField.Country, WineFormField.Grapes -> origin
+                    // Tags and notes: done by WineMoreDetails.
+                    WineFormField.Tags, WineFormField.Notes, null -> null
+                } ?: return@LaunchedEffect
+                delay(FIELD_TARGET_DELAY_MS)
+                requester.bringIntoView()
+            }
             Header(R.string.photo_section)
             PhotoSection(viewModel, form)
-            WineEssentials(form, known)
-            Header(R.string.detail_window)
+            WineEssentials(form, known, Modifier.bringIntoViewRequester(essentials))
+            Header(R.string.detail_window, Modifier.bringIntoViewRequester(window))
             DrinkingWindowField(form)
-            Header(R.string.add_more_details)
-            WineMoreDetails(form, known)
+            Header(R.string.add_more_details, Modifier.bringIntoViewRequester(origin))
+            WineMoreDetails(form, known, target = field)
         }
     }
 }

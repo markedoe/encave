@@ -80,8 +80,8 @@ private struct SheetContent: View {
             AddBottleView(context: context)
         case .drink(let bottleID):
             DrinkSheet(bottleID: bottleID)
-        case .editWine(let wineID):
-            EditWineView(wineID: wineID)
+        case .editWine(let wineID, let field):
+            EditWineView(wineID: wineID, field: field)
         case .editTasting(let bottleID):
             TastingEditor(bottleID: bottleID)
         case .editRack(let rackID):

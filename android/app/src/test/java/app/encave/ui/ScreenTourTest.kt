@@ -365,6 +365,31 @@ class ScreenTourTest(private val device: String, private val language: String) {
     }
 
     @Test
+    fun wineExplore() {
+        tap("wine.row")
+        scrollIn("wine.detail", "detail.explore.producer")
+        tap("detail.explore.producer")
+        assertTrue(
+            "$device-$language: no wine listed for the producer",
+            compose.onAllNodesWithTag("explore.row").fetchSemanticsNodes().isNotEmpty(),
+        )
+        capture("46-wine-explore")
+        // A wine of the list opens its page.
+        tap("explore.row")
+        compose.onAllNodesWithTag("wine.detail").onFirst().assertExists()
+    }
+
+    @Test
+    fun wineEditFromDetail() {
+        tap("wine.row")
+        scrollIn("wine.detail", "detail.edit.window")
+        tap("detail.edit.window")
+        val title = RuntimeEnvironment.getApplication().getString(app.encave.R.string.edit_wine_title)
+        compose.onAllNodesWithText(title).onFirst().assertExists()
+        capture("47-wine-edit-window")
+    }
+
+    @Test
     fun wineTags() {
         tap("wine.row")
         tap("action.edit_wine")

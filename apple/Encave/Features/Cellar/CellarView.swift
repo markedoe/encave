@@ -26,7 +26,9 @@ struct CellarView: View {
                         // Wide enough on iPad for names, producers and the figures.
                         .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
                 } detail: {
+                    // A new stack for each wine: what was opened from the last one's details goes.
                     NavigationStack { WinePane(wineID: selection) }
+                        .id(selection)
                 }
                 .navigationSplitViewStyle(.balanced)
             }
