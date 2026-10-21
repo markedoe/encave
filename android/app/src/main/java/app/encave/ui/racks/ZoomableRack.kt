@@ -45,9 +45,10 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-/** What changes the drawing's shape: kind, depth, cells per row and layers per shelf. Zoom starts again when it changes. */
+/** What changes the drawing's shape: kind, depth, cells per row, layers per shelf and zones. Zoom starts again when it changes. */
 val Rack.shape: String
-    get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { columnsInRow(it).toString() } + " ${shelfLayers.orEmpty()}"
+    get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { columnsInRow(it).toString() } +
+        " ${shelfLayers.orEmpty()} ${zoneBreaks.orEmpty()}"
 
 /**
  * How far a rack is zoomed in (1 = the whole rack fits) and which spot of it is in the

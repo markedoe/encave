@@ -284,10 +284,10 @@ final class CenteringScrollView: UIScrollView {
 }
 
 private extension Rack {
-    /// What changes the drawing's size: kind, depth, columns per row and layers per shelf.
+    /// What changes the drawing's size: kind, depth, columns per row, layers per shelf and zones.
     var shape: String {
         "\(kind) \(positionsPerCell) " + (0..<rows).map { "\(columns(inRow: $0))" }.joined(separator: ",")
-            + " \(shelfLayers ?? [])"
+            + " \(shelfLayers ?? []) \(zoneBreaks ?? [])"
     }
 }
 #endif
