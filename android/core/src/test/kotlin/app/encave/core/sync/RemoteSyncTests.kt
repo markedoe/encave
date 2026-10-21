@@ -1,8 +1,11 @@
 package app.encave.core.sync
 
+import app.encave.core.Attachment
 import app.encave.core.Cellar
+import app.encave.core.FileKind
 import app.encave.core.Wine
 import java.nio.file.Files
+import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -26,14 +29,33 @@ internal class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnap
         snapshot = snapshot.copy(cellar = cellar, state = snapshot.state.recording(before, cellar))
     }
 
-    suspend fun sync(store: MailboxStore) {
+    suspend fun sync(store: MailboxStore): RemoteSync.Result? {
         if (key == null) key = RemoteSync.receiveGrant(store, identity, snapshot.membership, null)?.cellarKey
-        val key = key ?: return
+        val key = key ?: return null
         val result = RemoteSync.run(store, identity, key, snapshot, progress, photos)
         result.snapshot?.let { snapshot = it }
         result.newKey?.let { this.key = it }
         snapshot = snapshot.copy(state = snapshot.state.copy(clock = maxOf(snapshot.state.clock, result.clock)))
         progress = result.progress
+        return result
+    }
+}
+
+/**
+ * Storage that refuses files under "photo/" larger than [limit] bytes, like a WebDAV server
+ * with a small upload limit (or, with [RemoteSyncError.QuotaExceeded], one with no room left).
+ */
+internal class RefusingStore(@Volatile var limit: Int, private val error: RemoteSyncError) : MailboxStore {
+    private val base = MemoryMailboxStore()
+    override fun inbox(id: String, token: String): Mailbox = base.inbox(id, token)
+    override fun mailbox(id: String, token: String): Mailbox {
+        val mailbox = base.mailbox(id, token)
+        return object : Mailbox by mailbox {
+            override suspend fun create(path: String, data: ByteArray): Boolean {
+                if (path.startsWith("photo/") && data.size > limit) throw RemoteSyncException(error)
+                return mailbox.create(path, data)
+            }
+        }
     }
 }
 
@@ -57,6 +79,45 @@ internal suspend fun grantAll(devices: List<RemoteDevice>, store: MailboxStore, 
     RemoteSync.grant(devices[0].key!!, devices[0].snapshot.membership.active, store, devices[0].identity, storage)
 
 class RemoteSyncTests {
+    @Test
+    fun aDocumentTooLargeForTheStorageDoesNotStopSync() = aRefusedDocumentDoesNotStopSync(RemoteSyncError.FileTooLarge)
+
+    @Test
+    fun aDocumentRefusedByAFullStorageDoesNotStopSync() = aRefusedDocumentDoesNotStopSync(RemoteSyncError.QuotaExceeded)
+
+    private fun aRefusedDocumentDoesNotStopSync(refusal: RemoteSyncError) = runBlocking {
+        val store = RefusingStore(1000, refusal)
+        val devices = household(2)
+        grantAll(devices, store, null)
+        val label = "label".toByteArray()
+        val invoice = ByteArray(5000) { 7 }
+        val photo = PhotoId.make(label)
+        val document = PhotoId.make(invoice)
+        devices[0].photos.save(photo, label)
+        devices[0].photos.save(document, FileKind.Document, invoice)
+        val attachment = Attachment(document, "Invoice.pdf", "application/pdf", invoice.size.toLong(), Instant.EPOCH)
+        val wine = Wine(name = "With a large invoice", photoId = photo, attachments = listOf(attachment))
+        devices[0].edit { it.addBottles(wine, 1) }
+
+        // The cellar goes (and the small photo, unless the storage is full); the document stays
+        // here, and the reason is told.
+        assertEquals(refusal, devices[0].sync(store)?.refusedFiles)
+        devices[1].sync(store)
+        assertNotNull(devices[1].snapshot.cellar.wines[wine.id])
+        if (refusal == RemoteSyncError.FileTooLarge) assertArrayEquals(label, devices[1].photos.stored[photo])
+        assertNull(devices[1].photos.storedDocuments[document])
+        // Nothing new: the document is not sent again, and the reason is still told.
+        assertEquals(refusal, devices[0].sync(store)?.refusedFiles)
+
+        // The storage accepts it now: it goes with the next change.
+        store.limit = Int.MAX_VALUE
+        devices[0].edit { it.addBottles(Wine(name = "Another"), 1) }
+        assertNull(devices[0].sync(store)!!.refusedFiles)
+        devices[1].sync(store)
+        assertArrayEquals(invoice, devices[1].photos.storedDocuments[document])
+        assertArrayEquals(label, devices[1].photos.stored[photo])
+    }
+
     @Test
     fun extraPhotosTravelToo() = runBlocking {
         val store = MemoryMailboxStore()

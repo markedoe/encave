@@ -8,6 +8,7 @@ import VisionKit
 /// Settings › Devices: the devices that share this cellar, and adding one.
 struct DevicesView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     @State private var inviting = false
     @State private var joining = false
     @State private var removing: Member?
@@ -16,7 +17,7 @@ struct DevicesView: View {
     @State private var notificationsRefused = false
 
     var body: some View {
-        let sync = model.sync!
+        let sync = model.sync
         Form {
             // A failed session is shown with the status below instead.
             if let problem = sync.problem, sync.localFailedAt == nil {
@@ -144,6 +145,11 @@ struct DevicesView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Devices")
+        .onChange(of: scenePhase) { _, phase in
+            // Back from the system settings: drop the message once notifications are allowed.
+            guard phase == .active, notificationsRefused else { return }
+            Task { if await Reminders.notificationsAllowed() { notificationsRefused = false } }
+        }
         .sheet(isPresented: $inviting) { InviteDeviceView() }
         .sheet(isPresented: $joining) { JoinDeviceView() }
         .confirmationDialog(
@@ -173,6 +179,7 @@ struct DevicesView: View {
                     let granted = await ChangeNotifications.enable()
                     notifiesChanges = granted
                     notificationsRefused = !granted
+                    if !granted { Reminders.announceRefused() }
                 }
             } else {
                 ChangeNotifications.disable()
@@ -360,7 +367,7 @@ struct RemoteSyncView: View {
     @State private var error: String?
 
     var body: some View {
-        let sync = model.sync!
+        let sync = model.sync
         Form {
             if let storage = sync.remoteStorage {
                 Section {

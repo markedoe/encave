@@ -216,6 +216,13 @@ data class RemoteProgress(
     val uploadedDigest: String? = null,
     /** Photos already uploaded in the current epoch. */
     val uploadedPhotos: Set<String> = emptySet(),
+    /**
+     * Files the storage refused (too large, or no room left): the cellar still syncs without
+     * them, and they are tried again with the next snapshot this device writes.
+     */
+    val refusedFiles: Set<String> = emptySet(),
+    /** The last refusal was for lack of room rather than size. */
+    val storageFull: Boolean = false,
     /** Epoch the progress refers to; a new epoch starts afresh. */
     val epoch: Long = 0,
 )
@@ -239,6 +246,11 @@ object RemoteSync {
          * readers see a newer snapshot. Keep it.
          */
         val clock: Long = 0,
+        /**
+         * Why the storage refused some of this device's files ([RemoteSyncError.FileTooLarge] or
+         * [RemoteSyncError.QuotaExceeded]), if it did: the cellar synced, those files stay here for now.
+         */
+        val refusedFiles: RemoteSyncError? = null,
     )
 
     /**
@@ -313,6 +325,8 @@ object RemoteSync {
             received = true
         }
         val uploaded = current.uploadedPhotos.toMutableSet()
+        val refused = current.refusedFiles.toMutableSet()
+        var storageFull = current.storageFull
 
         // 3. Missing files: photos and documents, both under "photo/".
         val refs = merged.cellar.fileRefs
@@ -343,24 +357,45 @@ object RemoteSync {
             if (last != null && java.lang.Long.compareUnsigned(merged.state.clock, last) <= 0) {
                 merged = merged.copy(state = merged.state.copy(clock = last + 1))
             }
+            var full = false
             for (id in referenced) {
-                if (!PhotoId.isValid(id) || id in uploaded) continue
+                if (full || !PhotoId.isValid(id) || id in uploaded) continue
                 val data = files.data(id, refs) ?: continue
                 val path = photoPath(id)
-                mailbox.create(path, Envelope.seal(data, Envelope.Kind.Photo, path, currentKey.dataKey))
+                // A file the storage refuses (a large document) must not stop the cellar from syncing.
+                try {
+                    mailbox.create(path, Envelope.seal(data, Envelope.Kind.Photo, path, currentKey.dataKey))
+                } catch (error: RemoteSyncException) {
+                    if (error.error != RemoteSyncError.FileTooLarge && error.error != RemoteSyncError.QuotaExceeded) throw error
+                    refused += id
+                    storageFull = error.error == RemoteSyncError.QuotaExceeded
+                    // No room: the other files would be refused too.
+                    full = storageFull
+                    continue
+                }
                 uploaded += id
+                refused -= id
             }
             write(merged, mailbox, currentKey, identity.id)
             uploadedClock = merged.state.clock
             uploadedDigest = digest
         }
+        refused.retainAll(referenced)
         return Result(
             if (received) merged else null,
-            current.copy(seen = seen, uploadedClock = uploadedClock, uploadedDigest = uploadedDigest, uploadedPhotos = uploaded),
+            current.copy(
+                seen = seen, uploadedClock = uploadedClock, uploadedDigest = uploadedDigest, uploadedPhotos = uploaded,
+                refusedFiles = refused, storageFull = storageFull,
+            ),
             newKey,
             storage,
             unreadable,
             merged.state.clock,
+            refusedFiles = when {
+                refused.isEmpty() -> null
+                storageFull -> RemoteSyncError.QuotaExceeded
+                else -> RemoteSyncError.FileTooLarge
+            },
         )
     }
 

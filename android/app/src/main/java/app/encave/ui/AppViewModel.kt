@@ -114,6 +114,9 @@ class AppViewModel(
     /** What the Journal shows; back to everything when a new entry would be hidden. */
     val journalFilter = MutableStateFlow(DiaryFilter.All)
 
+    /** The Journal's tag chip; cleared, like the filter, when a new entry would be hidden. */
+    val journalTag = MutableStateFlow<String?>(null)
+
     val groups: StateFlow<List<WineGroup>> = combine(cellar, filter, sort) { cellar, filter, sort ->
         cellar.groups(filter, sort, year)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -196,6 +199,8 @@ class AppViewModel(
                     withContext(Dispatchers.IO) { pendingDocuments.forEach(documents::discard) }
                     if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
                     else post(UiText.Plural(R.plurals.bottles_added, it.size))
+                    // Added without the documents that could not be stored (a full disk…).
+                    if (attachments.size < pendingDocuments.size) post(UiText.Res(R.string.err_document_unreadable))
                 }
                 .onFailure { post(errorText(it)) }
         }
@@ -204,6 +209,8 @@ class AppViewModel(
     fun drink(bottleId: UUID, tasting: Tasting) {
         val previous = cellar.value.bottles[bottleId]?.slot
         if (!journalFilter.value.showsTastings) journalFilter.value = DiaryFilter.All
+        // A tag only picks wines tasted elsewhere.
+        journalTag.value = null
         change<String>({ name -> post(UiText.Res(R.string.msg_drunk, listOf(name))) { undoDrink(bottleId, previous) } }) {
             it.drink(bottleId, tasting)
             nameOf(it, bottleId)
@@ -444,6 +451,8 @@ class AppViewModel(
                 .onSuccess {
                     val filter = journalFilter.value
                     if (filter == DiaryFilter.Cellar || (filter == DiaryFilter.ToBuy && !discovery.wantsToBuy)) journalFilter.value = DiaryFilter.All
+                    val tag = journalTag.value
+                    if (tag != null && discovery.tags.none { it.equals(tag, ignoreCase = true) }) journalTag.value = null
                     post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
                 }
                 .onFailure { post(errorText(it)) }

@@ -67,6 +67,23 @@ public struct Attachment: Codable, Hashable, Sendable, Identifiable {
         return String(trimmed(cut))
     }
 
+    /// File names are at most 255 bytes on Apple's and Android's file systems; this leaves room.
+    public static let maxFileNameBytes = 240
+
+    /// `base` and `pathExtension` as a file name of at most `maxFileNameBytes` bytes of
+    /// UTF-8: a long base is cut (between characters), the extension is kept whole.
+    public static func fileName(base: String, pathExtension: String?) -> String {
+        let suffix = pathExtension.map { ".\($0)" } ?? ""
+        var room = maxFileNameBytes - suffix.utf8.count
+        var kept = ""
+        for character in base {
+            room -= character.utf8.count
+            if room < 0 { break }
+            kept.append(character)
+        }
+        return kept + suffix
+    }
+
     /// Each document once (by ID, the first kept), in order; nil when none are left.
     public static func unique(_ attachments: [Attachment]?) -> [Attachment]? {
         var seen = Set<String>()

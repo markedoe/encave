@@ -415,6 +415,20 @@ import Testing
 }
 
 @Suite struct WineTagTests {
+    @Test func grapeAndTagChipsShowTheMostUsedSpelling() throws {
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "A", grapes: ["Pinot noir"], tags: ["gift"]))
+        try cellar.addBottles(of: Wine(name: "B", grapes: ["Pinot Noir"], tags: ["Gift"]))
+        try cellar.addBottles(of: Wine(name: "C", grapes: [" Pinot Noir ", "Gamay"], tags: ["Gift"]))
+        #expect(cellar.wineGrapes == ["Pinot Noir", "Gamay"])
+        #expect(cellar.wineTags == ["Gift"])
+        // A tie: the same spelling whatever order the wines are stored in.
+        var tie = Cellar()
+        try tie.addBottles(of: Wine(name: "A", grapes: ["syrah"]))
+        try tie.addBottles(of: Wine(name: "B", grapes: ["Syrah"]))
+        #expect(tie.wineGrapes == ["Syrah"])
+    }
+
     @Test func tagsFilterSearchAndStayOutOfOldFiles() throws {
         var cellar = Cellar()
         let gift = Wine(name: "Gift wine", tags: [" Gift ", "gift", "Birth year"])

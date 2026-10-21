@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var confirmingErase = false
     @State private var confirmingSample = false
     @State private var deletingUnreadable: URL?
@@ -36,6 +37,7 @@ struct SettingsView: View {
                     let granted = await Reminders.enable(for: model.cellar)
                     remindersOn = granted
                     remindersRefused = !granted
+                    if !granted { Reminders.announceRefused() }
                 }
             } else {
                 Reminders.disable()
@@ -222,6 +224,11 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
+        .onChange(of: scenePhase) { _, phase in
+            // Back from the system settings: drop the message once notifications are allowed.
+            guard phase == .active, remindersRefused else { return }
+            Task { if await Reminders.notificationsAllowed() { remindersRefused = false } }
+        }
         #if os(iOS)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

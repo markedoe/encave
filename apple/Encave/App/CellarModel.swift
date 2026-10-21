@@ -7,7 +7,7 @@ import Observation
 @MainActor
 @Observable
 final class CellarModel {
-    private(set) var cellar: Cellar
+    private(set) var cellar = Cellar()
     var errorMessage: String?
     /// The sheet shown above everything (add, drink, edit...).
     var sheet: AppSheet?
@@ -21,15 +21,27 @@ final class CellarModel {
     var selectedTab: AppTab = .cellar
     /// What the Journal shows; back to everything when a new entry would be hidden.
     var journalFilter: DiaryFilter = .all
+    /// The Journal's tag chip; cleared, like the filter, when a new entry would be hidden.
+    var journalTag: String?
 
-    private let store: any CellarStore
-    /// Sync with the user's other devices.
-    @ObservationIgnored private(set) var sync: SyncService!
+    @ObservationIgnored private var store: any CellarStore = InMemoryCellarStore()
+    /// Sync with the user's other devices. Replaced when the cellar loads late (`reloadIfLoadFailed`).
+    var sync: SyncService {
+        _ = syncVersion
+        return syncService
+    }
+    @ObservationIgnored private var syncService: SyncService!
+    private var syncVersion = 0
     /// Told about every local change (old and new cellar), to record it for sync.
     @ObservationIgnored var onLocalChange: ((Cellar, Cellar) -> Void)?
 
     /// The cellar file could not be read at launch: where it was kept (see `unreadableFiles`).
     @ObservationIgnored private(set) var unreadableFile: URL?
+    /// The cellar file could not be loaded at all (for example before the first unlock
+    /// after a restart, when iOS may launch the app in the background): the store to try
+    /// again. Until then the cellar is empty, in memory, and sync and reminders stay off.
+    @ObservationIgnored private var storeToRetry: JSONFileCellarStore?
+    var loadFailed: Bool { storeToRetry != nil }
 
     /// Previous versions, Back Up Now and the weekly archive.
     @ObservationIgnored let backups: BackupCenter
@@ -37,8 +49,12 @@ final class CellarModel {
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     /// `versions`: earlier versions of the cellar when the store keeps none (previews).
     init(store: any CellarStore, demo: Bool = true, versions: (any CellarVersionSource)? = nil) {
-        var store = store
-        var demo = demo
+        let folder: (any CellarVersionSource)? = (store as? JSONFileCellarStore)?.versions.map { $0 as any CellarVersionSource }
+        backups = BackupCenter(versions: folder ?? versions ?? InMemoryCellarVersions([]), demo: demo)
+        load(store, demo: demo)
+    }
+
+    private func load(_ store: any CellarStore, demo: Bool) {
         do {
             if let file = store as? JSONFileCellarStore {
                 // A file that cannot be read is moved aside first, so it is never saved over.
@@ -49,20 +65,39 @@ final class CellarModel {
                 cellar = try store.load()
             }
         } catch {
-            // Not even moved aside: nothing is saved, and sync stays off, until the next launch.
+            // Tried again and still unreadable: everything stays as it is.
+            guard storeToRetry == nil else { return }
+            // Not even moved aside: nothing is saved, and sync stays off, until it loads.
             cellar = Cellar()
-            store = InMemoryCellarStore()
-            demo = true
+            self.store = InMemoryCellarStore()
+            storeToRetry = store as? JSONFileCellarStore
             errorMessage = String(localized: "Your cellar could not be loaded. Nothing is saved until Encave is opened again.")
+            syncService = SyncService(model: self, demo: true)
+            syncVersion += 1
+            return
         }
         self.store = store
+        storeToRetry = nil
+        errorMessage = nil
         if let fileName = unreadableFile?.lastPathComponent {
             errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
         }
-        let folder: (any CellarVersionSource)? = (store as? JSONFileCellarStore)?.versions.map { $0 as any CellarVersionSource }
-        let kept: any CellarVersionSource = folder ?? versions ?? InMemoryCellarVersions([])
-        backups = BackupCenter(versions: kept, demo: demo)
-        sync = SyncService(model: self, demo: demo)
+        syncService = SyncService(model: self, demo: demo)
+        syncVersion += 1
+    }
+
+    /// Loads the cellar again if it could not be loaded at launch, now that the device may
+    /// be unlocked; then sync starts as after a normal launch. Changes made meanwhile were
+    /// never saved, as the alert said.
+    func reloadIfLoadFailed() {
+        guard let file = storeToRetry else { return }
+        load(file, demo: false)
+        guard !loadFailed else { return }
+        // An Undo would apply to the cellar now loaded.
+        toast = nil
+        #if os(iOS)
+        sync.scheduleBackgroundSync()
+        #endif
     }
 
     /// The cellar file could not be read at launch and earlier versions are kept: one can be
@@ -260,6 +295,8 @@ final class CellarModel {
         let previousSlot = bottle.slot
         guard update({ try $0.drink(bottleID, tasting: tasting) }) else { return false }
         if !journalFilter.showsTastings { journalFilter = .all }
+        // A tag only picks wines tasted elsewhere.
+        journalTag = nil
         successCount += 1
         showToast(String(localized: "Enjoy your \(wine.displayName)")) { [weak self] in
             self?.update { $0.undoDrink(bottleID, previousSlot: previousSlot) }
@@ -366,6 +403,9 @@ final class CellarModel {
         guard update({ $0.addDiscovery(discovery, wine: wine) }) else { return }
         successCount += 1
         if journalFilter == .cellar || (journalFilter == .toBuy && !discovery.wantsToBuy) { journalFilter = .all }
+        if let tag = journalTag, !discovery.tags.contains(where: { $0.caseInsensitiveCompare(tag) == .orderedSame }) {
+            journalTag = nil
+        }
         showToast(discovery.wantsToBuy
                   ? String(localized: "Added to your shopping list")
                   : String(localized: "Saved to your journal"))

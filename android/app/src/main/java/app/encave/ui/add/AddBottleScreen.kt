@@ -56,12 +56,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import kotlinx.coroutines.delay
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -168,14 +166,10 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
     var scanning by rememberSaveable { mutableStateOf(route.scan) }
     var barcode by rememberSaveable { mutableStateOf<String?>(null) }
     val barcodeMatch = barcode?.let { cellar.wine(it) }
-    // Documents picked here: attached to the wine when the bottles are added, and their
-    // temporary copies removed if the screen is left without adding.
-    var pendingDocuments by remember { mutableStateOf(listOf<PendingDocument>()) }
-    var added by remember { mutableStateOf(false) }
-    val leftDocuments by rememberUpdatedState(pendingDocuments)
-    DisposableEffect(Unit) {
-        onDispose { if (!added) viewModel.discardDocuments(leftDocuments) }
-    }
+    // Documents picked here: attached to the wine when the bottles are added. Kept while the
+    // activity is recreated; their temporary copies go if the screen is left without adding.
+    val picked = rememberRetained("add.documents") { PickedDocuments(viewModel::discardDocuments) }
+    var pendingDocuments by picked::documents
 
     val freeSlots = rack?.let { cellar.freeSlots(it) } ?: emptyList()
     val slots: List<Slot> = when {
@@ -208,7 +202,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             boughtDiscoveryId = route.discoveryId?.let { runCatching { UUID.fromString(it) }.getOrNull() },
             pendingDocuments = pendingDocuments,
         )
-        added = true
+        picked.added = true
         navigator.back()
     }
 
@@ -700,5 +694,15 @@ private fun QuantityRow(quantity: Int, onChange: (Int) -> Unit) {
             )
         }
         Hint("${pluralStringResource(R.plurals.bottle_count, quantity, quantity)} · ${stringResource(R.string.help_field_quantity)}")
+    }
+}
+
+/** Documents picked in Add Bottles; their temporary copies go when the screen is left without adding. */
+internal class PickedDocuments(private val discard: (List<PendingDocument>) -> Unit) : AutoCloseable {
+    var documents by mutableStateOf(listOf<PendingDocument>())
+    var added = false
+
+    override fun close() {
+        if (!added) discard(documents)
     }
 }

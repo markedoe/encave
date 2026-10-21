@@ -96,6 +96,39 @@ class DocumentStoreTest {
         val id = PhotoId.make(bytes)
         store.store(id, bytes)
         assertNotNull(store.sharedUri(Attachment(id, "Certificate", "application/pdf", bytes.size.toLong(), at)))
+        // A long name is shortened, so the copy can be made. (FileProvider keeps the first
+        // test's folders: every shared copy is made in this test.)
+        assertNotNull(store.sharedUri(Attachment(id, "葡".repeat(200) + ".pdf", "application/pdf", bytes.size.toLong(), at)))
+    }
+
+    @Test
+    fun longNamesAreShortenedBeforeTheirExtension() {
+        val at = ReferenceDates.now()
+        fun fileName(name: String) = DocumentStore.fileName(Attachment("sha256-1", name, "application/pdf", 1, at), "Document")
+        for (letter in listOf("é", "葡", "😀")) {
+            val name = fileName(letter.repeat(200) + ".pdf")
+            assertTrue(name, name.toByteArray(Charsets.UTF_8).size <= 240)
+            assertTrue(name, name.endsWith(".pdf") && name.removeSuffix(".pdf").all { it.toString() in letter })
+            assertTrue(name.removeSuffix(".pdf").startsWith(letter))
+        }
+        assertEquals("Invoice.pdf", fileName("Invoice.pdf"))
+    }
+
+    @Test
+    fun copiesGivenToOtherAppsAreRemovedOnlyOnceOld() {
+        val store = DocumentStore(context)
+        val bytes = "shared".toByteArray()
+        // Copies as sharedUri makes them: one folder each.
+        val shared = File(context.cacheDir, "documents")
+        fun copy() = File(shared, "${java.util.UUID.randomUUID()}/Shared.pdf").apply { parentFile?.mkdirs(); writeBytes(bytes) }.parentFile!!
+        val old = copy().apply { setLastModified(System.currentTimeMillis() - Duration.ofDays(2).toMillis()) }
+        val recent = copy()
+        val pending = store.stage(bytes, "Pending.pdf", "application/pdf")
+        // Another app may be reading the recent copy as the app starts.
+        store.removeTemporaryCopies()
+        assertFalse(old.exists())
+        assertTrue(recent.exists())
+        assertNull(store.commit(pending))
     }
 
     @Test

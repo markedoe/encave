@@ -103,7 +103,10 @@ struct CellarTable: View {
         .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
         .navigationTitle("Cellar")
         .inspector(isPresented: $showsInspector) {
-            WinePane(wineID: selection)
+            // Its own stack, new for each wine: what is opened from the wine's details
+            // stays in the inspector instead of covering the table.
+            NavigationStack { WinePane(wineID: selection) }
+                .id(selection)
                 .inspectorColumnWidth(min: 300, ideal: 360, max: 480)
         }
         .toolbar {

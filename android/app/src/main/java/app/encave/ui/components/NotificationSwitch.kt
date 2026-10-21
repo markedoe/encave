@@ -21,15 +21,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.encave.R
 import app.encave.reminders.Reminders
 
 /**
  * A switch for notifications worked out on the device (reminders, changes from other
  * devices). Turning it on asks for the notification permission on Android 13 and later;
- * if notifications are off for Encave, it stays off and says where to turn them on.
+ * if notifications are off for Encave, it stays off and says where to turn them on
+ * (read aloud by TalkBack). Checked again on return to the app, as notifications may have
+ * been turned on or off in the system settings meanwhile.
  * [isOn]: the saved choice; [onChange] saves a new one.
  */
 @Composable
@@ -48,6 +54,12 @@ fun NotificationSwitch(
         refused = !granted
         enabled = granted
         onChange(granted)
+    }
+    LifecycleResumeEffect(Unit) {
+        val allowed = Reminders.canNotify(context)
+        enabled = isOn() && allowed
+        if (allowed) refused = false
+        onPauseOrDispose {}
     }
     fun change(on: Boolean) {
         if (!on) {
@@ -72,6 +84,8 @@ fun NotificationSwitch(
             Text(
                 if (refused) stringResource(R.string.reminders_refused) else footer,
                 color = if (refused) MaterialTheme.colorScheme.error else Color.Unspecified,
+                // The switch stays off when notifications are refused: say why.
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         },
         trailingContent = { Switch(checked = enabled, onCheckedChange = null) },

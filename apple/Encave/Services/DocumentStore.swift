@@ -130,11 +130,19 @@ enum DocumentStore {
         var name = attachment.name
         if name.isEmpty || name == "." || name == ".." { name = String(localized: "Document") }
         if name.hasPrefix(".") { name = "_" + name }
+        let current = (name as NSString).pathExtension
+        // The extension is kept whole; a long name is shortened before it.
+        let kept = current.isEmpty || current.count > 16 ? nil : current
+        func named(_ base: String, _ pathExtension: String?) -> String {
+            Attachment.fileName(base: base, pathExtension: pathExtension)
+        }
         guard let type = UTType(mimeType: attachment.contentType),
-              let preferred = type.preferredFilenameExtension else { return name }
+              let preferred = type.preferredFilenameExtension else {
+            return kept.map { named((name as NSString).deletingPathExtension, $0) } ?? named(name, nil)
+        }
         let known = type.tags[.filenameExtension] ?? [preferred]
-        let current = (name as NSString).pathExtension.lowercased()
-        return known.contains(current) ? name : "\(name).\(preferred)"
+        if let kept, known.contains(kept.lowercased()) { return named((name as NSString).deletingPathExtension, kept) }
+        return named(name, preferred)
     }
 }
 

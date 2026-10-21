@@ -122,6 +122,7 @@ fun ElsewhereRow(cellar: Cellar, photos: PhotoStore, discovery: Discovery, actio
                 showsSource = true,
                 modifier = Modifier.semantics {
                     customActions = listOf(
+                        CustomAccessibilityAction(editLabel) { actions.open(discovery); true },
                         CustomAccessibilityAction(addLabel) { actions.addToCellar(discovery); true },
                         CustomAccessibilityAction(buyLabel) { actions.toggleToBuy(discovery); true },
                         CustomAccessibilityAction(deleteLabel) { actions.delete(discovery); true },
@@ -165,19 +166,29 @@ fun DiscoveryRow(
 ) {
     val wine = cellar.wines[discovery.wineId]
     val source = elsewhereText(discovery)
+    // The style in words, not only by the dot's color.
+    val style = wine?.color?.let { stringResource(it.labelRes) }
+    val price = discovery.price?.let { Formats.money(it, discovery.currency ?: cellar.settings.currency) }
     val description = listOfNotNull(
         source,
         wine?.displayName ?: stringResource(R.string.unknown_wine),
+        style,
         discovery.rating?.let { pluralStringResource(R.plurals.journal_rating_stars, it, it) },
         Formats.day(discovery.date),
-        if (discovery.wantsToBuy) stringResource(R.string.discovery_to_buy) else null,
+        when {
+            discovery.wantsToBuy -> stringResource(R.string.discovery_to_buy)
+            discovery.boughtAt != null -> stringResource(R.string.discovery_bought)
+            else -> null
+        },
         discovery.note,
+        price,
         discovery.tags.takeIf { it.isNotEmpty() }?.joinToString(", "),
     ).joinToString(", ")
     ListItem(
+        // The clicks before clearAndSetSemantics, so TalkBack still finds the row's actions.
         modifier = modifier
-            .then(if (showsSource) Modifier.clearAndSetSemantics { contentDescription = description } else Modifier)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .then(if (showsSource) Modifier.clearAndSetSemantics { contentDescription = description } else Modifier),
         overlineContent = if (showsSource) {
             {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
@@ -216,12 +227,15 @@ fun DiscoveryRow(
                         Icon(discovery.setting?.icon ?: Icons.Outlined.Place, contentDescription = null, modifier = Modifier.size(16.dp))
                         Text(where, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     }
-                    if (showsWine) Text(if (where != null) "· ${Formats.day(discovery.date)}" else Formats.day(discovery.date), maxLines = 1)
+                    if (showsWine) {
+                        val tail = listOfNotNull(style, Formats.day(discovery.date)).joinToString(" · ")
+                        Text(if (where != null) "· $tail" else tail, maxLines = 1)
+                    }
                 }
                 discovery.rating?.let { RatingStars(it) }
                 discovery.note?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                 val extras = listOfNotNull(
-                    discovery.price?.let { Formats.money(it, discovery.currency ?: cellar.settings.currency) },
+                    price,
                     discovery.tags.takeIf { it.isNotEmpty() }?.joinToString(" ") { "#$it" },
                 )
                 if (extras.isNotEmpty()) {

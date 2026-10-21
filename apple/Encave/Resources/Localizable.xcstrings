@@ -6751,6 +6751,16 @@
         }
       }
     },
+    "Not on this device yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore sur cet appareil"
+          }
+        }
+      }
+    },
     "Not synced yet": {
       "localizations": {
         "fr": {
@@ -12667,6 +12677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Vos données."
+          }
+        }
+      }
+    },
+    "Your cellar has no bottle to open.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave n’a aucune bouteille à ouvrir."
           }
         }
       }

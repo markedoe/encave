@@ -72,6 +72,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
@@ -176,11 +177,13 @@ fun rememberDocumentAdder(viewModel: AppViewModel, onStaged: (List<PendingDocume
 /** "Add a document…" and "Photograph a paper". */
 @Composable
 fun AddDocumentButtons(adder: DocumentAdder, place: String, modifier: Modifier = Modifier) {
-    val hint = stringResource(R.string.action_add_document_hint)
+    // The action first, then what can be added: "Add a document…, A PDF, an image…".
+    val description = stringResource(R.string.action_add_document) + ", " + stringResource(R.string.action_add_document_hint)
     FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         OutlinedButton(
             onClick = adder.pick, enabled = !adder.busy,
-            modifier = Modifier.testTag("action.add_document.$place").semantics { contentDescription = hint },
+            modifier = Modifier.testTag("action.add_document.$place")
+                .then(if (adder.busy) Modifier else Modifier.semantics { contentDescription = description }),
         ) {
             if (adder.busy) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
@@ -206,9 +209,14 @@ private fun rememberDocumentOpener(viewModel: AppViewModel): (Attachment, Boolea
     return remember<(Attachment, Boolean) -> Unit>(viewModel, context, chooserTitle) {
         { attachment, share ->
             scope.launch {
+                if (!viewModel.documents.exists(attachment.id)) {
+                    viewModel.showMessage(UiText.Res(R.string.err_document_missing))
+                    return@launch
+                }
+                // Here, but the copy for the other app could not be made (a full disk…).
                 val uri = viewModel.documentUri(attachment)
                 if (uri == null) {
-                    viewModel.showMessage(UiText.Res(R.string.err_document_missing))
+                    viewModel.showMessage(UiText.Res(R.string.err_document_unreadable))
                     return@launch
                 }
                 val intent = if (share) {
@@ -246,7 +254,10 @@ fun DocumentRow(viewModel: AppViewModel, document: Attachment, target: Attachmen
     var menu by remember { mutableStateOf(false) }
     var renaming by remember { mutableStateOf(false) }
     val kind = DocumentKind.of(document.contentType)
-    val available = remember(document.id) { viewModel.documents.exists(document.id) }
+    // Checked again when a file arrives (files come after the cellar when syncing).
+    val fileRevision by viewModel.documents.revision.collectAsStateWithLifecycle()
+    val available = remember(document.id, fileRevision) { viewModel.documents.exists(document.id) }
+    val notHere = stringResource(R.string.document_not_here)
     val name = document.name.ifEmpty { stringResource(R.string.document_default_name) }
     val details = documentDetails(kind, document.byteCount, available)
     // "PDF, Invoice.pdf, 240 KB".
@@ -260,8 +271,9 @@ fun DocumentRow(viewModel: AppViewModel, document: Attachment, target: Attachmen
             .clickable(onClickLabel = openLabel) { open(document, false) }
             .semantics {
                 contentDescription = description
-                customActions = listOf(
-                    CustomAccessibilityAction(shareLabel) { open(document, true); true },
+                if (!available) stateDescription = notHere
+                customActions = listOfNotNull(
+                    if (available) CustomAccessibilityAction(shareLabel) { open(document, true); true } else null,
                     CustomAccessibilityAction(renameLabel) { renaming = true; true },
                     CustomAccessibilityAction(deleteLabel) { viewModel.removeDocument(target, document.id); true },
                 )

@@ -101,15 +101,7 @@ public extension Cellar {
     }
 
     /// Tags in use, most used first, for suggestions and filters.
-    var discoveryTags: [String] {
-        var counts: [String: (name: String, count: Int)] = [:]
-        for tag in discoveries.values.flatMap(\.tags) {
-            counts[tag.lowercased(), default: (tag, 0)].count += 1
-        }
-        return counts.values
-            .sorted { $0.count == $1.count ? $0.name.localizedStandardCompare($1.name) == .orderedAscending : $0.count > $1.count }
-            .map(\.name)
-    }
+    var discoveryTags: [String] { Cellar.byUse(discoveries.values.flatMap(\.tags)) }
 
     var shoppingListCount: Int { discoveries.values.filter(\.wantsToBuy).count }
 
