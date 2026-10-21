@@ -107,37 +107,32 @@ class Cellar(
     val wineTags: List<String>
         get() {
             val inCellar = bottlesInCellar.map { it.wineId }.toSet()
-            val counts = LinkedHashMap<String, Pair<String, Int>>()
-            for (wine in wineMap.values) {
-                if (wine.id !in inCellar) continue
-                for (tag in wine.tags.orEmpty()) {
-                    val key = tag.lowercase(java.util.Locale.ROOT)
-                    counts[key] = (counts[key]?.first ?: tag) to ((counts[key]?.second ?: 0) + 1)
-                }
-            }
-            val collator = collator()
-            return counts.values.sortedWith { a, b -> if (a.second != b.second) b.second - a.second else collator.compare(a.first, b.first) }
-                .map { it.first }
+            return byUse(wineMap.values.filter { it.id in inCellar }.flatMap { it.tags.orEmpty() })
         }
 
     /** Grapes of the wines in the cellar, the most used first (for the filter chips). */
     val wineGrapes: List<String>
         get() {
             val inCellar = bottlesInCellar.map { it.wineId }.toSet()
-            val counts = LinkedHashMap<String, Pair<String, Int>>()
-            for (wine in wineMap.values) {
-                if (wine.id !in inCellar) continue
-                for (grape in wine.grapes) {
-                    val name = grape.trim()
-                    if (name.isEmpty()) continue
-                    val key = name.lowercase(java.util.Locale.ROOT)
-                    counts[key] = (counts[key]?.first ?: name) to ((counts[key]?.second ?: 0) + 1)
-                }
-            }
-            val collator = collator()
-            return counts.values.sortedWith { a, b -> if (a.second != b.second) b.second - a.second else collator.compare(a.first, b.first) }
-                .map { it.first }
+            return byUse(wineMap.values.filter { it.id in inCellar }.flatMap { it.grapes }.map { it.trim() }.filter { it.isNotEmpty() })
         }
+
+    /**
+     * Names counted case-insensitively, the most used first. Each is shown with its most
+     * used spelling (ties: the first in UTF-16 order), so the label does not depend on
+     * the order wines are stored in, and is the same on every platform.
+     */
+    private fun byUse(names: List<String>): List<String> {
+        val spellings = HashMap<String, HashMap<String, Int>>()
+        for (name in names) spellings.getOrPut(name.lowercase(java.util.Locale.ROOT)) { HashMap() }.merge(name, 1, Int::plus)
+        val entries = spellings.values.map { counts ->
+            val shown = counts.entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key }).first().key
+            shown to counts.values.sum()
+        }
+        val collator = collator()
+        return entries.sortedWith { a, b -> if (a.second != b.second) b.second - a.second else collator.compare(a.first, b.first) }
+            .map { it.first }
+    }
 
     val consumedBottles: List<Bottle>
         get() = bottleMap.values

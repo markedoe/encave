@@ -84,6 +84,21 @@ class WineTagTest {
     }
 
     @Test
+    fun grapeAndTagChipsShowTheMostUsedSpelling() {
+        val cellar = Cellar()
+        cellar.addBottles(Wine(name = "A", grapes = listOf("Pinot noir"), tags = listOf("gift")))
+        cellar.addBottles(Wine(name = "B", grapes = listOf("Pinot Noir"), tags = listOf("Gift")))
+        cellar.addBottles(Wine(name = "C", grapes = listOf(" Pinot Noir ", "Gamay"), tags = listOf("Gift")))
+        assertEquals(listOf("Pinot Noir", "Gamay"), cellar.wineGrapes)
+        assertEquals(listOf("Gift"), cellar.wineTags)
+        // A tie: the same spelling whatever order the wines are stored in.
+        val tie = Cellar()
+        tie.addBottles(Wine(name = "A", grapes = listOf("syrah")))
+        tie.addBottles(Wine(name = "B", grapes = listOf("Syrah")))
+        assertEquals(listOf("Syrah"), tie.wineGrapes)
+    }
+
+    @Test
     fun grapesFilterTheCellarAndAreListedByUse() {
         val cellar = Cellar()
         cellar.addBottles(Wine(name = "Burgundy", grapes = listOf("Pinot Noir")))
