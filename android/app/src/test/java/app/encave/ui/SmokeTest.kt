@@ -1,5 +1,8 @@
 package app.encave.ui
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -82,6 +85,15 @@ class SmokeTest {
         // Each entry says where it comes from, in words.
         compose.onAllNodes(hasContentDescription("From my cellar, Vieilles Vignes", substring = true)).onFirst().assertExists()
         compose.onAllNodes(hasContentDescription("Tasted elsewhere", substring = true)).onFirst().assertExists()
+        // TalkBack reads the style in words and still finds the rows' actions.
+        compose.onAllNodes(hasContentDescription("Vieilles Vignes", substring = true) and hasContentDescription(", Red, ", substring = true))
+            .onFirst().assertExists()
+        compose.onAllNodesWithTag("journal.row.cellar").onFirst().assertHasClickAction()
+        compose.onAllNodes(
+            hasContentDescription("Tasted elsewhere", substring = true) and
+                SemanticsMatcher.keyIsDefined(SemanticsActions.OnLongClick) and
+                SemanticsMatcher.keyIsDefined(SemanticsActions.CustomActions),
+        ).onFirst().assertHasClickAction()
         compose.onNodeWithContentDescription("Insights").performClick()
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Opened per month"))
