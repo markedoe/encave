@@ -502,7 +502,10 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    the clock): upload the files it has not uploaded yet in this epoch (once
    each, even if a file is both a photo and a document), then a snapshot of the merged state,
    then delete its older snapshots. If the clock did not move since the last
-   upload, it is raised by one first, so readers see a newer snapshot.
+   upload, it is raised by one first, so readers see a newer snapshot. A file
+   the storage refuses (too large, 413, or full, 507) is left out and the
+   snapshot is still written; the device says so and tries the file again with
+   its next snapshot.
 
 Rounds run a few seconds after a change, every minute while the app is open,
 and when it comes back to the foreground. Each device can choose a longer

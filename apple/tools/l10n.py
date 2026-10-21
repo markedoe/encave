@@ -37,6 +37,7 @@ FR = {
     'Scan a Document': 'Numériser un document',
     'Takes pictures of a paper and keeps them as a PDF.': 'Photographie un papier et le garde en PDF.',
     '%@ · %@ · Not on this device yet': '%@ · %@ · Pas encore sur cet appareil',
+    'Not on this device yet': 'Pas encore sur cet appareil',
     'Opens the document.': 'Ouvre le document.',
     'Share…': 'Partager…',
     'Rename…': 'Renommer…',

@@ -6511,6 +6511,16 @@
         }
       }
     },
+    "Not on this device yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore sur cet appareil"
+          }
+        }
+      }
+    },
     "Not synced yet": {
       "localizations": {
         "fr": {

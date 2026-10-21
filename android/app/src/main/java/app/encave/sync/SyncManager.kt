@@ -881,11 +881,17 @@ class SyncManager(
                 if (sent) storage.unsentChanges = false
             }
             status.update {
-                val unreadable = result.unreadable.isNotEmpty()
+                // The cellar synced; files the storage refused stay on this device for now.
+                val problem = when {
+                    result.unreadable.isNotEmpty() -> RemoteProblem.Unreadable
+                    result.refusedFiles == RemoteSyncError.QuotaExceeded -> RemoteProblem.Full
+                    result.refusedFiles == RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
+                    else -> null
+                }
                 it.copy(
                     lastRemoteSync = now,
-                    remoteProblem = if (unreadable) RemoteProblem.Unreadable else null,
-                    remoteProblemAt = if (unreadable) now else null,
+                    remoteProblem = problem,
+                    remoteProblemAt = if (problem != null) now else null,
                     unsentChanges = it.unsentChanges && !sent,
                 )
             }

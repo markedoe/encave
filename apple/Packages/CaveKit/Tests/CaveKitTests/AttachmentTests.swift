@@ -42,6 +42,18 @@ enum AttachmentNames {
         #expect(attachment.name == "new-name")
     }
 
+    @Test func longFileNamesAreShortenedBeforeTheirExtension() {
+        for letter in ["é", "葡", "🍷", "e\u{301}"] {
+            let name = Attachment.fileName(base: String(repeating: letter, count: 200), pathExtension: "pdf")
+            #expect(name.utf8.count <= Attachment.maxFileNameBytes)
+            #expect(name.hasSuffix(".pdf"))
+            // Cut between characters: only whole letters are left.
+            #expect(name.dropLast(4).allSatisfy { String($0) == letter })
+        }
+        #expect(Attachment.fileName(base: "Invoice", pathExtension: "pdf") == "Invoice.pdf")
+        #expect(Attachment.fileName(base: "Notes", pathExtension: nil) == "Notes")
+    }
+
     @Test func documentsAreKeptOnceAndNilWhenNone() throws {
         var wine = Wine(name: "A")
         wine.attachments = [doc("a"), doc("b"), doc("a", "Again.pdf")]

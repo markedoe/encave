@@ -717,6 +717,9 @@ final class SyncService {
             remoteFailedAt = nil
             if !result.unreadable.isEmpty {
                 remoteProblem = String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
+            } else if let refused = result.refusedFiles {
+                // The cellar synced; some photos or documents stay on this device for now.
+                remoteProblem = refusalMessage(refused)
             } else if remoteStorage == .iCloud, remoteProgress.seen.isEmpty, !otherDevices.isEmpty {
                 // Each Apple Account has its own iCloud: devices on different accounts never meet there.
                 remoteProblem = String(localized: "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.")
@@ -733,20 +736,9 @@ final class SyncService {
             case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
             default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
             }
-        } catch RemoteSyncError.fileTooLarge {
+        } catch let error as RemoteSyncError where error == .fileTooLarge || error == .quotaExceeded {
             remoteFailedAt = .now
-            if case .webDAV = remoteStorage {
-                remoteProblem = String(localized: "The cellar or a document is larger than this WebDAV server accepts in one file. Raise its upload limit.")
-            } else {
-                remoteProblem = String(localized: "The cellar or a document is larger than this relay accepts in one file. Use a relay with a higher limit.")
-            }
-        } catch RemoteSyncError.quotaExceeded {
-            remoteFailedAt = .now
-            switch remoteStorage {
-            case .iCloud: remoteProblem = String(localized: "Your iCloud storage is full.")
-            case .webDAV: remoteProblem = String(localized: "The WebDAV folder is full. Free some space on the server.")
-            default: remoteProblem = String(localized: "The relay is full. Remove old photos or use another relay.")
-            }
+            remoteProblem = refusalMessage(error)
         } catch {
             remoteFailedAt = .now
             switch remoteStorage {
@@ -754,6 +746,21 @@ final class SyncService {
             case .webDAV: remoteProblem = String(localized: "The WebDAV folder could not be reached.")
             default: remoteProblem = String(localized: "The relay could not be reached.")
             }
+        }
+    }
+
+    /// The storage refused a file: too large for it (`fileTooLarge`) or full (`quotaExceeded`).
+    private func refusalMessage(_ error: RemoteSyncError) -> String {
+        if error == .fileTooLarge {
+            if case .webDAV = remoteStorage {
+                return String(localized: "The cellar or a document is larger than this WebDAV server accepts in one file. Raise its upload limit.")
+            }
+            return String(localized: "The cellar or a document is larger than this relay accepts in one file. Use a relay with a higher limit.")
+        }
+        switch remoteStorage {
+        case .iCloud: return String(localized: "Your iCloud storage is full.")
+        case .webDAV: return String(localized: "The WebDAV folder is full. Free some space on the server.")
+        default: return String(localized: "The relay is full. Remove old photos or use another relay.")
         }
     }
 
