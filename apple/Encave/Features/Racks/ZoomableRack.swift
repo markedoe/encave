@@ -52,28 +52,19 @@ struct ZoomableRack: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.parent = self
         coordinator.model = model
-        defer {
-            // A zoom button was pressed: zoom around the middle, as a pinch would.
-            if zoomStep.id != coordinator.zoomStepID {
-                coordinator.zoomStepID = zoomStep.id
-                let target = min(ZoomableRack.maxZoom, max(1, coordinator.level * scroll.zoomScale * zoomStep.factor))
-                scroll.setZoomScale(target / coordinator.level, animated: true)
-            }
-        }
-        if coordinator.rackShape != rack.shape {
-            // New rack shape: start again from the fitted size.
-            coordinator.rackShape = rack.shape
-            coordinator.base = baseCellSize
-            coordinator.level = 1
-            coordinator.render(keepingCenter: false)
-        } else if coordinator.base != baseCellSize {
-            // The space changed (card shown, rotation): keep the zoom and the spot in view.
-            coordinator.base = baseCellSize
-            coordinator.render(keepingCenter: true)
+        // SwiftUI redraws this view whenever something it reads changes, also during a pinch
+        // (a sync round, the sync status). Changing the drawing then would fight the gesture:
+        // wait until the zoom or the scroll is over.
+        if coordinator.isBusy {
+            coordinator.hasPendingUpdate = true
         } else {
-            // Same size (new highlight, focus, selection): redraw without touching the zoom,
-            // which may be in the middle of a pinch.
-            coordinator.refresh()
+            coordinator.update()
+        }
+        // A zoom button was pressed: zoom around the middle, as a pinch would.
+        if zoomStep.id != coordinator.zoomStepID {
+            coordinator.zoomStepID = zoomStep.id
+            let target = min(ZoomableRack.maxZoom, max(1, coordinator.level * scroll.zoomScale * zoomStep.factor))
+            scroll.setZoomScale(target / coordinator.level, animated: true)
         }
     }
 
@@ -89,6 +80,47 @@ struct ZoomableRack: UIViewRepresentable {
         var level: CGFloat = 1
         /// The last zoom button press handled.
         var zoomStepID = 0
+        /// SwiftUI asked for a redraw while the rack was being zoomed or scrolled.
+        var hasPendingUpdate = false
+
+        /// Zooming, bouncing back or scrolling: the drawing and its frame must not change.
+        var isBusy: Bool {
+            guard let scroll else { return false }
+            let pinch = scroll.pinchGestureRecognizer?.state
+            return scroll.isZooming || scroll.isZoomBouncing || scroll.isDragging || scroll.isDecelerating
+                || pinch == .began || pinch == .changed
+        }
+
+        /// Applies what SwiftUI last asked for: a new shape, a new space or a new drawing.
+        func update() {
+            hasPendingUpdate = false
+            guard let parent else { return }
+            if rackShape != parent.rack.shape {
+                // New rack shape: start again from the fitted size.
+                rackShape = parent.rack.shape
+                base = parent.baseCellSize
+                level = 1
+                render(keepingCenter: false)
+            } else if base != parent.baseCellSize {
+                // The space changed (card shown, rotation): keep the zoom and the spot in view.
+                base = parent.baseCellSize
+                render(keepingCenter: true)
+            } else {
+                // Same size (new highlight, focus, selection): redraw without touching the zoom.
+                refresh()
+            }
+        }
+
+        /// Once the gesture is over, applies a redraw that had to wait.
+        func updateIfPending() {
+            if hasPendingUpdate, !isBusy { update() }
+        }
+
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { updateIfPending() }
+
+        func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            if !decelerate { updateIfPending() }
+        }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { host?.view }
 
@@ -105,9 +137,12 @@ struct ZoomableRack: UIViewRepresentable {
 
         func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
             let newLevel = min(ZoomableRack.maxZoom, max(1, level * scale))
-            guard abs(newLevel - level) > 0.01 || scale != 1 else { return }
-            level = newLevel
-            render(keepingCenter: true)
+            if abs(newLevel - level) > 0.01 || scale != 1 {
+                level = newLevel
+                render(keepingCenter: true)
+            }
+            // Called while the zoom view still settles: let it finish first.
+            Task { @MainActor [weak self] in self?.updateIfPending() }
         }
 
         @objc func doubleTapped(_ gesture: UITapGestureRecognizer) {
@@ -193,7 +228,10 @@ final class CenteringScrollView: UIScrollView {
 }
 
 private extension Rack {
-    /// What changes the drawing's size: kind, depth and columns per row.
-    var shape: String { "\(kind) \(positionsPerCell) " + (0..<rows).map { "\(columns(inRow: $0))" }.joined(separator: ",") }
+    /// What changes the drawing's size: kind, depth, columns per row and layers per shelf.
+    var shape: String {
+        "\(kind) \(positionsPerCell) " + (0..<rows).map { "\(columns(inRow: $0))" }.joined(separator: ",")
+            + " \(shelfLayers ?? [])"
+    }
 }
 #endif
