@@ -539,11 +539,12 @@ final class ScreenTourTests: XCTestCase {
     /// The wine's producer lists the wines of the cellar from that producer.
     private func checkExplore() {
         let producer = element("detail.explore.producer")
+        // Below the fold on iPhone: the list makes the row only once it is scrolled to.
+        scrollIntoView(producer)
         guard producer.waitForExistence(timeout: 5) else {
             XCTFail("wine: no producer row")
             return
         }
-        scrollIntoView(producer)
         // The detail column can be out of reach of the scroll on some layouts: the step is skipped there.
         guard producer.isHittable else { return }
         producer.press()
