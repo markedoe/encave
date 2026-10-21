@@ -60,6 +60,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import app.encave.core.DiaryFilter
 
 /** Text resolved in the UI, so the view model never holds a Context. */
 sealed interface UiText {
@@ -97,6 +98,9 @@ class AppViewModel(
     /** Cellar list search, filters and sort; kept while moving between sections. */
     val filter = MutableStateFlow(CellarFilter())
     val sort = MutableStateFlow(CellarSort.Name)
+
+    /** What the Journal shows; back to everything when a new entry would be hidden. */
+    val journalFilter = MutableStateFlow(DiaryFilter.All)
 
     val groups: StateFlow<List<WineGroup>> = combine(cellar, filter, sort) { cellar, filter, sort ->
         cellar.groups(filter, sort, year)
@@ -179,6 +183,7 @@ class AppViewModel(
 
     fun drink(bottleId: UUID, tasting: Tasting) {
         val previous = cellar.value.bottles[bottleId]?.slot
+        if (!journalFilter.value.showsTastings) journalFilter.value = DiaryFilter.All
         change<String>({ name -> post(UiText.Res(R.string.msg_drunk, listOf(name))) { undoDrink(bottleId, previous) } }) {
             it.drink(bottleId, tasting)
             nameOf(it, bottleId)
@@ -415,6 +420,8 @@ class AppViewModel(
             val record = if (photoId != null) wine.copy(photoId = photoId) else wine
             repository.update { it.addDiscovery(discovery, record) }
                 .onSuccess {
+                    val filter = journalFilter.value
+                    if (filter == DiaryFilter.Cellar || (filter == DiaryFilter.ToBuy && !discovery.wantsToBuy)) journalFilter.value = DiaryFilter.All
                     post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
                 }
                 .onFailure { post(errorText(it)) }
@@ -612,7 +619,7 @@ class AppViewModel(
     }
 
     private fun importText(summary: ImportSummary): UiText = if (summary.discoveriesAdded > 0) {
-        UiText.Res(R.string.msg_imported_discoveries, listOf(summary.discoveriesAdded))
+        UiText.Res(R.string.msg_imported_elsewhere, listOf(summary.discoveriesAdded))
     } else if (summary.rowsSkipped > 0) {
         UiText.Res(R.string.msg_imported_skipped, listOf(summary.winesAdded, summary.bottlesAdded, summary.rowsSkipped))
     } else {

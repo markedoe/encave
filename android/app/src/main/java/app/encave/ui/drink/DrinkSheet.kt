@@ -226,10 +226,16 @@ fun DrinkSheet(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
+            // What happens, then which wine.
             Text(
-                stringResource(R.string.drink_title, wine?.displayName ?: stringResource(R.string.unknown_wine)),
-                style = MaterialTheme.typography.headlineSmall,
+                stringResource(R.string.drink_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                wine?.displayName ?: stringResource(R.string.unknown_wine),
+                style = MaterialTheme.typography.headlineSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Serif),
             )
             if (choices.size > 1) {
                 Text(stringResource(R.string.drink_which), style = MaterialTheme.typography.titleSmall)
