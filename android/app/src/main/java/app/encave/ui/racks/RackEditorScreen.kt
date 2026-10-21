@@ -71,6 +71,7 @@ import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.RackKind
+import app.encave.core.SampleData
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
@@ -94,7 +95,19 @@ private const val MAX_SIZE = 40
 private data class RackPreset(
     val title: Int, val kind: RackKind, val rows: Int, val columns: Int, val depth: Int = 1, val binCapacity: Int = 10,
     val shelfLayers: List<Int>? = null,
-)
+    /** Bottles of each row from the top (default: the usual quincunx), and shelves starting a zone. */
+    val shelfRows: List<Int>? = null,
+    val zoneBreaks: List<Int>? = null,
+) {
+    /** The shelves of this preset, as the editor shows them. */
+    val shelves: List<ShelfDraft>?
+        get() = shelfLayers?.let { layers ->
+            ShelfDraft.of(
+                Rack(name = "", kind = kind, rows = rows, columns = columns, depth = depth, rowColumns = shelfRows,
+                    shelfLayers = layers, zoneBreaks = zoneBreaks).normalized(),
+            )
+        }
+}
 
 private val presets = listOf(
     RackPreset(R.string.preset_grid_6x8, RackKind.Grid, 6, 8),
@@ -103,6 +116,10 @@ private val presets = listOf(
     RackPreset(R.string.preset_staggered_5x8, RackKind.Staggered, 5, 8),
     RackPreset(R.string.preset_staggered_8x10, RackKind.Staggered, 8, 10),
     RackPreset(R.string.preset_fridge_layers, RackKind.Staggered, 10, 6, depth = 2, shelfLayers = List(5) { 2 }),
+    RackPreset(
+        R.string.preset_fridge_zones, RackKind.Staggered, SampleData.TWO_ZONE_FRIDGE_ROWS.size, 6, depth = 2,
+        shelfLayers = SampleData.TWO_ZONE_FRIDGE_LAYERS, shelfRows = SampleData.TWO_ZONE_FRIDGE_ROWS, zoneBreaks = listOf(4),
+    ),
     RackPreset(R.string.preset_fridge_6x6, RackKind.Shelves, 6, 6),
     RackPreset(R.string.preset_fridge_2deep, RackKind.Shelves, 6, 7, depth = 2),
     RackPreset(R.string.preset_cabinet, RackKind.Shelves, 10, 8, depth = 2),
@@ -116,7 +133,12 @@ private val presets = listOf(
  * bottles of each layer from the bottom (always three values, so changing the number of
  * layers keeps what was typed).
  */
-data class ShelfDraft(val layers: Int = 2, val counts: List<Int> = quincunx(6)) {
+data class ShelfDraft(
+    val layers: Int = 2,
+    val counts: List<Int> = quincunx(6),
+    /** A divider above this shelf: it starts a new temperature zone. */
+    val startsZone: Boolean = false,
+) {
     /** A new bottom layer; the layers above follow it while they keep their usual count. */
     fun withBottom(value: Int): ShelfDraft {
         val old = counts[0]
@@ -140,10 +162,10 @@ data class ShelfDraft(val layers: Int = 2, val counts: List<Int> = quincunx(6)) 
         fun quincunx(bottom: Int) = listOf(bottom, maxOf(1, bottom - 1), bottom)
 
         /** The shelves of a fridge with layers, as the editor shows them. */
-        fun of(rack: Rack): List<ShelfDraft> = rack.shelfRows.map { rows ->
+        fun of(rack: Rack): List<ShelfDraft> = rack.shelfRows.mapIndexed { shelf, rows ->
             val fromBottom = rows.reversed().map { rack.columnsInRow(it) }
             val bottom = fromBottom.first()
-            ShelfDraft(rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3))
+            ShelfDraft(rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3), rack.zoneBreaks.orEmpty().contains(shelf))
         }
 
         /** The rack these shelves make (rows are the layers, from the top). */
@@ -153,6 +175,7 @@ data class ShelfDraft(val layers: Int = 2, val counts: List<Int> = quincunx(6)) 
                 id = id, name = name, kind = RackKind.Staggered, rows = widths.size.coerceAtLeast(1),
                 columns = shelves.maxOfOrNull { it.counts[0] } ?: 1, depth = depth, rowColumns = widths,
                 shelfLayers = shelves.map { it.layers },
+                zoneBreaks = shelves.indices.filter { it > 0 && shelves[it].startsZone },
             ).normalized()
         }
     }
@@ -223,17 +246,17 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         binCapacity = preset.binCapacity
         customRows = false
         onShelves = preset.shelfLayers != null
-        preset.shelfLayers?.let { layers ->
+        preset.shelves?.let {
             shelves.clear()
-            layers.forEach { shelves.add(ShelfDraft(it, ShelfDraft.quincunx(preset.columns))) }
+            shelves.addAll(it)
         }
     }
 
     fun matches(preset: RackPreset): Boolean {
-        val layers = preset.shelfLayers
-        if (layers != null) {
+        val presetShelves = preset.shelves
+        if (presetShelves != null) {
             return layered && depth == preset.depth &&
-                shelves.map { it.widths } == layers.map { ShelfDraft(it, ShelfDraft.quincunx(preset.columns)).widths }
+                shelves.map { it.widths to it.startsZone } == presetShelves.map { it.widths to it.startsZone }
         }
         return !customRows && !layered && rows == preset.rows && columns == preset.columns && when (kind) {
             RackKind.Bins -> binCapacity == preset.binCapacity
@@ -386,13 +409,13 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     ShelfCard(
                         number = index + 1, shelf = shelf, onChange = { shelves[index] = it },
                         canAdd = layerCount() + shelf.layers <= Rack.MAX_SIZE,
-                        onDuplicate = { shelves.add(index + 1, shelf) },
-                        onApplyToAll = { shelves.indices.forEach { shelves[it] = shelf } },
+                        onDuplicate = { shelves.add(index + 1, shelf.copy(startsZone = false)) },
+                        onApplyToAll = { shelves.indices.forEach { shelves[it] = shelf.copy(startsZone = shelves[it].startsZone) } },
                         onDelete = if (shelves.size > 1) ({ shelves.removeAt(index) }) else null,
                     )
                 }
                 OutlinedButton(
-                    onClick = { shelves.add(shelves.lastOrNull() ?: ShelfDraft()) },
+                    onClick = { shelves.add(shelves.lastOrNull()?.copy(startsZone = false) ?: ShelfDraft()) },
                     enabled = layerCount() + Rack.MAX_LAYERS <= Rack.MAX_SIZE,
                     modifier = Modifier.fillMaxWidth().testTag("rack.shelf.add"),
                 ) { Text(stringResource(R.string.rack_shelf_add)) }
@@ -542,6 +565,21 @@ private fun ShelfCard(
                     else -> stringResource(R.string.rack_layers_hint_3, shelf.counts[0], shelf.counts[1], shelf.counts[2])
                 },
             )
+            if (number > 1) {
+                Row(
+                    Modifier.fillMaxWidth().toggleable(shelf.startsZone, role = Role.Switch) { onChange(shelf.copy(startsZone = it)) },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f).padding(end = Dimens.l)) {
+                        Text(stringResource(R.string.rack_shelf_new_zone), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(R.string.rack_shelf_new_zone_body),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = shelf.startsZone, onCheckedChange = null)
+                }
+            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                 TextButton(onClick = onDuplicate, enabled = canAdd) { Text(stringResource(R.string.rack_shelf_duplicate)) }
                 TextButton(onClick = onApplyToAll) { Text(stringResource(R.string.rack_shelf_apply_all)) }

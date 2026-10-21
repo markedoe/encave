@@ -424,7 +424,13 @@
     <string name="rack_layout_continuous">Continuous</string>
     <string name="rack_layout_shelves">On shelves</string>
     <string name="help_field_layout">A honeycomb rack, or the shelves of a wine fridge holding bottles stacked in quincunx.</string>
-    <string name="help_field_layer_depth">Bottles one behind the other on the shelf.</string>
+    <string name="help_field_layer_depth">Two rows, often head to tail.</string>
+    <string name="preset_fridge_zones">Wine fridge, 2 zones</string>
+    <string name="rack_zone_upper">Upper zone</string>
+    <string name="rack_zone_lower">Lower zone</string>
+    <string name="rack_zone_number">Zone %1$d</string>
+    <string name="rack_shelf_new_zone">New zone from this shelf</string>
+    <string name="rack_shelf_new_zone_body">For a fridge with two temperature zones: a divider is drawn above this shelf.</string>
     <string name="rack_shelves_title">Shelves, from the top</string>
     <string name="rack_shelf">Shelf %1$d</string>
     <string name="rack_layers_per_shelf">Layers per shelf</string>
@@ -574,7 +580,7 @@
     <string name="help_racks_grid">One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.</string>
     <string name="help_racks_staggered">Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row, and in **Rows deep** whether a second bottle fits behind each one.</string>
     <string name="help_racks_layers_title">Fridge with bottles in layers</string>
-    <string name="help_racks_layers">For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to all shelves**. Places are named by shelf, layer and number, like **Shelf 1, top layer, place 3**; each shelf fills from its bottom layer.</string>
+    <string name="help_racks_layers">For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to all shelves**. Places are named by shelf, layer and number, like **Shelf 1, top layer, place 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone; **Wine fridge, 2 zones** is a ready-made start.</string>
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.</string>
     <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
     <string name="help_racks_places_title">Places</string>

@@ -74,6 +74,9 @@ import app.encave.core.WineColor
 import java.util.UUID
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.displayLabel
+import app.encave.ui.components.zoneName
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import app.encave.ui.theme.LocalWinePalette
 
 /** From these cell sizes a bottle shows its vintage, then (grid and shelves) its name under it. */
@@ -124,7 +127,9 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
         val shelves = rack.shelfRows
         val height = shelves.fold(0.dp) { total, rows ->
             total + cellHeight * rows.count() - overlap * (rows.count() - 1) + cell * SHELF_BAR_GAP + shelfBar(cell)
-        } + cell * SHELF_GAP * (shelves.size - 1)
+        } + cell * SHELF_GAP * (shelves.size - 1) +
+            // Each zone's name over its shelves.
+            (if (rack.zoneCount > 1) (labelHeight + cell * SHELF_GAP) * rack.zoneCount else 0.dp)
         return width to height
     }
     val shelf = if (rack.kind == RackKind.Shelves) shelfBar(cell) else 0.dp
@@ -320,6 +325,12 @@ fun RackGrid(
                 val place = rack.shelfPlace(row)
                 val startsShelf = place != null && place.layer == place.layers - 1
                 if (startsShelf && row > 0) Spacer(Modifier.height(cellSize * SHELF_GAP))
+                if (place != null && startsShelf && rack.zoneCount > 1 &&
+                    (place.shelf == 0 || rack.zoneOfShelf(place.shelf) != rack.zoneOfShelf(place.shelf - 1))
+                ) {
+                    ZoneDivider(rack, rack.zoneOfShelf(place.shelf), cellSize, if (showHeaders) headerWidth else 0.dp)
+                    Spacer(Modifier.height(cellSize * SHELF_GAP))
+                }
                 Column(if (row > 0 && overlap > 0.dp && !startsShelf) Modifier.overlapUp(overlap) else Modifier) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (showHeaders) {
@@ -389,6 +400,26 @@ fun RackGrid(
                 size = size,
             )
         }
+    }
+}
+
+/** The name of a temperature zone over a line; zones below the first start under a thicker divider. */
+@Composable
+private fun ZoneDivider(rack: Rack, zone: Int, cellSize: Dp, inset: Dp) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        Modifier.padding(start = inset).semantics(mergeDescendants = true) { heading() },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(cellSize * 0.12f),
+    ) {
+        Text(
+            rack.zoneName(zone, LocalResources.current), style = MaterialTheme.typography.labelSmall,
+            color = scheme.onSurfaceVariant, maxLines = 1,
+        )
+        Box(
+            Modifier.width(cellSize * rack.maxColumns).height(if (zone == 0) 1.dp else maxOf(3.dp, cellSize * 0.07f))
+                .background(if (zone == 0) scheme.outlineVariant else scheme.outline, CircleShape),
+        )
     }
 }
 

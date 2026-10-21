@@ -105,6 +105,9 @@ struct RackGrid: View {
         let bar = max(4, cellSize * 0.09)
         return VStack(alignment: .leading, spacing: cellSize * Self.shelfGap) {
             ForEach(Array(rack.shelfRows.enumerated()), id: \.offset) { shelf, rows in
+                if rack.zoneCount > 1, shelf == 0 || rack.zone(ofShelf: shelf) != rack.zone(ofShelf: shelf - 1) {
+                    zoneDivider(rack.zone(ofShelf: shelf))
+                }
                 HStack(spacing: 0) {
                     if showsHeaders {
                         Text(verbatim: "\(shelf + 1)")
@@ -125,6 +128,31 @@ struct RackGrid: View {
 
     /// Space between two shelves of layers, in places.
     static let shelfGap: CGFloat = 0.12
+
+    /// The name of a temperature zone over a line; the zones below the first one start
+    /// under a thicker divider.
+    private func zoneDivider(_ zone: Int) -> some View {
+        HStack(spacing: cellSize * 0.12) {
+            Text(verbatim: rack.zoneName(zone))
+                .font(.system(size: max(9, cellSize * 0.2), weight: .semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .fixedSize()
+            Capsule()
+                .fill(Color.secondary.opacity(zone == 0 ? 0.25 : 0.55))
+                .frame(height: zone == 0 ? 1 : max(3, cellSize * 0.07))
+        }
+        // As wide as the shelves (the line would otherwise take all the width offered).
+        .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2,
+               height: max(Self.zoneLabelMinHeight, cellSize * Self.zoneLabelHeight), alignment: .leading)
+        .padding(.leading, showsHeaders ? headerWidth : 0)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    /// Height of a zone's name, in places, and at least in points.
+    static let zoneLabelHeight: CGFloat = 0.3
+    static let zoneLabelMinHeight: CGFloat = 12
 
     private func rowHeader(_ row: Int) -> some View {
         Text(verbatim: Rack.rowLetters(row))
@@ -159,6 +187,8 @@ extension RackGrid {
     static func fittingCellSize(for rack: Rack, in space: CGSize, showsHeaders: Bool = true) -> CGFloat {
         let columns = CGFloat(rack.maxColumns), rows = CGFloat(rack.rows)
         var width: CGFloat, height: CGFloat
+        /// Points taken whatever the cell size (zone names).
+        var reserved: CGFloat = 0
         switch rack.kind {
         case .grid:
             width = columns * 1.08
@@ -169,6 +199,12 @@ extension RackGrid {
             width = (columns + 0.5) * 1.04
             height = rack.shelfRows.reduce(CGFloat(0)) { $0 + 1 + CGFloat($1.count - 1) * 0.87 + 0.15 }
                 + CGFloat(max(0, rack.shelfRows.count - 1)) * shelfGap
+            if rack.zoneCount > 1 {
+                // Each zone's name: a share of a place, but never below its smallest height.
+                let zones = CGFloat(rack.zoneCount)
+                height += zones * (zoneLabelHeight + shelfGap)
+                reserved = zones * zoneLabelMinHeight
+            }
         case .staggered:
             width = (columns + 0.5) * 1.04 + 0.4
             height = rows * 0.9 + 0.4
@@ -180,7 +216,7 @@ extension RackGrid {
             height = 1.7 + (rows - 1) * 0.92
         }
         if showsHeaders { width += 0.5 }
-        let fit = min(space.width / width, space.height / height)
+        let fit = min(space.width / width, max(0, space.height - reserved) / height)
         // From this size, grid and shelf cells also show the wine's name, so rows get taller.
         if fit >= RackCellView.nameSize, rack.kind == .grid || rack.kind == .shelves {
             let taller = height + rows * (RackCellView.nameHeightRatio - 1)

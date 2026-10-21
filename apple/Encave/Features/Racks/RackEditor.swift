@@ -9,9 +9,18 @@ struct RackPreset: Identifiable {
     let columns: Int
     var depth = 1
     var binCapacity = 10
-    /// Honeycomb on shelves: the layers of each shelf, from the top.
+    /// Honeycomb on shelves: the layers of each shelf, from the top, the bottles of each
+    /// row (default: the usual quincunx) and the shelves that start a new zone.
     var shelfLayers: [Int]?
-    var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)-\(shelfLayers ?? [])" }
+    var shelfRows: [Int]?
+    var zoneBreaks: [Int]?
+    var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)-\(shelfLayers ?? [])-\(zoneBreaks ?? [])" }
+
+    /// The fridge these shelves make.
+    var shelvesRack: Rack? {
+        shelfLayers.map { Rack(name: "", kind: kind, rows: rows, columns: columns, depth: depth, rowColumns: shelfRows,
+                               shelfLayers: $0, zoneBreaks: zoneBreaks) }
+    }
 
     // Computed: LocalizedStringKey is not Sendable, so it cannot be a stored static.
     static var all: [RackPreset] {
@@ -23,6 +32,9 @@ struct RackPreset: Identifiable {
             RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
             RackPreset(title: "Wine fridge, shelves in layers", kind: .staggered, rows: 10, columns: 6, depth: 2,
                        shelfLayers: Array(repeating: 2, count: 5)),
+            RackPreset(title: "Wine fridge, 2 zones", kind: .staggered, rows: SampleData.twoZoneFridgeRows.count, columns: 6,
+                       depth: 2, shelfLayers: SampleData.twoZoneFridgeLayers, shelfRows: SampleData.twoZoneFridgeRows,
+                       zoneBreaks: [4]),
             RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
             RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
             RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
@@ -247,7 +259,7 @@ struct RackEditor: View {
     private var layered: Bool { kind == .staggered && onShelves }
 
     private var depthHelp: LocalizedStringKey {
-        layered ? "Bottles one behind the other on the shelf." : "How many bottles fit one behind the other in each cell."
+        layered ? "Two rows, often head to tail." : "How many bottles fit one behind the other in each cell."
     }
 
     private var layerCount: Int { shelves.reduce(0) { $0 + $1.layers } }
@@ -258,7 +270,8 @@ struct RackEditor: View {
             let widths = shelves.flatMap { $0.counts.prefix($0.layers).reversed() }
             return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: max(1, widths.count),
                         columns: shelves.map { $0.counts[0] }.max() ?? 1, depth: depth, rowColumns: widths,
-                        shelfLayers: shelves.map(\.layers))
+                        shelfLayers: shelves.map(\.layers),
+                        zoneBreaks: shelves.indices.filter { $0 > 0 && shelves[$0].startsZone })
         }
         return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: rows,
                     columns: customRows ? (rowColumns.max() ?? columns) : columns,
@@ -292,6 +305,7 @@ struct RackEditor: View {
             shelves = shelves.map { shelf in
                 var copy = source
                 copy.id = shelf.id
+                copy.startsZone = shelf.startsZone
                 return copy
             }
         }
@@ -327,9 +341,8 @@ struct RackEditor: View {
     }
 
     private func matches(_ preset: RackPreset) -> Bool {
-        if let layers = preset.shelfLayers {
-            return layered && depth == preset.depth
-                && shelves == layers.map { ShelfDraft(layers: $0, bottom: preset.columns) }
+        if let fridge = preset.shelvesRack {
+            return layered && depth == preset.depth && shelves == ShelfDraft.shelves(of: fridge)
         }
         return !customRows && !layered && rows == preset.rows && columns == preset.columns
             && (kind == .bins ? binCapacity == preset.binCapacity : depth == preset.depth)
@@ -340,9 +353,7 @@ struct RackEditor: View {
             kind = preset.kind; rows = preset.rows; columns = preset.columns
             depth = preset.depth; binCapacity = preset.binCapacity; customRows = false
             onShelves = preset.shelfLayers != nil
-            if let layers = preset.shelfLayers {
-                shelves = layers.map { ShelfDraft(layers: $0, bottom: preset.columns) }
-            }
+            if let fridge = preset.shelvesRack { shelves = ShelfDraft.shelves(of: fridge) }
         }
     }
 
@@ -361,10 +372,7 @@ struct RackEditor: View {
             depth = rack.depth; binCapacity = rack.binCapacity
             if rack.hasShelfLayers {
                 onShelves = true
-                shelves = rack.shelfRows.map { rows in
-                    // From the bottom layer up: the shelf's last row first.
-                    ShelfDraft(layers: rows.count, counts: rows.reversed().map { rack.columns(inRow: $0) })
-                }
+                shelves = ShelfDraft.shelves(of: rack)
             } else if let custom = rack.rowColumns {
                 rowColumns = custom
                 customRows = true
@@ -392,6 +400,8 @@ struct ShelfDraft: Identifiable, Equatable {
     /// Bottles in each layer, from the bottom; always three values, so changing the
     /// number of layers keeps what was typed.
     var counts: [Int]
+    /// A divider above this shelf: it starts a new temperature zone.
+    var startsZone = false
 
     /// A bottom layer of `bottom` bottles; each layer above rests in the gaps of the one below.
     init(layers: Int = 2, bottom: Int = 6) {
@@ -413,11 +423,22 @@ struct ShelfDraft: Identifiable, Equatable {
     init(copying other: ShelfDraft) {
         self = other
         id = UUID()
+        startsZone = false
     }
 
-    /// Same layers and bottles, whatever the shelf.
+    /// The shelves of a fridge with layers, from the top.
+    static func shelves(of rack: Rack) -> [ShelfDraft] {
+        rack.shelfRows.enumerated().map { shelf, rows in
+            // From the bottom layer up: the shelf's last row first.
+            var draft = ShelfDraft(layers: rows.count, counts: rows.reversed().map { rack.columns(inRow: $0) })
+            draft.startsZone = rack.zoneBreaks?.contains(shelf) == true
+            return draft
+        }
+    }
+
+    /// Same layers, bottles and zone, whatever the shelf.
     static func == (a: ShelfDraft, b: ShelfDraft) -> Bool {
-        a.layers == b.layers && a.counts.prefix(a.layers) == b.counts.prefix(b.layers)
+        a.layers == b.layers && a.counts.prefix(a.layers) == b.counts.prefix(b.layers) && a.startsZone == b.startsZone
     }
 }
 
@@ -454,6 +475,10 @@ private struct ShelfRow: View {
             hint
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            if number > 1 {
+                Toggle("New zone from this shelf", isOn: $shelf.startsZone)
+                    .fieldHelp("For a fridge with two temperature zones: a divider is drawn above this shelf.")
+            }
         }
         .padding(.vertical, 4)
     }

@@ -159,6 +159,13 @@ fun Rack.displayLabel(cell: RackCell, resources: Resources): String {
     return displayLabelByKind(cell, resources)
 }
 
+/** "Upper zone" and "Lower zone" for a fridge with two zones, else "Zone 2". */
+fun Rack.zoneName(zone: Int, resources: Resources): String = when {
+    zoneCount == 2 && zone == 0 -> resources.getString(R.string.rack_zone_upper)
+    zoneCount == 2 -> resources.getString(R.string.rack_zone_lower)
+    else -> resources.getString(R.string.rack_zone_number, zone + 1)
+}
+
 private fun Rack.displayLabelByKind(cell: RackCell, resources: Resources): String = when (kind) {
     RackKind.Grid, RackKind.Staggered -> label(cell)
     RackKind.Shelves -> resources.getString(R.string.place_shelf, Rack.rowLetters(cell.row), cell.column + 1)

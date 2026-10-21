@@ -2171,16 +2171,6 @@
         }
       }
     },
-    "Bottles one behind the other on the shelf.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bouteilles l’une derrière l’autre sur l’étagère."
-          }
-        }
-      }
-    },
     "Bottles opened from your cellar and wines tasted elsewhere, in one diary.": {
       "localizations": {
         "fr": {
@@ -4381,6 +4371,16 @@
         }
       }
     },
+    "For a fridge with two temperature zones: a divider is drawn above this shelf.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour une cave à deux zones de température : un séparateur est dessiné au-dessus de cette étagère."
+          }
+        }
+      }
+    },
     "For a rack with a sloped top, a staircase or an irregular cellar wall.": {
       "localizations": {
         "fr": {
@@ -4391,12 +4391,12 @@
         }
       }
     },
-    "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to All Shelves** (touch and hold it). Places are named by shelf, layer and number, like **Shelf 1, top layer, place 3**; each shelf fills from its bottom layer.": {
+    "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to All Shelves** (touch and hold it). Places are named by shelf, layer and number, like **Shelf 1, top layer, place 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone; **Wine fridge, 2 zones** is a ready-made start.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas."
+            "value": "Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin, 2 zones** est un point de départ tout prêt."
           }
         }
       }
@@ -5851,6 +5851,16 @@
         }
       }
     },
+    "Lower zone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone basse"
+          }
+        }
+      }
+    },
     "Made on this device with Image Playground, from the wine's name and its label photo.": {
       "localizations": {
         "fr": {
@@ -6157,6 +6167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nouveau casier…"
+          }
+        }
+      }
+    },
+    "New zone from this shelf": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelle zone à partir de cette étagère"
           }
         }
       }
@@ -11231,6 +11251,16 @@
         }
       }
     },
+    "Two rows, often head to tail.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deux rangées, souvent tête-bêche."
+          }
+        }
+      }
+    },
     "Two steps": {
       "localizations": {
         "fr": {
@@ -11347,6 +11377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mis à jour depuis vos autres appareils"
+          }
+        }
+      }
+    },
+    "Upper zone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone haute"
           }
         }
       }
@@ -11911,6 +11951,16 @@
         }
       }
     },
+    "Wine fridge, 2 zones": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave à vin, 2 zones"
+          }
+        }
+      }
+    },
     "Wine fridge, 24": {
       "localizations": {
         "fr": {
@@ -12317,6 +12367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre année en vin %@"
+          }
+        }
+      }
+    },
+    "Zone %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone %lld"
           }
         }
       }

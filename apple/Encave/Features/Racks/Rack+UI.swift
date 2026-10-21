@@ -84,6 +84,12 @@ extension Rack {
     }
 
     static func letters(_ row: Int) -> String { rowLetters(row) }
+
+    /// "Upper zone" and "Lower zone" for a fridge with two zones, else "Zone 2".
+    func zoneName(_ zone: Int) -> String {
+        if zoneCount == 2 { return zone == 0 ? String(localized: "Upper zone") : String(localized: "Lower zone") }
+        return String(localized: "Zone \(zone + 1)")
+    }
 }
 
 extension CellarModel {
