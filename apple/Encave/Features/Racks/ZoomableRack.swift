@@ -7,6 +7,9 @@ import UIKit
 /// double-tap to zoom in on a spot (or back out), pan when zoomed in.
 /// When a pinch ends the rack is drawn again at the new size, so labels stay sharp
 /// and names appear once cells are large enough.
+///
+/// The pinch is our own recognizer: on iPad (iPadOS 26), the scroll view's built-in pinch
+/// recognizes the two fingers and reports their scale, but never changes the zoom.
 struct ZoomableRack: UIViewRepresentable {
     @Environment(CellarModel.self) private var model
     let rack: Rack
@@ -40,6 +43,10 @@ struct ZoomableRack: UIViewRepresentable {
         scroll.zoomedView = host.view
         context.coordinator.host = host
         context.coordinator.scroll = scroll
+
+        let pinch = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pinched(_:)))
+        scroll.addGestureRecognizer(pinch)
+        context.coordinator.pinch = pinch
 
         let doubleTap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.doubleTapped(_:)))
         doubleTap.numberOfTapsRequired = 2
@@ -82,13 +89,59 @@ struct ZoomableRack: UIViewRepresentable {
         var zoomStepID = 0
         /// SwiftUI asked for a redraw while the rack was being zoomed or scrolled.
         var hasPendingUpdate = false
+        /// Our pinch, and the zoom and the point of the drawing under the fingers when it began.
+        weak var pinch: UIPinchGestureRecognizer?
+        private var pinchStartScale: CGFloat = 1
+        private var pinchAnchor: CGPoint = .zero
 
         /// Zooming, bouncing back or scrolling: the drawing and its frame must not change.
         var isBusy: Bool {
             guard let scroll else { return false }
-            let pinch = scroll.pinchGestureRecognizer?.state
-            return scroll.isZooming || scroll.isZoomBouncing || scroll.isDragging || scroll.isDecelerating
-                || pinch == .began || pinch == .changed
+            let pinching = pinch?.state == .began || pinch?.state == .changed
+            return pinching || scroll.isZooming || scroll.isZoomBouncing || scroll.isDragging || scroll.isDecelerating
+        }
+
+        /// Zooms with the fingers, keeping the spot under them in place; a little past the
+        /// limits while pinching, then back to them.
+        @objc func pinched(_ gesture: UIPinchGestureRecognizer) {
+            guard let scroll, let content = host?.view else { return }
+            switch gesture.state {
+            case .began:
+                // The fingers both zoom and move the rack here: no scrolling meanwhile.
+                scroll.panGestureRecognizer.isEnabled = false
+                pinchStartScale = scroll.zoomScale
+                // In the drawing's own coordinates, whatever its current scale.
+                pinchAnchor = gesture.location(in: content)
+            case .changed:
+                let low = scroll.minimumZoomScale, high = scroll.maximumZoomScale
+                var scale = pinchStartScale * gesture.scale
+                // Resist past the limits, as the scroll view's own zoom does.
+                if scale > high { scale = high * pow(scale / high, 0.25) }
+                if scale < low { scale = low * pow(scale / low, 0.25) }
+                scroll.setZoomScale(scale, animated: false)
+                // Keep the anchor under the fingers (which may also move together).
+                let fingers = gesture.location(in: scroll)
+                let onScreen = CGPoint(x: fingers.x - scroll.contentOffset.x, y: fingers.y - scroll.contentOffset.y)
+                let size = scroll.contentSize
+                let inset = scroll.contentInset
+                let x = pinchAnchor.x * scale - onScreen.x
+                let y = pinchAnchor.y * scale - onScreen.y
+                scroll.contentOffset = CGPoint(
+                    x: min(max(x, -inset.left), max(-inset.left, size.width + inset.right - scroll.bounds.width)),
+                    y: min(max(y, -inset.top), max(-inset.top, size.height + inset.bottom - scroll.bounds.height))
+                )
+            case .ended, .cancelled, .failed:
+                scroll.panGestureRecognizer.isEnabled = true
+                let low = scroll.minimumZoomScale, high = scroll.maximumZoomScale
+                if scroll.zoomScale > high || scroll.zoomScale < low {
+                    // Back within the limits; the scroll view then calls scrollViewDidEndZooming.
+                    scroll.setZoomScale(min(high, max(low, scroll.zoomScale)), animated: true)
+                } else {
+                    scrollViewDidEndZooming(scroll, with: content, atScale: scroll.zoomScale)
+                }
+            default:
+                break
+            }
         }
 
         /// Applies what SwiftUI last asked for: a new shape, a new space or a new drawing.
@@ -189,6 +242,9 @@ struct ZoomableRack: UIViewRepresentable {
             host.rootView = content()
             scroll.minimumZoomScale = 1 / level
             scroll.maximumZoomScale = ZoomableRack.maxZoom / level
+            // Our pinch zooms (see the type's comment); the scroll view's own one would only
+            // compete with it where it works.
+            scroll.pinchGestureRecognizer?.isEnabled = false
             if scroll.zoomScale != 1 { scroll.zoomScale = 1 }
             report(scroll)
             let size = host.sizeThatFits(in: CGSize(width: CGFloat.infinity, height: CGFloat.infinity))

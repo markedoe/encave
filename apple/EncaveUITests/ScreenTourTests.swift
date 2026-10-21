@@ -444,22 +444,22 @@ final class ScreenTourTests: XCTestCase {
         let before = cell.frame.width
         canvas.pinch(withScale: 2.2, velocity: 1.5)
         sleep(2)
-        var after = cell.frame.width
+        let after = cell.frame.width
         let zoom = (canvas.value as? String) ?? "?"
-        let zoomIn = element("rack.zoom.in")
-        if after <= before * 1.3, zoomIn.exists {
-            // iPad: the simulated pinch does not reach the zooming view on the CI
-            // simulator. The zoom buttons (also ⌘+) are checked instead.
-            print("main rack: simulated pinch did not zoom on this device (canvas zoom \(zoom)); using Zoom In")
-            zoomIn.press()
-            sleep(1)
+        XCTAssertGreaterThan(after, before * 1.3,
+                             "main rack: pinching did not enlarge places (\(before) → \(after) pt, canvas zoom \(zoom), canvas \(canvas.frame))")
+        snapshot("rack-zoomed")
+        // iPad: the zoom buttons (also ⌘+ and ⌘–) zoom in and out too.
+        let zoomIn = element("rack.zoom.in"), zoomOut = element("rack.zoom.out")
+        if zoomIn.exists, zoomOut.exists {
+            zoomOut.press()
+            sleep(2)
+            let out = cell.frame.width
+            XCTAssertLessThan(out, after * 0.8, "main rack: Zoom Out did not shrink places (\(after) → \(out) pt)")
             zoomIn.press()
             sleep(2)
-            after = cell.frame.width
+            XCTAssertGreaterThan(cell.frame.width, out * 1.2, "main rack: Zoom In did not enlarge places (\(out) → \(cell.frame.width) pt)")
         }
-        XCTAssertGreaterThan(after, before * 1.3,
-                             "main rack: zooming did not enlarge places (\(before) → \(after) pt, canvas zoom \(zoom), canvas \(canvas.frame))")
-        snapshot("rack-zoomed")
         #endif
     }
 
