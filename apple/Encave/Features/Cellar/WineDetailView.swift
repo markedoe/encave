@@ -149,7 +149,7 @@ struct WineDetailView: View {
 
                 let discoveries = model.cellar.discoveries(of: wineID)
                 if !discoveries.isEmpty {
-                    Section("Discoveries") {
+                    Section("Tasted elsewhere") {
                         ForEach(discoveries) { discovery in
                             Button {
                                 model.sheet = .discovery(discoveryID: discovery.id)

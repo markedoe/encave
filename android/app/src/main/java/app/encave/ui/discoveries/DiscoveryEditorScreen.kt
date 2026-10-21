@@ -51,6 +51,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -82,7 +83,7 @@ import app.encave.ui.theme.Dimens
 import java.time.Instant
 
 /**
- * Remember a wine tasted or seen elsewhere: photo (read by AI when set up),
+ * Note a wine tasted elsewhere (restaurant, friends, a fair; the cellar does not change): photo (read by AI when set up),
  * the wine, where, your impression, tags and the shopping list. Also edits one.
  */
 @Composable
@@ -145,7 +146,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (existing == null) R.string.discovery_new else R.string.discovery_title)) },
+                title = { Text(wine?.displayName ?: stringResource(R.string.discovery_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navigator.back() }) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
@@ -263,7 +264,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
                     ActionContent(stringResource(R.string.discovery_delete), Icons.Outlined.Delete)
                 }
             }
-            HelpLink(HelpTopic.Discoveries, R.string.help_link_discoveries)
+            HelpLink(HelpTopic.Journal, R.string.help_link_journal)
         }
     }
     if (pickingDate) {

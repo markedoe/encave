@@ -1,122 +1,68 @@
 import CaveKit
 import SwiftUI
 
-/// Wines found elsewhere, with the shopping list and tag filters. Sections for the Journal list.
-struct DiscoverySections: View {
-    @Environment(CellarModel.self) private var model
-    let query: String
-    @State private var toBuyOnly = false
-    @State private var tag: String?
+extension Discovery {
+    /// "Tasted elsewhere · Lisbon": where it comes from, in words.
+    var sourceText: String {
+        if let place = place ?? setting?.name {
+            String(localized: "Tasted elsewhere · \(place)")
+        } else {
+            String(localized: "Tasted elsewhere")
+        }
+    }
+}
 
-    /// The chosen tag while some discovery still has it: otherwise its chip is gone and
-    /// the filter could not be cleared.
-    private var activeTag: String? {
-        tag.flatMap { model.cellar.discoveryTags.contains($0) ? $0 : nil }
+/// Swipe actions and context menu of a wine tasted elsewhere: add it to the cellar,
+/// put it on the shopping list or take it off, delete it.
+struct ElsewhereActions: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    let discovery: Discovery
+
+    func body(content: Content) -> some View {
+        content
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                Button {
+                    model.buy(discovery)
+                } label: {
+                    Label("Add to Cellar", systemImage: "plus")
+                }
+                .tint(.accentColor)
+            }
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    model.deleteDiscovery(discovery.id)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                Button {
+                    toggleToBuy()
+                } label: {
+                    toBuyLabel
+                }
+                .tint(.indigo)
+            }
+            .contextMenu {
+                Button("Edit", systemImage: "pencil") { model.sheet = .discovery(discoveryID: discovery.id) }
+                Button("Add to Cellar", systemImage: "plus") { model.buy(discovery) }
+                Button {
+                    toggleToBuy()
+                } label: {
+                    toBuyLabel
+                }
+                Divider()
+                Button("Delete", systemImage: "trash", role: .destructive) { model.deleteDiscovery(discovery.id) }
+            }
     }
 
-    var body: some View {
-        let tag = activeTag
-        let items = model.cellar.discoveries(filter: DiscoveryFilter(query: query, tag: tag, toBuyOnly: toBuyOnly))
-        if model.cellar.discoveries.isEmpty {
-            ContentUnavailableView {
-                Label("No discoveries yet", systemImage: "sparkles")
-            } description: {
-                Text("Liked a bottle at friends’ or in a restaurant? Scan it to remember it, add notes and tags, and put it on your shopping list.")
-            } actions: {
-                Button {
-                    model.sheet = .discovery(discoveryID: nil)
-                } label: {
-                    Text("Remember a Wine").frame(minWidth: 200)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            }
-            .listRowBackground(Color.clear)
+    @ViewBuilder private var toBuyLabel: some View {
+        if discovery.wantsToBuy {
+            Label("Remove from List", systemImage: "cart.badge.minus")
         } else {
-            Section {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ChoiceChip(title: "To buy", isSelected: toBuyOnly) {
-                            withAnimation(.snappy) { toBuyOnly.toggle() }
-                        } leading: {
-                            Image(systemName: "cart")
-                            Text(verbatim: "\(model.cellar.shoppingListCount)")
-                                .monospacedDigit()
-                                .foregroundStyle(.secondary)
-                        }
-                        ForEach(model.cellar.discoveryTags, id: \.self) { name in
-                            ChoiceChip(verbatim: name, isSelected: tag == name) {
-                                withAnimation(.snappy) { self.tag = tag == name ? nil : name }
-                            } leading: {
-                                Image(systemName: "number").font(.caption.weight(.semibold))
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 2)
-                }
-                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                .listRowBackground(Color.clear)
-            }
-            Section {
-                if items.isEmpty {
-                    ContentUnavailableView.search(text: query)
-                        .listRowBackground(Color.clear)
-                }
-                ForEach(items) { discovery in
-                    Button {
-                        model.sheet = .discovery(discoveryID: discovery.id)
-                    } label: {
-                        DiscoveryRow(discovery: discovery)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            model.buy(discovery)
-                        } label: {
-                            Label("Add to Cellar", systemImage: "plus")
-                        }
-                        .tint(.accentColor)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            model.deleteDiscovery(discovery.id)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        Button {
-                            toggleToBuy(discovery)
-                        } label: {
-                            if discovery.wantsToBuy {
-                                Label("Remove from List", systemImage: "cart.badge.minus")
-                            } else {
-                                Label("To buy", systemImage: "cart.badge.plus")
-                            }
-                        }
-                        .tint(.indigo)
-                    }
-                    .contextMenu {
-                        Button("Edit", systemImage: "pencil") { model.sheet = .discovery(discoveryID: discovery.id) }
-                        Button("Add to Cellar", systemImage: "plus") { model.buy(discovery) }
-                        Button {
-                            toggleToBuy(discovery)
-                        } label: {
-                            if discovery.wantsToBuy {
-                                Label("Remove from List", systemImage: "cart.badge.minus")
-                            } else {
-                                Label("To buy", systemImage: "cart.badge.plus")
-                            }
-                        }
-                        Divider()
-                        Button("Delete", systemImage: "trash", role: .destructive) { model.deleteDiscovery(discovery.id) }
-                    }
-                }
-            } header: {
-                if toBuyOnly { Text("Shopping list") }
-            }
+            Label("To buy", systemImage: "cart.badge.plus")
         }
     }
 
-    private func toggleToBuy(_ discovery: Discovery) {
+    private func toggleToBuy() {
         model.update { cellar in
             cellar.discoveries[discovery.id]?.wantsToBuy.toggle()
             if cellar.discoveries[discovery.id]?.wantsToBuy == true { cellar.discoveries[discovery.id]?.boughtAt = nil }
@@ -124,15 +70,17 @@ struct DiscoverySections: View {
     }
 }
 
-/// One wine found elsewhere: photo or bottle, where, rating, note and tags.
+/// One wine tasted elsewhere: photo or bottle, where, rating, note and tags.
 struct DiscoveryRow: View {
     @Environment(CellarModel.self) private var model
     let discovery: Discovery
     var showsWine = true
+    /// In the Journal: says in words that it was tasted elsewhere, and where.
+    var showsSource = false
 
     var body: some View {
         let wine = model.cellar.wines[discovery.wineID]
-        HStack(alignment: .top, spacing: 12) {
+        let row = HStack(alignment: .top, spacing: 12) {
             if showsWine {
                 if let wine, wine.hasShownPhoto {
                     WineImage(wine: wine, maxPixelSize: 200, inset: 3)
@@ -163,15 +111,23 @@ struct DiscoveryRow: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                if showsSource {
+                    Label(discovery.sourceText, systemImage: discovery.setting?.systemImage ?? "mappin.and.ellipse")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .labelStyle(CompactLabelStyle())
+                }
                 HStack(spacing: 10) {
                     // The style in words, not only by the bottle's color.
                     if showsWine, let style = wine?.color?.name {
                         Text(style)
                     }
-                    if let place = discovery.place {
-                        Label(place, systemImage: discovery.setting?.systemImage ?? "mappin.and.ellipse")
-                    } else if let setting = discovery.setting {
-                        Label(setting.title, systemImage: setting.systemImage)
+                    if !showsSource {
+                        if let place = discovery.place {
+                            Label(place, systemImage: discovery.setting?.systemImage ?? "mappin.and.ellipse")
+                        } else if let setting = discovery.setting {
+                            Label(setting.title, systemImage: setting.systemImage)
+                        }
                     }
                     if showsWine {
                         Text(discovery.date, format: .dateTime.day().month(.abbreviated))
@@ -204,6 +160,23 @@ struct DiscoveryRow: View {
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        if showsSource {
+            row
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityText(wine: wine))
+        } else {
+            row.accessibilityElement(children: .combine)
+        }
+    }
+
+    /// "Tasted elsewhere · Lisbon, Alvarinho 2023, 5 stars, March 3, …".
+    private func accessibilityText(wine: Wine?) -> String {
+        var parts = [discovery.sourceText, wine?.displayName ?? String(localized: "Unknown wine")]
+        if let rating = discovery.rating { parts.append(String(localized: "\(rating) stars")) }
+        parts.append(discovery.date.formatted(.dateTime.day().month(.wide)))
+        if discovery.wantsToBuy { parts.append(String(localized: "To buy")) }
+        if let note = discovery.note { parts.append(note) }
+        if !discovery.tags.isEmpty { parts.append(discovery.tags.joined(separator: ", ")) }
+        return parts.joined(separator: ", ")
     }
 }

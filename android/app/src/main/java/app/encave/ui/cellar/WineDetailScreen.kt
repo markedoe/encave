@@ -281,7 +281,7 @@ fun WineDetailScreen(
             ServingAdvice.advice(wine, viewModel.year)?.let { advice -> item { Serving(advice) } }
             val discoveries = cellar.discoveriesOf(wine.id)
             if (discoveries.isNotEmpty()) {
-                item { SectionHeader(stringResource(R.string.journal_discoveries)) }
+                item { SectionHeader(stringResource(R.string.journal_tasted_elsewhere)) }
                 items(discoveries, key = { "d" + it.id }) { discovery ->
                     DiscoveryRow(
                         cellar, viewModel.photos, discovery, showsWine = false,

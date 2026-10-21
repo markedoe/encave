@@ -34,12 +34,14 @@ import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.FilterList
 
 /**
  * Topics of the in-app help, the same as on Apple. The keyboard-shortcuts topic is
  * left out: the Android app has no keyboard shortcuts.
  */
-enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Discoveries, Devices, Sync, Ai, WebSearch, Data, Privacy }
+enum class HelpTopic { Start, Adding, Scanning, Racks, Tonight, Drinking, Journal, Devices, Sync, Ai, WebSearch, Data, Privacy }
 
 /** A paragraph of help with an optional heading. Text can use **bold** and `code`. */
 data class HelpSection(@StringRes val body: Int, @StringRes val title: Int? = null, val icon: ImageVector? = null)
@@ -123,18 +125,20 @@ data class HelpArticle(
             HelpArticle(
                 HelpTopic.Drinking, R.string.help_drinking_title, R.string.help_drinking_summary, Icons.Outlined.LocalBar,
                 listOf(
-                    HelpSection(R.string.help_drinking_drink, R.string.action_drink),
+                    HelpSection(R.string.help_drinking_drink, R.string.drink_title),
                     HelpSection(R.string.help_drinking_note, R.string.help_drinking_note_title),
                     HelpSection(R.string.help_drinking_gone, R.string.help_drinking_gone_title),
                 ),
             ),
             HelpArticle(
-                HelpTopic.Discoveries, R.string.help_discoveries_title, R.string.help_discoveries_summary, Icons.Outlined.ShoppingCart,
+                HelpTopic.Journal, R.string.help_journal_title, R.string.help_journal_summary, Icons.Outlined.AutoStories,
                 listOf(
-                    HelpSection(R.string.help_discoveries_remember, R.string.discovery_new),
-                    HelpSection(R.string.help_discoveries_tags, R.string.discovery_tags),
-                    HelpSection(R.string.help_discoveries_list, R.string.discovery_shopping_list),
-                    HelpSection(R.string.help_discoveries_not_cellar, R.string.help_discoveries_not_cellar_title),
+                    HelpSection(R.string.help_journal_diary, R.string.help_journal_diary_title),
+                    HelpSection(R.string.help_journal_add, R.string.journal_add, Icons.Filled.Add),
+                    HelpSection(R.string.help_journal_filters, R.string.help_journal_filters_title, Icons.Outlined.FilterList),
+                    HelpSection(R.string.help_journal_tags, R.string.discovery_tags),
+                    HelpSection(R.string.help_journal_list, R.string.discovery_shopping_list, Icons.Outlined.ShoppingCart),
+                    HelpSection(R.string.help_journal_not_cellar, R.string.help_journal_not_cellar_title),
                 ),
             ),
             HelpArticle(
