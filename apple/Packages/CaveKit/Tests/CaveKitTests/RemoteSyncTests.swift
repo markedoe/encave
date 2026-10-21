@@ -55,6 +55,15 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
 }
 
 @Suite struct RemoteSyncTests {
+    @Test func firstRoundComesOneIntervalAfterTheLastOne() {
+        let now = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        #expect(RemoteSync.firstWait(interval: 900, lastRound: nil, now: now) == 0)
+        #expect(RemoteSync.firstWait(interval: 900, lastRound: now.addingTimeInterval(-3600), now: now) == 0)
+        #expect(RemoteSync.firstWait(interval: 900, lastRound: now.addingTimeInterval(-600), now: now) == 300)
+        // A last round in the future (the clock moved back) waits one interval at most.
+        #expect(RemoteSync.firstWait(interval: 900, lastRound: now.addingTimeInterval(600), now: now) == 900)
+    }
+
     @Test func aChangeReachesTheOtherDevicesThroughStorage() async throws {
         let store = MemoryMailboxStore()
         var devices = household()

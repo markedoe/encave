@@ -221,6 +221,13 @@ public enum RemoteSync {
     /// Snapshots kept per device: the newest two (a reader may be fetching the previous one).
     static let keptSnapshots = 2
 
+    /// The wait before the first round of a loop that runs every `interval`, counted from
+    /// the last round: none when that round is older than the interval, or there was none.
+    public static func firstWait(interval: TimeInterval, lastRound: Date?, now: Date = .now) -> TimeInterval {
+        let elapsed = now.timeIntervalSince(lastRound ?? .distantPast)
+        return min(interval, max(0, interval - elapsed))
+    }
+
     public struct Result: Sendable {
         /// The merged copy, or nil if nothing came in.
         public var snapshot: SyncSnapshot?

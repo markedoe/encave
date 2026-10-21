@@ -196,8 +196,9 @@ final class SyncService {
         remoteFrequency = frequency
         UserDefaults.standard.set(frequency.rawValue, forKey: RemoteSyncFrequency.key)
         stopRemoteLoop()
-        // Changed in Devices, so the app is open: the next round after the new interval.
-        startRemoteLoop(roundFirst: false)
+        // Changed in Devices, so the app is open: the next round one new interval after
+        // the last one, now if that is past (as on Android).
+        startRemoteLoop(sinceLastRound: true)
         if frequency.interval == nil { pendingRemote?.cancel() }
         #if os(iOS)
         scheduleBackgroundSync()
@@ -610,16 +611,22 @@ final class SyncService {
     /// While the app is open: a round at the chosen frequency (every minute by default),
     /// to pick up changes from devices away. None when the user syncs there only when
     /// they tap Sync Now.
-    private func startRemoteLoop(roundFirst: Bool = true) {
+    /// `sinceLastRound`: the first round comes one interval after the last one, not now.
+    private func startRemoteLoop(sinceLastRound: Bool = false) {
         guard remoteStorage != nil, remoteLoop == nil, !isDemo, let interval = remoteFrequency.interval else { return }
+        let seconds = TimeInterval(interval.components.seconds)
+        let first = sinceLastRound ? RemoteSync.firstWait(interval: seconds, lastRound: lastRemoteSync) : 0
         remoteLoop = Task { [weak self] in
-            if roundFirst { await self?.remoteRound() }
+            var wait = first
             while !Task.isCancelled {
-                self?.nextRemoteRound = .now.addingTimeInterval(TimeInterval(interval.components.seconds))
-                try? await Task.sleep(for: interval)
-                guard !Task.isCancelled else { break }
-                self?.nextRemoteRound = nil
+                if wait > 0 {
+                    self?.nextRemoteRound = .now.addingTimeInterval(wait)
+                    try? await Task.sleep(for: .seconds(wait))
+                    guard !Task.isCancelled else { break }
+                    self?.nextRemoteRound = nil
+                }
                 await self?.remoteRound()
+                wait = seconds
             }
         }
     }
