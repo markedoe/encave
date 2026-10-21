@@ -186,6 +186,8 @@ class AppViewModel(
                     withContext(Dispatchers.IO) { pendingDocuments.forEach(documents::discard) }
                     if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
                     else post(UiText.Plural(R.plurals.bottles_added, it.size))
+                    // Added without the documents that could not be stored (a full disk…).
+                    if (attachments.size < pendingDocuments.size) post(UiText.Res(R.string.err_document_unreadable))
                 }
                 .onFailure { post(errorText(it)) }
         }

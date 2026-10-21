@@ -17,6 +17,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Documents of wines and bottles (invoices, certificates, technical sheets), kept as they
@@ -40,6 +44,11 @@ class DocumentStore(context: Context) {
 
     fun data(id: String): ByteArray? = file(id)?.takeIf { it.exists() }?.readBytes()
 
+    private val changes = MutableStateFlow(0)
+
+    /** Moves on each time a document file is added (picked, or received from another device). */
+    val revision: StateFlow<Int> = changes.asStateFlow()
+
     /** Writes a document under an ID (a received one). False if the ID is not a safe file name. */
     fun store(id: String, data: ByteArray): Boolean = runCatching {
         val target = file(id) ?: return false
@@ -47,6 +56,7 @@ class DocumentStore(context: Context) {
         val temp = File(folder, "$id.${UUID.randomUUID()}.tmp")
         temp.writeBytes(data)
         check(temp.renameTo(target))
+        changes.update { it + 1 }
         true
     }.getOrDefault(false)
 
@@ -134,10 +144,14 @@ class DocumentStore(context: Context) {
         pendingFile(pending).parentFile?.deleteRecursively()
     }
 
-    /** Temporary copies (pending ones and those given to other apps), at launch. */
-    fun removeTemporaryCopies() {
+    /**
+     * Temporary copies, when the app starts: the pending ones, and those given to other apps
+     * a day ago or more. The process can start because another app reads a copy it was given
+     * (an email being sent), so recent ones stay.
+     */
+    fun removeTemporaryCopies(now: Instant = Instant.now()) {
         pendingFolder.deleteRecursively()
-        sharedFolder.deleteRecursively()
+        removeOlderThan(sharedFolder, now.minus(SHARED_COPY_LIFETIME))
     }
 
     /**
@@ -163,6 +177,30 @@ class DocumentStore(context: Context) {
         const val EXTENSION = "document"
         private const val SHARED_FOLDER = "documents"
 
+        /** How long a copy given to another app is kept: that app may read it much later. */
+        private val SHARED_COPY_LIFETIME = java.time.Duration.ofDays(1)
+
+        /** File names are at most 255 bytes on Android's file systems; this leaves room. */
+        private const val MAX_FILE_NAME_BYTES = 240
+
+        /** Removes the entries of [folder] last changed before [cutoff]. */
+        internal fun removeOlderThan(folder: File, cutoff: Instant) {
+            folder.listFiles()?.forEach { if (it.lastModified() < cutoff.toEpochMilli()) it.deleteRecursively() }
+        }
+
+        /** [name] cut, on a character boundary, to at most [maxBytes] bytes of UTF-8. */
+        internal fun trimmed(name: String, maxBytes: Int): String {
+            var bytes = 0
+            var end = 0
+            while (end < name.length) {
+                val next = name.offsetByCodePoints(end, 1)
+                bytes += name.substring(end, next).toByteArray(Charsets.UTF_8).size
+                if (bytes > maxBytes) break
+                end = next
+            }
+            return name.substring(0, end)
+        }
+
         private fun mimeType(name: String): String? =
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substringAfterLast('.', "").lowercase(Locale.ROOT))
 
@@ -171,10 +209,16 @@ class DocumentStore(context: Context) {
             var name = attachment.name
             if (name.isEmpty() || name == "." || name == "..") name = fallbackName
             if (name.startsWith(".")) name = "_$name"
-            val wanted = MimeTypeMap.getSingleton().getExtensionFromMimeType(attachment.contentType) ?: return name
+            val wanted = MimeTypeMap.getSingleton().getExtensionFromMimeType(attachment.contentType)
             val current = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
-            val same = current == wanted || MimeTypeMap.getSingleton().getMimeTypeFromExtension(current) == attachment.contentType
-            return if (same) name else "$name.$wanted"
+            val same = wanted == null || current == wanted ||
+                MimeTypeMap.getSingleton().getMimeTypeFromExtension(current) == attachment.contentType
+            // The extension is kept whole; a long name is shortened before it.
+            val extension = if (same) name.substringAfterLast('.', "").takeIf { it.isNotEmpty() && it.length <= 16 } else wanted
+            val base = if (same && extension != null) name.dropLast(extension.length + 1) else name
+            if (extension == null) return trimmed(base, MAX_FILE_NAME_BYTES)
+            val room = MAX_FILE_NAME_BYTES - extension.toByteArray(Charsets.UTF_8).size - 1
+            return trimmed(base, room) + "." + extension
         }
     }
 }
