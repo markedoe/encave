@@ -117,7 +117,7 @@ final class PairingSession {
                 phase = .syncing
                 guard let local = service.snapshot() else { throw SyncError.closed }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
-                                                                       photos: SyncService.photos, remote: service.remoteInfo)
+                                                                       files: SyncService.files, remote: service.remoteInfo)
                 service.apply(result, from: member.id)
                 service.adoptRemote(remote)
                 service.resume()
@@ -193,7 +193,7 @@ final class PairingSession {
                 phase = .syncing
                 guard let local = service.snapshot() else { throw SyncError.closed }
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
-                                                                       photos: SyncService.photos, remote: service.remoteInfo)
+                                                                       files: SyncService.files, remote: service.remoteInfo)
                 service.apply(result, from: keys.peer.device)
                 service.adoptRemote(remote)
                 service.resume()

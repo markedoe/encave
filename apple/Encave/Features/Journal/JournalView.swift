@@ -1,14 +1,14 @@
 import CaveKit
 import SwiftUI
 
-/// What you drank (tastings) and wines found elsewhere (discoveries), with insights.
+/// The diary: bottles opened from the cellar and wines tasted elsewhere, newest first,
+/// grouped by month, with filters and insights.
 struct JournalView: View {
-    enum Page: Hashable { case tastings, discoveries }
-
     @Environment(CellarModel.self) private var model
     /// On the Mac the window shows Insights in its own column, and provides the navigation.
     var embedded = false
     @State private var query = ""
+    @State private var tag: String?
 
     var body: some View {
         if embedded {
@@ -18,94 +18,227 @@ struct JournalView: View {
         }
     }
 
+    /// The chosen tag while some wine tasted elsewhere still has it and the filter shows them:
+    /// otherwise its chip is gone and the filter could not be cleared.
+    private var activeTag: String? {
+        guard model.journalFilter.showsElsewhere else { return nil }
+        return tag.flatMap { model.cellar.discoveryTags.contains($0) ? $0 : nil }
+    }
+
     private var journal: some View {
-        @Bindable var model = model
+        let entries = model.cellar.diary(filter: model.journalFilter, query: query, tag: activeTag)
+        let months = Dictionary(grouping: entries) { entry in
+            Calendar.current.dateInterval(of: .month, for: entry.date)?.start ?? .distantPast
+        }
+        let isEmpty = model.cellar.consumedBottles.isEmpty && model.cellar.discoveries.isEmpty
         return List {
+            if !embedded {
                 Section {
-                    Picker("Show", selection: $model.journalPage.animation()) {
-                        Text("Tastings").tag(Page.tastings)
-                        Text("Discoveries").tag(Page.discoveries)
+                    NavigationLink {
+                        InsightsView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Insights").font(.headline)
+                                Text("Your cellar in figures").font(.subheadline).foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "chart.pie").foregroundStyle(Color.accentColor)
+                        }
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
+                }
+            }
+            if isEmpty {
+                ContentUnavailableView {
+                    Label("Nothing here yet", systemImage: "book.closed")
+                } description: {
+                    Text("Open a bottle from your cellar or note a wine tasted elsewhere.")
+                } actions: {
+                    AddTastingMenu {
+                        Text("Add a Tasting").frame(minWidth: 200)
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .accessibilityIdentifier("journal.empty.add")
+                }
+                .listRowBackground(Color.clear)
+            } else {
+                Section {
+                    DiaryFilterBar(tag: $tag, activeTag: activeTag)
                 }
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
-
-                switch model.journalPage {
-                case .tastings: TastingSections(query: query, showsInsights: !embedded)
-                case .discoveries: DiscoverySections(query: query)
-                }
-            }
-            .searchable(text: $query, prompt: Text("Wine, place, note or tag"))
-            .navigationTitle("Journal")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        model.sheet = .discovery(discoveryID: nil)
-                    } label: {
-                        Label("Remember a Wine", systemImage: "plus")
+                if entries.isEmpty {
+                    if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                        FilterEmptyState(filter: model.journalFilter)
+                            .listRowBackground(Color.clear)
+                    } else {
+                        ContentUnavailableView.search(text: query)
+                            .listRowBackground(Color.clear)
                     }
-                    .accessibilityIdentifier("journal.add")
-                    .help(Text("Remember a wine tasted or seen elsewhere"))
+                }
+                ForEach(months.keys.sorted(by: >), id: \.self) { month in
+                    Section {
+                        ForEach(months[month] ?? []) { entry in
+                            DiaryEntryRow(entry: entry)
+                        }
+                    } header: {
+                        Text(month, format: .dateTime.month(.wide).year())
+                    }
                 }
             }
+        }
+        .searchable(text: $query, prompt: Text("Wine, place, note or tag"))
+        .navigationTitle("Journal")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                AddTastingMenu {
+                    Label("Add a Tasting", systemImage: "plus")
+                }
+                .accessibilityIdentifier("journal.add")
+                .help(Text("Note a bottle opened from your cellar or a wine tasted elsewhere"))
+            }
+        }
     }
 }
 
-/// Bottles you have opened, grouped by month, with access to insights.
-private struct TastingSections: View {
+/// "+" in the Journal: first where the wine was drunk, since only a bottle from the
+/// cellar leaves it.
+struct AddTastingMenu<MenuLabel: View>: View {
     @Environment(CellarModel.self) private var model
-    let query: String
-    var showsInsights = true
+    @ViewBuilder var label: () -> MenuLabel
 
     var body: some View {
-        let bottles = model.cellar.tastings(matching: query)
-        let months = Dictionary(grouping: bottles) { bottle in
-            Calendar.current.dateInterval(of: .month, for: bottle.tasting?.date ?? bottle.addedAt)?.start ?? .distantPast
-        }
-        if showsInsights {
-        Section {
-            NavigationLink {
-                InsightsView()
+        Menu {
+            Button {
+                model.sheet = .drink(bottleID: nil)
             } label: {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Insights").font(.headline)
-                        Text("Your cellar in figures").font(.subheadline).foregroundStyle(.secondary)
+                Label("A Bottle from My Cellar", systemImage: "house")
+                Text("It leaves your cellar.")
+            }
+            .disabled(model.cellar.bottlesInCellar.isEmpty)
+            .accessibilityIdentifier("journal.add.cellar")
+            Button {
+                model.sheet = .discovery(discoveryID: nil)
+            } label: {
+                Label("Somewhere Else", systemImage: "mappin.and.ellipse")
+                Text("Restaurant, friends, a fair… Your cellar does not change.")
+            }
+            .accessibilityIdentifier("journal.add.elsewhere")
+        } label: {
+            label()
+        }
+    }
+}
+
+/// All · From my cellar · Tasted elsewhere · To buy, then the tags of wines tasted elsewhere.
+private struct DiaryFilterBar: View {
+    @Environment(CellarModel.self) private var model
+    @Binding var tag: String?
+    let activeTag: String?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ChoiceChip(title: "All", isSelected: model.journalFilter == .all) {
+                    select(.all)
+                } leading: {
+                    Image(systemName: "book.closed")
+                }
+                .accessibilityIdentifier("journal.filter.all")
+                ChoiceChip(title: "From my cellar", isSelected: model.journalFilter == .cellar) {
+                    select(.cellar)
+                } leading: {
+                    Image(systemName: "house")
+                }
+                .accessibilityIdentifier("journal.filter.cellar")
+                ChoiceChip(title: "Tasted elsewhere", isSelected: model.journalFilter == .elsewhere) {
+                    select(.elsewhere)
+                } leading: {
+                    Image(systemName: "mappin.and.ellipse")
+                }
+                .accessibilityIdentifier("journal.filter.elsewhere")
+                ChoiceChip(title: "To buy", isSelected: model.journalFilter == .toBuy) {
+                    select(.toBuy)
+                } leading: {
+                    Image(systemName: "cart")
+                    Text(verbatim: "\(model.cellar.shoppingListCount)")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityIdentifier("journal.filter.toBuy")
+                if model.journalFilter.showsElsewhere {
+                    ForEach(model.cellar.discoveryTags, id: \.self) { name in
+                        ChoiceChip(verbatim: name, isSelected: activeTag == name) {
+                            withAnimation(.snappy) { tag = activeTag == name ? nil : name }
+                        } leading: {
+                            Image(systemName: "number").font(.caption.weight(.semibold))
+                        }
                     }
-                } icon: {
-                    Image(systemName: "chart.pie").foregroundStyle(Color.accentColor)
                 }
             }
+            .padding(.horizontal, 2)
         }
+    }
+
+    private func select(_ filter: DiaryFilter) {
+        withAnimation(.snappy) { model.journalFilter = filter }
+    }
+}
+
+/// What to do when a filter shows nothing yet.
+private struct FilterEmptyState: View {
+    let filter: DiaryFilter
+
+    var body: some View {
+        switch filter {
+        case .all, .cellar:
+            ContentUnavailableView(
+                "No bottles opened yet",
+                systemImage: "house",
+                description: Text("Bottles you open from your cellar and your notes appear here.")
+            )
+        case .elsewhere:
+            ContentUnavailableView(
+                "No wines tasted elsewhere yet",
+                systemImage: "mappin.and.ellipse",
+                description: Text("Liked a wine at friends’ or in a restaurant? Tap + and choose Somewhere Else to remember it, add notes and tags, and put it on your shopping list.")
+            )
+        case .toBuy:
+            ContentUnavailableView(
+                "Your shopping list is empty",
+                systemImage: "cart",
+                description: Text("Turn on To buy for a wine tasted elsewhere to find it here.")
+            )
         }
-        if bottles.isEmpty {
-            if model.cellar.consumedBottles.isEmpty {
-                ContentUnavailableView(
-                    "No tastings yet",
-                    systemImage: "book.closed",
-                    description: Text("Bottles you open and your notes will appear here.")
-                )
-                .listRowBackground(Color.clear)
-            } else {
-                ContentUnavailableView.search(text: query)
-                    .listRowBackground(Color.clear)
+    }
+}
+
+/// One entry of the diary, from the cellar or tasted elsewhere, opening its note.
+private struct DiaryEntryRow: View {
+    @Environment(CellarModel.self) private var model
+    let entry: DiaryEntry
+
+    var body: some View {
+        switch entry {
+        case .tasting(let bottle):
+            Button {
+                model.sheet = .editTasting(bottleID: bottle.id)
+            } label: {
+                TastingRow(bottle: bottle, showsWine: true, showsSource: true)
             }
-        }
-        ForEach(months.keys.sorted(by: >), id: \.self) { month in
-            Section {
-                ForEach(months[month] ?? []) { bottle in
-                    Button {
-                        model.sheet = .editTasting(bottleID: bottle.id)
-                    } label: {
-                        TastingRow(bottle: bottle, showsWine: true)
-                    }
-                    .buttonStyle(.plain)
-                }
-            } header: {
-                Text(month, format: .dateTime.month(.wide).year())
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("journal.row.cellar")
+        case .elsewhere(let discovery):
+            Button {
+                model.sheet = .discovery(discoveryID: discovery.id)
+            } label: {
+                DiscoveryRow(discovery: discovery, showsSource: true)
             }
+            .buttonStyle(.plain)
+            .modifier(ElsewhereActions(discovery: discovery))
+            .accessibilityIdentifier("journal.row.elsewhere")
         }
     }
 }
@@ -114,11 +247,13 @@ struct TastingRow: View {
     @Environment(CellarModel.self) private var model
     let bottle: Bottle
     var showsWine = true
+    /// In the Journal: says in words that the bottle came from the cellar.
+    var showsSource = false
 
     var body: some View {
         let wine = model.cellar.wines[bottle.wineID]
         let tasting = bottle.tasting
-        HStack(alignment: .top, spacing: 12) {
+        let row = HStack(alignment: .top, spacing: 12) {
             if showsWine {
                 BottleEnd(color: wine?.color, size: 30)
             }
@@ -132,11 +267,17 @@ struct TastingRow: View {
                             .font(.headline)
                     }
                     Spacer()
-                    if showsWine, let date = tasting?.date {
-                        Text(date, format: .dateTime.day().month(.abbreviated))
+                    if showsWine {
+                        Text(tasting?.date ?? bottle.addedAt, format: .dateTime.day().month(.abbreviated))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                }
+                if showsSource {
+                    Label("From my cellar", systemImage: "house")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .labelStyle(CompactLabelStyle())
                 }
                 if let rating = tasting?.rating {
                     RatingView(rating: rating)
@@ -166,6 +307,23 @@ struct TastingRow: View {
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        if showsSource {
+            row
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityText(wine: wine))
+        } else {
+            row.accessibilityElement(children: .combine)
+        }
+    }
+
+    /// "From my cellar, Château X 2015, 4 stars, March 3, …".
+    private func accessibilityText(wine: Wine?) -> String {
+        let tasting = bottle.tasting
+        var parts = [String(localized: "From my cellar"), wine?.displayName ?? String(localized: "Unknown wine")]
+        if let rating = tasting?.rating { parts.append(String(localized: "\(rating) stars")) }
+        parts.append((tasting?.date ?? bottle.addedAt).formatted(.dateTime.day().month(.wide)))
+        if let occasion = tasting?.occasion { parts.append(occasion) }
+        if let note = tasting?.note, !note.isEmpty { parts.append(note) }
+        return parts.joined(separator: ", ")
     }
 }

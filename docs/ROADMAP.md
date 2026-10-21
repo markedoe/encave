@@ -59,8 +59,8 @@ it with.
     bottles in one place, a bottle in a removed rack.
   - Each bottle is its own object with a status, so two people drinking "the last
     bottle" never produce a wrong count.
-- **Photos** are content-addressed (named after their SHA-256), encrypted
-  when they leave the device.
+- **Photos and documents** are content-addressed (named after their SHA-256),
+  encrypted when they leave the device.
 - **Sync without servers first.**
   - Devices on the same network sync directly.
   - Apart, they exchange encrypted files through a storage that never has a key.
@@ -196,6 +196,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Widgets, Control Center | Planned (needs an App Group) | Home screen widgets done (Glance: Tonight, Cellar) |
 | Saved searches | Done | Done |
 | Several photos per wine | Done | Done |
+| Documents attached to a wine or a bottle (invoice, certificate, technical sheet; synced, encrypted; up to 8 MB each) | Done (document scanner on iPhone and iPad) | Done |
 | Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Light evened out on a clean background (no cut-out: it would need ML Kit) |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |

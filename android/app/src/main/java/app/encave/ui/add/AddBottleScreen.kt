@@ -52,10 +52,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,7 +79,9 @@ import app.encave.core.Rack
 import app.encave.core.Slot
 import app.encave.core.Wine
 import app.encave.ui.AppNavigator
+import app.encave.data.PendingDocument
 import app.encave.ui.AppViewModel
+import app.encave.ui.cellar.PendingDocumentsSection
 import app.encave.ui.components.Formats
 import app.encave.ui.components.Hint
 import app.encave.ui.help.HelpLink
@@ -160,6 +164,14 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
     var scanning by rememberSaveable { mutableStateOf(route.scan) }
     var barcode by rememberSaveable { mutableStateOf<String?>(null) }
     val barcodeMatch = barcode?.let { cellar.wine(it) }
+    // Documents picked here: attached to the wine when the bottles are added, and their
+    // temporary copies removed if the screen is left without adding.
+    var pendingDocuments by remember { mutableStateOf(listOf<PendingDocument>()) }
+    var added by remember { mutableStateOf(false) }
+    val leftDocuments by rememberUpdatedState(pendingDocuments)
+    DisposableEffect(Unit) {
+        onDispose { if (!added) viewModel.discardDocuments(leftDocuments) }
+    }
 
     val freeSlots = rack?.let { cellar.freeSlots(it) } ?: emptyList()
     val slots: List<Slot> = when {
@@ -190,7 +202,9 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             wine, quantity, slots, purchase,
             photo = if (existing == null) form.newPhoto else null,
             boughtDiscoveryId = route.discoveryId?.let { runCatching { UUID.fromString(it) }.getOrNull() },
+            pendingDocuments = pendingDocuments,
         )
+        added = true
         navigator.back()
     }
 
@@ -280,6 +294,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 ExistingWineCard(existing, onChange = if (routeWine == null) ({ existingId = null }) else null)
                 QuantityRow(quantity) { quantity = it }
                 location()
+                PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
             } else {
                 if (cellar.wines.isNotEmpty()) {
                     OutlinedTextField(
@@ -312,6 +327,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 PhotoSection(viewModel, form)
                 QuantityRow(quantity) { quantity = it }
                 location()
+                PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
                 Header(R.string.add_section_wine)
                 WineEssentials(form, known)
             }

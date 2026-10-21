@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import androidx.compose.ui.test.assertCountEquals
 
 /** Opens every screen with the sample cellar, so a crash in any of them fails the build. */
 @RunWith(RobolectricTestRunner::class)
@@ -78,7 +79,9 @@ class SmokeTest {
     @Test
     fun journalInsightsAndSettings() {
         tab("Journal")
-        compose.onAllNodesWithText("Vieilles Vignes", substring = true).onFirst().assertExists()
+        // Each entry says where it comes from, in words.
+        compose.onAllNodes(hasContentDescription("From my cellar, Vieilles Vignes", substring = true)).onFirst().assertExists()
+        compose.onAllNodes(hasContentDescription("Tasted elsewhere", substring = true)).onFirst().assertExists()
         compose.onNodeWithContentDescription("Insights").performClick()
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Opened per month"))
@@ -89,17 +92,35 @@ class SmokeTest {
     }
 
     @Test
-    fun discoveriesAndEditor() {
+    fun winesTastedElsewhereAndEditor() {
         tab("Journal")
-        compose.onNodeWithText("Discoveries").performClick()
+        compose.onNodeWithText("Tasted elsewhere").performClick()
         compose.waitForIdle()
-        compose.onAllNodesWithText("Alvarinho Reserva", substring = true).onFirst().assertExists().performClick()
+        compose.onAllNodes(hasContentDescription("From my cellar", substring = true)).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Alvarinho Reserva", substring = true)).onFirst().assertExists().performClick()
         compose.waitForIdle()
         compose.onAllNodesWithText("Where").onFirst().assertExists()
         compose.onNodeWithContentDescription("Close").performClick()
-        compose.onNodeWithText("Remember a wine", useUnmergedTree = true).performClick()
+        compose.onNodeWithText("Add a tasting", useUnmergedTree = true).performClick()
         compose.waitForIdle()
+        compose.onNodeWithText("Somewhere else").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Tasted elsewhere").onFirst().assertExists()
         compose.onAllNodesWithText("Your impression").onFirst().assertExists()
+    }
+
+    @Test
+    fun openABottleFromTheJournal() {
+        tab("Journal")
+        compose.onNodeWithText("Add a tasting", useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("A bottle from my cellar").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Which bottle?").onFirst().assertExists()
+        compose.onAllNodesWithText("Clos des Tilleuls", substring = true).onFirst().performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Open a bottle").onFirst().assertExists()
+        compose.onAllNodesWithText("Clos des Tilleuls", substring = true).onFirst().assertExists()
     }
 
     @Test

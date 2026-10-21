@@ -23,7 +23,9 @@ struct LabelScanner: View {
     @State private var photo: PhotosPickerItem?
     @State private var isReading = false
     @State private var lastResult: LabelScanResult?
-    @State private var liveLines: [LabelLine] = []
+    #if os(iOS)
+    @State private var liveText: [LiveTextLine] = []
+    #endif
     @State private var liveBarcode: String?
     @State private var isCapturing = false
     #if os(iOS)
@@ -35,7 +37,9 @@ struct LabelScanner: View {
             VStack(spacing: 20) {
                 #if os(iOS)
                 if LiveTextScanner.isSupported {
-                    LiveTextScanner(lines: $liveLines, barcode: $liveBarcode, handle: handle)
+                    LiveTextScanner(lines: $liveText, barcode: $liveBarcode, handle: handle)
+                        // Only the large titles are outlined, so it is clear what will be read.
+                        .overlay { TitleHighlights(lines: LiveTextLine.titles(in: liveText)) }
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .overlay(alignment: .bottom) { liveOverlay }
                         .ignoresSafeArea(edges: .bottom)
@@ -70,7 +74,7 @@ struct LabelScanner: View {
 
     #if os(iOS)
     private var liveOverlay: some View {
-        var result = LabelTextParser.parse(liveLines)
+        var result = LabelTextParser.parse(liveText.map(\.line))
         result.barcode = liveBarcode
         let known = liveBarcode.flatMap(knownWine)
         return VStack(spacing: 12) {
@@ -80,12 +84,14 @@ struct LabelScanner: View {
                 Text("Point the camera at the label")
                     .font(.subheadline.weight(.medium))
             } else {
-                VStack(spacing: 2) {
-                    Text(result.name ?? "–").font(.headline)
-                    Text([result.producer, result.vintage.map(String.init)].compactMap { $0 }.joined(separator: " · "))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                // What will be read, field by field: a few words, not every line on the label.
+                Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 4) {
+                    if let name = result.name { field("Name", name, font: .headline) }
+                    if let producer = result.producer { field("Producer", producer) }
+                    if let vintage = result.vintage { field("Vintage", String(vintage)) }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
             }
             Button {
                 capture(result)
@@ -103,6 +109,13 @@ struct LabelScanner: View {
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding()
+    }
+
+    private func field(_ label: LocalizedStringKey, _ value: String, font: Font = .body) -> some View {
+        GridRow {
+            Text(label).font(.subheadline).foregroundStyle(.secondary)
+            Text(verbatim: value).font(font).lineLimit(1)
+        }
     }
 
     private func capture(_ result: LabelScanResult) {
@@ -184,7 +197,7 @@ struct LiveTextScanner: UIViewControllerRepresentable {
         weak var scanner: DataScannerViewController?
     }
 
-    @Binding var lines: [LabelLine]
+    @Binding var lines: [LiveTextLine]
     /// The last barcode seen (EAN, UPC), matched against the cellar on this device only.
     @Binding var barcode: String?
     let handle: Handle
@@ -199,7 +212,8 @@ struct LiveTextScanner: UIViewControllerRepresentable {
             qualityLevel: .accurate,
             recognizesMultipleItems: true,
             isHighFrameRateTrackingEnabled: false,
-            isHighlightingEnabled: true
+            // VisionKit would outline every line it reads; the sheet outlines only the titles.
+            isHighlightingEnabled: false
         )
         scanner.delegate = context.coordinator
         handle.scanner = scanner
@@ -217,10 +231,10 @@ struct LiveTextScanner: UIViewControllerRepresentable {
 
     @MainActor
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
-        let lines: Binding<[LabelLine]>
+        let lines: Binding<[LiveTextLine]>
         let barcode: Binding<String?>
 
-        init(lines: Binding<[LabelLine]>, barcode: Binding<String?>) { self.lines = lines; self.barcode = barcode }
+        init(lines: Binding<[LiveTextLine]>, barcode: Binding<String?>) { self.lines = lines; self.barcode = barcode }
 
         func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
             update(allItems)
@@ -243,10 +257,53 @@ struct LiveTextScanner: UIViewControllerRepresentable {
             }
             lines.wrappedValue = items.compactMap { item in
                 guard case .text(let text) = item else { return nil }
-                let height = Double(abs(text.bounds.bottomLeft.y - text.bounds.topLeft.y))
-                return LabelLine(text: text.transcript, height: height)
+                let b = text.bounds
+                return LiveTextLine(text: text.transcript, corners: [b.topLeft, b.topRight, b.bottomRight, b.bottomLeft])
             }
         }
+    }
+}
+
+/// A line of text the camera sees, with its corners in the camera view.
+struct LiveTextLine: Equatable {
+    var text: String
+    var corners: [CGPoint]
+
+    var height: Double {
+        guard corners.count == 4 else { return 0 }
+        return Double(abs(corners[3].y - corners[0].y))
+    }
+
+    var line: LabelLine { LabelLine(text: text, height: height) }
+
+    /// The large titles of the label: at most three lines, the tallest ones, at least
+    /// 60% of the tallest. Small print (address, volume, mentions) is left out.
+    static func titles(in lines: [LiveTextLine]) -> [LiveTextLine] {
+        let readable = lines.filter { $0.text.trimmingCharacters(in: .whitespaces).count >= 2 }
+        guard let tallest = readable.map(\.height).max(), tallest > 0 else { return [] }
+        return Array(readable.filter { $0.height >= tallest * 0.6 }.sorted { $0.height > $1.height }.prefix(3))
+    }
+}
+
+/// Outlines drawn around the label's titles on the live camera image.
+private struct TitleHighlights: View {
+    let lines: [LiveTextLine]
+
+    var body: some View {
+        Canvas { context, _ in
+            for line in lines where line.corners.count == 4 {
+                var path = Path()
+                path.addLines(line.corners)
+                path.closeSubpath()
+                // The accent color on a light halo, readable on any label.
+                context.fill(path, with: .color(Color.accentColor.opacity(0.15)))
+                context.stroke(path, with: .color(.white.opacity(0.85)), style: StrokeStyle(lineWidth: 5, lineJoin: .round))
+                context.stroke(path, with: .color(.accentColor), style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .animation(.easeOut(duration: 0.15), value: lines)
     }
 }
 #endif

@@ -253,7 +253,7 @@ object RemoteSync {
      */
     suspend fun run(
         store: MailboxStore, identity: DeviceIdentity, key: CellarKey, local: SyncSnapshot,
-        progress: RemoteProgress, photos: PhotoAccess, currentStorage: String? = null,
+        progress: RemoteProgress, files: FileAccess, currentStorage: String? = null,
     ): Result {
         var currentKey = key
         var current = progress
@@ -314,10 +314,10 @@ object RemoteSync {
         }
         val uploaded = current.uploadedPhotos.toMutableSet()
 
-        // 3. Missing photos.
-        val referenced = merged.cellar.photoIds.toSortedSet()
-        for (id in referenced) {
-            if (!PhotoId.isValid(id) || photos.exists(id)) continue
+        // 3. Missing files: photos and documents, both under "photo/".
+        val refs = merged.cellar.fileRefs
+        val referenced = refs.map { it.id }.toSortedSet()
+        for (id in files.missing(refs)) {
             val path = photoPath(id)
             val file = try {
                 mailbox.get(path)
@@ -328,11 +328,11 @@ object RemoteSync {
             } ?: continue
             val data = runCatching { Envelope.open(file, Envelope.Kind.Photo, path, currentKey.dataKey) }.getOrNull() ?: continue
             if (!PhotoId.matches(id, data)) continue
-            photos.save(id, data)
+            files.save(id, data, refs)
             uploaded += id
         }
 
-        // 4. This device's snapshot and photos, if something changed since the last upload.
+        // 4. This device's snapshot and files, if something changed since the last upload.
         var uploadedClock = current.uploadedClock
         var uploadedDigest = current.uploadedDigest
         val digest = stampDigest(merged)
@@ -345,7 +345,7 @@ object RemoteSync {
             }
             for (id in referenced) {
                 if (!PhotoId.isValid(id) || id in uploaded) continue
-                val data = photos.data(id) ?: continue
+                val data = files.data(id, refs) ?: continue
                 val path = photoPath(id)
                 mailbox.create(path, Envelope.seal(data, Envelope.Kind.Photo, path, currentKey.dataKey))
                 uploaded += id

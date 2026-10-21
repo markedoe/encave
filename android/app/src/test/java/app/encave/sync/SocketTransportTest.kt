@@ -5,7 +5,7 @@ import app.encave.core.Wine
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.Member
 import app.encave.core.sync.Membership
-import app.encave.core.sync.PhotoAccess
+import app.encave.core.sync.FileAccess
 import app.encave.core.sync.SyncExchange
 import app.encave.core.sync.SyncHandshake
 import app.encave.core.sync.SyncSnapshot
@@ -36,12 +36,12 @@ class SocketTransportTest {
             val responder = async(Dispatchers.IO) {
                 val transport = SocketTransport(server.accept())
                 val (channel, _) = SyncHandshake.respond(transport, b, membership)
-                SyncExchange.run(channel, false, SyncSnapshot(cellarB, SyncState.starting(cellarB, b.id), membership), PhotoAccess.NONE)
+                SyncExchange.run(channel, false, SyncSnapshot(cellarB, SyncState.starting(cellarB, b.id), membership), FileAccess.NONE)
                     .also { transport.close() }
             }
             val transport = SocketTransport.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), server.localPort))
             val (channel, peer) = SyncHandshake.initiate(transport, a, membership)
-            val resultA = SyncExchange.run(channel, true, SyncSnapshot(cellarA, SyncState.starting(cellarA, a.id), membership), PhotoAccess.NONE)
+            val resultA = SyncExchange.run(channel, true, SyncSnapshot(cellarA, SyncState.starting(cellarA, a.id), membership), FileAccess.NONE)
             transport.close()
             val resultB = responder.await()
             assertEquals(b.id, peer.id)

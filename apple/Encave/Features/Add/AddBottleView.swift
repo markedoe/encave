@@ -28,6 +28,8 @@ struct AddBottleView: View {
     @State private var prepared = false
     @State private var scan = LabelScan()
     @State private var searchingOnline = false
+    /// Documents picked here, attached to the wine when the bottles are added.
+    @State private var documents = DocumentActions()
 
     private var wineIsValid: Bool { existingWine != nil || draft.isValid }
 
@@ -81,6 +83,7 @@ struct AddBottleView: View {
                 }
             }
         }
+        PendingDocumentsSection(actions: documents)
     }
 
     var body: some View {
@@ -191,6 +194,7 @@ struct AddBottleView: View {
                 }
             }
             .formStyle(.grouped)
+            .documentActions(documents)
             .labelScanner(scan, draft: $draft)
             .webSearchSheet(isPresented: $searchingOnline, draft: $draft)
             .navigationTitle("Add Bottles")
@@ -219,6 +223,9 @@ struct AddBottleView: View {
                 scan.matchedWine = nil
             }
             .onAppear(perform: prepare)
+            // Cancelled (or added: nothing is left): the temporary copies go. Not while the
+            // document camera covers the screen, which also makes the form disappear.
+            .onDisappear { if !documents.scanning { documents.discardPending() } }
         }
         .macSheetFrame(width: 520, height: 720)
     }
@@ -247,6 +254,11 @@ struct AddBottleView: View {
         if existingWine == nil, let labelPhoto = scan.photo {
             wine.photoID = PhotoStore.save(labelPhoto)
         }
+        // Documents picked here go with the wine, for all its bottles.
+        let attachments = documents.commitPending()
+        if !attachments.isEmpty {
+            wine.attachments = (wine.attachments ?? []) + attachments
+        }
         var slots = isOrdered ? [] : chosenSlots
         if !isOrdered, let rack = selectedRack, slots.count < quantity {
             let free = model.cellar.freeSlots(in: rack).filter { !slots.contains($0) }
@@ -263,6 +275,7 @@ struct AddBottleView: View {
         // On failure (a place taken meanwhile…) the form stays open under the error.
         guard model.addBottles(of: wine, quantity: quantity, slots: Array(slots.prefix(quantity)), purchase: purchase)
         else { return }
+        documents.discardPending()
         if let discoveryID = context.discoveryID {
             model.update { try $0.markBought(discoveryID) }
         }

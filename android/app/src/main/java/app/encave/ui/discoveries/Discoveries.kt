@@ -3,19 +3,14 @@ package app.encave.ui.discoveries
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -25,11 +20,8 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.RemoveShoppingCart
-import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -38,14 +30,15 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,19 +46,17 @@ import androidx.compose.ui.unit.dp
 import app.encave.R
 import app.encave.core.Cellar
 import app.encave.core.Discovery
-import app.encave.core.DiscoveryFilter
 import app.encave.core.discoveries
-import app.encave.core.discoveryTags
-import app.encave.core.shoppingListCount
 import app.encave.data.PhotoStore
-import app.encave.ui.add.WinePhoto
 import app.encave.ui.components.Formats
 import app.encave.ui.components.RatingStars
 import app.encave.ui.components.WineColorDot
+import app.encave.ui.components.hasPicture
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
 import app.encave.ui.theme.Dimens
-import app.encave.ui.components.hasPicture
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 /** Actions available on a discovery row. */
 class DiscoveryActions(
@@ -75,55 +66,19 @@ class DiscoveryActions(
     val delete: (Discovery) -> Unit,
 )
 
-/** "To buy" chip with the count, then tag chips. */
+/** "Tasted elsewhere · Lisbon": where it comes from, in words. */
 @Composable
-fun DiscoveryFilterBar(cellar: Cellar, filter: DiscoveryFilter, onChange: (DiscoveryFilter) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Dimens.l),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.s),
-    ) {
-        FilterChip(
-            selected = filter.toBuyOnly,
-            onClick = { onChange(filter.copy(toBuyOnly = !filter.toBuyOnly)) },
-            label = { Text(stringResource(R.string.discovery_to_buy_count, cellar.shoppingListCount)) },
-            leadingIcon = { Icon(Icons.Filled.ShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp)) },
-        )
-        cellar.discoveryTags.forEach { tag ->
-            FilterChip(
-                selected = filter.tag == tag,
-                onClick = { onChange(filter.copy(tag = if (filter.tag == tag) null else tag)) },
-                label = { Text(tag) },
-                leadingIcon = { Icon(Icons.Outlined.Tag, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            )
-        }
-    }
+fun elsewhereText(discovery: Discovery): String {
+    val place = discovery.place ?: discovery.setting?.let { stringResource(it.labelRes) }
+    return if (place != null) stringResource(R.string.journal_tasted_elsewhere_at, place) else stringResource(R.string.journal_tasted_elsewhere)
 }
 
-/** The discoveries list items, for a LazyColumn. */
-fun LazyListScope.discoveryItems(
-    cellar: Cellar,
-    photos: PhotoStore,
-    filter: DiscoveryFilter,
-    actions: DiscoveryActions,
-) {
-    val items = cellar.discoveries(filter)
-    if (items.isEmpty()) {
-        item {
-            Text(
-                stringResource(R.string.discovery_none_match),
-                Modifier.padding(Dimens.l), color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-    items(items, key = { "d" + it.id }) { discovery ->
-        SwipeableDiscoveryRow(cellar, photos, discovery, actions, Modifier.animateItem())
-        HorizontalDivider(Modifier.padding(start = 72.dp))
-    }
-}
-
-/** Swipe right: add to cellar. Swipe left: to buy on or off. Long press: all actions. */
+/**
+ * A wine tasted elsewhere in the Journal, saying so. Swipe right: add to cellar.
+ * Swipe left: to buy on or off. Long press: all actions.
+ */
 @Composable
-private fun SwipeableDiscoveryRow(cellar: Cellar, photos: PhotoStore, discovery: Discovery, actions: DiscoveryActions, modifier: Modifier) {
+fun ElsewhereRow(cellar: Cellar, photos: PhotoStore, discovery: Discovery, actions: DiscoveryActions, modifier: Modifier = Modifier) {
     var menu by remember { mutableStateOf(false) }
     val addLabel = stringResource(R.string.discovery_add_to_cellar)
     val buyLabel = stringResource(if (discovery.wantsToBuy) R.string.discovery_remove_from_list else R.string.discovery_to_buy)
@@ -164,6 +119,7 @@ private fun SwipeableDiscoveryRow(cellar: Cellar, photos: PhotoStore, discovery:
                 cellar, photos, discovery,
                 onClick = { actions.open(discovery) },
                 onLongClick = { menu = true },
+                showsSource = true,
                 modifier = Modifier.semantics {
                     customActions = listOf(
                         CustomAccessibilityAction(addLabel) { actions.addToCellar(discovery); true },
@@ -190,7 +146,11 @@ private fun SwipeableDiscoveryRow(cellar: Cellar, photos: PhotoStore, discovery:
     }
 }
 
-/** One wine found elsewhere: photo or bottle end, where, rating, note and #tags. */
+/**
+ * One wine tasted elsewhere: photo or bottle end, where, rating, note and #tags.
+ * [showsSource] (in the Journal): says in words that it was tasted elsewhere, and where,
+ * and TalkBack reads the row as one sentence.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DiscoveryRow(
@@ -201,10 +161,33 @@ fun DiscoveryRow(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     showsWine: Boolean = true,
+    showsSource: Boolean = false,
 ) {
     val wine = cellar.wines[discovery.wineId]
+    val source = elsewhereText(discovery)
+    val description = listOfNotNull(
+        source,
+        wine?.displayName ?: stringResource(R.string.unknown_wine),
+        discovery.rating?.let { pluralStringResource(R.plurals.journal_rating_stars, it, it) },
+        Formats.day(discovery.date),
+        if (discovery.wantsToBuy) stringResource(R.string.discovery_to_buy) else null,
+        discovery.note,
+        discovery.tags.takeIf { it.isNotEmpty() }?.joinToString(", "),
+    ).joinToString(", ")
     ListItem(
-        modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        modifier = modifier
+            .then(if (showsSource) Modifier.clearAndSetSemantics { contentDescription = description } else Modifier)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        overlineContent = if (showsSource) {
+            {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                    Icon(discovery.setting?.icon ?: Icons.Outlined.Place, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Text(source, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        } else {
+            null
+        },
         leadingContent = if (showsWine) {
             {
                 if (wine != null && photos.hasPicture(wine)) {
@@ -226,7 +209,8 @@ fun DiscoveryRow(
         },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                val where = discovery.place ?: discovery.setting?.let { stringResource(it.labelRes) }
+                // In the Journal the place is already in the line above.
+                val where = if (showsSource) null else discovery.place ?: discovery.setting?.let { stringResource(it.labelRes) }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                     if (where != null) {
                         Icon(discovery.setting?.icon ?: Icons.Outlined.Place, contentDescription = null, modifier = Modifier.size(16.dp))

@@ -19,8 +19,8 @@ final class CellarModel {
     var highlightedSlot: Slot?
     /// Selected tab, so other screens can jump between sections.
     var selectedTab: AppTab = .cellar
-    /// Page shown in Journal; set to Discoveries after remembering a wine.
-    var journalPage: JournalView.Page = .tastings
+    /// What the Journal shows; back to everything when a new entry would be hidden.
+    var journalFilter: DiaryFilter = .all
 
     private let store: any CellarStore
     /// Sync with the user's other devices.
@@ -104,11 +104,14 @@ final class CellarModel {
         }
         if let store = try? JSONFileCellarStore.defaultStore() {
             let model = CellarModel(store: store, demo: false)
-            // Photo files no wine refers to are removed after a grace period (PhotoStore);
-            // not while a cellar file that could not be read is kept, as its photos may be needed.
+            // Photo and document files nothing refers to are removed after a grace period
+            // (PhotoStore); not while a cellar file that could not be read is kept, as its
+            // files may be needed.
             if model.errorMessage == nil, store.unreadableFiles().isEmpty {
                 PhotoStore.removeOrphans(keeping: model.cellar.photoIDs)
+                DocumentStore.removeOrphans(keeping: model.cellar.attachmentIDs)
             }
+            DocumentStore.removeTemporaryCopies()
             return model
         }
         return CellarModel(store: InMemoryCellarStore())
@@ -195,6 +198,7 @@ final class CellarModel {
         }
         let previousSlot = bottle.slot
         guard update({ try $0.drink(bottleID, tasting: tasting) }) else { return false }
+        if !journalFilter.showsTastings { journalFilter = .all }
         successCount += 1
         showToast(String(localized: "Enjoy your \(wine.displayName)")) { [weak self] in
             self?.update { $0.undoDrink(bottleID, previousSlot: previousSlot) }
@@ -300,16 +304,16 @@ final class CellarModel {
     func addDiscovery(_ discovery: Discovery, wine: Wine) {
         guard update({ $0.addDiscovery(discovery, wine: wine) }) else { return }
         successCount += 1
-        journalPage = .discoveries
+        if journalFilter == .cellar || (journalFilter == .toBuy && !discovery.wantsToBuy) { journalFilter = .all }
         showToast(discovery.wantsToBuy
                   ? String(localized: "Added to your shopping list")
-                  : String(localized: "Saved to your discoveries"))
+                  : String(localized: "Saved to your journal"))
     }
 
     func deleteDiscovery(_ id: UUID) {
         let snapshot = cellar
         guard update({ $0.deleteDiscovery(id) }) else { return }
-        showToast(String(localized: "Discovery deleted")) { [weak self] in
+        showToast(String(localized: "Deleted from your journal")) { [weak self] in
             self?.update { $0 = snapshot }
         }
     }
@@ -433,7 +437,8 @@ enum AppTab: String, Hashable {
 /// Sheets presented at the root so any screen can open them.
 enum AppSheet: Identifiable {
     case addBottle(AddBottleContext)
-    case drink(bottleID: UUID)
+    /// Open a bottle (nil: choose it first, from the Journal).
+    case drink(bottleID: UUID?)
     case editWine(wineID: UUID)
     case editTasting(bottleID: UUID)
     case editRack(rackID: UUID?)
@@ -442,18 +447,21 @@ enum AppSheet: Identifiable {
     case wineImage(wineID: UUID)
     /// Remember a wine found elsewhere (nil: a new one).
     case discovery(discoveryID: UUID?)
+    /// The documents of one bottle; `importing` opens the file picker right away.
+    case bottleDocuments(bottleID: UUID, importing: Bool)
     case settings
 
     var id: String {
         switch self {
         case .addBottle(let context): "add-\(context.id)"
-        case .drink(let id): "drink-\(id)"
+        case .drink(let id): "drink-\(id?.uuidString ?? "choose")"
         case .editWine(let id): "wine-\(id)"
         case .editTasting(let id): "tasting-\(id)"
         case .editRack(let id): "rack-\(id?.uuidString ?? "new")"
         case .moveBottle(let id): "move-\(id)"
         case .wineImage(let id): "image-\(id)"
         case .discovery(let id): "discovery-\(id?.uuidString ?? "new")"
+        case .bottleDocuments(let id, _): "documents-\(id)"
         case .settings: "settings"
         }
     }

@@ -6,13 +6,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave uses the camera to read wine labels. Images stay on this device."
+            "value": "Encave uses the camera to read wine labels and scan documents. Images stay on your devices."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave utilise l’appareil photo pour lire les étiquettes. Les images restent sur cet appareil."
+            "value": "Encave utilise l’appareil photo pour lire les étiquettes et numériser des documents. Les images restent sur vos appareils."
           }
         }
       }

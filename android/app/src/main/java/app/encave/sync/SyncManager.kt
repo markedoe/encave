@@ -6,6 +6,7 @@ import app.encave.core.sync.CellarChangeSummary
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
 import app.encave.core.sync.DeviceIdentity
+import app.encave.core.sync.FileAccess
 import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
 import app.encave.core.sync.Membership
@@ -25,7 +26,6 @@ import app.encave.core.sync.SyncSnapshot
 import app.encave.core.sync.SyncState
 import app.encave.core.sync.WebDavMailboxStore
 import app.encave.data.CellarRepository
-import app.encave.data.PhotoStore
 import app.encave.data.Preferences
 import app.encave.data.SyncFrequency
 import java.io.Closeable
@@ -64,7 +64,8 @@ import kotlinx.coroutines.withContext
 class SyncManager(
     private val context: Context,
     private val repository: CellarRepository,
-    private val photos: PhotoStore,
+    /** Photos and documents, each in its own folder. */
+    private val files: FileAccess,
     private val preferences: Preferences,
     private val scope: CoroutineScope,
 ) {
@@ -103,7 +104,7 @@ class SyncManager(
 
     val storage = SyncStorage(context)
     internal val appContext: Context get() = context
-    internal val photoAccess get() = photos.syncAccess
+    internal val photoAccess get() = files
     private val network = LocalNetwork(context)
     val deviceName: String = SyncStorage.deviceName(context)
     val platform = "android"
@@ -553,7 +554,7 @@ class SyncManager(
 
     private suspend fun exchange(channel: SecureChannel, isInitiator: Boolean, peer: UUID) {
         val local = snapshot() ?: return
-        val (result, remote) = SyncExchange.exchange(channel, isInitiator, local, photos.syncAccess, remoteInfo())
+        val (result, remote) = SyncExchange.exchange(channel, isInitiator, local, files, remoteInfo())
         apply(result, peer)
         adoptRemote(remote)
     }
@@ -843,7 +844,7 @@ class SyncManager(
                 return
             }
             val current = synchronized(this) { progress }
-            val result = RemoteSync.run(store, identity, key, local, current, photos.syncAccess, currentStorage = url)
+            val result = RemoteSync.run(store, identity, key, local, current, files, currentStorage = url)
             // The device left or joined another cellar meanwhile: drop the result.
             if (round != generation) return
             result.newKey?.let(::storeRemoteKey)

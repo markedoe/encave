@@ -68,7 +68,8 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_cellar_info" />
         </receiver>
 
-        <!-- Hands the camera app a file in our cache for "Take a photo". -->
+        <!-- Hands the camera app a file in our cache for "Take a photo", and other apps a copy
+             of a document to open or share. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"

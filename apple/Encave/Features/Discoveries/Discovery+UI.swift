@@ -13,6 +13,18 @@ extension Discovery.Setting {
         }
     }
 
+    /// The title as a string, to build sentences and VoiceOver labels.
+    var name: String {
+        switch self {
+        case .friends: String(localized: "At friends'")
+        case .restaurant: String(localized: "Restaurant")
+        case .travel: String(localized: "Travel")
+        case .shop: String(localized: "Shop")
+        case .tasting: String(localized: "Tasting event")
+        case .other: String(localized: "Elsewhere")
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .friends: "person.2"
