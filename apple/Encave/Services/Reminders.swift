@@ -1,5 +1,6 @@
 import CaveKit
 import Foundation
+import SwiftUI
 import UserNotifications
 
 /// A monthly reminder, on the first of the month, of the bottles to drink this year,
@@ -32,6 +33,21 @@ enum Reminders {
     /// notifications of changes from other devices (`ChangeNotifications`).
     static func requestPermission() async -> Bool {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+    }
+
+    /// The system lets Encave post notifications: they may have been turned on or off in
+    /// the system settings since permission was asked.
+    nonisolated static func notificationsAllowed() async -> Bool {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        return status == .authorized || status == .provisional
+    }
+
+    /// Read aloud by VoiceOver when turning notifications on fails: the switch just turns
+    /// back off, and the footer that says why is not read on its own.
+    static func announceRefused() {
+        AccessibilityNotification.Announcement(
+            String(localized: "Notifications are off for Encave. Turn them on in the system settings.")
+        ).post()
     }
 
     static func disable() {
