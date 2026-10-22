@@ -373,6 +373,10 @@ private struct SelectedBottleCard: View {
                         .font(.title2)
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
+                        // A 44-point target around the drawn symbol, without moving it.
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                        .padding(-8)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Close"))
@@ -437,7 +441,7 @@ private struct RackKey: View {
                 Label {
                     Text("\(bottles.count) of \(rack.capacity) bottles")
                 } icon: {
-                    Image(systemName: rack.kind.systemImage)
+                    Image(systemName: rack.systemImage)
                 }
                 .font(.subheadline.weight(.semibold).monospacedDigit())
                 .padding(.trailing, 6)
@@ -474,6 +478,12 @@ private struct RackKey: View {
                 BottleEnd(color: entry.wine.color, size: 16)
                 Text(verbatim: entry.wine.displayName)
                     .lineLimit(1)
+                // The style in words too, not only the bottle's color.
+                if let style = entry.wine.color?.name {
+                    Text(verbatim: style)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
                 Text(verbatim: "×\(entry.count)")
                     .monospacedDigit()
                     .foregroundStyle(isOn ? Color.primary : Color.secondary)
@@ -523,7 +533,7 @@ private struct CellSheet: View {
         NavigationStack {
             List {
                 if bottles.isEmpty {
-                    ContentUnavailableView("Empty", systemImage: rack.kind.systemImage)
+                    ContentUnavailableView("Empty", systemImage: rack.systemImage)
                         .listRowBackground(Color.clear)
                 }
                 Section {

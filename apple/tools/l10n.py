@@ -1103,7 +1103,6 @@ FR = {
     "Zone %lld": "Zone %lld",
     "New zone from this shelf": "Nouvelle zone à partir de cette étagère",
     "For a fridge with two temperature zones: a divider is drawn above this shelf.": "Pour une cave à deux zones de température : un séparateur est dessiné au-dessus de cette étagère.",
-    "Holds %lld bottles. Shelves are numbered from the top, places from the left.": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche.",
     "Holds %lld bottles. Shelves are numbered from the top, places from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche. Chaque étagère montre ses bouteilles de devant, puis celles du fond ; tête-bêche, leur goulot est vers vous.",
     "Shelf %lld, %@, place %lld": "Étagère %lld, %@, place %lld",
     "Shelf %lld, %@, bottom layer, place %lld": "Étagère %lld, %@, couche du bas, place %lld",
@@ -1467,6 +1466,12 @@ FR = {
     'On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere. In a large cellar, the model reads only part of it, the wines closest to the question and the most urgent, and the answer says so.': 'Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit.',
     'Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. When the wine is in several places, choose the bottle under **Which Bottle?**: free bottles come first, and those kept for an occasion say so. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.': 'Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin est à plusieurs endroits, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes.',
     'Add a rating, a few words, an occasion (Dinner at home, With friends…), or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal. If you close the sheet or leave a note after changing it, Encave asks before discarding it.': 'Ajoutez une note, quelques mots, une occasion (Dîner à la maison, Entre amis…), ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal. Si vous fermez la feuille ou quittez une note après l’avoir modifiée, Encave demande avant de l’abandonner.',
+    # Racks: fridge names, shelves, checking.
+    'Wine fridge, shelves in layers': 'Cave à vin, étagères en couches',
+    'Wine fridge, shelves in layers · two deep, head-to-tail': 'Cave à vin, étagères en couches · deux rangs, tête-bêche',
+    'Counted from the top. Shelves are numbered 1, 2, 3…': 'Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…',
+    'Found': 'Trouvée',
+    'Not found yet': 'Pas encore trouvée',
 }
 
 # Keys with plural forms: English one/other and French one/other.
@@ -1511,6 +1516,11 @@ PLURALS = {
          "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."),
         ("Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière.",
          "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière.")),
+    "Holds %lld bottles. Shelves are numbered from the top, places from the left.": (
+        ("Holds %lld bottle. Shelves are numbered from the top, places from the left.",
+         "Holds %lld bottles. Shelves are numbered from the top, places from the left."),
+        ("Contient %lld bouteille. Les étagères sont numérotées depuis le haut, les places depuis la gauche.",
+         "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche.")),
     "%lld bottles are in places you removed": (
         ("%lld bottle is in a place you removed", "%lld bottles are in places you removed"),
         ("%lld bouteille est dans un emplacement supprimé", "%lld bouteilles sont dans des emplacements supprimés")),

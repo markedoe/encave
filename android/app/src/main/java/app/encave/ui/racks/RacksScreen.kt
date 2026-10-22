@@ -50,7 +50,7 @@ import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
-import app.encave.ui.components.labelRes
+import app.encave.ui.components.kindLabelRes
 import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.RackEditorRoute
 import app.encave.ui.navigation.SettingsRoute
@@ -124,7 +124,7 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     supportingContent = {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                             Text(
-                                "${stringResource(rack.kind.labelRes)} · ${androidx.compose.ui.res.pluralStringResource(R.plurals.rack_holds, rack.capacity, rack.capacity)}",
+                                "${stringResource(rack.kindLabelRes)} · ${androidx.compose.ui.res.pluralStringResource(R.plurals.rack_holds, rack.capacity, rack.capacity)}",
                             )
                             Text(stringResource(R.string.rack_occupancy, used, rack.capacity))
                             LinearProgressIndicator(

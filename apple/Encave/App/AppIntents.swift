@@ -20,7 +20,7 @@ enum CellarAccess {
 
     static var year: Int { CellarYear.current }
 
-    /// "Main rack · B3", or the storage note.
+    /// "Main rack · B3", "Fridge · Shelf 2, place 3", or the storage note.
     static func location(of bottle: Bottle, in cellar: Cellar) -> String? {
         // The place as the app shows it ("Main rack · B3, back").
         if let slot = bottle.slot, let rack = cellar.rack(slot.rackID) {
@@ -178,7 +178,9 @@ struct CellarContentsIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let report = CellarAccess.cellar().report(scope: bottles.scope, search: search ?? "", year: CellarAccess.year)
+        let cellar = CellarAccess.cellar()
+        let report = cellar.report(scope: bottles.scope, search: search ?? "", year: CellarAccess.year,
+                                   location: { CellarAccess.location(of: $0, in: cellar) })
         let value = try format == .json ? report.json() : report.text
         return .result(value: value)
     }
@@ -196,7 +198,8 @@ struct WineDetailsIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
         let cellar = CellarAccess.cellar()
         guard let record = cellar.wines[wine.id] else { return .result(value: "") }
-        let row = cellar.report(scope: .all, year: CellarAccess.year).rows.first { $0.wineID == wine.id }
+        let row = cellar.report(scope: .all, year: CellarAccess.year, location: { CellarAccess.location(of: $0, in: cellar) })
+            .rows.first { $0.wineID == wine.id }
         var lines = ["Wine: \(record.displayName)"]
         func add(_ title: String, _ value: String?) {
             if let value, !value.isEmpty { lines.append("\(title): \(value)") }

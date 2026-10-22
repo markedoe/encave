@@ -106,7 +106,8 @@ struct RackEditor: View {
                         Stepper(value: $rows, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
                         }
-                        .fieldHelp("Counted from the top. Rows are lettered A, B, C…")
+                        .fieldHelp(kind == .shelves ? "Counted from the top. Shelves are numbered 1, 2, 3…"
+                                                    : "Counted from the top. Rows are lettered A, B, C…")
                     }
                     if !customRows && !layered {
                         Stepper(value: $columns, in: 1...40) {
@@ -153,6 +154,11 @@ struct RackEditor: View {
                         Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.")
                     } else if layered {
                         Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
+                    } else if kind == .shelves {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
+                            outsideWarning
+                        }
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Holds \(preview.capacity) bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.")
@@ -199,7 +205,11 @@ struct RackEditor: View {
                                     LabeledContent {
                                         Text(verbatim: "\(rowBinding(row).wrappedValue)").monospacedDigit()
                                     } label: {
-                                        Text("Row \(Rack.rowLetters(row))")
+                                        if kind == .shelves {
+                                            Text("Shelf \(row + 1)")
+                                        } else {
+                                            Text("Row \(Rack.rowLetters(row))")
+                                        }
                                     }
                                 }
                             }

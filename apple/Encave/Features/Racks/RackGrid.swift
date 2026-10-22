@@ -44,6 +44,9 @@ struct RackGrid: View {
     /// A bottle dragged onto a place (iPad, Mac): move it there.
     var onDrop: ((UUID, RackPlace) -> Bool)?
     var interaction = RackInteraction()
+    /// The smallest size of the fridge's captions (shelf numbers, front and back, zones),
+    /// growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .caption2) private var captionFloor: CGFloat = 11
 
     private var size: CGFloat { rack.kind == .bins ? cellSize * 1.7 : cellSize }
     private var spacing: CGFloat {
@@ -103,7 +106,7 @@ struct RackGrid: View {
         }
     }
 
-    private var headerWidth: CGFloat { max(18, cellSize * 0.42) }
+    private var headerWidth: CGFloat { max(18, cellSize * 0.42, rack.hasShelfLayers ? captionFloor * 1.7 : 0) }
 
     /// The places of one row, offset by half a place when the row nests into the one below.
     /// `depth` draws only the front or the back places of a fridge drawn in bands.
@@ -136,8 +139,10 @@ struct RackGrid: View {
                 HStack(spacing: 0) {
                     if showsHeaders {
                         Text(verbatim: "\(shelf + 1)")
-                            .font(.system(size: max(10, cellSize * 0.24), weight: .semibold).monospacedDigit())
+                            .font(.system(size: max(captionFloor, cellSize * 0.24), weight: .semibold).monospacedDigit())
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                             .frame(width: headerWidth)
                             .accessibilityHidden(true)
                     }
@@ -198,13 +203,15 @@ struct RackGrid: View {
         } else {
             Text("**Back** · Bases facing you")
         }
+        // Never below the caption floor: with large text it wraps, then truncates.
         return caption
-            .font(.system(size: max(9, cellSize * 0.2)))
+            .font(.system(size: max(captionFloor, cellSize * 0.2)))
             .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2,
-                   height: max(Self.bandCaptionMinHeight, cellSize * Self.bandCaptionHeight), alignment: .leading)
+            .lineLimit(2)
+            .truncationMode(.tail)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2, alignment: .leading)
+            .frame(minHeight: max(Self.bandCaptionMinHeight, cellSize * Self.bandCaptionHeight), alignment: .leading)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Shelf \(shelf + 1)") + Text(verbatim: ", ") + caption)
             .accessibilityAddTraits(.isHeader)
@@ -231,7 +238,7 @@ struct RackGrid: View {
     private func zoneDivider(_ zone: Int) -> some View {
         HStack(spacing: cellSize * 0.12) {
             Text(verbatim: rack.zoneName(zone))
-                .font(.system(size: max(9, cellSize * 0.2), weight: .semibold))
+                .font(.system(size: max(captionFloor, cellSize * 0.2), weight: .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .fixedSize()
@@ -240,8 +247,8 @@ struct RackGrid: View {
                 .frame(height: zone == 0 ? 1 : max(3, cellSize * 0.07))
         }
         // As wide as the shelves (the line would otherwise take all the width offered).
-        .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2,
-               height: max(Self.zoneLabelMinHeight, cellSize * Self.zoneLabelHeight), alignment: .leading)
+        .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2, alignment: .leading)
+        .frame(minHeight: max(Self.zoneLabelMinHeight, cellSize * Self.zoneLabelHeight), alignment: .leading)
         .padding(.leading, showsHeaders ? headerWidth : 0)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
@@ -460,7 +467,7 @@ struct RackCellView: View {
                 if rack.kind == .bins { bin } else if place.depth != nil { bandPlace } else { position }
             }
             .frame(width: size, height: cellHeight)
-            .contentShape(Rectangle())
+            .contentShape(hitShape)
             .opacity(isDimmed ? 0.25 : 1)
         }
         .buttonStyle(.plain)
@@ -476,11 +483,22 @@ struct RackCellView: View {
         .help(Text(verbatim: bottles.compactMap { model.cellar.wines[$0.wineID]?.displayName }.joined(separator: ", ")))
         .modifier(CheckMenu(isOn: canCheckOneByOne) { interaction.checkOneByOne?(cell) })
         .accessibilityLabel(accessibilityText)
+        .accessibilityValue(checkValue ?? Text(verbatim: ""))
         .accessibilityHint(hintText ?? Text(verbatim: ""))
         .accessibilityActions { cellActions }
         // Back places: "rack.cell.1-0.back"; the others keep their identifier.
         .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)" + (isBack ? ".back" : ""))
         .accessibilityAddTraits(selectedCount > 0 ? .isSelected : [])
+    }
+
+    /// What a tap reaches: the drawn hole of a honeycomb or a fridge, the diamond of a bin
+    /// (their rows nest into each other), else the whole cell.
+    private var hitShape: AnyShape {
+        switch rack.kind {
+        case .staggered: AnyShape(Circle())
+        case .bins: AnyShape(Diamond())
+        case .grid, .shelves: AnyShape(Rectangle())
+        }
     }
 
     /// While checking, a place holding several bottles can be checked bottle by bottle.
@@ -566,7 +584,7 @@ struct RackCellView: View {
             } else {
                 BottleEnd(color: nil, size: size * 0.72, isEmpty: true, isHighlighted: isHighlighted)
                 if selectedCount == 0 {
-                    Text(verbatim: rack.label(for: cell))
+                    Text(verbatim: rack.emptyCaption(for: cell))
                         .font(.system(size: max(9, size * 0.18), weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
@@ -574,7 +592,7 @@ struct RackCellView: View {
             if isPartlyFound {
                 partlyFoundBadge
             } else if selectedCount > 0 {
-                selectionBadge
+                selectionBadge(diameter: size * 0.72)
             }
         }
         .overlay(alignment: .bottom) {
@@ -602,15 +620,17 @@ struct RackCellView: View {
                 }
             } else {
                 BottleEnd(color: nil, size: diameter, isEmpty: true, isHighlighted: isHighlighted)
-                if selectedCount == 0, !isBack {
-                    Text(verbatim: rack.label(for: cell))
-                        .font(.system(size: max(9, size * 0.18), weight: .medium).monospacedDigit())
+                if selectedCount == 0 {
+                    // The place number: the shelf is on the side, the band in its caption.
+                    Text(verbatim: rack.emptyCaption(for: cell))
+                        .font(.system(size: max(9, diameter * 0.25), weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
                 }
             }
             if selectedCount > 0 {
-                selectionBadge
-                    .scaleEffect(isBack ? RackGrid.backHeight : 1)
+                selectionBadge(diameter: diameter)
             }
         }
         .frame(width: size, height: cellHeight)
@@ -680,21 +700,36 @@ struct RackCellView: View {
         }
     }
 
-    private var selectionBadge: some View {
-        ZStack {
-            Circle()
-                .fill(Color.accentColor.opacity(0.25))
-                .overlay(Circle().strokeBorder(Color.accentColor, lineWidth: 2))
-                .frame(width: size * 0.74, height: size * 0.74)
-            if capacity > 1 && interaction.mode != .auditing {
+    /// A chosen or found place: a ring around the bottle and, in its top corner, a white
+    /// tick on the accent color ringed with the background, readable on any wine's color and
+    /// clear of the vintage. Choosing several bottles of a cell shows "+2" instead.
+    @ViewBuilder
+    private func selectionBadge(diameter: CGFloat) -> some View {
+        if capacity > 1 && interaction.mode != .auditing {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.25))
+                    .overlay(Circle().strokeBorder(Color.accentColor, lineWidth: 2))
+                    .frame(width: diameter * 1.03, height: diameter * 1.03)
                 Text(verbatim: "+\(selectedCount)")
-                    .font(.system(size: size * 0.24, weight: .bold).monospacedDigit())
-                    .foregroundStyle(Color.accentColor)
-            } else {
-                Image(systemName: "checkmark")
-                    .font(.system(size: size * 0.25, weight: .bold))
+                    .font(.system(size: diameter * 0.33, weight: .bold).monospacedDigit())
                     .foregroundStyle(Color.accentColor)
             }
+        } else {
+            let badge = max(12, diameter * 0.42)
+            Circle()
+                .strokeBorder(Color.accentColor, lineWidth: max(2, diameter * 0.06))
+                .frame(width: diameter * 1.06, height: diameter * 1.06)
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: badge * 0.55, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .frame(width: badge, height: badge)
+                        .background(Color.accentColor, in: Circle())
+                        .overlay(Circle().strokeBorder(.background, lineWidth: max(1.5, badge * 0.12)))
+                        .offset(x: badge * 0.22, y: -badge * 0.22)
+                }
+                .accessibilityHidden(true)
         }
     }
 
@@ -708,11 +743,34 @@ struct RackCellView: View {
             .overlay(Capsule().strokeBorder(Color.accentColor, lineWidth: 1.5))
     }
 
-    /// The wine and its style in words (in the drawing the style is only the bottle's color).
+    /// The wine, its style and maturity in words (in the drawing the style is only the
+    /// bottle's color): "Château X 2015, Red, Ready".
     private func wineWords(_ bottle: Bottle) -> String? {
         model.cellar.wines[bottle.wineID].map { wine in
-            [wine.displayName, wine.color?.name].compactMap { $0 }.joined(separator: ", ")
+            let maturity = Maturity.of(wine, year: model.currentYear).shortName
+            return [wine.displayName, wine.color?.name, maturity].compactMap { $0 }.joined(separator: ", ")
         }
+    }
+
+    /// What a bin holds, most bottles first: "2 Château X 2015, 1 Y", the first three wines.
+    private var binContents: String? {
+        var counts: [UUID: Int] = [:]
+        for bottle in bottles { counts[bottle.wineID, default: 0] += 1 }
+        let wines = counts.compactMap { id, count in model.cellar.wines[id].map { ($0.displayName, count) } }
+            .sorted { $0.1 != $1.1 ? $0.1 > $1.1 : $0.0 < $1.0 }
+        guard !wines.isEmpty else { return nil }
+        var parts = wines.prefix(3).map { "\($0.1) \($0.0)" }
+        if wines.count > 3 {
+            let others = wines.count - 3
+            parts.append(String(localized: "\(others) more"))
+        }
+        return parts.joined(separator: ", ")
+    }
+
+    /// While checking: has this place been found?
+    private var checkValue: Text? {
+        guard interaction.mode == .auditing, !bottles.isEmpty, !isPartlyFound else { return nil }
+        return selectedCount > 0 ? Text("Found") : Text("Not found yet")
     }
 
     /// Place, wine, style, then state: "B3: front Château X, Red; back empty, shown".
@@ -721,6 +779,7 @@ struct RackCellView: View {
         var label: String
         if rack.kind == .bins {
             label = String(localized: "\(place), \(bottles.count) of \(rack.positionsPerCell) bottles")
+            if let contentsLabel = binContents { label = String(localized: "\(label): \(contentsLabel)") }
         } else if capacity == 1 {
             if let words = bottles.first.flatMap(wineWords) {
                 label = "\(place), \(words)"
@@ -753,6 +812,19 @@ struct RackCellView: View {
             return String(localized: "\(depthName) empty")
         }
         .joined(separator: "; ")
+    }
+}
+
+/// A diamond touching the middle of each side, as a bin is drawn.
+private struct Diamond: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.midY))
+            path.closeSubpath()
+        }
     }
 }
 

@@ -20,7 +20,7 @@ class PlaceLabelsTest {
     @Test
     fun shelvesAreNumbered() {
         val fridge = Rack(name = "Fridge", kind = RackKind.Shelves, rows = 4, columns = 6)
-        assertEquals("Shelf 2, 3", fridge.displayLabel(Slot(fridge.id, 1, 2), resources))
+        assertEquals("Shelf 2, place 3", fridge.displayLabel(Slot(fridge.id, 1, 2), resources))
         val grid = Rack(name = "Grid", rows = 4, columns = 6)
         assertEquals("B3", grid.displayLabel(Slot(grid.id, 1, 2), resources))
     }

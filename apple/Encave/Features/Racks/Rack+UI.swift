@@ -49,7 +49,16 @@ extension RackKind {
 }
 
 extension Rack {
-    /// "B3", "B3, back", "Shelf 2, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
+    /// The kind of storage, as in the Racks list: a honeycomb on shelves is a wine fridge.
+    var kindTitle: LocalizedStringKey {
+        guard hasShelfLayers else { return kind.title }
+        return isBackReversed ? "Wine fridge, shelves in layers · two deep, head-to-tail" : "Wine fridge, shelves in layers"
+    }
+
+    /// The symbol of its kind of storage; a fridge for a honeycomb on shelves.
+    var systemImage: String { hasShelfLayers ? RackKind.shelves.systemImage : kind.systemImage }
+
+    /// "B3", "B3, back", "Shelf 2, place 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
     /// for people (not for files). A fridge drawn front and back names the band first, as it
     /// is drawn: "Shelf 3, front, bottom layer, place 2".
     func displayLabel(for slot: Slot) -> String {
@@ -80,7 +89,7 @@ extension Rack {
         case .shelves:
             // Shelves are numbered from the top, as in layered fridges.
             let shelf = cell.row + 1, number = cell.column + 1
-            return String(localized: "Shelf \(shelf), \(number)")
+            return String(localized: "Shelf \(shelf), place \(number)")
         case .bins:
             return String(localized: "Bin \(label(for: cell))")
         }
@@ -147,6 +156,11 @@ extension Cellar {
 }
 
 extension CellarModel {
+    /// The symbol of the bottle's rack ("square.grid.3x3" when it has none), next to its place.
+    func locationIcon(for bottle: Bottle) -> String {
+        bottle.slot.flatMap { cellar.rack($0.rackID) }?.systemImage ?? RackKind.grid.systemImage
+    }
+
     /// "Main rack · B3", the storage note, or nil.
     func locationLabel(for bottle: Bottle) -> String? {
         if let slot = bottle.slot, let rack = cellar.rack(slot.rackID) {

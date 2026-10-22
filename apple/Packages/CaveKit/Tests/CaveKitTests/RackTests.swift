@@ -32,6 +32,45 @@ import Testing
         #expect(fridge.slot(forLabel: "B3-3") == nil)
     }
 
+    @Test func shelvesNumberTheirPlacesOthersUseCodes() {
+        let grid = Rack(name: "G", rows: 3, columns: 4, depth: 2)
+        #expect(grid.emptyCaption(for: RackCell(rackID: grid.id, row: 1, column: 2)) == "B3")
+        #expect(grid.placeName(for: Slot(rackID: grid.id, row: 1, column: 2, depth: 1)) == "B3, back")
+        let shelves = Rack(name: "S", kind: .shelves, rows: 4, columns: 6, depth: 2)
+        #expect(shelves.emptyCaption(for: RackCell(rackID: shelves.id, row: 2, column: 5)) == "6")
+        #expect(shelves.placeName(for: Slot(rackID: shelves.id, row: 0, column: 5)) == "Shelf 1, place 6, front")
+        let bins = Rack(name: "B", kind: .bins, rows: 2, columns: 3, binCapacity: 6)
+        #expect(bins.placeName(for: Slot(rackID: bins.id, row: 1, column: 2, depth: 3)) == "Bin B3")
+        let honeycomb = Rack(name: "H", kind: .staggered, rows: 3, columns: 5)
+        #expect(honeycomb.emptyCaption(for: RackCell(rackID: honeycomb.id, row: 2, column: 0)) == "C1")
+    }
+
+    @Test func fridgePlacesAreNamedByShelfLayerAndSide() {
+        let fridge = Rack(name: "F", kind: .staggered, rows: 3, columns: 6, depth: 2, shelfLayers: [2, 1],
+                          backReversed: true)
+        // Row 1 is the bottom layer of shelf 1; row 2 the only layer of shelf 2.
+        #expect(fridge.emptyCaption(for: RackCell(rackID: fridge.id, row: 2, column: 3)) == "4")
+        #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 0, column: 2, depth: 1))
+            == "Shelf 1, back, top layer, place 3")
+        #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 1, column: 0))
+            == "Shelf 1, front, bottom layer, place 1")
+        #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 2, column: 5, depth: 1)) == "Shelf 2, back, place 6")
+        let single = Rack(name: "F1", kind: .staggered, rows: 2, columns: 6, shelfLayers: [1, 1])
+        #expect(single.placeName(for: Slot(rackID: single.id, row: 1, column: 5)) == "Shelf 2, place 6")
+    }
+
+    @Test func reportsNameFridgePlacesInWords() throws {
+        var cellar = Cellar()
+        let fridge = Rack(name: "Fridge", kind: .shelves, rows: 4, columns: 6, depth: 2)
+        cellar.addRack(fridge)
+        let back = Slot(rackID: fridge.id, row: 2, column: 2, depth: 1)
+        _ = try cellar.addBottles(of: Wine(name: "W"), quantity: 1, slots: [back])
+        let report = cellar.report(scope: .all, year: 2026)
+        #expect(report.rows.first?.places == ["Fridge · Shelf 3, place 3, back"])
+        let named = cellar.report(scope: .all, year: 2026, location: { _ in "Cave · Étagère 3" })
+        #expect(named.rows.first?.places == ["Cave · Étagère 3"])
+    }
+
     @Test func binsFillOneBinBeforeTheNext() throws {
         var cellar = Cellar()
         let rack = Rack(name: "Bins", kind: .bins, rows: 1, columns: 2, binCapacity: 3)

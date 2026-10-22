@@ -281,14 +281,14 @@ private struct TonightPick: View {
                     Button {
                         router?.showInRack(bottle, model: model)
                     } label: {
-                        Label(location, systemImage: "square.grid.3x3")
+                        Label(location, systemImage: model.locationIcon(for: bottle))
                             .font(.subheadline)
                     }
                     .buttonStyle(.borderless)
                     .accessibilityHint(Text("Show in Rack"))
                     .accessibilityIdentifier("action.tonight.showInRack")
                 } else {
-                    Label(location, systemImage: "square.grid.3x3")
+                    Label(location, systemImage: model.locationIcon(for: bottle))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

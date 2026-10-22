@@ -517,7 +517,7 @@
     <string name="preset_bins_2x3">Losanges, 2 × 3 de 10</string>
     <string name="preset_crates_6">Caisses de 6, 3 × 4</string>
     <string name="preset_crates_12">Caisses de 12, 2 × 4</string>
-    <string name="place_shelf">Étagère %1$d, %2$d</string>
+    <string name="place_shelf">Étagère %1$d, place %2$d</string>
     <string name="place_bin">Casier %1$s</string>
     <string name="place_shelf_layer_single">Étagère %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Étagère %1$d, couche du bas, place %2$d</string>
@@ -1472,5 +1472,15 @@
         <item quantity="one">%1$s : %2$d bouteille</item>
         <item quantity="many">%1$s : %2$d bouteilles</item>
         <item quantity="other">%1$s : %2$d bouteilles</item>
+    </plurals>
+    <string name="rack_field_shelves">Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…</string>
+    <string name="kind_fridge_layers">Cave à vin, étagères en couches</string>
+    <string name="kind_fridge_layers_reversed">Cave à vin, étagères en couches · deux rangs, tête-bêche</string>
+    <string name="cell_check_found">Trouvée</string>
+    <string name="cell_check_not_found">Pas encore trouvée</string>
+    <plurals name="cell_bin_more">
+        <item quantity="one">%d autre</item>
+        <item quantity="many">%d autres</item>
+        <item quantity="other">%d autres</item>
     </plurals>
 </resources>

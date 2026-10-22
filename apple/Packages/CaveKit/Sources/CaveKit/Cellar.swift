@@ -328,10 +328,11 @@ public extension Cellar {
 
     func rack(_ id: UUID) -> Rack? { racks.first { $0.id == id } }
 
-    /// "Cellar A · B3", the storage note, or nil when the bottle has no location.
+    /// "Cellar A · B3", "Fridge · Shelf 2, place 3", the storage note, or nil when the
+    /// bottle has no location.
     func locationLabel(for bottle: Bottle) -> String? {
         if let slot = bottle.slot, let rack = rack(slot.rackID) {
-            return "\(rack.name) · \(rack.label(for: slot))"
+            return "\(rack.name) · \(rack.placeName(for: slot))"
         }
         if let note = bottle.storageNote, !note.isEmpty { return note }
         return nil

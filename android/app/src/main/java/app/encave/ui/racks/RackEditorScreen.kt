@@ -207,6 +207,9 @@ val RackKind.icon: ImageVector
         RackKind.Bins -> Icons.Outlined.Diamond
     }
 
+/** The symbol of a rack's kind of storage; a fridge for a honeycomb on shelves. */
+val Rack.icon: ImageVector get() = if (hasShelfLayers) RackKind.Shelves.icon else kind.icon
+
 /** Create or edit a rack: the kind of storage, its size, rows of different lengths, with a live preview. */
 @Composable
 fun RackEditorScreen(viewModel: AppViewModel, navigator: AppNavigator, rackId: String?) {
@@ -395,7 +398,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
             }
             if (!layered) {
                 SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
-                Hint(stringResource(R.string.help_field_rows))
+                Hint(stringResource(if (kind == RackKind.Shelves) R.string.rack_field_shelves else R.string.help_field_rows))
             }
             if (!customRows && !layered) {
                 SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
@@ -514,7 +517,12 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 }
                 if (customRows) {
                     rowColumns.forEachIndexed { row, count ->
-                        SizeRow(stringResource(R.string.rack_row, Rack.rowLetters(row)), count, { rowColumns[row] = it }, 1..60)
+                        val title = if (kind == RackKind.Shelves) {
+                            stringResource(R.string.rack_shelf, row + 1)
+                        } else {
+                            stringResource(R.string.rack_row, Rack.rowLetters(row))
+                        }
+                        SizeRow(title, count, { rowColumns[row] = it }, 1..60)
                     }
                 }
             }
@@ -541,7 +549,10 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 }
             }
             Text(
-                stringResource(if (layered) R.string.help_rack_holds_shelves else R.string.help_rack_holds, rack.capacity),
+                stringResource(
+                    if (layered || kind == RackKind.Shelves) R.string.help_rack_holds_shelves else R.string.help_rack_holds,
+                    rack.capacity,
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
 

@@ -181,7 +181,7 @@ class SmokeTest {
         tab("Racks")
         compose.onNodeWithText("Wine fridge").performClick()
         compose.waitForIdle()
-        compose.onNode(hasContentDescription("Shelf 1, 1", substring = true)).assertExists()
+        compose.onNode(hasContentDescription("Shelf 1, place 1", substring = true)).assertExists()
         compose.onNodeWithContentDescription("Edit rack").performClick()
         compose.waitForIdle()
         compose.onAllNodesWithText("Honeycomb rack").onFirst().performClick()

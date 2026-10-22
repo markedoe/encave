@@ -97,7 +97,7 @@ struct MacRoot: View {
             }
             Section("Racks") {
                 ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
-                    Label(rack.name, systemImage: rack.kind.systemImage)
+                    Label(rack.name, systemImage: rack.systemImage)
                         .badge(model.cellar.occupancy(of: rack))
                         .tag(MacDestination.rack(rack.id))
                         .accessibilityIdentifier("rack.card.\(index)")

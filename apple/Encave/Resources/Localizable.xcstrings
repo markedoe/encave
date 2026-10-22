@@ -3971,6 +3971,16 @@
         }
       }
     },
+    "Counted from the top. Shelves are numbered 1, 2, 3…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…"
+          }
+        }
+      }
+    },
     "Country": {
       "localizations": {
         "fr": {
@@ -5651,6 +5661,16 @@
         }
       }
     },
+    "Found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvée"
+          }
+        }
+      }
+    },
     "Found: %@": {
       "localizations": {
         "fr": {
@@ -6153,10 +6173,40 @@
     },
     "Holds %lld bottles. Shelves are numbered from the top, places from the left.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottle. Shelves are numbered from the top, places from the left."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottles. Shelves are numbered from the top, places from the left."
+                }
+              }
+            }
+          }
+        },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteille. Les étagères sont numérotées depuis le haut, les places depuis la gauche."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche."
+                }
+              }
+            }
           }
         }
       }
@@ -8067,6 +8117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Non trouvé"
+          }
+        }
+      }
+    },
+    "Not found yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore trouvée"
           }
         }
       }
@@ -14507,6 +14567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cave à vin, étagères en couches"
+          }
+        }
+      }
+    },
+    "Wine fridge, shelves in layers · two deep, head-to-tail": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave à vin, étagères en couches · deux rangs, tête-bêche"
           }
         }
       }

@@ -499,7 +499,7 @@ struct BottleRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: bottle.slot == nil ? "shippingbox" : "square.grid.3x3.topleft.filled")
+            Image(systemName: bottle.slot == nil ? "shippingbox" : model.locationIcon(for: bottle))
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {

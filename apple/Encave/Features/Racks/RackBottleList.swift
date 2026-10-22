@@ -19,17 +19,17 @@ struct RackBottleList: View {
                     LabeledContent {
                         Text("\(bottles.count) of \(rack.capacity) bottles").monospacedDigit()
                     } label: {
-                        Label(rack.kind.title, systemImage: rack.kind.systemImage)
+                        Label(rack.kindTitle, systemImage: rack.systemImage)
                     }
                     ProgressView(value: Double(bottles.count), total: Double(max(1, rack.capacity)))
                         .tint(Color.accentColor)
                 }
                 if bottles.isEmpty {
                     #if os(macOS)
-                    ContentUnavailableView("Empty", systemImage: rack.kind.systemImage,
+                    ContentUnavailableView("Empty", systemImage: rack.systemImage,
                                            description: Text("Click a place in the rack to add a bottle there."))
                     #else
-                    ContentUnavailableView("Empty", systemImage: rack.kind.systemImage,
+                    ContentUnavailableView("Empty", systemImage: rack.systemImage,
                                            description: Text("Tap a place in the rack to add a bottle there."))
                     #endif
                 }
@@ -80,17 +80,17 @@ extension RackBottleList {
     }
 
     /// Shelves are named ("Shelf 2", with its zone when the fridge has several), other
-    /// rows lettered.
+    /// rows lettered ("Row B").
     private func header(_ rack: Rack, group: Int) -> String {
+        let number = group + 1
         if rack.hasShelfLayers {
-            let number = group + 1
             let shelf = String(localized: "Shelf \(number)")
             guard rack.zoneCount > 1 else { return shelf }
             return "\(shelf) · \(rack.zoneName(rack.zone(ofShelf: group)))"
         }
-        guard rack.kind == .shelves else { return Rack.rowLetters(group) }
-        let label = rack.displayLabel(for: RackCell(rackID: rack.id, row: group, column: 0))
-        return label.components(separatedBy: ",").first ?? ""
+        if rack.kind == .shelves { return String(localized: "Shelf \(number)") }
+        let letters = Rack.rowLetters(group)
+        return String(localized: "Row \(letters)")
     }
 
     private func listRow(_ rack: Rack, _ bottle: Bottle) -> some View {

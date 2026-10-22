@@ -113,8 +113,10 @@ private extension CellarReportScope {
 
 public extension Cellar {
     /// The wines in `scope` whose name, producer, region, grape or tag contains
-    /// `search` (all of them when it is empty), at most `limit`.
-    func report(scope: CellarReportScope, search: String = "", year: Int, limit: Int = 500) -> CellarReport {
+    /// `search` (all of them when it is empty), at most `limit`. `location` names where a
+    /// bottle is (the app gives the words it shows); `locationLabel(for:)` by default.
+    func report(scope: CellarReportScope, search: String = "", year: Int, limit: Int = 500,
+                location: ((Bottle) -> String?)? = nil) -> CellarReport {
         let needle = search.trimmingCharacters(in: .whitespacesAndNewlines)
         func matching(_ groups: [WineGroup]) -> [WineGroup] {
             needle.isEmpty ? groups : groups.filter { $0.wine.matches(needle) }
@@ -157,7 +159,7 @@ public extension Cellar {
                 wineID: wine.id, name: wine.name, vintage: wine.vintage, producer: wine.producer,
                 style: wine.color?.rawValue, appellation: wine.appellation, region: wine.region, country: wine.country,
                 grapes: wine.grapes, drinkFrom: wine.drinkFrom, drinkUntil: wine.drinkUntil, maturity: maturity,
-                bottles: group.count, places: group.bottles.compactMap { locationLabel(for: $0) },
+                bottles: group.count, places: group.bottles.compactMap { location?($0) ?? locationLabel(for: $0) },
                 tags: wine.tags ?? [],
                 keptFor: Array(Set(group.bottles.compactMap(\.reservedFor))).sorted(),
                 expected: group.bottles.compactMap { $0.expectedAt.map(day.string(from:)) })
