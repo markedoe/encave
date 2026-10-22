@@ -691,6 +691,8 @@ enum AppSheet: Identifiable {
     /// A backup or an earlier version, previewed before restoring it.
     case restore(RestoreSource)
     case settings
+    /// Join a cellar with a pairing code from a link (the QR code scanned with the camera).
+    case joinDevice(code: String, commitment: Data?)
 
     var id: String {
         switch self {
@@ -705,6 +707,7 @@ enum AppSheet: Identifiable {
         case .bottleDocuments(let id, _): "documents-\(id)"
         case .restore(let source): "restore-\(source.id)"
         case .settings: "settings"
+        case .joinDevice(let code, _): "join-\(code)"
         }
     }
 }

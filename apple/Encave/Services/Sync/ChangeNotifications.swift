@@ -117,7 +117,7 @@ enum ChangeNotifications {
         if summary.bottlesOpened > 0 { parts.append(String(localized: "\(summary.bottlesOpened) bottles opened")) }
         if summary.bottlesAdded > 0 { parts.append(String(localized: "\(summary.bottlesAdded) bottles added")) }
         if summary.bottlesRemoved > 0 { parts.append(String(localized: "\(summary.bottlesRemoved) bottles removed")) }
-        if summary.winesAdded > 0 { parts.append(String(localized: "\(summary.winesAdded) wines added")) }
+        if summary.winesAdded > 0 { parts.append(String(localized: "\(summary.winesAdded) wines added to the shopping list")) }
         if summary.otherChanges > 0 { parts.append(String(localized: "\(summary.otherChanges) other changes")) }
         return parts.joined(separator: ", ") + "."
     }

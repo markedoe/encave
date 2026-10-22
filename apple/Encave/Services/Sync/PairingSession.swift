@@ -17,6 +17,12 @@ final class PairingSession {
         case waitingForOther
         case syncing
         case done(device: String)
+        /// Added, but the first sync did not finish: the devices complete it the next time
+        /// they meet on the network.
+        case addedNotSynced(device: String)
+        /// Local Network access is off for Encave: nothing can be found until it is on.
+        /// Waits, so that turning it on (from the prompt or in Settings) carries on.
+        case localNetworkDenied
         case failed(String)
     }
 
@@ -38,6 +44,9 @@ final class PairingSession {
     @ObservationIgnored private var listener: NWListener?
     @ObservationIgnored private var browser: NWBrowser?
     @ObservationIgnored private var transport: NetworkTransport?
+    /// The time limit starts once the network is ready, not while the system asks for
+    /// Local Network access.
+    @ObservationIgnored private var timerStarted = false
 
     static let lifetime: TimeInterval = 120
 
@@ -74,16 +83,51 @@ final class PairingSession {
             listener.newConnectionHandler = { [weak self] connection in
                 MainActor.assumeIsolated { self?.accept(connection, host: host) }
             }
+            listener.stateUpdateHandler = { [weak self] state in
+                MainActor.assumeIsolated {
+                    switch state {
+                    case .ready: self?.networkReady()
+                    case .waiting(let error): self?.networkProblem(error, failed: false)
+                    case .failed(let error): self?.networkProblem(error, failed: true)
+                    default: break
+                    }
+                }
+            }
             listener.start(queue: .main)
             self.listener = listener
         } catch {
-            phase = .failed(String(localized: "This device could not wait for the other one on the network."))
+            phase = .failed(Self.cannotListen)
         }
+    }
+
+    private static var cannotListen: String {
+        String(localized: "This device could not wait for the other one on the network.")
+    }
+
+    /// Listening or looking works: the time limit starts (2 minutes for the code, 30
+    /// seconds to find the device showing it).
+    private func networkReady() {
+        if phase == .localNetworkDenied { phase = .waiting }
+        guard !timerStarted, phase == .waiting else { return }
+        timerStarted = true
+        let inviting = role == .inviting
         task = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(Self.lifetime))
-            guard let self, phase == .waiting else { return }
+            try? await Task.sleep(for: .seconds(inviting ? Self.lifetime : 30))
+            guard let self, phase == .waiting, transport == nil else { return }
             stop()
-            phase = .failed(String(localized: "The code expired. Show a new code."))
+            phase = .failed(inviting
+                ? String(localized: "The code expired. Show a new code.")
+                : String(localized: "No device shows this code on this network. Check the code, and that both devices are on the same Wi-Fi."))
+        }
+    }
+
+    private func networkProblem(_ error: NWError, failed: Bool) {
+        if SyncService.isLocalNetworkDenied(error) {
+            if phase == .waiting { phase = .localNetworkDenied }
+        } else if failed, phase == .waiting || phase == .localNetworkDenied {
+            stop()
+            phase = .failed(role == .inviting ? Self.cannotListen
+                : String(localized: "The connection was lost. Try again with a new code."))
         }
     }
 
@@ -157,14 +201,18 @@ final class PairingSession {
             guard let match else { return }
             MainActor.assumeIsolated { self?.connect(to: match.endpoint, commitment: commitment, replace: replace) }
         }
+        browser.stateUpdateHandler = { [weak self] state in
+            MainActor.assumeIsolated {
+                switch state {
+                case .ready: self?.networkReady()
+                case .waiting(let error): self?.networkProblem(error, failed: false)
+                case .failed(let error): self?.networkProblem(error, failed: true)
+                default: break
+                }
+            }
+        }
         browser.start(queue: .main)
         self.browser = browser
-        task = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(30))
-            guard let self, phase == .waiting, transport == nil else { return }
-            stop()
-            phase = .failed(String(localized: "No device shows this code on this network. Check the code, and that both devices are on the same Wi-Fi."))
-        }
     }
 
     private func connect(to endpoint: NWEndpoint, commitment: Data?, replace: Bool) {
@@ -237,12 +285,16 @@ final class PairingSession {
     private func finishWithoutSync(device: String) {
         stop()
         service?.resume()
-        phase = .done(device: device)
+        phase = .addedNotSynced(device: device)
     }
 
     private func fail(_ error: Error) {
         stop()
         if case .done = phase { return }
+        if let error = error as? NWError, SyncService.isLocalNetworkDenied(error) {
+            phase = .localNetworkDenied
+            return
+        }
         switch error {
         case SyncError.rejected:
             phase = .failed(String(localized: "The codes were not confirmed on both devices. Nothing was shared."))

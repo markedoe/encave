@@ -861,7 +861,7 @@
         }
       }
     },
-    "%lld wines added": {
+    "%lld wines added to the shopping list": {
       "localizations": {
         "en": {
           "variations": {
@@ -869,13 +869,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld wine added"
+                  "value": "%lld wine added to the shopping list"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld wines added"
+                  "value": "%lld wines added to the shopping list"
                 }
               }
             }
@@ -887,13 +887,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld vin ajouté"
+                  "value": "%lld vin ajouté à la liste d’achats"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld vins ajoutés"
+                  "value": "%lld vins ajoutés à la liste d’achats"
                 }
               }
             }
@@ -1691,12 +1691,12 @@
         }
       }
     },
-    "Add your iPad or Mac to have the same cellar on each, kept in sync.": {
+    "Add your other devices (iPhone, iPad, Mac or Android) to have the same cellar on each, kept in sync.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez votre iPad ou votre Mac pour avoir la même cave sur chacun, toujours à jour."
+            "value": "Ajoutez vos autres appareils (iPhone, iPad, Mac ou Android) pour avoir la même cave sur chacun, toujours à jour."
           }
         }
       }
@@ -1877,6 +1877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
+          }
+        }
+      }
+    },
+    "Android devices can’t use iCloud. To sync with %@ away from home, choose a WebDAV folder or a relay.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils Android ne peuvent pas utiliser iCloud. Pour vous synchroniser à distance avec %@, choisissez un dossier WebDAV ou un relais."
           }
         }
       }
@@ -3941,12 +3951,12 @@
         }
       }
     },
-    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins.": {
+    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change; a sync that fails is tried again after 15 seconds, 1 minute and 5 minutes. To sync right away, pull down the list in the Cellar, or on a Mac or an iPad with a keyboard choose **Cellar › Sync Now** (⌘R). You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins. When sync needs you (a WebDAV sign-in, Local Network access turned off, failures for over an hour), the Settings button shows a badge and **Devices** says what to do.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification. Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte."
+            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification ; une synchronisation qui échoue est retentée après 15 secondes, 1 minute et 5 minutes. Pour synchroniser tout de suite, tirez la liste de la Cave vers le bas, ou sur un Mac ou un iPad avec clavier choisissez **Cave › Synchroniser** (⌘R). Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte. Quand la synchronisation a besoin de vous (une connexion WebDAV, l’accès au réseau local désactivé, des échecs depuis plus d’une heure), le bouton Réglages affiche un badge et **Appareils** indique quoi faire."
           }
         }
       }
@@ -3957,6 +3967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave."
+          }
+        }
+      }
+    },
+    "Devices sync on the same Wi-Fi while Encave is open, and away from home through the storage you chose. Changes made apart merge without losing anything.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils se synchronisent sur le même Wi-Fi quand Encave est ouvert, et loin de la maison par le stockage choisi. Les modifications faites séparément se réunissent sans rien perdre."
           }
         }
       }
@@ -4337,6 +4357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher."
+          }
+        }
+      }
+    },
+    "Each device proves it belongs to the cellar with its own key, and everything is encrypted. On your network, devices talk directly. Away from home, the storage only holds encrypted files.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et tout est chiffré. Sur votre réseau, les appareils communiquent directement. Loin de la maison, le stockage ne contient que des fichiers chiffrés."
           }
         }
       }
@@ -5021,6 +5051,16 @@
         }
       }
     },
+    "For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
+          }
+        }
+      }
+    },
     "For bottles that are not in a rack.": {
       "localizations": {
         "fr": {
@@ -5037,16 +5077,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés."
-          }
-        }
-      }
-    },
-    "For iPhone, iPad and Mac today, and Android later. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour iPhone, iPad et Mac aujourd’hui, et Android plus tard. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
           }
         }
       }
@@ -5971,6 +6001,16 @@
         }
       }
     },
+    "Join another cellar?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoindre une autre cave ?"
+          }
+        }
+      }
+    },
     "Journal": {
       "localizations": {
         "fr": {
@@ -6351,6 +6391,16 @@
         }
       }
     },
+    "Leave and Join": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter et rejoindre"
+          }
+        }
+      }
+    },
     "Leave empty for the provider's usual address. For a local server, its address on your network.": {
       "localizations": {
         "fr": {
@@ -6457,6 +6507,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Charger la cave d’exemple ?"
+          }
+        }
+      }
+    },
+    "Local Network Access Is Off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accès au réseau local désactivé"
+          }
+        }
+      }
+    },
+    "Local Network access is off for Encave, so it can’t find your other devices. Turn it on in Settings › Encave.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès au réseau local est désactivé pour Encave, qui ne peut donc pas trouver vos autres appareils. Activez-le dans Réglages › Encave."
+          }
+        }
+      }
+    },
+    "Local Network access is off for Encave, so it can’t find your other devices. Turn it on in System Settings › Privacy & Security › Local Network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès au réseau local est désactivé pour Encave, qui ne peut donc pas trouver vos autres appareils. Activez-le dans Réglages Système › Confidentialité et sécurité › Réseau local."
           }
         }
       }
@@ -7321,6 +7401,16 @@
         }
       }
     },
+    "Not syncing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne se synchronise plus"
+          }
+        }
+      }
+    },
     "Not valid": {
       "localizations": {
         "fr": {
@@ -7711,12 +7801,12 @@
         }
       }
     },
-    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar**, then scan the QR code (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi.": {
+    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, scan the QR code with the camera, or choose **Join Another Device’s Cellar** and scan it there (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi, and Encave needs Local Network access: if it is off, Encave says so and opens the settings where you turn it on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil**, puis scannez le QR code (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi."
+            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, scannez le QR code avec l’appareil photo, ou choisissez **Rejoindre la cave d’un autre appareil** et scannez-le là (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi, et Encave doit avoir accès au réseau local : si cet accès est désactivé, Encave le signale et ouvre les réglages où l’activer."
           }
         }
       }
@@ -7737,16 +7827,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée. Calculé sur cet appareil."
-          }
-        }
-      }
-    },
-    "On the other device, open Settings › Devices › Join Another Device’s Cellar, then scan this code or type the numbers.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur l’autre appareil, ouvrez Réglages › Appareils › Rejoindre la cave d’un autre appareil, puis scannez ce code ou saisissez les chiffres."
           }
         }
       }
@@ -8026,7 +8106,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvrir les Réglages"
+            "value": "Ouvrir les réglages"
           }
         }
       }
@@ -8107,6 +8187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre Encave pour ajouter des bouteilles, en scannant l’étiquette ou en saisissant."
+          }
+        }
+      }
+    },
+    "Opens Settings, then choose Devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre les réglages ; choisissez ensuite Appareils."
           }
         }
       }
@@ -9051,6 +9141,46 @@
         }
       }
     },
+    "Remove %lld bottles from this device?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld bottle from this device?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld bottles from this device?"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Retirer %lld bouteille de cet appareil ?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Retirer %lld bouteilles de cet appareil ?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Remove Barcode": {
       "localizations": {
         "fr": {
@@ -9177,6 +9307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplacer cette cave"
+          }
+        }
+      }
+    },
+    "Replace and Join": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer et rejoindre"
           }
         }
       }
@@ -9587,6 +9727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scanner le code QR"
+          }
+        }
+      }
+    },
+    "Scan this code with the other device’s camera, or type the numbers in Settings › Devices › Join Another Device’s Cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scannez ce code avec l’appareil photo de l’autre appareil, ou saisissez les chiffres dans Réglages › Appareils › Rejoindre la cave d’un autre appareil."
           }
         }
       }
@@ -10401,6 +10551,16 @@
         }
       }
     },
+    "Sign-in needed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion requise"
+          }
+        }
+      }
+    },
     "Silky, red fruit, long finish.": {
       "localizations": {
         "fr": {
@@ -10611,12 +10771,32 @@
         }
       }
     },
+    "Stop syncing away from home on this device?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la synchronisation à distance sur cet appareil ?"
+          }
+        }
+      }
+    },
     "Stop syncing on this device?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter la synchronisation sur cet appareil ?"
+          }
+        }
+      }
+    },
+    "Stopping…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt…"
           }
         }
       }
@@ -10721,12 +10901,12 @@
         }
       }
     },
-    "Swipe a device in the list and choose **Remove**, or on the Mac, right-click it and choose **Remove Device**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device.": {
+    "Swipe a device in the list and choose **Remove**, or on the Mac, right-click it and choose **Remove Device**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device. **Stop Syncing on This Device** tells the other devices on the same Wi-Fi or away from home, so they stop listing it; if none can be reached, remove it on one of them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil."
+            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil. **Arrêter la synchronisation sur cet appareil** prévient les autres appareils sur le même Wi-Fi ou à distance, pour qu’ils ne l’affichent plus ; si aucun n’est joignable, retirez-le depuis l’un d’eux."
           }
         }
       }
@@ -10821,12 +11001,32 @@
         }
       }
     },
-    "Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.": {
+    "Sync needs attention": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisez votre cave entre iPhone, iPad et Mac, chiffrée de bout en bout."
+            "value": "La synchronisation demande votre attention"
+          }
+        }
+      }
+    },
+    "Sync paused": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation en pause"
+          }
+        }
+      }
+    },
+    "Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisez votre cave avec vos autres appareils (iPhone, iPad, Mac ou Android), chiffrée de bout en bout."
           }
         }
       }
@@ -10847,6 +11047,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Synchronisation"
+          }
+        }
+      }
+    },
+    "Syncing stopped on this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation arrêtée sur cet appareil"
           }
         }
       }
@@ -11321,6 +11531,16 @@
         }
       }
     },
+    "The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul."
+          }
+        }
+      }
+    },
     "The cellar it holds cannot be recovered afterwards.": {
       "localizations": {
         "fr": {
@@ -11351,12 +11571,12 @@
         }
       }
     },
-    "The cellar stays on this device as it is. Other devices keep syncing together.": {
+    "The cellar stays on this device as it is. Your other devices are told and keep syncing together.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cave reste telle quelle sur cet appareil. Les autres appareils continuent de se synchroniser entre eux."
+            "value": "La cave reste telle quelle sur cet appareil. Vos autres appareils en sont prévenus et continuent de se synchroniser entre eux."
           }
         }
       }
@@ -11661,12 +11881,12 @@
         }
       }
     },
-    "The same cellar on your iPhone, iPad and Mac.": {
+    "The same cellar on your iPhone, iPad, Mac and Android devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La même cave sur votre iPhone, iPad et Mac."
+            "value": "La même cave sur votre iPhone, votre iPad, votre Mac et vos appareils Android."
           }
         }
       }
@@ -11991,12 +12211,62 @@
         }
       }
     },
+    "This device stops using iCloud. Your other devices keep using it: turn it off on them too if you want.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’utilise plus iCloud. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+          }
+        }
+      }
+    },
+    "This device stops using the WebDAV folder and forgets its login. Your other devices keep using it: turn it off on them too if you want.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’utilise plus le dossier WebDAV et oublie son identifiant. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+          }
+        }
+      }
+    },
+    "This device stops using the relay. Your other devices keep using it: turn it off on them too if you want.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’utilise plus le relais. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+          }
+        }
+      }
+    },
     "This device was removed from the cellar on another device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Cet appareil a été retiré de la cave depuis un autre appareil."
+          }
+        }
+      }
+    },
+    "This device will leave the cellar it shares with %@. Its bottles stay on it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil quittera la cave qu’il partage avec %@. Ses bouteilles y restent."
+          }
+        }
+      }
+    },
+    "This device will show only the other device’s cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’affichera que la cave de l’autre appareil."
           }
         }
       }
@@ -12201,12 +12471,12 @@
         }
       }
     },
-    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only.": {
+    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for Apple devices on the same Apple Account; Android devices cannot use it), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only, after you confirm.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil."
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation."
           }
         }
       }
@@ -12971,12 +13241,12 @@
         }
       }
     },
-    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar).": {
+    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil (par exemple après avoir essayé la cave d’exemple)."
+            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil . Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave."
           }
         }
       }
@@ -13431,6 +13701,16 @@
         }
       }
     },
+    "Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison."
+          }
+        }
+      }
+    },
     "Your cellar is stored only on this device.": {
       "localizations": {
         "fr": {
@@ -13537,6 +13817,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre note"
+          }
+        }
+      }
+    },
+    "Your other devices are Android devices, which can’t use iCloud. To sync with them away from home, choose a WebDAV folder or a relay instead, on every device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos autres appareils sont des appareils Android, qui ne peuvent pas utiliser iCloud. Pour vous synchroniser à distance avec eux, choisissez plutôt un dossier WebDAV ou un relais, sur chaque appareil."
+          }
+        }
+      }
+    },
+    "Your other devices could not be told. If this device still appears on them, remove it there.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos autres appareils n’ont pas pu être prévenus. Si cet appareil y apparaît encore, retirez-le depuis l’un d’eux."
           }
         }
       }

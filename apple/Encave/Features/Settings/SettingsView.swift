@@ -67,14 +67,20 @@ struct SettingsView: View {
                     DevicesView()
                 } label: {
                     LabeledContent {
-                        Text(devicesSummary)
+                        SyncHealthReader { health in
+                            if health.needsAttention {
+                                SyncHealthLabel(health: health)
+                            } else {
+                                Text(devicesSummary)
+                            }
+                        }
                     } label: {
                         Label("Devices", systemImage: "laptopcomputer.and.iphone")
                     }
                 }
                 .accessibilityIdentifier("settings.devices")
             } footer: {
-                Text("Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.")
+                Text("Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.")
             }
 
             Section {
