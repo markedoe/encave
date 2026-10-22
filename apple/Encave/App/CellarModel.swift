@@ -565,7 +565,7 @@ final class CellarModel {
     /// (here or by sync), the banner and its Undo go away so nothing newer is lost.
     /// Undos that put back only their own records (`.long`, `.afterChanges`) stay.
     private func dropStaleUndo() {
-        guard let toast, let undo = toast.undo, toast.lasting == .standard else { return }
+        guard let current = toast, let undo = current.undo, current.lasting == .standard else { return }
         undo.cancel()
         toast = nil
     }

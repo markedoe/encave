@@ -29,6 +29,29 @@ struct CellarTable: View {
         let rows = model.cellar.groups(filter: model.cellarFilter, sort: .name, year: model.currentYear)
             .map { CellarTableRow(group: $0, model: model) }
             .sorted(using: sortOrder)
+        table(rows)
+            .onChange(of: picked) { _, ids in
+                selection = ids.count == 1 ? ids.first : nil
+            }
+            .onChange(of: selection, initial: true) { _, id in
+                // Opened from elsewhere (Spotlight, a notification), or replaced after a deletion.
+                if let id, picked != [id] { picked = [id] }
+            }
+            .modifier(TableCommands(picked: $picked, confirmingDelete: $confirmingDelete))
+            .overlay { emptyState(rows.isEmpty) }
+            .searchable(text: filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
+            .navigationTitle("Cellar")
+            .inspector(isPresented: $showsInspector) {
+                // Its own stack, new for each wine: what is opened from the wine's details
+                // stays in the inspector instead of covering the table.
+                NavigationStack { WinePane(wineID: selection) }
+                    .id(selection)
+                    .inspectorColumnWidth(min: 300, ideal: 360, max: 480)
+            }
+            .toolbar { toolbar }
+    }
+
+    private func table(_ rows: [CellarTableRow]) -> some View {
         Table(rows, selection: $picked, sortOrder: $sortOrder, columnCustomization: $columns) {
             TableColumn("Wine", value: \.name) { row in
                 HStack(spacing: 8) {
@@ -90,11 +113,7 @@ struct CellarTable: View {
             .defaultVisibility(.hidden)
         }
         .contextMenu(forSelectionType: UUID.self) { ids in
-            if ids.count == 1, let id = ids.first, let group = rows.first(where: { $0.id == id }).map(\.group) {
-                WineContextMenu(group: group)
-            } else if ids.count > 1 {
-                SeveralWinesMenu(wineIDs: ids) { confirmingDelete = ids }
-            }
+            menu(for: ids, rows: rows)
         } primaryAction: { ids in
             if let id = ids.first {
                 picked = [id]
@@ -102,87 +121,95 @@ struct CellarTable: View {
                 showsInspector = true
             }
         }
-        .onChange(of: picked) { _, ids in
-            selection = ids.count == 1 ? ids.first : nil
+    }
+
+    @ViewBuilder
+    private func menu(for ids: Set<UUID>, rows: [CellarTableRow]) -> some View {
+        if ids.count > 1 {
+            SeveralWinesMenu(wineIDs: ids) { confirmingDelete = ids }
+        } else if let row = rows.first(where: { ids.contains($0.id) }) {
+            WineContextMenu(group: row.group)
         }
-        .onChange(of: selection, initial: true) { _, id in
-            // Opened from elsewhere (Spotlight, a notification), or replaced after a deletion.
-            if let id, picked != [id] { picked = [id] }
+    }
+
+    @ViewBuilder
+    private func emptyState(_ isEmpty: Bool) -> some View {
+        if isEmpty {
+            if model.cellarFilter.isActive {
+                ContentUnavailableView {
+                    Label("No matching bottles", systemImage: "line.3.horizontal.decrease.circle")
+                } description: {
+                    Text("Try removing a filter.")
+                } actions: {
+                    Button("Clear Filters") { model.cellarFilter = CellarFilter(query: model.cellarFilter.query) }
+                }
+            } else if model.cellarFilter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+                ContentUnavailableView("No bottles", systemImage: "wineglass")
+            } else {
+                ContentUnavailableView.search(text: model.cellarFilter.query)
+            }
         }
-        #if os(macOS)
-        // ⌫: like the context menu, one wine at once (with Undo), several after a confirmation.
-        .onDeleteCommand {
-            if picked.count == 1, let id = picked.first {
-                model.deleteWine(id)
-            } else if picked.count > 1 {
-                confirmingDelete = picked
+    }
+
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            CellarLayoutPicker()
+            CellarFilterMenu(filter: filter)
+            Button {
+                model.sheet = .addBottle(AddBottleContext())
+            } label: {
+                Label("Add Bottle", systemImage: "plus")
+            }
+            Button {
+                showsInspector.toggle()
+            } label: {
+                Label("Show Wine", systemImage: "sidebar.trailing")
+            }
+            .help(Text("Show or hide the selected wine"))
+        }
+        #if os(iOS)
+        // iPad: Settings is reached from the Cellar, list or table.
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                model.sheet = .settings
+            } label: {
+                Label("Settings", systemImage: "gearshape")
             }
         }
         #endif
-        .confirmationDialog("Delete these wines?", isPresented: Binding(
-            get: { !confirmingDelete.isEmpty }, set: { if !$0 { confirmingDelete = [] } }
-        ), titleVisibility: .visible) {
-            Button("Delete Wines", role: .destructive) {
-                model.deleteWines(confirmingDelete)
-                picked = []
-                confirmingDelete = []
-            }
-        } message: {
-            Text("Their bottles and tastings are deleted too. You can undo right after.")
-        }
-        .overlay {
-            if rows.isEmpty {
-                if model.cellarFilter.isActive {
-                    ContentUnavailableView {
-                        Label("No matching bottles", systemImage: "line.3.horizontal.decrease.circle")
-                    } description: {
-                        Text("Try removing a filter.")
-                    } actions: {
-                        Button("Clear Filters") { model.cellarFilter = CellarFilter(query: model.cellarFilter.query) }
-                    }
-                } else if model.cellarFilter.query.trimmingCharacters(in: .whitespaces).isEmpty {
-                    ContentUnavailableView("No bottles", systemImage: "wineglass")
-                } else {
-                    ContentUnavailableView.search(text: model.cellarFilter.query)
-                }
-            }
-        }
-        .searchable(text: filter.query, prompt: Text("Wine, producer, region, grape, vintage"))
-        .navigationTitle("Cellar")
-        .inspector(isPresented: $showsInspector) {
-            // Its own stack, new for each wine: what is opened from the wine's details
-            // stays in the inspector instead of covering the table.
-            NavigationStack { WinePane(wineID: selection) }
-                .id(selection)
-                .inspectorColumnWidth(min: 300, ideal: 360, max: 480)
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                CellarLayoutPicker()
-                CellarFilterMenu(filter: filter)
-                Button {
-                    model.sheet = .addBottle(AddBottleContext())
-                } label: {
-                    Label("Add Bottle", systemImage: "plus")
-                }
-                Button {
-                    showsInspector.toggle()
-                } label: {
-                    Label("Show Wine", systemImage: "sidebar.trailing")
-                }
-                .help(Text("Show or hide the selected wine"))
-            }
-            #if os(iOS)
-            // iPad: Settings is reached from the Cellar, list or table.
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    model.sheet = .settings
-                } label: {
-                    Label("Settings", systemImage: "gearshape")
+    }
+}
+
+/// Deleting the selected rows: the Delete key on the Mac, like the context menu, deletes
+/// one wine at once (with Undo) and several after a confirmation.
+private struct TableCommands: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    @Binding var picked: Set<UUID>
+    @Binding var confirmingDelete: Set<UUID>
+
+    func body(content: Content) -> some View {
+        content
+            #if os(macOS)
+            .onDeleteCommand {
+                if picked.count == 1, let id = picked.first {
+                    model.deleteWine(id)
+                } else if picked.count > 1 {
+                    confirmingDelete = picked
                 }
             }
             #endif
-        }
+            .confirmationDialog("Delete these wines?", isPresented: Binding(
+                get: { !confirmingDelete.isEmpty }, set: { if !$0 { confirmingDelete = [] } }
+            ), titleVisibility: .visible) {
+                Button("Delete Wines", role: .destructive) {
+                    model.deleteWines(confirmingDelete)
+                    picked = []
+                    confirmingDelete = []
+                }
+            } message: {
+                Text("Their bottles and tastings are deleted too. You can undo right after.")
+            }
     }
 }
 
