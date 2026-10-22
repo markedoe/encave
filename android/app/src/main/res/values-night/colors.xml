@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_background">@android:color/black</color>
+    <!-- Mirrors design/tokens.json (color.launch-background, dark); checked by DesignTokensTest. -->
+    <color name="window_background">#120F10</color>
 </resources>

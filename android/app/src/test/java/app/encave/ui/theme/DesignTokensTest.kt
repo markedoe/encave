@@ -53,10 +53,22 @@ class DesignTokensTest {
         assertEquals(tokens.getValue("touchTarget").jsonObject.getValue("android").jsonPrimitive.int, DesignTokens.TOUCH_TARGET)
     }
 
+    private fun resourceColor(folder: String, name: String): Long {
+        val colors = File("src/main/res/$folder/colors.xml").readText()
+        val hex = Regex("""name="$name">#([0-9A-Fa-f]{6})<""").find(colors)
+        return argb(checkNotNull(hex) { "$folder/colors.xml has no literal $name" }.groupValues[1])
+    }
+
     @Test
     fun launcherBackgroundIsTheAccent() {
-        val colors = File("src/main/res/values/colors.xml").readText()
-        val hex = Regex("""name="ic_launcher_background">#([0-9A-Fa-f]{6})<""").find(colors)!!.groupValues[1]
-        assertEquals(DesignTokens.accent.light, argb(hex))
+        assertEquals(DesignTokens.accent.light, resourceColor("values", "ic_launcher_background"))
+    }
+
+    @Test
+    fun launchWindowMatches() {
+        val token = themed("launch-background")
+        assertEquals(token, DesignTokens.launchBackground)
+        assertEquals(token.light, resourceColor("values", "window_background"))
+        assertEquals(token.dark, resourceColor("values-night", "window_background"))
     }
 }
