@@ -21,6 +21,15 @@ struct RestoreSource: Identifiable, Sendable {
     var workingFolder: URL?
 }
 
+/// An archive made by Back Up Now, waiting in a temporary folder to be shared or saved.
+struct MadeArchive: Identifiable, Sendable {
+    let url: URL
+    let date: Date
+    /// The photos and documents it holds, and those left out.
+    let result: CellarArchive.WriteResult
+    var id: URL { url }
+}
+
 /// Backups made on this device: the previous versions of the cellar (kept by the store),
 /// archives made with Back Up Now, and the weekly archive kept in the app's Documents
 /// folder (Files › On My iPhone › Encave). Nothing here uses the network.
@@ -36,12 +45,14 @@ final class BackupCenter {
         didSet { defaults.set(weeklyEnabled, forKey: Self.weeklyKey) }
     }
 
-    /// The last archive made, by Back Up Now or the weekly backup.
+    /// The last backup kept: an archive shared or saved with Back Up Now, or the weekly one.
     private(set) var lastBackup: Date?
     /// Making an archive.
     private(set) var isWorking = false
     /// Bumped when a version or archive is added, so lists reload.
     private(set) var changeCount = 0
+    /// The last weekly archive that could not be made (no space): not tried again for a day.
+    private var lastAutomaticFailure: Date?
 
     static let weeklyKey = "backup.weekly"
     static let lastKey = "backup.last"
@@ -117,18 +128,34 @@ final class BackupCenter {
         }
     }
 
-    /// Back Up Now: an archive of the cellar in a temporary folder, to share or save.
-    func makeArchive(of cellar: Cellar) async throws -> URL {
+    /// Back Up Now: an archive of the cellar in a temporary folder, to share or save. It
+    /// counts as the last backup once it is shared or saved (`noteKept`).
+    func makeArchive(of cellar: Cellar) async throws -> MadeArchive {
         isWorking = true
         defer { isWorking = false }
         let now = Date.now
-        let url = try await Task.detached(priority: .userInitiated) { () throws -> URL in
-            let target = try Self.newTemporaryFolder().appendingPathComponent(CellarArchive.fileName(date: now))
-            try CellarArchive.write(cellar, exportedAt: now, to: target, fileURL: Self.fileURL)
-            return target
+        return try await Task.detached(priority: .userInitiated) { () throws -> MadeArchive in
+            let folder = try Self.newTemporaryFolder()
+            let target = folder.appendingPathComponent(CellarArchive.fileName(date: now))
+            do {
+                let result = try CellarArchive.write(cellar, exportedAt: now, to: target, fileURL: Self.fileURL)
+                return MadeArchive(url: target, date: now, result: result)
+            } catch {
+                try? FileManager.default.removeItem(at: folder)
+                throw error
+            }
         }.value
-        noteBackup(at: now)
-        return url
+    }
+
+    /// The archive was shared or saved.
+    func noteKept(_ archive: MadeArchive) {
+        noteBackup(at: archive.date)
+    }
+
+    /// Removes an archive's temporary folder once it is shared, saved or given up (it can
+    /// hold gigabytes of photos; the Mac app is seldom relaunched to clear it).
+    nonisolated static func discard(_ archive: MadeArchive) {
+        try? FileManager.default.removeItem(at: archive.url.deletingLastPathComponent())
     }
 
     private func noteBackup(at date: Date) {
@@ -143,10 +170,11 @@ final class BackupCenter {
         guard !isDemo, weeklyEnabled, !isWorking, !cellar.isEmpty, let folder = Self.automaticFolder else { return }
         if let last = defaults.object(forKey: Self.lastAutomaticKey) as? Date, now.timeIntervalSince(last) < Self.automaticInterval,
            last <= now { return }
+        if let failed = lastAutomaticFailure, now.timeIntervalSince(failed) < 24 * 3600, failed <= now { return }
         isWorking = true
         defer { isWorking = false }
         let cancelled = CancelFlag()
-        let name = CellarArchive.fileName(date: now)
+        let name = Self.automaticName(date: now, in: folder, ours: Set(automaticNames))
         let result: URL? = await withTaskCancellationHandler {
             await Task.detached(priority: .utility) { () -> URL? in
                 do {
@@ -170,7 +198,11 @@ final class BackupCenter {
         } onCancel: {
             cancelled.set()
         }
-        guard result != nil else { return }
+        guard result != nil else {
+            if !cancelled.isSet { lastAutomaticFailure = now }
+            return
+        }
+        lastAutomaticFailure = nil
         defaults.set(now, forKey: Self.lastAutomaticKey)
         var names = automaticNames.filter { $0 != name } + [name]
         while names.count > Self.automaticCount {
@@ -178,6 +210,21 @@ final class BackupCenter {
         }
         automaticNames = names
         noteBackup(at: now)
+    }
+
+    /// "Encave Backup 2026-10-21.zip", or "… 2.zip" when a file of that name that is not a
+    /// weekly archive is there (one the user saved in the folder): it is never written over,
+    /// nor removed later with the weekly ones.
+    static func automaticName(date: Date, in folder: URL, ours: Set<String>) -> String {
+        let name = CellarArchive.fileName(date: date)
+        let stem = String(name.dropLast(4))
+        var candidate = name
+        var number = 2
+        while !ours.contains(candidate), FileManager.default.fileExists(atPath: folder.appendingPathComponent(candidate).path) {
+            candidate = "\(stem) \(number).zip"
+            number += 1
+        }
+        return candidate
     }
 
     #if os(macOS)
@@ -210,6 +257,15 @@ final class BackupCenter {
     /// copied first, while the caller holds access to it.
     nonisolated static func source(forFileAt url: URL) async throws -> RestoreSource {
         let folder = try newTemporaryFolder()
+        do {
+            return try await read(url, in: folder)
+        } catch {
+            try? FileManager.default.removeItem(at: folder)
+            throw error
+        }
+    }
+
+    private nonisolated static func read(_ url: URL, in folder: URL) async throws -> RestoreSource {
         let copy = folder.appendingPathComponent("picked")
         try FileManager.default.copyItem(at: url, to: copy)
         let isArchive = (try? FileHandle(forReadingFrom: copy).read(upToCount: 4)) == Data([0x50, 0x4B, 0x03, 0x04])
@@ -226,6 +282,11 @@ final class BackupCenter {
             try? FileManager.default.removeItem(at: folder)
             return RestoreSource(kind: .json, date: backup.exportedAt, cellar: backup.cellar)
         }.value
+    }
+
+    /// Removes the files read from a backup that was not restored.
+    nonisolated static func discard(_ source: RestoreSource) {
+        if let folder = source.workingFolder { try? FileManager.default.removeItem(at: folder) }
     }
 
     /// Copies an archive's photos and documents into the stores, one at a time.

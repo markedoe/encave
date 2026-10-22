@@ -433,11 +433,31 @@ final class CellarModel {
 
     /// Deletes a rack, with Undo. Its bottles stay in the cellar without a place.
     func deleteRack(_ rackID: UUID) {
-        let snapshot = cellar
-        guard let rack = cellar.rack(rackID), update({ $0.removeRack(rackID) }) else { return }
+        guard let index = cellar.racks.firstIndex(where: { $0.id == rackID }) else { return }
+        let rack = cellar.racks[index]
+        let placed = cellar.bottlesInCellar.filter { $0.slot?.rackID == rackID }
+        guard update({ $0.removeRack(rackID) }) else { return }
         let rackName = rack.name
-        showToast(String(localized: "Deleted \(rackName)")) { [weak self] in
-            self?.update { $0 = snapshot }
+        // Only its own records come back, so the Undo can stay after other changes.
+        showToast(String(localized: "Deleted \(rackName)"), lasting: .long) { [weak self] in
+            self?.update { cellar in
+                guard cellar.rack(rackID) == nil else { return }
+                cellar.addRack(rack)
+                let last = cellar.racks.count - 1
+                if index < last { cellar.moveRacks(fromOffsets: IndexSet(integer: last), toOffset: index) }
+                CellarModel.putBack(placed, in: &cellar)
+            }
+        }
+    }
+
+    /// Bottles back in the places they had, when they are in the cellar without a place
+    /// and the place is free (the Undo of a change to a rack).
+    private static func putBack(_ bottles: [Bottle], in cellar: inout Cellar) {
+        for bottle in bottles {
+            guard let slot = bottle.slot, let now = cellar.bottles[bottle.id], now.status == .inCellar,
+                  now.slot == nil, cellar.bottle(at: slot) == nil, cellar.rack(slot.rackID)?.contains(slot) == true
+            else { continue }
+            cellar.bottles[bottle.id]?.slot = slot
         }
     }
 
@@ -499,12 +519,72 @@ final class CellarModel {
         sheet = .addBottle(AddBottleContext(wine: wine, discoveryID: discovery.id))
     }
 
-    func move(_ bottleID: UUID, to slot: Slot?) {
-        if update({ try $0.move(bottleID, to: slot) }) { successCount += 1 }
+    /// Moves a bottle to a place, with Undo back to where it was.
+    func move(_ bottleID: UUID, to slot: Slot) {
+        guard let before = cellar.bottles[bottleID], update({ try $0.move(bottleID, to: slot) }) else { return }
+        successCount += 1
+        guard let rack = cellar.rack(slot.rackID) else { return }
+        let rackName = rack.name
+        let place = rack.displayLabel(for: slot)
+        showToast(String(localized: "Moved to \(rackName) · \(place)"), lasting: .afterChanges) { [weak self] in self?.moveBack(before) }
     }
 
+    /// Takes a bottle out of the racks, noting where it is now, with Undo back to its place.
+    func takeOutOfRack(_ bottleID: UUID, note: String?) {
+        guard let before = cellar.bottles[bottleID] else { return }
+        let ok = update { cellar in
+            try cellar.move(bottleID, to: nil)
+            if var updated = cellar.bottles[bottleID] {
+                updated.storageNote = note
+                try cellar.updateBottle(updated)
+            }
+        }
+        guard ok, before.slot != nil else { return }
+        successCount += 1
+        showToast(String(localized: "Bottle taken out of the rack"), lasting: .afterChanges) { [weak self] in self?.moveBack(before) }
+    }
+
+    /// Puts a bottle back in the place and with the note it had (the Undo of a move).
+    private func moveBack(_ before: Bottle) {
+        update { cellar in
+            guard var bottle = cellar.bottles[before.id], bottle.status == .inCellar else { return }
+            bottle.slot = before.slot
+            bottle.storageNote = before.storageNote
+            try cellar.updateBottle(bottle)
+        }
+    }
+
+    /// Swaps the bottles of two places, with Undo (swapping them again).
     func swap(_ a: Slot, _ b: Slot) {
-        if update({ try $0.swap(a, b) }) { successCount += 1 }
+        guard update({ try $0.swap(a, b) }) else { return }
+        successCount += 1
+        showToast(String(localized: "Bottles swapped"), lasting: .afterChanges) { [weak self] in
+            self?.update { try $0.swap(a, b) }
+        }
+    }
+
+    /// Saves an edited rack, moving its bottles by `rowMap`. Bottles whose place is gone
+    /// are taken out (the person agreed first), with a longer Undo.
+    @discardableResult
+    func updateRack(_ rack: Rack, rowMap: [Int: Int?], takingOut count: Int) -> Bool {
+        let old = cellar.rack(rack.id)
+        let inRack = cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
+        if count > 0, let old {
+            // Only this rack and its bottles come back, so the Undo can stay after other changes.
+            showToast(String(localized: "Bottles taken out of their places: \(count)"), lasting: .long) { [weak self] in
+                self?.update { cellar in
+                    guard cellar.rack(old.id) != nil else { return }
+                    // Out of their places first, so the rack can take its old shape, then back in.
+                    for bottle in inRack where cellar.bottles[bottle.id]?.status == .inCellar {
+                        cellar.bottles[bottle.id]?.slot = nil
+                    }
+                    try cellar.updateRack(old, takingOut: true)
+                    CellarModel.putBack(inRack, in: &cellar)
+                }
+            }
+        }
+        return true
     }
 
     /// Windows in the foreground: sync pauses only when the last one goes to the background.
@@ -632,6 +712,8 @@ enum AppSheet: Identifiable {
     /// A backup or an earlier version, previewed before restoring it.
     case restore(RestoreSource)
     case settings
+    /// Join a cellar with a pairing code from a link (the QR code scanned with the camera).
+    case joinDevice(code: String, commitment: Data?)
 
     var id: String {
         switch self {
@@ -646,6 +728,7 @@ enum AppSheet: Identifiable {
         case .bottleDocuments(let id, _): "documents-\(id)"
         case .restore(let source): "restore-\(source.id)"
         case .settings: "settings"
+        case .joinDevice(let code, _): "join-\(code)"
         }
     }
 }
@@ -709,9 +792,9 @@ final class ToastUndo: NSObject {
 extension CellarError {
     var localizedMessage: String {
         switch self {
-        case .slotTaken: String(localized: "That position is already taken.")
-        case .slotOutOfRange: String(localized: "That position is outside the rack.")
-        case .rackNotEmpty: String(localized: "Move the bottles out of the removed rows or columns first.")
+        case .slotTaken: String(localized: "That place is already taken.")
+        case .slotOutOfRange: String(localized: "That place is outside the rack.")
+        case .rackNotEmpty: String(localized: "Some bottles are in places you removed.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
         case .notReceived: String(localized: "This bottle is on order: mark it received first.")
         case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")

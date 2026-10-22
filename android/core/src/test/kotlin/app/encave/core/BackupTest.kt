@@ -104,8 +104,8 @@ class CellarArchiveTest {
         val (cellar, files) = sample()
         val zip = File(folder, "backup.zip")
         val exportedAt = Instant.ofEpochSecond(1_790_000_000)
-        val count = zip.outputStream().use { CellarArchive.write(cellar, exportedAt, it, { ref -> files[ref] }) }
-        assertEquals(3, count)
+        val result = zip.outputStream().use { CellarArchive.write(cellar, exportedAt, it, { ref -> files[ref] }) }
+        assertEquals(CellarArchive.WriteResult(included = 3, missing = 0, leftOut = 0), result)
 
         ZipFile(zip).use { archive ->
             val names = archive.entries().toList().map { it.name }
@@ -131,11 +131,36 @@ class CellarArchiveTest {
     fun missingFilesAreLeftOut() {
         val (cellar, files) = sample()
         val photo = files.keys.first { it.kind == FileKind.Photo }
-        val bytes = ByteArrayOutputStream().also { out ->
-            CellarArchive.write(cellar, Instant.now(), out, { ref -> if (ref == photo) null else files[ref] })
-        }.toByteArray()
-        val zip = File(folder, "partial.zip").apply { writeBytes(bytes) }
+        val out = ByteArrayOutputStream()
+        val result = CellarArchive.write(cellar, Instant.now(), out, { ref -> if (ref == photo) null else files[ref] })
+        assertEquals(CellarArchive.WriteResult(included = 2, missing = 1, leftOut = 0), result)
+        val zip = File(folder, "partial.zip").apply { writeBytes(out.toByteArray()) }
         ZipFile(zip).use { assertEquals(5, it.size()) }
+    }
+
+    @Test
+    fun filesBeyondTheZipLimitsAreLeftOut() {
+        // Counted as CaveKit counts: the first file fits, the second is too large, the third fits.
+        val fixed = 1000L
+        val base = fixed + 3 * (30 + 46 + 16) + 22 + CellarArchive.RESERVE
+        fun cost(size: Long) = size + 76 + 3 * 10 + 160
+        val limit = base + cost(40) + cost(10) + 1
+        assertEquals(listOf(true, false, true), CellarArchive.fitting(listOf(10 to 40L, 10 to 200L, 10 to 10L), fixed, limit))
+        assertEquals(listOf(true, true, true, false, false), CellarArchive.fitting(List(5) { 10 to 1L }, 0, maxEntries = 6))
+    }
+
+    @Test
+    fun aDamagedPhotoIsSkippedAndTheNextOnesRead() {
+        val (cellar, files) = sample()
+        val bytes = ByteArrayOutputStream().also { CellarArchive.write(cellar, Instant.now(), it, { ref -> files[ref] }) }.toByteArray()
+        // A byte of the first photo changed: its CRC-32 no longer matches.
+        // Its name comes first in files.json, then in its own header.
+        val name = CellarArchive.plan(cellar).first().path.toByteArray()
+        val start = bytes.indexOfSequence(name, from = bytes.indexOfSequence(name) + 1) + name.size
+        bytes[start] = (bytes[start].toInt() xor 0x01).toByte()
+        val contents = CellarArchive.read(ByteArrayInputStream(bytes), work())
+        assertEquals(1, contents.skipped)
+        assertEquals(2, contents.files.size)
     }
 
     private fun zip(name: String, vararg entries: Pair<String, ByteArray>): File {
@@ -205,8 +230,8 @@ class CellarArchiveTest {
         assertEquals(ImportError.DamagedArchive, error)
     }
 
-    private fun ByteArray.indexOfSequence(sequence: ByteArray): Int =
-        (0..size - sequence.size).first { start -> sequence.indices.all { this[start + it] == sequence[it] } }
+    private fun ByteArray.indexOfSequence(sequence: ByteArray, from: Int = 0): Int =
+        (from..size - sequence.size).first { start -> sequence.indices.all { this[start + it] == sequence[it] } }
 
     @Test
     fun fileNameHasTheDay() {
@@ -225,14 +250,25 @@ class CellarVersionsTest {
 
     @Test
     fun keepsTheNewestOfEachOfTheLastSevenDaysAndFourWeeks() {
-        val now = day(0, hour = 9)
         val dates = (0 until 40).map { day(-it) } + listOf(day(-1, hour = 8), day(-10, hour = 8))
-        val kept = CellarVersionFolder.kept(dates, now, ZoneOffset.UTC)
+        val kept = CellarVersionFolder.kept(dates, ZoneOffset.UTC)
         val daily = (0 until 7).map { day(-it) }
         assertTrue(kept.containsAll(daily))
         assertFalse(day(-1, hour = 8) in kept)
-        assertEquals(listOf(day(-10), day(-17), day(-24)), (kept - daily.toSet()).sortedDescending())
-        assertEquals(10, kept.size)
+        // Then the newest of each of the 4 ISO weeks before (as CaveKit keeps them).
+        assertEquals(listOf(day(-7), day(-10), day(-17), day(-24)), (kept - daily.toSet()).sortedDescending())
+        assertEquals(11, kept.size)
+        val later = CellarVersionFolder.kept(kept.toList() + day(1), ZoneOffset.UTC)
+        assertEquals(11, later.size)
+        assertTrue((kept + day(1)).containsAll(later))
+    }
+
+    @Test
+    fun aLongPauseKeepsTheLastVersions() {
+        val kept = CellarVersionFolder.kept((60 until 100).map { day(-it) }, ZoneOffset.UTC)
+        assertEquals(11, kept.size)
+        assertTrue(day(-60) in kept)
+        assertTrue(CellarVersionFolder.kept(emptyList(), ZoneOffset.UTC).isEmpty())
     }
 
     @Test
@@ -261,7 +297,15 @@ class CellarVersionsTest {
         store.save(SampleData.cellar(year = 2026))
         store.file.setLastModified(day(40).toEpochMilli())
         versions.keepCopy(store.file, day(41))
-        assertEquals(listOf(day(40)), versions.versions().map { it.date })
+        assertEquals(listOf(day(40), day(-1, hour = 22)), versions.versions().map { it.date })
+
+        for (offset in 41 until 70) {
+            store.file.setLastModified(day(offset).toEpochMilli())
+            versions.keepCopy(store.file, day(offset + 1))
+        }
+        assertEquals(11, versions.versions().size)
+        assertEquals(day(69), versions.versions().first().date)
+        assertFalse(versions.versions().any { it.date == day(40) })
     }
 
     @Test
@@ -338,6 +382,32 @@ class RestoreTest {
         assertEquals("CHF", added.settings.currency)
         assertNull(current.bottles[bottle.id])
 
-        assertEquals(backup, current.restoring(backup, RestoreMode.Replace))
+        // Replace takes the backup, but the settings stay those of the cellar.
+        val replaced = current.restoring(backup, RestoreMode.Replace)
+        assertEquals(backup.copy().also { it.settings = current.settings }, replaced)
+        assertEquals("CHF", replaced.settings.currency)
+    }
+
+    @Test
+    fun addMissingBringsBackSavedSearchesAndKeepsBottlesInTheirRack() {
+        val backup = SampleData.cellar(year = 2026)
+        backup.saveSearch("Ready", CellarFilter(query = "bordeaux"))
+        backup.saveSearch("Old", CellarFilter(query = "1990"))
+        // A bottle in the second row of a rack, deleted since; the rack now has one row.
+        val bottle = backup.bottlesInCellar.first { (it.slot?.row ?: 0) >= 1 }
+        val slot = requireNotNull(bottle.slot)
+        val current = Cellar(
+            backup.wines.values,
+            backup.bottles.values.filter { it.id != bottle.id },
+            backup.racks.map { if (it.id == slot.rackId) it.copy(rows = 1) else it },
+            // A search deleted since, one renamed and saved again under the same name.
+            backup.settings.copy(savedSearches = backup.settings.savedSearches!!.filter { it.name == "Old" }.map { it.copy(id = UUID.randomUUID()) }),
+            backup.discoveries.values,
+        )
+
+        val added = current.restoring(backup, RestoreMode.AddMissing)
+        assertNull(requireNotNull(added.bottles[bottle.id]).slot)
+        assertEquals(listOf("Old", "Ready"), added.settings.savedSearches?.map { it.name })
+        assertEquals(current.settings.savedSearches?.first()?.id, added.settings.savedSearches?.first()?.id)
     }
 }

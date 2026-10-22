@@ -87,6 +87,11 @@ struct CellarCommands: Commands {
             Button("Journal") { model.selectedTab = .journal }.keyboardShortcut("4")
             Divider()
             CellarTableToggle()
+            Divider()
+            // With the devices on the network and away from home, as in Devices.
+            Button("Sync Now") { Task { await model.sync.syncEverywhere() } }
+                .keyboardShortcut("r")
+                .disabled(model.sync.otherDevices.isEmpty || model.sync.isDemo)
         }
     }
 }

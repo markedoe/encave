@@ -1,6 +1,17 @@
 package app.encave.ui.racks
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Switch
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import app.encave.ui.components.depthName
+import app.encave.ui.components.labelRes
+import app.encave.ui.components.zoneName
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -125,6 +136,10 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     val rack = cellar.racks.firstOrNull { it.id.toString() == route.rackId }
     var movingId by rememberSaveable { mutableStateOf<String?>(null) }
     var actionsId by rememberSaveable { mutableStateOf<String?>(null) }
+    /** A bottle being moved to another rack (or out of the racks) in the Move sheet. */
+    var moveSheetId by rememberSaveable { mutableStateOf<String?>(null) }
+    /** While checking: a place whose bottles are checked one by one. */
+    var checkingKey by rememberSaveable { mutableStateOf<String?>(null) }
     var openCell by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
     var focusWineId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -143,8 +158,11 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
         confirmingAudit = false
     }
     androidx.activity.compose.BackHandler(auditing) { endAudit() }
-    val inRack = rack?.let { r -> cellar.bottlesInCellar.filter { it.slot?.rackId == r.id } }.orEmpty()
-    val missing = inRack.filter { it.slot !in checked }
+    // Back ends choosing where to move a bottle, then closes the bottle's card, before leaving the rack.
+    androidx.activity.compose.BackHandler(enabled = movingId != null && !auditing) { movingId = null }
+    androidx.activity.compose.BackHandler(enabled = selectedKey != null && movingId == null && !auditing) { selectedKey = null }
+    val inRack = remember(cellar, rack) { rack?.let { r -> cellar.bottlesInCellar.filter { it.slot?.rackId == r.id } }.orEmpty() }
+    val missing = remember(inRack, checked) { inRack.filter { it.slot !in checked } }
     val moving = movingId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
     val highlighted = highlightId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id }?.slot }
         ?.takeIf { it.rackId == rack?.id }
@@ -243,6 +261,10 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             val addHere = stringResource(R.string.rack_cell_add)
             val actions = stringResource(R.string.rack_cell_actions)
             val foundLabel = stringResource(R.string.audit_found_state)
+            val moveLabel = stringResource(R.string.action_move)
+            val checkLabel = stringResource(R.string.rack_check_one_by_one)
+            val drinkLabel = stringResource(R.string.action_drink)
+            val winePageLabel = stringResource(R.string.action_wine_page)
             ZoomableRack(rack, zoom, Modifier.weight(1f).fillMaxWidth()) { cellSize, zoomHere ->
                 RackGrid(
                     rack = rack,
@@ -252,6 +274,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     selected = if (auditing) checked else setOfNotNull(moving?.slot),
                     selectedCell = selectedCell.takeIf { moving == null && !auditing },
                     focusWine = focusWine.takeIf { moving == null && !auditing },
+                    countsFound = auditing,
                     clickLabel = { bottles ->
                         when {
                             auditing -> foundLabel
@@ -293,14 +316,37 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             }
                         }
                     },
-                    onCellLongClick = if (dragAndDrop) null else { _, bottles ->
-                        if (auditing) return@RackGrid
-                        bottles.firstOrNull()?.let {
-                            selectedKey = null
-                            movingId = it.id.toString()
+                    onCellLongClick = { cell, bottles ->
+                        if (auditing) {
+                            checkingKey = cell.key()
+                        } else {
+                            bottles.firstOrNull()?.let {
+                                selectedKey = null
+                                movingId = it.id.toString()
+                            }
                         }
                     },
-                    onCellDoubleClick = { zoomHere() },
+                    longClickLabel = { bottles ->
+                        when {
+                            // Some of a place's bottles found: check them one by one.
+                            auditing -> checkLabel.takeIf { bottles.size > 1 }
+                            moving != null || dragAndDrop -> null
+                            else -> moveLabel.takeIf { bottles.isNotEmpty() }
+                        }
+                    },
+                    customActions = { _, bottles ->
+                        val bottle = bottles.singleOrNull()
+                        if (bottle == null || auditing || moving != null || rack.positionsPerCell != 1) {
+                            emptyList()
+                        } else {
+                            listOf(
+                                CustomAccessibilityAction(drinkLabel) { drinking = bottle.id.toString(); true },
+                                CustomAccessibilityAction(winePageLabel) { navigator.open(WineDetailRoute(bottle.wineId.toString())); true },
+                            )
+                        }
+                    },
+                    // Taps answer at once while checking or moving; double-tap zooms only when browsing.
+                    onCellDoubleClick = if (auditing || moving != null) null else { _ -> zoomHere() },
                     onDrop = if (!dragAndDrop || auditing || moving != null) null else { bottle, cell ->
                         val from = bottle.slot
                         when {
@@ -355,6 +401,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             },
                             onWinePage = { navigator.open(WineDetailRoute(bottle.wineId.toString())) },
                             onDocuments = { importing -> bottleDocuments = bottle.id to importing },
+                            onMoveElsewhere = { moveSheetId = bottle.id.toString() },
+                            onTakeOut = { viewModel.move(bottle.id, null) },
+                            onGone = { viewModel.markGone(bottle.id) },
                             onClose = { selectedKey = null },
                             modifier = Modifier.padding(horizontal = Dimens.l).padding(bottom = Dimens.s),
                         )
@@ -401,9 +450,25 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             onOpen = { navigator.open(WineDetailRoute(actionBottle.wineId.toString())) },
             onDrink = { drinking = actionBottle.id.toString() },
             onMove = { movingId = actionBottle.id.toString() },
+            onMoveElsewhere = { moveSheetId = actionBottle.id.toString() },
             onTakeOut = { viewModel.move(actionBottle.id, null) },
             onGone = { viewModel.markGone(actionBottle.id) },
             onDocuments = { importing -> bottleDocuments = actionBottle.id to importing },
+        )
+    }
+    val moveSheetBottle = moveSheetId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
+    if (moveSheetBottle != null) {
+        MoveBottleSheet(viewModel, cellar, moveSheetBottle, onDismiss = { moveSheetId = null })
+    }
+    val checkingCell = rack?.cellFor(checkingKey)?.takeIf { auditing }
+    if (checkingCell != null && rack != null) {
+        CheckOneByOneSheet(
+            rack = rack,
+            cell = checkingCell,
+            cellar = cellar,
+            checked = checked,
+            onChange = { checked = it },
+            onDismiss = { checkingKey = null },
         )
     }
     bottleDocuments?.let { (bottleId, importing) ->
@@ -451,10 +516,14 @@ private fun SelectedBottleCard(
     onWinePage: () -> Unit,
     /** The bottle's documents; true opens the file picker at once. */
     onDocuments: (Boolean) -> Unit,
+    onMoveElsewhere: () -> Unit,
+    onTakeOut: () -> Unit,
+    onGone: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val wine = cellar.wines[bottle.wineId]
+    var menu by remember { mutableStateOf(false) }
     val scheme = MaterialTheme.colorScheme
     val resources = LocalResources.current
     Surface(
@@ -481,6 +550,29 @@ private fun SelectedBottleCard(
                             }
                         }
                         wine?.let { MaturityLabel(Maturity.of(it, year)) }
+                    }
+                }
+                Box {
+                    IconButton(onClick = { menu = true }, modifier = Modifier.testTag("rack.selection.more")) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_move_other_rack)) },
+                            leadingIcon = { Icon(Icons.Outlined.OpenWith, contentDescription = null) },
+                            onClick = { menu = false; onMoveElsewhere() },
+                            modifier = Modifier.testTag("rack.selection.move_elsewhere"),
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_take_out_of_rack)) },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null) },
+                            onClick = { menu = false; onTakeOut() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_mark_gone)) },
+                            leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                            onClick = { menu = false; onGone() },
+                        )
                     }
                 }
                 IconButton(onClick = onClose, modifier = Modifier.testTag("rack.selection.close")) {
@@ -519,10 +611,12 @@ private fun SelectedBottleCard(
  */
 @Composable
 private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID?) -> Unit) {
-    val bottles = cellar.bottlesInCellar.filter { it.slot?.rackId == rack.id }
-    val entries = bottles.groupingBy { it.wineId }.eachCount()
-        .mapNotNull { (id, count) -> cellar.wines[id]?.let { it to count } }
-        .sortedWith(compareByDescending<Pair<Wine, Int>> { it.second }.thenBy { it.first.displayName })
+    val bottles = remember(cellar, rack) { cellar.bottlesInCellar.filter { it.slot?.rackId == rack.id } }
+    val entries = remember(bottles) {
+        bottles.groupingBy { it.wineId }.eachCount()
+            .mapNotNull { (id, count) -> cellar.wines[id]?.let { it to count } }
+            .sortedWith(compareByDescending<Pair<Wine, Int>> { it.second }.thenBy { it.first.displayName })
+    }
     val scheme = MaterialTheme.colorScheme
     Surface(color = scheme.surfaceContainer, modifier = Modifier.fillMaxWidth().testTag("rack.key")) {
         Row(
@@ -566,9 +660,17 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
 private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, onPick: (Bottle) -> Unit) {
     val resources = LocalResources.current
     val scheme = MaterialTheme.colorScheme
-    val bottles = cellar.bottlesInCellar.filter { it.slot?.rackId == rack.id }
-        .sortedWith(compareBy({ it.slot?.row ?: 0 }, { it.slot?.column ?: 0 }, { it.slot?.depth ?: 0 }))
-    val rows = bottles.groupBy { it.slot?.row ?: 0 }
+    // A fridge on shelves goes shelf by shelf (bottom layer first); other racks row by row.
+    val bottles = remember(cellar, rack) {
+        cellar.bottlesInCellar.filter { it.slot?.rackId == rack.id }.sortedWith(
+            compareBy(
+                { b -> b.slot?.let { rack.shelfPlace(it.row)?.shelf } ?: 0 },
+                { b -> b.slot?.let { rack.shelfPlace(it.row)?.layer } ?: 0 },
+                { it.slot?.row ?: 0 }, { it.slot?.column ?: 0 }, { it.slot?.depth ?: 0 },
+            ),
+        )
+    }
+    val rows = bottles.groupBy { b -> b.slot?.let { slot -> rack.shelfPlace(slot.row)?.shelf ?: slot.row } ?: 0 }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         LazyColumn(Modifier.navigationBarsPadding().testTag("rack.list")) {
             item {
@@ -592,10 +694,17 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
             }
             rows.keys.sorted().forEach { row ->
                 item(key = "row-$row") {
-                    val header = if (rack.kind == RackKind.Shelves) {
-                        rack.displayLabel(RackCell(rack.id, row, 0), resources).substringBefore(",")
-                    } else {
-                        stringResource(R.string.rack_row, Rack.rowLetters(row))
+                    val header = when {
+                        rack.hasShelfLayers -> {
+                            val shelf = stringResource(R.string.rack_shelf, row + 1)
+                            if (rack.zoneCount > 1) {
+                                stringResource(R.string.rack_list_shelf_zone, shelf, rack.zoneName(rack.zoneOfShelf(row), resources))
+                            } else {
+                                shelf
+                            }
+                        }
+                        rack.kind == RackKind.Shelves -> rack.displayLabel(RackCell(rack.id, row, 0), resources).substringBefore(",")
+                        else -> stringResource(R.string.rack_row, Rack.rowLetters(row))
                     }
                     Text(
                         header,
@@ -606,20 +715,16 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
                 }
                 items(rows[row].orEmpty(), key = { it.id.toString() }) { bottle ->
                     val wine = cellar.wines[bottle.wineId]
+                    // "B3, back · Red · Producer": the place named as everywhere else.
+                    val line = listOfNotNull(
+                        bottle.slot?.let { rack.displayLabel(it, resources) },
+                        wine?.color?.let { stringResource(it.labelRes) },
+                        wine?.producer?.takeIf { it.isNotBlank() },
+                    ).joinToString(" · ")
                     ListItem(
-                        leadingContent = {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
-                                Text(
-                                    bottle.slot?.let { rack.label(it) }.orEmpty(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = scheme.onSurfaceVariant,
-                                    modifier = Modifier.width(44.dp),
-                                )
-                                BottleEnd(wine?.color, size = 20.dp)
-                            }
-                        },
-                        headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        supportingContent = wine?.producer?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+                        leadingContent = { BottleEnd(wine?.color, size = 24.dp) },
+                        headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                        supportingContent = { Text(line, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                         trailingContent = bottle.attachments?.size?.let { { DocumentCount(it) } },
                         modifier = Modifier.clickable { onPick(bottle) }.testTag("rack.list.row"),
                     )
@@ -638,6 +743,7 @@ private fun BottleActionsSheet(
     onOpen: () -> Unit,
     onDrink: () -> Unit,
     onMove: () -> Unit,
+    onMoveElsewhere: () -> Unit,
     onTakeOut: () -> Unit,
     onGone: () -> Unit,
     onDocuments: (Boolean) -> Unit,
@@ -652,6 +758,7 @@ private fun BottleActionsSheet(
                 Triple(Icons.AutoMirrored.Outlined.OpenInNew, R.string.action_open_wine, onOpen),
                 Triple(Icons.Outlined.LocalBar, R.string.action_drink, onDrink),
                 Triple(Icons.Outlined.OpenWith, R.string.action_move, onMove),
+                Triple(Icons.Outlined.OpenWith, R.string.action_move_other_rack, onMoveElsewhere),
                 Triple(Icons.AutoMirrored.Outlined.Logout, R.string.action_remove_from_rack, onTakeOut),
                 Triple(Icons.Outlined.VolunteerActivism, R.string.action_mark_gone, onGone),
             ).let { actions ->
@@ -705,6 +812,60 @@ private fun CellSheet(
                     headlineContent = { Text(stringResource(R.string.rack_add_here)) },
                     modifier = Modifier.clickable { onDismiss(); onAdd() },
                 )
+            }
+        }
+    }
+}
+
+/**
+ * While checking a rack: the bottles of a place holding several, each found or not, for a
+ * place where only some are there.
+ */
+@Composable
+private fun CheckOneByOneSheet(
+    rack: Rack,
+    cell: RackCell,
+    cellar: Cellar,
+    checked: Set<Slot>,
+    onChange: (Set<Slot>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    val bottles = cellar.bottlesIn(cell)
+    val slots = bottles.mapNotNull { it.slot }
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l).testTag("rack.check.sheet")) {
+            ListItem(
+                headlineContent = {
+                    Text(rack.displayLabel(cell, resources), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+                },
+                supportingContent = { Text(stringResource(R.string.audit_found, slots.count { it in checked }, slots.size)) },
+            )
+            bottles.forEachIndexed { index, bottle ->
+                val slot = bottle.slot ?: return@forEachIndexed
+                val wine = cellar.wines[bottle.wineId]
+                val found = slot in checked
+                ListItem(
+                    leadingContent = { BottleEnd(wine?.color, size = 28.dp) },
+                    headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
+                    supportingContent = {
+                        Text(
+                            if (rack.kind == RackKind.Bins) stringResource(R.string.rack_check_bottle, index + 1) else rack.depthName(slot.depth, resources),
+                        )
+                    },
+                    trailingContent = { Switch(checked = found, onCheckedChange = null) },
+                    modifier = Modifier.toggleable(found, role = Role.Switch) { onChange(if (it) checked + slot else checked - slot) }
+                        .testTag("rack.check.bottle"),
+                )
+            }
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = Dimens.l),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.s, Alignment.End),
+            ) {
+                TextButton(onClick = { onChange(checked + slots) }, modifier = Modifier.testTag("rack.check.all")) {
+                    Text(stringResource(R.string.rack_check_all_here))
+                }
+                androidx.compose.material3.Button(onClick = onDismiss) { Text(stringResource(R.string.action_done)) }
             }
         }
     }

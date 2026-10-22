@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import app.encave.ui.devices.SettingsIcon
 import app.encave.ui.discoveries.DiscoveryActions
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
@@ -40,7 +41,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Insights
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -175,7 +175,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         Icon(Icons.Outlined.Insights, contentDescription = stringResource(R.string.action_insights))
                     }
                     IconButton(onClick = { navigator.open(SettingsRoute) }) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                        SettingsIcon()
                     }
                 },
                 scrollBehavior = scrollBehavior,

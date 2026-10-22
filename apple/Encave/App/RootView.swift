@@ -22,6 +22,16 @@ struct RootView: View {
         }
         .sensoryFeedback(.success, trigger: model.successCount)
         .sensoryFeedback(.selection, trigger: model.selectionCount)
+        // encave://pair?code=…: the pairing QR code scanned with the system camera. Opens
+        // Join with the code filled in; the user still chooses and taps Join.
+        .onOpenURL { url in
+            guard let parsed = PairingCode.parse(qr: url.absoluteString), !model.sync.isDemo else { return }
+            model.sheet = .joinDevice(code: parsed.code.digits, commitment: parsed.commitment)
+        }
+        #if os(macOS)
+        // A link goes to a window already open rather than a new one.
+        .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+        #endif
         // The monthly reminder reflects the cellar as it is now.
         .task(id: model.cellar) {
             try? await Task.sleep(for: .seconds(3))
@@ -117,6 +127,8 @@ private struct SheetContent: View {
                 .macSheetFrame(width: 520, height: 640)
         case .settings:
             NavigationStack { SettingsView() }
+        case .joinDevice(let code, let commitment):
+            JoinDeviceView(code: code, commitment: commitment)
         }
     }
 }

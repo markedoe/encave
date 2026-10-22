@@ -30,6 +30,8 @@ import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -61,7 +63,9 @@ interface ArchiveDestination {
 
 /**
  * Download/Encave, through MediaStore: the Files app shows it, and no permission is needed for
- * the app's own files. Removing Encave does not remove them.
+ * the app's own files. Removing Encave does not remove them; once it is installed again they
+ * are no longer its own, so it cannot delete them (they are left for the user) and new ones get
+ * a name MediaStore makes unique ("… (1).zip").
  */
 class DownloadsDestination(context: Context) : ArchiveDestination {
     private val resolver: ContentResolver = context.contentResolver
@@ -139,6 +143,9 @@ class BackupManager(
     val working: StateFlow<Boolean> = busy.asStateFlow()
     private val mutex = Mutex()
 
+    /** The last weekly archive that could not be written (no space): not tried again for a day. */
+    @Volatile private var lastAutomaticFailure: Instant? = null
+
     init {
         if (!prefs.contains(KEY_FIRST_USE)) prefs.edit { putLong(KEY_FIRST_USE, clock().toEpochMilli()) }
     }
@@ -161,7 +168,7 @@ class BackupManager(
     }
 
     /** Back up now: the archive of the cellar, written to [output] (a file the user chose). */
-    suspend fun writeArchive(output: OutputStream): Result<Int> = mutex.withLock {
+    suspend fun writeArchive(output: OutputStream): Result<CellarArchive.WriteResult> = mutex.withLock {
         busy.value = true
         try {
             val cellar = repository.read { it.copy() }
@@ -189,14 +196,23 @@ class BackupManager(
             if (lastAutomatic != null && !lastAutomatic.isAfter(now) && Duration.between(lastAutomatic, now) < AUTOMATIC_INTERVAL) {
                 return@withLock false
             }
+            val failed = lastAutomaticFailure
+            if (failed != null && !failed.isAfter(now) && Duration.between(failed, now) < Duration.ofDays(1)) return@withLock false
             val cellar = repository.read { it.copy() }
             if (cellar.isEmpty) return@withLock false
             busy.value = true
             try {
                 val name = CellarArchive.fileName(now)
+                // Stopped between files when the job is cancelled (WorkManager stops it): the
+                // half-written file is then deleted by the destination.
                 val id = withContext(Dispatchers.IO) {
-                    destination.write(name) { CellarArchive.write(cellar, now, it, ::fileOf) }
-                } ?: return@withLock false
+                    destination.write(name) { CellarArchive.write(cellar, now, it, ::fileOf, isCancelled = { !isActive }) }
+                }
+                if (id == null) {
+                    if (currentCoroutineContext().isActive) lastAutomaticFailure = now
+                    return@withLock false
+                }
+                lastAutomaticFailure = null
                 val ids = (automaticIds() + id).toMutableList()
                 while (ids.size > AUTOMATIC_COUNT) withContext(Dispatchers.IO) { destination.delete(ids.removeAt(0)) }
                 prefs.edit {

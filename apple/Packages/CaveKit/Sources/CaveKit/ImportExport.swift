@@ -128,7 +128,9 @@ public enum CellarExport {
 }
 
 public extension Cellar {
-    /// Adds everything from a backup that is not already in this cellar (by id).
+    /// Adds everything from a backup that is not already in this cellar (by id), and the saved
+    /// searches it does not have (by id and name). A bottle whose place is taken, or no longer
+    /// in its rack (made smaller since), is added without a place.
     @discardableResult
     mutating func merge(_ other: Cellar) -> ImportSummary {
         var wineCount = 0, bottleCount = 0
@@ -139,13 +141,19 @@ public extension Cellar {
         }
         for (id, bottle) in other.bottles where bottles[id] == nil {
             var copy = bottle
-            if let slot = copy.slot, self.bottle(at: slot) != nil { copy.slot = nil }
+            if let slot = copy.slot, self.bottle(at: slot) != nil || !(self.rack(slot.rackID)?.contains(slot) ?? false) {
+                copy.slot = nil
+            }
             bottles[id] = copy
             bottleCount += 1
         }
         for (id, discovery) in other.discoveries where discoveries[id] == nil && wines[discovery.wineID] != nil {
             discoveries[id] = discovery
         }
+        let searches = settings.savedSearches ?? []
+        let ids = Set(searches.map(\.id)), names = Set(searches.map { $0.name.lowercased() })
+        let missing = (other.settings.savedSearches ?? []).filter { !ids.contains($0.id) && !names.contains($0.name.lowercased()) }
+        if !missing.isEmpty { settings.savedSearches = SavedSearch.ordered(searches + missing) }
         return ImportSummary(winesAdded: wineCount, bottlesAdded: bottleCount, rowsSkipped: 0)
     }
 
