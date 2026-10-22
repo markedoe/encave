@@ -114,7 +114,7 @@ object LabelCrop {
         Box(left * step, top * step, min(width, right * step), min(height, bottom * step))
 
     /** The average light of each cell of step × step pixels. */
-    private fun grayGrid(pixels: IntArray, width: Int, step: Int, w: Int, h: Int): IntArray {
+    internal fun grayGrid(pixels: IntArray, width: Int, step: Int, w: Int, h: Int): IntArray {
         val sums = IntArray(w * h)
         for (y in 0 until h * step) {
             val row = (y / step) * w
