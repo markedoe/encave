@@ -4,13 +4,19 @@ import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
 import app.encave.R
+import app.encave.core.PhotoId
 import app.encave.core.PurchaseInfo
+import app.encave.core.Rack
+import app.encave.core.Slot
 import app.encave.core.Wine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,5 +48,32 @@ class AddBottlesDocumentsTest {
         collector.cancel()
         assertEquals(1, app.repository.cellar.value.wines.values.single { it.name == wine.name }.attachments?.size)
         assertTrue(messages.any { (it.text as? UiText.Res)?.id == R.string.err_document_unreadable })
+    }
+
+    @Test
+    fun aFailedAddLeavesNoFilesBehind() {
+        val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val viewModel = AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, app.backups)
+        val rack = Rack(name = "Full", rows = 1, columns = 1)
+        runBlocking {
+            app.repository.update { it.addRack(rack) }
+            app.repository.update { it.addBottles(Wine(name = "Already there"), 1, listOf(Slot(rack.id, 0, 0)), PurchaseInfo()) }
+        }
+        val photo = "label photo".toByteArray()
+        val pending = app.documents.stage("receipt".toByteArray(), "Receipt.pdf", "application/pdf")
+        val documentId = PhotoId.make("receipt".toByteArray())
+        var done: Boolean? = null
+        // The place is taken: the save fails.
+        viewModel.addBottles(Wine(name = "Too late"), 1, listOf(Slot(rack.id, 0, 0)), PurchaseInfo(), photo = photo, pendingDocuments = listOf(pending)) { done = it }
+        val deadline = System.currentTimeMillis() + 10_000
+        while (done == null && System.currentTimeMillis() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(10)
+        }
+        assertEquals(false, done)
+        assertFalse(app.photos.exists(PhotoId.make(photo)))
+        assertFalse(app.documents.exists(documentId))
+        // The temporary copy stays, so trying again can still store it.
+        assertNotNull(app.documents.commit(pending))
     }
 }

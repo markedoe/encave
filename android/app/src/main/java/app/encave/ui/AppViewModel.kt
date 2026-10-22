@@ -202,7 +202,7 @@ class AppViewModel(
      * Adds bottles, with Undo. [photo] is a prepared JPEG (the label), saved first as the
      * wine's photo. [onDone] tells the screen whether they were added: on failure (a place
      * taken meanwhile by a sync, a full disk) it stays open with everything entered. Files
-     * already stored are then left to the cleanup at launch, which removes unused ones.
+     * written for it are then removed, so a retry stores them once and none is left over.
      */
     fun addBottles(
         wine: Wine,
@@ -216,8 +216,16 @@ class AppViewModel(
         onDone: (Boolean) -> Unit = {},
     ) {
         viewModelScope.launch {
-            val photoId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
-            val attachments = withContext(Dispatchers.IO) { pendingDocuments.mapNotNull { documents.commit(it) } }
+            val newPhotos = mutableListOf<String>()
+            val photoId = photo?.let {
+                withContext(Dispatchers.IO) {
+                    val existed = photos.contains(it)
+                    photos.save(it)?.also { id -> if (!existed) newPhotos += id }
+                }
+            }
+            val committed = withContext(Dispatchers.IO) { pendingDocuments.mapNotNull { documents.commitTracked(it) } }
+            val attachments = committed.map { it.attachment }
+            val newDocuments = committed.filter { it.isNew }.map { it.attachment.id }
             var record = if (photoId != null) wine.copy(photoId = photoId) else wine
             if (attachments.isNotEmpty()) record = record.copy(attachments = record.attachments.orEmpty() + attachments)
             val before = cellar.value
@@ -240,9 +248,25 @@ class AppViewModel(
                     onDone(true)
                 }
                 .onFailure {
+                    removeUnused(newPhotos, newDocuments)
                     post(errorText(it))
                     onDone(false)
                 }
+        }
+    }
+
+    /**
+     * Removes files written for a save that failed. One the cellar refers to meanwhile (the
+     * same photo or document, received from another device) is kept.
+     */
+    private suspend fun removeUnused(photoIds: List<String>, documentIds: List<String>) {
+        if (photoIds.isEmpty() && documentIds.isEmpty()) return
+        val now = cellar.value
+        val usedPhotos = now.photoIds
+        val usedDocuments = now.attachmentIds
+        withContext(Dispatchers.IO) {
+            photoIds.filterNot { it in usedPhotos }.forEach(photos::delete)
+            documentIds.filterNot { it in usedDocuments }.forEach(documents::delete)
         }
     }
 
@@ -962,9 +986,25 @@ class AppViewModel(
                     onDone(true)
                 }
                 .onFailure {
+                    removeUnused(newPhotos, newDocuments)
                     post(errorText(it))
                     onDone(false)
                 }
+        }
+    }
+
+    /**
+     * Removes files written for a save that failed. One the cellar refers to meanwhile (the
+     * same photo or document, received from another device) is kept.
+     */
+    private suspend fun removeUnused(photoIds: List<String>, documentIds: List<String>) {
+        if (photoIds.isEmpty() && documentIds.isEmpty()) return
+        val now = cellar.value
+        val usedPhotos = now.photoIds
+        val usedDocuments = now.attachmentIds
+        withContext(Dispatchers.IO) {
+            photoIds.filterNot { it in usedPhotos }.forEach(photos::delete)
+            documentIds.filterNot { it in usedDocuments }.forEach(documents::delete)
         }
     }
 
