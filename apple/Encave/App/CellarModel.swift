@@ -775,9 +775,9 @@ final class CellarModel {
         take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
         guard updated != live else { return }
         // The bottles' "Added" banner still shown: one banner, whose Undo takes both back.
-        let add = lastAdd.flatMap { $0.wineID == id && toast?.id == $0.toastID && toast?.undo != nil ? $0 : nil }
+        let shownAdd = lastAdd.flatMap { $0.wineID == id && toast?.id == $0.toastID && toast?.undo != nil ? $0 : nil }
         // Its own change keeps that banner, which the new one replaces just below.
-        if add != nil { undoing = true }
+        if shownAdd != nil { undoing = true }
         let saved = update { try $0.updateWine(updated) }
         undoing = false
         guard saved else { return }
@@ -791,7 +791,7 @@ final class CellarModel {
             restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
             cellar.wines[id] = wine
         }
-        guard let add else {
+        guard let add = shownAdd else {
             showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
                 self?.update(revert)
             }
