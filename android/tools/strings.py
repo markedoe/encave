@@ -931,6 +931,7 @@ S = [
  ("pair_failed_version", "The other device runs a different version of Encave. Update both devices.", "L’autre appareil utilise une version différente d’Encave. Mettez les deux à jour."),
  ("pair_failed_connection", "The connection was lost. Try again with a new code.", "La connexion a été perdue. Réessayez avec un nouveau code."),
  ("pair_failed_listen", "This device could not wait for the other one on the network.", "Cet appareil n’a pas pu attendre l’autre sur le réseau."),
+ ("pair_failed_sample", "The sample cellar could not be removed from this device, so nothing was shared. Check the free space on this device, then try again.", "La cave d’exemple n’a pas pu être retirée de cet appareil, rien n’a donc été partagé. Vérifiez l’espace libre sur cet appareil, puis réessayez."),
  ("pair_not_synced_body", "The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.", "La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul."),
  ("pair_done_body_remote", "Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.", "Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison."),
  ("join_replace_confirm_body", "This device will show only the other device’s cellar.", "Cet appareil n’affichera que la cave de l’autre appareil."),

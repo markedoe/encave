@@ -411,6 +411,7 @@ private val PairingSession.Failure.text: Int
         PairingSession.Failure.ConnectionLost -> R.string.pair_failed_connection
         PairingSession.Failure.CannotListen -> R.string.pair_failed_listen
         PairingSession.Failure.LocalNetwork -> R.string.sync_problem_local_network
+        PairingSession.Failure.SampleNotRemoved -> R.string.pair_failed_sample
     }
 
 /** "Does the other device show this code?" */

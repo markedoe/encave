@@ -369,6 +369,8 @@ class SyncManager(
 
     /** First device of a cellar: creates the list of devices with this one. */
     suspend fun setUpIfNeeded() {
+        // Before the cellar is first shared (no other device yet): the sample is never sent.
+        if (otherDevices.isEmpty()) removeSampleUnshared()
         if (isSetUp) return
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
@@ -518,10 +520,7 @@ class SyncManager(
         // that fails loses nothing); meanwhile only what changes here is sent.
         runCatching { storage.pendingReplace = replace }
         // Combining: the sample cellar is removed first, never sent to the other devices.
-        if (!replace) {
-            val withoutSample = repository.read { if (it.containsSample) it.removingSample() else null }
-            if (withoutSample != null) repository.replace(withoutSample)
-        }
+        if (!replace) removeSampleUnshared()
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
             replacing = replace
@@ -533,6 +532,21 @@ class SyncManager(
         }
         status.update { it.copy(membership = membership, wasRemoved = false, problem = null) }
         save()
+    }
+
+    /**
+     * Removes the sample cellar without recording it as a change: its records have the same
+     * IDs on every device, so a deletion sent would remove another device's sample too.
+     * Throws [SampleNotRemovedException] if it could not be saved: nothing is shared then.
+     */
+    private suspend fun removeSampleUnshared() {
+        if (isDemo || !repository.read { it.containsSample }) return
+        var removed: Pair<Cellar, Cellar>? = null
+        repository.applySynced(
+            { current -> if (current.containsSample) current.removingSample().also { removed = current to it } else current },
+            onSaved = { removed?.let { (old, new) -> synchronized(this) { syncState = syncState?.forgetting(old, new) } } },
+        ).getOrElse { throw SampleNotRemovedException(it) }
+        if (removed != null) save()
     }
 
     /** Adds the device that just joined. */
@@ -1225,3 +1239,6 @@ class SyncManager(
         const val REMOTE_DELAY_MS = 3_000L
     }
 }
+
+/** The sample cellar could not be removed before sharing the cellar: nothing was shared. */
+class SampleNotRemovedException(cause: Throwable) : Exception(cause)

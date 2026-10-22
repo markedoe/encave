@@ -884,6 +884,7 @@
     <string name="pair_failed_version">The other device runs a different version of Encave. Update both devices.</string>
     <string name="pair_failed_connection">The connection was lost. Try again with a new code.</string>
     <string name="pair_failed_listen">This device could not wait for the other one on the network.</string>
+    <string name="pair_failed_sample">The sample cellar could not be removed from this device, so nothing was shared. Check the free space on this device, then try again.</string>
     <string name="pair_not_synced_body">The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.</string>
     <string name="pair_done_body_remote">Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.</string>
     <string name="join_replace_confirm_body">This device will show only the other device’s cellar.</string>

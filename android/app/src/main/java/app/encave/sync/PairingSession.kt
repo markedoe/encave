@@ -51,7 +51,7 @@ class PairingSession private constructor(
         data class Failed(val reason: Failure) : Phase()
     }
 
-    enum class Failure { Expired, NotFound, Rejected, NotVerified, OtherVersion, ConnectionLost, CannotListen, LocalNetwork }
+    enum class Failure { Expired, NotFound, Rejected, NotVerified, OtherVersion, ConnectionLost, CannotListen, LocalNetwork, SampleNotRemoved }
 
     private val phaseFlow = MutableStateFlow<Phase>(Phase.Waiting)
     val phase: StateFlow<Phase> = phaseFlow.asStateFlow()
@@ -253,7 +253,7 @@ class PairingSession private constructor(
         stop()
         if (phaseFlow.value is Phase.Done || phaseFlow.value is Phase.AddedNotSynced) return
         phaseFlow.value = Phase.Failed(
-            when ((error as? SyncException)?.error) {
+            if (error is SampleNotRemovedException) Failure.SampleNotRemoved else when ((error as? SyncException)?.error) {
                 SyncError.Rejected -> Failure.Rejected
                 SyncError.AuthenticationFailed -> Failure.NotVerified
                 is SyncError.UnsupportedVersion -> Failure.OtherVersion
@@ -279,8 +279,13 @@ class PairingSession private constructor(
 
         /** Shows a new code and waits for a device to join with it. */
         suspend fun invite(sync: SyncManager, scope: CoroutineScope): PairingSession {
-            sync.setUpIfNeeded()
             val session = PairingSession(Role.Inviting, PairingCode.random(), sync, scope)
+            try {
+                sync.setUpIfNeeded()
+            } catch (_: SampleNotRemovedException) {
+                session.phaseFlow.value = Phase.Failed(Failure.SampleNotRemoved)
+                return session
+            }
             val host = PairingHost(sync.identity, sync.deviceName, sync.platform)
             session.qrPayload = session.code.qrPayload(host.commitment)
             if (!sync.isDemo) {

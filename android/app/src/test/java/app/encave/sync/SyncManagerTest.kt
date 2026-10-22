@@ -164,6 +164,38 @@ class SyncManagerTest {
     }
 
     @Test
+    fun theHostRemovesTheSampleBeforeSharingWithoutSendingADeletion() = runBlocking {
+        // A device alone in its cellar (sync state already there) loads the sample, then invites.
+        sync.setUpIfNeeded()
+        repository.replace(SampleData.cellar()).getOrThrow()
+        repository.update { it.addBottles(Wine(name = "Mine"), 2) }.getOrThrow()
+
+        sync.setUpIfNeeded()
+        assertFalse(repository.cellar.value.containsSample)
+        val shared = sync.snapshot()!!
+        assertEquals(setOf("Mine"), shared.cellar.wines.values.map { it.name }.toSet())
+        // The sample has the same IDs on every device: no stamp of it, deleted or not, is sent.
+        val sampleKeys = SampleData.ids.map { it.toString().lowercase() }.toSet()
+        assertTrue(shared.state.stamps.keys.none { it.substringAfter(':') in sampleKeys })
+    }
+
+    @Test
+    fun combineStopsWhenTheSampleCannotBeRemoved() = runBlocking {
+        repository.replace(SampleData.cellar()).getOrThrow()
+        // The cellar file can no longer be written.
+        File(context.filesDir, "cellar-test.json").apply { delete(); mkdirs(); File(this, "x").writeText("x") }
+        val (host, _) = DeviceIdentity.generate()
+        val (members, _) = Membership().adding(Member(host.id, "iPad", host.publicKey, "ipados"), 0, host.id)
+
+        val failure = runCatching { sync.adoptCellar(members, replace = false) }.exceptionOrNull()
+        assertTrue(failure is SampleNotRemovedException)
+        assertNull(sync.state.value.membership)
+        assertTrue(repository.cellar.value.containsSample)
+        File(context.filesDir, "cellar-test.json").deleteRecursively()
+        Unit
+    }
+
+    @Test
     fun leavingWithNoDeviceReachableSaysSoAndForgetsTheCellar() = runBlocking {
         sync.setUpIfNeeded()
         addOther()

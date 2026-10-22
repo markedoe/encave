@@ -883,6 +883,7 @@
     <string name="pair_failed_version">L’autre appareil utilise une version différente d’Encave. Mettez les deux à jour.</string>
     <string name="pair_failed_connection">La connexion a été perdue. Réessayez avec un nouveau code.</string>
     <string name="pair_failed_listen">Cet appareil n’a pas pu attendre l’autre sur le réseau.</string>
+    <string name="pair_failed_sample">La cave d’exemple n’a pas pu être retirée de cet appareil, rien n’a donc été partagé. Vérifiez l’espace libre sur cet appareil, puis réessayez.</string>
     <string name="pair_not_synced_body">La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul.</string>
     <string name="pair_done_body_remote">Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison.</string>
     <string name="join_replace_confirm_body">Cet appareil n’affichera que la cave de l’autre appareil.</string>

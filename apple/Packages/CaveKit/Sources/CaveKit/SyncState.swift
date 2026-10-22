@@ -70,6 +70,18 @@ public struct SyncState: Codable, Equatable, Sendable {
         if old.racks.map(\.id) != new.racks.map(\.id) { stamp(SyncKey.rackOrder, deleted: false) }
     }
 
+    /// Records removed from the cellar without telling the other devices (the sample cellar,
+    /// before the cellar is shared): their stamps go, so no deletion of them is ever sent.
+    public mutating func forget(from old: Cellar, to new: Cellar) {
+        func drop<T>(_ kind: SyncKey.Kind, _ before: [UUID: T], _ after: [UUID: T]) {
+            for id in before.keys where after[id] == nil { stamps[SyncKey(kind, id).string] = nil }
+        }
+        drop(.wine, old.wines, new.wines)
+        drop(.bottle, old.bottles, new.bottles)
+        drop(.discovery, old.discoveries, new.discoveries)
+        drop(.rack, CellarMerge.byID(old.racks), CellarMerge.byID(new.racks))
+    }
+
     /// A write failed and the cellar went back from `shown` to `saved`, what the file holds.
     /// The records last changed on this device are stamped again with what was saved, so no
     /// device takes a change that was never saved (or a deletion of a record still here).

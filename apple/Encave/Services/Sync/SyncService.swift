@@ -258,7 +258,10 @@ final class SyncService {
 
     /// First device of a cellar: creates the list of devices with this one.
     func setUpIfNeeded() {
-        guard membership == nil, !identityUnavailable, let model else { return }
+        guard !identityUnavailable, let model else { return }
+        // Before the cellar is first shared (no other device yet): the sample is never sent.
+        if membership.map({ $0.members.keys.allSatisfy { $0 == identity.id } }) ?? true { removeSampleUnshared() }
+        guard membership == nil else { return }
         var members = Membership()
         var clock = state?.clock ?? 0
         members.add(me, clock: &clock, by: identity.id)
@@ -267,6 +270,19 @@ final class SyncService {
         state = newState
         membership = members
         save()
+    }
+
+    /// Removes the sample cellar without recording it as a change: its records have the same
+    /// IDs on every device, so a deletion sent would remove another device's sample too.
+    private func removeSampleUnshared() {
+        guard !isDemo, let model, model.cellar.containsSample else { return }
+        let before = model.cellar
+        let removed = before.removingSample()
+        model.applySynced(removed)
+        guard var state else { return }
+        state.forget(from: before, to: removed)
+        self.state = state
+        try? files?.syncState.save(state)
     }
 
     /// Removes another device: it can no longer sync with any device of the cellar.
@@ -1120,7 +1136,7 @@ final class SyncService {
             state = SyncState(device: identity.id, clock: state?.clock ?? 0)
         } else {
             // Combining: the sample cellar is removed first, never sent to the other devices.
-            if model.cellar.containsSample { _ = model.update { $0 = $0.removingSample() } }
+            removeSampleUnshared()
             if state == nil { state = .starting(with: model.cellar, device: identity.id) }
         }
         setPendingReplace(replace)

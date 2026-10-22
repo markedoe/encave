@@ -118,6 +118,22 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(a.cellar == b.cellar)
     }
 
+    @Test func theSampleRemovedBeforeSharingIsNotDeletedElsewhere() throws {
+        let sample = SampleData.cellar()
+        var host = Device(sample)
+        try host.edit { try $0.addBottles(of: Wine(name: "Mine"), quantity: 1) }
+        // Removed before the cellar is first shared: not recorded, its stamps forgotten.
+        let before = host.cellar
+        host.cellar = before.removingSample()
+        host.state.forget(from: before, to: host.cellar)
+        var other = Device(sample)
+        syncBoth(&host, &other)
+        // No deletion of the sample was sent: the other device keeps its own.
+        #expect(other.cellar.containsSample)
+        #expect(host.cellar.wines.values.map(\.name).contains("Mine"))
+        #expect(other.cellar.wines.values.map(\.name).contains("Mine"))
+    }
+
     @Test func aRevertLeavesChangesFromOtherDevicesAlone() throws {
         let (cellar, wine, _) = try sample()
         var (a, b) = pair(cellar)
