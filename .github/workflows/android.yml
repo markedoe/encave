@@ -3,9 +3,9 @@ name: Android app
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["android/**", "design/tokens.json", "relay/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "relay/**", "licences/**", "LICENSE", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", "design/tokens.json", "relay/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "relay/**", "licences/**", "LICENSE", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 permissions:
@@ -55,6 +55,10 @@ jobs:
 
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
+
+      - name: Licences list up to date
+        # Settings › About › Licences matches the release runtime classpath.
+        run: python3 tools/licences.py --check
 
       - name: Debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
