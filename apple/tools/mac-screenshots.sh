@@ -35,10 +35,12 @@ for appearance in light dark; do
       [ "$failures" -ge 2 ] && break 3
       name=$(printf "%s-%02d-%s" "$language" "$step" "$section")
       log="$work/$appearance-$name.log"
-      "$app/Contents/MacOS/Encave" --sample-data --tab "$section" \
+      # AppKit reads "-name value" pairs as settings and opens any other word as a
+      # document, without a window: --sample-data, alone, comes last.
+      "$app/Contents/MacOS/Encave" --tab "$section" \
         -EncaveScreenshots YES -EncaveAppearance "$appearance" \
         -AppleLanguages "($language)" -AppleLocale "$locale" \
-        -ApplePersistenceIgnoreState YES -NSTreatUnknownArgumentsAsOpen NO > "$log" 2>&1 &
+        -ApplePersistenceIgnoreState YES -NSAppSleepDisabled YES --sample-data > "$log" 2>&1 &
       pid=$!
       window=
       for _ in $(seq 60); do
