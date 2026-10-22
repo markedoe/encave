@@ -161,7 +161,7 @@ struct CellarList: View {
     @ViewBuilder
     private func content(_ groups: [WineGroup]) -> some View {
         let searching = !filter.query.trimmingCharacters(in: .whitespaces).isEmpty
-        if model.cellar.bottlesInCellar.isEmpty && model.cellar.bottlesOnOrder.isEmpty {
+        if model.bottlesInCellar.isEmpty && model.cellar.bottlesOnOrder.isEmpty {
             EmptyCellarView()
         } else {
             ScrollViewReader { proxy in
@@ -420,7 +420,7 @@ private struct CellarStats: View {
     var onWines: () -> Void
 
     var body: some View {
-        let stats = model.cellar.statistics(year: model.currentYear)
+        let stats = model.overview.statistics
         let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil && filter.tag == nil
             && filter.reservation == nil && filter.grape == nil
         // Side by side, or one above the other at the accessibility text sizes so captions fit.
@@ -462,15 +462,16 @@ struct CellarFilterOptions {
 
     @MainActor
     init(model: CellarModel, filter: CellarFilter) {
-        let stats = model.cellar.statistics(year: model.currentYear)
+        let overview = model.overview
+        let stats = overview.statistics
         let present = Set(stats.byColor.compactMap(\.color))
         colors = WineColor.allCases.filter { present.contains($0) || filter.colors.contains($0) }
         maturities = [Maturity.drinkSoon, .ready, .young, .pastPeak].filter {
             stats.byMaturity[$0, default: 0] > 0 || filter.maturities.contains($0)
         }
-        grapes = Self.keeping(filter.grape, in: model.cellar.wineGrapes)
-        reservations = Self.keeping(filter.reservation, in: model.cellar.reservations)
-        tags = Self.keeping(filter.tag, in: model.cellar.wineTags)
+        grapes = Self.keeping(filter.grape, in: overview.grapes)
+        reservations = Self.keeping(filter.reservation, in: overview.reservations)
+        tags = Self.keeping(filter.tag, in: overview.tags)
     }
 
     var isEmpty: Bool { colors.isEmpty && maturities.isEmpty && grapes.isEmpty && reservations.isEmpty && tags.isEmpty }

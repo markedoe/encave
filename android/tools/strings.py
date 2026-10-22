@@ -1112,6 +1112,8 @@ S = [
  ("same_wine_footer", "Adding to it keeps the bottles and tastings of this wine together.", "Ajouter à ce vin garde ensemble ses bouteilles et ses dégustations."),
  ("msg_added", "Added %1$d × %2$s", "Ajouté : %1$d × %2$s"),
  ("msg_ai_completed", "Details completed by AI: %1$s", "Fiche complétée par l’IA : %1$s"),
+ ("msg_added_ai_completed", "Added %1$d × %2$s, details completed by AI", "Ajouté : %1$d × %2$s, fiche complétée par l’IA"),
+ ("msg_on_order_ai_completed", "On order: %1$d × %2$s, details completed by AI", "En commande : %1$d × %2$s, fiche complétée par l’IA"),
  ("quantity_case", "A case of", "Une caisse de"),
  ("add_auto_slots", "Placed automatically in the first free places. Tap a place to choose.", "Rangées automatiquement aux premiers emplacements libres. Touchez un emplacement pour choisir."),
  ("discard_title", "Discard changes?", "Abandonner les modifications ?"),

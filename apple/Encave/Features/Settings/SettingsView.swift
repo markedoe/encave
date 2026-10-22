@@ -168,7 +168,7 @@ struct SettingsView: View {
                 } label: {
                     Label("Inventory for Printing (PDF)", systemImage: "doc.richtext")
                 }
-                .disabled(model.cellar.bottlesInCellar.isEmpty)
+                .disabled(model.bottlesInCellar.isEmpty)
                 Button {
                     importing = true
                 } label: {

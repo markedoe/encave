@@ -35,6 +35,8 @@ import androidx.navigation.toRoute
 import app.encave.MainActivity
 import app.encave.R
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.ui.add.AddBottleScreen
 import app.encave.ui.add.EditWineScreen
@@ -129,6 +131,12 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { message ->
+            val slot = message.slot
+            // Replaced while it waited: the message that took its place follows.
+            if (slot != null && slot.replaced.value) {
+                slot.finished = true
+                return@collect
+            }
             val show = suspend {
                 snackbar.showSnackbar(
                     message = message.text.resolve(resources),
@@ -141,13 +149,17 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                     },
                 )
             }
+            // Replaced while shown: it goes away at once.
+            val watch = slot?.let { shown -> launch { shown.replaced.first { it }; snackbar.currentSnackbarData?.dismiss() } }
             // A large change keeps its Undo longer than the standard long snackbar.
             val result = if (message.long && !message.persistent) {
                 kotlinx.coroutines.withTimeoutOrNull(LONG_UNDO_MILLIS) { show() } ?: SnackbarResult.Dismissed
             } else {
                 show()
             }
-            if (result == SnackbarResult.ActionPerformed) message.undo?.invoke()
+            watch?.cancel()
+            slot?.finished = true
+            if (result == SnackbarResult.ActionPerformed && slot?.replaced?.value != true) message.undo?.invoke()
         }
     }
 

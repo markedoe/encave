@@ -35,7 +35,7 @@ private struct BottleToOpenPicker: View {
         let groups = model.cellar.groups(matching: query)
         List {
             if groups.isEmpty {
-                if model.cellar.bottlesInCellar.isEmpty {
+                if model.bottlesInCellar.isEmpty {
                     ContentUnavailableView("No bottles in your cellar", systemImage: "wineglass",
                                            description: Text("Add bottles to your cellar to open them here."))
                         .listRowBackground(Color.clear)

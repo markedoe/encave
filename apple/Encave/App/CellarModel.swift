@@ -12,7 +12,12 @@ import AppKit
 @MainActor
 @Observable
 final class CellarModel {
-    private(set) var cellar = Cellar()
+    private(set) var cellar = Cellar() {
+        didSet {
+            cachedBottlesInCellar = nil
+            cachedOverview = nil
+        }
+    }
     var errorMessage: String?
     /// Short confirmation with an optional Undo, shown at the bottom.
     var toast: Toast?
@@ -287,6 +292,30 @@ final class CellarModel {
 
     var currentYear: Int { CellarYear.current }
 
+    @ObservationIgnored private var cachedBottlesInCellar: [Bottle]?
+    @ObservationIgnored private var cachedOverview: CellarOverview?
+
+    /// The cellar's bottles in the cellar, kept until the cellar changes (views read it often).
+    var bottlesInCellar: [Bottle] {
+        let cellar = self.cellar
+        if let cachedBottlesInCellar { return cachedBottlesInCellar }
+        let bottles = cellar.bottlesInCellar
+        cachedBottlesInCellar = bottles
+        return bottles
+    }
+
+    /// Figures and filter chip values of the Cellar screen, kept until the cellar or the
+    /// year changes. Its month by month figures are those of when it was worked out: the
+    /// Insights screen computes its own.
+    var overview: CellarOverview {
+        let cellar = self.cellar
+        let year = currentYear
+        if let cachedOverview, cachedOverview.year == year { return cachedOverview }
+        let overview = CellarOverview(cellar, year: year)
+        cachedOverview = overview
+        return overview
+    }
+
     /// Applies a change and saves it. The change is checked here; an invalid one changes
     /// nothing and the error is shown. The file is written in the background (`save`).
     @discardableResult
@@ -399,19 +428,35 @@ final class CellarModel {
         guard ok else { return false }
         successCount += 1
         let bottleIDs = added.map(\.id)
+        let revert: (inout Cellar) -> Void = { cellar in
+            // A new wine left without bottles goes with them; a wine that was there
+            // gets back its record as it was (barcodes, photo, documents added here).
+            bottleIDs.forEach { cellar.deleteBottle($0) }
+            if let previousWine { cellar.wines[previousWine.id] = previousWine }
+            if let previousDiscovery { cellar.discoveries[previousDiscovery.id] = previousDiscovery }
+        }
         showToast(purchase.isOrdered
                   ? String(localized: "On order: \(quantity) × \(wine.displayName)")
                   : String(localized: "Added \(quantity) × \(wine.displayName)")) { [weak self] in
-            self?.update { cellar in
-                // A new wine left without bottles goes with them; a wine that was there
-                // gets back its record as it was (barcodes, photo, documents added here).
-                bottleIDs.forEach { cellar.deleteBottle($0) }
-                if let previousWine { cellar.wines[previousWine.id] = previousWine }
-                if let previousDiscovery { cellar.discoveries[previousDiscovery.id] = previousDiscovery }
-            }
+            self?.update(revert)
+        }
+        if let toast {
+            lastAdd = AddBanner(toastID: toast.id, wineID: wine.id, quantity: quantity, isOrdered: purchase.isOrdered, revert: revert)
         }
         return true
     }
+
+    /// The banner of the last add, so the AI completing that wine while it is still shown
+    /// takes its place with one Undo for both, instead of taking the add's Undo away.
+    private struct AddBanner {
+        var toastID: UUID
+        var wineID: UUID
+        var quantity: Int
+        var isOrdered: Bool
+        var revert: (inout Cellar) -> Void
+    }
+
+    @ObservationIgnored private var lastAdd: AddBanner?
 
     /// Keeps bottles for an occasion (or frees them with nil), with Undo.
     func reserve(_ bottleIDs: [UUID], for occasion: String?) {
@@ -561,7 +606,7 @@ final class CellarModel {
     func deleteRack(_ rackID: UUID) {
         guard let index = cellar.racks.firstIndex(where: { $0.id == rackID }) else { return }
         let rack = cellar.racks[index]
-        let placed = cellar.bottlesInCellar.filter { $0.slot?.rackID == rackID }
+        let placed = bottlesInCellar.filter { $0.slot?.rackID == rackID }
         guard update({ $0.removeRack(rackID) }) else { return }
         let rackName = rack.name
         // Only its own records come back, so the Undo can stay after other changes.
@@ -694,7 +739,7 @@ final class CellarModel {
     @discardableResult
     func updateRack(_ rack: Rack, rowMap: [Int: Int?], takingOut count: Int) -> Bool {
         let old = cellar.rack(rack.id)
-        let inRack = cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        let inRack = bottlesInCellar.filter { $0.slot?.rackID == rack.id }
         guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
         if count > 0, let old {
             // Only this rack and its bottles come back, so the Undo can stay after other changes.
@@ -795,17 +840,39 @@ final class CellarModel {
         }
         take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
         take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
-        guard updated != live, update({ try $0.updateWine(updated) }) else { return }
+        guard updated != live else { return }
+        // The bottles' "Added" banner still shown: one banner, whose Undo takes both back.
+        let shownAdd = lastAdd.flatMap { $0.wineID == id && toast?.id == $0.toastID && toast?.undo != nil ? $0 : nil }
+        // Its own change keeps that banner, which the new one replaces just below.
+        if shownAdd != nil { undoing = true }
+        let saved = update { try $0.updateWine(updated) }
+        undoing = false
+        guard saved else { return }
         let completed = updated
-        showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
+        let revert: (inout Cellar) -> Void = { cellar in
+            guard var wine = cellar.wines[id] else { return }
+            func restore<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
+                if wine[keyPath: field] == completed[keyPath: field] { wine[keyPath: field] = live[keyPath: field] }
+            }
+            restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
+            restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
+            cellar.wines[id] = wine
+        }
+        guard let add = shownAdd else {
+            showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
+                self?.update(revert)
+            }
+            return
+        }
+        lastAdd = nil
+        toast?.undo?.cancel()
+        let name = completed.displayName
+        showToast(add.isOrdered
+                  ? String(localized: "On order: \(add.quantity) × \(name), details completed by AI")
+                  : String(localized: "Added \(add.quantity) × \(name), details completed by AI")) { [weak self] in
             self?.update { cellar in
-                guard var wine = cellar.wines[id] else { return }
-                func restore<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
-                    if wine[keyPath: field] == completed[keyPath: field] { wine[keyPath: field] = live[keyPath: field] }
-                }
-                restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
-                restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
-                try cellar.updateWine(wine)
+                revert(&cellar)
+                add.revert(&cellar)
             }
         }
     }
