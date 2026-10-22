@@ -40,8 +40,7 @@ struct ToastOverlay: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .task(id: toast.id) {
                     AccessibilityNotification.Announcement(toast.message).post()
-                    // Longer with VoiceOver, to leave time to reach Undo.
-                    try? await Task.sleep(for: .seconds(voiceOver ? 12 : 5))
+                    try? await Task.sleep(for: .seconds(toast.seconds(voiceOver: voiceOver)))
                     if model.toast?.id == toast.id {
                         withAnimation { model.toast = nil }
                     }

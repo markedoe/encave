@@ -24,12 +24,11 @@ struct DiscoveryEditor: View {
     @State private var wantsToBuy = false
     @State private var loaded = false
     @State private var confirmingDelete = false
-    @State private var confirmingDiscard = false
-    /// The fields as they opened, to know whether something changed.
-    @State private var original: Fields?
+    /// The form as it opened, to ask before discarding changes.
+    @State private var initial: FormState?
 
-    /// What the form holds, compared with how it opened.
-    private struct Fields: Equatable {
+    /// What the user can change, to tell whether something was entered.
+    private struct FormState: Equatable {
         var draft: WineDraft
         var date: Date
         var setting: Discovery.Setting?
@@ -40,16 +39,17 @@ struct DiscoveryEditor: View {
         var pendingTag: String
         var price: Decimal?
         var wantsToBuy: Bool
-        var photo: Bool
     }
 
-    private var fields: Fields {
-        Fields(draft: draft, date: date, setting: setting, place: place, rating: rating, note: note, tags: tags,
-               pendingTag: pendingTag, price: price, wantsToBuy: wantsToBuy,
-               photo: newPhoto != nil || photoRemoved || scan.photo != nil)
+    private var formState: FormState {
+        FormState(draft: draft, date: date, setting: setting, place: place, rating: rating, note: note,
+                  tags: tags, pendingTag: pendingTag, price: price, wantsToBuy: wantsToBuy)
     }
 
-    private var isDirty: Bool { original.map { $0 != fields } ?? false }
+    private var isDirty: Bool {
+        guard let initial else { return false }
+        return formState != initial || scan.photo != nil || newPhoto != nil || photoRemoved
+    }
 
     private var existing: Discovery? { discoveryID.flatMap { model.cellar.discoveries[$0] } }
 
@@ -139,10 +139,7 @@ struct DiscoveryEditor: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        if isDirty { confirmingDiscard = true } else { dismiss() }
-                    }
-                    .accessibilityIdentifier("sheet.cancel")
+                    DiscardChangesCancelButton(isDirty: isDirty) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
@@ -156,7 +153,6 @@ struct DiscoveryEditor: View {
                     dismiss()
                 }
             }
-            .discardGuard(isDirty: isDirty, isAsking: $confirmingDiscard) { dismiss() }
             .onAppear(perform: load)
             .onChange(of: scan.matchedWine) { _, wine in
                 guard let wine else { return }
@@ -167,13 +163,16 @@ struct DiscoveryEditor: View {
                 scan.matchedWine = nil
             }
         }
+        // A swipe down would lose what was entered: Cancel asks first.
+        .interactiveDismissDisabled(isDirty)
         .macSheetFrame(width: 520, height: 720)
     }
 
     private func load() {
         guard !loaded else { return }
         loaded = true
-        defer { original = fields }
+        // After loading: only what the user changes counts.
+        defer { initial = formState }
         guard let discovery = existing, let wine = model.cellar.wines[discovery.wineID] else { return }
         draft = WineDraft(wine)
         date = discovery.date

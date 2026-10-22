@@ -25,6 +25,9 @@ final class CellarModel {
     var journalFilter: DiaryFilter = .all
     /// The Journal's tag chip; cleared, like the filter, when a new entry would be hidden.
     var journalTag: String?
+    /// The Cellar's search, filters and sort, shared by its list and its table.
+    var cellarFilter = CellarFilter()
+    var cellarSort: CellarSort = .name
 
     @ObservationIgnored private var store: any CellarStore = InMemoryCellarStore()
     /// Sync with the user's other devices. Replaced when the cellar loads late (`reloadIfLoadFailed`).
@@ -256,14 +259,31 @@ final class CellarModel {
 
     // MARK: - Actions with feedback
 
+    /// Adds bottles, with Undo. `discoveryID`: a wine of the shopping list, marked bought
+    /// in the same change (so the Undo takes both back).
     @discardableResult
-    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo) -> Bool {
-        let ok = update { try $0.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase) }
+    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo, discoveryID: UUID? = nil) -> Bool {
+        let previousWine = cellar.wines[wine.id]
+        let previousDiscovery = discoveryID.flatMap { cellar.discoveries[$0] }
+        var added: [Bottle] = []
+        let ok = update { cellar in
+            added = try cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase)
+            if let discoveryID, cellar.discoveries[discoveryID] != nil { try cellar.markBought(discoveryID) }
+        }
         guard ok else { return false }
         successCount += 1
+        let bottleIDs = added.map(\.id)
         showToast(purchase.isOrdered
                   ? String(localized: "On order: \(quantity) × \(wine.displayName)")
-                  : String(localized: "Added \(quantity) × \(wine.displayName)"))
+                  : String(localized: "Added \(quantity) × \(wine.displayName)")) { [weak self] in
+            self?.update { cellar in
+                // A new wine left without bottles goes with them; a wine that was there
+                // gets back its record as it was (barcodes, photo, documents added here).
+                bottleIDs.forEach { cellar.deleteBottle($0) }
+                if let previousWine { cellar.wines[previousWine.id] = previousWine }
+                if let previousDiscovery { cellar.discoveries[previousDiscovery.id] = previousDiscovery }
+            }
+        }
         return true
     }
 
@@ -311,7 +331,7 @@ final class CellarModel {
         guard update({ try $0.markGone(bottleID) }) else { return }
         showToast(bottle.status == .ordered
                   ? String(localized: "Order cancelled")
-                  : String(localized: "Bottle removed from the cellar")) { [weak self] in
+                  : String(localized: "Bottle removed from the cellar"), lasting: .afterChanges) { [weak self] in
             // Put the record back as it was (an order stays an order), in its
             // place if nothing took it meanwhile.
             self?.update { cellar in
@@ -322,13 +342,36 @@ final class CellarModel {
         }
     }
 
+    /// Deletes a wine with its bottles, tastings and wines tasted elsewhere. The Undo stays
+    /// longer, and after changes from sync: it puts back only these records.
     func deleteWine(_ wineID: UUID) {
-        let snapshot = cellar
         guard let wine = cellar.wines[wineID] else { return }
-        update { $0.deleteWine(wineID) }
-        showToast(String(localized: "Deleted \(wine.displayName)")) { [weak self] in
-            self?.update { $0 = snapshot }
+        let removed = records(ofWines: [wineID])
+        guard update({ $0.deleteWine(wineID) }) else { return }
+        showToast(String(localized: "Deleted \(wine.displayName)"), lasting: .long) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
         }
+    }
+
+    /// A bottle entered by mistake: its record goes (and the wine with its last one), with Undo.
+    func deleteBottle(_ bottleID: UUID) {
+        guard let bottle = cellar.bottles[bottleID] else { return }
+        var removed = Cellar()
+        removed.wines[bottle.wineID] = cellar.wines[bottle.wineID]
+        removed.bottles[bottleID] = bottle
+        guard update({ $0.deleteBottle(bottleID) }) else { return }
+        showToast(String(localized: "Bottle deleted"), lasting: .afterChanges) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
+        }
+    }
+
+    /// The records deleted with these wines, to put back with `merge`.
+    private func records(ofWines wineIDs: Set<UUID>) -> Cellar {
+        var removed = Cellar()
+        removed.wines = cellar.wines.filter { wineIDs.contains($0.key) }
+        removed.bottles = cellar.bottles.filter { wineIDs.contains($0.value.wineID) }
+        removed.discoveries = cellar.discoveries.filter { wineIDs.contains($0.value.wineID) }
+        return removed
     }
 
     // MARK: Several wines at once (one Undo for all)
@@ -363,19 +406,29 @@ final class CellarModel {
         }
     }
 
-    /// Bottles no longer in the cellar (given away, drunk elsewhere, broken).
+    /// Bottles no longer in the cellar (given away, sold, broken).
     func markGone(_ bottleIDs: Set<UUID>) {
-        let snapshot = cellar
+        let previous = bottleIDs.compactMap { cellar.bottles[$0] }
         guard update({ cellar in try bottleIDs.forEach { try cellar.markGone($0) } }) else { return }
-        showToast(String(localized: "Bottles removed from the cellar: \(bottleIDs.count)")) { [weak self] in
-            self?.update { $0 = snapshot }
+        showToast(String(localized: "Bottles removed from the cellar: \(bottleIDs.count)"),
+                  lasting: bottleIDs.count > 1 ? .long : .afterChanges) { [weak self] in
+            // The records as they were, in their places if nothing took them meanwhile.
+            self?.update { cellar in
+                for bottle in previous.sorted(by: { ($0.slot == nil ? 0 : 1) < ($1.slot == nil ? 0 : 1) }) {
+                    var restored = bottle
+                    if let slot = bottle.slot, let occupant = cellar.bottle(at: slot), occupant.id != bottle.id { restored.slot = nil }
+                    cellar.bottles[bottle.id] = restored
+                }
+            }
         }
     }
 
     func deleteWines(_ wineIDs: Set<UUID>) {
-        let snapshot = cellar
+        let removed = records(ofWines: wineIDs)
         guard update({ cellar in wineIDs.forEach { cellar.deleteWine($0) } }) else { return }
-        showToast(String(localized: "Wines deleted: \(wineIDs.count)")) { [weak self] in self?.update { $0 = snapshot } }
+        showToast(String(localized: "Wines deleted: \(wineIDs.count)"), lasting: .long) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
+        }
     }
 
     /// Deletes a rack, with Undo. Its bottles stay in the cellar without a place.
@@ -529,8 +582,8 @@ final class CellarModel {
         }
     }
 
-    func showToast(_ message: String, undo: (@MainActor () -> Void)? = nil) {
-        var toast = Toast(message: message)
+    func showToast(_ message: String, lasting: Toast.Lasting = .standard, undo: (@MainActor () -> Void)? = nil) {
+        var toast = Toast(message: message, lasting: lasting)
         if let undo {
             let id = toast.id
             toast.undo = ToastUndo { [weak self] in
@@ -548,8 +601,9 @@ final class CellarModel {
 
     /// Some undos put back a whole earlier cellar: once anything else has changed
     /// (here or by sync), the banner and its Undo go away so nothing newer is lost.
+    /// Undos that put back only their own records (`.long`, `.afterChanges`) stay.
     private func dropStaleUndo() {
-        guard let undo = toast?.undo else { return }
+        guard let current = toast, let undo = current.undo, current.lasting == .standard else { return }
         undo.cancel()
         toast = nil
     }
@@ -603,12 +657,32 @@ struct AddBottleContext: Identifiable {
     var slot: Slot?
     /// Set when buying a wine from the shopping list: it leaves the list once added.
     var discoveryID: UUID?
+    /// Opens on the label scanner when the device has one (Cancel leaves the form).
+    var scan = false
 }
 
 struct Toast: Identifiable {
     let id = UUID()
     var message: String
+    var lasting: Lasting = .standard
     var undo: ToastUndo?
+
+    enum Lasting {
+        /// A few seconds; gone as soon as anything else changes (its Undo may restore a whole cellar).
+        case standard
+        /// Stays after other changes, here or from sync: its Undo puts back only its own records.
+        case afterChanges
+        /// Like `afterChanges`, and on screen longer: a large deletion.
+        case long
+    }
+
+    /// Seconds on screen, longer with VoiceOver to leave time to reach Undo.
+    func seconds(voiceOver: Bool) -> Int {
+        switch lasting {
+        case .standard, .afterChanges: voiceOver ? 12 : 5
+        case .long: voiceOver ? 20 : 10
+        }
+    }
 }
 
 /// The Undo of a banner. It runs at most once, whether from the banner's button

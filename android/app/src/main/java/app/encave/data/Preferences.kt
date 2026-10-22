@@ -72,8 +72,17 @@ class Preferences(context: Context) {
         dish.value = value
     }
 
+    /**
+     * Where the last bottles were added on this device ("rack:<id>", or "other:<where>"):
+     * offered first the next time, as each device may sit next to a different rack.
+     */
+    var lastAddLocation: String?
+        get() = prefs.getString(KEY_LAST_ADD_LOCATION, null)
+        set(value) = prefs.edit { putString(KEY_LAST_ADD_LOCATION, value) }
+
     private companion object {
         const val KEY_PAIRING_DISH = "pairing_dish"
+        const val KEY_LAST_ADD_LOCATION = "last_add_location"
         const val KEY_SYNC_FREQUENCY = "sync_frequency"
         const val KEY_SYNC_NOTIFICATIONS = "sync_notifications"
         const val KEY_STUDIO_LOOK = "studio_look"
