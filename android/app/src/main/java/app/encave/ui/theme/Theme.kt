@@ -39,12 +39,17 @@ private fun maturityPalette(dark: Boolean): MaturityPalette {
 
 val LocalMaturityPalette = staticCompositionLocalOf { maturityPalette(dark = false) }
 
-/** The studio backdrop's colors for the current theme (design/tokens.json). */
+/** The studio backdrop's colors for the current theme (design/tokens.json): its base and each style's shade. */
 @Immutable
-data class StudioPalette(val backdrop: Color, val glow: Color, val dark: Boolean)
+data class StudioPalette(val backdrop: Color, private val shades: Map<WineColor, Color>, val dark: Boolean) {
+    fun shade(color: WineColor?): Color = color?.let { shades[it] } ?: backdrop
+}
 
-private fun studioPalette(dark: Boolean) =
-    StudioPalette(DesignTokens.studioBackdrop.resolve(dark), DesignTokens.studioGlow.resolve(dark), dark)
+private fun studioPalette(dark: Boolean) = StudioPalette(
+    DesignTokens.studioBackdrop.resolve(dark),
+    WineColor.entries.associateWith { DesignTokens.studioShades.getValue("studio-${it.raw}").resolve(dark) },
+    dark,
+)
 
 val LocalStudioPalette = staticCompositionLocalOf { studioPalette(dark = false) }
 

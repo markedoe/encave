@@ -18,9 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -46,10 +43,11 @@ fun PhotoStore.hasPicture(wine: Wine?): Boolean = wine != null && (exists(wine.c
 
 /**
  * The picture shown for a wine: its cover (a picture from the internet) if any,
- * else its label photo. In the studio look the label photo is framed on its label
- * (where its edges are densest, see [LabelCrop]) with its light evened out, on the
- * device, and shown with soft edges on a backdrop in the wine's color; a cover is
- * shown whole on the same backdrop. The stored photo is never changed.
+ * else its label photo. In the studio look the label photo is cut to the band of
+ * its label (where its edges are densest, see [LabelCrop]) with its light evened
+ * out, on the device, and shown filling the picture, centred on the label, with a
+ * light vignette; a cover is shown whole on a backdrop in the wine's color. The
+ * stored photo is never changed.
  */
 @Composable
 fun WineImage(
@@ -80,30 +78,34 @@ fun WineImage(
         return
     }
     Box(modifier.clip(shape), contentAlignment = Alignment.Center) {
-        StudioBackdrop(LocalWinePalette.current[wine.color], Modifier.matchParentSize())
+        StudioBackdrop(wine.color, LocalWinePalette.current[wine.color], Modifier.matchParentSize())
         picture?.let {
             val bitmap = it.bitmap
-            val image = Modifier.padding(inset).aspectRatio(bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1))
-            Image(
-                bitmap.asImageBitmap(), contentDescription,
-                if (it.framed) image.softEdges() else image.clip(RoundedCornerShape(corner / 2)),
-                contentScale = ContentScale.Fit,
-            )
+            if (enhance) {
+                // The label photo fills the picture, centred on its label, with a light vignette.
+                Image(bitmap.asImageBitmap(), contentDescription, Modifier.fillMaxSize().vignette(), contentScale = ContentScale.Crop)
+            } else {
+                // A cover is shown whole on the backdrop.
+                val image = Modifier.padding(inset).aspectRatio(bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1))
+                Image(bitmap.asImageBitmap(), contentDescription, image.clip(RoundedCornerShape(corner / 2)), contentScale = ContentScale.Fit)
+            }
         }
     }
 }
 
-/** A picture for [WineImage]; [framed] when it was cut to the label, so its edges fade out. */
+/** A picture for [WineImage]; [framed] when it was cut to the band of its label. */
 internal class StudioPicture(val bitmap: Bitmap, val framed: Boolean)
 
-/** Fades the edges into the backdrop: 12% at the top and bottom, 10% at the sides. */
-private fun Modifier.softEdges() = graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-    .drawWithContent {
-        drawContent()
-        val clear = Color.Black.copy(alpha = 0f)
-        drawRect(Brush.verticalGradient(0f to clear, 0.12f to Color.Black, 0.88f to Color.Black, 1f to clear), blendMode = BlendMode.DstIn)
-        drawRect(Brush.horizontalGradient(0f to clear, 0.1f to Color.Black, 0.9f to Color.Black, 1f to clear), blendMode = BlendMode.DstIn)
-    }
+/** A light vignette: the edges a little darker. */
+private fun Modifier.vignette() = drawWithContent {
+    drawContent()
+    drawRect(
+        Brush.radialGradient(
+            0.55f to Color.Black.copy(alpha = 0f), 1f to Color.Black.copy(alpha = 0.28f),
+            center = center, radius = maxOf(size.width, size.height) * 0.75f,
+        ),
+    )
+}
 
 /** Studio versions of label photos, made once per size and kept in memory. */
 internal object StudioBitmaps {

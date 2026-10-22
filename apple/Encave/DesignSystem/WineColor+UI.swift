@@ -49,6 +49,22 @@ extension WineColor {
     }
 }
 
+extension WineColor {
+    /// The studio backdrop's shade for this style (design/tokens.json): pale in
+    /// light mode, deep and rich in dark mode, behind a cream label.
+    var studioShade: Color {
+        switch self {
+        case .red: Color("StudioRed")
+        case .white: Color("StudioWhite")
+        case .rose: Color("StudioRose")
+        case .sparkling: Color("StudioSparkling")
+        case .dessert: Color("StudioDessert")
+        case .fortified: Color("StudioFortified")
+        case .orange: Color("StudioOrange")
+        }
+    }
+}
+
 /// Small dot showing the wine style. Decorative: the style is always also given as text.
 struct WineColorDot: View {
     let color: WineColor?

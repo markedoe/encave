@@ -5,12 +5,18 @@ import Foundation
 /// device). Positions go from the top of the bottle (0) to its bottom (1).
 ///
 /// The result keeps the full width of the bottle (its sides frame the label),
-/// 15% of the label's height above it (the shoulder shows) and 5% below, made
-/// taller to `aspect` when the label is short so it fills the list pictures.
+/// 15% of the label's height above it and 10% below, so the label is about 80%
+/// of its height; it is shown as tall as the picture, the glass running off its
+/// top and bottom edges.
 public enum LabelFraming {
-    /// Width over height of the result for a short label: about the list pictures
-    /// (34 × 46 and 44 × 56 points), so the label fills them.
-    public static let aspect = 0.72
+    /// Above and below the label, as a share of its height.
+    public static let above = 0.15
+    public static let below = 0.10
+    /// Text lines leaning more than this (degrees) are not straightened: the photo
+    /// was taken sideways or the reading is unsure.
+    public static let maximumTilt = 25.0
+    /// Text lines leaning less than this are left as they are.
+    public static let minimumTilt = 1.5
     /// A cut-out wider than this, compared with its height, is not a standing
     /// bottle (a close-up of a label, several bottles): it is left whole.
     public static let bottleAspect = 0.55
@@ -66,16 +72,19 @@ public enum LabelFraming {
     public static func frame(label: ClosedRange<Double>, width: Double, height: Double) -> ClosedRange<Double>? {
         guard width > 0, height > 0 else { return nil }
         let labelHeight = label.upperBound - label.lowerBound
-        var top = label.lowerBound - labelHeight * 0.15
-        var bottom = label.upperBound + labelHeight * 0.05
-        let wanted = width / aspect / height
-        if bottom - top < wanted {
-            let extra = wanted - (bottom - top)
-            top -= extra * 0.6
-            bottom += extra * 0.4
-        }
-        if top < 0 { bottom -= top; top = 0 }
-        if bottom > 1 { top = max(0, top - (bottom - 1)); bottom = 1 }
-        return bottom - top > 0.85 ? nil : top...bottom
+        let top = max(0, label.lowerBound - labelHeight * above)
+        let bottom = min(1, label.upperBound + labelHeight * below)
+        return bottom - top > 0.9 ? nil : top...bottom
+    }
+
+    /// The angle to turn a photo by (degrees, counterclockwise) so its text lines
+    /// are level: the median of the lines' angles, nil when they are level already
+    /// or lean too much to be sure.
+    public static func straightening(lineAngles: [Double]) -> Double? {
+        guard !lineAngles.isEmpty else { return nil }
+        let sorted = lineAngles.sorted()
+        let median = sorted[sorted.count / 2]
+        guard abs(median) >= minimumTilt, abs(median) <= maximumTilt else { return nil }
+        return -median
     }
 }

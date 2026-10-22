@@ -3,29 +3,30 @@ import Testing
 @testable import CaveKit
 
 struct LabelFramingTests {
-    @Test func aTallLabelKeepsTheShoulderAboveAndAMarginBelow() throws {
-        // A bottle 300 × 1000 with its label from 50% to 90% of its height.
-        let frame = try #require(LabelFraming.frame(label: 0.5...0.9, width: 300, height: 1000))
-        #expect(abs(frame.lowerBound - 0.44) < 0.001) // 15% of 0.4 above
-        #expect(abs(frame.upperBound - 0.92) < 0.001) // 5% below
-    }
-
-    @Test func aShortLabelIsMadeTallerToFillThePictures() throws {
-        let frame = try #require(LabelFraming.frame(label: 0.55...0.65, width: 300, height: 1000))
-        let shape = 300 / (1000 * (frame.upperBound - frame.lowerBound))
-        #expect(abs(shape - LabelFraming.aspect) < 0.001)
-        // More is added above (the shoulder) than below.
-        #expect(0.55 - frame.lowerBound > frame.upperBound - 0.65)
+    @Test func theLabelIsAboutFourFifthsOfThePicture() throws {
+        // A bottle 300 × 1000 with its label from 50% to 80% of its height.
+        let frame = try #require(LabelFraming.frame(label: 0.5...0.8, width: 300, height: 1000))
+        #expect(abs(frame.lowerBound - 0.455) < 0.001) // 15% of 0.3 above
+        #expect(abs(frame.upperBound - 0.83) < 0.001) // 10% below
+        #expect(abs(0.3 / (frame.upperBound - frame.lowerBound) - 0.8) < 0.001)
     }
 
     @Test func theFrameStaysOnTheBottle() throws {
-        let frame = try #require(LabelFraming.frame(label: 0.85...0.98, width: 300, height: 1000))
+        let frame = try #require(LabelFraming.frame(label: 0.75...0.99, width: 300, height: 1000))
         #expect(frame.upperBound == 1)
         #expect(frame.lowerBound >= 0)
     }
 
     @Test func nearlyTheWholeBottleIsNotFramed() {
-        #expect(LabelFraming.frame(label: 0.05...0.95, width: 300, height: 1000) == nil)
+        #expect(LabelFraming.frame(label: 0.02...0.97, width: 300, height: 1000) == nil)
+    }
+
+    @Test func tiltedTextIsStraightenedWithinLimits() {
+        #expect(LabelFraming.straightening(lineAngles: [9, 10, 11, 40]) == -11)
+        #expect(LabelFraming.straightening(lineAngles: [9, 10, 11]) == -10)
+        #expect(LabelFraming.straightening(lineAngles: [0.5, -0.4, 1]) == nil) // level enough
+        #expect(LabelFraming.straightening(lineAngles: [88, 90, 91]) == nil) // sideways
+        #expect(LabelFraming.straightening(lineAngles: []) == nil)
     }
 
     @Test func onlyStandingBottlesAreFramed() {

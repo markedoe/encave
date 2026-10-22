@@ -6,13 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
-- Studio look framed on the label: Apple cuts the bottle out and frames it on
-  its label (found from its text, else a rectangle, else where labels sit) with
-  a little of the shoulder, or frames the photo on its text when it cannot be
-  cut out cleanly, else shows it whole; Android frames the photo where its print is
-  densest, with soft edges (no cut-out). Both on a backdrop in the wine's color
-  with a vine drawing, on the device only; Apple pictures are made again once
-  (photos that gave nothing before are tried again)
+- Studio look framed on the label: Apple turns the photo level from its text,
+  cuts the bottle out and frames it on its label (about 80% of the picture,
+  the glass running off its edges), straightens a close-up of a label, and
+  otherwise shows the photo centred on its label; Android shows the photo cut
+  to the band of its label (where its print is densest). On the device only,
+  on a backdrop in the wine's color with a vine drawing; Apple pictures are
+  made again once (photos that gave nothing before are tried again)
 - First run: Join a Cellar from Another Device on the empty Cellar; while the
   sample cellar is there, a banner removes it alone (with Undo), and joining
   another device replaces a sample-only cellar

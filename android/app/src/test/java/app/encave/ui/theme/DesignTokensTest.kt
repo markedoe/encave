@@ -39,7 +39,9 @@ class DesignTokensTest {
     @Test
     fun studioBackdropMatches() {
         assertEquals(themed("studio-backdrop"), DesignTokens.studioBackdrop)
-        assertEquals(themed("studio-glow"), DesignTokens.studioGlow)
+        val names = tokens.getValue("color").jsonObject.keys.filter { it.startsWith("studio-") && it != "studio-backdrop" }
+        assertEquals(names.toSet(), DesignTokens.studioShades.keys)
+        names.forEach { assertEquals(it, themed(it), DesignTokens.studioShades[it]) }
     }
 
     @Test

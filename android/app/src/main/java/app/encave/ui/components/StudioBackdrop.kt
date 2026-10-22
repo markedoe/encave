@@ -12,7 +12,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import app.encave.core.WineColor
 import app.encave.ui.theme.LocalStudioPalette
 import kotlin.math.PI
 import kotlin.math.cos
@@ -23,24 +25,29 @@ import kotlin.math.pow
 import kotlin.math.sin
 
 /**
- * The backdrop behind studio pictures and covers: a gradient in the wine's color
- * with a soft light behind the picture (so it stands out in light and dark theme),
- * and a discreet bunch of grapes and vine leaves in the corners when there is
- * room. The same drawing as on Apple (StudioPhoto.swift, VineArt). Decorative.
+ * The backdrop behind studio pictures and covers: a gradient in the wine style's
+ * studio shade (design tokens, deep and rich in dark theme), a soft light behind
+ * the picture so it stands out, and a bunch of grapes and vine leaves in the
+ * corners when there is room. The same drawing as on Apple (StudioPhoto.swift,
+ * VineArt). Decorative.
  */
 @Composable
-fun StudioBackdrop(tint: Color, modifier: Modifier = Modifier) {
+fun StudioBackdrop(color: WineColor?, tint: Color, modifier: Modifier = Modifier) {
     val palette = LocalStudioPalette.current
     Canvas(modifier) {
         val dark = palette.dark
-        drawRect(palette.backdrop)
-        drawRect(Brush.verticalGradient(listOf(tint.copy(alpha = if (dark) 0.42f else 0.5f), tint.copy(alpha = if (dark) 0.14f else 0.16f))))
+        val base = palette.backdrop
+        val shade = palette.shade(color)
+        drawRect(base)
+        drawRect(Brush.verticalGradient(listOf(shade, lerp(shade, base, if (dark) 0.45f else 0.55f))))
+        val light = if (dark) lerp(shade, Color.White, 0.35f) else Color.White
+        val ink = if (dark) lerp(shade, Color.White, 0.55f).copy(alpha = 0.32f) else tint.copy(alpha = 0.3f)
         if (min(size.width, size.height) >= VineArt.MINIMUM_SIDE.dp.toPx()) {
-            VineArt.draw(this, tint.copy(alpha = if (dark) 0.34f else 0.28f), palette.glow.copy(alpha = 0.55f), palette.backdrop.copy(alpha = 0.5f))
+            VineArt.draw(this, ink, light.copy(alpha = 0.6f), shade.copy(alpha = 0.6f))
         }
         drawRect(
             Brush.radialGradient(
-                listOf(palette.glow.copy(alpha = if (dark) 0.7f else 0.75f), palette.glow.copy(alpha = 0f)),
+                listOf(light.copy(alpha = if (dark) 0.4f else 0.7f), light.copy(alpha = 0f)),
                 center = Offset(size.width / 2, size.height * 0.46f),
                 radius = max(size.width, size.height) * 0.48f,
             ),

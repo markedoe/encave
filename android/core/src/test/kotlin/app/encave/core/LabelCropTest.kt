@@ -31,7 +31,9 @@ class LabelCropTest {
         assertTrue(box.top in 380..480, "a little of the shoulder above the label: $box")
         assertTrue(box.bottom in 630..720, "a small margin below the label: $box")
         assertTrue(box.left <= 240 && box.right >= 360, "the label's full width: $box")
-        assertEquals(LabelCrop.ASPECT, box.width.toFloat() / box.height, 0.05f)
+        // The label (170 px) is about 80% of the result, which is centred on it.
+        assertTrue(170f / box.height in 0.7f..0.9f, "label share: $box")
+        assertTrue(kotlin.math.abs((box.left + box.right) / 2 - 300) <= 10, "centred on the label: $box")
     }
 
     @Test
@@ -45,7 +47,6 @@ class LabelCropTest {
     fun aPhotoWithoutEdgesGetsTheCentreBand() {
         val box = checkNotNull(LabelCrop.find(IntArray(600 * 800) { gray(128) }, 600, 800))
         assertTrue(box.top >= (800 * 0.2).toInt() && box.bottom <= 800, "$box")
-        assertTrue(box.left > 0 && box.right < 600, "centred: $box")
         assertTrue(kotlin.math.abs((box.left + box.right) / 2 - 300) <= 10, "$box")
     }
 

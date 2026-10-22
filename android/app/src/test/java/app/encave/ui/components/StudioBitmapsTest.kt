@@ -51,9 +51,9 @@ class StudioBitmapsTest {
         }
         val result = StudioBitmaps.studio(source, maxPixelSize = 900)
         assertTrue(result.framed)
-        assertEquals(0.72f, result.bitmap.width.toFloat() / result.bitmap.height, 0.05f)
-        // Much less than the whole photo: the label fills the picture.
+        // A band around the label, much less tall than the photo: the label fills the picture.
         assertTrue(result.bitmap.height < source.height / 2)
+        assertTrue(result.bitmap.width > result.bitmap.height)
     }
 
     @Test

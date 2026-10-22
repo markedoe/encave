@@ -9,8 +9,9 @@ import kotlin.math.roundToInt
  * Frames a label photo on its label for the studio look, on the device and
  * without any model: printed text makes many sharp edges, so the label is the
  * band of the photo where edges are densest, looked for in the central column
- * (where the bottle stands). The band is widened a little (15% of its height
- * above, for the shoulder, 5% below) and shaped like the list pictures.
+ * (where the bottle stands). The band gets 15% of its height above and 10% below
+ * (the label about 80% of the result), and is as wide as the photo allows while
+ * centred on the label, so it fills any picture with the label in the middle.
  *
  * A photo whose edges are spread evenly (a close-up of the label, text everywhere)
  * is left whole; a photo with almost no edges gets the centre band where labels
@@ -23,8 +24,9 @@ object LabelCrop {
         val height: Int get() = bottom - top
     }
 
-    /** Width over height of the result: about the list pictures (34 × 46 dp), so the label fills them. */
-    const val ASPECT = 0.72f
+    /** Above and below the label, as a share of its height (the same as Apple's LabelFraming). */
+    const val ABOVE = 0.15f
+    const val BELOW = 0.10f
 
     /** The centre band used when the photo has almost no edges, from the top. */
     const val FALLBACK_TOP = 0.35f
@@ -58,7 +60,7 @@ object LabelCrop {
             count.toFloat() / (columnRight - columnLeft)
         }
         val mean = rows.average().toFloat()
-        if (mean < 0.01f) return fit(centreBand(w, h), w, h)?.scaled(step, width, height)
+        if (mean < 0.01f) return frame((h * FALLBACK_TOP).toInt(), (h * FALLBACK_BOTTOM).toInt(), w / 2f, w, h)?.scaled(step, width, height)
 
         // The densest window of rows, about the height of a label on a whole bottle.
         val window = max(3, (h * 0.22f).roundToInt())
@@ -79,56 +81,33 @@ object LabelCrop {
         val maxRows = (h * 0.45f).toInt()
         while (bottom - top < maxRows && top > 0 && rows[top - 1] >= density * 0.5f) top--
         while (bottom - top < maxRows && bottom < h && rows[bottom] >= density * 0.5f) bottom++
-        val band = bottom - top
-        top = max(0, top - (band * 0.15f).roundToInt())
-        bottom = min(h, bottom + (band * 0.05f).roundToInt())
 
-        // Across: the columns where the band is busy, and a little more for the bottle's sides.
+        // Across: the centre of the columns where the band is busy.
         val columns = FloatArray(w) { x ->
             var count = 0
             for (y in top until bottom) if (edges[y * w + x]) count++
             count.toFloat()
         }
         val threshold = (columns.maxOrNull() ?: 0f) * 0.35f
-        var left = columns.indexOfFirst { it >= threshold && it > 0f }.coerceAtLeast(0)
-        var right = columns.indexOfLast { it >= threshold && it > 0f } + 1
-        if (right <= left) { left = 0; right = w }
-        val margin = (w * 0.08f).roundToInt()
-        left = max(0, left - margin)
-        right = min(w, right + margin)
-        return fit(Box(left, top, right, bottom), w, h)?.scaled(step, width, height)
-    }
-
-    /** The centre band where labels sit, as wide as the bottle usually is. */
-    private fun centreBand(w: Int, h: Int): Box {
-        val top = (h * FALLBACK_TOP).toInt()
-        val bottom = (h * FALLBACK_BOTTOM).toInt()
-        val half = ((bottom - top) * ASPECT / 2).roundToInt()
-        return Box(max(0, w / 2 - half), top, min(w, w / 2 + half), bottom)
+        val left = columns.indexOfFirst { it >= threshold && it > 0f }
+        val right = columns.indexOfLast { it >= threshold && it > 0f } + 1
+        val centre = if (right > left && left >= 0) (left + right) / 2f else w / 2f
+        return frame(top, bottom, centre, w, h)?.scaled(step, width, height)
     }
 
     /**
-     * Grows the box to [ASPECT] (more above than below, for the shoulder), kept
-     * inside the photo. Null when it is nearly the whole photo anyway.
+     * The label rows [top, bottom) with 15% above and 10% below, as wide as the
+     * photo allows while centred on [centre]. Null when that is nearly the whole
+     * height anyway.
      */
-    internal fun fit(box: Box, w: Int, h: Int): Box? {
-        var (left, top, right, bottom) = box
-        val aspect = (right - left).toFloat() / max(1, bottom - top)
-        if (aspect > ASPECT) {
-            val extra = ((right - left) / ASPECT).roundToInt() - (bottom - top)
-            top -= (extra * 0.6f).roundToInt()
-            bottom += extra - (extra * 0.6f).roundToInt()
-        } else {
-            val extra = ((bottom - top) * ASPECT).roundToInt() - (right - left)
-            left -= extra / 2
-            right += extra - extra / 2
-        }
-        if (top < 0) { bottom -= top; top = 0 }
-        if (bottom > h) { top = max(0, top - (bottom - h)); bottom = h }
-        if (left < 0) { right -= left; left = 0 }
-        if (right > w) { left = max(0, left - (right - w)); right = w }
-        val result = Box(left, top, right, bottom)
-        return if (result.width.toLong() * result.height > 0.8 * w * h) null else result
+    internal fun frame(top: Int, bottom: Int, centre: Float, w: Int, h: Int): Box? {
+        val band = bottom - top
+        val from = max(0, top - (band * ABOVE).roundToInt())
+        val to = min(h, bottom + (band * BELOW).roundToInt())
+        if (to - from > 0.9f * h) return null
+        val half = min(centre, w - centre).roundToInt().coerceAtLeast(1)
+        val middle = centre.roundToInt()
+        return Box(max(0, middle - half), from, min(w, middle + half), to)
     }
 
     private fun Box.scaled(step: Int, width: Int, height: Int) =

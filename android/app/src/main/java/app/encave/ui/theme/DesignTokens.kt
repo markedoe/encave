@@ -17,8 +17,16 @@ object DesignTokens {
 
     /** Base of the studio backdrop behind label photos and covers; the wine color is laid over it. */
     val studioBackdrop = ThemedColor(light = 0xFFF5EFEC, dark = 0xFF1C1719)
-    /** Soft light behind the picture on the studio backdrop, so its shadow reads. */
-    val studioGlow = ThemedColor(light = 0xFFFFFFFF, dark = 0xFF4A3F43)
+    /** Studio backdrop shade of each wine style (top of its gradient), keyed by token name ("studio-red"...). */
+    val studioShades: Map<String, ThemedColor> = linkedMapOf(
+        "studio-red" to ThemedColor(light = 0xFFEBCDD2, dark = 0xFF5C1322),
+        "studio-white" to ThemedColor(light = 0xFFF2EAC4, dark = 0xFF64501A),
+        "studio-rose" to ThemedColor(light = 0xFFF9DDE1, dark = 0xFF6A2638),
+        "studio-sparkling" to ThemedColor(light = 0xFFF4EDDA, dark = 0xFF4E4530),
+        "studio-dessert" to ThemedColor(light = 0xFFF2DDB0, dark = 0xFF64400F),
+        "studio-fortified" to ThemedColor(light = 0xFFE6CDCB, dark = 0xFF46181A),
+        "studio-orange" to ThemedColor(light = 0xFFF6DBBF, dark = 0xFF693510),
+    )
 
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
