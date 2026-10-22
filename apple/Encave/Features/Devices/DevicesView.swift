@@ -941,7 +941,7 @@ struct JoinDeviceView: View {
                     if replace {
                         Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
                     } else {
-                        Text("Both cellars are put together. Choose Replace if this device only has the sample cellar.")
+                        Text("Both cellars are put together. Choose Replace with the other cellar if this device only has the sample cellar.")
                     }
                 }
             }

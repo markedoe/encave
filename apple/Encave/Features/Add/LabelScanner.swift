@@ -175,7 +175,7 @@ struct LabelScanner: View {
                 .foregroundStyle(Color.accentColor)
             Text("Choose a photo of the label")
                 .font(.headline)
-            Text("The text is read on this device to fill in the name, producer and vintage.")
+            Text("The text is read on this device to fill in the name, producer, vintage and appellation.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

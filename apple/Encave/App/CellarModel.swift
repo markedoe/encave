@@ -96,7 +96,7 @@ final class CellarModel {
         errorMessage = nil
         startWriter()
         if let fileName = unreadableFile?.lastPathComponent {
-            errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
+            errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Cellar files that could not be read.")
         }
         syncService = SyncService(model: self, demo: demo)
         syncVersion += 1

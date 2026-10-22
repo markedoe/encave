@@ -115,12 +115,12 @@ struct WebSearchSettingsSection: View {
                 Text(verbatim: message).foregroundStyle(.red)
             }
             if !settings.isEnabled {
-                Text("Optional. Looks up a wine on the web to complete its details, with the search service you choose.")
+                Text("Optional. Looks up a wine on the web to complete its details or find its current price, with the search service you choose.")
             } else {
                 if settings.service.requiresServerURL {
                     Text("SearXNG must answer in JSON: add json under search: formats: in its settings.yml.")
                 }
-                Text("Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent.")
+                Text("Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.")
             }
         }
     }

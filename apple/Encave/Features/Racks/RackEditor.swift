@@ -719,7 +719,7 @@ struct MoveBottleView: View {
                                         model.showToast(String(localized: "This place is full."))
                                     }
                             }
-                            Text("Tap a place. Tapping another bottle swaps them; a bin takes the bottle if it has room.")
+                            Text("Tap a place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .padding()

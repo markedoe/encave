@@ -155,7 +155,7 @@ final class SyncService {
                 // The cellar does not know this device's key (a backup restored on another
                 // device, a reset Keychain): it cannot sync as the device it was.
                 forgetCellar()
-                problem = String(localized: "This device is no longer part of the synced cellar: its key changed, for example after restoring a backup. The cellar stays here. Join the cellar again from another device.")
+                problem = String(localized: "This device is no longer part of the synced cellar: its key changed, for example after this device was restored from an iCloud or computer backup. The cellar stays here. Join the cellar again from another device.")
             }
         }
         if membership != nil, state == nil, !identityUnavailable {
