@@ -162,7 +162,7 @@ struct LabelScanSection: View {
                 if let aiError = scan.aiError {
                     Label(aiError, systemImage: "exclamationmark.triangle")
                         .font(.footnote)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.warning)
                 }
             } footer: {
                 if scan.aiEnabled {

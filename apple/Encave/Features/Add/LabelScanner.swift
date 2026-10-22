@@ -149,7 +149,7 @@ struct LabelScanner: View {
             if let lastResult, lastResult.isEmpty, !acceptsPhotoWithoutText {
                 Text("No text found. Try a sharper photo.")
                     .font(.footnote)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.warning)
             }
             Spacer()
         }

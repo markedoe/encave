@@ -67,7 +67,7 @@ struct AddBottleView: View {
                         Label("Only \(free) free positions: the other bottles will have no position.",
                               systemImage: "exclamationmark.triangle")
                             .font(.footnote)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.warning)
                     }
                 } else {
                     TextField("Where is it?", text: $storageNote, prompt: Text("Kitchen, box in the garage…"))
