@@ -22,9 +22,11 @@ python3 design/generate_app_icon.py
 ## Builds
 
 `.github/workflows/apple.yml` builds both apps on every change under
-`apple/`, and uploads them to TestFlight from `main` (a manual run on another
-branch uploads without giving the build to testers). Each upload from `main` goes to every external TestFlight group of the app, with
-the latest commits as "What to Test", and is submitted to Beta App Review
+`apple/`, and uploads them to TestFlight from `main`, for the internal testers.
+To give a build to the external testers, run the workflow manually on `main`
+(Actions › Apple apps › Run workflow) with "external testers" ticked: that
+build goes to every external TestFlight group of the app, with the latest
+commits as "What to Test", and is submitted to Beta App Review
 (`tools/testflight_testers.py`). It needs these repository secrets:
 `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` (App
 Store Connect API key with the Admin role).

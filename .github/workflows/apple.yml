@@ -7,6 +7,11 @@ on:
   pull_request:
     paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   workflow_dispatch:
+    inputs:
+      external_testers:
+        description: "Also give this build to the external TestFlight testers (and submit it to Beta App Review)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -360,10 +365,11 @@ jobs:
   testers:
     name: TestFlight external testers
     needs: apps
-    # Builds from main only. Also when one upload failed (the Mac one runs after the
-    # iPhone one): the uploaded build still reaches the testers, and the apps job and
-    # the run stay failed, with a warning below.
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
+    # Only when asked: a manual run from main with "external testers" ticked. Every push
+    # to main still uploads a build for the internal testers. Also when one upload failed
+    # (the Mac one runs after the iPhone one): the uploaded build still reaches the
+    # testers, and the apps job and the run stay failed, with a warning below.
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.external_testers && github.ref == 'refs/heads/main' && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
     runs-on: ubuntu-latest
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60
