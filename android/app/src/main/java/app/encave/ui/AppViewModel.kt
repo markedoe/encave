@@ -51,6 +51,8 @@ import app.encave.data.ai.AiError
 import app.encave.data.ai.AiPreferences
 import app.encave.data.ai.AiService
 import app.encave.data.ai.LabelAnalysis
+import app.encave.data.ai.completed
+import app.encave.data.ai.completing
 import app.encave.sync.ChangeNotifications
 import java.time.LocalDate
 import java.util.UUID
@@ -77,8 +79,23 @@ sealed interface UiText {
     data class Plural(@PluralsRes val id: Int, val count: Int) : UiText
 }
 
-/** A snackbar message, with an optional undo; [persistent] ones stay until dismissed. */
-data class UiMessage(val text: UiText, val undo: (() -> Unit)? = null, val persistent: Boolean = false)
+/**
+ * A snackbar message, with an optional undo; [persistent] ones stay until dismissed.
+ * [actionLabel] names the action when it is not Undo (Open settings).
+ */
+data class UiMessage(
+    val text: UiText,
+    val undo: (() -> Unit)? = null,
+    val persistent: Boolean = false,
+    val actionLabel: UiText? = null,
+)
+
+/** The AI reading a label photo for a form, kept by the view model so it survives rotation. */
+sealed interface LabelReading {
+    data object Reading : LabelReading
+    data class Done(val analysis: LabelAnalysis) : LabelReading
+    data class Failed(val error: Throwable) : LabelReading
+}
 
 /**
  * The cellar and every command the screens can run. Commands go through the
@@ -174,7 +191,12 @@ class AppViewModel(
 
     // region Bottles
 
-    /** [photo] is a prepared JPEG for a new wine; it is saved before the bottles are added. */
+    /**
+     * Adds bottles, with Undo. [photo] is a prepared JPEG (the label), saved first as the
+     * wine's photo. [onDone] tells the screen whether they were added: on failure (a place
+     * taken meanwhile by a sync, a full disk) it stays open with everything entered. Files
+     * already stored are then left to the cleanup at launch, which removes unused ones.
+     */
     fun addBottles(
         wine: Wine,
         quantity: Int,
@@ -184,26 +206,49 @@ class AppViewModel(
         boughtDiscoveryId: UUID? = null,
         /** Documents picked while adding: stored and attached to the wine, for all its bottles. */
         pendingDocuments: List<PendingDocument> = emptyList(),
+        onDone: (Boolean) -> Unit = {},
     ) {
         viewModelScope.launch {
             val photoId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
             val attachments = withContext(Dispatchers.IO) { pendingDocuments.mapNotNull { documents.commit(it) } }
             var record = if (photoId != null) wine.copy(photoId = photoId) else wine
             if (attachments.isNotEmpty()) record = record.copy(attachments = record.attachments.orEmpty() + attachments)
+            val before = cellar.value
+            val previousWine = before.wines[wine.id]
+            val previousDiscovery = boughtDiscoveryId?.let { before.discoveries[it] }
             repository.update { cellar ->
                 cellar.addBottles(record, quantity, slots, purchase).also {
                     if (boughtDiscoveryId != null && cellar.discoveries[boughtDiscoveryId] != null) cellar.markBought(boughtDiscoveryId)
                 }
             }
-                .onSuccess {
+                .onSuccess { added ->
                     withContext(Dispatchers.IO) { pendingDocuments.forEach(documents::discard) }
-                    if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
-                    else post(UiText.Plural(R.plurals.bottles_added, it.size))
+                    // The AI was still reading the label: its answer completes the saved wine.
+                    if (readingJobs[record.id] != null) savedWhileReading[record.id] = record
+                    val ids = added.map { it.id }
+                    val text = UiText.Res(if (purchase.isOrdered) R.string.msg_on_order else R.string.msg_added, listOf(added.size, record.displayName))
+                    post(text) { undoAdd(ids, previousWine, previousDiscovery) }
                     // Added without the documents that could not be stored (a full disk…).
                     if (attachments.size < pendingDocuments.size) post(UiText.Res(R.string.err_document_unreadable))
+                    onDone(true)
                 }
-                .onFailure { post(errorText(it)) }
+                .onFailure {
+                    post(errorText(it))
+                    onDone(false)
+                }
         }
+    }
+
+    /**
+     * Takes back bottles just added. A new wine left without bottles goes with them; a wine
+     * that was there gets back its record as it was (barcode, photo, documents added).
+     */
+    private fun undoAdd(bottleIds: List<UUID>, previousWine: Wine?, previousDiscovery: Discovery?) = change<Unit> { c ->
+        bottleIds.forEach { c.deleteBottle(it) }
+        if (previousWine != null) {
+            if (c.wines[previousWine.id] != null) c.updateWine(previousWine) else c.merge(Cellar(listOf(previousWine)))
+        }
+        if (previousDiscovery != null && c.discoveries[previousDiscovery.id] != null) c.updateDiscovery(previousDiscovery)
     }
 
     fun drink(bottleId: UUID, tasting: Tasting) {
@@ -498,6 +543,69 @@ class AppViewModel(
     /** Resized JPEG of a picked or captured image, or null if it cannot be read. */
     suspend fun preparePhoto(uri: Uri): ByteArray? = withContext(Dispatchers.IO) { photos.prepare(uri) }
 
+    private val readings = MutableStateFlow<Map<UUID, LabelReading>>(emptyMap())
+
+    /** The AI readings of label photos, by form (the wine's id). */
+    val labelReadings: StateFlow<Map<UUID, LabelReading>> = readings
+    private val readingJobs = mutableMapOf<UUID, kotlinx.coroutines.Job>()
+
+    /** Wines added while the AI was still reading their label: completed with its answer. */
+    private val savedWhileReading = mutableMapOf<UUID, Wine>()
+
+    /**
+     * Reads a label photo with the AI for the form of wine [formId]. It runs in the view
+     * model: rotating or folding the device does not stop it, and if the bottles are added
+     * meanwhile, the answer completes the saved wine (with Undo), as on Apple.
+     */
+    fun startLabelAnalysis(formId: UUID, jpeg: ByteArray) {
+        readingJobs.remove(formId)?.cancel()
+        readings.value = readings.value + (formId to LabelReading.Reading)
+        readingJobs[formId] = viewModelScope.launch {
+            val result = analyzeLabel(jpeg)
+            readingJobs.remove(formId)
+            val saved = savedWhileReading.remove(formId)
+            if (saved != null) {
+                readings.value = readings.value - formId
+                result.onSuccess { completeWine(saved, it) }.onFailure { post(aiErrorText(it)) }
+            } else {
+                readings.value = readings.value + (formId to result.fold({ LabelReading.Done(it) }, { LabelReading.Failed(it) }))
+            }
+        }
+    }
+
+    /** The form took the answer. */
+    fun consumeLabelReading(formId: UUID) {
+        if (readings.value[formId] !is LabelReading.Reading) readings.value = readings.value - formId
+    }
+
+    /** The form was left: the reading stops, unless its wine was just added (it completes it). */
+    fun releaseLabelReading(formId: UUID) {
+        if (savedWhileReading.containsKey(formId)) return
+        readingJobs.remove(formId)?.cancel()
+        readings.value = readings.value - formId
+    }
+
+    /** The AI answered after the wine was saved: fills the fields still as they were at saving, with Undo. */
+    private fun completeWine(saved: Wine, analysis: LabelAnalysis) {
+        val completed = analysis.completing(saved)
+        viewModelScope.launch {
+            var change: Pair<Wine, Wine>? = null
+            repository.update { cellar ->
+                val live = cellar.wines[saved.id] ?: return@update
+                val updated = live.completed(from = saved, to = completed)
+                if (updated != live) {
+                    cellar.updateWine(updated)
+                    change = live to updated
+                }
+            }.onSuccess {
+                val (live, updated) = change ?: return@onSuccess
+                post(UiText.Res(R.string.msg_ai_completed, listOf(updated.displayName))) {
+                    change<Unit> { c -> c.wines[live.id]?.let { c.updateWine(it.completed(from = updated, to = live)) } }
+                }
+            }.onFailure { post(errorText(it)) }
+        }
+    }
+
     /** Sends only the label photo to the provider set in Settings. */
     suspend fun analyzeLabel(jpeg: ByteArray): Result<LabelAnalysis> {
         val settings = ai.settings.value
@@ -520,6 +628,11 @@ class AppViewModel(
     suspend fun loadModels(key: String?): Result<List<String>> = runCatching { AiService.models(ai.settings.value, key) }
 
     fun showMessage(text: UiText) = post(text)
+
+    /** A message with an action other than Undo, such as Open settings. */
+    fun showMessage(text: UiText, actionLabel: UiText, action: () -> Unit) {
+        messageChannel.trySend(UiMessage(text, action, actionLabel = actionLabel))
+    }
 
     // region Documents
 
