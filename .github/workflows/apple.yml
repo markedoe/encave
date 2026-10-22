@@ -83,10 +83,6 @@ jobs:
             "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
             pid=$!
             sleep 20
-            # What the window looks like (needs screen capture permission on the runner).
-            mkdir -p "$RUNNER_TEMP/mac-screens"
-            osascript -e 'tell application "System Events" to set frontmost of (first process whose unix id is '"$pid"') to true' || true
-            screencapture -x "$RUNNER_TEMP/mac-screens/$attempt.png" || echo "screen capture not allowed"
             if kill -0 "$pid" 2>/dev/null; then
               echo "$attempt launch: still running after 20 s"
               kill "$pid"; wait "$pid" 2>/dev/null || true
@@ -125,15 +121,6 @@ jobs:
             status=1
           done
           exit $status
-
-      - name: Upload Mac screenshots
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: mac-screens
-          path: ${{ runner.temp }}/mac-screens
-          retention-days: 7
-          if-no-files-found: ignore
 
   screens:
     name: Screen tour (iPhone, iPad, Mac)
@@ -196,10 +183,31 @@ jobs:
           done
           exit $status
 
+      - name: Mac screenshots
+        if: ${{ !cancelled() }}
+        # Each section with the sample cellar, English and French, light and dark, at the
+        # App Store size (2880x1800), on a HiDPI virtual display: see the script.
+        run: |
+          set -o pipefail
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd-mac" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            | xcbeautify --renderer github-actions
+          tools/mac-screenshots.sh "$RUNNER_TEMP/dd-mac/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
+
+      - name: Upload Mac screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mac-screens
+          path: ${{ runner.temp }}/mac-screens
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Mac
         if: ${{ !cancelled() }}
-        # GitHub's Mac runners cannot show windows to UI tests yet ("The main window opens"
-        # fails); the Mac launch test above captures each section instead.
+        # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
+        # failed); the Mac screenshots above show each section.
         continue-on-error: true
         run: |
           set -o pipefail
