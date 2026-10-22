@@ -29,7 +29,8 @@ struct ElsewhereActions: ViewModifier {
                 }
                 .tint(.accentColor)
             }
-            .swipeActions(edge: .trailing) {
+            // No full swipe: a long swipe on the shopping list must not delete the wine.
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button(role: .destructive) {
                     model.deleteDiscovery(discovery.id)
                 } label: {
