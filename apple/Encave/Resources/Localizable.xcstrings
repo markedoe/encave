@@ -661,6 +661,46 @@
         }
       }
     },
+    "%lld other wines": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld other wine"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld other wines"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autre vin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autres vins"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld positions": {
       "localizations": {
         "en": {
@@ -1091,6 +1131,16 @@
         }
       }
     },
+    "A case of": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une caisse de"
+          }
+        }
+      }
+    },
     "A copy of your cellar is kept on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. They stay on this device; the photos and documents they need are kept with them.": {
       "localizations": {
         "fr": {
@@ -1181,6 +1231,16 @@
         }
       }
     },
+    "A new wine with the same details and the vintage on this label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un nouveau vin avec les mêmes informations et le millésime de cette étiquette."
+          }
+        }
+      }
+    },
     "A new wine, or more bottles of one you already have.": {
       "localizations": {
         "fr": {
@@ -1257,6 +1317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La fiche d’un vin"
+          }
+        }
+      }
+    },
+    "A wine's page shows its bottles first: where each one is, and what you can do with it. Tap a detail of the wine: when other wines of your cellar share its producer, vintage, style, appellation, region, country, a grape or a tag, it lists them, with how many bottles; otherwise, and for the other details, it opens the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
           }
         }
       }
@@ -1571,12 +1641,12 @@
         }
       }
     },
-    "Add several bottles at once. Choose a rack to place them: the first free places are used unless you pick them. Without a rack, write where they are (kitchen, box in the garage).": {
+    "Add several bottles at once, or a case of 6 or 12 in one tap. The bottles go to the rack you used last on this device (or the first one with room), in its first free places unless you pick them. Without a rack, write where they are (kitchen, box in the garage). Right after adding, **Undo** in the banner takes the bottles back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez plusieurs bouteilles d’un coup. Choisissez un casier pour les ranger : les premiers emplacements libres sont utilisés, sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage)."
+            "value": "Ajoutez plusieurs bouteilles d’un coup, ou une caisse de 6 ou 12 en une touche. Les bouteilles vont dans le casier utilisé la dernière fois sur cet appareil (ou le premier qui a de la place), aux premiers emplacements libres sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage). Juste après l’ajout, **Annuler** dans le bandeau retire les bouteilles."
           }
         }
       }
@@ -1597,6 +1667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter à la cave"
+          }
+        }
+      }
+    },
+    "Add to This Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter à ce vin"
           }
         }
       }
@@ -1671,6 +1751,16 @@
         }
       }
     },
+    "Adding to it keeps the bottles and tastings of this wine together.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter à ce vin garde ensemble ses bouteilles et ses dégustations."
+          }
+        }
+      }
+    },
     "Adding…": {
       "localizations": {
         "fr": {
@@ -1687,6 +1777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoute une bouteille ici"
+          }
+        }
+      }
+    },
+    "Adds bottles of this vintage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute des bouteilles de ce millésime."
           }
         }
       }
@@ -1731,6 +1831,16 @@
         }
       }
     },
+    "Allow the camera for Encave in Settings to scan labels, or choose a photo of the label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez l’appareil photo pour Encave dans Réglages pour scanner les étiquettes, ou choisissez une photo de l’étiquette."
+          }
+        }
+      }
+    },
     "Already in your cellar": {
       "localizations": {
         "fr": {
@@ -1767,6 +1877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
+          }
+        }
+      }
+    },
+    "Another Vintage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre millésime"
           }
         }
       }
@@ -2151,6 +2271,16 @@
         }
       }
     },
+    "Barcode %@, kept with the wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code-barres %@, gardé avec le vin"
+          }
+        }
+      }
+    },
     "Barcodes": {
       "localizations": {
         "fr": {
@@ -2277,6 +2407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Liste des bouteilles"
+          }
+        }
+      }
+    },
+    "Bottle deleted": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille supprimée"
           }
         }
       }
@@ -2667,6 +2807,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Armoire, 10 étagères de 8, 2 en profondeur"
+          }
+        }
+      }
+    },
+    "Camera Access Is Off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès à l’appareil photo est désactivé"
+          }
+        }
+      }
+    },
+    "Camera access is off. Allow it in Settings to scan the code, or type the code below.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès à l’appareil photo est désactivé. Autorisez-le dans Réglages pour scanner le code, ou saisissez le code ci-dessous."
           }
         }
       }
@@ -3151,6 +3311,16 @@
         }
       }
     },
+    "Clear Filters": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer les filtres"
+          }
+        }
+      }
+    },
     "Clear filters": {
       "localizations": {
         "fr": {
@@ -3521,6 +3691,16 @@
         }
       }
     },
+    "Delete Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la bouteille"
+          }
+        }
+      }
+    },
     "Delete File": {
       "localizations": {
         "fr": {
@@ -3567,6 +3747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer les vins"
+          }
+        }
+      }
+    },
+    "Delete Wines…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les vins…"
           }
         }
       }
@@ -3687,6 +3877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Décrivez vos rangements pour que chaque bouteille ait sa place."
+          }
+        }
+      }
+    },
+    "Deselect All": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout désélectionner"
           }
         }
       }
@@ -3886,12 +4086,12 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abandonner"
+            "value": "Abandonner les modifications"
           }
         }
       }
     },
-    "Discard changes?": {
+    "Discard Changes?": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -4241,6 +4441,16 @@
         }
       }
     },
+    "Edits this detail of the wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie ce détail du vin."
+          }
+        }
+      }
+    },
     "Elsewhere": {
       "localizations": {
         "fr": {
@@ -4411,6 +4621,16 @@
         }
       }
     },
+    "Entered by mistake": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisie par erreur"
+          }
+        }
+      }
+    },
     "Erase all data": {
       "localizations": {
         "fr": {
@@ -4491,12 +4711,12 @@
         }
       }
     },
-    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.": {
+    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, with several words if you like (“margaux 2015”), and filter by style, grape or when to drink: the chips show only what your bottles have, and stay while you search.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
           }
         }
       }
@@ -4631,6 +4851,16 @@
         }
       }
     },
+    "Filter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrer"
+          }
+        }
+      }
+    },
     "Filters": {
       "localizations": {
         "fr": {
@@ -4747,6 +4977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plat servi"
+          }
+        }
+      }
+    },
+    "For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No Longer in Cellar** on it. For one entered by mistake, choose **Delete Bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back; after deleting a wine, it stays a little longer.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), choisissez **Plus en cave** sur elle. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps."
           }
         }
       }
@@ -5071,12 +5311,12 @@
         }
       }
     },
-    "Given away or broken": {
+    "Given away, sold or broken": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Donnée ou cassée"
+            "value": "Donnée, vendue ou cassée"
           }
         }
       }
@@ -5521,12 +5761,12 @@
         }
       }
     },
-    "In the Cellar list (not the table), choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
+    "In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack, take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la liste de la Cave (pas le tableau), choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."
+            "value": "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier, sortez-les de leur emplacement ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit. **Annuler** remet tout en place."
           }
         }
       }
@@ -5681,6 +5921,16 @@
         }
       }
     },
+    "It’s a Different Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est un autre vin"
+          }
+        }
+      }
+    },
     "JSON": {
       "localizations": {
         "fr": {
@@ -5767,6 +6017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garder la bouteille"
+          }
+        }
+      }
+    },
+    "Keep Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder les bouteilles"
           }
         }
       }
@@ -6611,6 +6871,16 @@
         }
       }
     },
+    "New Vintage: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau millésime : %lld"
+          }
+        }
+      }
+    },
     "New zone from this shelf": {
       "localizations": {
         "fr": {
@@ -6637,6 +6907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Non"
+          }
+        }
+      }
+    },
+    "No Longer in Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus en cave"
           }
         }
       }
@@ -6791,12 +7071,52 @@
         }
       }
     },
+    "No longer in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus en cave"
+          }
+        }
+      }
+    },
+    "No matching bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille ne correspond"
+          }
+        }
+      }
+    },
+    "No other bottle with this detail is in the cellar or on order.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune autre bouteille avec ce détail n’est dans la cave ou en commande."
+          }
+        }
+      }
+    },
     "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Aucun autre appareil ne s’est encore synchronisé via iCloud. Vos appareils doivent être connectés au même compte Apple, avec la synchronisation loin de la maison activée."
+          }
+        }
+      }
+    },
+    "No other wine in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun autre vin dans la cave"
           }
         }
       }
@@ -7311,6 +7631,16 @@
         }
       }
     },
+    "On iPhone and iPad, **+** in the Cellar opens the camera: point it at the label and tap **Use This Label**, or choose a photo (**Cancel** leaves the form to type the wine). The text is read on the device and fills in the name, producer, vintage and appellation; choose the style and check the vintage right below. Nothing is sent anywhere. The first time, Encave asks for the camera; if it is off, **Open Settings** turns it on.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** laisse le formulaire pour saisir le vin). Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
+          }
+        }
+      }
+    },
     "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": {
       "localizations": {
         "fr": {
@@ -7351,12 +7681,12 @@
         }
       }
     },
-    "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.": {
+    "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it. Both keep the same search and filters; in the table, **Filter** sets them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté."
+            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté. Les deux gardent la même recherche et les mêmes filtres ; dans le tableau, **Filtrer** les règle."
           }
         }
       }
@@ -7687,6 +8017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir Encave"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les Réglages"
           }
         }
       }
@@ -8161,16 +8501,6 @@
         }
       }
     },
-    "Point the camera at the label and tap **Use This Label**, or choose a photo. The text is read on the device and fills in the name, producer, vintage and appellation. Nothing is sent anywhere.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Visez l’étiquette avec l’appareil photo et touchez **Utiliser cette étiquette**, ou choisissez une photo. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation. Rien n’est envoyé."
-          }
-        }
-      }
-    },
     "Pork": {
       "localizations": {
         "fr": {
@@ -8511,6 +8841,16 @@
         }
       }
     },
+    "Read on this device. Choose the style, or tap Edit Details to correct the rest.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lu sur cet appareil. Choisissez le style, ou touchez Modifier les détails pour corriger le reste."
+          }
+        }
+      }
+    },
     "Reading the label…": {
       "localizations": {
         "fr": {
@@ -8707,6 +9047,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retirer %@ ?"
+          }
+        }
+      }
+    },
+    "Remove Barcode": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer le code-barres"
           }
         }
       }
@@ -9211,6 +9561,16 @@
         }
       }
     },
+    "Scan a Label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner une étiquette"
+          }
+        }
+      }
+    },
     "Scan the Label": {
       "localizations": {
         "fr": {
@@ -9301,12 +9661,12 @@
         }
       }
     },
-    "Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.": {
+    "Search or choose filters, then **Save This Search…** in the **Sort and Filter** menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
+            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu **Trier et filtrer**. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
           }
         }
       }
@@ -9367,6 +9727,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche…"
+          }
+        }
+      }
+    },
+    "Select All": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout sélectionner"
           }
         }
       }
@@ -9791,6 +10161,16 @@
         }
       }
     },
+    "Show only some wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher seulement certains vins"
+          }
+        }
+      }
+    },
     "Show or hide the selected wine": {
       "localizations": {
         "fr": {
@@ -10101,6 +10481,16 @@
         }
       }
     },
+    "Sort and Filter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trier et filtrer"
+          }
+        }
+      }
+    },
     "Sort by": {
       "localizations": {
         "fr": {
@@ -10161,12 +10551,12 @@
         }
       }
     },
-    "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go.": {
+    "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go. When a scan or the name you type is a wine you already have (same name, producer and vintage), **Already in your cellar** shows it: tap **Add to This Wine** so its bottles and tastings stay together, or **It’s a Different Wine**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Commencez à taper le nom : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont."
+            "value": "Commencez à taper le nom : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont. Quand un scan ou le nom saisi correspond à un vin que vous avez déjà (même nom, producteur et millésime), **Déjà dans votre cave** l’affiche : touchez **Ajouter à ce vin** pour garder ensemble ses bouteilles et ses dégustations, ou **C’est un autre vin**."
           }
         }
       }
@@ -10591,16 +10981,6 @@
         }
       }
     },
-    "Tap a detail of a wine. Its producer, vintage, style, appellation, region, country, a grape or a tag lists the wines of your cellar that share it, with how many bottles; the other details open the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez un détail d’un vin. Son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag liste les vins de votre cave qui le partagent, avec le nombre de bouteilles ; les autres détails ouvrent le vin pour les modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
-          }
-        }
-      }
-    },
     "Tap a place in the rack to add a bottle there.": {
       "localizations": {
         "fr": {
@@ -10927,6 +11307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La bouteille choisie sort de votre cave et sa place dans le casier se libère."
+          }
+        }
+      }
+    },
+    "The bottles stay in their places but are no longer suggested for tonight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles restent à leur place mais ne sont plus proposées pour ce soir."
           }
         }
       }
@@ -11761,6 +12151,16 @@
         }
       }
     },
+    "This wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce vin"
+          }
+        }
+      }
+    },
     "To Drink Soon": {
       "localizations": {
         "fr": {
@@ -11937,6 +12337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Essayer"
+          }
+        }
+      }
+    },
+    "Try removing a filter.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayez de retirer un filtre."
           }
         }
       }
@@ -12147,16 +12557,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zone haute"
-          }
-        }
-      }
-    },
-    "Use **Given away or broken** for a bottle that left the cellar without being drunk by you.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utilisez **Donnée ou cassée** pour une bouteille sortie de la cave sans que vous l’ayez bue."
           }
         }
       }
@@ -12531,6 +12931,16 @@
         }
       }
     },
+    "What you entered here is not saved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que vous avez saisi ici n’est pas enregistré."
+          }
+        }
+      }
+    },
     "What you liked, the dish, the moment…": {
       "localizations": {
         "fr": {
@@ -12631,12 +13041,12 @@
         }
       }
     },
-    "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.": {
+    "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is offered, and **Another Vintage** starts a new wine with the same details and the vintage on the label. Barcodes are matched on this device only; Encave looks nothing up online.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
+            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les producteurs gardent souvent un code-barres pour tous les millésimes : chaque millésime que vous avez est proposé, et **Autre millésime** commence un nouveau vin avec les mêmes informations et le millésime de l’étiquette. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
           }
         }
       }

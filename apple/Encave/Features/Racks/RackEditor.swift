@@ -246,7 +246,7 @@ struct RackEditor: View {
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            .confirmationDialog("Discard changes?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
+            .confirmationDialog("Discard Changes?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
                 Button("Discard Changes", role: .destructive) { dismiss() }
                 Button("Keep Editing", role: .cancel) {}
             }

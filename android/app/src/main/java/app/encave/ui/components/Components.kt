@@ -1,5 +1,16 @@
 package app.encave.ui.components
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.background
@@ -217,7 +228,10 @@ fun Hint(text: String, modifier: Modifier = Modifier) {
     Text(text, modifier, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** − value + with 48dp buttons. */
+/**
+ * − value + with 48dp buttons. Holding a button repeats it (a case of 12 without twelve
+ * taps); the value is announced by TalkBack whenever it changes, also from elsewhere.
+ */
 @Composable
 fun Stepper(
     value: Int,
@@ -228,16 +242,47 @@ fun Stepper(
     modifier: Modifier = Modifier,
     valueText: String = value.toString(),
 ) {
+    val current by rememberUpdatedState(value)
+    val change by rememberUpdatedState(onChange)
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
-        FilledTonalIconButton(onClick = { onChange(value - 1) }, enabled = value > range.first) {
+        RepeatingIconButton(enabled = value > range.first, onStep = { if (current > range.first) change(current - 1) }) {
             Icon(Icons.Filled.Remove, contentDescription = decreaseLabel)
         }
-        Text(valueText, style = MaterialTheme.typography.titleMedium, modifier = Modifier.widthIn(min = 32.dp), textAlign = TextAlign.Center)
-        FilledTonalIconButton(onClick = { onChange(value + 1) }, enabled = value < range.last) {
+        Text(
+            valueText, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(min = 32.dp).semantics { liveRegion = LiveRegionMode.Polite },
+        )
+        RepeatingIconButton(enabled = value < range.last, onStep = { if (current < range.last) change(current + 1) }) {
             Icon(Icons.Filled.Add, contentDescription = increaseLabel)
         }
     }
 }
+
+/** A tonal icon button that repeats [onStep] while held, after a short delay. */
+@Composable
+private fun RepeatingIconButton(enabled: Boolean, onStep: () -> Unit, content: @Composable () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val step by rememberUpdatedState(onStep)
+    // Set once holding has repeated: the click that ends the press then adds nothing more.
+    var repeated by remember { mutableStateOf(false) }
+    LaunchedEffect(pressed, enabled) {
+        if (!pressed || !enabled) return@LaunchedEffect
+        repeated = false
+        delay(STEPPER_REPEAT_DELAY_MS)
+        while (true) {
+            repeated = true
+            step()
+            delay(STEPPER_REPEAT_INTERVAL_MS)
+        }
+    }
+    FilledTonalIconButton(onClick = { if (repeated) repeated = false else step() }, enabled = enabled, interactionSource = interaction) {
+        content()
+    }
+}
+
+private const val STEPPER_REPEAT_DELAY_MS = 400L
+private const val STEPPER_REPEAT_INTERVAL_MS = 100L
 
 /** A row of mutually exclusive options with radio semantics. */
 @Composable

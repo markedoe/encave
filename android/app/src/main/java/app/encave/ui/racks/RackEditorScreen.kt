@@ -78,6 +78,7 @@ import app.encave.core.SampleData
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
+import app.encave.ui.components.rememberDiscardGuard
 import app.encave.ui.components.Hint
 import app.encave.ui.help.HelpLink
 import app.encave.ui.help.HelpTopic
@@ -234,7 +235,6 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDisplaced by remember { mutableStateOf(false) }
-    var confirmDiscard by remember { mutableStateOf(false) }
     val id = rememberSaveable { existing?.id ?: UUID.randomUUID() }
 
     fun resizeRows(count: Int) {
@@ -307,17 +307,15 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         viewModel.updateRack(rack, map, takingOut) { navigator.back() }
     }
 
-    fun close() {
-        if (isDirty) confirmDiscard = true else navigator.back()
-    }
-    androidx.activity.compose.BackHandler(enabled = isDirty) { confirmDiscard = true }
+    // Back and Close ask before unsaved changes are lost.
+    val close = rememberDiscardGuard(isDirty) { navigator.back() }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(if (existing == null) R.string.rack_editor_new else R.string.rack_editor_edit)) },
                 navigationIcon = {
-                    IconButton(onClick = ::close) {
+                    IconButton(onClick = close) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
@@ -543,16 +541,6 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
             confirm = stringResource(R.string.rack_displaced_confirm),
             onConfirm = { save(takingOut = true) },
             onDismiss = { confirmDisplaced = false },
-        )
-    }
-    if (confirmDiscard) {
-        ConfirmDialog(
-            title = stringResource(R.string.discard_title),
-            body = "",
-            confirm = stringResource(R.string.discard_confirm),
-            dismiss = stringResource(R.string.discard_keep),
-            onConfirm = { navigator.back() },
-            onDismiss = { confirmDiscard = false },
         )
     }
     if (confirmDelete && existing != null) {

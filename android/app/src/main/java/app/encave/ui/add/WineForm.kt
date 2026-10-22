@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -153,6 +154,26 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
         }
     }
 
+    /** Another vintage of [wine] (one barcode for several vintages): its details, the vintage left to fill. */
+    fun fillFrom(wine: Wine) {
+        name = wine.name
+        producer = wine.producer.orEmpty()
+        vintageText = ""
+        color = wine.color
+        region = wine.region.orEmpty()
+        country = wine.country.orEmpty()
+        appellation = wine.appellation.orEmpty()
+        grapes.clear()
+        grapes.addAll(wine.grapes)
+        autoFilled.clear()
+    }
+
+    /** What the user can edit, to tell whether anything changed since it was taken (Discard changes?). */
+    fun snapshot(): List<Any?> = listOf(
+        name, producer, vintageText, color, region, country, appellation, grapes.toList(), grapeInput, notes,
+        tags.toList(), tagInput, newPhoto != null, photoRemoved, manualWindow, windowEnabled,
+    )
+
     fun addGrape() {
         grapeInput.split(",", ";").map { it.trim() }.filter { it.isNotEmpty() && it !in grapes }.forEach { grapes += it }
         grapeInput = ""
@@ -189,20 +210,35 @@ enum class WineFormField {
     }
 }
 
-/** Name, producer, vintage and style first; the rest behind "More details". */
+/**
+ * Name, producer, vintage and style first, with Search online; the rest behind "More details".
+ * [nameFocus] and [vintageFocus] let the screen move to the name when it is missing, or to
+ * the vintage of another vintage.
+ */
 @Composable
-fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier = Modifier) {
+fun WineEssentials(
+    form: WineFormState,
+    known: KnownValues,
+    modifier: Modifier = Modifier,
+    nameFocus: FocusRequester? = null,
+    vintageFocus: FocusRequester? = null,
+) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+        val nameError = form.showErrors && form.nameMissing
+        val nameRequired = stringResource(R.string.add_name_required)
         OutlinedTextField(
             value = form.name,
             onValueChange = { form.name = it },
             label = { Text(stringResource(R.string.field_name)) },
-            isError = form.showErrors && form.nameMissing,
+            isError = nameError,
             supportingText = {
-                Text(stringResource(if (form.showErrors && form.nameMissing) R.string.add_name_required else R.string.help_field_name))
+                Text(stringResource(if (nameError) R.string.add_name_required else R.string.help_field_name))
             },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("field.name")
+                .then(if (nameFocus != null) Modifier.focusRequester(nameFocus) else Modifier)
+                // TalkBack says why the field is in error, not only that it is.
+                .semantics { if (nameError) error(nameRequired) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
@@ -220,8 +256,24 @@ fun WineEssentials(form: WineFormState, known: KnownValues, modifier: Modifier =
                     Text(stringResource(if (form.vintageInvalid) R.string.add_vintage_invalid else R.string.help_field_vintage))
                 },
                 singleLine = true,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).then(if (vintageFocus != null) Modifier.focusRequester(vintageFocus) else Modifier),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+            )
+        }
+        // Right under the name: the web often has the details the label lacks.
+        val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
+        var searching by remember { mutableStateOf(false) }
+        if (webSearch.isEnabled) {
+            OutlinedButton(onClick = { searching = true }, enabled = !form.nameMissing, modifier = Modifier.testTag("form.search_online")) {
+                Icon(Icons.Outlined.Public, contentDescription = null)
+                Text(stringResource(R.string.search_online), Modifier.padding(start = Dimens.s))
+            }
+            Hint(stringResource(R.string.search_online_footer, webSearch.service.brand.orEmpty()))
+        }
+        if (searching) {
+            WebSearchSheet(
+                initialQuery = WebSearchQuery.terms(form.producer, form.name, form.appellation, form.vintage, stringResource(R.string.search_wine_word)),
+                onDismiss = { searching = false },
             )
         }
         Text(stringResource(R.string.field_style), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
@@ -271,21 +323,6 @@ fun WineMoreDetails(
         )
         GrapesField(form, known.grapes)
         Hint(stringResource(R.string.help_origin_footer))
-        val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
-        var searching by remember { mutableStateOf(false) }
-        if (webSearch.isEnabled) {
-            OutlinedButton(onClick = { searching = true }, enabled = !form.nameMissing, modifier = Modifier.testTag("form.search_online")) {
-                Icon(Icons.Outlined.Public, contentDescription = null)
-                Text(stringResource(R.string.search_online), Modifier.padding(start = Dimens.s))
-            }
-            Hint(stringResource(R.string.search_online_footer, webSearch.service.brand.orEmpty()))
-        }
-        if (searching) {
-            WebSearchSheet(
-                initialQuery = WebSearchQuery.terms(form.producer, form.name, form.appellation, form.vintage, stringResource(R.string.search_wine_word)),
-                onDismiss = { searching = false },
-            )
-        }
         // Discoveries have tags of their own.
         if (showsTags) {
             Box(Modifier.bringIntoViewRequester(tagsRequester)) { WineTagsField(form, known.tags) }

@@ -357,22 +357,33 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.waitForIdle()
         // The move is saved in the background: wait for it.
         val repository = ApplicationProvider.getApplicationContext<EncaveApplication>().repository
-        compose.waitUntil(10_000) {
+        // The save runs on another thread and publishes on the main one: let both run.
+        val deadline = System.currentTimeMillis() + 10_000
+        fun dropped(): Boolean {
             val cellar = repository.cellar.value
-            cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
+            return cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
         }
+        while (!dropped() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50)
+            compose.waitForIdle()
+        }
+        assertTrue("the dragged bottle is in its new place", dropped())
         capture("39-rack-dropped")
     }
 
     @Test
     fun wineExplore() {
         tap("wine.row")
-        scrollIn("wine.detail", "detail.explore.producer")
-        tap("detail.explore.producer")
+        // The first wine's country is shared with other wines; its producer is not, so it edits.
+        scrollIn("wine.detail", "detail.edit.producer")
+        scrollIn("wine.detail", "detail.explore.country")
+        tap("detail.explore.country")
         assertTrue(
-            "$device-$language: no wine listed for the producer",
+            "$device-$language: no other wine listed for the country",
             compose.onAllNodesWithTag("explore.row").fetchSemanticsNodes().isNotEmpty(),
         )
+        // The wine it was opened from comes first, and goes back to its page.
+        compose.onAllNodesWithTag("explore.current").onFirst().assertExists()
         capture("46-wine-explore")
         // A wine of the list opens its page.
         tap("explore.row")
