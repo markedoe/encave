@@ -6,16 +6,22 @@ struct WineRow: View {
     @Environment(CellarModel.self) private var model
     let group: WineGroup
 
-    /// "Red · Domaine X · Pauillac": the style in words, not only by the bottle's color.
-    private var subtitle: String {
-        [group.wine.color?.name, group.wine.producer, group.wine.appellation ?? group.wine.region]
-            .compactMap { $0 }.joined(separator: " · ")
-    }
+    private var subtitle: String { group.wine.styleLine }
 
     private var location: String? {
-        let labels = group.bottles.compactMap { model.locationLabel(for: $0) }
-        guard let first = labels.first else { return nil }
-        return labels.count > 1 ? String(localized: "\(first) and \(labels.count - 1) more") : first
+        Self.places(group.bottles.compactMap { model.locationLabel(for: $0) })
+    }
+
+    /// "A1", or "A1 and 2 more" when the bottles are in several places (each place counted once).
+    static func places(_ labels: [String]) -> String? {
+        var distinct: [String] = []
+        for label in labels where !distinct.contains(label) {
+            distinct.append(label)
+        }
+        guard let first = distinct.first else { return nil }
+        guard distinct.count > 1 else { return first }
+        let othersLabel = String(localized: "\(distinct.count - 1) more")
+        return String(localized: "\(first) and \(othersLabel)")
     }
 
     /// Bottles on order: when they should arrive, instead of maturity and place.
@@ -47,8 +53,8 @@ struct WineRow: View {
                         ArrivalLabel(date: group.bottles.first?.expectedAt)
                     }
                     if maturity != .unknown {
-                        Label(maturity.shortTitle, systemImage: maturity.systemImage)
-                            .foregroundStyle(maturity.tint)
+                        MaturityLabel(maturity: maturity, short: true)
+                            .foregroundStyle(.secondary)
                     }
                     if let location {
                         Label(location, systemImage: "square.grid.3x3")
@@ -65,6 +71,13 @@ struct WineRow: View {
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+extension Wine {
+    /// "Red · Domaine X · Pauillac": the style in words, not only by the bottle's color.
+    var styleLine: String {
+        [color?.name, producer, appellation ?? region].compactMap { $0 }.joined(separator: " · ")
     }
 }
 

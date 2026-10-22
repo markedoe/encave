@@ -21,6 +21,14 @@ object DesignTokens {
         "wine-orange" to ThemedColor(light = 0xFFE39B4C, dark = 0xFFEBA35A),
     )
 
+    /** Maturity symbols, keyed by token name ("maturity-ready"...). Always shown with words. */
+    val maturityColors: Map<String, ThemedColor> = linkedMapOf(
+        "maturity-drink-soon" to ThemedColor(light = 0xFFA65A00, dark = 0xFFF5A54A),
+        "maturity-ready" to ThemedColor(light = 0xFF2E7D32, dark = 0xFF81C784),
+        "maturity-past-peak" to ThemedColor(light = 0xFFB3261E, dark = 0xFFF2B8B5),
+        "maturity-keep" to ThemedColor(light = 0xFF00695C, dark = 0xFF4DB6AC),
+    )
+
     /** Spacing in dp. */
     object Spacing {
         const val XS = 4

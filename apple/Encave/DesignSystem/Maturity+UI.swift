@@ -33,23 +33,30 @@ extension Maturity {
         }
     }
 
-    /// Semantic system colors; always paired with a symbol and a label.
+    /// Colors from the asset catalog (see design/tokens.json), for the symbol only:
+    /// the words next to it keep the text color, so they stay readable.
     var tint: Color {
         switch self {
-        case .drinkSoon: .orange
-        case .ready: .green
-        case .pastPeak: .red
-        case .young: .teal
+        case .drinkSoon: Color("MaturityDrinkSoon")
+        case .ready: Color("MaturityReady")
+        case .pastPeak: Color("MaturityPastPeak")
+        case .young: Color("MaturityKeep")
         case .unknown: .secondary
         }
     }
 }
 
+/// The maturity symbol in its color and the words in the text color: never color alone.
 struct MaturityLabel: View {
     let maturity: Maturity
+    /// The compact words of list rows ("Ready" rather than "Ready to drink").
+    var short = false
 
     var body: some View {
-        Label(maturity.title, systemImage: maturity.systemImage)
-            .foregroundStyle(maturity.tint)
+        Label {
+            Text(short ? maturity.shortTitle : maturity.title)
+        } icon: {
+            Image(systemName: maturity.systemImage).foregroundStyle(maturity.tint)
+        }
     }
 }

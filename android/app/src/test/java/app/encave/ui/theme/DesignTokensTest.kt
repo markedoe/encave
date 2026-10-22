@@ -39,6 +39,13 @@ class DesignTokensTest {
     }
 
     @Test
+    fun maturityColorsMatch() {
+        val names = tokens.getValue("color").jsonObject.keys.filter { it.startsWith("maturity-") }
+        assertEquals(names.toSet(), DesignTokens.maturityColors.keys)
+        names.forEach { assertEquals(it, themed(it), DesignTokens.maturityColors[it]) }
+    }
+
+    @Test
     fun spacingRadiusAndTouchTargetMatch() {
         val spacing = tokens.getValue("spacing").jsonObject
         assertEquals(
