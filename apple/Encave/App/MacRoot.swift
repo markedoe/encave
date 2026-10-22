@@ -17,12 +17,12 @@ struct MacRoot: View {
     @State private var wine: UUID?
     @State private var bottle: UUID?
     @State private var columns: NavigationSplitViewVisibility = .all
-    private var layout = CellarLayout.shared
+    private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
         let _ = UserDefaults.standard.bool(forKey: "EncaveDebugChanges") ? Self._printChanges() : ()
         Group {
-            if destination == .cellar && layout.showsTable {
+            if destination == .cellar && layout.isOn {
                 // The table needs the width: sidebar, then the table with the wine
                 // in an inspector.
                 NavigationSplitView(columnVisibility: $columns) {

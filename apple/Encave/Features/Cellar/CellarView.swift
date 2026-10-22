@@ -9,7 +9,7 @@ struct CellarView: View {
     @State private var selection: UUID?
     /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
     @State private var columns: NavigationSplitViewVisibility = .all
-    private var layout = CellarLayout.shared
+    private var layout = DefaultsFlag.cellarTable
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     private var isWide: Bool { sizeClass == .regular }
@@ -19,7 +19,7 @@ struct CellarView: View {
 
     var body: some View {
         Group {
-            if layout.showsTable && isWide {
+            if layout.isOn && isWide {
                 NavigationStack { CellarTable(selection: $selection) }
             } else {
                 NavigationSplitView(columnVisibility: $columns) {

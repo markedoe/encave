@@ -1,30 +1,10 @@
 import CaveKit
 import SwiftUI
 
-/// Mac and iPad: show the cellar as a list or as a sortable table. Remembered in the
-/// defaults, read from here rather than with @AppStorage: an @AppStorage at the root of
-/// the Mac window redrew it on every write to the defaults, including those AppKit makes
-/// while laying the window out, so the window redrew itself without end.
-@MainActor
-@Observable
-final class CellarLayout {
+/// Mac and iPad: show the cellar as a list or as a sortable table. Remembered
+/// (`DefaultsFlag.cellarTable`).
+enum CellarLayout {
     static let key = "cellar.table"
-    static let shared = CellarLayout()
-
-    private var stored: Bool
-
-    var showsTable: Bool {
-        get { stored }
-        set {
-            guard newValue != stored else { return }
-            stored = newValue
-            UserDefaults.standard.set(newValue, forKey: Self.key)
-        }
-    }
-
-    private init() {
-        stored = UserDefaults.standard.bool(forKey: Self.key)
-    }
 }
 
 /// The cellar as a sortable table, one row per wine, with the selected wine in an
@@ -369,10 +349,10 @@ struct CellarTableRow: Identifiable, Sendable {
 
 /// List or table, in the Cellar toolbar on the Mac and the iPad.
 struct CellarLayoutPicker: View {
-    @Bindable private var layout = CellarLayout.shared
+    @Bindable private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
-        Picker("View", selection: $layout.showsTable) {
+        Picker("View", selection: $layout.isOn) {
             Label("List", systemImage: "list.bullet").tag(false)
             Label("Table", systemImage: "tablecells").tag(true)
         }
