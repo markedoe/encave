@@ -1,5 +1,6 @@
 package app.encave.ui.devices
 
+import app.encave.core.containsSample
 import app.encave.core.isOnlySample
 import android.app.Application
 import androidx.compose.foundation.background
@@ -334,7 +335,13 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
                     }
                 }
                 Text(
-                    stringResource(if (replace) R.string.join_replace_footer else R.string.join_combine_footer),
+                    stringResource(
+                        when {
+                            replace -> R.string.join_replace_footer
+                            cellar.containsSample -> R.string.join_combine_sample_footer
+                            else -> R.string.join_combine_footer
+                        },
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = Dimens.l),

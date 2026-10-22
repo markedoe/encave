@@ -2,6 +2,8 @@ package app.encave.sync
 
 import android.content.Context
 import app.encave.core.Cellar
+import app.encave.core.containsSample
+import app.encave.core.removingSample
 import app.encave.core.sync.CellarChangeSummary
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
@@ -515,6 +517,11 @@ class SyncManager(
         // Replace: this device's bottles stay until the other cellar has arrived (a first sync
         // that fails loses nothing); meanwhile only what changes here is sent.
         runCatching { storage.pendingReplace = replace }
+        // Combining: the sample cellar is removed first, never sent to the other devices.
+        if (!replace) {
+            val withoutSample = repository.read { if (it.containsSample) it.removingSample() else null }
+            if (withoutSample != null) repository.replace(withoutSample)
+        }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
             replacing = replace

@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import app.encave.core.Cellar
 import app.encave.core.JsonFileCellarStore
+import app.encave.core.SampleData
 import app.encave.core.Wine
+import app.encave.core.containsSample
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.FileAccess
 import app.encave.core.sync.Mailbox
@@ -118,6 +120,19 @@ class SyncManagerTest {
         assertFalse(sync.isReplacePending)
         assertEquals(setOf("Theirs"), repository.cellar.value.wines.values.map { it.name }.toSet())
         assertEquals(2, repository.cellar.value.bottles.size)
+    }
+
+    @Test
+    fun combineRemovesTheSampleFirst() = runBlocking {
+        repository.replace(SampleData.cellar()).getOrThrow()
+        repository.update { it.addBottles(Wine(name = "Mine"), 2) }.getOrThrow()
+        val (host, _) = DeviceIdentity.generate()
+        val (members, _) = Membership().adding(Member(host.id, "iPad", host.publicKey, "ipados"), 0, host.id)
+
+        sync.adoptCellar(members, replace = false)
+        // Only this device's own bottles are sent to the other devices.
+        assertFalse(repository.cellar.value.containsSample)
+        assertEquals(setOf("Mine"), sync.snapshot()!!.cellar.wines.values.map { it.name }.toSet())
     }
 
     @Test

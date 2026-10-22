@@ -1099,8 +1099,10 @@ final class SyncService {
             // The stamps start over; the bottles here stay until the other cellar has
             // arrived, and are never sent (`pendingReplace`).
             state = SyncState(device: identity.id, clock: state?.clock ?? 0)
-        } else if state == nil {
-            state = .starting(with: model.cellar, device: identity.id)
+        } else {
+            // Combining: the sample cellar is removed first, never sent to the other devices.
+            if model.cellar.containsSample { _ = model.update { $0 = $0.removingSample() } }
+            if state == nil { state = .starting(with: model.cellar, device: identity.id) }
         }
         setPendingReplace(replace)
         var members = received

@@ -2651,6 +2651,16 @@
         }
       }
     },
+    "Both cellars are put together. The sample cellar is removed first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les deux caves sont réunies. La cave d’exemple est d’abord supprimée."
+          }
+        }
+      }
+    },
     "Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network.": {
       "localizations": {
         "fr": {
@@ -14051,12 +14061,12 @@
         }
       }
     },
-    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking.": {
+    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking. With Combine, the sample cellar is removed first: it is never sent to the other devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander."
+            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander. Avec Réunir, la cave d’exemple est d’abord supprimée : elle n’est jamais envoyée aux autres appareils."
           }
         }
       }
