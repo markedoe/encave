@@ -521,6 +521,17 @@
     <string name="place_shelf_layer_bottom">Étagère %1$d, couche du bas, place %2$d</string>
     <string name="place_shelf_layer_middle">Étagère %1$d, couche du milieu, place %2$d</string>
     <string name="place_shelf_layer_top">Étagère %1$d, couche du haut, place %2$d</string>
+    <string name="place_shelf_band_single">Étagère %1$d, %2$s, place %3$d</string>
+    <string name="place_shelf_band_bottom">Étagère %1$d, %2$s, couche du bas, place %3$d</string>
+    <string name="place_shelf_band_middle">Étagère %1$d, %2$s, couche du milieu, place %3$d</string>
+    <string name="place_shelf_band_top">Étagère %1$d, %2$s, couche du haut, place %3$d</string>
+    <string name="rack_band_front">Devant</string>
+    <string name="rack_band_back">Fond</string>
+    <string name="rack_band_bases">Culots vers vous</string>
+    <string name="rack_band_necks">Goulots vers vous</string>
+    <string name="rack_band_heading">Étagère %1$d, %2$s, %3$s</string>
+    <string name="rack_back_reversed">Bouteilles du fond tête-bêche</string>
+    <string name="help_field_back_reversed">Les bouteilles du fond sont couchées dans l’autre sens : leur goulot est vers vous, entre les culots de celles de devant.</string>
     <string name="place_with_depth">%1$s, %2$s</string>
     <string name="depth_front">devant</string>
     <string name="depth_back">fond</string>
@@ -539,6 +550,7 @@
     <string name="sample_honeycomb">Casier nid d’abeille</string>
     <string name="sample_stairs">Sous l’escalier</string>
     <string name="sample_large_fridge">Grande cave à vin</string>
+    <string name="sample_head_to_tail_fridge">Cave tête-bêche</string>
     <string name="help_field_search">Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà.</string>
     <string name="help_field_existing">Choisissez-le pour ajouter des bouteilles sans ressaisir le vin.</string>
     <string name="help_field_quantity">Combien de bouteilles identiques vous ajoutez.</string>
@@ -638,6 +650,8 @@
     <string name="help_racks_add">Touchez **Ajouter un casier**, choisissez le type, puis la taille, ou une taille toute prête dans **Démarrage rapide** (seulement en créant un casier). Les places libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond.</string>
     <string name="help_racks_staggered">Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large, et dans **Rangées en profondeur** si une deuxième bouteille tient derrière chacune.</string>
     <string name="help_racks_layers_title">Cave à vin avec bouteilles en couches</string>
+    <string name="help_racks_bands_title">Deux rangs, tête-bêche</string>
+    <string name="help_racks_bands">Quand une cave à étagères a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur une tablette, touchez longuement une bouteille pour la faire glisser d’une bande à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**.</string>
     <string name="help_racks_layers">Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères**. Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin, 2 zones** est un point de départ tout prêt.</string>
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière.</string>
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu.</string>

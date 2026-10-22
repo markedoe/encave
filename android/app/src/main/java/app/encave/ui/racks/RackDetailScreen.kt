@@ -166,8 +166,8 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     val moving = movingId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
     val highlighted = highlightId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id }?.slot }
         ?.takeIf { it.rackId == rack?.id }
-    val selectedCell = rack?.cellFor(selectedKey)
-    val selectedBottle = selectedCell?.let { cell -> cellar.bottlesIn(cell).firstOrNull() }
+    val selectedPlace = rack?.let { RackPlace.of(selectedKey, it) }
+    val selectedBottle = selectedPlace?.let { place -> cellar.bottlesAt(place).firstOrNull() }
     val focusWine = focusWineId?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     // Tablets and large screens: drag a bottle to another place (touch and hold, then drag).
     val dragAndDrop = androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2().windowSizeClass
@@ -178,7 +178,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     val zoom = rack?.let { rememberRackZoomState(it) }
     LaunchedEffect(highlighted, rack?.id) {
         if (highlighted == null || rack == null) return@LaunchedEffect
-        if (rack.positionsPerCell == 1) selectedKey = highlighted.cell.key()
+        RackPlace.of(highlighted, rack).takeIf { it.holdsOne(rack) }?.let { selectedKey = it.key() }
         zoom?.show(rack, highlighted.cell)
         delay(4000)
         highlightId = null
@@ -272,7 +272,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     cellSize = cellSize,
                     highlighted = highlighted,
                     selected = if (auditing) checked else setOfNotNull(moving?.slot),
-                    selectedCell = selectedCell.takeIf { moving == null && !auditing },
+                    selectedPlace = selectedPlace.takeIf { moving == null && !auditing },
                     focusWine = focusWine.takeIf { moving == null && !auditing },
                     countsFound = auditing,
                     clickLabel = { bottles ->
@@ -283,7 +283,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             else -> actions
                         }
                     },
-                    onCellClick = { cell, bottles ->
+                    onCellClick = { place, bottles ->
                         val source = moving
                         when {
                             // A tap says "the bottles of this place are here" (or undoes it).
@@ -295,31 +295,31 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                                 movingId = null
                                 // A bottle without a place (Move in a wine's menu) takes a free place.
                                 val from = source.slot
-                                if (from?.cell == cell) return@RackGrid
-                                val free = cellar.freeSlot(cell)
+                                if (from != null && from in place) return@RackGrid
+                                val free = cellar.freeSlotAt(place)
                                 when {
                                     free != null -> viewModel.move(source.id, free)
-                                    from != null && rack.positionsPerCell == 1 -> viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
+                                    from != null && place.holdsOne(rack) -> viewModel.swap(from, place.firstSlot)
                                     else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
                                 }
                             }
-                            bottles.isEmpty() -> cellar.freeSlot(cell)?.let { free ->
+                            bottles.isEmpty() -> cellar.freeSlotAt(place)?.let { free ->
                                 selectedKey = null
                                 navigator.open(
                                     AddBottleRoute(rackId = rack.id.toString(), row = free.row, column = free.column, depth = free.depth),
                                 )
                             }
                             // One bottle per place: show it in the card. Several: open the list of the place.
-                            rack.positionsPerCell == 1 -> selectedKey = cell.key()
+                            place.holdsOne(rack) -> selectedKey = place.key()
                             else -> {
                                 selectedKey = null
-                                openCell = cell.key()
+                                openCell = place.cell.key()
                             }
                         }
                     },
-                    onCellLongClick = { cell, bottles ->
+                    onCellLongClick = { place, bottles ->
                         if (auditing) {
-                            checkingKey = cell.key()
+                            checkingKey = place.cell.key()
                         } else {
                             bottles.firstOrNull()?.let {
                                 selectedKey = null
@@ -335,9 +335,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             else -> moveLabel.takeIf { bottles.isNotEmpty() }
                         }
                     },
-                    customActions = { _, bottles ->
+                    customActions = { place, bottles ->
                         val bottle = bottles.singleOrNull()
-                        if (bottle == null || auditing || moving != null || rack.positionsPerCell != 1) {
+                        if (bottle == null || auditing || moving != null || !place.holdsOne(rack)) {
                             emptyList()
                         } else {
                             listOf(
@@ -348,23 +348,23 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     },
                     // Taps answer at once while checking or moving; double-tap zooms only when browsing.
                     onCellDoubleClick = if (auditing || moving != null) null else { _ -> zoomHere() },
-                    onDrop = if (!dragAndDrop || auditing || moving != null) null else { bottle, cell ->
+                    onDrop = if (!dragAndDrop || auditing || moving != null) null else { bottle, place ->
                         val from = bottle.slot
                         when {
                             from == null -> Unit
                             // Held without moving: tap where to put it, as on phones.
-                            from.cell == cell -> {
+                            from in place -> {
                                 selectedKey = null
                                 movingId = bottle.id.toString()
                             }
                             else -> {
-                                val free = cellar.freeSlot(cell)
+                                val free = cellar.freeSlotAt(place)
                                 when {
                                     free != null -> viewModel.move(bottle.id, free)
-                                    rack.positionsPerCell == 1 -> viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
+                                    place.holdsOne(rack) -> viewModel.swap(from, place.firstSlot)
                                     else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
                                 }
-                                if (rack.positionsPerCell == 1) selectedKey = cell.key()
+                                if (place.holdsOne(rack)) selectedKey = place.key()
                             }
                         }
                     },
@@ -424,7 +424,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                 // Chosen in the list: close it and point to the bottle in the drawing.
                 showsList = false
                 highlightId = bottle.id.toString()
-                bottle.slot?.let { if (rack.positionsPerCell == 1) selectedKey = it.cell.key() }
+                bottle.slot?.let { RackPlace.of(it, rack).takeIf { place -> place.holdsOne(rack) }?.let { place -> selectedKey = place.key() } }
             },
         )
     }
