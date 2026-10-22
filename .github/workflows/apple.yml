@@ -16,9 +16,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a branch cancels that branch's older run. Runs on main are never
+# cancelled (each one brings a build to the TestFlight testers once its tour passes),
+# and get a group of their own so that they never wait for each other either.
 concurrency:
-  group: apple-${{ github.ref }}
-  cancel-in-progress: true
+  group: apple-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   cavekit:
@@ -41,97 +44,19 @@ jobs:
       # The licences shown in Settings › About › Licences match Package.resolved.
       - run: python3 apple/tools/licences.py --check
 
-  mac-launch:
-    name: Mac launch test
-    needs: [cavekit, l10n]
-    runs-on: macos-latest
-    timeout-minutes: 40
-    defaults:
-      run:
-        working-directory: apple
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - name: Select newest Xcode
-        working-directory: .
-        run: |
-          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
-          sudo xcode-select -s "$xcode"
-
-      - name: Build the Mac app (Release, signed to run locally)
-        run: |
-          set -o pipefail
-          brew install xcodegen xcbeautify
-          xcodegen generate
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
-            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
-            | xcbeautify --renderer github-actions
-          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
-
-      - name: Launch twice and report crashes
-        run: |
-          app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
-          reports="$HOME/Library/Logs/DiagnosticReports"
-          status=0
-          # Empty first and second launch, then every tab with the sample cellar.
-          for attempt in first second cellar racks tonight journal; do
-            case "$attempt" in
-              first|second) args=() ;;
-              *) args=(--tab "$attempt" --sample-data) ;;
-            esac
-            "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
-            pid=$!
-            sleep 20
-            if kill -0 "$pid" 2>/dev/null; then
-              echo "$attempt launch: still running after 20 s"
-              kill "$pid"; wait "$pid" 2>/dev/null || true
-            else
-              wait "$pid"; code=$?
-              echo "::error::$attempt launch: exited with code $code"
-              status=1
-            fi
-            echo "--- output ($attempt launch) ---"
-            tail -n 80 "$RUNNER_TEMP/launch-$attempt.log"
-          done
-          sleep 5
-          for report in "$reports"/Encave*; do
-            [ -e "$report" ] || continue
-            echo "--- $report ---"
-            # The crash report is JSON after a one-line header: print the useful part.
-            python3 - "$report" <<'PY'
-          import json, sys
-          text = open(sys.argv[1]).read()
-          header, _, body = text.partition("\n")
-          try:
-              data = json.loads(body)
-          except Exception:
-              print(text[:6000]); sys.exit()
-          print(json.dumps(data.get("exception"), indent=1))
-          print(json.dumps(data.get("termination"), indent=1))
-          print(json.dumps(data.get("asi"), indent=1))
-          images = data.get("usedImages", [])
-          for thread in data.get("threads", []):
-              if not thread.get("triggered"):
-                  continue
-              for frame in thread.get("frames", [])[:40]:
-                  image = images[frame.get("imageIndex", 0)] if images else {}
-                  print(image.get("name", "?"), frame.get("symbol", ""), frame.get("sourceFile", ""), frame.get("sourceLine", ""))
-          PY
-            status=1
-          done
-          exit $status
-
   screens:
     name: Screen tour (iPhone, iPad, Mac)
     needs: [cavekit, l10n]
-    # The full tour (over an hour) runs on main before each TestFlight build, on pull
-    # requests and on manual runs. Pushes to other branches only build and run the
-    # Mac launch test, so fixes reach main faster.
+    # The full tour runs on main before each TestFlight build, on pull requests and on
+    # manual runs. Pushes to other branches only build and run the Mac launch test, so
+    # fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    # Two simulators and the Mac in one job: 70 to 100 minutes depending on the runner
-    # (the studio pictures of the sample cellar are made on the first launch).
+    # Built once; the iPhone and the iPad run side by side: 65 to 90 minutes depending
+    # on the runner (measured: a runner runs an iPhone and an iPad together, but not two
+    # iPads, two iPhones or three simulators, and each new job pays about 20 minutes to
+    # start its simulators; the studio pictures of the sample cellar are made on the
+    # first launch).
     timeout-minutes: 150
     defaults:
       run:
@@ -150,68 +75,114 @@ jobs:
           brew install xcodegen xcbeautify
           xcodegen generate
 
-      - name: Mac screenshots
-        if: ${{ !cancelled() }}
-        # Each section with the sample cellar, English and French, light and dark, at the
-        # App Store size (2880x1800), on a HiDPI virtual display: see the script. Not a
-        # gate for the external testers: a failure shows as a warning.
-        continue-on-error: true
-        timeout-minutes: 20
+      - name: Build for testing
         run: |
           set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
-            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd-mac" \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
-            | xcbeautify --renderer github-actions
-          tools/mac-screenshots.sh "$RUNNER_TEMP/dd-mac/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
+          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
 
-      - name: Upload Mac screenshots
+      - name: Model tests (macOS)
+        run: swift test --package-path Packages/CaveKit
+
+      - name: Start the simulators
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: mac-screens
-          path: ${{ runner.temp }}/mac-screens
-          retention-days: 7
-          if-no-files-found: ignore
+        run: |
+          set -e
+          sims="$RUNNER_TEMP/sims"
+          mkdir -p "$sims"
+          # The newest iPhone (not mini) and iPad. Booted first: a cold simulator can time
+          # out launching the app under test. Nothing else runs meanwhile: a booting
+          # simulator slows all else.
+          xcrun simctl list devices available -j > "$sims/devices.json"
+          python3 - "$sims/devices.json" > "$sims/plan" <<'PY'
+          import json, sys
+          for prefix in ("iPhone", "iPad"):
+              found = []
+              for runtime, devices in json.load(open(sys.argv[1]))["devices"].items():
+                  if "iOS" not in runtime:
+                      continue
+                  for d in devices:
+                      if d["name"].startswith(prefix) and "mini" not in d["name"]:
+                          found.append((runtime, d["name"], d["udid"]))
+              found.sort()
+              runtime, name, udid = found[-1]
+              print(prefix, udid, name)
+          PY
+          while read -r device udid name; do
+            echo "$device: $name ($udid)"
+            echo "$udid" > "$sims/$device"
+            xcrun simctl boot "$udid" || true
+          done < "$sims/plan"
+          for device in iPhone iPad; do
+            xcrun simctl bootstatus "$(cat "$sims/$device")" > /dev/null
+            echo "$device booted at $(date -u +%T)"
+          done
 
       - name: iPhone and iPad
+        if: ${{ !cancelled() }}
         run: |
           set -o pipefail
-          # Newest available iPhone and iPad simulators.
-          pick() {
-            xcrun simctl list devices available -j | python3 -c "
-          import json, sys
-          prefix = sys.argv[1]
-          found = []
-          for runtime, devices in json.load(sys.stdin)['devices'].items():
-              if 'iOS' not in runtime:
-                  continue
-              for d in devices:
-                  if d['name'].startswith(prefix) and 'mini' not in d['name']:
-                      found.append((runtime, d['name'], d['udid']))
-          found.sort()
-          print(found[-1][2])
-          " "$1"
-          }
-          status=0
-          for device in iPhone iPad; do
-            udid=$(pick "$device")
-            echo "Using $device simulator $udid"
-            # Boot first: a cold simulator can time out launching the app under test.
-            xcrun simctl boot "$udid" 2>/dev/null || true
-            xcrun simctl bootstatus "$udid" -b
+          sims="$RUNNER_TEMP/sims"
+          xctestrun=$(find "$RUNNER_TEMP/dd/Build/Products" -name "*.xctestrun" | head -n 1)
+          tour=EncaveUITests/ScreenTourTests
+          run() {
+            device=$1; shift
             # A one-off simulator timeout (a screenshot request) is retried once.
-            xcodebuild test -project Encave.xcodeproj -scheme Encave -destination "id=$udid" \
-              -retry-tests-on-failure -test-iterations 2 \
-              -resultBundlePath "$RUNNER_TEMP/$device.xcresult" CODE_SIGNING_ALLOWED=NO \
-              | xcbeautify --renderer github-actions || status=1
-          done
+            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$device")" \
+              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$device.xcresult" "$@" 2>&1 \
+              | tee "$RUNNER_TEMP/$device.raw" | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$device.log" \
+              | sed -u "s/^/[$device] /"
+          }
+          # English then French on each. The large text checks run on iPhone only (they
+          # stop at once on the iPad's regular width).
+          echo "Started at $(date -u +%T)"
+          run iPhone & iphone=$!
+          run iPad "-skip-testing:$tour/testLargeText" "-skip-testing:$tour/testLargestText" & ipad=$!
+          status=0
+          wait "$iphone" || status=1
+          wait "$ipad" || status=1
+          # The failures again, as annotations, and when each part started its tests.
+          grep -h "^::" "$RUNNER_TEMP"/iP*.log || true
+          grep -h "Test Suite 'All tests' started\|elapsed --" "$RUNNER_TEMP"/iP*.raw | head -n 30 || true
           exit $status
+
+      - name: Slowest steps of the tour
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          for result in "$RUNNER_TEMP"/iP*.xcresult; do
+            [ -e "$result" ] || continue
+            for test in testTourInEnglish testTourInFrench; do
+              echo "== $(basename "$result" .xcresult) $test"
+              xcrun xcresulttool get test-results activities --path "$result" \
+                --test-id "ScreenTourTests/$test()" > "$RUNNER_TEMP/activities.json" || continue
+              python3 - "$RUNNER_TEMP/activities.json" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          rows = []
+          def walk(items, end, depth):
+              for i, item in enumerate(items):
+                  start = item.get("startTime")
+                  nxt = items[i + 1].get("startTime") if i + 1 < len(items) else end
+                  if start is not None and nxt is not None:
+                      rows.append((nxt - start, depth, item.get("title", "")[:150]))
+                  walk(item.get("childActivities", []), nxt, depth + 1)
+          for run in data.get("testRuns", []):
+              acts = run.get("activities", [])
+              walk(acts, None, 0)
+          top = [r for r in rows if r[1] == 0]
+          print("total top-level:", round(sum(r[0] for r in top)), "s in", len(top), "steps")
+          for d, depth, title in sorted(rows, reverse=True)[:40]:
+              print(f"{d:7.1f}s  {'  ' * depth}{title}")
+          PY
+            done
+          done
 
       - name: Mac
         if: ${{ !cancelled() }}
         # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
-        # failed); the Mac screenshots, taken first, show each section.
+        # failed); the Mac screenshots of the build job show each section.
         continue-on-error: true
         run: |
           set -o pipefail
@@ -229,9 +200,10 @@ jobs:
             [ -e "$result" ] || continue
             name=$(basename "$result" .xcresult)
             out="$RUNNER_TEMP/export-$name"
+            # iPhone-en and iPhone-fr both go to screens/iPhone (file names start with the language).
             xcrun xcresulttool export attachments --path "$result" --output-path "$out" || continue
             # Name each file after its attachment: iPhone/en-03-wine.png
-            python3 - "$out" "$RUNNER_TEMP/screens/$name" <<'PY'
+            python3 - "$out" "$RUNNER_TEMP/screens/${name%%-*}" <<'PY'
           import json, os, shutil, sys
           src, dst = sys.argv[1], sys.argv[2]
           os.makedirs(dst, exist_ok=True)
@@ -264,7 +236,7 @@ jobs:
           retention-days: 7
 
   apps:
-    name: Build${{ github.event_name != 'pull_request' && ' and upload to TestFlight' || '' }}
+    name: Build, Mac launch test${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && ', TestFlight upload' || '' }}
     needs: [cavekit, l10n]
     runs-on: macos-latest
     timeout-minutes: 60
@@ -281,10 +253,10 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      # Uploads on a push to main or a manual run, only when the secrets are available
-      # (never on forks). Pushes to other branches only build. A manual run from another
-      # branch reaches the internal testers only: external testers get main (testers job).
-      UPLOAD: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
+      # Uploads on a push to main or a manual run on main, only when the secrets are
+      # available (never on forks). Other branches, manual runs on them included, only
+      # build: their builds never reach the testers.
+      UPLOAD: ${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && secrets.ASC_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -301,19 +273,23 @@ jobs:
           brew install xcodegen xcbeautify
           xcodegen generate
 
-      - name: Model tests
-        run: swift test --package-path Packages/CaveKit
-
-      - name: Build (no signing)
+      - name: Build the Mac app (Release, signed to run locally)
         if: env.UPLOAD != 'true'
         run: |
           set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
-            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -derivedDataPath "$RUNNER_TEMP/dd" \
-            -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app" \
-            "$RUNNER_TEMP/dd/Build/Products/Debug/Encave.app"
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
+          app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
+          ../scripts/check-privacy-manifest.sh "$app"
+          echo "MAC_APP=$app" >> "$GITHUB_ENV"
+          # The iPhone and iPad app builds while the Mac app is launched (the launch test
+          # mostly waits); its result is checked in the last step.
+          touch "$RUNNER_TEMP/ios-build.started"
+          nohup bash -c 'xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
+            -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
+            > "$RUNNER_TEMP/ios-build.log" 2>&1; echo $? > "$RUNNER_TEMP/ios-build.status"' > /dev/null 2>&1 &
 
       - name: App Store Connect key
         id: key
@@ -367,10 +343,97 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" ENCAVE_CHANNEL=beta \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
           ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app"
+          echo "MAC_APP=$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app" >> "$GITHUB_ENV"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
           echo "uploaded=true" >> "$GITHUB_OUTPUT"
+
+      - name: Mac launch test (twice, then each section; reports crashes)
+        # Also when the upload failed: the archived app is there.
+        if: ${{ !cancelled() && env.MAC_APP != '' }}
+        run: |
+          app="$MAC_APP"
+          reports="$HOME/Library/Logs/DiagnosticReports"
+          status=0
+          # Empty first and second launch, then every tab with the sample cellar.
+          for attempt in first second cellar racks tonight journal; do
+            case "$attempt" in
+              first|second) args=() ;;
+              *) args=(--tab "$attempt" --sample-data) ;;
+            esac
+            "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
+            pid=$!
+            sleep 20
+            if kill -0 "$pid" 2>/dev/null; then
+              echo "$attempt launch: still running after 20 s"
+              kill "$pid"; wait "$pid" 2>/dev/null || true
+            else
+              wait "$pid"; code=$?
+              echo "::error::$attempt launch: exited with code $code"
+              status=1
+            fi
+            echo "--- output ($attempt launch) ---"
+            tail -n 80 "$RUNNER_TEMP/launch-$attempt.log"
+          done
+          sleep 5
+          for report in "$reports"/Encave*; do
+            [ -e "$report" ] || continue
+            echo "--- $report ---"
+            # The crash report is JSON after a one-line header: print the useful part.
+            python3 - "$report" <<'PY'
+          import json, sys
+          text = open(sys.argv[1]).read()
+          header, _, body = text.partition("\n")
+          try:
+              data = json.loads(body)
+          except Exception:
+              print(text[:6000]); sys.exit()
+          print(json.dumps(data.get("exception"), indent=1))
+          print(json.dumps(data.get("termination"), indent=1))
+          print(json.dumps(data.get("asi"), indent=1))
+          images = data.get("usedImages", [])
+          for thread in data.get("threads", []):
+              if not thread.get("triggered"):
+                  continue
+              for frame in thread.get("frames", [])[:40]:
+                  image = images[frame.get("imageIndex", 0)] if images else {}
+                  print(image.get("name", "?"), frame.get("symbol", ""), frame.get("sourceFile", ""), frame.get("sourceLine", ""))
+          PY
+            status=1
+          done
+          exit $status
+
+      - name: Mac screenshots
+        # Main, pull requests and manual runs, like the tour.
+        if: ${{ !cancelled() && env.MAC_APP != '' && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
+        # Each section with the sample cellar, English and French, light and dark, at the
+        # App Store size (2880x1800), on a HiDPI virtual display: see the script. Not a
+        # gate for the external testers: a failure shows as a warning.
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          # The app of the launch test above: archived on main, a Release build elsewhere.
+          tools/mac-screenshots.sh "$MAC_APP" "$RUNNER_TEMP/mac-screens"
+
+      - name: Upload Mac screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mac-screens
+          path: ${{ runner.temp }}/mac-screens
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Build the iPhone and iPad app (simulator, no signing)
+        if: ${{ !cancelled() && env.UPLOAD != 'true' }}
+        timeout-minutes: 20
+        run: |
+          [ -e "$RUNNER_TEMP/ios-build.started" ] || { echo "::error::Not built: the Mac build failed first."; exit 1; }
+          while [ ! -e "$RUNNER_TEMP/ios-build.status" ]; do sleep 5; done
+          xcbeautify --renderer github-actions < "$RUNNER_TEMP/ios-build.log"
+          [ "$(cat "$RUNNER_TEMP/ios-build.status")" = 0 ] || exit 1
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app"
 
       - name: Remove key
         if: always()
