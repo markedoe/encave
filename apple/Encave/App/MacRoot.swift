@@ -115,6 +115,7 @@ struct MacRoot: View {
             }
         }
         .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom) { SyncAttentionFooter() }
     }
 
     // MARK: Middle column
