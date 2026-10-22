@@ -386,6 +386,14 @@ import Testing
         #expect(cellar.bottles.count == 3)
         #expect(cellar.wines.values.first?.color == .red)
     }
+
+    @Test func frenchPlaceAndWindowHeadersAreRecognized() throws {
+        var cellar = Cellar()
+        _ = try cellar.importCSV("Nom;Emplacement;Fenêtre de dégustation\nMorgon;Cave du bas;2024-2030")
+        let wine = try #require(cellar.wines.values.first)
+        #expect(wine.drinkFrom == 2024 && wine.drinkUntil == 2030)
+        #expect(cellar.bottles.values.first?.storageNote == "Cave du bas")
+    }
 }
 
 @Suite struct OnOrderTests {
