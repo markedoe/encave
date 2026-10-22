@@ -1,0 +1,43 @@
+name: Mac screens probe (temporary)
+
+on:
+  push:
+    branches: ["claude/mac-screens"]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apple
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Select newest Xcode
+        working-directory: .
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+      - name: Build the Mac app
+        run: |
+          set -o pipefail
+          brew install xcodegen xcbeautify
+          xcodegen generate
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            | xcbeautify --renderer github-actions
+      - name: Screenshots
+        run: tools/mac-screenshots.sh "$RUNNER_TEMP/dd/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
+      - name: Desktop (debug)
+        if: ${{ !cancelled() }}
+        run: screencapture -x "$RUNNER_TEMP/mac-screens/desktop.png" || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ !cancelled() }}
+        with:
+          name: mac-screens
+          path: ${{ runner.temp }}/mac-screens
+          retention-days: 7
