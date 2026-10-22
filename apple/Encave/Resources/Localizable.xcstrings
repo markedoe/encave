@@ -8311,6 +8311,16 @@
         }
       }
     },
+    "Open this help (Mac)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir cette aide (Mac)"
+          }
+        }
+      }
+    },
     "OpenAI-compatible": {
       "localizations": {
         "fr": {
@@ -11157,6 +11167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La synchronisation demande votre attention"
+          }
+        }
+      }
+    },
+    "Sync now, on the same Wi-Fi and away from home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser maintenant, sur le même Wi-Fi et loin de la maison"
           }
         }
       }
@@ -14421,12 +14441,32 @@
         }
       }
     },
+    "⌘?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘?"
+          }
+        }
+      }
+    },
     "⌘N": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "⌘N"
+          }
+        }
+      }
+    },
+    "⌘R": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘R"
           }
         }
       }
