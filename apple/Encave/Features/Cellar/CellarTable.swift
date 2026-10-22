@@ -7,10 +7,15 @@ enum CellarLayout {
 }
 
 /// The cellar as a sortable table, one row per wine, with the selected wine in an
-/// inspector. For large cellars on the Mac and the iPad, like a spreadsheet.
+/// inspector. For large cellars on the Mac and the iPad, like a spreadsheet. Several
+/// wines can be selected at once to place, take out or delete them together.
 struct CellarTable: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
+    /// The wine shown in the inspector: the selected one, when only one is.
     @Binding var selection: UUID?
+    /// The selected rows.
+    @State private var picked: Set<UUID> = []
     @State private var query = ""
     @State private var sortOrder = [KeyPathComparator(\CellarTableRow.name)]
     @State private var showsInspector = true
@@ -21,7 +26,7 @@ struct CellarTable: View {
         let rows = model.cellar.groups(filter: CellarFilter(query: query), sort: .name, year: model.currentYear)
             .map { CellarTableRow(group: $0, model: model) }
             .sorted(using: sortOrder)
-        Table(rows, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columns) {
+        Table(rows, selection: $picked, sortOrder: $sortOrder, columnCustomization: $columns) {
             TableColumn("Wine", value: \.name) { row in
                 HStack(spacing: 8) {
                     BottleEnd(color: row.wine.color, size: 18)
@@ -82,15 +87,34 @@ struct CellarTable: View {
             .defaultVisibility(.hidden)
         }
         .contextMenu(forSelectionType: UUID.self) { ids in
-            if let id = ids.first, let group = rows.first(where: { $0.id == id }).map(\.group) {
+            if ids.count == 1, let id = ids.first, let group = rows.first(where: { $0.id == id }).map(\.group) {
                 WineContextMenu(group: group)
+            } else if ids.count > 1 {
+                SeveralWinesMenu(wineIDs: ids)
             }
         } primaryAction: { ids in
-            if let id = ids.first {
-                selection = id
+            if ids.count == 1, let id = ids.first {
+                picked = [id]
                 showsInspector = true
             }
         }
+        .onChange(of: picked) { _, new in
+            selection = new.count == 1 ? new.first : nil
+        }
+        // A wine chosen elsewhere (opened from Spotlight, the first one at launch).
+        .onChange(of: selection, initial: true) { _, id in
+            if let id, picked != [id] { picked = [id] }
+        }
+        #if os(macOS)
+        // The Delete key, like in Finder; Undo puts them back.
+        .onDeleteCommand {
+            if picked.count == 1, let id = picked.first {
+                model.deleteWine(id)
+            } else if !picked.isEmpty {
+                model.deleteWines(picked)
+            }
+        }
+        #endif
         .overlay {
             if rows.isEmpty {
                 if query.isEmpty {
@@ -113,7 +137,7 @@ struct CellarTable: View {
             ToolbarItemGroup(placement: .primaryAction) {
                 CellarLayoutPicker()
                 Button {
-                    model.sheet = .addBottle(AddBottleContext())
+                    router?.sheet = .addBottle(AddBottleContext())
                 } label: {
                     Label("Add Bottle", systemImage: "plus")
                 }
@@ -125,16 +149,27 @@ struct CellarTable: View {
                 .help(Text("Show or hide the selected wine"))
             }
             #if os(iOS)
-            // iPad: Settings is reached from the Cellar, list or table.
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    model.sheet = .settings
-                } label: {
-                    Label("Settings", systemImage: "gearshape")
-                }
-            }
+            SettingsToolbarItem(identifier: "cellar.settings")
             #endif
         }
+    }
+}
+
+/// The menu of several selected wines: what the Cellar list does with its selection.
+private struct SeveralWinesMenu: View {
+    @Environment(CellarModel.self) private var model
+    let wineIDs: Set<UUID>
+
+    var body: some View {
+        Menu("Place in a Rack", systemImage: "square.grid.3x3") {
+            ForEach(model.cellar.racks) { rack in
+                Button(rack.name) { model.place(wineIDs, inRack: rack.id) }
+            }
+        }
+        .disabled(model.cellar.racks.isEmpty)
+        Button("Take Out of Racks", systemImage: "tray.and.arrow.up") { model.unplace(wineIDs) }
+        Divider()
+        Button("Delete Wines", systemImage: "trash", role: .destructive) { model.deleteWines(wineIDs) }
     }
 }
 

@@ -11,6 +11,7 @@ struct WineRoute: Hashable {
 /// The key at the bottom lists the wines of the rack: tap one to see where its bottles are.
 struct RackDetailView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let rackID: UUID
     @State private var zoom: CGFloat = 1
     /// iPad: the zoom buttons ask the native zooming view for a step in or out.
@@ -69,7 +70,7 @@ struct RackDetailView: View {
                     .solidSheetBackground()
                 }
                 .sheet(isPresented: $showsList, onDismiss: {
-                    if let afterList { model.sheet = afterList }
+                    if let afterList { router?.sheet = afterList }
                     afterList = nil
                 }) {
                     NavigationStack {
@@ -208,19 +209,19 @@ struct RackDetailView: View {
             }
             .disabled(auditing)
             .accessibilityIdentifier("rack.audit")
-            Button { model.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
+            Button { router?.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
         }
     }
 
     private func perform(_ action: CellAction) {
         switch action {
-        case .drink(let bottle): model.sheet = .drink(bottleID: bottle.id)
+        case .drink(let bottle): router?.sheet = .drink(bottleID: bottle.id)
         case .move(let bottle):
             selectedCell = nil
             moving = bottle
         case .remove(let bottle): model.markGone(bottle.id)
-        case .add(let slot): model.sheet = .addBottle(AddBottleContext(slot: slot))
-        case .documents(let bottle, let importing): model.sheet = .bottleDocuments(bottleID: bottle.id, importing: importing)
+        case .add(let slot): router?.sheet = .addBottle(AddBottleContext(slot: slot))
+        case .documents(let bottle, let importing): router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: importing)
         }
     }
 
@@ -288,7 +289,7 @@ struct RackDetailView: View {
         }
         if bottles.isEmpty, let free = model.cellar.freeSlot(in: cell) {
             selectedCell = nil
-            model.sheet = .addBottle(AddBottleContext(slot: free))
+            router?.sheet = .addBottle(AddBottleContext(slot: free))
         } else if rack.positionsPerCell == 1, !bottles.isEmpty {
             withAnimation(.snappy) { selectedCell = cell }
         } else {

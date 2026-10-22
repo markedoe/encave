@@ -3,6 +3,7 @@ import SwiftUI
 
 struct WineDetailView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let wineID: UUID
     @State private var searchingOnline = false
     @State private var findingPrice = false
@@ -26,7 +27,7 @@ struct WineDetailView: View {
                 Section {
                     HStack(spacing: 12) {
                         Button {
-                            if let bottle = bottles.bottleToOpen { model.sheet = .drink(bottleID: bottle.id) }
+                            if let bottle = bottles.bottleToOpen { router?.sheet = .drink(bottleID: bottle.id) }
                         } label: {
                             ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                         }
@@ -34,7 +35,7 @@ struct WineDetailView: View {
                         .accessibilityIdentifier("action.wine.drink")
                         .disabled(bottles.isEmpty)
                         Button {
-                            model.sheet = .addBottle(AddBottleContext(wine: wine))
+                            router?.sheet = .addBottle(AddBottleContext(wine: wine))
                         } label: {
                             ActionLabel("Add", systemImage: "plus").frame(maxWidth: .infinity)
                         }
@@ -48,7 +49,7 @@ struct WineDetailView: View {
 
                 Section("Drinking window") {
                     EditDetailRow(hint: Text("Edits the drinking window.")) {
-                        model.sheet = .editWine(wineID: wineID, field: .window)
+                        router?.sheet = .editWine(wineID: wineID, field: .window)
                     } content: {
                         VStack(alignment: .leading, spacing: 0) {
                             MaturityLabel(maturity: maturity)
@@ -65,7 +66,7 @@ struct WineDetailView: View {
                     if wine.drinkFrom != nil, wine.drinkUntil != nil {
                         WindowExplanation(wine: wine)
                     } else {
-                        Button("Set a drinking window") { model.sheet = .editWine(wineID: wineID, field: .window) }
+                        Button("Set a drinking window") { router?.sheet = .editWine(wineID: wineID, field: .window) }
                     }
                 }
 
@@ -73,7 +74,7 @@ struct WineDetailView: View {
                     // Worked out from the style and the vintage: a tap edits the style.
                     Section("Serving") {
                         EditDetailRow(hint: Text("Edits the style, which sets the serving advice.")) {
-                            model.sheet = .editWine(wineID: wineID, field: .style)
+                            router?.sheet = .editWine(wineID: wineID, field: .style)
                         } content: {
                             LabeledContent {
                                 Text(verbatim: temperatureRange(advice)).monospacedDigit()
@@ -83,7 +84,7 @@ struct WineDetailView: View {
                         }
                         .contextMenu { editMenu(temperatureRange(advice), field: .style) }
                         EditDetailRow(hint: Text("Edits the style, which sets the serving advice.")) {
-                            model.sheet = .editWine(wineID: wineID, field: .style)
+                            router?.sheet = .editWine(wineID: wineID, field: .style)
                         } content: {
                             LabeledContent {
                                 if let minutes = advice.decantMinutes {
@@ -126,7 +127,7 @@ struct WineDetailView: View {
                     }
                     if let notes = wine.notes, !notes.isEmpty {
                         EditDetailRow(hint: Text("Edits the notes.")) {
-                            model.sheet = .editWine(wineID: wineID, field: .notes)
+                            router?.sheet = .editWine(wineID: wineID, field: .notes)
                         } content: {
                             Text(notes)
                                 .font(.callout)
@@ -182,7 +183,7 @@ struct WineDetailView: View {
                     Section("Tasted elsewhere") {
                         ForEach(discoveries) { discovery in
                             Button {
-                                model.sheet = .discovery(discoveryID: discovery.id)
+                                router?.sheet = .discovery(discoveryID: discovery.id)
                             } label: {
                                 DiscoveryRow(discovery: discovery, showsWine: false)
                             }
@@ -195,7 +196,7 @@ struct WineDetailView: View {
                     Section("Tastings") {
                         ForEach(tastings) { bottle in
                             Button {
-                                model.sheet = .editTasting(bottleID: bottle.id)
+                                router?.sheet = .editTasting(bottleID: bottle.id)
                             } label: {
                                 TastingRow(bottle: bottle, showsWine: false)
                             }
@@ -237,9 +238,9 @@ struct WineDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: wineID) }
-                        Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wineID) }
-                        Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
+                        Button("Edit Wine", systemImage: "pencil") { router?.sheet = .editWine(wineID: wineID) }
+                        Button("Change Picture…", systemImage: "photo.on.rectangle") { router?.sheet = .wineImage(wineID: wineID) }
+                        Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: wine)) }
                         Divider()
                         Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(wineID) }
                     } label: {
@@ -350,7 +351,7 @@ struct WineDetailView: View {
 
     /// Copy and Edit for a detail with nothing to explore (never sent to a web search).
     private func editMenu(_ value: String?, field: WineFormField) -> some View {
-        DetailMenu(value: value, onEdit: { model.sheet = .editWine(wineID: wineID, field: field) })
+        DetailMenu(value: value, onEdit: { router?.sheet = .editWine(wineID: wineID, field: field) })
     }
 
     /// "2020 – 2030", to copy.
@@ -365,6 +366,7 @@ private struct WineHeader: View {
     let wine: Wine
     let count: Int
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @AppStorage(StudioPhoto.settingKey) private var studio = true
     @State private var asTaken = false
     @State private var showsPhoto = false
@@ -409,7 +411,7 @@ private struct WineHeader: View {
                     .macSheetFrame(width: 640, height: 720)
                 }
                 .contextMenu {
-                    Button("Change Picture…", systemImage: "photo.on.rectangle") { model.sheet = .wineImage(wineID: wine.id) }
+                    Button("Change Picture…", systemImage: "photo.on.rectangle") { router?.sheet = .wineImage(wineID: wine.id) }
                     if studio, wine.coverPhotoID == nil, PhotoStore.exists(wine.photoID) {
                         Button(asTaken ? LocalizedStringKey("Show Studio Look") : LocalizedStringKey("Show Photo as Taken"),
                                systemImage: asTaken ? "wand.and.stars" : "photo") { asTaken.toggle() }
@@ -473,6 +475,7 @@ private struct WineHeader: View {
 /// One bottle in the cellar with its location and quick actions.
 struct BottleRow: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let bottle: Bottle
     @State private var reserving = false
     @State private var occasion = ""
@@ -497,7 +500,7 @@ struct BottleRow: View {
             Spacer()
             if let documents = bottle.attachments?.count {
                 Button {
-                    model.sheet = .bottleDocuments(bottleID: bottle.id, importing: false)
+                    router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: false)
                 } label: {
                     DocumentCount(count: documents)
                 }
@@ -507,7 +510,7 @@ struct BottleRow: View {
             }
             if bottle.slot != nil {
                 Button {
-                    model.showInRack(bottle)
+                    router?.showInRack(bottle, model: model)
                 } label: {
                     Image(systemName: "scope")
                 }
@@ -517,7 +520,7 @@ struct BottleRow: View {
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button {
-                model.sheet = .drink(bottleID: bottle.id)
+                router?.sheet = .drink(bottleID: bottle.id)
             } label: {
                 Label("Drink", systemImage: "wineglass")
             }
@@ -531,21 +534,21 @@ struct BottleRow: View {
             }
             .tint(.red)
             Button {
-                model.sheet = .moveBottle(bottleID: bottle.id)
+                router?.sheet = .moveBottle(bottleID: bottle.id)
             } label: {
                 Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
             }
             .tint(.indigo)
             Button {
-                model.sheet = .bottleDocuments(bottleID: bottle.id, importing: bottle.attachments == nil)
+                router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: bottle.attachments == nil)
             } label: {
                 Label("Documents", systemImage: "paperclip")
             }
             .tint(.gray)
         }
         .contextMenu {
-            Button("Drink", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
-            Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { model.sheet = .moveBottle(bottleID: bottle.id) }
+            Button("Drink", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
+            Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { router?.sheet = .moveBottle(bottleID: bottle.id) }
             if bottle.reservedFor == nil {
                 Button("Keep for an Occasion…", systemImage: "gift") {
                     occasion = model.cellar.reservations.first ?? ""
@@ -555,9 +558,9 @@ struct BottleRow: View {
                 Button("Free This Bottle", systemImage: "gift.slash") { model.reserve([bottle.id], for: nil) }
             }
             if bottle.slot != nil {
-                Button("Show in Rack", systemImage: "scope") { model.showInRack(bottle) }
+                Button("Show in Rack", systemImage: "scope") { router?.showInRack(bottle, model: model) }
             }
-            BottleDocumentButtons(bottle: bottle) { model.sheet = $0 }
+            BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()
             Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { model.markGone(bottle.id) }
         }

@@ -12,12 +12,20 @@ struct TonightView: View {
         if let selection {
             list(selection: selection)
                 .navigationTitle("Tonight")
+                #if os(macOS)
+                .toolbar {
+                    ToolbarItem { MenuBarToggle() }
+                }
+                #endif
                 .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView(selection: selection) }
                 .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView(selection: selection) }
         } else {
             NavigationStack {
                 list(selection: nil)
                     .navigationTitle("Tonight")
+                    #if os(iOS)
+                    .toolbar { SettingsToolbarItem() }
+                    #endif
                     .navigationDestination(for: UUID.self) { WineDetailView(wineID: $0) }
                     .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
                     .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView() }
@@ -105,6 +113,7 @@ struct FoodPairingRoute: Hashable {}
 /// Hero card with tonight's suggestion.
 private struct TonightPick: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let group: WineGroup
     let next: () -> Void
 
@@ -135,7 +144,7 @@ private struct TonightPick: View {
             }
             HStack(spacing: 12) {
                 Button {
-                    if let bottle = group.bottles.bottleToOpen { model.sheet = .drink(bottleID: bottle.id) }
+                    if let bottle = group.bottles.bottleToOpen { router?.sheet = .drink(bottleID: bottle.id) }
                 } label: {
                     ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                 }

@@ -228,8 +228,7 @@ struct AddBottleIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        CellarModel.current?.selectedTab = .cellar
-        CellarModel.current?.sheet = .addBottle(AddBottleContext())
+        CellarModel.current?.request(.present(.addBottle(AddBottleContext())))
         return .result()
     }
 }

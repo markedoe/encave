@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RacksView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -15,7 +16,7 @@ struct RacksView: View {
                         Text("Describe your racks to see exactly where each bottle is.")
                     } actions: {
                         Button {
-                            model.sheet = .editRack(rackID: nil)
+                            router?.sheet = .editRack(rackID: nil)
                         } label: {
                             Text("Add a Rack").frame(minWidth: 200)
                         }
@@ -32,7 +33,7 @@ struct RacksView: View {
                                 .accessibilityIdentifier("rack.card.\(index)")
                                 .buttonStyle(.plain)
                                 .contextMenu {
-                                    Button("Edit Rack", systemImage: "pencil") { model.sheet = .editRack(rackID: rack.id) }
+                                    Button("Edit Rack", systemImage: "pencil") { router?.sheet = .editRack(rackID: rack.id) }
                                     Button("Delete Rack", systemImage: "trash", role: .destructive) {
                                         model.deleteRack(rack.id)
                                     }
@@ -48,12 +49,15 @@ struct RacksView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        model.sheet = .editRack(rackID: nil)
+                        router?.sheet = .editRack(rackID: nil)
                     } label: {
                         Label("Add Rack", systemImage: "plus")
                     }
                     .accessibilityIdentifier("racks.add")
                 }
+                #if os(iOS)
+                SettingsToolbarItem()
+                #endif
             }
             .onChange(of: model.highlightedSlot, initial: true) { _, slot in
                 guard let slot else { return }

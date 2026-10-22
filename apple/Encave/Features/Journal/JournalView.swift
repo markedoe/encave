@@ -98,6 +98,9 @@ struct JournalView: View {
                 .accessibilityIdentifier("journal.add")
                 .help(Text("Note a bottle opened from your cellar or a wine tasted elsewhere"))
             }
+            #if os(iOS)
+            SettingsToolbarItem()
+            #endif
         }
     }
 }
@@ -106,12 +109,13 @@ struct JournalView: View {
 /// cellar leaves it.
 struct AddTastingMenu<MenuLabel: View>: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @ViewBuilder var label: () -> MenuLabel
 
     var body: some View {
         Menu {
             Button {
-                model.sheet = .drink(bottleID: nil)
+                router?.sheet = .drink(bottleID: nil)
             } label: {
                 Label("A Bottle from My Cellar", systemImage: "house")
                 // Says why it is off, rather than only dimming it.
@@ -124,7 +128,7 @@ struct AddTastingMenu<MenuLabel: View>: View {
             .disabled(model.cellar.bottlesInCellar.isEmpty)
             .accessibilityIdentifier("journal.add.cellar")
             Button {
-                model.sheet = .discovery(discoveryID: nil)
+                router?.sheet = .discovery(discoveryID: nil)
             } label: {
                 Label("Somewhere Else", systemImage: "mappin.and.ellipse")
                 Text("Restaurant, friends, a fair… Your cellar does not change.")
@@ -221,13 +225,14 @@ private struct FilterEmptyState: View {
 /// One entry of the diary, from the cellar or tasted elsewhere, opening its note.
 private struct DiaryEntryRow: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let entry: DiaryEntry
 
     var body: some View {
         switch entry {
         case .tasting(let bottle):
             Button {
-                model.sheet = .editTasting(bottleID: bottle.id)
+                router?.sheet = .editTasting(bottleID: bottle.id)
             } label: {
                 TastingRow(bottle: bottle, showsWine: true, showsSource: true)
             }
@@ -235,7 +240,7 @@ private struct DiaryEntryRow: View {
             .accessibilityIdentifier("journal.row.cellar")
         case .elsewhere(let discovery):
             Button {
-                model.sheet = .discovery(discoveryID: discovery.id)
+                router?.sheet = .discovery(discoveryID: discovery.id)
             } label: {
                 DiscoveryRow(discovery: discovery, showsSource: true)
             }

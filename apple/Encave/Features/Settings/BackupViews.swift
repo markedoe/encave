@@ -236,6 +236,7 @@ struct RestorePreviewView: View {
     /// Shown in a sheet of its own (not pushed in a list), with a Cancel button.
     var inSheet = false
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingReplace = false
     @State private var working = false
@@ -344,7 +345,7 @@ struct RestorePreviewView: View {
             guard done else { return }
             // The banner with Undo is under the sheets on iPhone and iPad: close them.
             #if os(iOS)
-            model.sheet = nil
+            router?.sheet = nil
             #endif
             dismiss()
         }

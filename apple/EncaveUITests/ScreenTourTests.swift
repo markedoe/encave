@@ -281,16 +281,9 @@ final class ScreenTourTests: XCTestCase {
     // MARK: Selecting several wines
 
     private func checkSelection() {
-        let sort = element("cellar.sort")
-        guard sort.waitForExistence(timeout: 3), sort.isHittable else {
-            XCTFail("cellar: no sort menu")
-            return
-        }
-        sort.press()
         let select = element("cellar.select")
-        guard select.waitForExistence(timeout: 3) else {
-            XCTFail("cellar: no Select Wines")
-            app.typeKeyEscapeIfMac()
+        guard select.waitForExistence(timeout: 3), select.isHittable else {
+            XCTFail("cellar: no Select button")
             return
         }
         select.press()

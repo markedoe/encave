@@ -4,6 +4,7 @@ import SwiftUI
 /// The bottles of one rack, place by place. Selecting one points to it in the drawing.
 struct RackBottleList: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let rackID: UUID
     @Binding var selection: UUID?
     /// Opens a sheet. In a sheet itself, this closes the list first.
@@ -102,7 +103,7 @@ extension RackBottleList {
     }
 
     private func open(_ sheet: AppSheet) {
-        if let present { present(sheet) } else { model.sheet = sheet }
+        if let present { present(sheet) } else { router?.sheet = sheet }
     }
 }
 
