@@ -50,6 +50,15 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     /// When the details were last completed by the AI from the label photo, so the app
     /// can say so. Nil when never.
     public var aiCompletedAt: Date?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, name, producer, vintage, color, region, country, appellation, grapes, drinkFrom, drinkUntil, notes
+        case photoID, barcodes, tags, extraPhotoIDs, currentPrice, currentPriceCurrency, currentPriceDate
+        case coverPhotoID, attachments, aiCompletedAt
+    }
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -92,6 +101,34 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         coverPhotoID = try c.decodeIfPresent(String.self, forKey: .coverPhotoID)
         attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
         aiCompletedAt = try c.decodeIfPresent(Date.self, forKey: .aiCompletedAt)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encodeIfPresent(producer, forKey: .producer)
+        try c.encodeIfPresent(vintage, forKey: .vintage)
+        try c.encodeIfPresent(color, forKey: .color)
+        try c.encodeIfPresent(region, forKey: .region)
+        try c.encodeIfPresent(country, forKey: .country)
+        try c.encodeIfPresent(appellation, forKey: .appellation)
+        try c.encode(grapes, forKey: .grapes)
+        try c.encodeIfPresent(drinkFrom, forKey: .drinkFrom)
+        try c.encodeIfPresent(drinkUntil, forKey: .drinkUntil)
+        try c.encodeIfPresent(notes, forKey: .notes)
+        try c.encodeIfPresent(photoID, forKey: .photoID)
+        try c.encodeIfPresent(barcodes, forKey: .barcodes)
+        try c.encodeIfPresent(tags, forKey: .tags)
+        try c.encodeIfPresent(extraPhotoIDs, forKey: .extraPhotoIDs)
+        try c.encodeIfPresent(currentPrice, forKey: .currentPrice)
+        try c.encodeIfPresent(currentPriceCurrency, forKey: .currentPriceCurrency)
+        try c.encodeIfPresent(currentPriceDate, forKey: .currentPriceDate)
+        try c.encodeIfPresent(coverPhotoID, forKey: .coverPhotoID)
+        try c.encodeIfPresent(attachments, forKey: .attachments)
+        try c.encodeIfPresent(aiCompletedAt, forKey: .aiCompletedAt)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
     /// The label photo first, then the others, then the cover.
@@ -159,6 +196,13 @@ public struct Slot: Codable, Hashable, Sendable {
     public var column: Int
     /// 0 is the front (or the first bottle of a bin).
     public var depth: Int
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Not part of equality: a slot is compared as a place (two bottles in one place).
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case rackID, row, column, depth
+    }
 
     public init(rackID: UUID, row: Int, column: Int, depth: Int = 0) {
         self.rackID = rackID; self.row = row; self.column = column; self.depth = depth
@@ -170,6 +214,24 @@ public struct Slot: Codable, Hashable, Sendable {
         row = try c.decode(Int.self, forKey: .row)
         column = try c.decode(Int.self, forKey: .column)
         depth = try c.decodeIfPresent(Int.self, forKey: .depth) ?? 0
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(rackID, forKey: .rackID)
+        try c.encode(row, forKey: .row)
+        try c.encode(column, forKey: .column)
+        try c.encode(depth, forKey: .depth)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
+    }
+
+    public static func == (a: Slot, b: Slot) -> Bool {
+        a.rackID == b.rackID && a.row == b.row && a.column == b.column && a.depth == b.depth
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(rackID); hasher.combine(row); hasher.combine(column); hasher.combine(depth)
     }
 
     /// The cell this slot belongs to, whatever its depth.
@@ -229,6 +291,9 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public var binCapacity: Int
     /// Cells in each row when rows differ (a triangle top, an irregular cellar).
     public var rowColumns: [Int]?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
 
     public static let maxDepth = 3
     /// Honeycomb racks hold at most two bottles one behind the other.
@@ -253,7 +318,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         self.backReversed = backReversed == true && hasDepthBands ? true : nil
     }
 
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey, CaseIterable {
         case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks, backReversed
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
@@ -274,6 +339,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
                          zoneBreaks: try c.decodeIfPresent([Int].self, forKey: .zoneBreaks))
         // Absent from older racks; kept only where it applies, true or left out.
         backReversed = try c.decodeIfPresent(Bool.self, forKey: .backReversed) == true && hasDepthBands ? true : nil
+        // "layout" is a known key (read as a grid), so it is not kept.
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
     /// 1 to `maxSize`.
@@ -320,6 +387,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(shelfLayers, forKey: .shelfLayers)
         try c.encodeIfPresent(zoneBreaks, forKey: .zoneBreaks)
         try c.encodeIfPresent(backReversed == true && hasDepthBands ? true : nil, forKey: .backReversed)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
     /// Cells in a row: custom widths first, then one fewer on offset honeycomb rows (on
@@ -484,6 +552,13 @@ public struct Tasting: Codable, Hashable, Sendable {
     public var palate: String?
     public var finish: String?
     public var foodPairing: String?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case date, rating, note, occasion, appearance, nose, palate, finish, foodPairing
+    }
 
     public init(
         date: Date = .now, rating: Int? = nil, note: String? = nil, occasion: String? = nil,
@@ -495,6 +570,34 @@ public struct Tasting: Codable, Hashable, Sendable {
         self.note = note; self.occasion = occasion
         self.appearance = appearance; self.nose = nose; self.palate = palate; self.finish = finish
         self.foodPairing = foodPairing
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = try c.decode(Date.self, forKey: .date)
+        rating = try c.decodeIfPresent(Int.self, forKey: .rating)
+        note = try c.decodeIfPresent(String.self, forKey: .note)
+        occasion = try c.decodeIfPresent(String.self, forKey: .occasion)
+        appearance = try c.decodeIfPresent(String.self, forKey: .appearance)
+        nose = try c.decodeIfPresent(String.self, forKey: .nose)
+        palate = try c.decodeIfPresent(String.self, forKey: .palate)
+        finish = try c.decodeIfPresent(String.self, forKey: .finish)
+        foodPairing = try c.decodeIfPresent(String.self, forKey: .foodPairing)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(date, forKey: .date)
+        try c.encodeIfPresent(rating, forKey: .rating)
+        try c.encodeIfPresent(note, forKey: .note)
+        try c.encodeIfPresent(occasion, forKey: .occasion)
+        try c.encodeIfPresent(appearance, forKey: .appearance)
+        try c.encodeIfPresent(nose, forKey: .nose)
+        try c.encodeIfPresent(palate, forKey: .palate)
+        try c.encodeIfPresent(finish, forKey: .finish)
+        try c.encodeIfPresent(foodPairing, forKey: .foodPairing)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
     /// True when any structured field beyond rating and note is filled.
@@ -540,6 +643,14 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
     public var attachments: [Attachment]? {
         didSet { attachments = Attachment.unique(attachments) }
     }
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, wineID, status, slot, storageNote, addedAt, purchaseDate, purchasePrice, currency, purchasePlace
+        case receivedFrom, sizeML, tasting, expectedAt, reservedFor, attachments
+    }
 
     public init(
         id: UUID = UUID(), wineID: UUID, status: Status = .inCellar, slot: Slot? = nil,
@@ -573,6 +684,28 @@ public struct Bottle: Identifiable, Codable, Hashable, Sendable {
         expectedAt = try c.decodeIfPresent(Date.self, forKey: .expectedAt)
         reservedFor = try c.decodeIfPresent(String.self, forKey: .reservedFor)
         attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(wineID, forKey: .wineID)
+        try c.encode(status, forKey: .status)
+        try c.encodeIfPresent(slot, forKey: .slot)
+        try c.encodeIfPresent(storageNote, forKey: .storageNote)
+        try c.encode(addedAt, forKey: .addedAt)
+        try c.encodeIfPresent(purchaseDate, forKey: .purchaseDate)
+        try c.encodeIfPresent(purchasePrice, forKey: .purchasePrice)
+        try c.encodeIfPresent(currency, forKey: .currency)
+        try c.encodeIfPresent(purchasePlace, forKey: .purchasePlace)
+        try c.encodeIfPresent(receivedFrom, forKey: .receivedFrom)
+        try c.encode(sizeML, forKey: .sizeML)
+        try c.encodeIfPresent(tasting, forKey: .tasting)
+        try c.encodeIfPresent(expectedAt, forKey: .expectedAt)
+        try c.encodeIfPresent(reservedFor, forKey: .reservedFor)
+        try c.encodeIfPresent(attachments, forKey: .attachments)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 }
 
@@ -582,10 +715,31 @@ public struct CellarSettings: Codable, Hashable, Sendable {
     public var currency: String
     /// Searches the user named, shown as chips in the Cellar. Nil when there are none.
     public var savedSearches: [SavedSearch]?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case currency, savedSearches
+    }
 
     public init(currency: String = "EUR", savedSearches: [SavedSearch]? = nil) {
         self.currency = currency
         self.savedSearches = savedSearches
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        currency = try c.decode(String.self, forKey: .currency)
+        savedSearches = try c.decodeIfPresent([SavedSearch].self, forKey: .savedSearches)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(currency, forKey: .currency)
+        try c.encodeIfPresent(savedSearches, forKey: .savedSearches)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 }
 
@@ -619,6 +773,13 @@ public struct SavedSearch: Codable, Hashable, Sendable, Identifiable {
     public var tag: String?
     public var reservation: String?
     public var grape: String?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, name, query, colors, maturities, rackID, tag, reservation, grape
+    }
 
     public init(id: UUID = UUID(), name: String, filter: CellarFilter) {
         self.id = id
@@ -631,6 +792,34 @@ public struct SavedSearch: Codable, Hashable, Sendable, Identifiable {
         tag = filter.tag
         reservation = filter.reservation
         grape = filter.grape
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        query = try c.decode(String.self, forKey: .query)
+        colors = try c.decode([WineColor].self, forKey: .colors)
+        maturities = try c.decode([Maturity].self, forKey: .maturities)
+        rackID = try c.decodeIfPresent(UUID.self, forKey: .rackID)
+        tag = try c.decodeIfPresent(String.self, forKey: .tag)
+        reservation = try c.decodeIfPresent(String.self, forKey: .reservation)
+        grape = try c.decodeIfPresent(String.self, forKey: .grape)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(query, forKey: .query)
+        try c.encode(colors, forKey: .colors)
+        try c.encode(maturities, forKey: .maturities)
+        try c.encodeIfPresent(rackID, forKey: .rackID)
+        try c.encodeIfPresent(tag, forKey: .tag)
+        try c.encodeIfPresent(reservation, forKey: .reservation)
+        try c.encodeIfPresent(grape, forKey: .grape)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
     public var filter: CellarFilter {
