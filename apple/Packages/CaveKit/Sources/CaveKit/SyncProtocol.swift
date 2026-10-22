@@ -70,10 +70,39 @@ public struct Member: Codable, Hashable, Sendable, Identifiable {
     /// (`DeviceIdentity.inboxID`). Set by the device itself; nil for records from
     /// before remote sync, which then get keys only on the local network.
     public var inbox: String?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, name, publicKey, platform, addedAt, inbox
+    }
 
     public init(id: UUID, name: String, publicKey: Data, platform: String, addedAt: Date = .now, inbox: String? = nil) {
         self.id = id; self.name = name; self.publicKey = publicKey; self.platform = platform; self.addedAt = addedAt
         self.inbox = inbox
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        publicKey = try c.decode(Data.self, forKey: .publicKey)
+        platform = try c.decode(String.self, forKey: .platform)
+        addedAt = try c.decode(Date.self, forKey: .addedAt)
+        inbox = try c.decodeIfPresent(String.self, forKey: .inbox)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(publicKey, forKey: .publicKey)
+        try c.encode(platform, forKey: .platform)
+        try c.encode(addedAt, forKey: .addedAt)
+        try c.encodeIfPresent(inbox, forKey: .inbox)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 }
 

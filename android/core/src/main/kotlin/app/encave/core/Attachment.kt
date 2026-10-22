@@ -2,7 +2,10 @@ package app.encave.core
 
 import java.time.Instant
 import java.util.UUID
+import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonObject
 
 /**
  * A document kept with a wine (for all its bottles) or with one bottle: an invoice, a
@@ -11,7 +14,8 @@ import kotlinx.serialization.Serializable
  * syncs like the photos (docs/SYNC.md). Backups hold this record, not the file. Mirrors
  * CaveKit's `Attachment`: every field is required.
  */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = AttachmentSerializer::class)
 data class Attachment(
     /** `sha256-` and the hex SHA-256 of the file (`PhotoId.make`). */
     val id: String,
@@ -21,6 +25,8 @@ data class Attachment(
     val contentType: String,
     val byteCount: Long,
     @Serializable(with = InstantSerializer::class) val addedAt: Instant,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     fun normalized(): Attachment {
         val clean = normalizedName(name)
@@ -89,3 +95,9 @@ enum class FileKind { Photo, Document }
 
 /** A file the cellar refers to. */
 data class FileRef(val id: String, val kind: FileKind)
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object AttachmentSerializer : KeepingUnknownKeys<Attachment>(Attachment.generatedSerializer()) {
+    override fun unknownKeys(value: Attachment) = value.unknownKeys
+    override fun withUnknownKeys(value: Attachment, keys: JsonObject) = value.copy(unknownKeys = keys)
+}

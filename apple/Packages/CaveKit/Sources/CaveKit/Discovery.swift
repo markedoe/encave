@@ -25,6 +25,13 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
     public var wantsToBuy: Bool
     /// When a bottle of it was added to the cellar from the shopping list.
     public var boughtAt: Date?
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, wineID, date, setting, place, rating, note, tags, price, currency, wantsToBuy, boughtAt
+    }
 
     public init(
         id: UUID = UUID(), wineID: UUID, date: Date = .now, setting: Setting? = nil, place: String? = nil,
@@ -53,6 +60,24 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
         currency = try c.decodeIfPresent(String.self, forKey: .currency)
         wantsToBuy = try c.decodeIfPresent(Bool.self, forKey: .wantsToBuy) ?? false
         boughtAt = try c.decodeIfPresent(Date.self, forKey: .boughtAt)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(wineID, forKey: .wineID)
+        try c.encode(date, forKey: .date)
+        try c.encodeIfPresent(setting, forKey: .setting)
+        try c.encodeIfPresent(place, forKey: .place)
+        try c.encodeIfPresent(rating, forKey: .rating)
+        try c.encodeIfPresent(note, forKey: .note)
+        try c.encode(tags, forKey: .tags)
+        try c.encodeIfPresent(price, forKey: .price)
+        try c.encodeIfPresent(currency, forKey: .currency)
+        try c.encode(wantsToBuy, forKey: .wantsToBuy)
+        try c.encodeIfPresent(boughtAt, forKey: .boughtAt)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
     /// Trimmed, without empty or duplicate tags (ignoring case), in the order given.
@@ -119,9 +144,10 @@ public extension Cellar {
     }
 
     mutating func updateDiscovery(_ discovery: Discovery) throws {
-        guard discoveries[discovery.id] != nil else { throw CellarError.unknownDiscovery }
+        guard let stored = discoveries[discovery.id] else { throw CellarError.unknownDiscovery }
         guard wines[discovery.wineID] != nil else { throw CellarError.unknownWine }
         var copy = discovery
+        copy.unknownFields = copy.unknownFields.orKept(stored.unknownFields)
         copy.tags = Discovery.normalized(copy.tags)
         discoveries[discovery.id] = copy
     }

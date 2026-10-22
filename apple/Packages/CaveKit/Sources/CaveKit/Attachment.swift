@@ -15,6 +15,13 @@ public struct Attachment: Codable, Hashable, Sendable, Identifiable {
     public var contentType: String
     public var byteCount: Int
     public var addedAt: Date
+    /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
+    /// Part of equality, so a merge that only brings them in is still saved.
+    public var unknownFields = UnknownFields()
+
+    private enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, name, contentType, byteCount, addedAt
+    }
 
     /// Largest document accepted when adding one: 8 MB (8,000,000 bytes). Sealed for remote
     /// sync it stays under a relay's 8 MiB file limit; on the local network its Base64 fits
@@ -41,6 +48,17 @@ public struct Attachment: Codable, Hashable, Sendable, Identifiable {
         contentType = try c.decode(String.self, forKey: .contentType)
         byteCount = try c.decode(Int.self, forKey: .byteCount)
         addedAt = try c.decode(Date.self, forKey: .addedAt)
+        unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(contentType, forKey: .contentType)
+        try c.encode(byteCount, forKey: .byteCount)
+        try c.encode(addedAt, forKey: .addedAt)
+        try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 
     /// The name as every device keeps it: control characters become spaces, `/` and `\`

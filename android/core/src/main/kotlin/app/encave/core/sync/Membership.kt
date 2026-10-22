@@ -1,15 +1,19 @@
 package app.encave.core.sync
 
 import app.encave.core.InstantSerializer
+import app.encave.core.KeepingUnknownKeys
+import app.encave.core.NoUnknownKeys
 import app.encave.core.ReferenceDates
 import app.encave.core.UuidSerializer
 import app.encave.core.parseUuid
 import java.time.Instant
 import java.util.UUID
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -23,7 +27,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** A device of the cellar. */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = MemberSerializer::class)
 data class Member(
     @Serializable(with = UuidSerializer::class) val id: UUID,
     val name: String,
@@ -38,11 +43,20 @@ data class Member(
      * remote sync, which then get keys only on the local network.
      */
     val inbox: String? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     override fun equals(other: Any?): Boolean = other is Member && id == other.id && name == other.name &&
-        publicKey.contentEquals(other.publicKey) && platform == other.platform && addedAt == other.addedAt && inbox == other.inbox
+        publicKey.contentEquals(other.publicKey) && platform == other.platform && addedAt == other.addedAt && inbox == other.inbox &&
+        unknownKeys == other.unknownKeys
 
-    override fun hashCode(): Int = listOf(id, name, publicKey.contentHashCode(), platform, addedAt, inbox).hashCode()
+    override fun hashCode(): Int = listOf(id, name, publicKey.contentHashCode(), platform, addedAt, inbox, unknownKeys).hashCode()
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object MemberSerializer : KeepingUnknownKeys<Member>(Member.generatedSerializer()) {
+    override fun unknownKeys(value: Member) = value.unknownKeys
+    override fun withUnknownKeys(value: Member, keys: JsonObject) = value.copy(unknownKeys = keys)
 }
 
 /**

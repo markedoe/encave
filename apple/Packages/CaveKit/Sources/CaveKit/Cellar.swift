@@ -496,6 +496,8 @@ public extension Cellar {
     /// Updates the tasting of a bottle already drunk (adding a full note later).
     mutating func updateTasting(_ bottleID: UUID, tasting: Tasting) throws {
         guard var bottle = bottles[bottleID], bottle.status == .consumed else { throw CellarError.unknownBottle }
+        var tasting = tasting
+        tasting.unknownFields = tasting.unknownFields.orKept(bottle.tasting?.unknownFields)
         bottle.tasting = tasting
         bottles[bottleID] = bottle
     }
@@ -527,7 +529,12 @@ public extension Cellar {
     }
 
     mutating func updateBottle(_ bottle: Bottle) throws {
-        guard bottles[bottle.id] != nil else { throw CellarError.unknownBottle }
+        guard let stored = bottles[bottle.id] else { throw CellarError.unknownBottle }
+        var bottle = bottle
+        bottle.unknownFields = bottle.unknownFields.orKept(stored.unknownFields)
+        if let fields = bottle.tasting?.unknownFields {
+            bottle.tasting?.unknownFields = fields.orKept(stored.tasting?.unknownFields)
+        }
         if let slot = bottle.slot {
             guard bottle.status != .ordered else { throw CellarError.notReceived }
             try validateInRange(slot)
@@ -557,7 +564,9 @@ public extension Cellar {
     }
 
     mutating func updateWine(_ wine: Wine) throws {
-        guard wines[wine.id] != nil else { throw CellarError.unknownWine }
+        guard let stored = wines[wine.id] else { throw CellarError.unknownWine }
+        var wine = wine
+        wine.unknownFields = wine.unknownFields.orKept(stored.unknownFields)
         wines[wine.id] = wine
     }
 
@@ -582,6 +591,8 @@ public extension Cellar {
             guard let slot = bottle.slot, slot.rackID == rack.id else { continue }
             bottles[bottle.id]?.slot = displaced.contains(bottle.id) ? nil : Rack.moved(slot, rowMap: rowMap)
         }
+        var rack = rack
+        rack.unknownFields = rack.unknownFields.orKept(racks[index].unknownFields)
         racks[index] = rack
     }
 

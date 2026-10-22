@@ -69,3 +69,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   (Apple); a menu bar glass (Mac); home screen widgets (Android)
 - In-app help with topics, help on form fields (tooltips on the Mac), and a
   link to create an API key for every AI provider
+- Sync, the cellar file and backups keep fields written by a newer version of
+  Encave and send them back unchanged, instead of erasing them

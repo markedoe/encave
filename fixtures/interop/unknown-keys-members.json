@@ -1,0 +1,49 @@
+{
+  "cellarID": "00000000-0000-4000-8000-0000000000AA",
+  "members": [
+    "00000000-0000-4000-8000-000000000001",
+    {
+      "addedAt": 780000000.5,
+      "futureArray": [
+        7,
+        -0.125,
+        "deux",
+        false,
+        null,
+        {
+          "k": [
+            9007199254740993
+          ]
+        },
+        []
+      ],
+      "futureObject": {
+        "count": 3,
+        "label": "Côte/Nord",
+        "nested": {
+          "list": [
+            1,
+            2.5,
+            "x"
+          ]
+        },
+        "none": null,
+        "on": true,
+        "ratio": 0.75
+      },
+      "futureScalar": "member",
+      "id": "00000000-0000-4000-8000-000000000001",
+      "name": "iPhone",
+      "platform": "ios",
+      "publicKey": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+    }
+  ],
+  "stamps": [
+    "00000000-0000-4000-8000-000000000001",
+    {
+      "counter": 1,
+      "deleted": false,
+      "device": "00000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

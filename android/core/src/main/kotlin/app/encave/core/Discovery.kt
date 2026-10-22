@@ -6,13 +6,17 @@ import java.util.Locale
 import java.util.UUID
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Required
+import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonObject
 
 /**
  * A wine tasted or seen somewhere else (at friends', in a restaurant, on a trip),
  * kept to remember it and maybe buy it later. Not a bottle in the cellar.
  */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = DiscoverySerializer::class)
 data class Discovery(
     @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     @SerialName("wineID") @Serializable(with = UuidSerializer::class) val wineId: UUID,
@@ -31,6 +35,8 @@ data class Discovery(
     val wantsToBuy: Boolean = false,
     /** When a bottle of it was added to the cellar from the shopping list. */
     @Serializable(with = InstantSerializer::class) val boughtAt: Instant? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     /** Where the wine was found. */
     @Serializable
@@ -101,9 +107,9 @@ fun Cellar.addDiscovery(discovery: Discovery, wine: Wine): Discovery {
 }
 
 fun Cellar.updateDiscovery(discovery: Discovery) {
-    if (discoveries[discovery.id] == null) throw CellarException(CellarError.UnknownDiscovery)
+    val stored = discoveries[discovery.id] ?: throw CellarException(CellarError.UnknownDiscovery)
     if (wines[discovery.wineId] == null) throw CellarException(CellarError.UnknownWine)
-    putDiscovery(discovery)
+    putDiscovery(discovery.copy(unknownKeys = discovery.unknownKeys.orKept(stored.unknownKeys)))
 }
 
 /** Removes a discovery, and its wine if nothing else refers to it. */
@@ -116,4 +122,10 @@ fun Cellar.deleteDiscovery(id: UUID) {
 fun Cellar.markBought(id: UUID, date: Instant = ReferenceDates.now()) {
     val discovery = discoveries[id] ?: throw CellarException(CellarError.UnknownDiscovery)
     putDiscovery(discovery.copy(wantsToBuy = false, boughtAt = date))
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object DiscoverySerializer : KeepingUnknownKeys<Discovery>(Discovery.generatedSerializer()) {
+    override fun unknownKeys(value: Discovery) = value.unknownKeys
+    override fun withUnknownKeys(value: Discovery, keys: JsonObject) = value.copy(unknownKeys = keys)
 }

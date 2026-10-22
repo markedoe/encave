@@ -1,0 +1,371 @@
+{
+  "bottles": [
+    "00000000-0000-4000-8000-000000000021",
+    {
+      "addedAt": 782000000.25,
+      "attachments": [
+        {
+          "addedAt": 782000000.75,
+          "byteCount": 4,
+          "contentType": "application/pdf",
+          "futureArray": [
+            7,
+            -0.125,
+            "deux",
+            false,
+            null,
+            {
+              "k": [
+                9007199254740993
+              ]
+            },
+            []
+          ],
+          "futureObject": {
+            "count": 3,
+            "label": "Côte/Nord",
+            "nested": {
+              "list": [
+                1,
+                2.5,
+                "x"
+              ]
+            },
+            "none": null,
+            "on": true,
+            "ratio": 0.75
+          },
+          "futureScalar": "attachment",
+          "id": "sha256-3c482346f375027677fa8a0d6830a32714d4f13f9e94c2d9e215e0ac205ad4e5",
+          "name": "Certificate.pdf"
+        }
+      ],
+      "futureArray": [
+        7,
+        -0.125,
+        "deux",
+        false,
+        null,
+        {
+          "k": [
+            9007199254740993
+          ]
+        },
+        []
+      ],
+      "futureObject": {
+        "count": 3,
+        "label": "Côte/Nord",
+        "nested": {
+          "list": [
+            1,
+            2.5,
+            "x"
+          ]
+        },
+        "none": null,
+        "on": true,
+        "ratio": 0.75
+      },
+      "futureScalar": "bottle",
+      "id": "00000000-0000-4000-8000-000000000021",
+      "sizeML": 750,
+      "slot": {
+        "column": 1,
+        "depth": 0,
+        "futureArray": [
+          7,
+          -0.125,
+          "deux",
+          false,
+          null,
+          {
+            "k": [
+              9007199254740993
+            ]
+          },
+          []
+        ],
+        "futureObject": {
+          "count": 3,
+          "label": "Côte/Nord",
+          "nested": {
+            "list": [
+              1,
+              2.5,
+              "x"
+            ]
+          },
+          "none": null,
+          "on": true,
+          "ratio": 0.75
+        },
+        "futureScalar": "slot",
+        "rackID": "00000000-0000-4000-8000-000000000031",
+        "row": 0
+      },
+      "status": "inCellar",
+      "tasting": {
+        "date": 785000000.125,
+        "futureArray": [
+          7,
+          -0.125,
+          "deux",
+          false,
+          null,
+          {
+            "k": [
+              9007199254740993
+            ]
+          },
+          []
+        ],
+        "futureObject": {
+          "count": 3,
+          "label": "Côte/Nord",
+          "nested": {
+            "list": [
+              1,
+              2.5,
+              "x"
+            ]
+          },
+          "none": null,
+          "on": true,
+          "ratio": 0.75
+        },
+        "futureScalar": "tasting",
+        "note": "Lovely",
+        "rating": 4
+      },
+      "wineID": "00000000-0000-4000-8000-000000000011"
+    }
+  ],
+  "discoveries": [
+    "00000000-0000-4000-8000-000000000041",
+    {
+      "date": 781500000.75,
+      "futureArray": [
+        7,
+        -0.125,
+        "deux",
+        false,
+        null,
+        {
+          "k": [
+            9007199254740993
+          ]
+        },
+        []
+      ],
+      "futureObject": {
+        "count": 3,
+        "label": "Côte/Nord",
+        "nested": {
+          "list": [
+            1,
+            2.5,
+            "x"
+          ]
+        },
+        "none": null,
+        "on": true,
+        "ratio": 0.75
+      },
+      "futureScalar": "discovery",
+      "id": "00000000-0000-4000-8000-000000000041",
+      "tags": [
+        "Trip"
+      ],
+      "wantsToBuy": false,
+      "wineID": "00000000-0000-4000-8000-000000000011"
+    }
+  ],
+  "racks": [
+    {
+      "binCapacity": 12,
+      "columns": 3,
+      "depth": 1,
+      "futureArray": [
+        7,
+        -0.125,
+        "deux",
+        false,
+        null,
+        {
+          "k": [
+            9007199254740993
+          ]
+        },
+        []
+      ],
+      "futureObject": {
+        "count": 3,
+        "label": "Côte/Nord",
+        "nested": {
+          "list": [
+            1,
+            2.5,
+            "x"
+          ]
+        },
+        "none": null,
+        "on": true,
+        "ratio": 0.75
+      },
+      "futureScalar": "rack",
+      "id": "00000000-0000-4000-8000-000000000031",
+      "kind": "grid",
+      "name": "Rack",
+      "rows": 2
+    }
+  ],
+  "schemaVersion": 2,
+  "settings": {
+    "currency": "EUR",
+    "futureArray": [
+      7,
+      -0.125,
+      "deux",
+      false,
+      null,
+      {
+        "k": [
+          9007199254740993
+        ]
+      },
+      []
+    ],
+    "futureObject": {
+      "count": 3,
+      "label": "Côte/Nord",
+      "nested": {
+        "list": [
+          1,
+          2.5,
+          "x"
+        ]
+      },
+      "none": null,
+      "on": true,
+      "ratio": 0.75
+    },
+    "futureScalar": "settings",
+    "savedSearches": [
+      {
+        "colors": [
+          "red"
+        ],
+        "futureArray": [
+          7,
+          -0.125,
+          "deux",
+          false,
+          null,
+          {
+            "k": [
+              9007199254740993
+            ]
+          },
+          []
+        ],
+        "futureObject": {
+          "count": 3,
+          "label": "Côte/Nord",
+          "nested": {
+            "list": [
+              1,
+              2.5,
+              "x"
+            ]
+          },
+          "none": null,
+          "on": true,
+          "ratio": 0.75
+        },
+        "futureScalar": "savedSearch",
+        "id": "00000000-0000-4000-8000-000000000051",
+        "maturities": [],
+        "name": "Futur",
+        "query": "syrah"
+      }
+    ]
+  },
+  "wines": [
+    "00000000-0000-4000-8000-000000000011",
+    {
+      "attachments": [
+        {
+          "addedAt": 782000000.75,
+          "byteCount": 4,
+          "contentType": "application/pdf",
+          "futureArray": [
+            7,
+            -0.125,
+            "deux",
+            false,
+            null,
+            {
+              "k": [
+                9007199254740993
+              ]
+            },
+            []
+          ],
+          "futureObject": {
+            "count": 3,
+            "label": "Côte/Nord",
+            "nested": {
+              "list": [
+                1,
+                2.5,
+                "x"
+              ]
+            },
+            "none": null,
+            "on": true,
+            "ratio": 0.75
+          },
+          "futureScalar": "attachment",
+          "id": "sha256-52d6e3de4fa0dcc29946695f93940c3e7f26f30e1e39f4b1a49ad98839112786",
+          "name": "Invoice.pdf"
+        }
+      ],
+      "color": "red",
+      "futureArray": [
+        7,
+        -0.125,
+        "deux",
+        false,
+        null,
+        {
+          "k": [
+            9007199254740993
+          ]
+        },
+        []
+      ],
+      "futureObject": {
+        "count": 3,
+        "label": "Côte/Nord",
+        "nested": {
+          "list": [
+            1,
+            2.5,
+            "x"
+          ]
+        },
+        "none": null,
+        "on": true,
+        "ratio": 0.75
+      },
+      "futureScalar": "wine",
+      "grapes": [
+        "Syrah"
+      ],
+      "id": "00000000-0000-4000-8000-000000000011",
+      "name": "Château Futur",
+      "vintage": 2030
+    }
+  ]
+}
