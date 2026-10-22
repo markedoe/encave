@@ -848,8 +848,12 @@ final class SyncService {
         if replace {
             model.applySynced(Cellar(settings: model.cellar.settings))
             state = SyncState(device: identity.id)
-        } else if state == nil {
-            state = .starting(with: model.cellar, device: identity.id)
+        } else {
+            // Combining: the sample cellar is not sent to the other devices.
+            if model.cellar.containsSample {
+                _ = model.update { $0 = $0.removingSample(labels: [.localized]) }
+            }
+            if state == nil { state = .starting(with: model.cellar, device: identity.id) }
         }
         var members = received
         var clock = max(state?.clock ?? 0, received.stamps.values.map(\.counter).max() ?? 0)

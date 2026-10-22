@@ -802,7 +802,8 @@
     <string name="join_has_bottles">Cet appareil a déjà des bouteilles</string>
     <string name="join_combine">Réunir avec l’autre cave</string>
     <string name="join_replace">Remplacer par l’autre cave</string>
-    <string name="join_combine_footer">Les deux caves sont réunies. Choisissez Remplacer si cet appareil n’a que la cave d’exemple.</string>
+    <string name="join_combine_footer">Les deux caves sont réunies.</string>
+    <string name="join_combine_sample_footer">Les deux caves sont réunies. La cave d’exemple est d’abord supprimée.</string>
     <string name="join_replace_footer">Cet appareil n’affichera que la cave de l’autre appareil. Faites d’abord une sauvegarde si vous pourriez avoir besoin de ces bouteilles.</string>
     <string name="join_button">Rejoindre</string>
     <string name="join_looking">Recherche de l’appareil qui affiche %1$s…</string>
@@ -858,7 +859,7 @@
     <string name="help_devices_sync_title">Rester synchronisé</string>
     <string name="help_devices_sync">Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification. Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte.</string>
     <string name="help_devices_bottles_title">Bouteilles déjà sur le nouvel appareil</string>
-    <string name="help_devices_bottles">En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil (par exemple après avoir essayé la cave d’exemple).</string>
+    <string name="help_devices_bottles">En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil. Si cet appareil a la cave d’exemple, Réunir la supprime d’abord : elle n’est jamais envoyée à vos autres appareils.</string>
     <string name="help_devices_remove_title">Retirer un appareil</string>
     <string name="help_devices_remove">Balayez un appareil dans la liste, ou ouvrez son menu, et choisissez **Retirer**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée.</string>
     <string name="help_devices_away_title">Loin de la maison</string>

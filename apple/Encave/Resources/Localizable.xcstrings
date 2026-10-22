@@ -2131,12 +2131,22 @@
         }
       }
     },
-    "Both cellars are put together. Choose Replace if this device only has the sample cellar.": {
+    "Both cellars are put together.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les deux caves sont réunies. Choisissez Remplacer si cet appareil n’a que la cave d’exemple."
+            "value": "Les deux caves sont réunies."
+          }
+        }
+      }
+    },
+    "Both cellars are put together. The sample cellar is removed first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les deux caves sont réunies. La cave d’exemple est d’abord supprimée."
           }
         }
       }
@@ -12261,12 +12271,12 @@
         }
       }
     },
-    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar).": {
+    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar. If this device has the sample cellar, Combine removes it first: it is never sent to your other devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil (par exemple après avoir essayé la cave d’exemple)."
+            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil. Si cet appareil a la cave d’exemple, Réunir la supprime d’abord : elle n’est jamais envoyée à vos autres appareils."
           }
         }
       }

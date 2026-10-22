@@ -2,6 +2,8 @@ package app.encave.sync
 
 import android.content.Context
 import app.encave.core.Cellar
+import app.encave.core.containsSample
+import app.encave.core.removeSample
 import app.encave.core.sync.CellarChangeSummary
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
@@ -28,6 +30,7 @@ import app.encave.core.sync.WebDavMailboxStore
 import app.encave.data.CellarRepository
 import app.encave.data.Preferences
 import app.encave.data.SyncFrequency
+import app.encave.ui.components.sampleLabels
 import java.io.Closeable
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -378,6 +381,10 @@ class SyncManager(
         }
         if (replace) {
             repository.applySynced(merge = { Cellar(settings = it.settings) })
+        } else if (repository.read { it.containsSample }) {
+            // Combining: the sample cellar is not sent to the other devices.
+            val labels = listOf(sampleLabels(context.resources))
+            repository.update { it.removeSample(labels) }
         }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {

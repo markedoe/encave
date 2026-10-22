@@ -803,7 +803,8 @@
     <string name="join_has_bottles">This device already has bottles</string>
     <string name="join_combine">Combine with the other cellar</string>
     <string name="join_replace">Replace with the other cellar</string>
-    <string name="join_combine_footer">Both cellars are put together. Choose Replace if this device only has the sample cellar.</string>
+    <string name="join_combine_footer">Both cellars are put together.</string>
+    <string name="join_combine_sample_footer">Both cellars are put together. The sample cellar is removed first.</string>
     <string name="join_replace_footer">This device will show only the other device’s cellar. Make a backup first if you may need these bottles.</string>
     <string name="join_button">Join</string>
     <string name="join_looking">Looking for the device showing %1$s…</string>
@@ -859,7 +860,7 @@
     <string name="help_devices_sync_title">Staying in sync</string>
     <string name="help_devices_sync">Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins.</string>
     <string name="help_devices_bottles_title">Bottles already on the new device</string>
-    <string name="help_devices_bottles">When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device’s cellar (for example after trying the sample cellar).</string>
+    <string name="help_devices_bottles">When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device’s cellar. If this device has the sample cellar, Combine removes it first: it is never sent to your other devices.</string>
     <string name="help_devices_remove_title">Removing a device</string>
     <string name="help_devices_remove">Swipe a device in the list, or open its menu, and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one’s key is no longer accepted.</string>
     <string name="help_devices_away_title">Away from home</string>

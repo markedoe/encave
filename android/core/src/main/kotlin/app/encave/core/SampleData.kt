@@ -182,3 +182,37 @@ object SampleData {
         return cellar
     }
 }
+
+/**
+ * Producer and name of every sample wine. Neither is translated, so they are the same
+ * whatever the language the sample was loaded in.
+ */
+private val sampleWineKeys: Set<String> by lazy { SampleData.cellar().wines.values.map { it.sampleKey }.toSet() }
+
+private val Wine.sampleKey: String get() = producer + "\u001F" + name
+
+/** Whether this wine is one of the sample cellar's. */
+fun SampleData.isSample(wine: Wine): Boolean = wine.sampleKey in sampleWineKeys
+
+/** Whether the cellar still holds wines of the sample cellar. */
+val Cellar.containsSample: Boolean get() = wines.values.any { SampleData.isSample(it) }
+
+/**
+ * Removes the sample: its wines with their bottles, tastings and discoveries, and its
+ * racks once empty. A rack counts as the sample's when its name (in one of [labels]) and
+ * its layout are those of a sample rack.
+ */
+fun Cellar.removeSample(labels: List<SampleData.Labels> = listOf(SampleData.Labels())) {
+    wines.values.filter { SampleData.isSample(it) }.forEach { deleteWine(it.id) }
+    val sampleRacks = (labels + SampleData.Labels()).flatMap { l -> SampleData.cellar(labels = l).racks.map { it.shape } }.toSet()
+    val used = bottlesInCellar.mapNotNull { it.slot?.rackId }.toSet()
+    racks.filter { it.id !in used && it.shape in sampleRacks }.forEach { removeRack(it.id) }
+}
+
+/** A copy of the cellar without the sample, see [removeSample]. */
+fun Cellar.removingSample(labels: List<SampleData.Labels> = listOf(SampleData.Labels())): Cellar =
+    copy().also { it.removeSample(labels) }
+
+private data class RackShape(val name: String, val kind: RackKind, val rows: Int, val columns: Int, val depth: Int)
+
+private val Rack.shape: RackShape get() = RackShape(name, kind, rows, columns, depth)
