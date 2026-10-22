@@ -78,7 +78,7 @@ jobs:
           for attempt in first second cellar racks tonight journal; do
             case "$attempt" in
               first|second) args=() ;;
-              *) args=(--sample-data --tab "$attempt") ;;
+              *) args=(--tab "$attempt" --sample-data) ;;
             esac
             "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
             pid=$!

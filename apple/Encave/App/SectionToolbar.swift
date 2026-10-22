@@ -34,10 +34,10 @@ struct SettingsButton: View {
 /// Mac Tonight: turns the list of bottles to open now in the menu bar on or off, where it
 /// is useful (the same switch as in Settings).
 struct MenuBarToggle: View {
-    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = MenuBarSetting.defaultValue
+    @Bindable private var menuBar = DefaultsFlag.menuBar
 
     var body: some View {
-        Toggle(isOn: $showsMenuBarExtra) {
+        Toggle(isOn: $menuBar.isOn) {
             Label("Show Tonight in the Menu Bar", systemImage: "menubar.arrow.up.rectangle")
         }
         .help(Text("A glass in the menu bar lists the bottles to open now; click one to open it."))

@@ -1,7 +1,8 @@
 import CaveKit
 import SwiftUI
 
-/// Mac and iPad: show the cellar as a list or as a sortable table. Remembered.
+/// Mac and iPad: show the cellar as a list or as a sortable table. Remembered
+/// (`DefaultsFlag.cellarTable`).
 enum CellarLayout {
     static let key = "cellar.table"
 }
@@ -348,10 +349,10 @@ struct CellarTableRow: Identifiable, Sendable {
 
 /// List or table, in the Cellar toolbar on the Mac and the iPad.
 struct CellarLayoutPicker: View {
-    @AppStorage(CellarLayout.key) private var showsTable = false
+    @Bindable private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
-        Picker("View", selection: $showsTable) {
+        Picker("View", selection: $layout.isOn) {
             Label("List", systemImage: "list.bullet").tag(false)
             Label("Table", systemImage: "tablecells").tag(true)
         }

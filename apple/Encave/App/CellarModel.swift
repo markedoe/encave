@@ -263,6 +263,9 @@ final class CellarModel {
                let tab = AppTab(rawValue: arguments[index + 1]) {
                 model.request(.show(tab))
             }
+            #if os(macOS)
+            MacScreenshotMode.startIfAsked()
+            #endif
             return model
         }
         if let store = try? JSONFileCellarStore.defaultStore() {

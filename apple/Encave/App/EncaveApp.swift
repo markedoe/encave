@@ -11,7 +11,7 @@ struct EncaveApp: App {
     @State private var model = CellarModel.live()
     private let notifications = NotificationRouter()
     #if os(macOS)
-    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = MenuBarSetting.defaultValue
+    @Bindable private var menuBar = DefaultsFlag.menuBar
     #endif
 
     init() {
@@ -56,7 +56,7 @@ struct EncaveApp: App {
             .environment(model)
             .frame(minWidth: 480, minHeight: 520)
         }
-        MenuBarExtra(isInserted: $showsMenuBarExtra) {
+        MenuBarExtra(isInserted: $menuBar.isOn) {
             CellarMenuBarContent()
                 .environment(model)
         } label: {
@@ -169,10 +169,10 @@ private struct HelpMenuButton: View {
 
 /// Cellar › Show as Table (⌥⌘T): the same switch as in the Cellar toolbar.
 private struct CellarTableToggle: View {
-    @AppStorage(CellarLayout.key) private var showsTable = false
+    @Bindable private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
-        Toggle("Show as Table", isOn: $showsTable)
+        Toggle("Show as Table", isOn: $layout.isOn)
             .keyboardShortcut("t", modifiers: [.command, .option])
     }
 }
