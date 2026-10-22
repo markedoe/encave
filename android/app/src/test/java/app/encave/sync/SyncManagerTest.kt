@@ -7,6 +7,7 @@ import app.encave.core.JsonFileCellarStore
 import app.encave.core.SampleData
 import app.encave.core.Wine
 import app.encave.core.containsSample
+import app.encave.core.sync.CellarKey
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.FileAccess
 import app.encave.core.sync.Mailbox
@@ -14,6 +15,7 @@ import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
 import app.encave.core.sync.MemoryMailboxStore
 import app.encave.core.sync.Membership
+import app.encave.core.sync.RemoteInfo
 import app.encave.core.sync.RemoteSyncError
 import app.encave.core.sync.RemoteSyncException
 import app.encave.core.sync.SyncHealth
@@ -99,6 +101,23 @@ class SyncManagerTest {
         // The key itself is in the Keystore, which tests do not have: its status says it is kept.
         assertTrue(sync.state.value.hasRemoteKey)
         assertEquals("https://relay.example", sync.state.value.remoteStorage)
+    }
+
+    @Test
+    fun turnedOffStaysOffWhenAnotherDeviceTellsItsStorage() = runBlocking {
+        sync.setUpIfNeeded()
+        addOther()
+        sync.turnOn(MemoryMailboxStore(), "https://relay.example")
+        sync.setRemoteStorage(null)
+        val cellarId = sync.state.value.membership!!.cellarId
+        val offer = RemoteInfo(CellarKey.random(cellarId), "https://relay.example")
+        sync.adoptRemote(offer)
+        assertNull(sync.storage.remoteStorage)
+        // Also after a restart.
+        assertTrue(SyncStorage(context).remoteTurnedOff)
+        // Picking a storage again here lifts it.
+        sync.turnOn(MemoryMailboxStore(), "https://relay.example")
+        assertFalse(sync.storage.remoteTurnedOff)
     }
 
     @Test

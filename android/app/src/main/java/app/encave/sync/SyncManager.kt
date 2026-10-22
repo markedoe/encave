@@ -886,6 +886,8 @@ class SyncManager(
         if (url == null) {
             storage.remoteStorage = null
             storage.webDavLogin = null
+            // Kept, as on Apple: another device on the network must not turn it back on.
+            storage.remoteTurnedOff = true
             synchronized(this) {
                 remoteLoop?.cancel()
                 remoteLoop = null
@@ -957,6 +959,7 @@ class SyncManager(
             }
         }
         if (login != null) storage.webDavLogin = login
+        storage.remoteTurnedOff = false
         storage.remoteStorage = storageString
         storage.peerUsesICloud = false
         // A key received meanwhile from a device on the network may supersede this one.
@@ -985,8 +988,9 @@ class SyncManager(
         }
         // Only a storage this device can use: an HTTPS relay or WebDAV folder. iCloud ("icloud")
         // is Apple-only. A WebDAV folder then asks for this device's own login.
+        // Not after the user turned it off here.
         val offered = info.storage?.let(::acceptedFromPeer)
-        if (storage.remoteStorage == null && offered != null) {
+        if (storage.remoteStorage == null && !storage.remoteTurnedOff && offered != null) {
             storage.remoteStorage = offered
             status.update { it.copy(remoteStorage = offered, needsWebDavSignIn = needsSignIn(offered)) }
             scheduleBackground()
