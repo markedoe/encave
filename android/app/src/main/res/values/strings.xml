@@ -324,7 +324,7 @@
     <string name="settings_export_csv">Export a spreadsheet (CSV)</string>
     <string name="settings_export_csv_body">One row per bottle</string>
     <string name="settings_import">Import a backup or a CSV file</string>
-    <string name="settings_import_body">A backup (ZIP or JSON) is shown first; a CSV adds what is not already in your cellar</string>
+    <string name="settings_import_body">A backup (ZIP or JSON) is shown first; a CSV adds its bottles to your cellar</string>
     <string name="settings_test_data">Test data</string>
     <string name="settings_sample_confirm_title">Load the sample cellar?</string>
     <string name="settings_sample_confirm_body">Sample bottles, racks and Journal entries fill your empty cellar so you can explore every screen. Erase all data removes them when you are ready to add your own.</string>
@@ -680,7 +680,7 @@
     <string name="help_data_title">Backup, export and import</string>
     <string name="help_data_summary">Keep a copy and move your cellar.</string>
     <string name="help_data_sync_title">Sync is not a backup</string>
-    <string name="help_data_sync">Sync keeps the same cellar on your devices: a bottle deleted by mistake, or **Erase all data**, is deleted on all of them. Keep backups too: they hold your cellar as it was.</string>
+    <string name="help_data_sync">Sync keeps the same cellar on your devices: a bottle deleted by mistake, or **Erase all data**, is deleted on all of them. Keep backups too: they hold your cellar as it was. Android’s cloud backup does not hold your cellar: keep your own backups.</string>
     <string name="help_data_versions_title">Previous versions</string>
     <string name="help_data_versions">Encave keeps a copy of your cellar on this device on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before, even if you did not open Encave for a while. Open **Settings › Your data › Previous versions**, choose a date to see what it holds and how it differs from your cellar, then restore it. The photos and documents a version needs are kept with it.</string>
     <string name="help_data_backup_title">Back up now</string>
@@ -694,7 +694,7 @@
     <string name="help_data_devices_title">Restoring and your other devices</string>
     <string name="help_data_devices">A restore is a change made on this device: the devices that sync with this one take it too. After **Replace this cellar**, what the backup brings back returns on them, and what is not in it is deleted on them. Their sync keys stay as they are: a backup never holds them.</string>
     <string name="help_data_csv_title">Spreadsheet</string>
-    <string name="help_data_csv">**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.</string>
+    <string name="help_data_csv">**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its place. Bottles on order, drunk or given away are included too, with their status and tasting notes. A CSV with at least a **name** column can be imported, including from another app.</string>
     <string name="help_privacy_title">Privacy</string>
     <string name="help_privacy_summary">Your cellar stays yours.</string>
     <string name="help_privacy_1">Your cellar, its photos and documents are kept on your devices, in Encave’s private storage, which Android encrypts. They are left out of Google cloud backups and move to a new phone only with a direct transfer from the old one. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.</string>
@@ -1006,7 +1006,7 @@
     <string name="pdf_page">Page %1$d of %2$d</string>
     <string name="msg_imported_elsewhere">Wines tasted elsewhere imported: %1$d</string>
     <string name="help_data_pdf_title">Printed inventory</string>
-    <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; Encave does not estimate market prices.</string>
+    <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.</string>
     <string name="help_data_other_title">Coming from another app</string>
     <string name="help_data_other">Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import from another app**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes wines tasted elsewhere in the Journal, with your ratings and notes. The file is read on this device.</string>
     <string name="action_scan_barcode">Scan the barcode</string>

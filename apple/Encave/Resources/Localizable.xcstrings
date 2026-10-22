@@ -1101,22 +1101,22 @@
         }
       }
     },
-    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "**Exporter un tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement."
-          }
-        }
-      }
-    },
     "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app."
+          }
+        }
+      }
+    },
+    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. Bottles on order, drunk or given away are included too, with their status and tasting notes.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec sa place. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation."
           }
         }
       }
@@ -1131,12 +1131,12 @@
         }
       }
     },
-    "**Inventory for Printing (PDF)** lists every wine with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory.": {
+    "**Inventory for Printing (PDF)** lists every wine in your cellar with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
+            "value": "**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses places et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
           }
         }
       }
@@ -3341,12 +3341,12 @@
         }
       }
     },
-    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after.": {
+    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after, unless the cellar changed since.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après."
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis."
           }
         }
       }
@@ -4996,7 +4996,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et commentaires. Le fichier est lu sur cet appareil."
+            "value": "Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, casier, case, prix…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et commentaires. Le fichier est lu sur cet appareil."
           }
         }
       }
@@ -11981,12 +11981,12 @@
         }
       }
     },
-    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.": {
+    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn off **Show Tonight in the Menu Bar** in Settings.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**."
+            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur place ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez **Afficher Ce soir dans la barre des menus** dans les Réglages."
           }
         }
       }
@@ -13851,12 +13851,12 @@
         }
       }
     },
-    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week when you open it, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, choose **Show Weekly Backups in Finder**. They are not in the iCloud backup of the device, which already holds your cellar, and they are removed with Encave. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
+    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week, when you use Encave or in the background, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's iCloud backup, which already holds your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine quand vous l’ouvrez, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et elles sont supprimées avec Encave. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
+            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine, quand vous utilisez Encave ou en arrière-plan, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, une fois la première faite, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Sur iPhone et iPad, elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et sont supprimées avec Encave ; sur un Mac, Time Machine ne les sauvegarde pas. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
           }
         }
       }

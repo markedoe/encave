@@ -323,7 +323,7 @@
     <string name="settings_export_csv">Exporter un tableur (CSV)</string>
     <string name="settings_export_csv_body">Une ligne par bouteille</string>
     <string name="settings_import">Importer une sauvegarde ou un fichier CSV</string>
-    <string name="settings_import_body">Une sauvegarde (ZIP ou JSON) est d’abord montrée ; un CSV ajoute ce qui n’est pas déjà dans votre cave</string>
+    <string name="settings_import_body">Une sauvegarde (ZIP ou JSON) est d’abord montrée ; un CSV ajoute ses bouteilles à votre cave</string>
     <string name="settings_test_data">Données de test</string>
     <string name="settings_sample_confirm_title">Charger la cave d’exemple ?</string>
     <string name="settings_sample_confirm_body">Des bouteilles, casiers et entrées du Journal d’exemple remplissent votre cave vide pour découvrir chaque écran. Effacer toutes les données les supprime quand vous êtes prêt à ajouter les vôtres.</string>
@@ -679,7 +679,7 @@
     <string name="help_data_title">Sauvegarde, export et import</string>
     <string name="help_data_summary">Gardez une copie et transférez votre cave.</string>
     <string name="help_data_sync_title">La synchronisation n’est pas une sauvegarde</string>
-    <string name="help_data_sync">La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était.</string>
+    <string name="help_data_sync">La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était. La sauvegarde en ligne d’Android ne contient pas votre cave : gardez vos propres sauvegardes.</string>
     <string name="help_data_versions_title">Versions précédentes</string>
     <string name="help_data_versions">Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant, même si vous n’avez pas ouvert Encave depuis longtemps. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle.</string>
     <string name="help_data_backup_title">Sauvegarder maintenant</string>
@@ -693,7 +693,7 @@
     <string name="help_data_devices_title">La restauration et vos autres appareils</string>
     <string name="help_data_devices">Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais.</string>
     <string name="help_data_csv_title">Tableur</string>
-    <string name="help_data_csv">**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec son emplacement. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.</string>
+    <string name="help_data_csv">**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec sa place. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.</string>
     <string name="help_privacy_title">Confidentialité</string>
     <string name="help_privacy_summary">Votre cave reste la vôtre.</string>
     <string name="help_privacy_1">Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage privé d’Encave, qu’Android chiffre. Ils sont exclus des sauvegardes Google dans le cloud et ne passent sur un nouveau téléphone que par un transfert direct depuis l’ancien. Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien.</string>
@@ -1005,9 +1005,9 @@
     <string name="pdf_page">Page %1$d sur %2$d</string>
     <string name="msg_imported_elsewhere">Vins goûtés ailleurs importés : %1$d</string>
     <string name="help_data_pdf_title">Inventaire imprimé</string>
-    <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; Encave n’estime pas les prix du marché.</string>
+    <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses places et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.</string>
     <string name="help_data_other_title">Venir d’une autre app</string>
-    <string name="help_data_other">Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, emplacement, case, prix, fenêtre de dégustation…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et commentaires. Le fichier est lu sur cet appareil.</string>
+    <string name="help_data_other">Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer depuis une autre app**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, casier, case, prix…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et commentaires. Le fichier est lu sur cet appareil.</string>
     <string name="action_scan_barcode">Scanner le code-barres</string>
     <string name="barcode_hint">Visez le code-barres de la bouteille</string>
     <string name="barcode_no_camera">Autorisez l’appareil photo pour scanner le code-barres, ou saisissez les chiffres en dessous.</string>
