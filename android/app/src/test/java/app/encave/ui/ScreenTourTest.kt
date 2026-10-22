@@ -547,7 +547,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.onNodeWithTag("rack.selection").assertDoesNotExist()
         // A wine in the key lights up its bottles.
         tap("rack.key.wine")
-        val chip = if (language == "fr") "Clos des Tilleuls 2017, 3 bouteilles" else "Clos des Tilleuls 2017, 3 bottles"
+        val chip = if (language == "fr") "Clos des Tilleuls 2017, Rouge, 3 bouteilles" else "Clos des Tilleuls 2017, Red, 3 bottles"
         compose.onNodeWithContentDescription(chip).assertIsSelected()
         capture("16-rack-key")
         tap("rack.key.wine")
