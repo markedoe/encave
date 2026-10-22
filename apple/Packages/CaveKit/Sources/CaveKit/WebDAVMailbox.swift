@@ -376,7 +376,12 @@ public enum LocalAddress {
         var host = host.lowercased()
         if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }
         if host == "localhost" || host.hasSuffix(".local") || host.hasSuffix(".home.arpa") { return true }
-        let octets = host.split(separator: ".", omittingEmptySubsequences: false).map { UInt8($0) }
+        // Decimal only, without leading zeros: "010" is 8 for some resolvers, a public address.
+        let octets = host.split(separator: ".", omittingEmptySubsequences: false).map { part -> UInt8? in
+            guard (1...3).contains(part.count), part.allSatisfy(\.isASCII), part.allSatisfy(\.isNumber),
+                  part == "0" || part.first != "0" else { return nil }
+            return UInt8(part)
+        }
         if octets.count == 4, !octets.contains(nil) {
             let a = octets[0]!, b = octets[1]!
             return a == 10 || a == 127 || (a == 172 && (16...31).contains(b)) || (a == 192 && b == 168) || (a == 169 && b == 254)

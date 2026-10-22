@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import app.encave.core.search.WebImageDownload
 import app.encave.core.search.WebImageResult
+import app.encave.core.search.SameHostRedirect
 import app.encave.core.search.WebSearchError
 import app.encave.core.search.WebSearchRequest
 import app.encave.core.search.imageProvider
@@ -108,52 +109,57 @@ object WebSearchClient {
         }
     }
 
+    /**
+     * Sends [request]: its status and text. Redirects are followed only on the same host, over
+     * HTTPS (or HTTP on the local network, see [SameHostRedirect]); any other is answered with
+     * its own status, so the search terms never go elsewhere or in clear text.
+     */
     private fun send(request: WebSearchRequest): Pair<Int, String> {
-        val connection = URL(request.url).openConnection() as HttpURLConnection
-        try {
-            connection.requestMethod = request.method
-            connection.connectTimeout = 20_000
-            connection.readTimeout = 30_000
-            connection.useCaches = false
-            request.headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
-            request.body?.let { body ->
-                connection.doOutput = true
-                connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
-            }
-            val status = connection.responseCode
-            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            return status to stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
-        } catch (error: IOException) {
-            throw WebSearchError.Server(0)
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    suspend fun search(query: String, settings: WebSearchSettings, apiKey: String?, count: Int = 10): List<WebSearchResult> =
-        withContext(Dispatchers.IO) {
-            val provider = settings.service.provider(apiKey, settings.serverUrl)
-            val request = provider.request(query, count)
-            val connection = URL(request.url).openConnection() as HttpURLConnection
+        var url = URL(request.url)
+        var method = request.method
+        var body = request.body
+        repeat(SameHostRedirect.MAX + 1) {
+            val connection = url.openConnection() as HttpURLConnection
             try {
-                connection.requestMethod = request.method
+                connection.instanceFollowRedirects = false
+                connection.requestMethod = method
                 connection.connectTimeout = 20_000
                 connection.readTimeout = 30_000
                 connection.useCaches = false
                 request.headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
-                request.body?.let { body ->
+                body?.let { text ->
                     connection.doOutput = true
-                    connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                    connection.outputStream.use { it.write(text.toByteArray(Charsets.UTF_8)) }
                 }
                 val status = connection.responseCode
+                if (status in REDIRECTS) {
+                    val next = connection.getHeaderField("Location")?.let { runCatching { URL(url, it) }.getOrNull() }
+                    if (next == null || !SameHostRedirect.allows(request.url, next.toString())) return status to ""
+                    // As browsers do: 303, and 301 or 302 after a POST, continue with a GET.
+                    if (status == 303 || (status != 307 && status != 308 && method == "POST")) {
+                        method = "GET"
+                        body = null
+                    }
+                    url = next
+                    return@repeat
+                }
                 val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-                val text = stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
-                provider.results(text, status)
+                return status to stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
             } catch (error: IOException) {
                 throw WebSearchError.Server(0)
             } finally {
                 connection.disconnect()
             }
         }
-}
+        throw WebSearchError.Server(0)
+    }
 
+    private val REDIRECTS = setOf(301, 302, 303, 307, 308)
+
+    suspend fun search(query: String, settings: WebSearchSettings, apiKey: String?, count: Int = 10): List<WebSearchResult> =
+        withContext(Dispatchers.IO) {
+            val provider = settings.service.provider(apiKey, settings.serverUrl)
+            val (status, text) = send(provider.request(query, count))
+            provider.results(text, status)
+        }
+}

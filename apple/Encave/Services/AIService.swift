@@ -557,7 +557,7 @@ enum AIService {
     /// Every request goes through here.
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
         guard isAllowed(request.url) else { throw AIServiceError.insecureURL }
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {
