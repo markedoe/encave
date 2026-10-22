@@ -4,11 +4,11 @@ import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
 import app.encave.R
-import app.encave.core.PhotoId
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.core.Slot
 import app.encave.core.Wine
+import app.encave.core.sync.PhotoId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
