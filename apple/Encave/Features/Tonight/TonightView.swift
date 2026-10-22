@@ -158,7 +158,7 @@ private struct EmptyTonightView: View {
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
+            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
     }
 }

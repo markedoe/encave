@@ -2641,16 +2641,6 @@
         }
       }
     },
-    "Both cellars are put together. Choose Replace with the other cellar if this device only has the sample cellar.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les deux caves sont réunies. Choisissez Remplacer par l’autre cave si cet appareil n’a que la cave d’exemple."
-          }
-        }
-      }
-    },
     "Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network.": {
       "localizations": {
         "fr": {
@@ -4921,22 +4911,12 @@
         }
       }
     },
-    "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.": {
+    "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time with **Back Up Now** in **Settings**, and report problems on the project page (**Source code** in **Settings › About**).": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet."
-          }
-        }
-      }
-    },
-    "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time with **Back Up Now** in **Settings**, and report problems on the project page.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps avec **Sauvegarder maintenant** dans les **Réglages** et signalez les problèmes sur la page du projet."
+            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps avec **Sauvegarder maintenant** dans les **Réglages** et signalez les problèmes sur la page du projet (**Code source** dans **Réglages › À propos**)."
           }
         }
       }
@@ -5197,16 +5177,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tout est facultatif et modifiable plus tard depuis le Journal."
-          }
-        }
-      }
-    },
-    "Example wines, racks and tastings to try Encave. Erase them later with Erase all data.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Des vins, casiers et dégustations d’exemple pour essayer Encave. Effacez-les ensuite avec Effacer toutes les données."
           }
         }
       }
@@ -8241,12 +8211,12 @@
         }
       }
     },
-    "On a new device with an empty cellar, **Join a Cellar from Another Device** shows how to bring in the cellar of your iPhone, iPad, Mac or Android: on that device, open **Settings › Devices › Add a Device** and type or scan the code it shows.": {
+    "On a new device with an empty cellar, tap **Join a Cellar from Another Device** on the Cellar screen. On the device that has your cellar (iPhone, iPad, Mac or Android), open **Settings › Devices › Add a Device**, then scan the QR code it shows (iPhone and iPad) or type its code.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur un nouvel appareil dont la cave est vide, **Rejoindre la cave d’un autre appareil** permet d’y faire venir la cave de votre iPhone, iPad, Mac ou Android : sur cet appareil, ouvrez **Réglages › Appareils › Ajouter un appareil** et saisissez ou scannez le code qu’il affiche."
+            "value": "Sur un nouvel appareil dont la cave est vide, touchez **Rejoindre la cave d’un autre appareil** sur l’écran Cave. Sur l’appareil qui a votre cave (iPhone, iPad, Mac ou Android), ouvrez **Réglages › Appareils › Ajouter un appareil**, puis scannez le code QR qu’il affiche (iPhone et iPad) ou saisissez son code."
           }
         }
       }
@@ -12461,12 +12431,12 @@
         }
       }
     },
-    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it on in **Tonight** or in **Settings**.": {
+    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn on **Show Tonight in the Menu Bar** in the Tonight toolbar or in **Settings**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Activez-le dans **Ce soir** ou dans les **Réglages**."
+            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur place ; cliquez sur l’une d’elles pour l’ouvrir. Activez **Afficher Ce soir dans la barre des menus** dans la barre d’outils de Ce soir ou dans les **Réglages**."
           }
         }
       }
@@ -14061,12 +14031,12 @@
         }
       }
     },
-    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm.": {
+    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation."
+            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander."
           }
         }
       }
@@ -14141,12 +14111,12 @@
         }
       }
     },
-    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. Joining a cellar from another device replaces the sample on its own.": {
+    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar or Tonight screen, or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. When this device holds only the sample, joining a cellar from another device replaces it without asking; if you added bottles too, choose **Remove Sample** first.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave vide ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave retire seulement eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Rejoindre la cave d’un autre appareil remplace l’exemple de lui-même."
+            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave ou Ce soir vide, ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave ne retire qu’eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Si cet appareil n’a que l’exemple, rejoindre la cave d’un autre appareil le remplace sans rien demander ; si vous avez aussi ajouté des bouteilles, touchez d’abord **Retirer l’exemple**."
           }
         }
       }
