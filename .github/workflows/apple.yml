@@ -16,9 +16,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a branch cancels that branch's older run. Runs on main are never
+# cancelled (each one brings a build to the TestFlight testers once its tour passes),
+# and get a group of their own so that they never wait for each other either.
 concurrency:
-  group: apple-${{ github.ref }}
-  cancel-in-progress: true
+  group: apple-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   cavekit:
