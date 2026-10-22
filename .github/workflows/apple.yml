@@ -130,8 +130,8 @@ jobs:
     # Mac launch test, so fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    # Two simulators and the Mac in one job: about 65 minutes now.
-    timeout-minutes: 100
+    # Two simulators and the Mac in one job: 70 to 95 minutes now.
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: apple
@@ -148,6 +148,30 @@ jobs:
         run: |
           brew install xcodegen xcbeautify
           xcodegen generate
+
+      - name: Mac screenshots
+        if: ${{ !cancelled() }}
+        # Each section with the sample cellar, English and French, light and dark, at the
+        # App Store size (2880x1800), on a HiDPI virtual display: see the script. Not a
+        # gate for the external testers: a failure shows as a warning.
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd-mac" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            | xcbeautify --renderer github-actions
+          tools/mac-screenshots.sh "$RUNNER_TEMP/dd-mac/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
+
+      - name: Upload Mac screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mac-screens
+          path: ${{ runner.temp }}/mac-screens
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: iPhone and iPad
         run: |
@@ -183,33 +207,10 @@ jobs:
           done
           exit $status
 
-      - name: Mac screenshots
-        if: ${{ !cancelled() }}
-        # Each section with the sample cellar, English and French, light and dark, at the
-        # App Store size (2880x1800), on a HiDPI virtual display: see the script. Not a
-        # gate for the external testers: a failure shows as a warning.
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
-            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd-mac" \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
-            | xcbeautify --renderer github-actions
-          tools/mac-screenshots.sh "$RUNNER_TEMP/dd-mac/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
-
-      - name: Upload Mac screenshots
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: mac-screens
-          path: ${{ runner.temp }}/mac-screens
-          retention-days: 7
-          if-no-files-found: ignore
-
       - name: Mac
         if: ${{ !cancelled() }}
         # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
-        # failed); the Mac screenshots above show each section.
+        # failed); the Mac screenshots, taken first, show each section.
         continue-on-error: true
         run: |
           set -o pipefail
