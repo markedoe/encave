@@ -3,9 +3,9 @@ name: Apple apps
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apple/**", "design/**", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apple/**", "design/**", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   workflow_dispatch:
 
 permissions:
@@ -60,6 +60,7 @@ jobs:
             -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
             | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
 
       - name: Launch twice and report crashes
         run: |
@@ -284,10 +285,12 @@ jobs:
         if: env.UPLOAD != 'true'
         run: |
           set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme Encave \
+          xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
             -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac \
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -derivedDataPath "$RUNNER_TEMP/dd" \
             -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app" \
+            "$RUNNER_TEMP/dd/Build/Products/Debug/Encave.app"
 
       - name: App Store Connect key
         id: key
@@ -319,6 +322,7 @@ jobs:
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
@@ -337,6 +341,7 @@ jobs:
             -destination 'generic/platform=macOS' -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions

@@ -35,6 +35,10 @@ targetTemplates:
     type: application
     sources:
       - path: Encave
+        excludes: [Resources/PrivacyInfo.xcprivacy]
+      # The privacy manifest, copied into both apps (checked in CI).
+      - path: Encave/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
     dependencies:
       - package: CaveKit
     settings:
