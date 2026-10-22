@@ -38,29 +38,62 @@ enum StudioPhoto {
         return folder
     }()
 
+    /// Makes the studio versions one at a time, a photo asked for by several views
+    /// only once, so a long list of new photos does not run Vision on all of them at once.
+    private static let renderer = Renderer()
+
     /// The cut-out image, transparent around the subject, from the cache or made
     /// now. Nil when nothing stands out clearly: the photo is then shown as taken.
     static func cutout(for photoID: String, maxPixelSize: Int) async -> CGImage? {
-        await Task.detached(priority: .utility) {
-            studioData(for: photoID).flatMap { PhotoStore.cgImage(from: $0, maxPixelSize: maxPixelSize) }
-        }.value
+        let cached = await Task.detached(priority: .utility) { cachedData(for: photoID) }.value
+        let made: Data?
+        if let cached {
+            made = cached
+        } else {
+            made = await renderer.data(for: photoID)
+        }
+        guard let data = made else { return nil }
+        return await Task.detached(priority: .utility) { PhotoStore.cgImage(from: data, maxPixelSize: maxPixelSize) }.value
     }
 
-    /// PNG of the studio version. A photo with no usable result is remembered so
-    /// it is not tried again.
+    /// The cached PNG (`.some(nil)` when the photo gave nothing before), or nil when not made yet.
+    private static func cachedData(for photoID: String) -> Data?? {
+        guard PhotoStore.isSafe(photoID), let folder else { return .some(nil) }
+        if let data = try? Data(contentsOf: folder.appendingPathComponent("\(photoID).png")) { return data }
+        if FileManager.default.fileExists(atPath: folder.appendingPathComponent("\(photoID).none").path) { return .some(nil) }
+        return nil
+    }
+
+    /// PNG of the studio version, made and cached now. A photo with no usable result
+    /// is remembered so it is not tried again.
     private static func studioData(for photoID: String) -> Data? {
-        guard PhotoStore.isSafe(photoID), let folder else { return nil }
-        let png = folder.appendingPathComponent("\(photoID).png")
-        let none = folder.appendingPathComponent("\(photoID).none")
-        if let data = try? Data(contentsOf: png) { return data }
-        if FileManager.default.fileExists(atPath: none.path) { return nil }
-        guard PhotoStore.exists(photoID) else { return nil }
+        if let cached = cachedData(for: photoID) { return cached }
+        guard let folder, PhotoStore.exists(photoID) else { return nil }
         if let data = make(photoID) {
-            try? data.write(to: png, options: [.atomic])
+            try? data.write(to: folder.appendingPathComponent("\(photoID).png"), options: [.atomic])
             return data
         }
-        FileManager.default.createFile(atPath: none.path, contents: nil)
+        FileManager.default.createFile(atPath: folder.appendingPathComponent("\(photoID).none").path, contents: nil)
         return nil
+    }
+
+    private actor Renderer {
+        private var running: [String: Task<Data?, Never>] = [:]
+        private var last: Task<Data?, Never>?
+
+        func data(for photoID: String) async -> Data? {
+            if let task = running[photoID] { return await task.value }
+            let previous = last
+            let task = Task.detached(priority: .utility) { () -> Data? in
+                _ = await previous?.value
+                return StudioPhoto.studioData(for: photoID)
+            }
+            running[photoID] = task
+            last = task
+            let result = await task.value
+            running[photoID] = nil
+            return result
+        }
     }
 
     private static func make(_ photoID: String) -> Data? {
