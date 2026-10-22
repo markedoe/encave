@@ -127,6 +127,9 @@ struct DevicesView: View {
                         Label("Tell Me About Changes from Other Devices", systemImage: "bell.badge")
                     }
                     .accessibilityIdentifier("devices.notifyChanges")
+                    if notificationsRefused {
+                        NotificationSettingsButton()
+                    }
                 } footer: {
                     if notificationsRefused {
                         Text("Notifications are off for Encave. Turn them on in the system settings.")

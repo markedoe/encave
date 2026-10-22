@@ -18,6 +18,11 @@ data class PairingSuggestion(
     val reasons: List<PairingReason>,
 ) {
     val id: UUID get() = group.id
+
+    companion object {
+        /** From this score, the apps say "Great match" (the score itself is not shown). */
+        const val GREAT_MATCH = 60
+    }
 }
 
 enum class PairingReason { Style, Grape, Region, ReadyToDrink }

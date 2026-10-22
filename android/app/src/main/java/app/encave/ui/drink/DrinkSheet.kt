@@ -11,13 +11,29 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.LocalBar
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.SheetValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.dp
+import app.encave.core.Occasion
+import app.encave.ui.components.labelRes
+import app.encave.core.drinkChoices
+import app.encave.ui.components.rememberForgetRetained
+import app.encave.ui.components.rememberRetained
+import kotlinx.coroutines.launch
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -26,7 +42,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -40,7 +55,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -72,23 +86,25 @@ class TastingFormState(initial: Tasting) {
     var palate by mutableStateOf(initial.palate.orEmpty())
     var finish by mutableStateOf(initial.finish.orEmpty())
     var food by mutableStateOf(initial.foodPairing.orEmpty())
-    var detailed by mutableStateOf(initial.isDetailed)
+
+    /** The full tasting note is shown: a disclosure only, what it holds is always saved. */
+    var expanded by mutableStateOf(initial.isDetailed)
 
     fun toTasting(): Tasting {
         fun String.orNull() = trim().ifEmpty { null }
         return Tasting(
             date = date, rating = rating, note = note.orNull(), occasion = occasion.orNull(),
-            appearance = appearance.orNull().takeIf { detailed }, nose = nose.orNull().takeIf { detailed },
-            palate = palate.orNull().takeIf { detailed }, finish = finish.orNull().takeIf { detailed },
-            foodPairing = food.orNull().takeIf { detailed },
+            appearance = appearance.orNull(), nose = nose.orNull(), palate = palate.orNull(),
+            finish = finish.orNull(), foodPairing = food.orNull(),
         )
     }
+
+    /** The tasting as the form opened, to know whether something changed. */
+    private val original: Tasting = toTasting()
+
+    val isDirty: Boolean get() = toTasting() != original
 }
 
-private val occasionLabels = listOf(
-    R.string.occasion_dinner, R.string.occasion_friends, R.string.occasion_celebration,
-    R.string.occasion_weeknight, R.string.occasion_tasting,
-)
 
 /** Rating, note, occasion and date, plus the optional full tasting note. */
 @Composable
@@ -107,11 +123,13 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
         )
         Text(stringResource(R.string.field_occasion), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            occasionLabels.forEach { id ->
-                val label = stringResource(id)
+            // A note written in another language still shows its chip as chosen.
+            val chosen = Occasion.matching(state.occasion)
+            Occasion.entries.forEach { occasion ->
+                val label = stringResource(occasion.labelRes)
                 FilterChip(
-                    selected = state.occasion == label,
-                    onClick = { state.occasion = if (state.occasion == label) "" else label },
+                    selected = chosen == occasion,
+                    onClick = { state.occasion = if (chosen == occasion) "" else label },
                     label = { Text(label) },
                 )
             }
@@ -128,17 +146,22 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
             leadingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = stringResource(R.string.field_date)) },
         )
         Hint(stringResource(R.string.help_tasting_footer))
+        // Shows or hides the fields; what they hold is kept either way.
+        val expandedLabel = stringResource(if (state.expanded) R.string.state_expanded else R.string.state_collapsed)
         Row(
             Modifier
                 .fillMaxWidth()
-                .toggleable(value = state.detailed, role = Role.Switch, onValueChange = { state.detailed = it })
+                .clickable(onClickLabel = stringResource(if (state.expanded) R.string.action_collapse else R.string.action_expand)) {
+                    state.expanded = !state.expanded
+                }
+                .semantics { stateDescription = expandedLabel }
                 .padding(vertical = Dimens.s),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.drink_full_note), Modifier.weight(1f).padding(end = Dimens.l), style = MaterialTheme.typography.bodyLarge)
-            Switch(checked = state.detailed, onCheckedChange = null)
+            Icon(if (state.expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = null)
         }
-        if (state.detailed) {
+        if (state.expanded) {
             Hint(stringResource(R.string.help_full_note_footer))
             listOf(
                 Triple(R.string.field_appearance to R.string.help_field_appearance, state.appearance) { v: String -> state.appearance = v },
@@ -193,32 +216,77 @@ fun DateDialog(initial: Instant?, onPick: (Instant?) -> Unit, onDismiss: () -> U
     ) { DatePicker(state) }
 }
 
+/** "Discard this note?", before closing a form whose note changed. */
+@Composable
+fun DiscardNoteDialog(onDiscard: () -> Unit, onKeepEditing: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onKeepEditing,
+        title = { Text(stringResource(R.string.discard_note_title)) },
+        confirmButton = {
+            TextButton(onClick = onDiscard, modifier = Modifier.testTag("discard.confirm")) {
+                Text(stringResource(R.string.action_discard), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = { TextButton(onClick = onKeepEditing) { Text(stringResource(R.string.action_keep_editing)) } },
+    )
+}
+
+/** Which bottle's drink sheet is open, by id: kept when the activity is recreated (rotation…). */
+@Composable
+fun rememberDrinking() = rememberSaveable { mutableStateOf<String?>(null) }
+
 /**
- * Short sheet to record a bottle being opened: which bottle, rating, note,
- * occasion and date. The snackbar that follows offers Undo.
+ * Short sheet to record a bottle being opened: which bottle (one per place, the free ones
+ * first), rating, note, occasion and date. The snackbar that follows offers Undo. The form
+ * is kept when the activity is recreated, and closing it with a changed note asks first.
+ * [bottleId]: the bottle chosen at first, usually the wine's bottleToOpen.
  */
 @Composable
 fun DrinkSheet(
     cellar: Cellar,
-    bottles: List<Bottle>,
-    initialBottleId: java.util.UUID? = null,
+    bottleId: String,
     onDismiss: () -> Unit,
     onDrink: (Bottle, Tasting) -> Unit,
 ) {
-    if (bottles.isEmpty()) return
-    val wine = cellar.wines[bottles.first().wineId]
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val form = remember { TastingFormState(Tasting()) }
-    // One choice per distinct location; bottles in the same place are interchangeable.
-    val choices = remember(bottles) {
-        bottles.distinctBy { it.slot ?: it.storageNote.orEmpty() }
+    val opened = cellar.bottles.values.firstOrNull { it.id.toString() == bottleId && it.status == Bottle.Status.InCellar }
+    if (opened == null) {
+        // Opened or removed meanwhile (on another device).
+        LaunchedEffect(Unit) { onDismiss() }
+        return
     }
-    var chosenId by rememberSaveable { mutableStateOf((initialBottleId ?: choices.first().id).toString()) }
-    val chosen = bottles.firstOrNull { it.id.toString() == chosenId } ?: choices.first()
+    val wine = cellar.wines[opened.wineId]
+    val formKey = "drink.form.${opened.wineId}"
+    val form = rememberRetained(formKey) { TastingFormState(Tasting()) }
+    val forget = rememberForgetRetained()
+    // One choice per place; the bottle the sheet opened with stands for its own.
+    val choices = remember(cellar, opened.id) {
+        (listOf(opened) + cellar.bottlesOf(opened.wineId).filter { it.id != opened.id }).drinkChoices
+    }
+    var chosenId by rememberSaveable(bottleId) { mutableStateOf(bottleId) }
+    val chosen = choices.firstOrNull { it.id.toString() == chosenId } ?: opened
+    var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        // A swipe down with a changed note asks instead of closing.
+        confirmValueChange = { value ->
+            if (value == SheetValue.Hidden && form.isDirty) {
+                confirmingDiscard = true
+                false
+            } else {
+                true
+            }
+        },
+    )
+    fun close() {
+        forget(formKey)
+        onDismiss()
+    }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    ModalBottomSheet(onDismissRequest = { if (form.isDirty) confirmingDiscard = true else close() }, sheetState = sheetState) {
         Column(
             Modifier
+                .testTag("drink.sheet")
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimens.xl)
                 .padding(bottom = Dimens.l)
@@ -241,10 +309,19 @@ fun DrinkSheet(
                 Text(stringResource(R.string.drink_which), style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                     choices.forEach { bottle ->
+                        val location = cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)
+                        val occasion = bottle.reservedFor
                         FilterChip(
                             selected = bottle.id == chosen.id,
                             onClick = { chosenId = bottle.id.toString() },
-                            label = { Text(cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)) },
+                            // A kept bottle says so in words and with a gift, not by color alone.
+                            label = { Text(if (occasion != null) stringResource(R.string.drink_choice_kept, location, occasion) else location) },
+                            leadingIcon = if (occasion != null) {
+                                { Icon(Icons.Outlined.CardGiftcard, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.testTag(if (occasion != null) "drink.choice.kept" else "drink.choice"),
                         )
                     }
                 }
@@ -256,10 +333,26 @@ fun DrinkSheet(
             }
             TastingFields(form)
             Button(
-                onClick = { onDrink(chosen, form.toTasting()); onDismiss() },
+                onClick = {
+                    onDrink(chosen, form.toTasting())
+                    close()
+                },
                 modifier = Modifier.fillMaxWidth().testTag("action.drink_confirm"),
             ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
             HelpLink(HelpTopic.Drinking, R.string.help_link_tasting)
         }
+    }
+    if (confirmingDiscard) {
+        DiscardNoteDialog(
+            onDiscard = {
+                confirmingDiscard = false
+                close()
+            },
+            onKeepEditing = {
+                confirmingDiscard = false
+                // Back or a tap outside may have started to close the sheet.
+                scope.launch { sheetState.show() }
+            },
+        )
     }
 }

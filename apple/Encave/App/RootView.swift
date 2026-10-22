@@ -35,6 +35,7 @@ struct RootView: View {
         }
         #endif
         .sensoryFeedback(.success, trigger: model.successCount)
+        .sensoryFeedback(.selection, trigger: model.selectionCount)
         // encave://pair?code=…: the pairing QR code scanned with the system camera. Opens
         // Join with the code filled in; the user still chooses and taps Join.
         .onOpenURL { url in

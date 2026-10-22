@@ -6,7 +6,13 @@ struct FoodPairingView: View {
     @Environment(CellarModel.self) private var model
     /// Mac columns: the wine opens beside the list, as from Tonight, instead of being pushed.
     var selection: Binding<UUID?>?
-    @State private var dish: DishCategory = .redMeat
+    /// The last dish chosen, on this device.
+    @AppStorage("pairing.dish") private var dishName = DishCategory.redMeat.rawValue
+
+    private var dish: DishCategory {
+        get { DishCategory(rawValue: dishName) ?? .redMeat }
+        nonmutating set { dishName = newValue.rawValue }
+    }
 
     var body: some View {
         let suggestions = model.cellar.pairings(for: dish, year: model.currentYear)
@@ -53,6 +59,11 @@ struct FoodPairingView: View {
                 ForEach(suggestions) { suggestion in
                     let row = VStack(alignment: .leading, spacing: 6) {
                         WineRow(group: suggestion.group)
+                        if suggestion.score >= PairingSuggestion.greatMatch {
+                            Label("Great match", systemImage: "star.fill")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color.accentColor)
+                        }
                         Text(reasonText(suggestion.reasons))
                             .font(.caption)
                             .foregroundStyle(.secondary)

@@ -75,10 +75,12 @@ class SmokeTest {
     @Test
     fun tonightAndPairing() {
         tab("Tonight")
-        compose.onNodeWithText("What are you eating?").performClick()
+        compose.onNodeWithText("Find the right bottle for your dish").performClick()
         compose.onNodeWithText("Fish").performClick()
         compose.waitForIdle()
-        compose.onAllNodes(hasText("100% match", substring = true)).onFirst().assertExists()
+        // The best matches say so in words; no percentage.
+        compose.onAllNodes(hasText("Great match")).onFirst().assertExists()
+        compose.onAllNodes(hasText("% match", substring = true)).assertCountEquals(0)
     }
 
     @Test
@@ -91,6 +93,12 @@ class SmokeTest {
         compose.onAllNodes(hasContentDescription("Vieilles Vignes", substring = true) and hasContentDescription(", Red, ", substring = true))
             .onFirst().assertExists()
         compose.onAllNodesWithTag("journal.row.cellar").onFirst().assertHasClickAction()
+        // Bottles from the cellar: a long-press menu, and the same actions for TalkBack.
+        compose.onAllNodes(
+            hasContentDescription("From my cellar", substring = true) and
+                SemanticsMatcher.keyIsDefined(SemanticsActions.OnLongClick) and
+                SemanticsMatcher.keyIsDefined(SemanticsActions.CustomActions),
+        ).onFirst().assertHasClickAction()
         compose.onAllNodes(
             hasContentDescription("Tasted elsewhere", substring = true) and
                 SemanticsMatcher.keyIsDefined(SemanticsActions.OnLongClick) and
