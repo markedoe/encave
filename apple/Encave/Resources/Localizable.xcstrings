@@ -861,6 +861,16 @@
         }
       }
     },
+    "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux."
+          }
+        }
+      }
+    },
     "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.": {
       "localizations": {
         "fr": {
@@ -1291,6 +1301,16 @@
         }
       }
     },
+    "Add Bottles…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter des bouteilles…"
+          }
+        }
+      }
+    },
     "Add Rack": {
       "localizations": {
         "fr": {
@@ -1357,6 +1377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une bouteille dans ce casier"
+          }
+        }
+      }
+    },
+    "Add a Bottle…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une bouteille…"
           }
         }
       }
@@ -1647,6 +1677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déjà dans votre cave ?"
+          }
+        }
+      }
+    },
+    "Already using Encave?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous utilisez déjà Encave ?"
           }
         }
       }
@@ -2127,6 +2167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bistrot sur le port, Lisbonne"
+          }
+        }
+      }
+    },
+    "Both cellars are put together.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les deux caves sont réunies."
           }
         }
       }
@@ -3411,6 +3461,16 @@
         }
       }
     },
+    "Delete the selected wine; on the Mac, the Delete key does too": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le vin sélectionné ; sur le Mac, la touche Supprimer aussi"
+          }
+        }
+      }
+    },
     "Delete these wines?": {
       "localizations": {
         "fr": {
@@ -3711,6 +3771,16 @@
         }
       }
     },
+    "Display": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichage"
+          }
+        }
+      }
+    },
     "Document": {
       "localizations": {
         "fr": {
@@ -3871,6 +3941,26 @@
         }
       }
     },
+    "Drink a Bottle…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boire une bouteille…"
+          }
+        }
+      }
+    },
+    "Drink a bottle of the selected wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boire une bouteille du vin sélectionné"
+          }
+        }
+      }
+    },
     "Drink soon": {
       "localizations": {
         "fr": {
@@ -4021,6 +4111,26 @@
         }
       }
     },
+    "Edit Wine…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le vin…"
+          }
+        }
+      }
+    },
+    "Edit the selected wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le vin sélectionné"
+          }
+        }
+      }
+    },
     "Edits the drinking window.": {
       "localizations": {
         "fr": {
@@ -4097,6 +4207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet."
+          }
+        }
+      }
+    },
+    "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time with **Back Up Now** in **Settings**, and report problems on the project page.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps avec **Sauvegarder maintenant** dans les **Réglages** et signalez les problèmes sur la page du projet."
           }
         }
       }
@@ -4357,6 +4477,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Des vins, casiers et dégustations d’exemple pour essayer Encave. Effacez-les ensuite avec Effacer toutes les données."
+          }
+        }
+      }
+    },
+    "Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des vins, casiers et dégustations d’exemple pour essayer Encave. Retirez-les quand vous voulez avec Retirer l’exemple en haut de la Cave."
           }
         }
       }
@@ -5491,6 +5621,16 @@
         }
       }
     },
+    "Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses vins, casiers et entrées du Journal sont des exemples. Retirez-les quand vous êtes prêt à ajouter vos bouteilles ; celles que vous avez ajoutées restent."
+          }
+        }
+      }
+    },
     "JSON": {
       "localizations": {
         "fr": {
@@ -5527,6 +5667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rejoindre une cave"
+          }
+        }
+      }
+    },
+    "Join a Cellar from Another Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoindre la cave d’un autre appareil"
           }
         }
       }
@@ -6381,6 +6531,26 @@
         }
       }
     },
+    "New Window": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelle fenêtre"
+          }
+        }
+      }
+    },
+    "New window (Mac and iPad)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelle fenêtre (Mac et iPad)"
+          }
+        }
+      }
+    },
     "New zone from this shelf": {
       "localizations": {
         "fr": {
@@ -7017,6 +7187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible."
+          }
+        }
+      }
+    },
+    "On a new device with an empty cellar, **Join a Cellar from Another Device** shows how to bring in the cellar of your iPhone, iPad, Mac or Android: on that device, open **Settings › Devices › Add a Device** and type or scan the code it shows.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur un nouvel appareil dont la cave est vide, **Rejoindre la cave d’un autre appareil** permet d’y faire venir la cave de votre iPhone, iPad, Mac ou Android : sur cet appareil, ouvrez **Réglages › Appareils › Ajouter un appareil** et saisissez ou scannez le code qu’il affiche."
           }
         }
       }
@@ -7886,7 +8066,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ranger dans un casier"
+            "value": "Placer dans un casier"
           }
         }
       }
@@ -8491,6 +8671,16 @@
         }
       }
     },
+    "Remove Sample": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer l’exemple"
+          }
+        }
+      }
+    },
     "Remove This Picture": {
       "localizations": {
         "fr": {
@@ -8607,6 +8797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réservation retirée"
+          }
+        }
+      }
+    },
+    "Reset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser"
           }
         }
       }
@@ -8817,6 +9017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cave d’exemple chargée"
+          }
+        }
+      }
+    },
+    "Sample cellar removed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave d’exemple retirée"
           }
         }
       }
@@ -9051,12 +9261,12 @@
         }
       }
     },
-    "Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.": {
+    "Search or choose filters, then **Save This Search…** in the **Sort and Filter** menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu de tri. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
+            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu **Trier et filtrer**. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
           }
         }
       }
@@ -9117,6 +9327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche…"
+          }
+        }
+      }
+    },
+    "Select": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionner"
           }
         }
       }
@@ -9831,6 +10051,16 @@
         }
       }
     },
+    "Sort and Filter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trier et filtrer"
+          }
+        }
+      }
+    },
     "Sort by": {
       "localizations": {
         "fr": {
@@ -9887,6 +10117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lancez un modèle de vision avec : vllm serve <modèle> --host 0.0.0.0. Si vous utilisez --api-key, saisissez la même clé ici."
+          }
+        }
+      }
+    },
+    "Start again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommencer"
           }
         }
       }
@@ -10157,6 +10397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Synchronisez votre cave entre iPhone, iPad et Mac, chiffrée de bout en bout."
+          }
+        }
+      }
+    },
+    "Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisez votre cave avec vos autres appareils (iPhone, iPad, Mac ou Android), chiffrée de bout en bout."
           }
         }
       }
@@ -10801,12 +11051,12 @@
         }
       }
     },
-    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.": {
+    "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it on in **Tonight** or in **Settings**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**."
+            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Activez-le dans **Ce soir** ou dans les **Réglages**."
           }
         }
       }
@@ -11007,6 +11257,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La cave d’exemple est proposée tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec celui-ci."
+          }
+        }
+      }
+    },
+    "The sample cellar on this device will be replaced.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave d’exemple de cet appareil sera remplacée."
           }
         }
       }
@@ -11627,6 +11887,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Try Encave": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayer Encave"
           }
         }
       }
@@ -12341,6 +12611,16 @@
         }
       }
     },
+    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. Joining a cellar from another device replaces the sample on its own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave vide ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave retire seulement eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Rejoindre la cave d’un autre appareil remplace l’exemple de lui-même."
+          }
+        }
+      }
+    },
     "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings**) fills it with example wines to explore every screen. **Erase all data** in Settings removes them when you are ready to add your own bottles; in a cellar shared with other devices, it erases it on them too.": {
       "localizations": {
         "fr": {
@@ -12631,6 +12911,16 @@
         }
       }
     },
+    "You are exploring the sample cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous explorez la cave d’exemple"
+          }
+        }
+      }
+    },
     "Your AI and web search keys, your WebDAV login, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
       "localizations": {
         "fr": {
@@ -12671,12 +12961,12 @@
         }
       }
     },
-    "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.": {
+    "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Vos données."
+            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages."
           }
         }
       }
@@ -13231,6 +13521,16 @@
         }
       }
     },
+    "⌃⌘N": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌃⌘N"
+          }
+        }
+      }
+    },
     "⌘+ / ⌘–": {
       "localizations": {
         "fr": {
@@ -13251,6 +13551,26 @@
         }
       }
     },
+    "⌘D": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘D"
+          }
+        }
+      }
+    },
+    "⌘E": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘E"
+          }
+        }
+      }
+    },
     "⌘N": {
       "localizations": {
         "fr": {
@@ -13267,6 +13587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌘Z"
+          }
+        }
+      }
+    },
+    "⌘⌫": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘⌫"
           }
         }
       }

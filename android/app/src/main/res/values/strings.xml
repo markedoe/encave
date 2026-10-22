@@ -28,6 +28,8 @@
     <string name="action_sort">Sort</string>
     <string name="action_clear_search">Clear search</string>
     <string name="action_load_sample">Load sample cellar</string>
+    <string name="action_remove_sample">Remove sample</string>
+    <string name="action_join_cellar">Join a cellar from another device</string>
     <string name="action_add_rack">Add rack</string>
     <string name="action_reorder">Reorder racks</string>
     <string name="action_move_up">Move %1$s up</string>
@@ -275,7 +277,7 @@
     <string name="chart_item">%1$s: %2$d</string>
     <string name="settings_cellar">Cellar</string>
     <string name="settings_currency">Default currency</string>
-    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance">Display</string>
     <string name="settings_dynamic_color">Use wallpaper colors</string>
     <string name="settings_dynamic_color_body">Material You colors instead of the Encave burgundy</string>
     <string name="settings_studio_look">Studio look for label photos</string>
@@ -328,9 +330,10 @@
     <string name="settings_export_csv_body">One row per bottle</string>
     <string name="settings_import">Import a backup or a CSV file</string>
     <string name="settings_import_body">A backup (ZIP or JSON) is shown first; a CSV adds what is not already in your cellar</string>
-    <string name="settings_test_data">Test data</string>
+    <string name="settings_try">Try Encave</string>
+    <string name="settings_reset">Reset</string>
     <string name="settings_sample_confirm_title">Load the sample cellar?</string>
-    <string name="settings_sample_confirm_body">Sample bottles, racks and Journal entries fill your empty cellar so you can explore every screen. Erase all data removes them when you are ready to add your own.</string>
+    <string name="settings_sample_confirm_body">Sample bottles, racks and Journal entries fill your empty cellar so you can explore every screen. Remove them at any time with Remove sample at the top of the Cellar.</string>
     <string name="settings_sample_body">Offered while the cellar is empty and no other device syncs with this one.</string>
     <string name="settings_erase">Erase all data</string>
     <string name="settings_erase_title">Erase all data?</string>
@@ -344,7 +347,7 @@
     <string name="settings_beta">Beta</string>
     <string name="settings_beta_note">Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.</string>
     <string name="help_start_beta_title">Beta version</string>
-    <string name="help_start_beta">Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.</string>
+    <string name="help_start_beta">Encave is in beta: features can still change and some bugs remain. Make a backup from time to time with **Back up now** in **Settings**, and report problems on the project page.</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Source code</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
@@ -353,6 +356,7 @@
     <string name="msg_imported">Imported. Wines: %1$d, bottles: %2$d</string>
     <string name="msg_imported_skipped">Imported. Wines: %1$d, bottles: %2$d, rows skipped: %3$d</string>
     <string name="msg_sample_loaded">Sample cellar loaded</string>
+    <string name="msg_sample_removed">Sample cellar removed</string>
     <string name="msg_erased">All data erased</string>
     <string name="settings_ai">AI label recognition</string>
     <string name="settings_ai_off_body">Optional. Reads labels from a photo with the AI service you choose, using your own API key.</string>
@@ -596,7 +600,13 @@
     <string name="help_start_tonight">What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.</string>
     <string name="help_start_journal">Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.</string>
     <string name="help_start_try_title">Try it</string>
-    <string name="help_start_try">While your cellar is empty and no other device syncs with this one, **Load sample cellar** (on the Cellar screen or in **Settings**) fills it with examples to explore every screen. **Erase all data** in **Settings** removes them when you are ready to add your own bottles; it also erases the cellar on the devices that sync with this one.</string>
+    <string name="help_start_try">While your cellar is empty and no other device syncs with this one, **Load sample cellar** (on the Cellar screen or in **Settings › Try Encave**) fills it with examples to explore every screen. While they are there, **Remove sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. Joining a cellar from another device replaces the sample on its own.</string>
+    <string name="cellar_sample_title">You are exploring the sample cellar</string>
+    <string name="cellar_sample_body">Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.</string>
+    <string name="help_start_join_title">Already using Encave?</string>
+    <string name="help_start_join">On a new device with an empty cellar, **Join a cellar from another device** shows how to bring in the cellar of your iPhone, iPad, Mac or Android: on that device, open **Settings › Devices › Add a device** and type or scan the code it shows.</string>
+    <string name="help_start_reset_title">Start again</string>
+    <string name="help_start_reset">**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too.</string>
     <string name="help_adding_title">Adding bottles</string>
     <string name="help_adding_summary">A new wine, or more bottles of one you already have.</string>
     <string name="help_adding_existing_title">Already in your cellar?</string>
@@ -697,7 +707,7 @@
     <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.</string>
     <string name="help_privacy_4">Encave is open source: anyone can check what the app does.</string>
     <string name="settings_devices">Devices</string>
-    <string name="settings_devices_summary">The same cellar on your other devices</string>
+    <string name="settings_devices_summary">Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.</string>
     <string name="devices_title">Devices</string>
     <string name="devices_this_device">This device</string>
     <string name="devices_section">Devices sharing this cellar</string>
@@ -803,7 +813,8 @@
     <string name="join_has_bottles">This device already has bottles</string>
     <string name="join_combine">Combine with the other cellar</string>
     <string name="join_replace">Replace with the other cellar</string>
-    <string name="join_combine_footer">Both cellars are put together. Choose Replace if this device only has the sample cellar.</string>
+    <string name="join_combine_footer">Both cellars are put together.</string>
+    <string name="join_replaces_sample">The sample cellar on this device will be replaced.</string>
     <string name="join_replace_footer">This device will show only the other device’s cellar. Make a backup first if you may need these bottles.</string>
     <string name="join_button">Join</string>
     <string name="join_looking">Looking for the device showing %1$s…</string>

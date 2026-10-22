@@ -1,5 +1,6 @@
 package app.encave.ui
 
+import app.encave.BuildConfig
 import android.content.ContentResolver
 import android.net.Uri
 import androidx.annotation.PluralsRes
@@ -32,6 +33,8 @@ import app.encave.core.ImportSummary
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.core.SampleData
+import app.encave.core.containsSample
+import app.encave.core.removingSample
 import app.encave.core.Slot
 import app.encave.core.Tasting
 import app.encave.core.Wine
@@ -626,16 +629,30 @@ class AppViewModel(
 
     fun setStudioLook(enabled: Boolean) = preferences.setStudioLook(enabled)
 
-    /** The sample is offered only on an empty cellar that no other device shares. */
-    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = cellar.isEmpty && !shared
+    /** The sample is offered only on an empty cellar that no other device shares, in beta builds. */
+    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = BuildConfig.BETA && cellar.isEmpty && !shared
 
-    /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices). */
+    /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices); Undo removes it. */
     fun loadSample(labels: SampleData.Labels) {
         if (!canLoadSample(cellar.value, sharedWithDevices.value)) return
-        change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) }) { c ->
+        change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) { removeSample(announce = false) } }) { c ->
             val empty = c.isEmpty
             if (empty) c.merge(SampleData.cellar(year, labels))
             empty
+        }
+    }
+
+    /**
+     * Removes the sample's racks, wines, bottles and Journal entries, and only them (the
+     * user's records stay), with Undo unless [announce] is false (the Undo of loading it).
+     */
+    fun removeSample(announce: Boolean = true) {
+        viewModelScope.launch {
+            val before = cellar.value.copy()
+            if (!before.containsSample) return@launch
+            repository.replace(before.removingSample())
+                .onSuccess { if (announce) post(UiText.Res(R.string.msg_sample_removed)) { change<Unit> { c -> c.merge(before) } } }
+                .onFailure { post(errorText(it)) }
         }
     }
 

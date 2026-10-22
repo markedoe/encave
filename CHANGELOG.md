@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- First run: Join a Cellar from Another Device on the empty Cellar; while the
+  sample cellar is there, a banner removes it alone (with Undo), and joining
+  another device replaces a sample-only cellar
+- Beta notices and the sample cellar come from a build flag (EncaveChannel on
+  Apple, BuildConfig.BETA on Android), so a store build turns them off
+- Mac and iPad: one sheet and section per window, a Wine menu (Edit ⌘E,
+  Drink ⌘D, Delete ⌘⌫), the Delete key, several wines selected in the table,
+  New Window (⌃⌘N); menu commands open the window when it is closed
+- iPhone and iPad: Settings from every section; Select in the Cellar toolbar
 - Backups on every platform: Back Up Now makes a readable ZIP archive (the
   cellar as JSON, photos and documents under their names) that restores on
   iPhone, iPad, Mac and Android; previous versions of the cellar kept on the

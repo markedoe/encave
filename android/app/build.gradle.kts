@@ -18,8 +18,15 @@ android {
         versionName = "0.1.0"
     }
 
+    // Beta notices and the sample cellar (BuildConfig.BETA): on in debug builds and, for now,
+    // in release builds; a store build sets ENCAVE_BETA=false.
+    val beta = providers.environmentVariable("ENCAVE_BETA").map { it.trim().lowercase() != "false" }.getOrElse(true)
     buildTypes {
+        debug {
+            buildConfigField("boolean", "BETA", "true")
+        }
         release {
+            buildConfigField("boolean", "BETA", beta.toString())
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

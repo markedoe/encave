@@ -724,6 +724,8 @@ struct JoinDeviceView: View {
 
     private var code: PairingCode { PairingCode(digits: digits) }
     private var hasOwnBottles: Bool { !model.cellar.bottles.isEmpty }
+    /// Only the sample cellar here: the other device's cellar replaces it, never joins it.
+    private var replacesSample: Bool { model.cellar.isOnlySample }
 
     var body: some View {
         NavigationStack {
@@ -809,7 +811,12 @@ struct JoinDeviceView: View {
             } footer: {
                 Text("On the device that already has your cellar: Settings › Devices › Add a Device.")
             }
-            if hasOwnBottles {
+            if replacesSample {
+                Section {
+                } footer: {
+                    Text("The sample cellar on this device will be replaced.")
+                }
+            } else if hasOwnBottles {
                 Section {
                     Picker("This device’s bottles", selection: $replace) {
                         Text("Combine with the other cellar").tag(false)
@@ -823,7 +830,7 @@ struct JoinDeviceView: View {
                     if replace {
                         Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
                     } else {
-                        Text("Both cellars are put together. Choose Replace if this device only has the sample cellar.")
+                        Text("Both cellars are put together.")
                     }
                 }
             }
@@ -845,7 +852,7 @@ struct JoinDeviceView: View {
     private func start() {
         guard code.isValid else { return }
         codeFocused = false
-        session = PairingSession.join(code: code, commitment: commitment, replace: replace, using: model.sync)
+        session = PairingSession.join(code: code, commitment: commitment, replace: replace || replacesSample, using: model.sync)
     }
 }
 

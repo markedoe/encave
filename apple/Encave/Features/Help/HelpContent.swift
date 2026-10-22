@@ -22,21 +22,33 @@ struct HelpArticle: Identifiable {
     let sections: [HelpSection]
     var id: HelpTopic { topic }
 
+    /// Beta builds only (AppChannel): what a beta means.
+    private static var betaSections: [HelpSection] {
+        guard AppChannel.isBeta else { return [] }
+        return [HelpSection(title: "Beta version", body: "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time with **Back Up Now** in **Settings**, and report problems on the project page.", systemImage: "testtube.2")]
+    }
+
+    /// The sample cellar, offered in beta builds only.
+    private static var trySections: [HelpSection] {
+        guard AppChannel.isBeta else { return [] }
+        return [HelpSection(title: "Try it", body: "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. Joining a cellar from another device replaces the sample on its own.")]
+    }
+
     // Computed: LocalizedStringKey is not Sendable, so the content cannot be a stored static.
     static var all: [HelpArticle] {
         [
             HelpArticle(topic: .start, title: "Getting started",
-                        summary: "The four sections and how they work together.", systemImage: "sparkles", sections: [
-                HelpSection(title: "Beta version", body: "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.", systemImage: "testtube.2"),
+                        summary: "The four sections and how they work together.", systemImage: "sparkles", sections: betaSections + [
                 HelpSection(title: "Cellar", body: "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.", systemImage: "wineglass"),
                 HelpSection(title: "Racks", body: "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.", systemImage: "square.grid.3x3"),
                 HelpSection(title: "Tonight", body: "What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.", systemImage: "moon.stars"),
                 HelpSection(title: "Journal", body: "Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.", systemImage: "book.closed"),
                 HelpSection(title: "A wine's page", body: "Tap a detail of a wine. Its producer, vintage, style, appellation, region, country, a grape or a tag lists the wines of your cellar that share it, with how many bottles; the other details open the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.", systemImage: "hand.tap"),
                 HelpSection(title: "List or table", body: "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.", systemImage: "tablecells"),
-                HelpSection(title: "Saved searches", body: "Search or choose filters, then **Save This Search…** in the sort menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.", systemImage: "bookmark"),
-                HelpSection(title: "Try it", body: "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar screen or in **Settings**) fills it with example wines to explore every screen. **Erase all data** in Settings removes them when you are ready to add your own bottles; in a cellar shared with other devices, it erases it on them too."),
-            ]),
+                HelpSection(title: "Saved searches", body: "Search or choose filters, then **Save This Search…** in the **Sort and Filter** menu. The search appears first among the filter chips; tap it to apply it again, or touch and hold it to delete it. Saved searches sync with your devices.", systemImage: "bookmark"),
+                HelpSection(title: "Already using Encave?", body: "On a new device with an empty cellar, **Join a Cellar from Another Device** shows how to bring in the cellar of your iPhone, iPad, Mac or Android: on that device, open **Settings › Devices › Add a Device** and type or scan the code it shows.", systemImage: "laptopcomputer.and.iphone"),
+                HelpSection(title: "Start again", body: "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too."),
+            ] + trySections),
             HelpArticle(topic: .adding, title: "Adding bottles",
                         summary: "A new wine, or more bottles of one you already have.", systemImage: "plus.circle", sections: [
                 HelpSection(title: "Already in your cellar?", body: "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go."),
@@ -166,11 +178,15 @@ struct HelpArticle: Identifiable {
                 HelpSection(title: "⌘N", body: "Add bottles"),
                 HelpSection(title: "⌥⌘N", body: "Note a wine tasted elsewhere"),
                 HelpSection(title: "⇧⌘N", body: "Add a rack"),
+                HelpSection(title: "⌃⌘N", body: "New window (Mac and iPad)"),
                 HelpSection(title: "⌘1 – ⌘4", body: "Cellar, Racks, Tonight, Journal"),
+                HelpSection(title: "⌘E", body: "Edit the selected wine"),
+                HelpSection(title: "⌘D", body: "Drink a bottle of the selected wine"),
+                HelpSection(title: "⌘⌫", body: "Delete the selected wine; on the Mac, the Delete key does too"),
                 HelpSection(title: "⌘+ / ⌘–", body: "Zoom a rack in and out"),
                 HelpSection(title: "⌘Z", body: "Undo, while the banner with Undo shows"),
                 HelpSection(title: "⌥⌘T", body: "Show the cellar as a table or a list (Mac)"),
-                HelpSection(title: "Menu bar (Mac)", body: "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it off in **Settings**.", systemImage: "menubar.arrow.up.rectangle"),
+                HelpSection(title: "Menu bar (Mac)", body: "The glass in the menu bar lists the bottles to open now and where they are; click one to open it. Turn it on in **Tonight** or in **Settings**.", systemImage: "menubar.arrow.up.rectangle"),
                 HelpSection(title: "Other apps and AI assistants", body: "In Shortcuts, **Get Cellar Contents** gives your bottles as text or JSON (all of them, those to open now, on order…), and **Get Wine Details** gives one wine with its tasting notes. An app on this device that runs shortcuts, such as a local AI assistant, can use them to answer questions about your cellar. Encave itself sends nothing.", systemImage: "square.stack.3d.up"),
                 HelpSection(title: "Siri and Shortcuts", body: "Ask Siri “What should I open tonight in Encave?”, “Where is Chablis in Encave?” or “Add a bottle to Encave”. The same actions are in the Shortcuts app. Wines also appear in Spotlight search. The answers are worked out on this device."),
             ]),

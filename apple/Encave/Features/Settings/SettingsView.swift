@@ -15,7 +15,7 @@ struct SettingsView: View {
     @State private var restoreSource: RestoreSource?
     @State private var remindersOn = Reminders.isEnabled
     #if os(macOS)
-    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
+    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = MenuBarSetting.defaultValue
     #endif
     @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     @State private var remindersRefused = false
@@ -26,7 +26,8 @@ struct SettingsView: View {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "–"
         let build = info?["CFBundleVersion"] as? String ?? "–"
-        return "\(short) (\(build)) · " + String(localized: "Beta")
+        let number = "\(short) (\(build))"
+        return AppChannel.isBeta ? number + " · " + String(localized: "Beta") : number
     }
 
     private var remindersBinding: Binding<Bool> {
@@ -74,7 +75,7 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("settings.devices")
             } footer: {
-                Text("Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.")
+                Text("Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.")
             }
 
             Section {
@@ -101,14 +102,6 @@ struct SettingsView: View {
             #endif
 
             Section {
-                Toggle(isOn: $studioPhotos) {
-                    Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
-                }
-            } footer: {
-                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
-            }
-
-            Section {
                 Picker("Currency", selection: currencyBinding) {
                     // The cellar's currency is always listed, even if set elsewhere (import, another device).
                     let current = model.cellar.settings.currency
@@ -118,9 +111,35 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Preferences")
+                Text("Cellar")
             } footer: {
                 Text("Used for new purchases. Prices already entered keep their currency.")
+            }
+
+            Section {
+                Toggle(isOn: $studioPhotos) {
+                    Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
+                }
+            } header: {
+                Text("Display")
+            } footer: {
+                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+            }
+
+            AISettingsSection()
+
+            WebSearchSettingsSection()
+
+            Section {
+                if model.sync.otherDevices.isEmpty {
+                    Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
+                } else {
+                    Label("Your cellar is stored only on your devices.", systemImage: "lock.shield")
+                }
+            } header: {
+                Text("Privacy")
+            } footer: {
+                Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
             }
 
             Section {
@@ -181,34 +200,21 @@ struct SettingsView: View {
                 }
             }
 
-            AISettingsSection()
-
-            WebSearchSettingsSection()
-
-            Section {
-                if model.sync.otherDevices.isEmpty {
-                    Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
-                } else {
-                    Label("Your cellar is stored only on your devices.", systemImage: "lock.shield")
+            if model.canLoadSample {
+                Section {
+                    Button("Load sample cellar") { confirmingSample = true }
+                } header: {
+                    Text("Try Encave")
+                } footer: {
+                    Text("The sample cellar is offered while your cellar is empty and no other device syncs with this one.")
                 }
-            } header: {
-                Text("Privacy")
-            } footer: {
-                Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
             }
 
             Section {
-                if model.canLoadSample {
-                    Button("Load sample cellar") { confirmingSample = true }
-                }
                 Button("Erase all data", role: .destructive) { confirmingErase = true }
                     .disabled(model.cellar.isEmpty)
             } header: {
-                Text("Test data")
-            } footer: {
-                if model.canLoadSample {
-                    Text("The sample cellar is offered while your cellar is empty and no other device syncs with this one.")
-                }
+                Text("Reset")
             }
 
             Section {
@@ -219,7 +225,9 @@ struct SettingsView: View {
             } header: {
                 Text("About")
             } footer: {
-                Text("Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.")
+                if AppChannel.isBeta {
+                    Text("Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.")
+                }
             }
         }
         .formStyle(.grouped)
@@ -249,7 +257,7 @@ struct SettingsView: View {
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
+            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
         .confirmationDialog(
             "Delete this file?",

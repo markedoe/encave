@@ -1,5 +1,11 @@
 package app.encave.ui.cellar
 
+import androidx.compose.ui.semantics.heading
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material3.OutlinedCard
+import app.encave.ui.navigation.JoinDeviceRoute
+import app.encave.ui.devices.rememberLocalNetworkAccess
+import app.encave.core.containsSample
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -227,6 +233,8 @@ private fun CellarList(
     var namingSearch by remember { mutableStateOf(false) }
     var confirmSample by remember { mutableStateOf(false) }
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
+    val showsSampleBanner = remember(cellar) { cellar.containsSample }
+    val joinDevice = rememberLocalNetworkAccess { navigator.open(JoinDeviceRoute) }
     fun endSelection() {
         selecting = false
         picked = emptySet()
@@ -291,10 +299,22 @@ private fun CellarList(
                 Button(onClick = { navigator.open(AddBottleRoute()) }, modifier = Modifier.testTag("action.empty_add")) {
                     ActionContent(stringResource(R.string.action_add_bottle), Icons.Filled.Add)
                 }
+                // Already using Encave on another device: bring its cellar here.
+                if (!shared) {
+                    OutlinedButton(onClick = joinDevice, modifier = Modifier.testTag("action.empty_join")) {
+                        Text(stringResource(R.string.action_join_cellar))
+                    }
+                }
                 // Only when everything is empty (no racks or discoveries either) and no other device shares the cellar.
                 if (viewModel.canLoadSample(cellar, shared)) {
                     OutlinedButton(onClick = { confirmSample = true }) {
                         Text(stringResource(R.string.action_load_sample))
+                    }
+                }
+                // Every sample bottle was drunk: what remains of it can still go.
+                if (showsSampleBanner) {
+                    OutlinedButton(onClick = { viewModel.removeSample() }) {
+                        Text(stringResource(R.string.action_remove_sample))
                     }
                 }
                 TextButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
@@ -357,6 +377,9 @@ private fun CellarList(
                         contentPadding = PaddingValues(bottom = 88.dp),
                         modifier = Modifier.fillMaxSize().testTag("cellar.list"),
                     ) {
+                        if (showsSampleBanner && !selecting) {
+                            item(key = "sample") { SampleBanner(onRemove = { viewModel.removeSample() }) }
+                        }
                         if (showsSummary) {
                             item(key = "summary") {
                                 CellarSummary(
@@ -1036,6 +1059,31 @@ private fun StatTile(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = scheme.outline,
                     modifier = Modifier.align(Alignment.TopEnd).size(18.dp),
                 )
+            }
+        }
+    }
+}
+
+/** Shown while records of the sample cellar remain: removes them, and only them, with Undo. */
+@Composable
+private fun SampleBanner(onRemove: () -> Unit) {
+    OutlinedCard(Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.sample")) {
+        Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.cellar_sample_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.semantics { heading() },
+                )
+            }
+            Text(
+                stringResource(R.string.cellar_sample_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = onRemove, modifier = Modifier.testTag("action.remove_sample")) {
+                Text(stringResource(R.string.action_remove_sample))
             }
         }
     }

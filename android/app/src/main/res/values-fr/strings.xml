@@ -27,6 +27,8 @@
     <string name="action_sort">Trier</string>
     <string name="action_clear_search">Effacer la recherche</string>
     <string name="action_load_sample">Charger une cave d’exemple</string>
+    <string name="action_remove_sample">Retirer l’exemple</string>
+    <string name="action_join_cellar">Rejoindre la cave d’un autre appareil</string>
     <string name="action_add_rack">Ajouter un casier</string>
     <string name="action_reorder">Réorganiser les casiers</string>
     <string name="action_move_up">Monter %1$s</string>
@@ -274,7 +276,7 @@
     <string name="chart_item">%1$s : %2$d</string>
     <string name="settings_cellar">Cave</string>
     <string name="settings_currency">Devise par défaut</string>
-    <string name="settings_appearance">Apparence</string>
+    <string name="settings_appearance">Affichage</string>
     <string name="settings_dynamic_color">Utiliser les couleurs du fond d’écran</string>
     <string name="settings_dynamic_color_body">Couleurs Material You au lieu du bordeaux d’Encave</string>
     <string name="settings_studio_look">Aspect studio pour les photos d’étiquette</string>
@@ -327,9 +329,10 @@
     <string name="settings_export_csv_body">Une ligne par bouteille</string>
     <string name="settings_import">Importer une sauvegarde ou un fichier CSV</string>
     <string name="settings_import_body">Une sauvegarde (ZIP ou JSON) est d’abord montrée ; un CSV ajoute ce qui n’est pas déjà dans votre cave</string>
-    <string name="settings_test_data">Données de test</string>
+    <string name="settings_try">Essayer Encave</string>
+    <string name="settings_reset">Réinitialiser</string>
     <string name="settings_sample_confirm_title">Charger la cave d’exemple ?</string>
-    <string name="settings_sample_confirm_body">Des bouteilles, casiers et entrées du Journal d’exemple remplissent votre cave vide pour découvrir chaque écran. Effacer toutes les données les supprime quand vous êtes prêt à ajouter les vôtres.</string>
+    <string name="settings_sample_confirm_body">Des bouteilles, casiers et entrées du Journal d’exemple remplissent votre cave vide pour découvrir chaque écran. Retirez-les quand vous voulez avec Retirer l’exemple en haut de la Cave.</string>
     <string name="settings_sample_body">Proposée tant que la cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci.</string>
     <string name="settings_erase">Effacer toutes les données</string>
     <string name="settings_erase_title">Effacer toutes les données ?</string>
@@ -343,7 +346,7 @@
     <string name="settings_beta">Bêta</string>
     <string name="settings_beta_note">Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps.</string>
     <string name="help_start_beta_title">Version bêta</string>
-    <string name="help_start_beta">Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet.</string>
+    <string name="help_start_beta">Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps avec **Sauvegarder maintenant** dans les **Réglages** et signalez les problèmes sur la page du projet.</string>
     <string name="settings_version">Version</string>
     <string name="settings_source">Code source</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
@@ -352,6 +355,7 @@
     <string name="msg_imported">Importé. Vins : %1$d, bouteilles : %2$d</string>
     <string name="msg_imported_skipped">Importé. Vins : %1$d, bouteilles : %2$d, lignes ignorées : %3$d</string>
     <string name="msg_sample_loaded">Cave d’exemple chargée</string>
+    <string name="msg_sample_removed">Cave d’exemple retirée</string>
     <string name="msg_erased">Toutes les données ont été effacées</string>
     <string name="settings_ai">Reconnaissance des étiquettes par IA</string>
     <string name="settings_ai_off_body">Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.</string>
@@ -595,7 +599,13 @@
     <string name="help_start_tonight">Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat.</string>
     <string name="help_start_journal">Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques.</string>
     <string name="help_start_try_title">Essayer</string>
-    <string name="help_start_try">Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci, **Charger une cave d’exemple** (sur l’écran Cave ou dans les **Réglages**) la remplit d’exemples pour découvrir chaque écran. **Effacer toutes les données** dans les **Réglages** les supprime quand vous êtes prêt à ajouter vos bouteilles ; cela efface aussi la cave des appareils synchronisés avec celui-ci.</string>
+    <string name="help_start_try">Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci, **Charger une cave d’exemple** (sur l’écran Cave ou dans **Réglages › Essayer Encave**) la remplit d’exemples pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave retire seulement eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Rejoindre la cave d’un autre appareil remplace l’exemple de lui-même.</string>
+    <string name="cellar_sample_title">Vous explorez la cave d’exemple</string>
+    <string name="cellar_sample_body">Ses vins, casiers et entrées du Journal sont des exemples. Retirez-les quand vous êtes prêt à ajouter vos bouteilles ; celles que vous avez ajoutées restent.</string>
+    <string name="help_start_join_title">Vous utilisez déjà Encave ?</string>
+    <string name="help_start_join">Sur un nouvel appareil dont la cave est vide, **Rejoindre la cave d’un autre appareil** permet d’y faire venir la cave de votre iPhone, iPad, Mac ou Android : sur cet appareil, ouvrez **Réglages › Appareils › Ajouter un appareil** et saisissez ou scannez le code qu’il affiche.</string>
+    <string name="help_start_reset_title">Recommencer</string>
+    <string name="help_start_reset">**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux.</string>
     <string name="help_adding_title">Ajouter des bouteilles</string>
     <string name="help_adding_summary">Un nouveau vin, ou d’autres bouteilles d’un vin que vous avez déjà.</string>
     <string name="help_adding_existing_title">Déjà dans votre cave ?</string>
@@ -696,7 +706,7 @@
     <string name="help_privacy_3">En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher.</string>
     <string name="help_privacy_4">Encave est open source : chacun peut vérifier ce que fait l’app.</string>
     <string name="settings_devices">Appareils</string>
-    <string name="settings_devices_summary">La même cave sur vos autres appareils</string>
+    <string name="settings_devices_summary">Synchronisez votre cave avec vos autres appareils (iPhone, iPad, Mac ou Android), chiffrée de bout en bout.</string>
     <string name="devices_title">Appareils</string>
     <string name="devices_this_device">Cet appareil</string>
     <string name="devices_section">Appareils partageant cette cave</string>
@@ -802,7 +812,8 @@
     <string name="join_has_bottles">Cet appareil a déjà des bouteilles</string>
     <string name="join_combine">Réunir avec l’autre cave</string>
     <string name="join_replace">Remplacer par l’autre cave</string>
-    <string name="join_combine_footer">Les deux caves sont réunies. Choisissez Remplacer si cet appareil n’a que la cave d’exemple.</string>
+    <string name="join_combine_footer">Les deux caves sont réunies.</string>
+    <string name="join_replaces_sample">La cave d’exemple de cet appareil sera remplacée.</string>
     <string name="join_replace_footer">Cet appareil n’affichera que la cave de l’autre appareil. Faites d’abord une sauvegarde si vous pourriez avoir besoin de ces bouteilles.</string>
     <string name="join_button">Rejoindre</string>
     <string name="join_looking">Recherche de l’appareil qui affiche %1$s…</string>

@@ -5,6 +5,7 @@ import SwiftUI
 /// On the Mac, the window's own columns show `CellarList` and `WinePane` directly.
 struct CellarView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @State private var selection: UUID?
     /// iPad: show the list next to the wine, also in portrait, instead of an empty page.
     @State private var columns: NavigationSplitViewVisibility = .all
@@ -41,11 +42,13 @@ struct CellarView: View {
             }
         }
         // Opened from Spotlight, Shortcuts or a notification.
-        .onChange(of: model.openWineRequest, initial: true) { _, id in
+        .onChange(of: router?.openWineRequest, initial: true) { _, id in
             guard let id else { return }
             selection = id
-            model.openWineRequest = nil
+            router?.openWineRequest = nil
         }
+        // The Wine menu (iPad with a keyboard) acts on the selected wine.
+        .focusedSceneValue(\.selectedWineID, selection)
     }
 }
 
@@ -67,6 +70,7 @@ struct WinePane: View {
 /// Bottles grouped by wine, with search, filters and sorting.
 struct CellarList: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @Binding var selection: UUID?
     @State private var filter = CellarFilter()
     @State private var sort: CellarSort = .name
@@ -137,6 +141,11 @@ struct CellarList: View {
         } else {
             ScrollViewReader { proxy in
             List(selection: $selection) {
+                if model.showsSampleBanner {
+                    Section {
+                        SampleBanner()
+                    }
+                }
                 if filter.query.isEmpty {
                     Section {
                         CellarSummary(filter: $filter, onBottles: { showsInsights = true }, onWines: {
@@ -166,7 +175,7 @@ struct CellarList: View {
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 if let bottle = group.bottles.bottleToOpen {
                                     Button {
-                                        model.sheet = .drink(bottleID: bottle.id)
+                                        router?.sheet = .drink(bottleID: bottle.id)
                                     } label: {
                                         Label("Drink", systemImage: "wineglass")
                                     }
@@ -175,13 +184,13 @@ struct CellarList: View {
                             }
                             .swipeActions(edge: .trailing) {
                                 Button {
-                                    model.sheet = .addBottle(AddBottleContext(wine: group.wine))
+                                    router?.sheet = .addBottle(AddBottleContext(wine: group.wine))
                                 } label: {
                                     Label("Add", systemImage: "plus")
                                 }
                                 .tint(.blue)
                             }
-                            .contextMenu { WineContextMenu(group: group) }
+                            .contextMenu { WineContextMenu(group: group, onSelect: { startSelection(with: group.wine.id) }) }
                     }
                 } header: {
                     if filter.isActive || !filter.query.isEmpty {
@@ -190,6 +199,12 @@ struct CellarList: View {
                 }
             }
             .animation(.default, value: groups.map(\.id))
+            #if os(macOS)
+            // The Delete key, like in Finder; Undo puts it back.
+            .onDeleteCommand {
+                if let selection { model.deleteWine(selection) }
+            }
+            #endif
             }
         }
     }
@@ -200,13 +215,10 @@ struct CellarList: View {
             if isWide {
                 CellarLayoutPicker()
             }
-            Menu {
-                Button("Select Wines", systemImage: "checkmark.circle") {
-                    picked = []
-                    withAnimation { isSelecting = true }
-                }
+            // Like Mail and Files: choose several wines to act on them at once.
+            Button("Select") { startSelection() }
                 .accessibilityIdentifier("cellar.select")
-                Divider()
+            Menu {
                 Picker("Sort by", selection: $sort) {
                     Text("Name").tag(CellarSort.name)
                     Text("Vintage").tag(CellarSort.vintage)
@@ -226,28 +238,21 @@ struct CellarList: View {
                     }
                 }
             } label: {
-                Label("Sort", systemImage: filter.isActive ? "line.3.horizontal.decrease.circle.fill" : "arrow.up.arrow.down")
+                Label("Sort and Filter", systemImage: filter.isActive ? "line.3.horizontal.decrease.circle.fill" : "arrow.up.arrow.down")
             }
             .accessibilityIdentifier("cellar.sort")
             Menu {
-                Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext()) }
-                Button("Note a Wine Tasted Elsewhere", systemImage: "mappin.and.ellipse") { model.sheet = .discovery(discoveryID: nil) }
+                Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext()) }
+                Button("Note a Wine Tasted Elsewhere", systemImage: "mappin.and.ellipse") { router?.sheet = .discovery(discoveryID: nil) }
             } label: {
                 Label("Add Bottle", systemImage: "plus")
             } primaryAction: {
-                model.sheet = .addBottle(AddBottleContext())
+                router?.sheet = .addBottle(AddBottleContext())
             }
             .accessibilityIdentifier("cellar.add")
         }
         #if os(iOS)
-        ToolbarItem(placement: .topBarLeading) {
-            Button {
-                model.sheet = .settings
-            } label: {
-                Label("Settings", systemImage: "gearshape")
-            }
-            .accessibilityIdentifier("cellar.settings")
-        }
+        SettingsToolbarItem(identifier: "cellar.settings")
         #endif
     }
 }
@@ -292,6 +297,12 @@ extension CellarList {
     #else
     static let actionsPlacement = ToolbarItemPlacement.primaryAction
     #endif
+
+    /// Choosing several wines, from the Select button or a wine's menu (already ticked).
+    func startSelection(with wineID: UUID? = nil) {
+        picked = wineID.map { [$0] } ?? []
+        withAnimation { isSelecting = true }
+    }
 
     func endSelection() {
         withAnimation { isSelecting = false }
@@ -456,20 +467,26 @@ private struct CellarSummary: View {
 /// Long-press menu shared by the cellar, tonight and pairing lists.
 struct WineContextMenu: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let group: WineGroup
+    /// The Cellar list: choose several wines, starting with this one.
+    var onSelect: (() -> Void)?
 
     var body: some View {
         if let bottle = group.bottles.bottleToOpen {
-            Button("Drink a Bottle", systemImage: "wineglass") { model.sheet = .drink(bottleID: bottle.id) }
+            Button("Drink a Bottle", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
             if bottle.slot != nil {
-                Button("Show in Rack", systemImage: "square.grid.3x3") { model.showInRack(bottle) }
+                Button("Show in Rack", systemImage: "square.grid.3x3") { router?.showInRack(bottle, model: model) }
             }
             Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
-                model.sheet = .moveBottle(bottleID: bottle.id)
+                router?.sheet = .moveBottle(bottleID: bottle.id)
             }
         }
-        Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: group.wine)) }
-        Button("Edit Wine", systemImage: "pencil") { model.sheet = .editWine(wineID: group.wine.id) }
+        Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: group.wine)) }
+        Button("Edit Wine", systemImage: "pencil") { router?.sheet = .editWine(wineID: group.wine.id) }
+        if let onSelect {
+            Button("Select", systemImage: "checkmark.circle", action: onSelect)
+        }
         Divider()
         Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(group.wine.id) }
     }
@@ -514,9 +531,30 @@ struct OrdersSection: View {
     }
 }
 
-/// First launch: explain the app and offer the sample cellar.
+/// Shown while records of the sample cellar remain: removes them, and only them, with Undo.
+struct SampleBanner: View {
+    @Environment(CellarModel.self) private var model
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("You are exploring the sample cellar", systemImage: "testtube.2")
+                .font(.subheadline.weight(.semibold))
+            Text("Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Button("Remove Sample", systemImage: "trash") { model.removeSample() }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("cellar.removeSample")
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// First launch: explain the app, offer to join the cellar of another device and the sample cellar.
 struct EmptyCellarView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @State private var confirmingSample = false
 
     var body: some View {
@@ -533,24 +571,42 @@ struct EmptyCellarView: View {
             // a row and would be cut off in the narrow content column.
             VStack(spacing: 12) {
                 Button {
-                    model.sheet = .addBottle(AddBottleContext())
+                    router?.sheet = .addBottle(AddBottleContext())
                 } label: {
                     Text("Add a Bottle").frame(minWidth: 200)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                Button("Note a wine tasted elsewhere") { model.sheet = .discovery(discoveryID: nil) }
+                .accessibilityIdentifier("empty.add")
+                // Already using Encave on another device: bring its cellar here.
+                if model.sync.otherDevices.isEmpty {
+                    Button {
+                        router?.sheet = .joinDevice
+                    } label: {
+                        Text("Join a Cellar from Another Device").frame(minWidth: 200)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .accessibilityIdentifier("empty.join")
+                }
                 // Only for a cellar with nothing at all in it, that no other device syncs with:
                 // the sample replaces everything.
                 if model.canLoadSample {
                     Button("Load sample cellar") { confirmingSample = true }
+                        .accessibilityIdentifier("empty.sample")
                 }
+                // Every sample bottle was drunk: what remains of it can still go.
+                if model.showsSampleBanner {
+                    Button("Remove Sample") { model.removeSample() }
+                }
+                Button("Note a wine tasted elsewhere") { router?.sheet = .discovery(discoveryID: nil) }
+                    .buttonStyle(.borderless)
             }
         }
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
+            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
     }
 }

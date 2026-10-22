@@ -25,6 +25,9 @@ settings:
     # iCloud container for syncing away from home, for example iCloud.app.encave.
     # Empty: the iCloud option is hidden. Enabling it is described in docs/development.md.
     ENCAVE_CLOUDKIT_CONTAINER: ""
+    # "beta": TestFlight builds, with the beta notices and the sample cellar.
+    # "store": an App Store build, without them (read through EncaveChannel, AppChannel.swift).
+    ENCAVE_CHANNEL: beta
 
 packages:
   CaveKit:
@@ -67,6 +70,7 @@ targets:
         NSBonjourServices: [_encave._tcp]
         # iCloud container for syncing away from home; empty hides the option (docs/development.md).
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
+        EncaveChannel: $(ENCAVE_CHANNEL)
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
@@ -129,6 +133,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
+        EncaveChannel: $(ENCAVE_CHANNEL)
         NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
         NSBonjourServices: [_encave._tcp]
         NSAppTransportSecurity:

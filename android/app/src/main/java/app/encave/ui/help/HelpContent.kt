@@ -1,5 +1,6 @@
 package app.encave.ui.help
 
+import app.encave.BuildConfig
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircleOutline
@@ -63,8 +64,9 @@ data class HelpArticle(
         val all: List<HelpArticle> = listOf(
             HelpArticle(
                 HelpTopic.Start, R.string.help_start_title, R.string.help_start_summary, Icons.Outlined.AutoAwesome,
-                listOf(
-                    HelpSection(R.string.help_start_beta, R.string.help_start_beta_title, Icons.Outlined.Science),
+                listOfNotNull(
+                    // Beta builds only, like the sample cellar below.
+                    HelpSection(R.string.help_start_beta, R.string.help_start_beta_title, Icons.Outlined.Science).takeIf { BuildConfig.BETA },
                     HelpSection(R.string.help_start_cellar, R.string.nav_cellar, Icons.Outlined.WineBar),
                     HelpSection(R.string.help_start_racks, R.string.nav_racks, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
@@ -74,7 +76,9 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_saved, R.string.help_start_saved_title, Icons.Outlined.BookmarkBorder),
                     HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
                     HelpSection(R.string.help_start_widgets, R.string.help_start_widgets_title, Icons.Outlined.Widgets),
-                    HelpSection(R.string.help_start_try, R.string.help_start_try_title),
+                    HelpSection(R.string.help_start_join, R.string.help_start_join_title, Icons.Outlined.Devices),
+                    HelpSection(R.string.help_start_reset, R.string.help_start_reset_title),
+                    HelpSection(R.string.help_start_try, R.string.help_start_try_title).takeIf { BuildConfig.BETA },
                 ),
             ),
             HelpArticle(

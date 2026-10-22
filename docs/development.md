@@ -128,6 +128,19 @@ a container:
    deploy the schema (record type `EncaveFile` with an Asset field `data`) to
    Production, so TestFlight and App Store builds can use it.
 
+## Beta and store builds
+
+Beta builds show the beta notices (Settings › About, the help) and offer the sample
+cellar (on the empty Cellar and in Settings › Try Encave). A store build turns them
+off without code changes:
+
+- **Apple:** the `ENCAVE_CHANNEL` build setting in `apple/project.yml`, read from the
+  `EncaveChannel` Info.plist key (`AppChannel.swift`). It is `beta` by default and for
+  the TestFlight archives of `apple.yml`; build with `ENCAVE_CHANNEL=store` for the App
+  Store.
+- **Android:** `BuildConfig.BETA`, always true in debug builds; release builds follow
+  the `ENCAVE_BETA` environment variable (true unless set to `false`).
+
 ## Continuous integration
 
 | Workflow | What it does |
