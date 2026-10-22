@@ -106,12 +106,11 @@ object Reminders {
     fun due(cellar: Cellar, today: LocalDate, zone: ZoneId, lastMonth: String?, delivered: Set<String>): Due {
         val month = YearMonth.from(today).toString()
         val digest = if (lastMonth != month) cellar.drinkingDigest(today.year).takeIf { !it.isEmpty } else null
-        // Per wine and expected day: only the bottles of the wine expected today are counted.
         val deliveries = cellar.orderGroups().mapNotNull { group ->
-            val count = group.bottles.count { it.expectedAt?.atZone(zone)?.toLocalDate() == today }
-            if (count == 0) return@mapNotNull null
+            val expected = group.bottles.first().expectedAt ?: return@mapNotNull null
+            if (expected.atZone(zone).toLocalDate() != today) return@mapNotNull null
             if (deliveryKey(group.wine.id.toString(), today) in delivered) return@mapNotNull null
-            Delivery(group.wine.id.toString(), group.wine.displayName, count)
+            Delivery(group.wine.id.toString(), group.wine.displayName, group.count)
         }.take(MAX_DELIVERIES)
         return Due(digest, deliveries)
     }

@@ -494,26 +494,6 @@ object RemoteSync {
     }
 
     /**
-     * The key to keep when turning remote sync on: [current], else one another device left
-     * for this one, else a new key given to every device. Throws when a grant cannot be
-     * left: then nothing is to be kept, and remote sync stays off.
-     */
-    suspend fun keyForTurningOn(store: MailboxStore, identity: DeviceIdentity, membership: Membership, current: CellarKey?, storage: String?): CellarKey {
-        if (current != null) return current
-        val received = try {
-            receiveGrant(store, identity, membership, null)
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: Exception) {
-            null
-        }
-        if (received != null) return received.cellarKey
-        val key = CellarKey.random(membership.cellarId)
-        grant(key, membership.active, store, identity, storage)
-        return key
-    }
-
-    /**
      * Gives the current key to devices that may not have it (a device that joined
      * while remote sync was already on, met only on the network). Devices whose record
      * has no inbox yet are skipped: they get the key on the local network.

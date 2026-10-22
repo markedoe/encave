@@ -2,8 +2,6 @@ package app.encave.sync
 
 import android.content.Context
 import app.encave.core.Cellar
-import app.encave.core.containsSample
-import app.encave.core.removeSample
 import app.encave.core.sync.CellarChangeSummary
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
@@ -30,7 +28,6 @@ import app.encave.core.sync.WebDavMailboxStore
 import app.encave.data.CellarRepository
 import app.encave.data.Preferences
 import app.encave.data.SyncFrequency
-import app.encave.ui.components.sampleLabels
 import java.io.Closeable
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -381,10 +378,6 @@ class SyncManager(
         }
         if (replace) {
             repository.applySynced(merge = { Cellar(settings = it.settings) })
-        } else if (repository.read { it.containsSample }) {
-            // Combining: the sample cellar is not sent to the other devices.
-            val labels = listOf(sampleLabels(context.resources))
-            repository.update { it.removeSample(labels) }
         }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
@@ -682,8 +675,6 @@ class SyncManager(
         if (url == null) {
             storage.remoteStorage = null
             storage.webDavLogin = null
-            // Kept: another device on the network must not turn it back on.
-            storage.remoteTurnedOff = true
             synchronized(this) {
                 remoteLoop?.cancel()
                 remoteLoop = null
@@ -714,7 +705,8 @@ class SyncManager(
         val url = WebDavMailboxStore.folderUrl(folder) ?: throw RemoteSyncException(RemoteSyncError.Unavailable("address"))
         val store = WebDavMailboxStore(url, username, password)
         store.check()
-        turnOn(store, WEBDAV_PREFIX + url, WebDavLogin(url, username, password))
+        storage.webDavLogin = WebDavLogin(url, username, password)
+        turnOn(store, WEBDAV_PREFIX + url)
     }
 
     /** Signs in to the WebDAV folder this device already syncs through (its address came from another device). */
@@ -728,18 +720,22 @@ class SyncManager(
         remoteRound()
     }
 
-    private suspend fun turnOn(store: MailboxStore, storageString: String, login: WebDavLogin? = null) {
+    private suspend fun turnOn(store: MailboxStore, storageString: String) {
         setUpIfNeeded()
-        // The key is settled before anything is kept, so a failed grant leaves remote sync off
-        // (no key that the other devices never received). Maybe another device already
-        // turned it on and left a key for this one.
-        val key = status.value.membership?.let { RemoteSync.keyForTurningOn(store, identity, it, storage.remoteKey, storageString) }
-        if (login != null) storage.webDavLogin = login
-        storage.remoteTurnedOff = false
         storage.remoteStorage = storageString
         status.update { it.copy(remoteStorage = storageString, needsWebDavSignIn = needsSignIn(storageString)) }
-        // A key received meanwhile from a device on the network may supersede this one.
-        if (key != null && key.cellarId == status.value.membership?.cellarId && key.supersedes(storage.remoteKey)) storeRemoteKey(key)
+        val membership = status.value.membership
+        if (storage.remoteKey == null && membership != null) {
+            // Maybe another device already turned it on and left a key for this one.
+            val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, null) }.getOrNull()
+            if (grant != null) {
+                storeRemoteKey(grant.cellarKey)
+            } else {
+                val key = CellarKey.random(membership.cellarId)
+                storeRemoteKey(key)
+                RemoteSync.grant(key, membership.active, store, identity, storageString)
+            }
+        }
         scheduleBackground()
         startRemoteLoop()
         remoteRound()
@@ -752,9 +748,8 @@ class SyncManager(
         if (info.key.supersedes(storage.remoteKey)) storeRemoteKey(info.key)
         // Only a storage this device can use: an HTTPS relay or WebDAV folder. iCloud ("icloud")
         // is Apple-only. A WebDAV folder then asks for this device's own login.
-        // Not after the user turned it off here.
         val offered = info.storage?.let(::acceptedFromPeer)
-        if (storage.remoteStorage == null && !storage.remoteTurnedOff && offered != null) {
+        if (storage.remoteStorage == null && offered != null) {
             storage.remoteStorage = offered
             status.update { it.copy(remoteStorage = offered, needsWebDavSignIn = needsSignIn(offered)) }
             scheduleBackground()
@@ -895,7 +890,6 @@ class SyncManager(
                 }
                 it.copy(
                     lastRemoteSync = now,
-                    needsWebDavSignIn = needsSignIn(storage.remoteStorage),
                     remoteProblem = problem,
                     remoteProblemAt = if (problem != null) now else null,
                     unsentChanges = it.unsentChanges && !sent,
@@ -908,11 +902,7 @@ class SyncManager(
                 RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
             }
-            // A WebDAV server that refuses the login (a changed password): ask to sign in again at once.
-            val refusedLogin = problem == RemoteProblem.Refused && storage.remoteStorage?.startsWith(WEBDAV_PREFIX) == true
-            status.update {
-                it.copy(remoteProblem = problem, remoteProblemAt = Instant.now(), needsWebDavSignIn = it.needsWebDavSignIn || refusedLogin)
-            }
+            status.update { it.copy(remoteProblem = problem, remoteProblemAt = Instant.now()) }
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {

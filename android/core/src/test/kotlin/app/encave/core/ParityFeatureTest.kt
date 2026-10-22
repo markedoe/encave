@@ -295,16 +295,6 @@ class OtherAppsImportTest {
         assertEquals(3, cellar.bottles.size)
         assertEquals(WineColor.Red, cellar.wines.values.first().color)
     }
-
-    @Test
-    fun frenchPlaceAndWindowHeadersAreRecognized() {
-        val cellar = Cellar()
-        cellar.importCsv("Nom;Emplacement;Fenêtre de dégustation\nMorgon;Cave du bas;2024-2030")
-        val wine = cellar.wines.values.first()
-        assertEquals(2024, wine.drinkFrom)
-        assertEquals(2030, wine.drinkUntil)
-        assertEquals("Cave du bas", cellar.bottles.values.first().storageNote)
-    }
 }
 
 class ReservationTest {

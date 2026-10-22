@@ -16,7 +16,6 @@ import app.encave.data.Preferences
 import app.encave.data.ai.AiPreferences
 import app.encave.data.search.WebSearchPreferences
 import app.encave.sync.SyncManager
-import app.encave.ui.components.displayLocation
 import app.encave.widget.WidgetPublisher
 import app.encave.widget.WidgetSnapshotStore
 import app.encave.widget.Widgets
@@ -71,10 +70,7 @@ class EncaveApplication : Application() {
         super.onCreate()
         sync.start()
         // Widgets follow every change, made here or synced from another device.
-        WidgetPublisher(
-            repository, widgetSnapshots, scope, onChanged = { Widgets.update(this) },
-            place = { cellar, bottle -> cellar.displayLocation(bottle, resources) },
-        ).start()
+        WidgetPublisher(repository, widgetSnapshots, scope, onChanged = { Widgets.update(this) }).start()
         scope.launch { Widgets.publishPreviews(this@EncaveApplication) }
         if (app.encave.reminders.Reminders.isEnabled(this)) app.encave.reminders.Reminders.schedule(this)
         // Photos and documents nothing has referred to for a while (deleted or replaced) are

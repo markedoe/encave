@@ -37,15 +37,4 @@ class SyncStorageTest {
         storage.saveLastSync(emptyMap())
         assertFalse(File(folder, "last-sync.json").exists())
     }
-
-    @Test
-    fun turningRemoteSyncOffIsRememberedUntilLeaving() {
-        val storage = SyncStorage(context)
-        assertFalse(storage.remoteTurnedOff)
-        storage.remoteTurnedOff = true
-        // Read again as after a restart.
-        assertTrue(SyncStorage(context).remoteTurnedOff)
-        storage.resetRemote()
-        assertFalse(SyncStorage(context).remoteTurnedOff)
-    }
 }

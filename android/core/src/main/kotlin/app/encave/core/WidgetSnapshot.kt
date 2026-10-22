@@ -67,13 +67,7 @@ data class WidgetSnapshot(
          * The summary of [cellar] in [year]. Bottles kept for an occasion count in
          * the totals but are never suggested for tonight, as in the Tonight section.
          */
-        fun of(
-            cellar: Cellar,
-            year: Int,
-            pickLimit: Int = PICK_LIMIT,
-            /** A bottle's place as the lists name it (the app's names, translated). */
-            place: (Bottle) -> String? = { cellar.locationLabel(it) },
-        ): WidgetSnapshot {
+        fun of(cellar: Cellar, year: Int, pickLimit: Int = PICK_LIMIT): WidgetSnapshot {
             val inCellar = cellar.bottlesInCellar
             val counts = HashMap<Maturity, Int>()
             val wineIds = HashSet<java.util.UUID>()
@@ -99,7 +93,7 @@ data class WidgetSnapshot(
                             color = group.wine.color,
                             maturity = section.maturity,
                             bottles = group.count,
-                            place = group.bottles.firstNotNullOfOrNull(place),
+                            place = group.bottles.firstNotNullOfOrNull { cellar.locationLabel(it) },
                         )
                     }
                 }

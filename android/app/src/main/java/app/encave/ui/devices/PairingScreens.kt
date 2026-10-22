@@ -67,7 +67,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.encave.EncaveApplication
 import app.encave.R
-import app.encave.core.containsSample
 import app.encave.core.sync.PairingCode
 import app.encave.sync.PairingSession
 import app.encave.ui.AppNavigator
@@ -264,13 +263,7 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     }
                 }
                 Text(
-                    stringResource(
-                        when {
-                            replace -> R.string.join_replace_footer
-                            cellar.containsSample -> R.string.join_combine_sample_footer
-                            else -> R.string.join_combine_footer
-                        },
-                    ),
+                    stringResource(if (replace) R.string.join_replace_footer else R.string.join_combine_footer),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = Dimens.l),

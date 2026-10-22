@@ -3,9 +3,9 @@ name: Android app
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["android/**", "design/tokens.json", "relay/**", "fixtures/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "relay/**", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", "design/tokens.json", "relay/**", "fixtures/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "relay/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 permissions:

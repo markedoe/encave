@@ -76,9 +76,6 @@ class WidgetSnapshotTest {
         assertEquals(cellar.locationLabel(placed), pick.place)
         assertNotNull(pick.place)
         assertEquals(2, snapshot.drinkSoon)
-        // The app names places as its lists do.
-        val named = WidgetSnapshot.of(cellar, year, place = { bottle -> bottle.slot?.let { "Main · Shelf ${it.row + 1}" } })
-        assertEquals("Main · Shelf 1", named.tonight.first().place)
     }
 
     @Test

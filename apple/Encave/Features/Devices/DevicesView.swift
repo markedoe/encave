@@ -100,8 +100,7 @@ struct DevicesView: View {
                     }
                     .accessibilityIdentifier("devices.remote")
                     if sync.needsWebDAVSignIn {
-                        // The folder came from another device (this one needs its own login), or
-                        // the server refused the login.
+                        // The folder came from another device: this one needs its own login.
                         NavigationLink {
                             RemoteSyncView()
                         } label: {
@@ -823,10 +822,8 @@ struct JoinDeviceView: View {
                 } footer: {
                     if replace {
                         Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
-                    } else if model.cellar.containsSample {
-                        Text("Both cellars are put together. The sample cellar is removed first.")
                     } else {
-                        Text("Both cellars are put together.")
+                        Text("Both cellars are put together. Choose Replace if this device only has the sample cellar.")
                     }
                 }
             }

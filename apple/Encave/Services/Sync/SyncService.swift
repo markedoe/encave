@@ -491,12 +491,8 @@ final class SyncService {
     /// the user to sign in instead of failing silently.
     var needsWebDAVSignIn: Bool {
         guard case .webDAV(let url) = remoteStorage else { return false }
-        return webDAVLoginRefused || webDAVLogin?.folder != url.absoluteString
+        return webDAVLogin?.folder != url.absoluteString
     }
-
-    /// The WebDAV server refused the login in the last round (a changed password): the
-    /// user is asked to sign in again at once rather than shown a failed round.
-    private(set) var webDAVLoginRefused = false
 
     /// Turns syncing away from home on with a storage (or off with nil). Checks the
     /// storage first. The first device to turn it on creates the cellar's key and
@@ -546,7 +542,6 @@ final class SyncService {
     /// old one stores nothing.
     private func useStorage(_ storage: RemoteStorage?) {
         guard storage != remoteStorage else { return }
-        webDAVLoginRefused = false
         generation += 1
         stopRemoteLoop()
         remoteStorage = storage
@@ -575,7 +570,6 @@ final class SyncService {
 
     private func storeWebDAVLogin(_ login: WebDAVLogin?) {
         webDAVLogin = login
-        webDAVLoginRefused = false
         Keychain.setData(login.flatMap { try? JSONEncoder().encode($0) }, for: Self.webDAVLoginAccount)
     }
 
@@ -721,7 +715,6 @@ final class SyncService {
             keep(.now, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
             keep(started, in: \.remoteSentThrough, key: Self.remoteSentKey)
             remoteFailedAt = nil
-            webDAVLoginRefused = false
             if !result.unreadable.isEmpty {
                 remoteProblem = String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
             } else if let refused = result.refusedFiles {
@@ -738,7 +731,6 @@ final class SyncService {
             return
         } catch RemoteSyncError.unauthorized {
             remoteFailedAt = .now
-            if case .webDAV = remoteStorage { webDAVLoginRefused = true }
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
             case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
@@ -856,12 +848,8 @@ final class SyncService {
         if replace {
             model.applySynced(Cellar(settings: model.cellar.settings))
             state = SyncState(device: identity.id)
-        } else {
-            // Combining: the sample cellar is not sent to the other devices.
-            if model.cellar.containsSample {
-                _ = model.update { $0 = $0.removingSample(labels: [.localized]) }
-            }
-            if state == nil { state = .starting(with: model.cellar, device: identity.id) }
+        } else if state == nil {
+            state = .starting(with: model.cellar, device: identity.id)
         }
         var members = received
         var clock = max(state?.clock ?? 0, received.stamps.values.map(\.counter).max() ?? 0)

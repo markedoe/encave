@@ -67,7 +67,7 @@ enum InventoryPDF {
                 .sorted { ($0.row, $0.column, $0.depth) < ($1.row, $1.column, $1.depth) }
             guard !slots.isEmpty else { continue }
             let rackName = rack.name
-            let labels = slots.map { rack.displayLabel(for: $0) }.joined(separator: ", ")
+            let labels = slots.map { rack.label(for: $0) }.joined(separator: ", ")
             lines.append(String(localized: "\(rackName): \(labels)"))
         }
         let elsewhere = bottles.filter { bottle in bottle.slot.flatMap { cellar.rack($0.rackID) } == nil }
