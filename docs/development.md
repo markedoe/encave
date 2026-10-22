@@ -204,10 +204,16 @@ off without code changes:
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
-| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test, screen tour on iPhone, iPad and Mac (artifact `screens`) and Mac screenshots for the App Store, 2880x1800 in English and French, light and dark (artifact `mac-screens`, made by `apple/tools/mac-screenshots.sh`), both on main, pull requests and manual runs only, builds both apps and checks they bundle the privacy manifest; on a push to main, uploads to TestFlight for the internal testers and, once the screen tour has passed, gives the build to the external testers and submits it to Beta App Review (a manual run on main with "external testers" ticked does too) |
+| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test, screen tour on iPhone, iPad and Mac (artifact `screens`) and Mac screenshots for the App Store, 2880x1800 in English and French, light and dark (artifact `mac-screens`, made by `apple/tools/mac-screenshots.sh`), both on main, pull requests and manual runs only; builds both apps and checks they bundle the privacy manifest. Uploads to TestFlight only on a push to `main` or a manual run, when the App Store Connect secrets are set (never on forks); pushes to other branches and pull requests only build. An uploaded build reaches the internal testers; the `testers` job then gives it to the external testers and submits it to Beta App Review, once the screen tour of the same run has passed, for every push to `main` and for a manual run from `main` with "external testers" ticked (a manual run from another branch reaches the internal testers only) |
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
-| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`) |
+| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`). Nothing is uploaded to Google Play |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
+| `testflight-status.yml` | Manual, read-only: the latest TestFlight builds, which external groups have them and where Beta App Review stands |
+| `testflight-external.yml` | Manual: gives a build already in TestFlight (its build number) to every external group and submits it to Beta App Review, with an optional "What to Test"; builds nothing |
+| `appstore-assets.yml` | Manual "App Store header image": `inspect` reads App Store Connect; `upload` places `docs/store/header-*.png` as the product page header and the search results asset of the version being prepared, in French and English (see [STORE.md](STORE.md)) |
+| `appstore-info.yml` | Manual "App Store listing": `inspect` reads the listing; `apply` sets what `docs/store/appstore.json` gives (privacy policy URL, age rating, names, subtitles and texts per language) and attaches its `build` to the iOS version being prepared |
+
+None of these workflows submits anything for App Store review.
 
 TestFlight uploads need these repository secrets: `APPLE_TEAM_ID`,
 `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_PRIVATE_KEY` (an App Store Connect API

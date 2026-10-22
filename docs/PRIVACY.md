@@ -40,9 +40,25 @@ Shortcuts and Spotlight, and the on-device features of Apple Intelligence
 (asking your cellar, suggesting details, estimating a price) are worked out on
 the device.
 
-A backup you make (**Back Up Now**, the weekly backup, or an export) is a
-standard file that is **not encrypted**: it goes where you choose to save or
-share it.
+The device also keeps earlier versions of your cellar (one for each of the
+last 7 days it changed, then one a week for 4 weeks), in the same storage.
+
+**Backups are not encrypted.** The weekly backup is **on by default**: once a
+week, Encave makes a ZIP file of your whole cellar, its photos and documents,
+by itself, and keeps the last two on the device. It runs when you open Encave,
+and in the background: on iPhone and iPad only during a background sync away
+from home, on Android once a day. You can turn it off in Settings.
+
+- **iPhone, iPad and Mac**: the weekly backups are in Encave's own Documents
+  folder (on iPhone and iPad, the Files app shows it under On My iPhone or On
+  My iPad › Encave). They are left out of the device's backups and Time
+  Machine. On iPhone and iPad, removing the app deletes them.
+- **Android**: the weekly backups are in the shared **Download/Encave**
+  folder. The Files app, apps you allow to access all files, and a computer
+  connected by USB can read them. They stay there when you remove the app.
+
+A backup you make yourself (**Back Up Now**, or an export) is a standard file,
+not encrypted either: it goes where you choose to save or share it.
 
 ### What can leave your device, and only if you turn it on
 
@@ -86,9 +102,15 @@ Encave is about wine and is not meant for children.
 ### Your rights
 
 The developer holds no data about you: there is nothing to access, correct or
-delete on the developer's side. You can export, delete (**Erase all data**, or
-removing the app) and restore your data at any time in the app. For the
-storage, AI or search service you choose, their own policies apply.
+delete on the developer's side. You can export, delete and restore your data at
+any time in the app. **Erase all data** empties the cellar (on your other
+devices too, if they sync with this one) but keeps the earlier versions and the
+weekly backups on the device, so it can still be restored. On iPhone, iPad and
+Android, removing the app deletes what Encave keeps in its own storage, but not
+the weekly backups in Android's Download/Encave folder: delete them in the
+Files app. On a Mac, the app's container stays until you delete it. Backups you
+saved elsewhere stay where you put them. For the storage, AI or search service you choose, their
+own policies apply.
 
 ### Changes and contact
 
@@ -99,10 +121,10 @@ source: anyone can check what the apps do at
 
 ## Français
 
-Date d'effet : 22 octobre 2026
+Date d'effet : 22 octobre 2026
 
 Encave est une app de cave à vin pour iPhone, iPad, Mac et Android. Cette
-politique couvre ces apps. En bref : **le développeur d'Encave ne collecte
+politique couvre ces apps. En bref : **le développeur d'Encave ne collecte
 rien.** Pas de compte, pas de mesure d'audience, pas de publicité, pas de
 pistage ni de SDK tiers, et le développeur n'exploite aucun serveur avec
 lequel les apps communiquent.
@@ -112,16 +134,16 @@ lequel les apps communiquent.
 Votre cave (vins, bouteilles, casiers, le Journal, prix, lieux, notes), ses
 photos et ses documents, ainsi que vos réglages, sont gardés dans le stockage
 propre à Encave sur votre appareil. Encave n'ajoute pas de chiffrement à ces
-fichiers ; ils sont protégés par l'appareil :
+fichiers ; ils sont protégés par l'appareil :
 
-- **iPhone et iPad** : iOS les chiffre (protection des données, accessibles
+- **iPhone et iPad** : iOS les chiffre (protection des données, accessibles
   après le premier déverrouillage suivant un redémarrage). Ils font partie des
   sauvegardes de l'appareil que vous faites (sauvegarde iCloud ou ordinateur),
   comme pour toute app.
-- **Mac** : ils sont dans le conteneur isolé de l'app, chiffrés quand FileVault
+- **Mac** : ils sont dans le conteneur isolé de l'app, chiffrés quand FileVault
   est activé, et font partie de vos sauvegardes Time Machine si vous l'utilisez.
-- **Android** : Android chiffre le stockage privé de l'app. Encave les exclut
-  des sauvegardes Google dans le cloud ; ils ne passent sur un nouveau
+- **Android** : Android chiffre le stockage privé de l'app. Encave les exclut
+  des sauvegardes Google dans le cloud ; ils ne passent sur un nouveau
   téléphone que par un transfert direct d'appareil à appareil.
 
 Les clés et mots de passe que vous saisissez (clés d'IA et de recherche web,
@@ -134,19 +156,41 @@ appareils, les widgets, Siri, Raccourcis et Spotlight, ainsi que les fonctions
 d'Apple Intelligence sur l'appareil (interroger votre cave, suggérer des
 détails, estimer un prix) sont calculés sur l'appareil.
 
-Une sauvegarde que vous faites (**Sauvegarder maintenant**, la sauvegarde
-hebdomadaire ou un export) est un fichier standard **non chiffré** : il va là
-où vous choisissez de l'enregistrer ou de le partager.
+L'appareil garde aussi des versions précédentes de votre cave (une pour
+chacun des 7 derniers jours où elle a changé, puis une par semaine pendant
+4 semaines), dans le même stockage.
+
+**Les sauvegardes ne sont pas chiffrées.** La sauvegarde hebdomadaire est
+**activée par défaut** : une fois par semaine, Encave fait de lui-même un
+fichier ZIP de toute votre cave, de ses photos et de ses documents, et garde les
+deux derniers sur l'appareil. Elle a lieu quand vous ouvrez Encave, et en
+arrière-plan : sur iPhone et iPad seulement pendant une synchronisation loin
+de la maison, sur Android une fois par jour. Vous pouvez la
+désactiver dans les réglages.
+
+- **iPhone, iPad et Mac** : les sauvegardes hebdomadaires sont dans le dossier
+  Documents propre à Encave (sur iPhone et iPad, l'app Fichiers l'affiche sous
+  Sur mon iPhone ou Sur mon iPad › Encave). Elles sont exclues des sauvegardes
+  de l'appareil et de Time Machine. Sur iPhone et iPad, supprimer l'app les
+  supprime.
+- **Android** : les sauvegardes hebdomadaires sont dans le dossier partagé
+  **Download/Encave**. L'app Fichiers, les apps que vous autorisez à accéder à
+  tous les fichiers et un ordinateur branché en USB peuvent les lire. Elles y
+  restent quand vous supprimez l'app.
+
+Une sauvegarde que vous faites vous-même (**Sauvegarder maintenant** ou un
+export) est un fichier standard, non chiffré lui non plus : il va là où vous
+choisissez de l'enregistrer ou de le partager.
 
 ### Ce qui peut quitter votre appareil, et seulement si vous l'activez
 
 1. **La synchronisation entre vos appareils.** Les appareils appairés
    s'échangent votre cave, ses photos et ses documents, chiffrés de bout en
    bout. Sur le même réseau, ils se connectent directement. À distance, si vous
-   l'activez, ils passent par un stockage que vous choisissez : iCloud (sur les
+   l'activez, ils passent par un stockage que vous choisissez : iCloud (sur les
    appareils Apple, quand il est proposé), un dossier WebDAV ou un relais
    (exploité par vous ou par quelqu'un de confiance). Il ne stocke que des
-   fichiers chiffrés qu'il ne peut pas lire ; il voit quand vos appareils se
+   fichiers chiffrés qu'il ne peut pas lire ; il voit quand vos appareils se
    synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais,
    leurs adresses IP. Les noms des appareils et la cave restent chiffrés.
 2. **La reconnaissance des étiquettes par IA** (désactivée par défaut). Si
@@ -156,16 +200,16 @@ où vous choisissez de l'enregistrer ou de le partager.
    demandez de compléter un vin. Votre cave et tout le reste ne sont jamais
    envoyés. La politique de confidentialité du service s'applique à la photo.
 3. **La recherche web** (désactivée par défaut). Si vous choisissez un service
-   de recherche, Encave envoie **seulement les termes de recherche** : le
+   de recherche, Encave envoie **seulement les termes de recherche** : le
    producteur, le nom, l'appellation et le millésime d'un vin, et pour un prix
    la contenance. Ils sont affichés, et modifiables, avant tout envoi. Votre
    cave, vos notes, vos prix et vos lieux ne sont jamais envoyés. Les résultats
    sont lus sur l'appareil. Quand vous cherchez des images, les miniatures et
    l'image choisie sont téléchargées depuis les sites qui les hébergent, qui
-   voient la demande ; l'image devient la couverture du vin et ne remplace
+   voient la demande ; l'image devient la couverture du vin et ne remplace
    jamais votre photo d'étiquette.
 
-Le HTTP non chiffré n'est utilisé que pour un serveur de votre réseau local ;
+Le HTTP non chiffré n'est utilisé que pour un serveur de votre réseau local ;
 tout le reste passe en HTTPS. Les liens (le code source, cette politique, un
 résultat de recherche) s'ouvrent dans votre navigateur.
 
@@ -173,7 +217,7 @@ résultat de recherche) s'ouvrent dans votre navigateur.
 
 Apple et Google peuvent transmettre aux développeurs des rapports de plantage
 et des statistiques d'utilisation des utilisateurs qui l'ont autorisé dans les
-réglages du système (par exemple « Partager avec les développeurs d'apps »).
+réglages du système (par exemple « Partager avec les développeurs d'apps »).
 Ils sont collectés par Apple ou Google selon leurs politiques, pas par Encave,
 et ne contiennent aucune donnée de la cave.
 
@@ -183,15 +227,21 @@ Encave parle de vin et ne s'adresse pas aux enfants.
 
 ### Vos droits
 
-Le développeur ne détient aucune donnée sur vous : il n'y a rien à consulter,
-corriger ou supprimer de son côté. Vous pouvez à tout moment exporter,
-supprimer (**Effacer toutes les données**, ou supprimer l'app) et restaurer vos
-données dans l'app. Pour le stockage, le service d'IA ou de recherche que vous
-choisissez, leurs propres politiques s'appliquent.
+Le développeur ne détient aucune donnée sur vous : il n'y a rien à consulter,
+corriger ou supprimer de son côté. Vous pouvez à tout moment exporter, supprimer
+et restaurer vos données dans l'app. **Effacer toutes les données** vide la
+cave (sur vos autres appareils aussi, s'ils se synchronisent avec celui-ci) mais
+garde les versions précédentes et les sauvegardes hebdomadaires sur l'appareil,
+pour pouvoir encore la restaurer. Sur iPhone, iPad et Android, supprimer l'app
+efface ce qu'Encave garde dans son propre stockage, mais pas les sauvegardes
+hebdomadaires du dossier Download/Encave d'Android : supprimez-les dans l'app
+Fichiers. Sur Mac, le conteneur de l'app reste jusqu'à ce que vous le supprimiez. Les sauvegardes enregistrées
+ailleurs restent là où vous les avez mises. Pour le stockage, le service d'IA ou
+de recherche que vous choisissez, leurs propres politiques s'appliquent.
 
 ### Modifications et contact
 
 Les modifications de cette politique sont publiées ici, avec la date
-ci-dessus. Encave est open source : chacun peut vérifier ce que font les apps
-sur <https://github.com/markedoe/encave>. Questions : ouvrez un ticket sur
+ci-dessus. Encave est open source : chacun peut vérifier ce que font les apps
+sur <https://github.com/markedoe/encave>. Questions : ouvrez un ticket sur
 <https://github.com/markedoe/encave/issues>.

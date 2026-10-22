@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Privacy policy (docs/PRIVACY.md, linked from the apps) and store paperwork
+  (docs/STORE.md); App Store listing in French and English (name, subtitle,
+  texts, age rating, privacy policy URL, the build to attach) applied from
+  docs/store/appstore.json, and a product page header image, by hand-run
+  workflows; TestFlight status and external build workflows; every build of
+  main goes to the external testers once the screen tour has passed
+- Fridge shelves can differ: layers and bottles set per shelf, or Apply to All
+  Shelves; adding, duplicating or removing a shelf keeps each bottle on its
+  shelf and layer
+- Fridge shelves numbered from the top everywhere
+- Deleting a rack asks first, naming it and how many bottles it holds; they
+  stay in the cellar without a place, and Undo brings the rack back
+- Combining with another device's cellar removes the sample cellar first
 - Studio look framed on the label: Apple turns a leaning bottle upright,
   cuts it out and frames it on its label (about 80% of the picture,
   the glass running off its edges), straightens a close-up of a label, and
@@ -58,11 +71,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   6-digit code, directly on the same Wi-Fi, or away from home through a WebDAV
   folder, a self-hostable relay or iCloud (Apple)
 - Backups on every platform: Back Up Now makes a readable ZIP archive (the
-  cellar as JSON, photos and documents under their names) that restores on
-  iPhone, iPad, Mac and Android; previous versions of the cellar kept on the
-  device (7 daily, 4 weekly); a weekly archive in Files (On My iPhone ›
-  Encave) or Download/Encave; restore with a preview, Add What Is Missing or
-  Replace This Cellar (synced to the other devices), and Undo
+  cellar as JSON, photos and documents under their names, not encrypted) that
+  restores on iPhone, iPad, Mac and Android; previous versions of the cellar
+  kept on the device (7 daily, 4 weekly); a weekly archive, on by default and
+  not encrypted, the last two kept in Files (On My iPhone › Encave), the Mac
+  app's container or Download/Encave; restore with a preview, Add What Is
+  Missing or Replace This Cellar (synced to the other devices), and Undo
 - Import from CellarTracker, Vivino and spreadsheets; CSV export; printable
   PDF inventory
 - Monthly and delivery reminders; Siri, Shortcuts actions and Spotlight

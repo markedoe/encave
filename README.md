@@ -60,8 +60,9 @@ where each bottle sits in your racks, and when it is ready to drink.
     ([docs/SHORTCUTS.md](docs/SHORTCUTS.md)).
   - On Android, home screen widgets: Tonight and Cellar.
 - **Backups:** previous versions kept on the device (7 daily, 4 weekly), a
-  weekly backup, **Back Up Now** as a ZIP file readable by other programs, and
-  a restore that shows what changes first. Import from CellarTracker, Vivino
+  weekly backup on the device (on by default), **Back Up Now** as a ZIP file
+  readable by other programs (backups are not encrypted), and a restore that
+  shows what changes first. Import from CellarTracker, Vivino
   or a spreadsheet; export to CSV.
 - French and English, light and dark mode, Dynamic Type, VoiceOver and TalkBack.
 
@@ -81,6 +82,7 @@ Requirements: iOS and iPadOS 18, macOS 15, Android 15 or later.
 - **Private by design.**
   - No account, no tracking, no analytics.
   - Sync is end-to-end encrypted; storage only ever holds ciphertext.
+  - What the apps keep and send: the [privacy policy](docs/PRIVACY.md).
 - **Native.** SwiftUI on iPhone, iPad and Mac; Jetpack Compose on Android.
 
 ## Repository
@@ -94,7 +96,7 @@ Requirements: iOS and iPadOS 18, macOS 15, Android 15 or later.
 | `design/` | Design tokens and asset generators shared by all platforms |
 | `fixtures/` | Test vectors shared by the Swift and Kotlin tests |
 | `scripts/` | Public-safety and commit message checks, public snapshot export |
-| `docs/` | [Roadmap](docs/ROADMAP.md), [sync protocol](docs/SYNC.md), [remote sync options](docs/REMOTE_SYNC.md), [Shortcuts for other apps](docs/SHORTCUTS.md), [encryption and export compliance](docs/ENCRYPTION.md), [development guide](docs/development.md) |
+| `docs/` | [Roadmap](docs/ROADMAP.md), [sync protocol](docs/SYNC.md), [remote sync options](docs/REMOTE_SYNC.md), [Shortcuts for other apps](docs/SHORTCUTS.md), [encryption and export compliance](docs/ENCRYPTION.md), [privacy policy](docs/PRIVACY.md), [store paperwork](docs/STORE.md), [development guide](docs/development.md) |
 
 ## Getting started
 

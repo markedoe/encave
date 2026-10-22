@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- Privacy manifest of the iPhone, iPad and Mac apps. Encave collects nothing and does
      not track: the cellar stays on the user's devices (see docs/PRIVACY.md). Keep the
-     reasons below in step with the code (checked in CI by scripts/check-privacy-manifest.sh). -->
+     reasons below in step with the code by hand: CI (scripts/check-privacy-manifest.sh)
+     only checks that the built apps bundle this file and that it declares no tracking
+     and no collected data. -->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>

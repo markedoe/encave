@@ -1171,12 +1171,12 @@
         }
       }
     },
-    "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too.": {
+    "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too. The previous versions and the weekly backups stay on this device, so the cellar can still be restored; on iPhone and iPad, removing Encave deletes them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux."
+            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux. Les versions précédentes et les sauvegardes hebdomadaires restent sur cet appareil, pour pouvoir encore restaurer la cave ; sur iPhone et iPad, supprimer Encave les supprime."
           }
         }
       }
@@ -1227,6 +1227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses places et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
+          }
+        }
+      }
+    },
+    "**Weekly Backup on This Device** is on from the start: once a week, Encave makes a backup by itself when you open it or come back to it, and on iPhone and iPad also during a background sync away from home, when iOS runs one. It keeps the last two on this device, as ZIP files that are not encrypted. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's backups, which already hold your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. **Erase all data** keeps them. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time. Turn the switch off if you do not want them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Sauvegarde hebdomadaire sur cet appareil** est activée au départ : une fois par semaine, Encave fait une sauvegarde de lui-même quand vous l’ouvrez ou y revenez, et sur iPhone et iPad aussi pendant une synchronisation loin de la maison en arrière-plan, quand iOS en lance une. Il garde les deux dernières sur cet appareil, en fichiers ZIP non chiffrés. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, une fois la première faite, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Sur iPhone et iPad, elles ne font pas partie des sauvegardes de l’appareil, qui contiennent déjà votre cave, et sont supprimées avec Encave ; sur un Mac, Time Machine ne les sauvegarde pas. **Effacer toutes les données** les garde. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps. Désactivez l’option si vous n’en voulez pas."
           }
         }
       }
@@ -1321,22 +1331,22 @@
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: Mac, iPhone, iPad or Android. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent sur ce Mac (Afficher les sauvegardes hebdomadaires dans le Finder). Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: iPhone, iPad, Mac or Android. The last two weekly backups stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. Les deux dernières sauvegardes hebdomadaires restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -6411,12 +6421,12 @@
         }
       }
     },
-    "In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.": {
+    "In the Cellar list, tap **Select** at the top, or touch and hold a wine and choose **Select**, then tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them; **Done** ends the selection. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
+            "value": "Dans la liste de la Cave, touchez **Sélectionner** en haut, ou touchez longuement un vin et choisissez **Sélectionner**, puis cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les ; **OK** termine la sélection. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
           }
         }
       }
@@ -9021,12 +9031,12 @@
         }
       }
     },
-    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there a few seconds after a change, and reads the others’ while Encave is open, every minute unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
+    "Optional, in **Devices › Sync Away from Home**: iCloud when Encave offers it (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there a few seconds after a change, and reads the others’ while Encave is open, every minute unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave quelques secondes après une modification, et lit celles des autres quand Encave est ouvert, toutes les minutes sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
+            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud quand Encave le propose (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave quelques secondes après une modification, et lit celles des autres quand Encave est ouvert, toutes les minutes sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
           }
         }
       }
@@ -11901,12 +11911,12 @@
         }
       }
     },
-    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud, your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
+    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud (when Encave offers it), your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud, votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
+            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud (quand Encave le propose), votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
           }
         }
       }
@@ -14271,12 +14281,12 @@
         }
       }
     },
-    "When a fridge on shelves is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Tap any place of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**.": {
+    "When a fridge with bottles in layers (**Honeycomb rack**, **On shelves**) is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Tap any place of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**. Other racks two deep show the dots described below.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand une cave à étagères a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**."
+            "value": "Quand une cave à vin avec bouteilles en couches (**Casier nid d’abeille**, **Sur étagères**) a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**. Les autres casiers à deux rangs montrent les points décrits plus bas."
           }
         }
       }
@@ -14371,12 +14381,12 @@
         }
       }
     },
-    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar or Tonight screen, or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. When this device holds only the sample, joining a cellar from another device replaces it without asking; if you added bottles too, choose **Remove Sample** first.": {
+    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar or Tonight screen, or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. When this device holds only the sample, joining a cellar from another device replaces it without asking; if you added bottles too, **Combine with the other cellar** removes the sample first, so it never reaches your other devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave ou Ce soir vide, ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave ne retire qu’eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Si cet appareil n’a que l’exemple, rejoindre la cave d’un autre appareil le remplace sans rien demander ; si vous avez aussi ajouté des bouteilles, touchez d’abord **Retirer l’exemple**."
+            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave ou Ce soir vide, ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave ne retire qu’eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Si cet appareil n’a que l’exemple, rejoindre la cave d’un autre appareil le remplace sans rien demander ; si vous avez aussi ajouté des bouteilles, **Réunir avec l’autre cave** retire d’abord l’exemple, qui n’arrive donc jamais sur vos autres appareils."
           }
         }
       }
@@ -14611,16 +14621,6 @@
         }
       }
     },
-    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week, when you use Encave or in the background, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's iCloud backup, which already holds your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine, quand vous utilisez Encave ou en arrière-plan, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, une fois la première faite, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Sur iPhone et iPad, elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et sont supprimées avec Encave ; sur un Mac, Time Machine ne les sauvegarde pas. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
-          }
-        }
-      }
-    },
     "With AI (optional)": {
       "localizations": {
         "fr": {
@@ -14831,12 +14831,12 @@
         }
       }
     },
-    "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.": {
+    "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). The backups Encave makes (the weekly backup, on at first, and **Back Up Now**) are ZIP files that are not encrypted. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien."
+            "value": "Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Les sauvegardes que fait Encave (la sauvegarde hebdomadaire, activée au départ, et **Sauvegarder maintenant**) sont des fichiers ZIP non chiffrés. Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien."
           }
         }
       }
