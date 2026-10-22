@@ -18,7 +18,6 @@ struct RootView: View {
     @State private var router = SceneRouter()
 
     var body: some View {
-        let _ = UserDefaults.standard.bool(forKey: "EncaveDebugChanges") ? Self._printChanges() : ()
         sections
             .environment(router)
             .overlay { ToastOverlay() }
