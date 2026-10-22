@@ -521,6 +521,12 @@ class Cellar(
         bottleMap[bottle.id] = bottle.normalized()
     }
 
+    /** Gives a bottle a new ID (the sample's fixed IDs). */
+    internal fun rekeyBottle(oldId: UUID, bottle: Bottle) {
+        bottleMap.remove(oldId)
+        bottleMap[bottle.id] = bottle.normalized()
+    }
+
     internal fun putDiscovery(discovery: Discovery) {
         discoveryMap[discovery.id] = discovery.normalized()
     }

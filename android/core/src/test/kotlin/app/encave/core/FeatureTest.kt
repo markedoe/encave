@@ -293,12 +293,31 @@ class ImportExportTest {
         val cellar = SampleData.cellar(year = 2026)
         val summary = cellar.merge(cellar.copy())
         assertEquals(0, summary.bottlesAdded)
-        val other = SampleData.cellar(year = 2026)
+        // The sample's IDs are fixed: another cellar with the same content, new IDs.
+        val other = SampleData.cellar(year = 2026).withNewIds()
         val added = cellar.merge(other)
         assertEquals(other.bottles.size, added.bottlesAdded)
         val slots = cellar.bottlesInCellar.mapNotNull { it.slot }
         assertEquals(slots.size, slots.toSet().size, "merged bottles never share a slot")
     }
+}
+
+/** The same records under new IDs. */
+internal fun Cellar.withNewIds(): Cellar {
+    val racks = racks.associate { it.id to UUID.randomUUID() }
+    val wines = wines.keys.associateWith { UUID.randomUUID() }
+    return Cellar(
+        wines = this.wines.values.map { it.copy(id = wines.getValue(it.id)) },
+        bottles = bottles.values.map { bottle ->
+            bottle.copy(
+                id = UUID.randomUUID(), wineId = wines.getValue(bottle.wineId),
+                slot = bottle.slot?.let { it.copy(rackId = racks.getValue(it.rackId)) },
+            )
+        },
+        racks = this.racks.map { it.copy(id = racks.getValue(it.id)) },
+        settings = settings,
+        discoveries = discoveries.values.map { it.copy(id = UUID.randomUUID(), wineId = wines.getValue(it.wineId)) },
+    )
 }
 
 class CompatibilityTest {
