@@ -13,6 +13,9 @@ public struct PairingSuggestion: Identifiable, Hashable, Sendable {
     /// Why it matches, as a reason code the UI turns into text.
     public var reasons: [PairingReason]
     public var id: UUID { group.id }
+
+    /// From this score, the apps say "Great match" (the score itself is not shown).
+    public static let greatMatch = 60
 }
 
 public enum PairingReason: String, Hashable, Sendable {
