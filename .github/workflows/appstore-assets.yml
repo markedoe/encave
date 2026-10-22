@@ -12,6 +12,10 @@ on:
         type: choice
         options: [inspect, upload]
         default: inspect
+      locales:
+        description: "Only these languages, e.g. en-US (empty: all)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -31,6 +35,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           BUNDLE_ID: app.encave
           MODE: ${{ inputs.mode }}
+          LOCALES: ${{ inputs.locales }}
           IMAGES: fr-FR=docs/store/header-fr.png,en-US=docs/store/header-en.png
         run: |
           export ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"

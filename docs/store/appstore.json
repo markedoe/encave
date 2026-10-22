@@ -1,0 +1,48 @@
+{
+  "privacyPolicyUrl": "https://github.com/markedoe/encave/blob/main/docs/PRIVACY.md",
+  "appInfo": {
+    "fr-FR": {"name": "Encave", "subtitle": "Votre cave à vin, bien rangée"},
+    "en-US": {"name": "Encave", "subtitle": "Your wine cellar, in order"}
+  },
+  "ageRating": {
+    "alcoholTobaccoOrDrugUseOrReferences": "FREQUENT",
+    "advertising": false,
+    "ageAssurance": false,
+    "contests": "NONE",
+    "gambling": false,
+    "gamblingSimulated": "NONE",
+    "gunsOrOtherWeapons": "NONE",
+    "healthOrWellnessTopics": false,
+    "horrorOrFearThemes": "NONE",
+    "lootBox": false,
+    "matureOrSuggestiveThemes": "NONE",
+    "medicalOrTreatmentInformation": "NONE",
+    "messagingAndChat": false,
+    "parentalControls": false,
+    "profanityOrCrudeHumor": "NONE",
+    "sexualContentGraphicAndNudity": "NONE",
+    "sexualContentOrNudity": "NONE",
+    "socialMedia": false,
+    "unrestrictedWebAccess": false,
+    "userGeneratedContent": false,
+    "violenceCartoonOrFantasy": "NONE",
+    "violenceRealistic": "NONE",
+    "violenceRealisticProlongedGraphicOrSadistic": "NONE"
+  },
+  "version": {
+    "fr-FR": {
+      "promotionalText": "Ajoutez une bouteille en un scan, retrouvez-la dans vos casiers et sachez quoi ouvrir ce soir. Sans compte, sans pub, chiffré de bout en bout.",
+      "keywords": "cave,vin,bouteille,casier,cellier,dégustation,millésime,cépage,sommelier,inventaire,étiquette",
+      "supportUrl": "https://github.com/markedoe/encave/issues",
+      "marketingUrl": "https://github.com/markedoe/encave",
+      "description": "Encave tient votre cave à vin : ce que vous avez, où c'est rangé et quand l'ouvrir.\n\nAJOUTER EN QUELQUES SECONDES\n• Scannez l'étiquette ou le code-barres : le nom, le domaine et le millésime sont lus sur l'appareil.\n• Un vin déjà en cave est reconnu, et vous ajoutez simplement des bouteilles.\n• Photos, documents (facture, fiche technique), bouteilles en commande et dates de livraison.\n• En option, une IA de votre choix complète la fiche avec votre propre clé : seule la photo de l'étiquette lui est envoyée.\n\nVOTRE CAVE, ET VOS CASIERS\n• Recherche, filtres par couleur, maturité, cépage et étiquettes, recherches enregistrées.\n• Fenêtre de dégustation et maturité de chaque bouteille : à boire bientôt, prête, à garder, après l'apogée.\n• Vos casiers tels qu'ils sont : grille classique, double profondeur, losanges, frigo à vin avec étagères en quinconce. Retrouvez une bouteille d'un coup d'œil, déplacez-la, vérifiez un casier.\n\nCE SOIR\n• Une idée de bouteille chaque jour, prête à boire.\n• Accords mets-vins dans votre cave.\n• Posez une question à votre cave, sur l'appareil, avec Apple Intelligence.\n\nJOURNAL\n• Vos dégustations et vos notes, les vins goûtés ailleurs, une liste de courses.\n• Votre année en vin et un plan pour boire chaque bouteille à temps.\n\nSUR TOUS VOS APPAREILS\n• iPhone, iPad et Mac, avec une vraie app Mac : barre latérale, tableau, raccourcis clavier.\n• Synchronisation chiffrée de bout en bout : directement sur le même Wi-Fi, ou hors de chez vous par un dossier WebDAV ou un relais que vous choisissez. Personne d'autre que vos appareils ne peut lire votre cave.\n• Sauvegardes lisibles, automatiques chaque semaine, export CSV et inventaire PDF, import depuis CellarTracker et Vivino.\n• Rappels du mois et des livraisons, Siri, Raccourcis et Spotlight.\n\nPRIVÉE PAR CONCEPTION\nPas de compte, pas de publicité, pas de suivi, aucun SDK tiers : vos données restent sur vos appareils. Encave est open source.\n\nEn français et en anglais, avec VoiceOver, la taille de texte dynamique et le mode sombre.\n\nÀ consommer avec modération."
+    },
+    "en-US": {
+      "promotionalText": "Add a bottle with one scan, find it in your racks and know what to open tonight. No account, no ads, end-to-end encrypted.",
+      "keywords": "wine,cellar,bottle,rack,tasting,vintage,grape,sommelier,inventory,label,scanner,fridge,notes",
+      "supportUrl": "https://github.com/markedoe/encave/issues",
+      "marketingUrl": "https://github.com/markedoe/encave",
+      "description": "Encave keeps track of your wine cellar: what you have, where it is and when to open it.\n\nADD IN SECONDS\n• Scan the label or the barcode: the name, producer and vintage are read on the device.\n• A wine already in your cellar is recognized, and you just add bottles.\n• Photos, documents (invoice, technical sheet), bottles on order and delivery dates.\n• Optionally, an AI service of your choice completes the details with your own key: only the label photo is sent to it.\n\nYOUR CELLAR, AND YOUR RACKS\n• Search, filters by color, maturity, grape and tags, saved searches.\n• Drinking window and maturity for every bottle: drink soon, ready, keep, past peak.\n• Your racks as they are: classic grid, double depth, diamond bins, wine fridges with staggered shelves. Find a bottle at a glance, move it, check a rack.\n\nTONIGHT\n• A bottle idea every day, ready to drink.\n• Food pairing from your own cellar.\n• Ask your cellar a question, on the device, with Apple Intelligence.\n\nJOURNAL\n• Your tastings and notes, wines tasted elsewhere, a shopping list.\n• Your year in wine and a plan to drink every bottle in time.\n\nON ALL YOUR DEVICES\n• iPhone, iPad and Mac, with a real Mac app: sidebar, table, keyboard shortcuts.\n• End-to-end encrypted sync: directly on the same Wi-Fi, or away from home through a WebDAV folder or a relay you choose. Nobody but your devices can read your cellar.\n• Readable backups, automatic every week, CSV export and PDF inventory, import from CellarTracker and Vivino.\n• Monthly and delivery reminders, Siri, Shortcuts and Spotlight.\n\nPRIVATE BY DESIGN\nNo account, no ads, no tracking, no third-party SDK: your data stays on your devices. Encave is open source.\n\nIn English and French, with VoiceOver, Dynamic Type and Dark Mode.\n\nPlease drink responsibly."
+    }
+  }
+}

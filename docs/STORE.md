@@ -1,8 +1,11 @@
 # Store paperwork (draft)
 
-> **Draft for the owner.** Answers for the App Store Connect and Google Play
-> Console forms, with the reasoning, checked against the code as it is. The
-> owner fills in the forms. Recheck them whenever the apps start sending
+> Answers for the App Store Connect and Google Play Console forms, with the
+> reasoning, checked against the code as it is. On the App Store side, the
+> "App Store listing" workflow applies `docs/store/appstore.json` (privacy
+> policy URL, age rating, texts in French and English); the App Privacy label
+> is answered in App Store Connect by hand (no API). Google Play is filled in
+> by hand. Recheck them whenever the apps start sending
 > something new. The privacy policy is [PRIVACY.md](PRIVACY.md).
 
 ## Facts the answers rest on

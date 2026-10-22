@@ -11,7 +11,8 @@ header and as the search results asset of the version being prepared. It does
 not submit anything for review: the images go to review with that version.
 
 Environment: ASC_KEY_PATH, ASC_KEY_ID, ASC_ISSUER_ID, BUNDLE_ID, MODE,
-IMAGES ("fr-FR=docs/store/header-fr.png,en-US=docs/store/header-en.png").
+IMAGES ("fr-FR=docs/store/header-fr.png,en-US=docs/store/header-en.png"),
+LOCALES (optional, e.g. "en-US": only these languages).
 """
 
 import hashlib
@@ -114,6 +115,9 @@ def main():
         return
 
     wanted = dict(item.split("=", 1) for item in os.environ["IMAGES"].split(","))
+    only = [l.strip() for l in os.environ.get("LOCALES", "").split(",") if l.strip()]
+    if only:
+        wanted = {locale: path for locale, path in wanted.items() if locale in only}
     for locale, path in wanted.items():
         localization = by_locale.get(locale) or next(
             (i for l, i in by_locale.items() if l.split("-")[0] == locale.split("-")[0]), None)
