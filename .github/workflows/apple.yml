@@ -51,16 +51,17 @@ jobs:
     # manual runs. Pushes to other branches only build and run the Mac launch test, so
     # fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
-    # One job per device: a runner runs two simulators side by side (English and French)
-    # as fast as one, but not three (measured). The screenshots job merges both.
+    # One job per language, each with the iPhone and the iPad side by side: a runner
+    # runs an iPhone and an iPad simulator together as fast as one, but not two iPads
+    # or three simulators (measured). The screenshots job merges both.
     strategy:
       fail-fast: false
       matrix:
         include:
-          - device: iPhone
-            name: iPhone, Mac
-          - device: iPad
-            name: iPad
+          - language: en
+            name: English, Mac
+          - language: fr
+            name: French
     runs-on: macos-latest
     timeout-minutes: 60
     defaults:
@@ -88,48 +89,49 @@ jobs:
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
 
       - name: Model tests (macOS)
-        if: matrix.device == 'iPhone'
+        if: matrix.language == 'fr'
         run: swift test --package-path Packages/CaveKit
 
       - name: Start the simulators
         if: ${{ !cancelled() }}
         env:
-          DEVICE: ${{ matrix.device }}
+          LANGUAGE: ${{ matrix.language }}
         run: |
           set -e
           sims="$RUNNER_TEMP/sims"
           mkdir -p "$sims"
-          # The newest iPhone (not mini) or iPad, and a copy of it: English and French run
-          # side by side. Booted first: a cold simulator can time out launching the app
-          # under test. Nothing else runs meanwhile: a booting simulator slows all else.
+          # The newest iPhone (not mini) and iPad. Booted first: a cold simulator can time
+          # out launching the app under test. Nothing else runs meanwhile: a booting
+          # simulator slows all else.
           xcrun simctl list devices available -j > "$sims/devices.json"
-          python3 - "$sims/devices.json" "$DEVICE" > "$sims/plan" <<'PY'
+          python3 - "$sims/devices.json" > "$sims/plan" <<'PY'
           import json, sys
-          found = []
-          for runtime, devices in json.load(open(sys.argv[1]))["devices"].items():
-              if "iOS" not in runtime:
-                  continue
-              for d in devices:
-                  if d["name"].startswith(sys.argv[2]) and "mini" not in d["name"]:
-                      found.append((runtime, d["name"], d["udid"]))
-          found.sort()
-          runtime, name, udid = found[-1]
-          print(udid, name)
+          for prefix in ("iPhone", "iPad"):
+              found = []
+              for runtime, devices in json.load(open(sys.argv[1]))["devices"].items():
+                  if "iOS" not in runtime:
+                      continue
+                  for d in devices:
+                      if d["name"].startswith(prefix) and "mini" not in d["name"]:
+                          found.append((runtime, d["name"], d["udid"]))
+              found.sort()
+              runtime, name, udid = found[-1]
+              print(prefix, udid, name)
           PY
-          read -r udid name < "$sims/plan"
-          echo "$DEVICE: $name ($udid)"
-          echo "$udid" > "$sims/$DEVICE-en"
-          xcrun simctl clone "$udid" "$name fr" > "$sims/$DEVICE-fr"
-          for label in "$DEVICE-en" "$DEVICE-fr"; do xcrun simctl boot "$(cat "$sims/$label")" || true; done
-          for label in "$DEVICE-en" "$DEVICE-fr"; do
-            xcrun simctl bootstatus "$(cat "$sims/$label")" > /dev/null
-            echo "$label booted at $(date -u +%T)"
+          while read -r device udid name; do
+            echo "$device: $name ($udid)"
+            echo "$udid" > "$sims/$device-$LANGUAGE"
+            xcrun simctl boot "$udid" || true
+          done < "$sims/plan"
+          for device in iPhone iPad; do
+            xcrun simctl bootstatus "$(cat "$sims/$device-$LANGUAGE")" > /dev/null
+            echo "$device booted at $(date -u +%T)"
           done
 
-      - name: Tour in English and in French
+      - name: iPhone and iPad
         if: ${{ !cancelled() }}
         env:
-          DEVICE: ${{ matrix.device }}
+          LANGUAGE: ${{ matrix.language }}
         run: |
           set -o pipefail
           sims="$RUNNER_TEMP/sims"
@@ -143,18 +145,21 @@ jobs:
               | tee "$RUNNER_TEMP/$label.raw" | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$label.log" \
               | sed -u "s/^/[$label] /"
           }
-          # The large text checks only run on iPhone (they stop at once on the iPad's
-          # regular width), with the French tour, the shorter one.
-          french=("-only-testing:$tour/testTourInFrench")
-          if [ "$DEVICE" = iPhone ]; then
-            french+=("-only-testing:$tour/testLargeText" "-only-testing:$tour/testLargestText")
+          if [ "$LANGUAGE" = en ]; then
+            iphone=("-only-testing:$tour/testTourInEnglish")
+          else
+            # The large text checks run on iPhone only (they stop at once on the iPad's
+            # regular width), with the French tour, the shorter one.
+            iphone=("-only-testing:$tour/testTourInFrench" "-only-testing:$tour/testLargeText"
+                    "-only-testing:$tour/testLargestText")
           fi
+          ipad=("${iphone[0]}")
           echo "Started at $(date -u +%T)"
-          run "$DEVICE-en" -only-testing:$tour/testTourInEnglish & en=$!
-          run "$DEVICE-fr" "${french[@]}" & fr=$!
+          run "iPhone-$LANGUAGE" "${iphone[@]}" & first=$!
+          run "iPad-$LANGUAGE" "${ipad[@]}" & second=$!
           status=0
-          wait "$en" || status=1
-          wait "$fr" || status=1
+          wait "$first" || status=1
+          wait "$second" || status=1
           # The failures again, as annotations, and when each part started its tests.
           grep -h "^::" "$RUNNER_TEMP"/iP*.log || true
           grep -h "Test Suite 'All tests' started\|elapsed --" "$RUNNER_TEMP"/iP*.raw | head -n 30 || true
@@ -194,7 +199,7 @@ jobs:
           done
 
       - name: Mac
-        if: ${{ !cancelled() && matrix.device == 'iPhone' }}
+        if: ${{ !cancelled() && matrix.language == 'en' }}
         # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
         # failed); the Mac screenshots of the build job show each section.
         continue-on-error: true
@@ -245,7 +250,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: screens-${{ matrix.device }}
+          name: screens-${{ matrix.language }}
           path: ${{ runner.temp }}/screens
           retention-days: 1
 

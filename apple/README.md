@@ -46,12 +46,13 @@ runs, and one on pushes to other branches:
   checks the privacy manifest. On main, pull requests and manual runs, the same
   Mac app then makes the Mac screenshots for the App Store
   (`tools/mac-screenshots.sh`, artifact `mac-screens`).
-- **Screen tour (iPhone, Mac)** and **Screen tour (iPad)** (main, pull requests
-  and manual runs): each builds the UI tests once, starts two copies of the
-  newest iPhone or iPad simulator and runs the English and the French tour side
-  by side (two simulators run as fast as one on GitHub's runners; three do not).
-  The iPhone job also runs the large text checks, the model tests on macOS and
-  the Mac tour. A third job merges their screenshots into the `screens` artifact
+- **Screen tour (English, Mac)** and **Screen tour (French)** (main, pull
+  requests and manual runs): each builds the UI tests once, starts the newest
+  iPhone and iPad simulators and runs the tour in its language on both side by
+  side (an iPhone and an iPad run together as fast as one on GitHub's runners;
+  two iPads or three simulators do not). The French job also runs the large
+  text checks on the iPhone and the model tests on macOS; the English job, the
+  Mac tour. A third job merges their screenshots into the `screens` artifact
   (one folder per device). The external testers get a build of main once both
   tour jobs have passed. Runs on main are never cancelled by a later push.
 
