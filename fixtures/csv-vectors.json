@@ -1,0 +1,590 @@
+{
+  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty.",
+  "headers": {
+    "name": "name",
+    "Wine Name": "name",
+    "wine_name": "name",
+    "Nom": "name",
+    "Vin": "name",
+    "Cuvée": "name",
+    "Domaine": "producer",
+    "Producteur": "producer",
+    "Winery": "producer",
+    "Millésime": "vintage",
+    "MILLESIME": "vintage",
+    "Année": "vintage",
+    "Couleur": "color",
+    "Type": "color",
+    "Pays": "country",
+    "Cépage": "grapes",
+    "Cépages": "grapes",
+    "Varietal": "grapes",
+    "Boire à": "drink_from",
+    "Boire jusqu'à": "drink_until",
+    "BeginConsume": "drink_from",
+    "EndConsume": "drink_until",
+    "Fenêtre de dégustation": "drinking_window",
+    "Drinking window": "drinking_window",
+    "Quantité": "quantity",
+    "Qty": "quantity",
+    "Bottles": "quantity",
+    "Prix": "price",
+    "Purchase Price": "price",
+    "Devise": "currency",
+    "Emplacement": "rack",
+    "Casier": "rack",
+    "Location": "rack",
+    "Case": "slot",
+    "Bin": "slot",
+    "Commentaire": "note",
+    "Your review": "note",
+    "Your rating": "rating",
+    "Prix actuel": "current_price",
+    "Valeur actuelle": "current_price",
+    "Livraison": "expected_on",
+    "Delivery date": "expected_on",
+    "Scan date": "scan_date",
+    "Scan/Review Location": "place",
+    "Lieu": "place",
+    "Size (ml)": "size_ml",
+    "Reserved for": "reserved_for",
+    "Average Rating": "average_rating",
+    " Something Else ": "something_else"
+  },
+  "years": {
+    "2015": 2015,
+    "2015.0": 2015,
+    " 1999 ": 1999,
+    "NV": null,
+    "1001": null,
+    "1799": null,
+    "2200": 2200,
+    "2201": null,
+    "": null
+  },
+  "ratings": {
+    "4": 4,
+    "4.4": 4,
+    "4.5": 5,
+    "3,5": 4,
+    "92": 5,
+    "88": 4,
+    "50": 3,
+    "100": 5,
+    "0": null,
+    "-3": null,
+    "abc": null,
+    "0.2": 1,
+    "7": 1
+  },
+  "quantities": {
+    "3": 3,
+    "3.6": 4,
+    "0": 1,
+    "-2": 1,
+    "abc": 1,
+    "": 1,
+    "5000": 999,
+    "999": 999
+  },
+  "sizes": {
+    "750": 750,
+    "750.0": 750,
+    "1500": 1500,
+    "0": null,
+    "100001": null,
+    "abc": null
+  },
+  "colors": {
+    "Rouge": "red",
+    "BLANC": "white",
+    "Rosé": "rose",
+    "White - Sparkling": "sparkling",
+    "Champagne": "sparkling",
+    "Pétillant": "sparkling",
+    "White - Sweet/Dessert": "dessert",
+    "Moelleux": "dessert",
+    "Port": "fortified",
+    "Vin orange": "orange",
+    "Red": "red",
+    "Purple": null,
+    "": null
+  },
+  "cleaned": {
+    "  Palmer  ": "Palmer",
+    "'=SUM(A1)": "=SUM(A1)",
+    "'+33 1": "+33 1",
+    "'-Sec": "-Sec",
+    "'@home": "@home",
+    "'Quoted'": "'Quoted'",
+    "'": "'",
+    "   ": null,
+    "": null
+  },
+  "escaped": {
+    "Palmer": "Palmer",
+    "a,b": "\"a,b\"",
+    "a;b": "\"a;b\"",
+    "say \"hi\"": "\"say \"\"hi\"\"\"",
+    "two\nlines": "\"two\nlines\"",
+    "=SUM(A1)": "'=SUM(A1)",
+    "-Sec": "'-Sec",
+    "+1": "'+1",
+    "@x": "'@x",
+    "=a,b": "\"'=a,b\"",
+    "": ""
+  },
+  "parsed": [
+    {
+      "text": "a,b,c\n1,2,3\n",
+      "rows": [
+        [
+          "a",
+          "b",
+          "c"
+        ],
+        [
+          "1",
+          "2",
+          "3"
+        ]
+      ]
+    },
+    {
+      "text": "a;b,c;d\r\n1;2,5;3\r\n",
+      "rows": [
+        [
+          "a",
+          "b,c",
+          "d"
+        ],
+        [
+          "1",
+          "2,5",
+          "3"
+        ]
+      ]
+    },
+    {
+      "text": "﻿name\rPalmer\r",
+      "rows": [
+        [
+          "name"
+        ],
+        [
+          "Palmer"
+        ]
+      ]
+    },
+    {
+      "text": "a,b\n\"x, \"\"y\"\"\",\"two\nlines\"\n\n",
+      "rows": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "x, \"y\"",
+          "two\nlines"
+        ]
+      ]
+    },
+    {
+      "text": "a,b\n1,",
+      "rows": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "1",
+          ""
+        ]
+      ]
+    },
+    {
+      "text": "",
+      "rows": []
+    }
+  ],
+  "imports": [
+    {
+      "about": "Encave's own columns: every status, prices, dates as days, tags, a reservation, the current price, and text a spreadsheet would run as a formula. Wine fields of a later row of the same wine are not read again.",
+      "csv": [
+        "name,producer,vintage,color,region,country,appellation,grapes,drink_from,drink_until,status,rack,slot,storage,purchase_date,price,currency,purchase_place,received_from,size_ml,rating,tasted_on,note,expected_on,tags,reserved_for,current_price,current_price_currency,current_price_date",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
+        "CHÂTEAU PALMER ,château palmer,2015,white,,,,,,,consumed,,,,,,,,,750,4,2026-05-01,\"Silky, long\",,,,,,",
+        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,",
+        "Muscadet,,,white,,,,,,,gone,,,,,,,,Paul,375,,,,,,,,,",
+        "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar"
+      ],
+      "summary": {
+        "winesAdded": 4,
+        "bottlesAdded": 5,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "=HYPERLINK(\"x\")",
+          "producer": "-Sec",
+          "grapes": []
+        },
+        {
+          "name": "Château Palmer",
+          "producer": "Château Palmer",
+          "vintage": 2015,
+          "color": "red",
+          "region": "Bordeaux",
+          "country": "France",
+          "appellation": "Margaux",
+          "drinkFrom": 2025,
+          "drinkUntil": 2045,
+          "tags": [
+            "Gift",
+            "Summer"
+          ],
+          "currentPrice": "150",
+          "currentPriceCurrency": "EUR",
+          "currentPriceDate": "2026-09-01",
+          "grapes": [
+            "Merlot",
+            "Cabernet Sauvignon"
+          ]
+        },
+        {
+          "name": "Muscadet",
+          "color": "white",
+          "grapes": []
+        },
+        {
+          "name": "Rully",
+          "producer": "Domaine Jacqueson",
+          "vintage": 2020,
+          "color": "white",
+          "region": "Bourgogne",
+          "country": "France",
+          "appellation": "Rully",
+          "grapes": [
+            "Chardonnay"
+          ]
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "=HYPERLINK(\"x\")",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR"
+        },
+        {
+          "wine": "Château Palmer",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "120.5",
+          "storage": "Cave du bas",
+          "purchaseDate": "2024-03-10",
+          "purchasePlace": "Caviste",
+          "reservedFor": "Wedding"
+        },
+        {
+          "wine": "Château Palmer",
+          "status": "consumed",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "rating": 4,
+          "tastedOn": "2026-05-01",
+          "note": "Silky, long"
+        },
+        {
+          "wine": "Muscadet",
+          "status": "gone",
+          "count": 1,
+          "sizeML": 375,
+          "currency": "EUR",
+          "receivedFrom": "Paul"
+        },
+        {
+          "wine": "Rully",
+          "status": "ordered",
+          "count": 1,
+          "sizeML": 1500,
+          "currency": "EUR",
+          "price": "18",
+          "expectedOn": "2026-11-15"
+        }
+      ],
+      "roundTrip": true,
+      "exportLines": [
+        "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,consumed,,,,,,EUR,,,750,4,2026-05-01,\"Silky, long\",,\"Gift; Summer\",,150,EUR,2026-09-01",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
+        "Muscadet,,,white,,,,,,,gone,,,,,,EUR,,Paul,375,,,,,,,,,",
+        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,"
+      ]
+    },
+    {
+      "about": "A French spreadsheet: semicolons, a byte order mark, CRLF lines, French headers with accents (Emplacement, Case, Fenêtre de dégustation), decimal commas, NV, a quantity of 0, a blank row and a row without a name.",
+      "lineEnding": "\r\n",
+      "byteOrderMark": true,
+      "csv": [
+        "Nom;Domaine;Millésime;Couleur;Pays;Cépages;Quantité;Prix;Devise;Emplacement;Case;Fenêtre de dégustation;Commentaire",
+        "La Landonne;E. Guigal;2012;Rouge;France;Syrah;2;95,00;EUR;Cave du bas;B3;2025 - 2040;Très bon",
+        "Sancerre;Domaine Vacheron;2022;Blanc;France;Sauvignon Blanc;1;24,5;;;;2024-2027;",
+        "Crémant d'Alsace;;NV;Effervescent;France;Pinot Blanc, Auxerrois;6;;;;;;",
+        "Rosé de Provence;;2023;Rosé;;;0;;;;;;",
+        ";;;;;;;;;;;;",
+        ";Domaine X;2020;;;;;;;;;;"
+      ],
+      "summary": {
+        "winesAdded": 4,
+        "bottlesAdded": 10,
+        "rowsSkipped": 1
+      },
+      "wines": [
+        {
+          "name": "Crémant d'Alsace",
+          "color": "sparkling",
+          "country": "France",
+          "grapes": [
+            "Pinot Blanc",
+            "Auxerrois"
+          ]
+        },
+        {
+          "name": "La Landonne",
+          "producer": "E. Guigal",
+          "vintage": 2012,
+          "color": "red",
+          "country": "France",
+          "drinkFrom": 2025,
+          "drinkUntil": 2040,
+          "grapes": [
+            "Syrah"
+          ]
+        },
+        {
+          "name": "Rosé de Provence",
+          "vintage": 2023,
+          "color": "rose",
+          "grapes": []
+        },
+        {
+          "name": "Sancerre",
+          "producer": "Domaine Vacheron",
+          "vintage": 2022,
+          "color": "white",
+          "country": "France",
+          "drinkFrom": 2024,
+          "drinkUntil": 2027,
+          "grapes": [
+            "Sauvignon Blanc"
+          ]
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Crémant d'Alsace",
+          "status": "inCellar",
+          "count": 6,
+          "sizeML": 750,
+          "currency": "EUR"
+        },
+        {
+          "wine": "La Landonne",
+          "status": "inCellar",
+          "count": 2,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "95",
+          "storage": "Cave du bas · B3"
+        },
+        {
+          "wine": "Rosé de Provence",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR"
+        },
+        {
+          "wine": "Sancerre",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "24.5"
+        }
+      ],
+      "roundTrip": true,
+      "exportLines": [
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
+        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
+        "Rosé de Provence,,2023,rose,,,,,,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Sancerre,Domaine Vacheron,2022,white,,France,,Sauvignon Blanc,2024,2027,inCellar,,,,,24.5,EUR,,,750,,,,,,,,,"
+      ]
+    },
+    {
+      "about": "A CellarTracker export: Type before Color, 1001 for non-vintage, Location and Bin, BeginConsume and EndConsume, sizes in a column Encave does not read.",
+      "csv": [
+        "iWine,Type,Color,Category,Size,Vintage,Wine,Locale,Country,Region,SubRegion,Appellation,Producer,Varietal,MasterVarietal,Designation,Vineyard,Quantity,Pending,Location,Bin,Price,Currency,BeginConsume,EndConsume",
+        "1234,White - Sparkling,White,Sparkling,750ml,1001,Krug Grande Cuvée,\"France, Champagne\",France,Champagne,,Champagne,Krug,Champagne Blend,Champagne Blend,Grande Cuvée,,2,0,Fridge,,180,EUR,2024,2034",
+        "5678,Red,Red,Dry,750ml,2016,Barolo Cannubi,\"Italy, Piedmont\",Italy,Piedmont,Langhe,Barolo,Brezza,Nebbiolo,Nebbiolo,,Cannubi,1,0,Cellar,A3,55.00,USD,2026,2040",
+        "9999,White - Sweet/Dessert,White,Sweet,375ml,2009,Château d'Yquem,\"France, Bordeaux\",France,Bordeaux,Sauternais,Sauternes,Château d'Yquem,Sémillon-Sauvignon Blanc Blend,,,,1,0,,,,,,"
+      ],
+      "summary": {
+        "winesAdded": 3,
+        "bottlesAdded": 4,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Barolo Cannubi",
+          "producer": "Brezza",
+          "vintage": 2016,
+          "color": "red",
+          "region": "Piedmont",
+          "country": "Italy",
+          "appellation": "Barolo",
+          "drinkFrom": 2026,
+          "drinkUntil": 2040,
+          "grapes": [
+            "Nebbiolo"
+          ]
+        },
+        {
+          "name": "Château d'Yquem",
+          "producer": "Château d'Yquem",
+          "vintage": 2009,
+          "color": "dessert",
+          "region": "Bordeaux",
+          "country": "France",
+          "appellation": "Sauternes",
+          "grapes": [
+            "Sémillon-Sauvignon Blanc Blend"
+          ]
+        },
+        {
+          "name": "Krug Grande Cuvée",
+          "producer": "Krug",
+          "color": "sparkling",
+          "region": "Champagne",
+          "country": "France",
+          "appellation": "Champagne",
+          "drinkFrom": 2024,
+          "drinkUntil": 2034,
+          "grapes": [
+            "Champagne Blend"
+          ]
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Barolo Cannubi",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "USD",
+          "price": "55",
+          "storage": "Cellar · A3"
+        },
+        {
+          "wine": "Château d'Yquem",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR"
+        },
+        {
+          "wine": "Krug Grande Cuvée",
+          "status": "inCellar",
+          "count": 2,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "180",
+          "storage": "Fridge"
+        }
+      ],
+      "roundTrip": false,
+      "exportLines": [
+        "Barolo Cannubi,Brezza,2016,red,Piedmont,Italy,Barolo,Nebbiolo,2026,2040,inCellar,,,Cellar · A3,,55,USD,,,750,,,,,,,,,",
+        "Château d'Yquem,Château d'Yquem,2009,dessert,Bordeaux,France,Sauternes,Sémillon-Sauvignon Blanc Blend,,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
+        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,Fridge,,180,EUR,,,750,,,,,,,,,",
+        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,Fridge,,180,EUR,,,750,,,,,,,,,"
+      ]
+    },
+    {
+      "about": "A Vivino scan history (a scan date and no quantity): each row is a wine tasted elsewhere, not a bottle. Ratings out of 5 with halves are rounded up; without a scan date, the import's own date.",
+      "csv": [
+        "Winery,Wine name,Vintage,Region,Country,Regional wine style,Average rating,Scan date,Scan/Review Location,Your rating,Your review,Wine price,Link to wine,Label image",
+        "Domaine Tempier,Bandol Rosé,2022,Bandol,France,Provence Rosé,4.1,2025-07-14 19:30:00,Le Bistrot,4.5,\"Lovely, salty\",32.00,,",
+        "Gaja,Barbaresco,2019,Barbaresco,Italy,Piedmont Barbaresco,4.5,2025-08-01 12:00:00,,3.5,,,,",
+        "E. Guigal,La Landonne,2012,Côte-Rôtie,France,,4.6,,,,,,,"
+      ],
+      "summary": {
+        "winesAdded": 3,
+        "bottlesAdded": 0,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Bandol Rosé",
+          "producer": "Domaine Tempier",
+          "vintage": 2022,
+          "region": "Bandol",
+          "country": "France",
+          "grapes": []
+        },
+        {
+          "name": "Barbaresco",
+          "producer": "Gaja",
+          "vintage": 2019,
+          "region": "Barbaresco",
+          "country": "Italy",
+          "grapes": []
+        },
+        {
+          "name": "La Landonne",
+          "producer": "E. Guigal",
+          "vintage": 2012,
+          "region": "Côte-Rôtie",
+          "country": "France",
+          "grapes": []
+        }
+      ],
+      "bottles": [],
+      "discoveries": [
+        {
+          "wine": "Bandol Rosé",
+          "date": "2025-07-14",
+          "place": "Le Bistrot",
+          "rating": 5,
+          "note": "Lovely, salty",
+          "price": "32",
+          "currency": "EUR"
+        },
+        {
+          "wine": "Barbaresco",
+          "date": "2025-08-01",
+          "rating": 4,
+          "currency": "EUR"
+        },
+        {
+          "wine": "La Landonne",
+          "date": "now",
+          "currency": "EUR"
+        }
+      ],
+      "roundTrip": false,
+      "exportLines": []
+    }
+  ]
+}
