@@ -58,10 +58,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -105,7 +108,7 @@ private data class RackPreset(
             ShelfDraft.of(
                 Rack(name = "", kind = kind, rows = rows, columns = columns, depth = depth, rowColumns = shelfRows,
                     shelfLayers = layers, zoneBreaks = zoneBreaks).normalized(),
-            )
+            ).map { it.copy(originalShelf = null) }
         }
 }
 
@@ -138,7 +141,14 @@ data class ShelfDraft(
     val counts: List<Int> = quincunx(6),
     /** A divider above this shelf: it starts a new temperature zone. */
     val startsZone: Boolean = false,
+    /** Stays with the shelf while it is edited, moved or applied to. */
+    val id: String = UUID.randomUUID().toString(),
+    /** The shelf of the saved fridge this one was (0 is the top one); null for a new shelf. */
+    val originalShelf: Int? = null,
 ) {
+    /** A new shelf like this one (Duplicate, Add shelf): its own identity, no zone break. */
+    fun duplicated(): ShelfDraft = copy(startsZone = false, id = UUID.randomUUID().toString(), originalShelf = null)
+
     /** A new bottom layer; the layers above follow it while they keep their usual count. */
     fun withBottom(value: Int): ShelfDraft {
         val old = counts[0]
@@ -165,7 +175,10 @@ data class ShelfDraft(
         fun of(rack: Rack): List<ShelfDraft> = rack.shelfRows.mapIndexed { shelf, rows ->
             val fromBottom = rows.reversed().map { rack.columnsInRow(it) }
             val bottom = fromBottom.first()
-            ShelfDraft(rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3), rack.zoneBreaks.orEmpty().contains(shelf))
+            ShelfDraft(
+                rows.count(), (fromBottom + quincunx(bottom).drop(fromBottom.size)).take(3), rack.zoneBreaks.orEmpty().contains(shelf),
+                originalShelf = shelf,
+            )
         }
 
         /** The rack these shelves make (rows are the layers, from the top). */
@@ -220,6 +233,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     val layered = kind == RackKind.Staggered && onShelves
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmDisplaced by remember { mutableStateOf(false) }
+    var confirmDiscard by remember { mutableStateOf(false) }
     val id = rememberSaveable { existing?.id ?: UUID.randomUUID() }
 
     fun resizeRows(count: Int) {
@@ -266,33 +281,53 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
 
     fun layerCount() = shelves.sumOf { it.layers }
 
-    fun save() {
+    // Where the bottles of an edited fridge go: each stays on its shelf and layer.
+    fun rowMap(rack: Rack): Map<Int, Int?> =
+        if (existing != null && layered) Rack.shelfRowMap(existing, rack, shelves.map { it.originalShelf }) else emptyMap()
+
+    // What a save would change: the name, the shape, and which shelf is which.
+    fun signature() = "${name.trim()}|${preview().shape}|${if (layered) shelves.map { it.originalShelf } else ""}"
+    val initialSignature = rememberSaveable { signature() }
+    val isDirty = signature() != initialSignature
+
+    fun save(takingOut: Boolean = false) {
         showErrors = true
         if (name.isBlank()) return
         val rack = preview()
         if (existing == null) {
             viewModel.addRack(rack)
             navigator.back()
-        } else {
-            viewModel.updateRack(rack) { navigator.back() }
+            return
         }
+        val map = rowMap(rack)
+        if (!takingOut && cellar.displacedBottles(rack, map).isNotEmpty()) {
+            confirmDisplaced = true
+            return
+        }
+        viewModel.updateRack(rack, map, takingOut) { navigator.back() }
     }
+
+    fun close() {
+        if (isDirty) confirmDiscard = true else navigator.back()
+    }
+    androidx.activity.compose.BackHandler(enabled = isDirty) { confirmDiscard = true }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(if (existing == null) R.string.rack_editor_new else R.string.rack_editor_edit)) },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = ::close) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
-                actions = { TextButton(onClick = ::save) { Text(stringResource(R.string.action_save)) } },
+                actions = { TextButton(onClick = { save() }) { Text(stringResource(R.string.action_save)) } },
             )
         },
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
         val rack = preview()
+        val displaced = if (existing != null) cellar.displacedBottles(rack, rowMap(rack)).size else 0
         Column(
             Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).readableWidth().padding(Dimens.l),
             verticalArrangement = Arrangement.spacedBy(Dimens.l),
@@ -409,16 +444,30 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     ShelfCard(
                         number = index + 1, shelf = shelf, onChange = { shelves[index] = it },
                         canAdd = layerCount() + shelf.layers <= Rack.MAX_SIZE,
-                        onDuplicate = { shelves.add(index + 1, shelf.copy(startsZone = false)) },
-                        onApplyToAll = { shelves.indices.forEach { shelves[it] = shelf.copy(startsZone = shelves[it].startsZone) } },
+                        onDuplicate = { shelves.add(index + 1, shelf.duplicated()) },
+                        onApplyToAll = {
+                            shelves.indices.forEach {
+                                val target = shelves[it]
+                                shelves[it] = shelf.copy(startsZone = target.startsZone, id = target.id, originalShelf = target.originalShelf)
+                            }
+                        },
                         onDelete = if (shelves.size > 1) ({ shelves.removeAt(index) }) else null,
                     )
                 }
                 OutlinedButton(
-                    onClick = { shelves.add(shelves.lastOrNull()?.copy(startsZone = false) ?: ShelfDraft()) },
+                    onClick = { shelves.add(shelves.lastOrNull()?.duplicated() ?: ShelfDraft()) },
                     enabled = layerCount() + Rack.MAX_LAYERS <= Rack.MAX_SIZE,
                     modifier = Modifier.fillMaxWidth().testTag("rack.shelf.add"),
                 ) { Text(stringResource(R.string.rack_shelf_add)) }
+            }
+
+            if (displaced > 0) {
+                Text(
+                    pluralStringResource(R.plurals.rack_displaced, displaced, displaced),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("rack.displaced").semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
 
             if (kind != RackKind.Staggered) {
@@ -485,6 +534,26 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
             }
             HelpLink(HelpTopic.Racks, R.string.help_link_racks)
         }
+    }
+    if (confirmDisplaced) {
+        val count = existing?.let { cellar.displacedBottles(preview(), rowMap(preview())).size } ?: 0
+        ConfirmDialog(
+            title = pluralStringResource(R.plurals.rack_displaced, count, count),
+            body = stringResource(R.string.rack_displaced_body),
+            confirm = stringResource(R.string.rack_displaced_confirm),
+            onConfirm = { save(takingOut = true) },
+            onDismiss = { confirmDisplaced = false },
+        )
+    }
+    if (confirmDiscard) {
+        ConfirmDialog(
+            title = stringResource(R.string.discard_title),
+            body = "",
+            confirm = stringResource(R.string.discard_confirm),
+            dismiss = stringResource(R.string.discard_keep),
+            onConfirm = { navigator.back() },
+            onDismiss = { confirmDiscard = false },
+        )
     }
     if (confirmDelete && existing != null) {
         ConfirmDialog(
