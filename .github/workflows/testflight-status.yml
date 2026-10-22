@@ -71,7 +71,7 @@ jobs:
           print("| Build | Platform | Uploaded (Apple time zone) | Processing | External state | Beta App Review | External groups |")
           print("|---|---|---|---|---|---|---|")
           response = safe("GET", "/builds", query={
-              "filter[app]": app_id, "sort": "-uploadedDate", "limit": 24,
+              "filter[app]": app_id, "sort": "-uploadedDate", "limit": 60,
               "include": "preReleaseVersion,buildBetaDetail,betaAppReviewSubmission"})
           included = {(i["type"], i["id"]): i["attributes"] for i in response.get("included", [])}
           def rel(build, name):
