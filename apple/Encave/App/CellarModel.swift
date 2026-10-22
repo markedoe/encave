@@ -12,7 +12,12 @@ import AppKit
 @MainActor
 @Observable
 final class CellarModel {
-    private(set) var cellar = Cellar()
+    private(set) var cellar = Cellar() {
+        didSet {
+            cachedBottlesInCellar = nil
+            cachedOverview = nil
+        }
+    }
     var errorMessage: String?
     /// The sheet shown above everything (add, drink, edit...).
     var sheet: AppSheet?
@@ -240,6 +245,30 @@ final class CellarModel {
     }
 
     var currentYear: Int { CellarYear.current }
+
+    @ObservationIgnored private var cachedBottlesInCellar: [Bottle]?
+    @ObservationIgnored private var cachedOverview: CellarOverview?
+
+    /// The cellar's bottles in the cellar, kept until the cellar changes (views read it often).
+    var bottlesInCellar: [Bottle] {
+        let cellar = self.cellar
+        if let cachedBottlesInCellar { return cachedBottlesInCellar }
+        let bottles = cellar.bottlesInCellar
+        cachedBottlesInCellar = bottles
+        return bottles
+    }
+
+    /// Figures and filter chip values of the Cellar screen, kept until the cellar or the
+    /// year changes. Its month by month figures are those of when it was worked out: the
+    /// Insights screen computes its own.
+    var overview: CellarOverview {
+        let cellar = self.cellar
+        let year = currentYear
+        if let cachedOverview, cachedOverview.year == year { return cachedOverview }
+        let overview = CellarOverview(cellar, year: year)
+        cachedOverview = overview
+        return overview
+    }
 
     /// Applies a change and saves it. The change is checked here; an invalid one changes
     /// nothing and the error is shown. The file is written in the background (`save`).
@@ -513,7 +542,7 @@ final class CellarModel {
     func deleteRack(_ rackID: UUID) {
         guard let index = cellar.racks.firstIndex(where: { $0.id == rackID }) else { return }
         let rack = cellar.racks[index]
-        let placed = cellar.bottlesInCellar.filter { $0.slot?.rackID == rackID }
+        let placed = bottlesInCellar.filter { $0.slot?.rackID == rackID }
         guard update({ $0.removeRack(rackID) }) else { return }
         let rackName = rack.name
         // Only its own records come back, so the Undo can stay after other changes.
@@ -627,7 +656,7 @@ final class CellarModel {
     @discardableResult
     func updateRack(_ rack: Rack, rowMap: [Int: Int?], takingOut count: Int) -> Bool {
         let old = cellar.rack(rack.id)
-        let inRack = cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        let inRack = bottlesInCellar.filter { $0.slot?.rackID == rack.id }
         guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
         if count > 0, let old {
             // Only this rack and its bottles come back, so the Undo can stay after other changes.

@@ -267,11 +267,11 @@ struct RackDetailView: View {
     }
 
     private func auditTotal(_ rack: Rack) -> Int {
-        model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }.count
+        model.bottlesInCellar.filter { $0.slot?.rackID == rack.id }.count
     }
 
     private func missing(_ rack: Rack) -> [Bottle] {
-        model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id && !checked.contains($0.slot!) }
+        model.bottlesInCellar.filter { $0.slot?.rackID == rack.id && !checked.contains($0.slot!) }
     }
 
     private func finishAudit(_ rack: Rack) {
@@ -431,7 +431,7 @@ private struct RackKey: View {
     }
 
     var body: some View {
-        let bottles: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        let bottles: [Bottle] = model.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
         let wines = entries(for: bottles)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
