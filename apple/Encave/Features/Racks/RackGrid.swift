@@ -227,8 +227,8 @@ extension RackGrid {
     }
 }
 
-/// A rack drawn as large as the space allows. Pinch to zoom (and double-tap on iPhone
-/// and iPad); on the Mac, trackpad pinch and the zoom buttons set `zoom`.
+/// A rack drawn as large as the space allows. Pinch to zoom; on the Mac, trackpad pinch
+/// and the zoom buttons set `zoom`.
 struct FittedRackGrid: View {
     let rack: Rack
     /// Mac: 1 fits the whole rack; more zooms in. iPhone and iPad zoom natively.

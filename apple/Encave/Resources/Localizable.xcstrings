@@ -7851,12 +7851,12 @@
         }
       }
     },
-    "Pinch to zoom in and out, or double-tap a spot. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.": {
+    "Pinch to zoom in and out. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pincez pour zoomer, ou touchez deux fois un endroit. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement."
+            "value": "Pincez pour zoomer. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement."
           }
         }
       }
