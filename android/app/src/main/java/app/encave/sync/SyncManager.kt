@@ -938,7 +938,7 @@ class SyncManager(
      * others); only then are the storage, the login and the key kept, so a failure leaves
      * syncing away from home off.
      */
-    private suspend fun turnOn(store: MailboxStore, storageString: String, login: WebDavLogin? = null) {
+    internal suspend fun turnOn(store: MailboxStore, storageString: String, login: WebDavLogin? = null) {
         setUpIfNeeded()
         val membership = status.value.membership
         var key: CellarKey? = null

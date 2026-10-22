@@ -2,7 +2,9 @@ package app.encave.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -20,7 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Reminders and app shortcuts open the app on a section, a wine or the scanner. */
+/** Reminders, app shortcuts and pairing links open the app on a section, a wine, the scanner or Join. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "en-w411dp-h891dp-xxhdpi")
 class LinksTest {
@@ -70,6 +72,14 @@ class LinksTest {
         val port = app.repository.cellar.value.wines.values.first { it.name == "Vintage Port" }
         open(MainActivity.wineLink(port.id.toString()))
         compose.onNodeWithText("Vintage Port 2011").assertExists()
+    }
+
+    @Test
+    fun pairingCodeScannedWithTheCamera() {
+        // The QR code shown when adding a device: Join opens with the code filled in.
+        open("encave://pair?code=123456&c=AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8")
+        compose.onNodeWithTag("devices.codeField").assertTextContains("123 456", substring = true)
+        compose.onNodeWithTag("action.join").assertIsEnabled()
     }
 
     @Test
