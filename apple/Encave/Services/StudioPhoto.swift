@@ -17,7 +17,8 @@ import Vision
 /// - a clear cut-out of anything else is shown whole, a label seen at an angle
 ///   straightened from its corners;
 /// - without a clear cut-out, a label in a rectangle is straightened, else the photo
-///   is shown filling the picture, centred on its label, with its light evened out.
+///   is shown filling the picture, centred on its label (found from its text, else
+///   where its edges are densest, as on Android), with its light evened out.
 ///
 /// The result is only a local cache (each device makes its own), so it is never
 /// synced and can be thrown away at any time.
@@ -154,7 +155,7 @@ enum StudioPhoto {
                 made = (LabelFrame.squared(cut, context: context) ?? cut, .cutout)
             }
         } else {
-            made = LabelFrame.withoutCutout(photo, handler: handler)
+            made = LabelFrame.withoutCutout(photo, handler: handler, context: context)
         }
         // Only a photo shown as it is gets its light evened out: a cut-out keeps the label's own colors.
         let result = made.kind == .photo ? evenedOut(made.picture) : made.picture
@@ -344,11 +345,37 @@ enum LabelFrame {
     /// A photo without a clear cut-out: the label straightened when a rectangle
     /// holds its text, else the photo cut to the band of its label (shown filling
     /// the picture, centred on the label), else the whole photo.
-    static func withoutCutout(_ photo: CIImage, handler: VNImageRequestHandler) -> (CIImage, StudioPhoto.Kind) {
+    static func withoutCutout(_ photo: CIImage, handler: VNImageRequestHandler,
+                              context: CIContext) -> (CIImage, StudioPhoto.Kind) {
         // Text near the middle, where the bottle stands, not on things around it.
         let boxes = textBoxes(handler).filter { $0.midX > 0.2 && $0.midX < 0.8 }
         if let label = straightenedLabel(photo, handler: handler, text: boxes) { return (label, .cutout) }
-        return (labelBand(photo, boxes: boxes) ?? photo, .photo)
+        return (labelBand(photo, boxes: boxes) ?? densestBand(photo, context: context) ?? photo, .photo)
+    }
+
+    /// The band where the photo's edges are densest (printed text), found as on
+    /// Android (CaveKit's `LabelCrop`), when Vision reads no text.
+    private static func densestBand(_ photo: CIImage, context: CIContext) -> CIImage? {
+        let extent = photo.extent
+        let scale = min(1, 640 / max(extent.width, extent.height))
+        let small = photo.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let width = Int(small.extent.width), height = Int(small.extent.height)
+        guard width >= 8, height >= 8, let image = context.createCGImage(small, from: small.extent),
+              let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        var pixels = [UInt32](repeating: 0, count: width * height)
+        let drawn = pixels.withUnsafeMutableBytes { bytes -> Bool in
+            guard let bitmap = CGContext(data: bytes.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                                         bytesPerRow: width * 4, space: space,
+                                         bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
+                                             | CGBitmapInfo.byteOrder32Little.rawValue) else { return false }
+            bitmap.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard drawn, let box = LabelCrop.find(pixels: pixels, width: width, height: height) else { return nil }
+        let unit = 1 / scale
+        return photo.cropped(to: CGRect(x: extent.minX + CGFloat(box.left) * unit,
+                                        y: extent.minY + CGFloat(height - box.bottom) * unit,
+                                        width: CGFloat(box.width) * unit, height: CGFloat(box.height) * unit))
     }
 
     /// The largest rectangle holding at least two lines of text (a label, not a
