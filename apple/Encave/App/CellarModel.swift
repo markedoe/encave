@@ -295,7 +295,9 @@ final class CellarModel {
         errorMessage = String(localized: "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.")
         if cellar != lastSaved {
             cellar = lastSaved
-            dropStaleUndo()
+            // Every banner's Undo was about changes now gone.
+            toast?.undo?.cancel()
+            toast = nil
         }
         return generation
     }
