@@ -3,13 +3,18 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Network use: the optional AI label recognition (off by default), which sends the
-         label photo and nothing else to the provider the user sets up; and syncing with
-         the user's own devices, end-to-end encrypted (directly on the local network, or
-         through a relay the user chooses that only stores ciphertext). -->
+         label photo and nothing else to the provider the user sets up; the optional web
+         search (off by default), which sends only the search terms, and downloads the
+         pictures the user looks at; and syncing with the user's own devices, end-to-end
+         encrypted (directly on the local network, or through a WebDAV folder or a relay
+         the user chooses, which only store ciphertext). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 17: finding and talking to the user's other devices on the local network. -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
-    <!-- Scanning the pairing QR code shown by the other device (optional: the code can be typed). -->
+    <!-- The in-app camera: the bottle barcode scanner and the pairing QR code shown by the
+         other device (both optional: the digits and the code can be typed). Declaring it
+         also means Android lets the camera app take label and document photos for Encave
+         only once the camera is allowed (Camera.kt asks first). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <!-- Monthly and delivery reminders, worked out on the device (off by default). -->

@@ -107,9 +107,11 @@ The full protocol is in [SYNC.md](SYNC.md).
   relay rendezvous, so someone watching the relay cannot guess it offline and
   gets one try before the code is burned.
 - **Losing a phone:** with a second paired device nothing is lost. Single-device
-  users keep backups (done): **Back Up Now** and a weekly backup make a ZIP
-  file (not encrypted) to copy to Files, iCloud Drive or Google Drive, and the
-  device keeps previous versions (7 daily, 4 weekly).
+  users keep backups (done): **Back Up Now** makes a ZIP file (not encrypted) to
+  copy to Files, iCloud Drive or Google Drive; the weekly backup (on by default,
+  not encrypted) keeps the last two on the device (the app's Documents folder on
+  Apple devices, Download/Encave on Android); and the device keeps previous
+  versions (7 daily, 4 weekly).
 
 ## User experience
 
@@ -170,7 +172,7 @@ Siri Shortcuts ("What should I open tonight in Encave?"), Spotlight.
 | 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple, sync included (not yet tried on a phone); Play internal testing next |
 | 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | CloudKit built (needs the iCloud container); Google Drive planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
 | 6. Household sharing | Roles, signed files, remote pairing | Planned |
-| 7. Launch | Store listings, documentation, privacy policy | Planned |
+| 7. Launch | Store listings, documentation, privacy policy | In progress: privacy policy published ([PRIVACY.md](PRIVACY.md)); App Store listing, age rating and header image written in French and English, with hand-run workflows that apply them; store forms answered in [STORE.md](STORE.md); Google Play listing next |
 
 ### Features beyond the core journeys
 
@@ -184,7 +186,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Barcode recognizes wines you already have (matched on the device) | Done | Done (CameraX + zxing-cpp) |
 | Select several wines: place, take out, delete | Done | Done |
 | Rack check (audit) | Done | Done |
-| Drag and drop in racks | iPad and Mac | Tablets |
+| Drag and drop in racks | iPad and Mac | Wide screens (tablets in landscape, unfolded foldables) |
 | Import CellarTracker and Vivino CSV exports | Done | Done |
 | Year in wine, drink-down plan | Done (year shared as an image) | Done |
 | Bottles on order (en primeur, deliveries) | Done | Done |
@@ -195,12 +197,15 @@ kept within the privacy rules: everything is worked out on the device.
 | Shortcuts actions that return the cellar as text or JSON, for local AI assistants ([SHORTCUTS.md](SHORTCUTS.md)) | Done | Later |
 | Printable PDF inventory | Done | Done |
 | Menu bar glass with tonight's bottles | Mac | — |
-| Sortable table with an inspector | Mac and iPad | Tablets |
+| Sortable table with an inspector | Mac and iPad | Wide screens |
 | Widgets, Control Center | Planned (needs an App Group) | Home screen widgets done (Glance: Tonight, Cellar) |
 | Saved searches | Done | Done |
 | Several photos per wine | Done | Done |
 | Documents attached to a wine or a bottle (invoice, certificate, technical sheet; synced, encrypted; up to 8 MB each) | Done (document scanner on iPhone and iPad) | Done |
-| Studio look for label photos (made on the device, photo kept as taken), on a backdrop of a softly lit cellar in the wine's color | Done (Vision: photo turned level from its text; bottle cut out and framed on its label, the label about 80% of the picture and the glass running off its edges; a close-up of a label straightened; else the photo centred on its label) | Done without a cut-out (it would need ML Kit): photo cut to the band of its label (densest edges, else a centre band), filling the picture with a light vignette |
+| Studio look for label photos (made on the device, photo kept as taken), on a backdrop of a softly lit cellar in the wine's color | Done (Vision: a leaning bottle turned upright from the axis of its cut-out, then framed on its label, the label about 80% of the picture and the glass running off its edges; a label seen at an angle or in a rectangle straightened from its corners; else the photo centred on its label, found from its text or, without text, its densest edges) | Done without a cut-out (it would need ML Kit): photo cut to the band of its label (densest edges, else a centre band), filling the picture with a light vignette |
+| Wine fridges two deep with bottles in layers drawn as a front and a back band per shelf, back bottles head-to-tail (necks shown) | Done | Done |
+| Fridge shelves that differ (layers and bottles set per shelf, Apply to All Shelves), numbered from the top | Done | Done |
+| Complete with AI on a wine with a label photo, with the day it was completed ("Completed by AI", synced) | Done | Done |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |

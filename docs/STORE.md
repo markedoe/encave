@@ -3,7 +3,8 @@
 > Answers for the App Store Connect and Google Play Console forms, with the
 > reasoning, checked against the code as it is. On the App Store side, the
 > "App Store listing" workflow applies `docs/store/appstore.json` (privacy
-> policy URL, age rating, texts in French and English); the App Privacy label
+> policy URL, age rating, texts in French and English, and the build number
+> it attaches to the iOS version being prepared); the App Privacy label
 > is answered in App Store Connect by hand (no API). Google Play is filled in
 > by hand. Recheck them whenever the apps start sending
 > something new. The privacy policy is [PRIVACY.md](PRIVACY.md).
@@ -16,9 +17,16 @@
 - The cellar, photos and documents stay in the app's storage on the device
   (protected by the system's encryption: iOS data protection, FileVault on a
   Mac when on, Android's file-based encryption).
+- Backups stay on the device unless the user moves them, and are **not
+  encrypted**. The weekly backup is on by default: the last two ZIP archives
+  are kept in the app's Documents folder on Apple devices, and in the shared
+  Download/Encave folder on Android, where apps with access to all files can
+  read them and where they stay after the app is removed. **Back Up Now** saves
+  or shares a ZIP file where the user chooses. Nothing is sent by the app.
 - Sync is end-to-end encrypted (`docs/SYNC.md`, `docs/REMOTE_SYNC.md`): direct
-  on the local network, or through a storage the user chooses (iCloud, WebDAV,
-  a relay) that holds only ciphertext. Nobody but the user's devices has the
+  on the local network, or through a storage the user chooses (iCloud, in
+  builds set up with an iCloud container; WebDAV; a relay) that holds only
+  ciphertext. Nobody but the user's devices has the
   keys, the developer included.
 - AI label recognition (off by default): only the label photo, sent from the
   device straight to the provider the user set up with their own key.
@@ -81,7 +89,7 @@ Other questions:
 | Question | Answer |
 |---|---|
 | Is all of the user data collected by your app encrypted in transit? | Yes (if the conservative reading is used: HTTPS, plain HTTP only to a server on the user's local network) |
-| Do you provide a way for users to request that their data is deleted? | Nothing is held by the developer; in the app, **Erase all data** and removing the app delete everything on the device |
+| Do you provide a way for users to request that their data is deleted? | Nothing is held by the developer. On the device, **Erase all data** empties the cellar but keeps the previous versions and the weekly backups; removing the app deletes its own storage, but not the weekly backups in Download/Encave, which the user deletes in the Files app |
 | Independent security review | No |
 | Privacy policy URL | The published PRIVACY.md |
 
@@ -124,9 +132,19 @@ the app out of the Families programme.
 
 - **Export compliance**: see [ENCRYPTION.md](ENCRYPTION.md)
   (`ITSAppUsesNonExemptEncryption = NO`; Play asks no export questions).
-- **Apple privacy manifest**: in the app, checked in CI.
-- **Google Play: app access**: no login needed; reviewers can load the sample
-  cellar from Settings while the cellar is empty.
+- **Apple privacy manifest**: in the app; CI checks that the built apps bundle
+  it and that it declares no tracking and no collected data (the required-reason
+  APIs it lists are kept in step with the code by hand).
+- **App access, and notes for App Review and Google Play**: no login, no account
+  and no server are needed. The builds CI makes today are beta builds
+  (`ENCAVE_CHANNEL=beta`, `ENCAVE_BETA` unset): while the cellar is empty they
+  offer the sample cellar (**Load sample cellar** on the empty Cellar, or
+  **Settings › Try Encave**). A store build (`ENCAVE_CHANNEL=store`,
+  `ENCAVE_BETA=false`) does not, so the notes for it read: "Open the app and add
+  a bottle with + (scan a label or type a name), then add a rack in Racks and
+  place the bottle; Tonight and the Journal fill as bottles are added and
+  opened. AI label recognition and web search are optional and need the
+  reviewer's own key or server; sync needs a second device."
 - **Google Play: ads**: the app contains no ads.
 - **Google Play: health apps, financial features, government apps, news**: No.
 

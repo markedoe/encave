@@ -45,6 +45,15 @@ python3 apple/tools/l10n.py           # regenerate Localizable and InfoPlist cat
 python3 apple/tools/l10n.py --check   # fails if a string has no French (run in CI)
 ```
 
+The French is written with plain spaces; the scripts put a narrow no-break space
+before ; ! ? and inside « », and a no-break space before :. Both `--check`
+commands (this one and Android's `strings.py --check`, run in CI) also fail when
+a help text is left in English, and when a **bold** word of the help (a button,
+setting or screen, each step of "Settings › Your data") is no longer a text the
+app shows, in English or in French. Place names in the help, such as
+"Shelf 2, place 3", must match a place pattern of the app; services, file names
+and examples go in `HELP_NAMES`.
+
 Avoid building strings with `? "a" : "b"` inside `Text`: write two `Text`
 views so both strings are extracted and translated.
 
@@ -204,10 +213,16 @@ off without code changes:
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
-| `apple.yml` | CaveKit tests on Linux, French strings check; one macOS job builds both apps, checks they bundle the privacy manifest and runs the Mac launch test; it also makes the Mac screenshots for the App Store, 2880x1800 in English and French, light and dark (artifact `mac-screens`, made by `apple/tools/mac-screenshots.sh`); another runs the model tests on macOS and the screen tour on iPhone and iPad side by side, then on the Mac (artifact `screens`); the screenshots and the tour on main, pull requests and manual runs only (see `apple/README.md`); on a push to main or a manual run on main (never from other branches), uploads to TestFlight for the internal testers and, once the screen tour has passed, gives the build to the external testers and submits it to Beta App Review (a manual run on main with "external testers" ticked does too) |
+| `apple.yml` | Every run: CaveKit tests on Linux and the French strings check. A macOS job builds both apps, checks they bundle the privacy manifest and runs the Mac launch test; a branch push runs only this macOS job. On main, pull requests and manual runs (on any branch), the same job also makes the Mac screenshots for the App Store, 2880x1800 in English and French, light and dark (artifact `mac-screens`, made by `apple/tools/mac-screenshots.sh`), and another job runs the model tests on macOS and the screen tour on iPhone and iPad, then on the Mac (artifact `screens`; see `apple/README.md`). Uploads to TestFlight only from main (a push or a manual run), when the App Store Connect secrets are set (never on forks); branch pushes, manual runs on a branch and pull requests never upload. An uploaded build reaches the internal testers; the `testers` job then gives it to the external testers and submits it to Beta App Review once the screen tour of the same run has passed: for every push to main, and for a manual run on main with "external testers" ticked |
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
-| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`) |
+| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`). Nothing is uploaded to Google Play |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
+| `testflight-status.yml` | Manual, read-only: the latest TestFlight builds, which external groups have them and where Beta App Review stands |
+| `testflight-external.yml` | Manual: gives a build already in TestFlight (its build number) to every external group and submits it to Beta App Review, with an optional "What to Test"; builds nothing |
+| `appstore-assets.yml` | Manual "App Store header image": `inspect` reads App Store Connect; `upload` places `docs/store/header-*.png` as the product page header and the search results asset of the version being prepared, in French and English (see [STORE.md](STORE.md)) |
+| `appstore-info.yml` | Manual "App Store listing": `inspect` reads the listing; `apply` sets what `docs/store/appstore.json` gives (privacy policy URL, age rating, names, subtitles and texts per language) and attaches its `build` to the iOS version being prepared |
+
+None of these workflows submits anything for App Store review.
 
 TestFlight uploads need these repository secrets: `APPLE_TEAM_ID`,
 `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_PRIVATE_KEY` (an App Store Connect API

@@ -1166,7 +1166,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
+            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
           }
         }
       }
@@ -1211,12 +1211,12 @@
         }
       }
     },
-    "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too.": {
+    "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too. The previous versions and the weekly backups stay on this device, so the cellar can still be restored; on iPhone and iPad, removing Encave deletes them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux."
+            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux. Les versions précédentes et les sauvegardes hebdomadaires restent sur cet appareil, pour pouvoir encore restaurer la cave ; sur iPhone et iPad, supprimer Encave les supprime."
           }
         }
       }
@@ -1271,12 +1271,22 @@
         }
       }
     },
+    "**Weekly Backup on This Device** is on from the start: once a week, Encave makes a backup by itself. On iPhone and iPad, it is made when you open Encave, and in the background only while sync away from home is on (iOS decides when); on a Mac, when you open Encave. It keeps the last two on this device, as ZIP files that are not encrypted. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's backups, which already hold your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. **Erase all data** keeps them. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time. Turn the switch off if you do not want them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Sauvegarde hebdomadaire sur cet appareil** est activée au départ : une fois par semaine, Encave fait une sauvegarde de lui-même. Sur iPhone et iPad, elle est faite quand vous ouvrez Encave, et en arrière-plan seulement tant que la synchronisation loin de la maison est activée (iOS décide quand) ; sur un Mac, quand vous ouvrez Encave. Il garde les deux dernières sur cet appareil, en fichiers ZIP non chiffrés. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, une fois la première faite, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Sur iPhone et iPad, elles ne font pas partie des sauvegardes de l’appareil, qui contiennent déjà votre cave, et sont supprimées avec Encave ; sur un Mac, Time Machine ne les sauvegarde pas. **Effacer toutes les données** les garde. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps. Désactivez l’option si vous n’en voulez pas."
+          }
+        }
+      }
+    },
     "**cellar.json** is your cellar itself: wines, bottles, racks, the Journal and settings, readable by other programs. **photos** and **documents** hold the files under readable names, such as “Château X 2015.jpg” or “Invoice.pdf”, and **files.json** says which is which. **README.txt** explains it in English and French. A backup made on an iPhone, an iPad, a Mac or an Android device restores on any of them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
+            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
           }
         }
       }
@@ -1331,12 +1341,12 @@
         }
       }
     },
-    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once.": {
+    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once. If the server refuses the username or password, Encave stops trying on its own until you sign in again or tap **Sync Now**, so the server does not lock the account. “The server refused access to this folder” means the login works, but this account may not read and write the folder.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt."
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt. Si le serveur refuse le nom d’utilisateur ou le mot de passe, Encave arrête d’essayer de lui-même jusqu’à ce que vous vous reconnectiez ou touchiez **Synchroniser**, pour que le serveur ne bloque pas le compte. « Le serveur a refusé l’accès à ce dossier » signifie que les identifiants fonctionnent, mais que ce compte ne peut pas lire et écrire dans le dossier."
           }
         }
       }
@@ -1361,22 +1371,22 @@
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: Mac, iPhone, iPad or Android. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent sur ce Mac (Afficher les sauvegardes hebdomadaires dans le Finder). Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: iPhone, iPad, Mac or Android. The last two weekly backups stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. Les deux dernières sauvegardes hebdomadaires restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -2111,12 +2121,12 @@
         }
       }
     },
-    "After a scan, or while editing a wine that has a label photo, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete Again** and “Completed by AI” shows the day, there and in the details of the wine's page. Tap it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped.": {
+    "After a scan, or while editing a wine that has a label photo, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete Again** and “Completed by AI” shows the day, there and in the details of the wine's page. Tap it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped. When the AI finds nothing to add, it says so (“The AI found nothing to add”) and the wine is not marked as completed. When its answer turns a new wine into one already in your cellar, a banner says **Same wine as …** and offers **Merge**, which moves the bottles and tastings into that wine; **Undo** takes it back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Après un scan, ou en modifiant un vin qui a une photo d’étiquette, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Touchez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché."
+            "value": "Après un scan, ou en modifiant un vin qui a une photo d’étiquette, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Touchez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché. Quand l’IA ne trouve rien à ajouter, elle le dit (« L’IA n’a rien trouvé à ajouter ») et le vin n’est pas marqué comme complété. Quand sa réponse fait d’un nouveau vin un vin déjà dans votre cave, un bandeau indique **Même vin que …** et propose **Fusionner**, qui déplace ses bouteilles et ses dégustations dans ce vin ; **Annuler** revient en arrière."
           }
         }
       }
@@ -2466,7 +2476,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
+            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
           }
         }
       }
@@ -2531,12 +2541,12 @@
         }
       }
     },
-    "At the top, **Tonight, open…** suggests one bottle to drink now (those in their last year first), a different one each day. It says where the bottle is (tap to show it in its rack); **Drink** opens it, **Another idea** picks another. Bottles kept for an occasion are not suggested; when nothing is ready or to drink soon, Tonight says which wine will be ready first. Below, the bottles to drink soon come first. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.": {
+    "At the top, **Tonight, open…** suggests one wine to drink now, chosen for the day among those ready or to drink soon: it stays the same all day, even when you add bottles. Tap the card to open the wine. It says where the bottle is (tap to show it in its rack); **Drink** opens it and, when at least two wines can be suggested, **Another idea** picks another. Bottles kept for an occasion are not suggested; when nothing is ready or to drink soon, Tonight says which wine will be ready first. Below, the bottles to drink soon come first. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En haut, **Ce soir, ouvrez…** propose une bouteille à boire maintenant (d’abord celles en dernière année), une autre chaque jour. Elle indique où est la bouteille (touchez pour la voir dans son casier) ; **Boire** l’ouvre, **Autre idée** en propose une autre. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt ni à boire bientôt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**."
+            "value": "En haut, **Ce soir, ouvrez…** propose un vin à boire maintenant, choisi pour la journée parmi ceux prêts ou à boire bientôt : il reste le même toute la journée, même quand vous ajoutez des bouteilles. Touchez la carte pour ouvrir le vin. Elle indique où est la bouteille (touchez pour la voir dans son casier) ; **Boire** l’ouvre et, quand au moins deux vins peuvent être proposés, **Autre idée** en propose un autre. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt ni à boire bientôt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**."
           }
         }
       }
@@ -3586,7 +3596,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio."
+            "value": "Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio."
           }
         }
       }
@@ -3631,12 +3641,12 @@
         }
       }
     },
-    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after, unless the cellar changed since.": {
+    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after, unless the cellar changed since. A backup that was cut short, for example by a copy that did not finish, shows “This backup is damaged or incomplete.” and nothing is restored.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis."
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis. Une sauvegarde tronquée, par exemple par une copie qui ne s’est pas terminée, affiche « Cette sauvegarde est abîmée ou incomplète. » et rien n’est restauré."
           }
         }
       }
@@ -4281,12 +4291,12 @@
         }
       }
     },
-    "Delete the selected wine; on the Mac, the Delete key does too": {
+    "Delete the selected wine": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer le vin sélectionné ; sur le Mac, la touche Supprimer aussi"
+            "value": "Supprimer le vin sélectionné"
           }
         }
       }
@@ -4326,7 +4336,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer « %@ » ?"
+            "value": "Supprimer « %@ » ?"
           }
         }
       }
@@ -5336,7 +5346,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
           }
         }
       }
@@ -6197,13 +6207,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
+                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
+                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
                 }
               }
             }
@@ -6476,7 +6486,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis l’iPhone ou l’iPad."
+            "value": "Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis l’iPhone ou l’iPad."
           }
         }
       }
@@ -6501,12 +6511,22 @@
         }
       }
     },
-    "In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.": {
+    "In grids and honeycombs, rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places along each shelf: **Shelf 2, place 3**, and the one behind it **Shelf 2, place 3, back**; an empty place shows only its number. In bins, places read like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
+            "value": "Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places le long de chaque étagère : **Étagère 2, place 3**, et celle derrière **Étagère 2, place 3, fond** ; une place vide n’affiche que son numéro. Dans des losanges, les places se lisent comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
+          }
+        }
+      }
+    },
+    "In the Cellar list, tap **Select** in the toolbar (an icon on the iPad), or touch and hold a wine and choose **Select**, then tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them; **Done** ends the selection. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans la liste de la Cave, touchez **Sélectionner** dans la barre d’outils (une icône sur iPad), ou touchez longuement un vin et choisissez **Sélectionner**, puis cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les ; **OK** termine la sélection. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
           }
         }
       }
@@ -8536,7 +8556,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
+            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
           }
         }
       }
@@ -8556,7 +8576,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit."
+            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit."
           }
         }
       }
@@ -8641,16 +8661,6 @@
         }
       }
     },
-    "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it. Both keep the same search and filters; in the table, **Filter** sets them.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté. Les deux gardent la même recherche et les mêmes filtres ; dans le tableau, **Filtrer** les règle."
-          }
-        }
-      }
-    },
     "On the Mac, and on iPad with a keyboard.": {
       "localizations": {
         "fr": {
@@ -8697,6 +8707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée. Calculé sur cet appareil."
+          }
+        }
+      }
+    },
+    "On the iPad, **Show as Table** in the **Sort and Filter** menu of the Cellar shows it as a table that sorts by any column, with the selected wine beside it; on the Mac, the buttons at the top show it as a list or as a table. In the table, the same buttons bring the list back. Both keep the same search and filters; in the table, **Filter** sets them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur iPad, **Afficher en tableau** dans le menu **Trier et filtrer** de la Cave l’affiche en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté ; sur Mac, les boutons en haut l’affichent en liste ou en tableau. Dans le tableau, ces mêmes boutons ramènent la liste. Les deux gardent la même recherche et les mêmes filtres ; dans le tableau, **Filtrer** les règle."
           }
         }
       }
@@ -8876,7 +8896,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -8936,7 +8956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -9151,12 +9171,12 @@
         }
       }
     },
-    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there a few seconds after a change, and reads the others’ while Encave is open, every minute unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
+    "Optional, in **Devices › Sync Away from Home**: iCloud when Encave offers it (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there a few seconds after a change, and reads the others’ while Encave is open, every minute unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave quelques secondes après une modification, et lit celles des autres quand Encave est ouvert, toutes les minutes sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
+            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud quand Encave le propose (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave quelques secondes après une modification, et lit celles des autres quand Encave est ouvert, toutes les minutes sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
           }
         }
       }
@@ -10501,16 +10521,6 @@
         }
       }
     },
-    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
-          }
-        }
-      }
-    },
     "Rows deep": {
       "localizations": {
         "fr": {
@@ -10886,7 +10896,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cherche « vin Chablis » pour vérifier les réglages."
+            "value": "Cherche « vin Chablis » pour vérifier les réglages."
           }
         }
       }
@@ -10967,6 +10977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez les détails à utiliser. Les autres restent tels quels."
+          }
+        }
+      }
+    },
+    "Selected: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélection : %lld"
           }
         }
       }
@@ -12031,12 +12051,12 @@
         }
       }
     },
-    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud, your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
+    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud (when Encave offers it), your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud, votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
+            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud (quand Encave le propose), votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
           }
         }
       }
@@ -13496,7 +13516,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name »."
+            "value": "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name »."
           }
         }
       }
@@ -13826,7 +13846,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand une synchronisation apporte des modifications faites sur un autre appareil (bouteilles ouvertes, ajoutées ou retirées, vins ajoutés à la liste d’achats, autres modifications), par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification ; la toucher ouvre la Cave, ou le Journal si des bouteilles ont seulement été ouvertes. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Désactivé par défaut, tout est calculé sur cet appareil : rien n’est envoyé nulle part."
+            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand une synchronisation apporte des modifications faites sur un autre appareil (bouteilles ouvertes, ajoutées ou retirées, vins ajoutés à la liste d’achats, autres modifications), par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification ; la toucher ouvre la Cave, ou le Journal si des bouteilles ont seulement été ouvertes. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Désactivé par défaut, tout est calculé sur cet appareil : rien n’est envoyé nulle part."
           }
         }
       }
@@ -14086,7 +14106,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment."
+            "value": "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment."
           }
         }
       }
@@ -14421,12 +14441,12 @@
         }
       }
     },
-    "When a fridge on shelves is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Tap any place of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**.": {
+    "When a fridge with bottles in layers (**Honeycomb rack**, **On shelves**) is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Tap any place of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**. Other racks two deep show the dots described below.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand une cave à étagères a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**."
+            "value": "Quand une cave à vin avec bouteilles en couches (**Casier nid d’abeille**, **Sur étagères**) a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**. Les autres casiers à deux rangs montrent les points décrits plus bas."
           }
         }
       }
@@ -14521,12 +14541,12 @@
         }
       }
     },
-    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar or Tonight screen, or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. When this device holds only the sample, joining a cellar from another device replaces it without asking; if you added bottles too, choose **Remove Sample** first.": {
+    "While your cellar is empty and no other device syncs with it, **Load sample cellar** (on the empty Cellar or Tonight screen, or in **Settings › Try Encave**) fills it with example wines to explore every screen. While they are there, **Remove Sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. When this device holds only the sample, joining a cellar from another device replaces it without asking; if you added bottles too, **Combine with the other cellar** removes the sample first, so it never reaches your other devices. A device that invites another one, or turns on sync away from home, while no other device syncs with it, also removes the sample first: it is never sent to the other devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave ou Ce soir vide, ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave ne retire qu’eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Si cet appareil n’a que l’exemple, rejoindre la cave d’un autre appareil le remplace sans rien demander ; si vous avez aussi ajouté des bouteilles, touchez d’abord **Retirer l’exemple**."
+            "value": "Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec elle, **Charger une cave d’exemple** (sur l’écran Cave ou Ce soir vide, ou dans **Réglages › Essayer Encave**) la remplit de vins d’exemple pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave ne retire qu’eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Si cet appareil n’a que l’exemple, rejoindre la cave d’un autre appareil le remplace sans rien demander ; si vous avez aussi ajouté des bouteilles, **Réunir avec l’autre cave** retire d’abord l’exemple, qui n’arrive donc jamais sur vos autres appareils. Un appareil qui en invite un autre, ou qui active la synchronisation loin de la maison, alors qu’aucun autre appareil n’est synchronisé avec lui, retire aussi l’exemple d’abord : il n’est jamais envoyé aux autres appareils."
           }
         }
       }
@@ -14771,16 +14791,6 @@
         }
       }
     },
-    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week, when you use Encave or in the background, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, once one is made, choose **Show Weekly Backups in Finder**. On iPhone and iPad they are left out of the device's iCloud backup, which already holds your cellar, and are removed with Encave; on a Mac, Time Machine leaves them out. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine, quand vous utilisez Encave ou en arrière-plan, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, une fois la première faite, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Sur iPhone et iPad, elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et sont supprimées avec Encave ; sur un Mac, Time Machine ne les sauvegarde pas. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
-          }
-        }
-      }
-    },
     "With AI (optional)": {
       "localizations": {
         "fr": {
@@ -14876,7 +14886,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Fichiers de cave illisibles."
+            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Fichiers de cave illisibles."
           }
         }
       }
@@ -14991,12 +15001,12 @@
         }
       }
     },
-    "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.": {
+    "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). The backups Encave makes (the weekly backup, on at first, and **Back Up Now**) are ZIP files that are not encrypted. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien."
+            "value": "Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Les sauvegardes que fait Encave (la sauvegarde hebdomadaire, activée au départ, et **Sauvegarder maintenant**) sont des fichiers ZIP non chiffrés. Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien."
           }
         }
       }
@@ -15703,16 +15713,6 @@
         }
       }
     },
-    "⌘⌫": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌘⌫"
-          }
-        }
-      }
-    },
     "⌥⌘N": {
       "localizations": {
         "fr": {
@@ -15729,6 +15729,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌥⌘T"
+          }
+        }
+      }
+    },
+    "⌫ (Mac)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌫ (Mac)"
           }
         }
       }
