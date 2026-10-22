@@ -381,7 +381,7 @@ final class CellarModel {
         let snapshot = cellar
         guard let rack = cellar.rack(rackID), update({ $0.removeRack(rackID) }) else { return }
         let rackName = rack.name
-        showToast(String(localized: "Deleted \(rackName)")) { [weak self] in
+        showToast(String(localized: "Deleted \(rackName)"), long: true) { [weak self] in
             self?.update { $0 = snapshot }
         }
     }
@@ -425,12 +425,62 @@ final class CellarModel {
         sheet = .addBottle(AddBottleContext(wine: wine, discoveryID: discovery.id))
     }
 
-    func move(_ bottleID: UUID, to slot: Slot?) {
-        if update({ try $0.move(bottleID, to: slot) }) { successCount += 1 }
+    /// Moves a bottle to a place, with Undo back to where it was.
+    func move(_ bottleID: UUID, to slot: Slot) {
+        guard let before = cellar.bottles[bottleID], update({ try $0.move(bottleID, to: slot) }) else { return }
+        successCount += 1
+        guard let rack = cellar.rack(slot.rackID) else { return }
+        let rackName = rack.name
+        let place = rack.displayLabel(for: slot)
+        showToast(String(localized: "Moved to \(rackName) · \(place)")) { [weak self] in self?.moveBack(before) }
     }
 
+    /// Takes a bottle out of the racks, noting where it is now, with Undo back to its place.
+    func takeOutOfRack(_ bottleID: UUID, note: String?) {
+        guard let before = cellar.bottles[bottleID] else { return }
+        let ok = update { cellar in
+            try cellar.move(bottleID, to: nil)
+            if var updated = cellar.bottles[bottleID] {
+                updated.storageNote = note
+                try cellar.updateBottle(updated)
+            }
+        }
+        guard ok, before.slot != nil else { return }
+        successCount += 1
+        showToast(String(localized: "Bottle taken out of the rack")) { [weak self] in self?.moveBack(before) }
+    }
+
+    /// Puts a bottle back in the place and with the note it had (the Undo of a move).
+    private func moveBack(_ before: Bottle) {
+        update { cellar in
+            guard var bottle = cellar.bottles[before.id], bottle.status == .inCellar else { return }
+            bottle.slot = before.slot
+            bottle.storageNote = before.storageNote
+            try cellar.updateBottle(bottle)
+        }
+    }
+
+    /// Swaps the bottles of two places, with Undo (swapping them again).
     func swap(_ a: Slot, _ b: Slot) {
-        if update({ try $0.swap(a, b) }) { successCount += 1 }
+        guard update({ try $0.swap(a, b) }) else { return }
+        successCount += 1
+        showToast(String(localized: "Bottles swapped")) { [weak self] in
+            self?.update { try $0.swap(a, b) }
+        }
+    }
+
+    /// Saves an edited rack, moving its bottles by `rowMap`. Bottles whose place is gone
+    /// are taken out (the person agreed first), with a longer Undo.
+    @discardableResult
+    func updateRack(_ rack: Rack, rowMap: [Int: Int?], takingOut count: Int) -> Bool {
+        let snapshot = cellar
+        guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
+        if count > 0 {
+            showToast(String(localized: "Bottles taken out of their places: \(count)"), long: true) { [weak self] in
+                self?.update { $0 = snapshot }
+            }
+        }
+        return true
     }
 
     /// Windows in the foreground: sync pauses only when the last one goes to the background.
@@ -508,8 +558,10 @@ final class CellarModel {
         }
     }
 
-    func showToast(_ message: String, undo: (@MainActor () -> Void)? = nil) {
+    /// `long`: a large destructive change, whose Undo stays longer.
+    func showToast(_ message: String, long: Bool = false, undo: (@MainActor () -> Void)? = nil) {
         var toast = Toast(message: message)
+        toast.long = long
         if let undo {
             let id = toast.id
             toast.undo = ToastUndo { [weak self] in
@@ -588,6 +640,8 @@ struct Toast: Identifiable {
     let id = UUID()
     var message: String
     var undo: ToastUndo?
+    /// Shown longer, to leave time to undo a large change.
+    var long = false
 }
 
 /// The Undo of a banner. It runs at most once, whether from the banner's button
@@ -614,9 +668,9 @@ final class ToastUndo: NSObject {
 extension CellarError {
     var localizedMessage: String {
         switch self {
-        case .slotTaken: String(localized: "That position is already taken.")
-        case .slotOutOfRange: String(localized: "That position is outside the rack.")
-        case .rackNotEmpty: String(localized: "Move the bottles out of the removed rows or columns first.")
+        case .slotTaken: String(localized: "That place is already taken.")
+        case .slotOutOfRange: String(localized: "That place is outside the rack.")
+        case .rackNotEmpty: String(localized: "Some bottles are in places you removed.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
         case .notReceived: String(localized: "This bottle is on order: mark it received first.")
         case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")
