@@ -38,7 +38,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Beta notices and the sample cellar come from a build flag (EncaveChannel on
   Apple, BuildConfig.BETA on Android), so a store build turns them off
 - Mac and iPad: one sheet and section per window, a Wine menu (Edit ⌘E,
-  Drink ⌘D, Delete ⌘⌫), the Delete key, several wines selected in the table,
+  Drink ⌘D, Delete), the Delete key on the Mac, several wines selected in the table,
   New Window (⌃⌘N); menu commands open the window when it is closed
 - iPhone and iPad: Settings from every section; Select in the Cellar toolbar
 - SwiftUI app for iPhone, iPad and Mac, and a Kotlin and Jetpack Compose app
@@ -83,3 +83,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   (Apple); a menu bar glass (Mac); home screen widgets (Android)
 - In-app help with topics, help on form fields (tooltips on the Mac), and a
   link to create an API key for every AI provider
+- Sync, the cellar file and backups keep fields written by a newer version of
+  Encave and send them back unchanged, instead of erasing them

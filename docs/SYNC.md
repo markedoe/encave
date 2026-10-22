@@ -133,7 +133,8 @@ implementations:
     (`depth` 2), the back bottles (`slot.depth` 1) lie head-to-tail: necks facing
     you, between the bases of the front bottles. Only `true` is written; it is
     left out (and dropped when read) when false, when `shelfLayers` is left out
-    and when `depth` is not 2. Older apps ignore it;
+    and when `depth` is not 2. Apps that do not know it keep it as an unknown
+    field (below);
   - a document's `name` is normalized the same way on every device, when read
     and when set: each control character (Unicode category Cc) becomes a
     space, `/` and `\` become `-`, white space (Unicode `White_Space`) is
@@ -141,6 +142,22 @@ implementations:
     kept, and the result is trimmed again. A name can still be empty, `.` or
     `..`: apps never use it as a path, only as the name shown or given to a
     copy they make.
+- Fields a reader does not know are kept and sent back unchanged. Every record
+  (wine, bottle and its `slot` and `tasting`, document, rack, discovery,
+  settings, saved search, and device in a membership) keeps each key it does
+  not know, with its value as raw JSON, and writes it back unchanged whenever it
+  writes the record: after a local edit, in sync payloads, in the cellar file
+  and in backups (JSON and ZIP archive). Numbers are kept by value (a reader may
+  write `2.50` as `2.5`). A key the record knows is never kept as unknown, so
+  known keys always win. Records without unknown keys are written exactly as
+  before. Unknown keys count when comparing two versions of a record, so a
+  merge that brings in only a newer version's field is saved, except in a
+  `slot`, which is compared as a place. A new optional field can therefore be
+  added to a record without a new protocol version. Builds made before this
+  rule dropped unknown fields and sent the record back without them on their
+  next change to it, erasing the field on every device: during the beta, all
+  devices of a cellar should be updated together. A new kind of record, or a new key at the top of the cellar, is not
+  covered: older builds drop it.
 - Readers key each wine, bottle and discovery by its own `id`, not by the map
   key; if two entries have the same `id`, the one whose map key sorts first
   (uppercase UUID string) is kept. Racks with a repeated `id` keep the first.

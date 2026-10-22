@@ -1,7 +1,6 @@
 package app.encave.ui.racks
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -88,31 +88,34 @@ fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onD
                 }
             }
             if (rack != null) {
-                BoxWithConstraints(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.Center) {
-                    val cellSize = fittingCellSize(rack, maxWidth, maxHeight)
-                    RackGrid(
-                        rack = rack,
-                        cellar = cellar,
-                        cellSize = cellSize,
-                        highlighted = bottle.slot?.takeIf { it.rackId == rack.id },
-                        clickLabel = { moveHere },
-                        onCellClick = { place, _ ->
-                            val from = bottle.slot
-                            val free = cellar.freeSlotAt(place)
-                            when {
-                                from != null && from in place -> onDismiss()
-                                free != null -> {
-                                    viewModel.move(bottle.id, free)
-                                    onDismiss()
+                // Pinch or double-tap to zoom in on a large rack, as on the rack screen.
+                key(rack.id) {
+                    ZoomableRack(rack, rememberRackZoomState(rack), Modifier.fillMaxWidth().height(360.dp), padding = Dimens.xs) { cellSize, zoomHere ->
+                        RackGrid(
+                            rack = rack,
+                            cellar = cellar,
+                            cellSize = cellSize,
+                            highlighted = bottle.slot?.takeIf { it.rackId == rack.id },
+                            clickLabel = { moveHere },
+                            onCellClick = { place, _ ->
+                                val from = bottle.slot
+                                val free = cellar.freeSlotAt(place)
+                                when {
+                                    from != null && from in place -> onDismiss()
+                                    free != null -> {
+                                        viewModel.move(bottle.id, free)
+                                        onDismiss()
+                                    }
+                                    place.holdsOne(rack) && from != null -> {
+                                        viewModel.swap(from, place.firstSlot)
+                                        onDismiss()
+                                    }
+                                    else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
                                 }
-                                place.holdsOne(rack) && from != null -> {
-                                    viewModel.swap(from, place.firstSlot)
-                                    onDismiss()
-                                }
-                                else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
-                            }
-                        },
-                    )
+                            },
+                            onCellDoubleClick = { _ -> zoomHere() },
+                        )
+                    }
                 }
                 Hint(stringResource(R.string.move_grid_hint))
             } else {

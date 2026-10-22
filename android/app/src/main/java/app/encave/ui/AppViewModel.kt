@@ -58,6 +58,7 @@ import app.encave.data.ai.AiService
 import app.encave.data.ai.LabelAnalysis
 import app.encave.data.ai.completed
 import app.encave.data.ai.completing
+import app.encave.data.ai.sameDetails
 import app.encave.sync.ChangeNotifications
 import java.time.LocalDate
 import java.util.UUID
@@ -728,15 +729,20 @@ class AppViewModel(
         val completed = analysis.completing(saved)
         viewModelScope.launch {
             var change: Pair<Wine, Wine>? = null
+            // A wine the AI's answer makes this one a duplicate of (none matched before: kept apart on purpose).
+            var twin: Wine? = null
             repository.update { cellar ->
                 val live = cellar.wines[saved.id] ?: return@update
                 val updated = live.completed(from = saved, to = completed)
-                if (updated != live) {
+                // Nothing left to fill (changed here or on another device since): not "completed".
+                if (!updated.sameDetails(live)) {
+                    val matchedBefore = cellar.wine(matching = live)?.id
                     cellar.updateWine(updated)
                     change = live to updated
+                    twin = cellar.wine(matching = updated)?.takeIf { it.id != matchedBefore }
                 }
             }.onSuccess {
-                val (live, updated) = change ?: return@onSuccess
+                val (live, updated) = change ?: return@onSuccess post(UiText.Res(R.string.msg_ai_nothing))
                 val revert = { c: Cellar -> c.wines[live.id]?.let { c.updateWine(it.completed(from = updated, to = live)) }; Unit }
                 // The bottles' "Added" snackbar still waiting or shown: one snackbar, whose Undo takes both back.
                 val add = lastAdd?.takeIf { it.wineId == saved.id && it.slot.replace() }
@@ -752,8 +758,31 @@ class AppViewModel(
                         }
                     }
                 }
+                // Then the merge is offered (a snackbar has one action, and the Undo above comes first).
+                twin?.let { other -> offerMerge(updated, other) }
             }.onFailure { fail(it) }
         }
+    }
+
+    /** The AI made a new wine the same as [other]: offers to put its bottles with [other]'s. */
+    private fun offerMerge(wine: Wine, other: Wine) {
+        showMessage(UiText.Res(R.string.msg_same_wine, listOf(other.displayName)), UiText.Res(R.string.action_merge)) {
+            mergeWine(wine.id, other.id)
+        }
+    }
+
+    /** The same wine entered twice: the bottles of [source] go to [target], with Undo. */
+    fun mergeWine(source: UUID, target: UUID) {
+        val before = cellar.value
+        val from = before.wines[source] ?: return
+        val into = before.wines[target] ?: return
+        val bottleIds = before.bottles.values.filter { it.wineId == source }.map { it.id }.toSet()
+        val discoveryIds = before.discoveries.values.filter { it.wineId == source }.map { it.id }.toSet()
+        change<Unit>({
+            post(UiText.Res(R.string.msg_merged, listOf(into.displayName))) {
+                change<Unit> { c -> c.unmergeWine(from, into, bottleIds, discoveryIds) }
+            }
+        }) { it.mergeWine(source, target) }
     }
 
     /** Sends only the label photo to the provider set in Settings. */

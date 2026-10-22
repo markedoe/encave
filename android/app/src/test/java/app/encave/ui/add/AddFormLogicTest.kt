@@ -34,6 +34,28 @@ class AddFormLogicTest {
     }
 
     @Test
+    fun theFormSaysWhetherTheAiAddedAnything() {
+        val form = WineFormState(Wine(name = "Clos des Tilleuls", producer = "Domaine Martin"), 2026)
+        // Typed fields are kept: nothing to add, no "Completed by AI".
+        assertEquals(false, form.apply(LabelAnalysis(name = "Clos Tilleuls", producer = "Martin")))
+        assertNull(form.aiCompletedAt)
+        assertEquals(true, form.apply(LabelAnalysis(region = "Bourgogne")))
+        assertEquals("Bourgogne", form.region)
+        assertNotNull(form.aiCompletedAt)
+        // The same answer again changes nothing.
+        assertEquals(false, form.apply(LabelAnalysis(region = "Bourgogne")))
+    }
+
+    @Test
+    fun anAnswerWithNothingNewIsNotACompletion() {
+        val saved = Wine(name = "Clos des Tilleuls", producer = "Domaine Martin", color = WineColor.Red)
+        // Only what is filled already, or nothing at all: the wine stays as it was, without the AI's date.
+        assertEquals(saved, LabelAnalysis(name = "Other name", producer = "Martin", color = "white").completing(saved))
+        assertEquals(saved, LabelAnalysis().completing(saved))
+        assertNull(LabelAnalysis().completing(saved).aiCompletedAt)
+    }
+
+    @Test
     fun theAiCompletesOnlyWhatIsEmptyAndWhatWasNotChangedSince() {
         val saved = Wine(name = "Clos des Tilleuls", producer = "Domaine Martin", vintage = 2019)
         val analysis = LabelAnalysis(

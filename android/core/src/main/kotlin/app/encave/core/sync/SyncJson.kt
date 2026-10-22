@@ -14,8 +14,8 @@ import kotlinx.serialization.json.JsonPrimitive
  * JSON of the sync protocol (docs/SYNC.md §4 and §7): keys sorted, binary values in
  * standard Base64, UUIDs in uppercase (either case is read), dictionaries keyed by
  * UUID as arrays alternating key and value, and dates as numbers of seconds since
- * 2001-01-01, as CaveKit's `JSONEncoder.sync` writes them. Readers ignore key order
- * and unknown keys.
+ * 2001-01-01, as CaveKit's `JSONEncoder.sync` writes them. Readers ignore key order;
+ * records keep the keys they do not know and write them back ([app.encave.core.KeepingUnknownKeys]).
  */
 object SyncJson {
     /** Strict on enum values, like Swift's decoder: an unknown bottle status fails the read instead of becoming another one. */

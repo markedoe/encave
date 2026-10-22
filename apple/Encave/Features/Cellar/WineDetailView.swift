@@ -108,12 +108,12 @@ struct WineDetailView: View {
                             router?.sheet = .editWine(wineID: wineID, field: .style)
                         } content: {
                             LabeledContent {
-                                Text(verbatim: temperatureRange(advice)).monospacedDigit()
+                                Text(verbatim: advice.temperatureRange()).monospacedDigit()
                             } label: {
                                 Label("Temperature", systemImage: "thermometer.medium")
                             }
                         }
-                        .contextMenu { editMenu(temperatureRange(advice), field: .style) }
+                        .contextMenu { editMenu(advice.temperatureRange(), field: .style) }
                         EditDetailRow(hint: Text("Edits the style, which sets the serving advice.")) {
                             router?.sheet = .editWine(wineID: wineID, field: .style)
                         } content: {
@@ -268,16 +268,6 @@ struct WineDetailView: View {
                 // stack, the list beside it selects another wine (`replacingDeletedWine`).
                 .onAppear { if isPresented { dismiss() } }
         }
-    }
-
-    /// "16 – 18 °C", or Fahrenheit where the locale uses it.
-    private func temperatureRange(_ advice: ServingAdvice) -> String {
-        let style = Measurement<UnitTemperature>.FormatStyle(
-            width: .narrow, usage: .weather, numberFormatStyle: .number.precision(.fractionLength(0))
-        )
-        let low = Measurement(value: Double(advice.minTemperature), unit: UnitTemperature.celsius)
-        let high = Measurement(value: Double(advice.maxTemperature), unit: UnitTemperature.celsius)
-        return "\(low.formatted(style)) – \(high.formatted(style))"
     }
 
     private func apply(_ details: WineDetails, fields: Set<WineDetailField>) {
@@ -454,7 +444,8 @@ private struct WineHeader: View {
                         .font(.subheadline.weight(.medium))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(color.tint.opacity(0.18), in: Capsule())
+                        // The backdrop's tint (white wine as straw gold, not khaki); text stays primary.
+                        .background(color.studioTint.opacity(0.18), in: Capsule())
                 }
             }
             if let producer = wine.producer {
@@ -475,7 +466,7 @@ private struct WineHeader: View {
         .padding(.horizontal)
         .background(
             LinearGradient(
-                colors: [(wine.color?.tint ?? .gray).opacity(0.22), .clear],
+                colors: [(wine.color?.studioTint ?? .gray).opacity(0.22), .clear],
                 startPoint: .top, endPoint: .bottom
             ),
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -499,7 +490,7 @@ struct BottleRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: bottle.slot == nil ? "shippingbox" : "square.grid.3x3.topleft.filled")
+            Image(systemName: bottle.slot == nil ? "shippingbox" : model.locationIcon(for: bottle))
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {

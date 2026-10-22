@@ -12,6 +12,11 @@ struct WineRow: View {
         Self.places(group.bottles.compactMap { model.locationLabel(for: $0) })
     }
 
+    /// The symbol of the first placed bottle's rack.
+    private var locationIcon: String {
+        group.bottles.first { $0.slot != nil }.map(model.locationIcon(for:)) ?? RackKind.grid.systemImage
+    }
+
     /// "A1", or "A1 and 2 more" when the bottles are in several places (each place counted once).
     static func places(_ labels: [String]) -> String? {
         var distinct: [String] = []
@@ -57,7 +62,7 @@ struct WineRow: View {
                             .foregroundStyle(.secondary)
                     }
                     if let location {
-                        Label(location, systemImage: "square.grid.3x3")
+                        Label(location, systemImage: locationIcon)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }

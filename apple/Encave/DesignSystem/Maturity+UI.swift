@@ -23,6 +23,17 @@ extension Maturity {
         }
     }
 
+    /// The compact words, as text (VoiceOver labels); nil without a drinking window.
+    var shortName: String? {
+        switch self {
+        case .drinkSoon: String(localized: "Drink soon")
+        case .ready: String(localized: "Ready")
+        case .pastPeak: String(localized: "Past peak")
+        case .young: String(localized: "Keep")
+        case .unknown: nil
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .drinkSoon: "hourglass"

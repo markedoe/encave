@@ -111,11 +111,16 @@ struct CellarList: View {
                 content(groups)
             }
         }
-            .navigationTitle(isSelecting ? Text("Selected: \(picked.count)") : Text("Cellar"))
+            // Short, so it fits beside the buttons of an iPad in portrait.
+            .navigationTitle(isSelecting ? Text("\(picked.count) selected") : Text("Cellar"))
             .searchable(text: filterBinding.query, prompt: Text("Wine, producer, region, grape, vintage"))
             .toolbar {
                 if isSelecting { selectionToolbar(groups) } else { toolbar }
             }
+            #if os(iOS)
+            // iPhone, like Mail and Files: the actions at the bottom take the tab bar's place.
+            .toolbar(isSelecting && !isWide ? .hidden : .visible, for: .tabBar)
+            #endif
             .alert("Save This Search", isPresented: $namingSearch) {
                 TextField("Name", text: $searchName)
                 Button("Save") { model.update { $0.saveSearch(searchName, filter: model.cellarFilter) } }
@@ -239,7 +244,7 @@ struct CellarList: View {
                 }
             }
             // Rows slide into place when sorting or filtering, not at each letter typed.
-            .animation(searching ? nil : .default, value: groups.map(\.id))
+            .motionAnimation(searching ? nil : .default, value: groups.map(\.id))
             #if os(macOS)
             // The Delete key, like in Finder; Undo puts it back.
             .onDeleteCommand {
@@ -254,13 +259,31 @@ struct CellarList: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
-            if isWide {
-                CellarLayoutPicker()
-            }
+            #if os(macOS)
+            CellarLayoutPicker()
+            #endif
             // Like Mail and Files: choose several wines to act on them at once.
-            Button("Select") { startSelection() }
-                .accessibilityIdentifier("cellar.select")
+            // An icon on iPad, where the sidebar is narrow in portrait.
+            Button { startSelection() } label: {
+                #if os(iOS)
+                if isWide {
+                    Label("Select", systemImage: "checkmark.circle")
+                } else {
+                    Text("Select")
+                }
+                #else
+                Text("Select")
+                #endif
+            }
+            .accessibilityIdentifier("cellar.select")
             Menu {
+                #if os(iOS)
+                // iPad: the table is chosen here, the sidebar has no room for the switch.
+                if isWide {
+                    Button("Show as Table", systemImage: "tablecells") { DefaultsFlag.cellarTable.isOn = true }
+                        .accessibilityIdentifier("cellar.layout.table")
+                }
+                #endif
                 Picker("Sort by", selection: sortBinding) {
                     Text("Name").tag(CellarSort.name)
                     Text("Vintage").tag(CellarSort.vintage)

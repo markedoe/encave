@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -83,6 +84,10 @@ import app.encave.ui.components.BottleNeck
 import app.encave.ui.components.depthName
 import app.encave.ui.components.displayLabel
 import app.encave.ui.components.labelRes
+import app.encave.ui.components.shortLabelRes
+import app.encave.core.emptyCaption
+import app.encave.core.Maturity
+import java.time.LocalDate
 import app.encave.ui.components.zoneName
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -625,9 +630,10 @@ private fun RackCellView(
     val description = cellDescription(
         rack, cell, bottles, cellar, resources,
         found = if (countsFound) selectedCount else null,
-        isSelected = selectedCount > 0, isShown = isHighlighted || isFocused, isDimmed = isDimmed,
+        isSelected = selectedCount > 0 && !countsFound, isShown = isHighlighted || isFocused, isDimmed = isDimmed,
         depth = place.depth,
     )
+    val checkState = cellCheckState(bottles, if (countsFound) selectedCount else null, resources)
     Box(
         Modifier
             .size(size, height)
@@ -645,6 +651,7 @@ private fun RackCellView(
             )
             .clearAndSetSemantics {
                 contentDescription = description
+                if (checkState != null) stateDescription = checkState
                 selected = selectedCount > 0
                 if (onClick != null) {
                     role = Role.Button
@@ -700,10 +707,12 @@ private fun BandPlace(
             }
         } else {
             Box(Modifier.size(diameter).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
-            if (selectedCount == 0 && !back) {
+            if (selectedCount == 0) {
+                // The place number: the shelf is on the side, the band in its caption.
                 Text(
-                    rack.label(cell), color = scheme.onSurfaceVariant,
-                    fontSize = with(density) { (width * 0.18f).toSp().value.coerceAtLeast(9f).sp },
+                    rack.emptyCaption(cell), color = scheme.onSurfaceVariant,
+                    fontSize = with(density) { (diameter * 0.25f).toSp().value.coerceAtLeast(9f).sp },
+                    maxLines = 1,
                 )
             }
         }
@@ -763,7 +772,7 @@ private fun Position(
                     Box(Modifier.size(bottle).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
                     if (selectedCount == 0) {
                         Text(
-                            rack.label(cell), color = scheme.onSurfaceVariant,
+                            rack.emptyCaption(cell), color = scheme.onSurfaceVariant,
                             fontSize = with(density) { (size * 0.18f).toSp().value.coerceAtLeast(9f).sp },
                         )
                     }
@@ -811,14 +820,20 @@ internal fun cellDescription(
     isDimmed: Boolean = false,
     /** A front (0) or back (1) place of a fridge drawn front and back; null for the whole cell. */
     depth: Int? = null,
+    year: Int = LocalDate.now().year,
 ): String {
     val place = depth?.let { rack.displayLabel(Slot(cell.rackId, cell.row, cell.column, it), resources) }
         ?: rack.displayLabel(cell, resources)
+    // "Château X 2015, Red, Ready": the style and maturity in words, not only by color.
     fun wine(bottle: Bottle): String? = cellar.wines[bottle.wineId]?.let { wine ->
-        wine.color?.let { resources.getString(R.string.cell_wine_style, wine.displayName, resources.getString(it.labelRes)) } ?: wine.displayName
+        val maturity = Maturity.of(wine, year).takeIf { it != Maturity.Unknown }?.let { resources.getString(it.shortLabelRes) }
+        listOfNotNull(wine.displayName, wine.color?.let { resources.getString(it.labelRes) }, maturity).joinToString(", ")
     }
     val base = when {
-        rack.kind == RackKind.Bins -> resources.getString(R.string.cell_bin, place, bottles.size, rack.positionsPerCell)
+        rack.kind == RackKind.Bins -> {
+            val count = resources.getString(R.string.cell_bin, place, bottles.size, rack.positionsPerCell)
+            binContents(bottles, cellar, resources)?.let { resources.getString(R.string.cell_depths, count, it) } ?: count
+        }
         rack.positionsPerCell == 1 || depth != null -> bottles.firstOrNull()?.let(::wine)?.let { resources.getString(R.string.cell_filled, place, it) }
             ?: resources.getString(R.string.cell_empty, place)
         bottles.isEmpty() -> resources.getString(R.string.cell_empty, place)
@@ -839,6 +854,25 @@ internal fun cellDescription(
         isDimmed -> resources.getString(R.string.cell_dimmed, base)
         else -> base
     }
+}
+
+/** What a bin holds, most bottles first: "2 Château X 2015, 1 Y", the first three wines. */
+private fun binContents(bottles: List<Bottle>, cellar: Cellar, resources: android.content.res.Resources): String? {
+    val wines = bottles.groupingBy { it.wineId }.eachCount()
+        .mapNotNull { (id, count) -> cellar.wines[id]?.let { it.displayName to count } }
+        .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first })
+    if (wines.isEmpty()) return null
+    val parts = wines.take(3).map { "${it.second} ${it.first}" }.toMutableList()
+    if (wines.size > 3) parts += resources.getQuantityString(R.plurals.cell_bin_more, wines.size - 3, wines.size - 3)
+    return parts.joinToString(", ")
+}
+
+/** While checking a rack: "Found" or "Not found yet" for a place with bottles; null when partly found. */
+internal fun cellCheckState(bottles: List<Bottle>, found: Int?, resources: android.content.res.Resources): String? = when {
+    found == null || bottles.isEmpty() -> null
+    found >= bottles.size -> resources.getString(R.string.cell_check_found)
+    found == 0 -> resources.getString(R.string.cell_check_not_found)
+    else -> null
 }
 
 /** The vintage on the bottle end ("2017", or "NV"), in a color readable on that wine's tint. */

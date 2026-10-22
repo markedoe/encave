@@ -19,6 +19,8 @@ final class LabelScan {
     private var savedDraft: WineDraft?
     private weak var savedIn: CellarModel?
     var aiError: String?
+    /// The AI answered but had nothing to add to what is filled already.
+    var aiNote: String?
     /// A scan filled the form: show the wine as a card, until the user wants to edit it.
     var scanned = false
     var editingDetails = false
@@ -76,6 +78,7 @@ final class LabelScan {
     /// On-device reading: instant, fills only what the label clearly shows.
     private func apply(_ result: LabelScanResult, to draft: Binding<WineDraft>) {
         aiError = nil
+        aiNote = nil
         var value = draft.wrappedValue
         if let name = result.name, value.name.isEmpty || value.name == autoFilled.name {
             value.name = name
@@ -101,6 +104,7 @@ final class LabelScan {
         guard let photo, !isAnalyzing else { return }
         isAnalyzing = true
         aiError = nil
+        aiNote = nil
         Task {
             defer { isAnalyzing = false }
             do {
@@ -109,16 +113,28 @@ final class LabelScan {
                     savedDraft = nil
                     var completed = saved
                     var filled = autoFilled
-                    analysis.apply(to: &completed, replacing: &filled)
+                    guard analysis.apply(to: &completed, replacing: &filled) else {
+                        model.aiFoundNothing(for: saved.id)
+                        return
+                    }
                     completed.aiCompletedAt = Date()
                     model.completeWine(saved.id, from: saved.makeWine(), to: completed.makeWine())
                     return
                 }
                 var value = draft.wrappedValue
-                analysis.apply(to: &value, replacing: &autoFilled)
+                guard analysis.apply(to: &value, replacing: &autoFilled) else {
+                    aiNote = String(localized: "The AI found nothing to add")
+                    return
+                }
                 value.aiCompletedAt = Date()
                 withAnimation { draft.wrappedValue = value }
             } catch {
+                // The bottles were added meanwhile: the form is gone, so a banner says it.
+                if let saved = savedDraft, let model = savedIn {
+                    savedDraft = nil
+                    model.aiFailed(for: saved.id, message: error.localizedDescription)
+                    return
+                }
                 aiError = error.localizedDescription
             }
         }
@@ -200,6 +216,11 @@ struct LabelScanSection: View {
                         .font(.footnote)
                         .foregroundStyle(Color.warning)
                 }
+                if let aiNote = scan.aiNote {
+                    Label(aiNote, systemImage: "info.circle")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             } footer: {
                 if scan.aiEnabled {
                     Text("Reads the label on this device, then completes the details with the AI service set in Settings.")
@@ -209,6 +230,7 @@ struct LabelScanSection: View {
             }
             .animation(.default, value: scan.photo)
             .animation(.default, value: scan.aiError)
+            .animation(.default, value: scan.aiNote)
         }
     }
 }

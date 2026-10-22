@@ -7,7 +7,8 @@ import app.encave.core.WindowSource
 
 /**
  * [wine] completed with what the AI read, for a wine already saved: only empty fields are
- * filled, and the drinking window only if it was an estimate (or missing).
+ * filled, and the drinking window only if it was an estimate (or missing). [wine] itself,
+ * without the AI's date, when the AI had nothing to add.
  */
 fun LabelAnalysis.completing(wine: Wine): Wine {
     fun fill(current: String?, value: String): String? = current?.takeIf { it.isNotBlank() } ?: value.trim().ifEmpty { null }
@@ -20,15 +21,17 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
         region = fill(wine.region, region),
         country = fill(wine.country, country),
         grapes = wine.grapes.ifEmpty { grapes.map { it.trim() }.filter { it.isNotEmpty() } },
-        aiCompletedAt = ReferenceDates.now(),
     )
     val wasEstimate = wine.drinkFrom == null || wine.drinkUntil == null || wine.windowSource is WindowSource.Estimated
     if (wasEstimate) {
         val window = if (drinkFrom > 1900 && drinkUntil >= drinkFrom) drinkFrom..drinkUntil else result.estimatedWindow()
         if (window != null) result = result.copy(drinkFrom = window.first, drinkUntil = window.last)
     }
-    return result
+    return if (result.sameDetails(wine)) wine else result.copy(aiCompletedAt = ReferenceDates.now())
 }
+
+/** The same details as [other], whatever the AI's date: nothing was completed. */
+fun Wine.sameDetails(other: Wine): Boolean = copy(aiCompletedAt = other.aiCompletedAt) == other
 
 /**
  * This wine with the fields of [to] where it still holds the value of [from]: what was

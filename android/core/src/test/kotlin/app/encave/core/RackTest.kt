@@ -21,6 +21,26 @@ class RackTest {
     }
 
     @Test
+    fun shelvesNumberTheirEmptyPlacesOthersUseCodes() {
+        val grid = Rack(name = "G", rows = 3, columns = 4)
+        assertEquals("B3", grid.emptyCaption(RackCell(grid.id, 1, 2)))
+        val honeycomb = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 5)
+        assertEquals("C1", honeycomb.emptyCaption(RackCell(honeycomb.id, 2, 0)))
+        val shelves = Rack(name = "S", kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
+        assertTrue(shelves.numbersPlacesOnShelves)
+        assertEquals("6", shelves.emptyCaption(RackCell(shelves.id, 2, 5)))
+        val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1))
+        assertEquals("4", fridge.emptyCaption(RackCell(fridge.id, 2, 3)))
+        assertFalse(Rack(name = "B", kind = RackKind.Bins, rows = 2, columns = 2).numbersPlacesOnShelves)
+        // Rows beyond Z: grids keep their two-letter codes.
+        val tall = Rack(name = "T", rows = 30, columns = 2)
+        assertEquals("AB2", tall.emptyCaption(RackCell(tall.id, 27, 1)))
+        // Shelves of different lengths still number from the left.
+        val custom = Rack(name = "C", kind = RackKind.Shelves, rows = 2, columns = 4, rowColumns = listOf(2, 4))
+        assertEquals("4", custom.emptyCaption(RackCell(custom.id, 1, 3)))
+    }
+
+    @Test
     fun honeycombOffsetRowsHoldOneFewer() {
         val rack = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 5, depth = 2)
         assertEquals(5, rack.columnsInRow(0))

@@ -7,7 +7,10 @@ import java.util.Locale
 import java.util.UUID
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Required
+import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonObject
 
 /** Style of wine. Always shown with a label, never by color alone. */
 @Serializable
@@ -26,7 +29,8 @@ enum class WineColor(val raw: String) {
 }
 
 /** A wine: the invisible grouping behind bottles ("Château X 2015"). */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = WineSerializer::class)
 data class Wine(
     @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
@@ -69,6 +73,8 @@ data class Wine(
     val attachments: List<Attachment>? = null,
     /** When the details were last completed by the AI from the label photo; null when never. Synced. */
     @Serializable(with = InstantSerializer::class) val aiCompletedAt: Instant? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     /** The label photo, then the others, then the cover. */
     val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty() + listOfNotNull(coverPhotoId)
@@ -182,16 +188,30 @@ sealed class WindowSource {
     data object Missing : WindowSource()
 }
 
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = SlotSerializer::class)
 data class Slot(
     @SerialName("rackID") @Serializable(with = UuidSerializer::class) val rackId: UUID,
     val row: Int,
     val column: Int,
     /** 0 is the front (or the first bottle of a bin). */
     val depth: Int = 0,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Not part of equality: a slot is compared as a place (two bottles in one place). */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     /** The cell this slot belongs to, whatever its depth. */
     val cell: RackCell get() = RackCell(rackId, row, column)
+
+    override fun equals(other: Any?): Boolean =
+        other is Slot && rackId == other.rackId && row == other.row && column == other.column && depth == other.depth
+
+    override fun hashCode(): Int = listOf(rackId, row, column, depth).hashCode()
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object SlotSerializer : KeepingUnknownKeys<Slot>(Slot.generatedSerializer()) {
+    override fun unknownKeys(value: Slot) = value.unknownKeys
+    override fun withUnknownKeys(value: Slot, keys: JsonObject) = value.copy(unknownKeys = keys)
 }
 
 /** One cell of a rack: a position in a grid, a place on a shelf or a whole bin. */
@@ -223,7 +243,8 @@ enum class RackKind(val raw: String) {
  * Rows (or shelves) are lettered from the top, cells numbered from the left.
  * Files from versions with a "layout" key ("grid" or the decorative "diamond") load as grids.
  */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = RackSerializer::class)
 data class Rack(
     @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
@@ -255,6 +276,8 @@ data class Rack(
      * elsewhere; [normalized] keeps it only as true where it applies.
      */
     val backReversed: Boolean? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     /** A fridge with shelf layers two deep: drawn as a front band and a back band per shelf. */
     val hasDepthBands: Boolean get() = hasShelfLayers && depth == 2
@@ -472,7 +495,8 @@ data class Rack(
 }
 
 /** A record of drinking a bottle, from a quick rating to a full tasting note. */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = TastingSerializer::class)
 data class Tasting(
     @Required @Serializable(with = InstantSerializer::class) val date: Instant = ReferenceDates.now(),
     /** 1 to 5, optional. Clamped when stored in a cellar. */
@@ -484,6 +508,8 @@ data class Tasting(
     val palate: String? = null,
     val finish: String? = null,
     val foodPairing: String? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     /** True when any structured field beyond rating and note is filled. */
     val isDetailed: Boolean
@@ -499,7 +525,8 @@ data class Tasting(
  * One physical bottle. Each bottle is its own entity with a status, so two
  * people drinking "the last bottle" at once is a visible conflict, not a wrong count.
  */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = BottleSerializer::class)
 data class Bottle(
     @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     @SerialName("wineID") @Serializable(with = UuidSerializer::class) val wineId: UUID,
@@ -522,6 +549,8 @@ data class Bottle(
     val reservedFor: String? = null,
     /** Documents of this bottle only (its certificate, its receipt). Null rather than empty. */
     val attachments: List<Attachment>? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     /** Documents once each, names normalized, null rather than empty, as CaveKit reads them. */
     fun normalized(): Bottle {
@@ -547,16 +576,26 @@ data class Bottle(
 }
 
 /** User preferences stored with the cellar. */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = CellarSettingsSerializer::class)
 data class CellarSettings(
     /** ISO 4217 code used by default for prices ("EUR", "CHF"...). */
     @Required val currency: String = "EUR",
     /** Searches the user named, shown as chips in the Cellar. Null when there are none. */
     val savedSearches: List<SavedSearch>? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 )
 
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object CellarSettingsSerializer : KeepingUnknownKeys<CellarSettings>(CellarSettings.generatedSerializer()) {
+    override fun unknownKeys(value: CellarSettings) = value.unknownKeys
+    override fun withUnknownKeys(value: CellarSettings, keys: JsonObject) = value.copy(unknownKeys = keys)
+}
+
 /** A search and filters kept under a name ("Burgundy, ready"). */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = SavedSearchSerializer::class)
 data class SavedSearch(
     @Required @Serializable(with = UuidSerializer::class) val id: UUID = UUID.randomUUID(),
     val name: String,
@@ -567,6 +606,8 @@ data class SavedSearch(
     val tag: String? = null,
     val reservation: String? = null,
     val grape: String? = null,
+    /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
+    @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {
     val filter: CellarFilter
         get() = CellarFilter(query, colors.toSet(), maturities.toSet(), rackId, tag, reservation, grape)
@@ -601,4 +642,34 @@ object SearchText {
         val folded = fields.map { Wine.fold(it) }
         return words.all { word -> folded.any { it.contains(word) } }
     }
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object WineSerializer : KeepingUnknownKeys<Wine>(Wine.generatedSerializer()) {
+    override fun unknownKeys(value: Wine) = value.unknownKeys
+    override fun withUnknownKeys(value: Wine, keys: JsonObject) = value.copy(unknownKeys = keys)
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object RackSerializer : KeepingUnknownKeys<Rack>(Rack.generatedSerializer(), legacyKeys = setOf("layout")) {
+    override fun unknownKeys(value: Rack) = value.unknownKeys
+    override fun withUnknownKeys(value: Rack, keys: JsonObject) = value.copy(unknownKeys = keys)
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object TastingSerializer : KeepingUnknownKeys<Tasting>(Tasting.generatedSerializer()) {
+    override fun unknownKeys(value: Tasting) = value.unknownKeys
+    override fun withUnknownKeys(value: Tasting, keys: JsonObject) = value.copy(unknownKeys = keys)
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object BottleSerializer : KeepingUnknownKeys<Bottle>(Bottle.generatedSerializer()) {
+    override fun unknownKeys(value: Bottle) = value.unknownKeys
+    override fun withUnknownKeys(value: Bottle, keys: JsonObject) = value.copy(unknownKeys = keys)
+}
+
+/** Keeps the keys of a newer version (see [KeepingUnknownKeys]). */
+object SavedSearchSerializer : KeepingUnknownKeys<SavedSearch>(SavedSearch.generatedSerializer()) {
+    override fun unknownKeys(value: SavedSearch) = value.unknownKeys
+    override fun withUnknownKeys(value: SavedSearch, keys: JsonObject) = value.copy(unknownKeys = keys)
 }

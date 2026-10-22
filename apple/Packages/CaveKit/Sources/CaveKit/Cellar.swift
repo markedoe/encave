@@ -328,10 +328,11 @@ public extension Cellar {
 
     func rack(_ id: UUID) -> Rack? { racks.first { $0.id == id } }
 
-    /// "Cellar A · B3", the storage note, or nil when the bottle has no location.
+    /// "Cellar A · B3", "Fridge · Shelf 2, place 3", the storage note, or nil when the
+    /// bottle has no location.
     func locationLabel(for bottle: Bottle) -> String? {
         if let slot = bottle.slot, let rack = rack(slot.rackID) {
-            return "\(rack.name) · \(rack.label(for: slot))"
+            return "\(rack.name) · \(rack.placeName(for: slot))"
         }
         if let note = bottle.storageNote, !note.isEmpty { return note }
         return nil
@@ -495,6 +496,8 @@ public extension Cellar {
     /// Updates the tasting of a bottle already drunk (adding a full note later).
     mutating func updateTasting(_ bottleID: UUID, tasting: Tasting) throws {
         guard var bottle = bottles[bottleID], bottle.status == .consumed else { throw CellarError.unknownBottle }
+        var tasting = tasting
+        tasting.unknownFields = tasting.unknownFields.orKept(bottle.tasting?.unknownFields)
         bottle.tasting = tasting
         bottles[bottleID] = bottle
     }
@@ -526,7 +529,12 @@ public extension Cellar {
     }
 
     mutating func updateBottle(_ bottle: Bottle) throws {
-        guard bottles[bottle.id] != nil else { throw CellarError.unknownBottle }
+        guard let stored = bottles[bottle.id] else { throw CellarError.unknownBottle }
+        var bottle = bottle
+        bottle.unknownFields = bottle.unknownFields.orKept(stored.unknownFields)
+        if let fields = bottle.tasting?.unknownFields {
+            bottle.tasting?.unknownFields = fields.orKept(stored.tasting?.unknownFields)
+        }
         if let slot = bottle.slot {
             guard bottle.status != .ordered else { throw CellarError.notReceived }
             try validateInRange(slot)
@@ -556,8 +564,24 @@ public extension Cellar {
     }
 
     mutating func updateWine(_ wine: Wine) throws {
-        guard wines[wine.id] != nil else { throw CellarError.unknownWine }
+        guard let stored = wines[wine.id] else { throw CellarError.unknownWine }
+        var wine = wine
+        wine.unknownFields = wine.unknownFields.orKept(stored.unknownFields)
         wines[wine.id] = wine
+    }
+
+    /// The same wine entered twice: the bottles and shopping-list entries of `source`
+    /// go to `target`, with its barcodes and documents, and its label photo when
+    /// `target` has none; then `source` is removed.
+    mutating func mergeWine(_ source: UUID, into target: UUID) throws {
+        guard source != target, let from = wines[source], var into = wines[target] else { throw CellarError.unknownWine }
+        for (id, bottle) in bottles where bottle.wineID == source { bottles[id]?.wineID = target }
+        for (id, discovery) in discoveries where discovery.wineID == source { discoveries[id]?.wineID = target }
+        from.barcodes?.forEach { into.addBarcode($0) }
+        if let documents = from.attachments { into.attachments = (into.attachments ?? []) + documents }
+        if into.photoID == nil { into.photoID = from.photoID }
+        wines[target] = into
+        wines[source] = nil
     }
 
     /// Deletes a wine with every bottle and discovery of it.
@@ -581,6 +605,8 @@ public extension Cellar {
             guard let slot = bottle.slot, slot.rackID == rack.id else { continue }
             bottles[bottle.id]?.slot = displaced.contains(bottle.id) ? nil : Rack.moved(slot, rowMap: rowMap)
         }
+        var rack = rack
+        rack.unknownFields = rack.unknownFields.orKept(racks[index].unknownFields)
         racks[index] = rack
     }
 

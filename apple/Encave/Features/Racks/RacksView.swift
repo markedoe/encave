@@ -26,7 +26,7 @@ struct RacksView: View {
                     }
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 16)], spacing: 16) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 16, alignment: .top)], alignment: .leading, spacing: 16) {
                             ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
                                 NavigationLink(value: rack.id) {
                                     RackCard(rack: rack)
@@ -105,12 +105,12 @@ private struct RackCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(rack.name)
                         .font(.title3.weight(.semibold))
-                    Text(rack.kind.title)
+                    Text(rack.kindTitle)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: rack.kind.systemImage)
+                Image(systemName: rack.systemImage)
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }

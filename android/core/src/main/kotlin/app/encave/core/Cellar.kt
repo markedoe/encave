@@ -380,7 +380,7 @@ class Cellar(
     fun updateTasting(bottleId: UUID, tasting: Tasting) {
         val bottle = bottleMap[bottleId]
         if (bottle == null || bottle.status != Bottle.Status.Consumed) throw CellarException(CellarError.UnknownBottle)
-        bottleMap[bottleId] = bottle.copy(tasting = tasting.normalized())
+        bottleMap[bottleId] = bottle.copy(tasting = tasting.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(bottle.tasting?.unknownKeys)) })
     }
 
     /** Reverts a drink, putting the bottle back in its previous slot if still free. */
@@ -406,14 +406,17 @@ class Cellar(
     }
 
     fun updateBottle(bottle: Bottle) {
-        if (bottleMap[bottle.id] == null) throw CellarException(CellarError.UnknownBottle)
+        val stored = bottleMap[bottle.id] ?: throw CellarException(CellarError.UnknownBottle)
         bottle.slot?.let { slot ->
             if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)
             validateInRange(slot)
             val occupant = bottleAt(slot)
             if (occupant != null && occupant.id != bottle.id) throw CellarException(CellarError.SlotTaken)
         }
-        bottleMap[bottle.id] = bottle.normalized().copy(tasting = bottle.tasting?.normalized())
+        bottleMap[bottle.id] = bottle.normalized().copy(
+            tasting = bottle.tasting?.normalized()?.let { it.copy(unknownKeys = it.unknownKeys.orKept(stored.tasting?.unknownKeys)) },
+            unknownKeys = bottle.unknownKeys.orKept(stored.unknownKeys),
+        )
     }
 
     fun move(bottleId: UUID, slot: Slot?) {
@@ -439,8 +442,38 @@ class Cellar(
     }
 
     fun updateWine(wine: Wine) {
-        if (wineMap[wine.id] == null) throw CellarException(CellarError.UnknownWine)
-        wineMap[wine.id] = wine.normalized()
+        val stored = wineMap[wine.id] ?: throw CellarException(CellarError.UnknownWine)
+        wineMap[wine.id] = wine.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(stored.unknownKeys)) }
+    }
+
+    /**
+     * The same wine entered twice: the bottles and shopping-list entries of [source] go to
+     * [target], with its barcodes and documents, and its label photo when [target] has none;
+     * then [source] is removed. As in CaveKit.
+     */
+    fun mergeWine(source: UUID, target: UUID) {
+        val from = wineMap[source]
+        val into = wineMap[target]
+        if (source == target || from == null || into == null) throw CellarException(CellarError.UnknownWine)
+        bottleMap.replaceAll { _, bottle -> if (bottle.wineId == source) bottle.copy(wineId = target) else bottle }
+        discoveryMap.replaceAll { _, discovery -> if (discovery.wineId == source) discovery.copy(wineId = target) else discovery }
+        val merged = from.barcodes.orEmpty().fold(into) { wine, code -> wine.addingBarcode(code) }
+        wineMap[target] = merged.copy(
+            attachments = if (from.attachments == null) merged.attachments else merged.attachments.orEmpty() + from.attachments,
+            photoId = merged.photoId ?: from.photoId,
+        ).normalized()
+        wineMap.remove(source)
+    }
+
+    /**
+     * Undoes [mergeWine]: [source] and [target] as they were before, and the bottles and
+     * discoveries that moved ([bottleIds], [discoveryIds]) back to [source].
+     */
+    fun unmergeWine(source: Wine, target: Wine, bottleIds: Set<UUID>, discoveryIds: Set<UUID>) {
+        wineMap[source.id] = source.normalized()
+        wineMap[target.id] = target.normalized()
+        bottleIds.forEach { id -> bottleMap[id]?.let { bottleMap[id] = it.copy(wineId = source.id) } }
+        discoveryIds.forEach { id -> discoveryMap[id]?.let { discoveryMap[id] = it.copy(wineId = source.id) } }
     }
 
     /** Deletes a wine with every bottle and discovery of it. */
@@ -461,9 +494,9 @@ class Cellar(
      * the cellar without a place, otherwise the update is refused.
      */
     fun updateRack(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), takingOut: Boolean = false) {
-        val updated = rack.normalized()
-        val index = rackList.indexOfFirst { it.id == updated.id }
+        val index = rackList.indexOfFirst { it.id == rack.id }
         if (index < 0) throw CellarException(CellarError.UnknownRack)
+        val updated = rack.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(rackList[index].unknownKeys)) }
         val displaced = displacedBottles(updated, rowMap).map { it.id }.toSet()
         if (displaced.isNotEmpty() && !takingOut) throw CellarException(CellarError.RackNotEmpty)
         bottlesInCellar.forEach { bottle ->

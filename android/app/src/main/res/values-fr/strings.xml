@@ -517,7 +517,7 @@
     <string name="preset_bins_2x3">Losanges, 2 × 3 de 10</string>
     <string name="preset_crates_6">Caisses de 6, 3 × 4</string>
     <string name="preset_crates_12">Caisses de 12, 2 × 4</string>
-    <string name="place_shelf">Étagère %1$d, %2$d</string>
+    <string name="place_shelf">Étagère %1$d, place %2$d</string>
     <string name="place_bin">Casier %1$s</string>
     <string name="place_shelf_layer_single">Étagère %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Étagère %1$d, couche du bas, place %2$d</string>
@@ -702,7 +702,7 @@
     <string name="help_ai_url_title">Adresse du serveur</string>
     <string name="help_ai_url">Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine.</string>
     <string name="help_ai_complete_title">Compléter avec l’IA</string>
-    <string name="help_ai_complete">Après avoir ajouté une photo d’étiquette, ou en modifiant un vin qui en a une, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Utilisez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché.</string>
+    <string name="help_ai_complete">Après avoir ajouté une photo d’étiquette, ou en modifiant un vin qui en a une, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Utilisez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché. Quand l’IA ne trouve rien à ajouter, elle le dit (« L’IA n’a rien trouvé à ajouter ») et le vin n’est pas marqué comme complété. Quand sa réponse fait d’un nouveau vin un vin déjà dans votre cave, un bandeau indique **Même vin que …** et propose **Fusionner**, qui déplace ses bouteilles et ses dégustations dans ce vin ; **Annuler** revient en arrière.</string>
     <string name="help_ai_sent_title">Ce qui est envoyé</string>
     <string name="help_ai_sent">Seulement la photo de l’étiquette, quand vous ajoutez une photo d’étiquette ou touchez **Compléter avec l’IA**. Votre cave, vos notes et vos prix ne sont jamais envoyés.</string>
     <string name="help_data_title">Sauvegarde, export et import</string>
@@ -1056,6 +1056,10 @@
     <string name="msg_ai_completed">Fiche complétée par l’IA : %1$s</string>
     <string name="msg_added_ai_completed">Ajouté : %1$d × %2$s, fiche complétée par l’IA</string>
     <string name="msg_on_order_ai_completed">En commande : %1$d × %2$s, fiche complétée par l’IA</string>
+    <string name="msg_ai_nothing">L’IA n’a rien trouvé à ajouter</string>
+    <string name="msg_same_wine">Même vin que %1$s</string>
+    <string name="action_merge">Fusionner</string>
+    <string name="msg_merged">Fusionné avec %1$s</string>
     <string name="quantity_case">Une caisse de</string>
     <string name="add_auto_slots">Rangées automatiquement aux premiers emplacements libres. Touchez un emplacement pour choisir.</string>
     <string name="discard_title">Abandonner les modifications ?</string>
@@ -1308,6 +1312,16 @@
     <string name="insights_year_made_with">Réalisé avec Encave</string>
     <string name="help_journal_opened_title">Une bouteille de votre cave</string>
     <string name="help_journal_opened">Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir.</string>
+    <string name="rack_field_shelves">Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…</string>
+    <string name="kind_fridge_layers">Cave à vin, étagères en couches</string>
+    <string name="kind_fridge_layers_reversed">Cave à vin, étagères en couches · deux rangs, tête-bêche</string>
+    <string name="cell_check_found">Trouvée</string>
+    <string name="cell_check_not_found">Pas encore trouvée</string>
+    <plurals name="cell_bin_more">
+        <item quantity="one">%d autre</item>
+        <item quantity="many">%d autres</item>
+        <item quantity="other">%d autres</item>
+    </plurals>
     <plurals name="rack_delete_body">
         <item quantity="one">%d bouteille reste dans votre cave sans emplacement.</item>
         <item quantity="many">%d bouteilles restent dans votre cave sans emplacement.</item>

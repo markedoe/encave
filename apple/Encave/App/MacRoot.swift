@@ -15,6 +15,8 @@ struct MacRoot: View {
     @Environment(SceneRouter.self) private var router
     @State private var destination: MacDestination? = .cellar
     @State private var wine: UUID?
+    /// Tonight's own selection, so it never shows the wine last chosen in the Cellar.
+    @State private var tonightWine: UUID?
     @State private var bottle: UUID?
     @State private var columns: NavigationSplitViewVisibility = .all
     @State private var deletingRackID: UUID?
@@ -41,7 +43,7 @@ struct MacRoot: View {
                 } detail: {
                     // A new stack for each wine: what was opened from the last one's details goes.
                     NavigationStack { detail }
-                        .id(wine)
+                        .id(destination == .tonight ? tonightWine : wine)
                 }
             }
         }
@@ -60,13 +62,15 @@ struct MacRoot: View {
             router.openWineRequest = nil
         }
         // The Wine menu acts on the wine selected in this window.
-        .focusedSceneValue(\.selectedWineID, destination == .cellar || destination == .tonight ? wine : nil)
+        .focusedSceneValue(\.selectedWineID, destination == .cellar ? wine : destination == .tonight ? tonightWine : nil)
         // The selected wine was deleted: the first of the Cellar takes its place.
         .replacingDeletedWine($wine, selectsFirst: destination == .cellar)
+        .replacingDeletedWine($tonightWine, selectsFirst: false)
         .onChange(of: model.highlightedSlot) { _, slot in
             if let slot { destination = .rack(slot.rackID) }
         }
         .onChange(of: destination) { _, new in
+            if new == .tonight, tonightWine == nil { tonightWine = todaysSuggestion }
             switch new {
             case .cellar: if router.selectedTab != .cellar { router.selectedTab = .cellar }
             case .tonight: if router.selectedTab != .tonight { router.selectedTab = .tonight }
@@ -97,7 +101,7 @@ struct MacRoot: View {
             }
             Section("Racks") {
                 ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
-                    Label(rack.name, systemImage: rack.kind.systemImage)
+                    Label(rack.name, systemImage: rack.systemImage)
                         .badge(model.cellar.occupancy(of: rack))
                         .tag(MacDestination.rack(rack.id))
                         .accessibilityIdentifier("rack.card.\(index)")
@@ -133,7 +137,7 @@ struct MacRoot: View {
         case .cellar, nil:
             CellarList(selection: $wine)
         case .tonight:
-            NavigationStack { TonightView(selection: $wine) }
+            NavigationStack { TonightView(selection: $tonightWine) }
         case .journal:
             NavigationStack { JournalView(embedded: true) }
         case .rack(let id):
@@ -146,8 +150,10 @@ struct MacRoot: View {
     @ViewBuilder
     private var detail: some View {
         switch destination {
-        case .cellar, .tonight, nil:
+        case .cellar, nil:
             WinePane(wineID: wine)
+        case .tonight:
+            WinePane(wineID: tonightWine)
         case .journal:
             InsightsView()
         case .rack(let id):
@@ -157,6 +163,12 @@ struct MacRoot: View {
                 ContentUnavailableView("Select a rack", systemImage: "square.grid.3x3")
             }
         }
+    }
+
+    /// The wine Tonight suggests first today.
+    private var todaysSuggestion: UUID? {
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 1
+        return model.cellar.tonightSuggestion(year: model.currentYear, dayOfYear: day)?.wine.id
     }
 
     private func follow(_ tab: AppTab) {

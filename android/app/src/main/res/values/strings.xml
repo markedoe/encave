@@ -518,7 +518,7 @@
     <string name="preset_bins_2x3">Diamond bins, 2 × 3 of 10</string>
     <string name="preset_crates_6">Crates of 6, 3 × 4</string>
     <string name="preset_crates_12">Crates of 12, 2 × 4</string>
-    <string name="place_shelf">Shelf %1$d, %2$d</string>
+    <string name="place_shelf">Shelf %1$d, place %2$d</string>
     <string name="place_bin">Bin %1$s</string>
     <string name="place_shelf_layer_single">Shelf %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Shelf %1$d, bottom layer, place %2$d</string>
@@ -703,7 +703,7 @@
     <string name="help_ai_url_title">Server URL</string>
     <string name="help_ai_url">Leave it empty to use the provider’s usual address. Change it only if the provider gives you another one, for example for its China region.</string>
     <string name="help_ai_complete_title">Completing with AI</string>
-    <string name="help_ai_complete">After adding a label photo, or while editing a wine that has one, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete again** and “Completed by AI” shows the day, there and in the details of the wine’s page. Use it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped.</string>
+    <string name="help_ai_complete">After adding a label photo, or while editing a wine that has one, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete again** and “Completed by AI” shows the day, there and in the details of the wine’s page. Use it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped. When the AI finds nothing to add, it says so (“The AI found nothing to add”) and the wine is not marked as completed. When its answer turns a new wine into one already in your cellar, a banner says **Same wine as …** and offers **Merge**, which moves the bottles and tastings into that wine; **Undo** takes it back.</string>
     <string name="help_ai_sent_title">What is sent</string>
     <string name="help_ai_sent">Only the label photo, when you add a label photo or tap **Complete with AI**. Your cellar, notes and prices are never sent.</string>
     <string name="help_data_title">Backup, export and import</string>
@@ -1057,6 +1057,10 @@
     <string name="msg_ai_completed">Details completed by AI: %1$s</string>
     <string name="msg_added_ai_completed">Added %1$d × %2$s, details completed by AI</string>
     <string name="msg_on_order_ai_completed">On order: %1$d × %2$s, details completed by AI</string>
+    <string name="msg_ai_nothing">The AI found nothing to add</string>
+    <string name="msg_same_wine">Same wine as %1$s</string>
+    <string name="action_merge">Merge</string>
+    <string name="msg_merged">Merged into %1$s</string>
     <string name="quantity_case">A case of</string>
     <string name="add_auto_slots">Placed automatically in the first free places. Tap a place to choose.</string>
     <string name="discard_title">Discard changes?</string>
@@ -1309,6 +1313,15 @@
     <string name="insights_year_made_with">Made with Encave</string>
     <string name="help_journal_opened_title">A bottle from your cellar</string>
     <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine\'s name to open it.</string>
+    <string name="rack_field_shelves">Counted from the top. Shelves are numbered 1, 2, 3…</string>
+    <string name="kind_fridge_layers">Wine fridge, shelves in layers</string>
+    <string name="kind_fridge_layers_reversed">Wine fridge, shelves in layers · two deep, head-to-tail</string>
+    <string name="cell_check_found">Found</string>
+    <string name="cell_check_not_found">Not found yet</string>
+    <plurals name="cell_bin_more">
+        <item quantity="one">%d more</item>
+        <item quantity="other">%d more</item>
+    </plurals>
     <plurals name="rack_delete_body">
         <item quantity="one">%d bottle stays in your cellar without a place.</item>
         <item quantity="other">%d bottles stay in your cellar without a place.</item>

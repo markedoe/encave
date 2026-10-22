@@ -625,7 +625,7 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
             horizontalArrangement = Arrangement.spacedBy(Dimens.s),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(rack.kind.icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(rack.icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(
                 stringResource(R.string.rack_key_count, bottles.size, rack.capacity),
                 style = MaterialTheme.typography.titleSmall,
@@ -633,14 +633,21 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
             )
             entries.forEach { (wine, count) ->
                 val isOn = focusWine == wine.id
-                val description = pluralStringResource(R.plurals.rack_key_wine, count, wine.displayName, count)
+                // The style in words too, not only the bottle's color.
+                val style = wine.color?.let { stringResource(it.labelRes) }
+                val named = style?.let { stringResource(R.string.cell_wine_style, wine.displayName, it) } ?: wine.displayName
+                val description = pluralStringResource(R.plurals.rack_key_wine, count, named, count)
                 FilterChip(
                     selected = isOn,
                     onClick = { onFocus(if (isOn) null else wine.id) },
                     label = {
-                        Row(Modifier.clearAndSetSemantics { }) {
-                            Text(wine.displayName, maxLines = 1)
-                            Text(" ×$count", color = if (isOn) scheme.onSurface else scheme.onSurfaceVariant, maxLines = 1)
+                        // A long name ends with an ellipsis; the style and the count always show.
+                        Row(Modifier.widthIn(max = 300.dp).clearAndSetSemantics { }) {
+                            Text(wine.displayName, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (style != null) {
+                                Text(" · $style", color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                            }
+                            Text(" ×$count", color = if (isOn) scheme.onSurface else scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                         }
                     },
                     leadingIcon = { BottleEnd(wine.color, size = 16.dp) },
@@ -676,7 +683,7 @@ private fun BottleListSheet(rack: Rack, cellar: Cellar, onDismiss: () -> Unit, o
         LazyColumn(Modifier.navigationBarsPadding().testTag("rack.list")) {
             item {
                 ListItem(
-                    leadingContent = { Icon(rack.kind.icon, contentDescription = null) },
+                    leadingContent = { Icon(rack.icon, contentDescription = null) },
                     headlineContent = { Text(rack.name, style = MaterialTheme.typography.titleLarge) },
                     supportingContent = { Text(stringResource(R.string.rack_key_count, bottles.size, rack.capacity)) },
                 )
