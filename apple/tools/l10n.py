@@ -40,7 +40,6 @@ FR = {
     'Reset': 'Réinitialiser',
     'Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.': 'Des vins, casiers et dégustations d’exemple pour essayer Encave. Retirez-les quand vous voulez avec Retirer l’exemple en haut de la Cave.',
     'You are exploring the sample cellar': 'Vous explorez la cave d’exemple',
-    'Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.': 'Ses vins, casiers et entrées du Journal sont des exemples. Retirez-les quand vous êtes prêt à ajouter vos bouteilles ; celles que vous avez ajoutées restent.',
     'Remove Sample': 'Retirer l’exemple',
     'Sample cellar removed': 'Cave d’exemple retirée',
     'Join a Cellar from Another Device': 'Rejoindre la cave d’un autre appareil',

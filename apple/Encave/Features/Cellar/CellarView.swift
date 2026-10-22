@@ -536,17 +536,15 @@ struct SampleBanner: View {
     @Environment(CellarModel.self) private var model
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(spacing: 12) {
             Label("You are exploring the sample cellar", systemImage: "testtube.2")
-                .font(.subheadline.weight(.semibold))
-            Text("Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            Button("Remove Sample", systemImage: "trash") { model.removeSample() }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("Remove Sample") { model.removeSample() }
                 .buttonStyle(.bordered)
+                .controlSize(.small)
                 .accessibilityIdentifier("cellar.removeSample")
         }
-        .padding(.vertical, 4)
         .accessibilityElement(children: .contain)
     }
 }

@@ -5621,16 +5621,6 @@
         }
       }
     },
-    "Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ses vins, casiers et entrées du Journal sont des exemples. Retirez-les quand vous êtes prêt à ajouter vos bouteilles ; celles que vous avez ajoutées restent."
-          }
-        }
-      }
-    },
     "JSON": {
       "localizations": {
         "fr": {

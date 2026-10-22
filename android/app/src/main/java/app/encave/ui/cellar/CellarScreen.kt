@@ -2,7 +2,6 @@ package app.encave.ui.cellar
 
 import androidx.compose.ui.semantics.heading
 import androidx.compose.material.icons.outlined.Science
-import androidx.compose.material3.OutlinedCard
 import app.encave.ui.navigation.JoinDeviceRoute
 import app.encave.ui.devices.rememberLocalNetworkAccess
 import app.encave.core.containsSample
@@ -1067,22 +1066,24 @@ private fun StatTile(
 /** Shown while records of the sample cellar remain: removes them, and only them, with Undo. */
 @Composable
 private fun SampleBanner(onRemove: () -> Unit) {
-    OutlinedCard(Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.sample")) {
-        Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
-                Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Text(
-                    stringResource(R.string.cellar_sample_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.semantics { heading() },
-                )
-            }
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.sample"),
+    ) {
+        Row(
+            Modifier.padding(start = Dimens.l, end = Dimens.s, top = Dimens.xs, bottom = Dimens.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.m),
+        ) {
+            Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
             Text(
-                stringResource(R.string.cellar_sample_body),
+                stringResource(R.string.cellar_sample_title),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f).semantics { heading() },
             )
-            OutlinedButton(onClick = onRemove, modifier = Modifier.testTag("action.remove_sample")) {
+            TextButton(onClick = onRemove, modifier = Modifier.testTag("action.remove_sample")) {
                 Text(stringResource(R.string.action_remove_sample))
             }
         }

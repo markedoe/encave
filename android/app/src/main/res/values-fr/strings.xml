@@ -601,7 +601,6 @@
     <string name="help_start_try_title">Essayer</string>
     <string name="help_start_try">Tant que votre cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci, **Charger une cave d’exemple** (sur l’écran Cave ou dans **Réglages › Essayer Encave**) la remplit d’exemples pour découvrir chaque écran. Tant qu’ils sont là, **Retirer l’exemple** en haut de la Cave retire seulement eux, avec Annuler, et garde les bouteilles que vous avez ajoutées. Rejoindre la cave d’un autre appareil remplace l’exemple de lui-même.</string>
     <string name="cellar_sample_title">Vous explorez la cave d’exemple</string>
-    <string name="cellar_sample_body">Ses vins, casiers et entrées du Journal sont des exemples. Retirez-les quand vous êtes prêt à ajouter vos bouteilles ; celles que vous avez ajoutées restent.</string>
     <string name="help_start_join_title">Vous utilisez déjà Encave ?</string>
     <string name="help_start_join">Sur un nouvel appareil dont la cave est vide, **Rejoindre la cave d’un autre appareil** permet d’y faire venir la cave de votre iPhone, iPad, Mac ou Android : sur cet appareil, ouvrez **Réglages › Appareils › Ajouter un appareil** et saisissez ou scannez le code qu’il affiche.</string>
     <string name="help_start_reset_title">Recommencer</string>

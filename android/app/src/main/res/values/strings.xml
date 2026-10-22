@@ -602,7 +602,6 @@
     <string name="help_start_try_title">Try it</string>
     <string name="help_start_try">While your cellar is empty and no other device syncs with this one, **Load sample cellar** (on the Cellar screen or in **Settings › Try Encave**) fills it with examples to explore every screen. While they are there, **Remove sample** at the top of the Cellar removes only them, with Undo, and keeps the bottles you added. Joining a cellar from another device replaces the sample on its own.</string>
     <string name="cellar_sample_title">You are exploring the sample cellar</string>
-    <string name="cellar_sample_body">Its wines, racks and Journal entries are examples. Remove them when you are ready to add your own bottles; those you added stay.</string>
     <string name="help_start_join_title">Already using Encave?</string>
     <string name="help_start_join">On a new device with an empty cellar, **Join a cellar from another device** shows how to bring in the cellar of your iPhone, iPad, Mac or Android: on that device, open **Settings › Devices › Add a device** and type or scan the code it shows.</string>
     <string name="help_start_reset_title">Start again</string>
