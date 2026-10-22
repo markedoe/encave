@@ -968,10 +968,15 @@ class SyncManager(
         if (storage.remoteKey == null && membership != null) {
             // Maybe another device already turned it on and left a key for this one.
             val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, null) }.getOrNull()
-            key = grant?.cellarKey ?: CellarKey.random(membership.cellarId).also {
-                RemoteSync.grant(it, membership.active, store, identity, storageString)
+            key = grant?.cellarKey ?: run {
+                // Kept until every device has it: a retry after a failure gives the same key.
+                val first = firstKey?.takeIf { it.cellarId == membership.cellarId } ?: CellarKey.random(membership.cellarId)
+                firstKey = first
+                RemoteSync.grant(first, membership.active, store, identity, storageString)
+                first
             }
         }
+        firstKey = null
         if (login != null) storage.webDavLogin = login
         storage.remoteTurnedOff = false
         storage.remoteStorage = storageString
@@ -1049,6 +1054,15 @@ class SyncManager(
             }
         }
     }
+
+    /** See [SyncStorage.firstKey]; also kept here for when the Keystore cannot keep it. */
+    @Volatile private var firstKeyHere: CellarKey? = null
+    private var firstKey: CellarKey?
+        get() = storage.firstKey ?: firstKeyHere
+        set(value) {
+            firstKeyHere = value
+            storage.firstKey = value
+        }
 
     /** Tests: the store to use instead of the one for the storage (tests have no Keystore for a login). */
     @Volatile internal var storeForTests: ((String) -> MailboxStore?)? = null

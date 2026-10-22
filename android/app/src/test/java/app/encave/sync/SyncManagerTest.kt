@@ -10,6 +10,7 @@ import app.encave.core.containsSample
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.FileAccess
+import app.encave.core.sync.KeyGrant
 import app.encave.core.sync.Mailbox
 import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
@@ -101,6 +102,37 @@ class SyncManagerTest {
         // The key itself is in the Keystore, which tests do not have: its status says it is kept.
         assertTrue(sync.state.value.hasRemoteKey)
         assertEquals("https://relay.example", sync.state.value.remoteStorage)
+    }
+
+    @Test
+    fun aRetryAfterAFailedGrantGivesTheSameKey() = runBlocking {
+        sync.setUpIfNeeded()
+        val first = addOther()
+        val second = addOther()
+        val members = sync.state.value.membership!!
+        val memory = MemoryMailboxStore()
+        var failing = true
+        // The inbox granted last cannot be written the first time: the other one has its grant then.
+        val last = members.active.last { it.id != sync.identity.id }.inbox
+        val flaky = object : MailboxStore {
+            override fun mailbox(id: String, token: String): Mailbox = memory.mailbox(id, token)
+            override fun inbox(id: String, token: String): Mailbox {
+                val box = memory.inbox(id, token)
+                if (id != last) return box
+                return object : Mailbox by box {
+                    override suspend fun create(path: String, data: ByteArray): Boolean =
+                        if (failing) throw RemoteSyncException(RemoteSyncError.Unavailable("offline")) else box.create(path, data)
+                }
+            }
+        }
+        assertTrue(runCatching { sync.turnOn(flaky, "https://relay.example") }.isFailure)
+        failing = false
+        sync.turnOn(flaky, "https://relay.example")
+        // Every grant left, for either device, holds the same key.
+        val keys = listOf(first, second).flatMap { device ->
+            memory.allFiles[device.inboxId].orEmpty().map { (path, data) -> KeyGrant.open(data, path, device, members).cellarKey }
+        }.toSet()
+        assertEquals(1, keys.size)
     }
 
     @Test

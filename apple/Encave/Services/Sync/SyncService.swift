@@ -311,6 +311,14 @@ final class SyncService {
         set { Keychain.setData(newValue.flatMap { try? JSONEncoder().encode($0) }, for: Self.pendingKeyAccount) }
     }
 
+    /// The cellar's first key, made when turning syncing away from home on and kept until it
+    /// has been given to every device: a retry gives the same key, so a grant already left
+    /// with it stays valid and no device ends up with a key the others never use.
+    private var firstKey: CellarKey? {
+        get { Keychain.getData(Self.firstKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) } }
+        set { Keychain.setData(newValue.flatMap { try? JSONEncoder().encode($0) }, for: Self.firstKeyAccount) }
+    }
+
     /// Rotates the remote key if a removal is waiting for it, and returns the key to use.
     private func rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot, round: Int) async throws -> CellarKey {
         // Builds before this one kept only a flag.
@@ -445,6 +453,7 @@ final class SyncService {
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         pendingKey = nil
+        firstKey = nil
         storeRemoteKey(nil)
         storeWebDAVLogin(nil)
     }
@@ -705,6 +714,7 @@ final class SyncService {
     /// Builds before the pending key kept only this flag.
     static let rotationKey = "sync.rotationPending"
     static let pendingKeyAccount = "sync.pendingCellarKey"
+    static let firstKeyAccount = "sync.firstCellarKey"
     static let webDAVLoginAccount = "sync.webDAVLogin"
     /// The user turned syncing away from home off on this device.
     static let remoteOffKey = "sync.remoteTurnedOff"
@@ -769,12 +779,15 @@ final class SyncService {
                                                              current: nil) {
                 key = grant.cellarKey
             } else {
-                let new = CellarKey.random(cellarID: membership.cellarID)
+                let new = firstKey.flatMap { $0.cellarID == membership.cellarID ? $0 : nil }
+                    ?? CellarKey.random(cellarID: membership.cellarID)
+                firstKey = new
                 try await RemoteSync.grant(new, to: membership.active, store: store, identity: identity,
                                            storage: storage.string)
                 key = new
             }
         }
+        firstKey = nil
         if case .webDAV = storage { storeWebDAVLogin(login) }
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         useStorage(storage)
