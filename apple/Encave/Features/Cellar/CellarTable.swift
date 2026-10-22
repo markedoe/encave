@@ -4,6 +4,13 @@ import SwiftUI
 /// Mac and iPad: show the cellar as a list or as a sortable table. Remembered.
 enum CellarLayout {
     static let key = "cellar.table"
+
+    /// Writes only a real change. A toolbar picker or a menu toggle can set its value again
+    /// on each update, and each write to the defaults redraws the windows that read it:
+    /// on the Mac that loop kept the main thread busy and the window could stay hidden.
+    static func changes(_ value: Binding<Bool>) -> Binding<Bool> {
+        Binding(get: { value.wrappedValue }, set: { if $0 != value.wrappedValue { value.wrappedValue = $0 } })
+    }
 }
 
 /// The cellar as a sortable table, one row per wine, with the selected wine in an
@@ -351,7 +358,7 @@ struct CellarLayoutPicker: View {
     @AppStorage(CellarLayout.key) private var showsTable = false
 
     var body: some View {
-        Picker("View", selection: $showsTable) {
+        Picker("View", selection: CellarLayout.changes($showsTable)) {
             Label("List", systemImage: "list.bullet").tag(false)
             Label("Table", systemImage: "tablecells").tag(true)
         }

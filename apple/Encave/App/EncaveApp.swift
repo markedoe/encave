@@ -168,7 +168,7 @@ private struct CellarTableToggle: View {
     @AppStorage(CellarLayout.key) private var showsTable = false
 
     var body: some View {
-        Toggle("Show as Table", isOn: $showsTable)
+        Toggle("Show as Table", isOn: CellarLayout.changes($showsTable))
             .keyboardShortcut("t", modifiers: [.command, .option])
     }
 }
