@@ -60,7 +60,9 @@ import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -82,6 +84,9 @@ sealed interface UiText {
 
 /** A snackbar message, with an optional undo; [persistent] ones stay until dismissed. */
 data class UiMessage(val text: UiText, val undo: (() -> Unit)? = null, val persistent: Boolean = false)
+
+/** A haptic confirmation played by the UI: an action done, or refused. */
+enum class Haptic { Confirm, Reject }
 
 /**
  * The cellar and every command the screens can run. Commands go through the
@@ -107,6 +112,15 @@ class AppViewModel(
 
     private val messageChannel = Channel<UiMessage>(Channel.BUFFERED)
     val messages: Flow<UiMessage> = messageChannel.receiveAsFlow()
+
+    // Not kept for later: a haptic only makes sense while the app is shown.
+    private val hapticFlow = MutableSharedFlow<Haptic>(extraBufferCapacity = 8)
+
+    /**
+     * Confirm when bottles are added, drunk, moved, placed or received, a discovery is saved,
+     * documents attached or a backup restored (as on Apple); Reject when a change is refused.
+     */
+    val haptics: SharedFlow<Haptic> = hapticFlow
 
     val year: Int get() = LocalDate.now().year
 
@@ -140,6 +154,16 @@ class AppViewModel(
         messageChannel.trySend(UiMessage(text, undo))
     }
 
+    private fun confirm() {
+        hapticFlow.tryEmit(Haptic.Confirm)
+    }
+
+    /** Reports a change that failed (a place taken, a full disk…). */
+    private fun fail(error: Throwable) {
+        hapticFlow.tryEmit(Haptic.Reject)
+        post(errorText(error))
+    }
+
     private fun errorText(error: Throwable): UiText = UiText.Res(
         when (error) {
             is CellarException -> when (error.error) {
@@ -166,7 +190,7 @@ class AppViewModel(
     /** Runs a change; reports failures and, on success, [onSuccess]. */
     private fun <T> change(onSuccess: (T) -> Unit = {}, block: (Cellar) -> T) {
         viewModelScope.launch {
-            repository.update(block).onSuccess(onSuccess).onFailure { post(errorText(it)) }
+            repository.update(block).onSuccess(onSuccess).onFailure { fail(it) }
         }
     }
 
@@ -200,12 +224,13 @@ class AppViewModel(
             }
                 .onSuccess {
                     withContext(Dispatchers.IO) { pendingDocuments.forEach(documents::discard) }
+                    confirm()
                     if (purchase.isOrdered) post(UiText.Res(R.string.msg_on_order, listOf(it.size, record.displayName)))
                     else post(UiText.Plural(R.plurals.bottles_added, it.size))
                     // Added without the documents that could not be stored (a full disk…).
                     if (attachments.size < pendingDocuments.size) post(UiText.Res(R.string.err_document_unreadable))
                 }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -214,7 +239,10 @@ class AppViewModel(
         if (!journalFilter.value.showsTastings) journalFilter.value = DiaryFilter.All
         // A tag only picks wines tasted elsewhere.
         journalTag.value = null
-        change<String>({ name -> post(UiText.Res(R.string.msg_drunk, listOf(name))) { undoDrink(bottleId, previous) } }) {
+        change<String>({ name ->
+            confirm()
+            post(UiText.Res(R.string.msg_drunk, listOf(name))) { undoDrink(bottleId, previous) }
+        }) {
             it.drink(bottleId, tasting)
             nameOf(it, bottleId)
         }
@@ -243,7 +271,10 @@ class AppViewModel(
     fun receive(bottleIds: List<UUID>) {
         val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
         if (before.isEmpty()) return
-        change<Unit>({ post(UiText.Res(R.string.msg_received, listOf(before.size))) { restore(before) } }) {
+        change<Unit>({
+            confirm()
+            post(UiText.Res(R.string.msg_received, listOf(before.size))) { restore(before) }
+        }) {
             it.receive(before.map(Bottle::id))
         }
     }
@@ -290,7 +321,10 @@ class AppViewModel(
         val before = bottlesOfWines(wineIds)
         change<Int>({ placed ->
             if (placed == 0) post(UiText.Res(R.string.msg_no_free_place))
-            else post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+            else {
+                confirm()
+                post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+            }
         }) { it.place(wineIds, rackId) }
     }
 
@@ -342,12 +376,15 @@ class AppViewModel(
         }) { it.deleteBottle(bottleId) }
     }
 
-    fun move(bottleId: UUID, slot: Slot?) = change<String?>({ label -> label?.let { post(UiText.Res(R.string.msg_moved, listOf(it))) } }) {
+    fun move(bottleId: UUID, slot: Slot?) = change<String?>({ label ->
+        confirm()
+        label?.let { post(UiText.Res(R.string.msg_moved, listOf(it))) }
+    }) {
         it.move(bottleId, slot)
         slot?.let { s -> it.rack(s.rackId)?.let { rack -> "${rack.name} · ${rack.label(s)}" } }
     }
 
-    fun swap(a: Slot, b: Slot) = change<Unit> { it.swap(a, b) }
+    fun swap(a: Slot, b: Slot) = change<Unit>({ confirm() }) { it.swap(a, b) }
 
     fun updateTasting(bottleId: UUID, tasting: Tasting) =
         change<Unit>({ post(UiText.Res(R.string.msg_saved)) }) { it.updateTasting(bottleId, tasting) }
@@ -373,7 +410,7 @@ class AppViewModel(
                 return@launch
             }
             repository.update { c -> c.wines[wineId]?.let { c.updateWine(it.copy(coverPhotoId = newId)) } }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -390,7 +427,7 @@ class AppViewModel(
             // (added meanwhile on another device, for example).
             repository.update { c -> c.updateWine(record.copy(attachments = c.wines[record.id]?.attachments ?: record.attachments)) }
                 .onSuccess { if (!quiet) post(UiText.Res(R.string.msg_saved)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -407,7 +444,7 @@ class AppViewModel(
                 val wine = cellar.wines[wineId] ?: return@update
                 // The same picture twice has the same ID: it is already there.
                 if (id !in wine.extraPhotoIds.orEmpty()) cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty() + id))
-            }.onFailure { post(errorText(it)) }
+            }.onFailure { fail(it) }
             onDone()
         }
     }
@@ -456,9 +493,10 @@ class AppViewModel(
                     if (filter == DiaryFilter.Cellar || (filter == DiaryFilter.ToBuy && !discovery.wantsToBuy)) journalFilter.value = DiaryFilter.All
                     val tag = journalTag.value
                     if (tag != null && discovery.tags.none { it.equals(tag, ignoreCase = true) }) journalTag.value = null
+                    confirm()
                     post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
                 }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -474,7 +512,7 @@ class AppViewModel(
                 it.updateWine(record)
                 it.updateDiscovery(discovery)
             }.onSuccess { post(UiText.Res(R.string.msg_saved)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -575,7 +613,7 @@ class AppViewModel(
             }
             if (attachments.size < staged.size) post(UiText.Res(R.string.err_document_unreadable))
             if (attachments.isNotEmpty()) {
-                repository.update { it.attach(attachments, target) }.onFailure { post(errorText(it)) }
+                repository.update { it.attach(attachments, target) }.onSuccess { confirm() }.onFailure { fail(it) }
             }
             onDone()
         }
@@ -665,7 +703,7 @@ class AppViewModel(
             val before = cellar.value.copy()
             repository.replace(Cellar(settings = before.settings))
                 .onSuccess { post(UiText.Res(R.string.msg_erased)) { change<Unit> { c -> c.merge(before) } } }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -746,17 +784,18 @@ class AppViewModel(
                 .onSuccess {
                     source.workingFolder?.let { folder -> withContext(Dispatchers.IO) { folder.deleteRecursively() } }
                     restoreState.value = null
+                    confirm()
                     val text = if (mode == RestoreMode.Replace) UiText.Res(R.string.msg_restored) else importText(summary)
                     val undo: (() -> Unit)? = if (restored == before) null else ({ undoRestore(before) })
                     messageChannel.trySend(UiMessage(text, undo))
                     onDone()
                 }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
     private fun undoRestore(before: Cellar) {
-        viewModelScope.launch { repository.replace(before).onFailure { post(errorText(it)) } }
+        viewModelScope.launch { repository.replace(before).onFailure { fail(it) } }
     }
 
     // endregion
@@ -809,7 +848,7 @@ class AppViewModel(
             if (isZip || isJson) {
                 runCatching { backups.source(resolver, uri) }
                     .onSuccess { restoreState.value = it; onBackup() }
-                    .onFailure { post(errorText(it)) }
+                    .onFailure { fail(it) }
                 return@launch
             }
             val text = withContext(Dispatchers.IO) {
@@ -820,7 +859,7 @@ class AppViewModel(
             }
             repository.update { cellar -> cellar.importCsv(text) }
                 .onSuccess { post(importText(it)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 

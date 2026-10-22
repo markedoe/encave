@@ -643,7 +643,7 @@
     <string name="help_racks_zooming_title">Zooming</string>
     <string name="help_racks_zooming">Pinch to zoom in and out, or double-tap a spot; double-tap again to see the whole rack. Drag to look around once zoomed in. **Bottle list** lists the bottles of the rack place by place.</string>
     <string name="help_racks_moving_title">Moving bottles</string>
-    <string name="help_racks_moving">Tap a bottle, then **Move**, then the new place (or press and hold a bottle). Tapping another bottle swaps them; a bin takes the bottle if it has room.</string>
+    <string name="help_racks_moving">Tap a bottle, then **Move**, then the new place (or press and hold a bottle). From the Cellar or Tonight, touch and hold a wine and choose **Move**. Tapping another bottle swaps them; a bin takes the bottle if it has room.</string>
     <string name="help_racks_irregular_title">Irregular racks</string>
     <string name="help_racks_irregular">Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row.</string>
     <string name="help_tonight_title">Tonight and drinking windows</string>

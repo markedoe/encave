@@ -122,7 +122,7 @@ private fun Rack.cellFor(key: String?): RackCell? =
 fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: RackDetailRoute) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val rack = cellar.racks.firstOrNull { it.id.toString() == route.rackId }
-    var movingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var movingId by rememberSaveable { mutableStateOf(route.moveBottleId) }
     var actionsId by rememberSaveable { mutableStateOf<String?>(null) }
     var openCell by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
@@ -269,12 +269,13 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             }
                             source != null -> {
                                 movingId = null
+                                // A bottle without a place (Move in a wine's menu) takes a free place.
                                 val from = source.slot
-                                if (from == null || from.cell == cell) return@RackGrid
+                                if (from?.cell == cell) return@RackGrid
                                 val free = cellar.freeSlot(cell)
                                 when {
                                     free != null -> viewModel.move(source.id, free)
-                                    rack.positionsPerCell == 1 -> viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
+                                    from != null && rack.positionsPerCell == 1 -> viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
                                     else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))
                                 }
                             }

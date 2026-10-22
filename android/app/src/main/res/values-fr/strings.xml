@@ -642,7 +642,7 @@
     <string name="help_racks_zooming_title">Zoomer</string>
     <string name="help_racks_zooming">Pincez pour zoomer, ou touchez deux fois un endroit ; touchez de nouveau deux fois pour revoir tout le casier. Faites glisser pour vous déplacer une fois zoomé. **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.</string>
     <string name="help_racks_moving_title">Déplacer des bouteilles</string>
-    <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement (ou appuyez longuement sur une bouteille). Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place.</string>
+    <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement (ou appuyez longuement sur une bouteille). Depuis la Cave ou Ce soir, appuyez longuement sur un vin et choisissez **Déplacer**. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place.</string>
     <string name="help_racks_irregular_title">Casiers irréguliers</string>
     <string name="help_racks_irregular">Activez **Rangées de longueurs différentes** pour un casier sous pente ou sous un escalier, et réglez la longueur de chaque rangée.</string>
     <string name="help_tonight_title">Ce soir et fenêtres de dégustation</string>

@@ -68,6 +68,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.MaturityLabel
+import app.encave.ui.cellar.WineMenuBox
 import app.encave.ui.components.WineGroupRow
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
@@ -160,11 +161,15 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     }
                 }
                 items(section.groups, key = { section.maturity.raw + it.id }) { group ->
-                    WineGroupRow(
-                        group = group, cellar = cellar, year = year, showMaturity = false,
-                        onClick = { navigator.open(WineDetailRoute(group.id.toString())) },
-                        onLongClick = { drinking = group },
-                    )
+                    // The same menu as in the Cellar (long press or TalkBack actions).
+                    WineMenuBox(group, cellar, viewModel, navigator, onDrink = { drinking = group }) { rowModifier, openMenu ->
+                        WineGroupRow(
+                            group = group, cellar = cellar, year = year, showMaturity = false,
+                            onClick = { navigator.open(WineDetailRoute(group.id.toString())) },
+                            onLongClick = openMenu,
+                            modifier = rowModifier.testTag("tonight.row"),
+                        )
+                    }
                     HorizontalDivider(Modifier.padding(start = 56.dp))
                 }
             }
