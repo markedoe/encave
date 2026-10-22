@@ -46,8 +46,8 @@ last 7 days it changed, then one a week for 4 weeks), in the same storage.
 **Backups are not encrypted.** The weekly backup is **on by default**: once a
 week, Encave makes a ZIP file of your whole cellar, its photos and documents,
 by itself, and keeps the last two on the device. It runs when you open Encave,
-and in the background: on iPhone and iPad only during a background sync away
-from home, on Android once a day. You can turn it off in Settings.
+and in the background: on iPhone and iPad only while sync away from home is on
+(iOS decides when), on Android once a day. You can turn it off in Settings.
 
 - **iPhone, iPad and Mac**: the weekly backups are in Encave's own Documents
   folder (on iPhone and iPad, the Files app shows it under On My iPhone or On
@@ -164,9 +164,9 @@ chacun des 7 derniers jours où elle a changé, puis une par semaine pendant
 **activée par défaut** : une fois par semaine, Encave fait de lui-même un
 fichier ZIP de toute votre cave, de ses photos et de ses documents, et garde les
 deux derniers sur l'appareil. Elle a lieu quand vous ouvrez Encave, et en
-arrière-plan : sur iPhone et iPad seulement pendant une synchronisation loin
-de la maison, sur Android une fois par jour. Vous pouvez la
-désactiver dans les réglages.
+arrière-plan : sur iPhone et iPad seulement tant que la synchronisation loin
+de la maison est activée (iOS décide quand), sur Android une fois par jour.
+Vous pouvez la désactiver dans les réglages.
 
 - **iPhone, iPad et Mac** : les sauvegardes hebdomadaires sont dans le dossier
   Documents propre à Encave (sur iPhone et iPad, l'app Fichiers l'affiche sous

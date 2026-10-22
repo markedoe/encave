@@ -583,9 +583,11 @@ Each storage keeps the files of a mailbox or inbox under its ID:
   - Create: `PUT` with `If-None-Match: *`; 412 means the file exists. A missing
     folder (409, or 404 on some servers) is made with `MKCOL` (405: it exists)
     and the `PUT` is tried once more.
-  - 401 and 403 mean the login was refused, 507 that the storage is full, 413
-    that the file is too large; redirects are not followed, so the login is
-    never sent to another address.
+  - 401 means the login was refused: the app then makes no automatic round
+    until a new login or Sync Now, so the server does not lock the account.
+    403 means the login works but the folder is refused. 507 means the storage
+    is full, 413 that the file is too large; redirects are not followed, so the
+    login is never sent to another address.
   - Only mailbox IDs and paths that pass the rules above become part of a URL.
   - A server that ignores `If-None-Match` replaces an existing file instead of
     answering 412. The protocol does not depend on it: snapshot and grant names
