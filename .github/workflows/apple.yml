@@ -52,8 +52,8 @@ jobs:
     # fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    # Built once; the iPhone and the iPad, each in English and in French, run side by side.
-    timeout-minutes: 60
+    # Built once; the iPhone and the iPad run side by side.
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: apple
@@ -71,13 +71,19 @@ jobs:
           brew install xcodegen xcbeautify
           xcodegen generate
 
-      - name: Build for testing, start the simulators
+      - name: Build for testing
         run: |
           set -o pipefail
+          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
+
+      - name: Model tests (macOS), while the simulators start
+        run: |
           sims="$RUNNER_TEMP/sims"
           mkdir -p "$sims"
-          # The simulators start while the app builds (the first start takes minutes):
-          # two of the newest iPhone (not mini) and two of the newest iPad, one per language.
+          # The newest iPhone (not mini) and iPad. Booted first: a cold simulator can
+          # time out launching the app under test.
           (
             set -e
             xcrun simctl list devices available -j > "$sims/devices.json"
@@ -90,61 +96,82 @@ jobs:
                       continue
                   for d in devices:
                       if d["name"].startswith(prefix) and "mini" not in d["name"]:
-                          found.append((runtime, d["name"], d["deviceTypeIdentifier"]))
+                          found.append((runtime, d["name"], d["udid"]))
               found.sort()
-              runtime, name, kind = found[-1]
-              print(prefix, runtime, kind, name)
+              runtime, name, udid = found[-1]
+              print(prefix, udid, name)
           PY
-            while read -r device runtime kind name; do
-              for language in en fr; do
-                udid=$(xcrun simctl create "$name $language" "$kind" "$runtime")
-                echo "$device $language: $name ($udid)"
-                echo "$udid" > "$sims/$device-$language"
-                xcrun simctl boot "$udid"
-              done
+            while read -r device udid name; do
+              echo "$device: $name ($udid)"
+              echo "$udid" > "$sims/$device"
+              xcrun simctl boot "$udid" || true
             done < "$sims/plan"
-            for file in "$sims"/iP*-??; do xcrun simctl bootstatus "$(cat "$file")" > /dev/null; done
+            for device in iPhone iPad; do xcrun simctl bootstatus "$(cat "$sims/$device")" > /dev/null; done
           ) > "$sims/boot.log" 2>&1 &
           boot=$!
-          xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave \
-            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
+          status=0
+          swift test --package-path Packages/CaveKit || status=1
           echo "Waiting for the simulators"
-          wait "$boot" || { cat "$sims/boot.log"; exit 1; }
+          wait "$boot" || status=1
           cat "$sims/boot.log"
+          exit $status
 
       - name: iPhone and iPad
+        if: ${{ !cancelled() }}
         run: |
           set -o pipefail
           sims="$RUNNER_TEMP/sims"
           xctestrun=$(find "$RUNNER_TEMP/dd/Build/Products" -name "*.xctestrun" | head -n 1)
           tour=EncaveUITests/ScreenTourTests
-          # One simulator per device and language. The large text checks only run on
+          # The iPhone and the iPad side by side. The large text checks only run on
           # iPhone (they stop at once on the iPad's regular width).
           run() {
-            label=$1; shift
+            device=$1; shift
             # A one-off simulator timeout (a screenshot request) is retried once.
-            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$label")" \
-              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$label.xcresult" "$@" 2>&1 \
-              | xcbeautify --renderer github-actions > "$RUNNER_TEMP/$label.log"
+            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$device")" \
+              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$device.xcresult" "$@" 2>&1 \
+              | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$device.log" | sed -u "s/^/[$device] /"
           }
-          run iPhone-en -only-testing:$tour/testTourInEnglish & pids="$!"
-          run iPhone-fr -only-testing:$tour/testTourInFrench -only-testing:$tour/testLargeText \
-            -only-testing:$tour/testLargestText & pids="$pids $!"
-          run iPad-en -only-testing:$tour/testTourInEnglish & pids="$pids $!"
-          run iPad-fr -only-testing:$tour/testTourInFrench & pids="$pids $!"
+          run iPhone & iphone=$!
+          run iPad -skip-testing:$tour/testLargeText -skip-testing:$tour/testLargestText & ipad=$!
           status=0
-          for pid in $pids; do wait "$pid" || status=1; done
-          for label in iPhone-en iPhone-fr iPad-en iPad-fr; do
-            echo "::group::$label"; cat "$RUNNER_TEMP/$label.log"; echo "::endgroup::"
-            # Failures and the test times, outside the folded log.
-            grep -E "✔|✖|error|Executed" "$RUNNER_TEMP/$label.log" | tail -n 20 || true
-          done
+          wait "$iphone" || status=1
+          wait "$ipad" || status=1
+          # The failures again, as annotations.
+          grep -h "^::" "$RUNNER_TEMP/iPhone.log" "$RUNNER_TEMP/iPad.log" || true
           exit $status
 
-      - name: Model tests (macOS)
+      - name: Slowest steps of the tour
         if: ${{ !cancelled() }}
-        run: swift test --package-path Packages/CaveKit
+        continue-on-error: true
+        run: |
+          for result in "$RUNNER_TEMP"/iP*.xcresult; do
+            [ -e "$result" ] || continue
+            for test in testTourInEnglish testTourInFrench; do
+              echo "== $(basename "$result" .xcresult) $test"
+              xcrun xcresulttool get test-results activities --path "$result" \
+                --test-id "ScreenTourTests/$test()" > "$RUNNER_TEMP/activities.json" || continue
+              python3 - "$RUNNER_TEMP/activities.json" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          rows = []
+          def walk(items, end, depth):
+              for i, item in enumerate(items):
+                  start = item.get("startTime")
+                  nxt = items[i + 1].get("startTime") if i + 1 < len(items) else end
+                  if start is not None and nxt is not None:
+                      rows.append((nxt - start, depth, item.get("title", "")[:150]))
+                  walk(item.get("childActivities", []), nxt, depth + 1)
+          for run in data.get("testRuns", []):
+              acts = run.get("activities", [])
+              walk(acts, None, 0)
+          top = [r for r in rows if r[1] == 0]
+          print("total top-level:", round(sum(r[0] for r in top)), "s in", len(top), "steps")
+          for d, depth, title in sorted(rows, reverse=True)[:40]:
+              print(f"{d:7.1f}s  {'  ' * depth}{title}")
+          PY
+            done
+          done
 
       - name: Mac
         if: ${{ !cancelled() }}
