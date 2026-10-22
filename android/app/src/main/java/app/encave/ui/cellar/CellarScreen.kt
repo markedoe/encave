@@ -122,6 +122,9 @@ import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.EmptyState
+import androidx.compose.ui.res.pluralStringResource
+import app.encave.ui.components.Formats
+import androidx.compose.ui.platform.LocalDensity
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.UuidSetSaver
 import app.encave.ui.components.WineColorDot
@@ -968,20 +971,23 @@ private fun CellarSummary(
     val stats = remember(cellar, year) { cellar.statistics(year) }
     val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null &&
         filter.reservation == null && filter.grape == null
-    Row(
-        Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.s),
-    ) {
+    // Side by side, or one above the other from 150 % font scale so captions are not clipped.
+    val stacked = LocalDensity.current.fontScale >= 1.5f
+    val bottles: @Composable (Modifier) -> Unit = { modifier ->
         StatTile(
-            value = stats.bottleCount, caption = stringResource(R.string.cellar_stat_bottles), icon = Icons.Outlined.WineBar,
+            value = stats.bottleCount, caption = pluralStringResource(R.plurals.stat_bottles, stats.bottleCount), icon = Icons.Outlined.WineBar,
             hint = stringResource(R.string.cellar_stat_bottles_hint), opens = true, onClick = onBottles,
-            modifier = Modifier.weight(1f).testTag("cellar.stat.bottles"),
+            modifier = modifier.testTag("cellar.stat.bottles"), stacked = stacked,
         )
+    }
+    val wines: @Composable (Modifier) -> Unit = { modifier ->
         StatTile(
-            value = stats.wineCount, caption = stringResource(R.string.cellar_stat_wines), icon = Icons.AutoMirrored.Outlined.List,
+            value = stats.wineCount, caption = pluralStringResource(R.plurals.stat_wines, stats.wineCount), icon = Icons.AutoMirrored.Outlined.List,
             hint = stringResource(R.string.cellar_stat_wines_hint), onClick = onWines,
-            modifier = Modifier.weight(1f).testTag("cellar.stat.wines"),
+            modifier = modifier.testTag("cellar.stat.wines"), stacked = stacked,
         )
+    }
+    val soon: @Composable (Modifier) -> Unit = { modifier ->
         StatTile(
             value = stats.byMaturity[Maturity.DrinkSoon] ?: 0, caption = stringResource(R.string.cellar_stat_soon),
             icon = Maturity.DrinkSoon.icon, hint = stringResource(R.string.cellar_stat_soon_hint), isSelected = soonOnly,
@@ -991,8 +997,23 @@ private fun CellarSummary(
                     else app.encave.core.CellarFilter(query = filter.query, maturities = setOf(Maturity.DrinkSoon)),
                 )
             },
-            modifier = Modifier.weight(1f).testTag("cellar.stat.soon"),
+            modifier = modifier.testTag("cellar.stat.soon"), stacked = stacked,
         )
+    }
+    if (stacked) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
+            verticalArrangement = Arrangement.spacedBy(Dimens.s),
+        ) {
+            listOf(bottles, wines, soon).forEach { it(Modifier.fillMaxWidth()) }
+        }
+    } else {
+        Row(
+            Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+        ) {
+            listOf(bottles, wines, soon).forEach { it(Modifier.weight(1f).fillMaxHeight()) }
+        }
     }
 }
 
@@ -1007,13 +1028,15 @@ private fun StatTile(
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
     opens: Boolean = false,
+    /** One tile a row, at large font scales: the caption takes the lines it needs. */
+    stacked: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(Dimens.radiusCard)
     Surface(
         onClick = onClick,
-        modifier = modifier.fillMaxHeight().clearAndSetSemantics {
-            contentDescription = "$value $caption. $hint"
+        modifier = modifier.clearAndSetSemantics {
+            contentDescription = "${Formats.integer(value)} $caption. $hint"
             selected = isSelected
             role = Role.Button
         },
@@ -1025,11 +1048,14 @@ private fun StatTile(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Icon(icon, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(18.dp))
                 Text(
-                    value.toString(),
+                    Formats.integer(value),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
                     maxLines = 1,
                 )
-                Text(caption, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 2)
+                Text(
+                    caption, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
+                    maxLines = if (stacked) Int.MAX_VALUE else 2,
+                )
             }
             if (opens) {
                 Icon(

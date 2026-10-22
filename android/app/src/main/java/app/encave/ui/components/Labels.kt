@@ -37,6 +37,7 @@ import app.encave.core.SampleData
 import app.encave.core.Wine
 import app.encave.core.WineColor
 import app.encave.ui.UiText
+import app.encave.ui.theme.LocalMaturityPalette
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.time.Instant
@@ -76,15 +77,25 @@ val Maturity.icon: ImageVector
         Maturity.Unknown -> Icons.AutoMirrored.Outlined.HelpOutline
     }
 
-/** Theme roles for maturity; always shown with an icon and a label. */
+/** Maturity token colors, for the symbol only: the words next to it stay in the text color. */
 val Maturity.tint: Color
     @Composable @ReadOnlyComposable
     get() = when (this) {
-        Maturity.DrinkSoon -> MaterialTheme.colorScheme.tertiary
-        Maturity.Ready -> MaterialTheme.colorScheme.primary
-        Maturity.PastPeak -> MaterialTheme.colorScheme.error
-        Maturity.Young -> MaterialTheme.colorScheme.secondary
+        Maturity.DrinkSoon -> LocalMaturityPalette.current.drinkSoon
+        Maturity.Ready -> LocalMaturityPalette.current.ready
+        Maturity.PastPeak -> LocalMaturityPalette.current.pastPeak
+        Maturity.Young -> LocalMaturityPalette.current.keep
         Maturity.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+/** "Drink soon", "Ready", "Past peak", "Keep": the short words of a list row. */
+val Maturity.shortLabelRes: Int
+    get() = when (this) {
+        Maturity.DrinkSoon -> R.string.maturity_short_drink_soon
+        Maturity.Ready -> R.string.maturity_short_ready
+        Maturity.PastPeak -> R.string.maturity_short_past_peak
+        Maturity.Young -> R.string.maturity_short_keep
+        Maturity.Unknown -> R.string.maturity_unknown
     }
 
 val CellarSort.labelRes: Int
@@ -219,6 +230,12 @@ fun sizeLabel(sizeML: Int): String {
 @Composable
 fun bottleCount(count: Int): String = pluralStringResource(R.plurals.bottle_count, count, count)
 
+/** "Red · Domaine X · Pauillac": the style in words, then producer and appellation or region, as on Apple. */
+@Composable
+fun Wine.styleLine(): String =
+    listOfNotNull(color?.let { stringResource(it.labelRes) }, producer, appellation ?: region)
+        .filter { it.isNotBlank() }.joinToString(" · ")
+
 /** "producer · region · country", skipping empty parts. */
 fun Wine.origin(): String = listOfNotNull(producer, region ?: country).filter { it.isNotBlank() }.joinToString(" · ")
 
@@ -292,6 +309,9 @@ object Formats {
         runCatching { if (code != null) format.currency = Currency.getInstance(code) }
         return format.format(amount)
     }
+
+    /** "1,234" or "1 234": a count with the locale's grouping. */
+    fun integer(value: Int): String = NumberFormat.getIntegerInstance(locale()).format(value)
 
     fun decimal(value: Double, digits: Int = 1): String =
         NumberFormat.getNumberInstance(locale()).apply {

@@ -388,8 +388,6 @@ FR = {
     '**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.': '**Exporter un tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement.',
     'Your year in wine': 'Votre année en vin',
     'Year': 'Année',
-    'bottles opened': 'bouteilles ouvertes',
-    'different wines': 'vins différents',
     'Most opened region: %@': 'Région la plus ouverte : %@',
     'Favorite occasion: %@': 'Occasion préférée : %@',
     'Busiest month: %@': 'Mois le plus actif : %@',
@@ -819,24 +817,21 @@ FR = {
     "Your data": "Vos données",
     "Zoom In": "Agrandir",
     "Zoom Out": "Réduire",
-    "%@ and %lld more": "%1$@ et %2$lld autres",
+    "%@ and %@": "%1$@ et %2$@",
+    "Rating": "Note",
+    "No rating": "Sans note",
     "%@, %@": "%1$@, %2$@",
     "%@, empty": "%@, vide",
     "%lld of %lld": "%1$lld sur %2$lld",
     "%lld of %lld chosen": "%1$lld sur %2$lld choisis",
     "%lld of %lld positions used": "%1$lld sur %2$lld emplacements occupés",
     "average rating": "note moyenne",
-    "bottles": "bouteilles",
-    "bottles in the cellar": "bouteilles en cave",
-    "bottles opened": "bouteilles ouvertes",
     "classic style for this dish": "style classique pour ce plat",
-    "different wines": "vins différents",
     "purchase value": "valeur d’achat",
     "ready to drink": "prêt à boire",
     "region known for it": "région réputée pour ça",
     "suited grape": "cépage adapté",
     "to drink soon": "à boire bientôt",
-    "wines": "vins",
     # AI label recognition, photos and serving
     "AI label recognition": "Reconnaissance des étiquettes par IA",
     "API key": "Clé d’API",
@@ -1196,7 +1191,6 @@ FR = {
     "From my cellar": "De ma cave",
     "Tasted elsewhere": "Goûté ailleurs",
     "Tasted elsewhere · %@": "Goûté ailleurs · %@",
-    "tasted elsewhere": "goûtés ailleurs",
     "Add a Tasting": "Noter une dégustation",
     "A Bottle from My Cellar": "Une bouteille de ma cave",
     "It leaves your cellar.": "Elle sort de votre cave.",
@@ -1329,6 +1323,7 @@ PLURALS = {
     "%lld new wines": (("%lld new wine", "%lld new wines"), ("%lld nouveau vin", "%lld nouveaux vins")),
     "%lld wines tasted elsewhere": (("%lld wine tasted elsewhere", "%lld wines tasted elsewhere"), ("%lld vin goûté ailleurs", "%lld vins goûtés ailleurs")),
     "%lld wines": (("%lld wine", "%lld wines"), ("%lld vin", "%lld vins")),
+    "%lld more": (("%lld more", "%lld more"), ("%lld autre", "%lld autres")),
     "Only %lld free positions: the other bottles will have no position.": (
         ("Only %lld free position: the other bottles will have no position.",
          "Only %lld free positions: the other bottles will have no position."),
@@ -1339,6 +1334,18 @@ PLURALS = {
          "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."),
         ("Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.",
          "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.")),
+}
+
+# Captions shown under a figure ("12" above "bottles"): plural forms without the number,
+# which the figure already shows. The key holds the count so the right form is picked.
+CAPTIONS = {
+    "bottles [count %lld]": (("bottle", "bottles"), ("bouteille", "bouteilles")),
+    "wines [count %lld]": (("wine", "wines"), ("vin", "vins")),
+    "bottles in the cellar [count %lld]": (("bottle in the cellar", "bottles in the cellar"),
+                                           ("bouteille en cave", "bouteilles en cave")),
+    "different wines [count %lld]": (("different wine", "different wines"), ("vin différent", "vins différents")),
+    "bottles opened [count %lld]": (("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
+    "tasted elsewhere [count %lld]": (("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
 }
 
 INFO_PLIST = {
@@ -1426,7 +1433,7 @@ def extract():
 def catalogs():
     """The catalog files, as written: {path: text}."""
     strings = {key: {"localizations": {"fr": unit(french(value))}} for key, value in FR.items() if key.strip() == key}
-    for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
+    for key, ((en_one, en_other), (fr_one, fr_other)) in (PLURALS | CAPTIONS).items():
         strings[key] = {"localizations": {
             "en": {"variations": {"plural": {"one": unit(en_one), "other": unit(en_other)}}},
             "fr": {"variations": {"plural": {"one": unit(french(fr_one)), "other": unit(french(fr_other))}}},
@@ -1461,7 +1468,7 @@ def placeholders(text):
 
 
 def check():
-    known = set(FR) | set(PLURALS)
+    known = set(FR) | set(PLURALS) | set(CAPTIONS)
     problems = []
     for key in sorted(k for k in extract() if to_key(k) not in known and k not in known):
         problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
@@ -1473,6 +1480,9 @@ def check():
         for form in forms[0] + forms[1]:
             if placeholders(form) != placeholders(key):
                 problems.append(f"placeholders differ in a plural form: {key!r} -> {form!r}")
+    for key, forms in CAPTIONS.items():
+        if placeholders(key) != ["%lld"] or any(placeholders(form) for form in forms[0] + forms[1]):
+            problems.append(f"a caption key holds one count and its forms none: {key!r}")
     # Keys with spaces around them are dropped from the catalog: the text would stay in English.
     for key in FR:
         if key.strip() != key:

@@ -5,6 +5,8 @@ import SwiftUI
 /// The cellar in figures and charts.
 struct InsightsView: View {
     @Environment(CellarModel.self) private var model
+    /// One country bar, taller with larger text so its label is not clipped.
+    @ScaledMetric(relativeTo: .body) private var countryRowHeight: CGFloat = 34
 
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
@@ -12,9 +14,9 @@ struct InsightsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 YearInWineCard()
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
-                    StatTile(value: "\(stats.bottleCount)", caption: "bottles in the cellar", systemImage: "wineglass")
-                    StatTile(value: "\(stats.wineCount)", caption: "different wines", systemImage: "list.bullet")
-                    StatTile(value: "\(stats.consumedCount)", caption: "bottles opened", systemImage: "book.closed")
+                    StatTile(value: stats.bottleCount.formatted(), caption: "bottles in the cellar [count \(stats.bottleCount)]", systemImage: "wineglass")
+                    StatTile(value: stats.wineCount.formatted(), caption: "different wines [count \(stats.wineCount)]", systemImage: "list.bullet")
+                    StatTile(value: stats.consumedCount.formatted(), caption: "bottles opened [count \(stats.consumedCount)]", systemImage: "book.closed")
                     StatTile(value: stats.averageRating.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "–",
                              caption: "average rating", systemImage: "star")
                     ForEach(stats.valueByCurrency.keys.sorted(), id: \.self) { currency in
@@ -35,7 +37,9 @@ struct InsightsView: View {
                         Chart(stats.byColor) { slice in
                             SectorMark(angle: .value("Bottles", slice.count), innerRadius: .ratio(0.6), angularInset: 1.5)
                                 .cornerRadius(4)
-                                .foregroundStyle(slice.color?.tint ?? .gray)
+                                .foregroundStyle(slice.color?.tint ?? Color.secondary.opacity(0.3))
+                                .accessibilityLabel(slice.color.map { Text($0.title) } ?? Text("Unknown"))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
                         }
                         .frame(height: 200)
                         FlowLayout(spacing: 12) {
@@ -43,9 +47,11 @@ struct InsightsView: View {
                                 HStack(spacing: 5) {
                                     BottleEnd(color: slice.color, size: 12)
                                     if let color = slice.color { Text(color.title) } else { Text("Unknown") }
-                                    Text(verbatim: "\(slice.count)").foregroundStyle(.secondary).monospacedDigit()
+                                    Text(verbatim: slice.count.formatted()).foregroundStyle(.secondary).monospacedDigit()
                                 }
                                 .font(.footnote)
+                                // The chart above already reads each style to VoiceOver.
+                                .accessibilityHidden(true)
                             }
                         }
                     }
@@ -58,11 +64,13 @@ struct InsightsView: View {
                                 .foregroundStyle(Color.accentColor.gradient)
                                 .cornerRadius(4)
                                 .annotation(position: .trailing) {
-                                    Text(verbatim: "\(slice.count)").font(.caption).foregroundStyle(.secondary)
+                                    Text(verbatim: slice.count.formatted()).font(.caption).foregroundStyle(.secondary)
                                 }
+                                .accessibilityLabel(Text(verbatim: slice.label))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
                         }
                         .chartXAxis(.hidden)
-                        .frame(height: CGFloat(min(8, stats.byCountry.count)) * 34 + 10)
+                        .frame(height: CGFloat(min(8, stats.byCountry.count)) * countryRowHeight + 10)
                     }
                 }
 
@@ -72,6 +80,8 @@ struct InsightsView: View {
                             BarMark(x: .value("Decade", Self.decadeName(slice.label)), y: .value("Bottles", slice.count))
                                 .foregroundStyle(Color.accentColor.gradient)
                                 .cornerRadius(4)
+                                .accessibilityLabel(Text(verbatim: Self.decadeName(slice.label)))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
                         }
                         .frame(height: 180)
                     }
@@ -82,6 +92,8 @@ struct InsightsView: View {
                         BarMark(x: .value("Month", month.month, unit: .month), y: .value("Bottles", month.count))
                             .foregroundStyle(Color.accentColor.gradient)
                             .cornerRadius(3)
+                            .accessibilityLabel(Text(month.month, format: .dateTime.month(.wide).year()))
+                            .accessibilityValue(Text("\(month.count) bottles"))
                     }
                     .chartXAxis {
                         AxisMarks(values: .stride(by: .month, count: 2)) { _ in
@@ -166,9 +178,12 @@ private struct DrinkDownCard: View {
                 }
                 .accessibilityElement(children: .combine)
                 if plan.pastPeak > 0 {
-                    Label("Past their peak: \(plan.pastPeak)", systemImage: Maturity.pastPeak.systemImage)
-                        .font(.subheadline)
-                        .foregroundStyle(Maturity.pastPeak.tint)
+                    Label {
+                        Text("Past their peak: \(plan.pastPeak)")
+                    } icon: {
+                        Image(systemName: Maturity.pastPeak.systemImage).foregroundStyle(Maturity.pastPeak.tint)
+                    }
+                    .font(.subheadline)
                 }
                 if plan.years.count > 1 || plan.years.first?.leaving ?? 0 > 0 {
                     Text("Windows ending each year")
@@ -177,6 +192,8 @@ private struct DrinkDownCard: View {
                         BarMark(x: .value("Year", String(item.year)), y: .value("Bottles", item.leaving))
                             .foregroundStyle(Color.accentColor.gradient)
                             .cornerRadius(3)
+                            .accessibilityLabel(Text(verbatim: String(item.year)))
+                            .accessibilityValue(Text("\(item.leaving) bottles"))
                     }
                     .frame(height: 160)
                     .accessibilityIdentifier("insights.drinkdown")
@@ -288,10 +305,10 @@ private struct YearInWineFacts: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 18) {
-                figure("\(recap.bottlesOpened)", caption: "bottles opened")
-                figure("\(recap.differentWines)", caption: "different wines")
+                figure(recap.bottlesOpened, caption: "bottles opened [count \(recap.bottlesOpened)]")
+                figure(recap.differentWines, caption: "different wines [count \(recap.differentWines)]")
                 if recap.discoveries > 0 {
-                    figure("\(recap.discoveries)", caption: "tasted elsewhere")
+                    figure(recap.discoveries, caption: "tasted elsewhere [count \(recap.discoveries)]")
                 }
             }
             VStack(alignment: .leading, spacing: 8) {
@@ -317,9 +334,9 @@ private struct YearInWineFacts: View {
         }
     }
 
-    private func figure(_ value: String, caption: LocalizedStringKey) -> some View {
+    private func figure(_ value: Int, caption: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: value).font(.title.weight(.semibold).monospacedDigit())
+            Text(verbatim: value.formatted()).font(.title.weight(.semibold).monospacedDigit())
             Text(caption).font(.footnote).foregroundStyle(.secondary)
         }
     }

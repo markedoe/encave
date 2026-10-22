@@ -64,6 +64,10 @@
     <string name="maturity_past_peak">Après l’apogée</string>
     <string name="maturity_young">À garder</string>
     <string name="maturity_unknown">Pas de fenêtre de dégustation</string>
+    <string name="maturity_short_drink_soon">À boire bientôt</string>
+    <string name="maturity_short_ready">Prêt</string>
+    <string name="maturity_short_past_peak">Après l’apogée</string>
+    <string name="maturity_short_keep">À garder</string>
     <string name="detail_window">Fenêtre de dégustation</string>
     <string name="detail_window_range">%1$d – %2$d</string>
     <string name="field_grape">Cépage</string>
@@ -163,9 +167,10 @@
     <string name="drink_title">Ouvrir une bouteille</string>
     <string name="drink_which">Quelle bouteille ?</string>
     <string name="drink_rating">Note</string>
-    <string name="rating_star">%1$d sur 5</string>
     <string name="rating_value">Noté %1$d sur 5</string>
     <string name="rating_none">Non noté</string>
+    <string name="rating_label">Note</string>
+    <string name="rating_input_none">Sans note</string>
     <string name="drink_note">Comment était-il ?</string>
     <string name="drink_full_note">Ajouter une note de dégustation complète</string>
     <string name="occasion_dinner">Dîner</string>
@@ -249,16 +254,11 @@
     <string name="journal_empty_body">Ouvrez une bouteille de votre cave ou notez un vin goûté ailleurs.</string>
     <string name="tasting_title">Ma dégustation</string>
     <string name="tasting_not_found">Dégustation introuvable</string>
-    <string name="insights_bottles">Bouteilles</string>
-    <string name="cellar_stat_bottles">bouteilles</string>
-    <string name="cellar_stat_wines">vins</string>
     <string name="cellar_stat_soon">à boire bientôt</string>
     <string name="cellar_stat_bottles_hint">Affiche votre cave en chiffres.</string>
     <string name="cellar_stat_wines_hint">Affiche tous vos vins.</string>
     <string name="cellar_stat_soon_hint">N’affiche que les vins à boire bientôt.</string>
-    <string name="insights_wines">Vins</string>
-    <string name="insights_opened">Ouvertes</string>
-    <string name="insights_avg_rating">Note moyenne</string>
+    <string name="insights_avg_rating">note moyenne</string>
     <string name="insights_rating_value">%1$s / 5</string>
     <string name="insights_value">Valeur de la cave</string>
     <string name="insights_value_none">Aucun prix d’achat enregistré.</string>
@@ -271,7 +271,6 @@
     <string name="insights_grapes">Cépages principaux</string>
     <string name="insights_empty">Ajoutez des bouteilles pour voir les statistiques.</string>
     <string name="insights_nv">NM</string>
-    <string name="chart_item">%1$s : %2$d</string>
     <string name="settings_cellar">Cave</string>
     <string name="settings_currency">Devise par défaut</string>
     <string name="settings_appearance">Apparence</string>
@@ -914,9 +913,6 @@
     <string name="insights_without_window">Bouteilles sans fenêtre de dégustation non comptées : %1$d</string>
     <string name="insights_year_title">Votre année en vin</string>
     <string name="insights_year_choose">Choisir l’année</string>
-    <string name="insights_year_opened">bouteilles ouvertes</string>
-    <string name="insights_year_wines">vins différents</string>
-    <string name="insights_year_elsewhere">goûtés ailleurs</string>
     <string name="insights_year_region">Région la plus ouverte : %1$s</string>
     <string name="insights_year_style">Style le plus ouvert : %1$s</string>
     <string name="insights_year_occasion">Occasion préférée : %1$s</string>
@@ -1268,5 +1264,40 @@
         <item quantity="one">%d étoile</item>
         <item quantity="many">%d étoiles</item>
         <item quantity="other">%d étoiles</item>
+    </plurals>
+    <plurals name="stat_bottles" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bouteille</item>
+        <item quantity="many">bouteilles</item>
+        <item quantity="other">bouteilles</item>
+    </plurals>
+    <plurals name="stat_wines" tools:ignore="ImpliedQuantity">
+        <item quantity="one">vin</item>
+        <item quantity="many">vins</item>
+        <item quantity="other">vins</item>
+    </plurals>
+    <plurals name="stat_bottles_in_cellar" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bouteille en cave</item>
+        <item quantity="many">bouteilles en cave</item>
+        <item quantity="other">bouteilles en cave</item>
+    </plurals>
+    <plurals name="stat_different_wines" tools:ignore="ImpliedQuantity">
+        <item quantity="one">vin différent</item>
+        <item quantity="many">vins différents</item>
+        <item quantity="other">vins différents</item>
+    </plurals>
+    <plurals name="stat_bottles_opened" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bouteille ouverte</item>
+        <item quantity="many">bouteilles ouvertes</item>
+        <item quantity="other">bouteilles ouvertes</item>
+    </plurals>
+    <plurals name="stat_tasted_elsewhere" tools:ignore="ImpliedQuantity">
+        <item quantity="one">goûté ailleurs</item>
+        <item quantity="many">goûtés ailleurs</item>
+        <item quantity="other">goûtés ailleurs</item>
+    </plurals>
+    <plurals name="chart_item_bottles">
+        <item quantity="one">%1$s : %2$d bouteille</item>
+        <item quantity="many">%1$s : %2$d bouteilles</item>
+        <item quantity="other">%1$s : %2$d bouteilles</item>
     </plurals>
 </resources>

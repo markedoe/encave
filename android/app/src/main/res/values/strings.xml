@@ -65,6 +65,10 @@
     <string name="maturity_past_peak">Past its peak</string>
     <string name="maturity_young">Keep for later</string>
     <string name="maturity_unknown">No drinking window</string>
+    <string name="maturity_short_drink_soon">Drink soon</string>
+    <string name="maturity_short_ready">Ready</string>
+    <string name="maturity_short_past_peak">Past peak</string>
+    <string name="maturity_short_keep">Keep</string>
     <string name="detail_window">Drinking window</string>
     <string name="detail_window_range">%1$d – %2$d</string>
     <string name="field_grape">Grape</string>
@@ -164,9 +168,10 @@
     <string name="drink_title">Open a bottle</string>
     <string name="drink_which">Which bottle?</string>
     <string name="drink_rating">Rating</string>
-    <string name="rating_star">%1$d out of 5</string>
     <string name="rating_value">Rated %1$d out of 5</string>
     <string name="rating_none">Not rated</string>
+    <string name="rating_label">Rating</string>
+    <string name="rating_input_none">No rating</string>
     <string name="drink_note">How was it?</string>
     <string name="drink_full_note">Add a full tasting note</string>
     <string name="occasion_dinner">Dinner</string>
@@ -250,16 +255,11 @@
     <string name="journal_empty_body">Open a bottle from your cellar or note a wine tasted elsewhere.</string>
     <string name="tasting_title">My tasting</string>
     <string name="tasting_not_found">Tasting not found</string>
-    <string name="insights_bottles">Bottles</string>
-    <string name="cellar_stat_bottles">bottles</string>
-    <string name="cellar_stat_wines">wines</string>
     <string name="cellar_stat_soon">to drink soon</string>
     <string name="cellar_stat_bottles_hint">Shows your cellar in figures.</string>
     <string name="cellar_stat_wines_hint">Shows all your wines.</string>
     <string name="cellar_stat_soon_hint">Shows only the wines to drink soon.</string>
-    <string name="insights_wines">Wines</string>
-    <string name="insights_opened">Opened</string>
-    <string name="insights_avg_rating">Average rating</string>
+    <string name="insights_avg_rating">average rating</string>
     <string name="insights_rating_value">%1$s / 5</string>
     <string name="insights_value">Cellar value</string>
     <string name="insights_value_none">No purchase prices recorded yet.</string>
@@ -272,7 +272,6 @@
     <string name="insights_grapes">Top grapes</string>
     <string name="insights_empty">Add bottles to see insights.</string>
     <string name="insights_nv">NV</string>
-    <string name="chart_item">%1$s: %2$d</string>
     <string name="settings_cellar">Cellar</string>
     <string name="settings_currency">Default currency</string>
     <string name="settings_appearance">Appearance</string>
@@ -915,9 +914,6 @@
     <string name="insights_without_window">Bottles without a drinking window are left out: %1$d</string>
     <string name="insights_year_title">Your year in wine</string>
     <string name="insights_year_choose">Choose the year</string>
-    <string name="insights_year_opened">bottles opened</string>
-    <string name="insights_year_wines">different wines</string>
-    <string name="insights_year_elsewhere">tasted elsewhere</string>
     <string name="insights_year_region">Most opened region: %1$s</string>
     <string name="insights_year_style">Most opened style: %1$s</string>
     <string name="insights_year_occasion">Favorite occasion: %1$s</string>
@@ -1249,5 +1245,33 @@
     <plurals name="journal_rating_stars">
         <item quantity="one">%d star</item>
         <item quantity="other">%d stars</item>
+    </plurals>
+    <plurals name="stat_bottles" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bottle</item>
+        <item quantity="other">bottles</item>
+    </plurals>
+    <plurals name="stat_wines" tools:ignore="ImpliedQuantity">
+        <item quantity="one">wine</item>
+        <item quantity="other">wines</item>
+    </plurals>
+    <plurals name="stat_bottles_in_cellar" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bottle in the cellar</item>
+        <item quantity="other">bottles in the cellar</item>
+    </plurals>
+    <plurals name="stat_different_wines" tools:ignore="ImpliedQuantity">
+        <item quantity="one">different wine</item>
+        <item quantity="other">different wines</item>
+    </plurals>
+    <plurals name="stat_bottles_opened" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bottle opened</item>
+        <item quantity="other">bottles opened</item>
+    </plurals>
+    <plurals name="stat_tasted_elsewhere" tools:ignore="ImpliedQuantity">
+        <item quantity="one">tasted elsewhere</item>
+        <item quantity="other">tasted elsewhere</item>
+    </plurals>
+    <plurals name="chart_item_bottles">
+        <item quantity="one">%1$s: %2$d bottle</item>
+        <item quantity="other">%1$s: %2$d bottles</item>
     </plurals>
 </resources>
