@@ -35,6 +35,17 @@ final class SyncService {
     /// for example before the first unlock). Sync stays off until the next launch, so
     /// the key is never replaced by mistake.
     private(set) var identityUnavailable = false
+    /// Local Network access is off for Encave (the system asks once; the user can turn it
+    /// off later): nothing on the network works until it is turned on again.
+    private(set) var localNetworkDenied = false
+    /// The first failure since the last success, on the network and away from home: sync
+    /// counts as failing (`health`) when it lasts.
+    private(set) var localFailingSince: Date?
+    private(set) var remoteFailingSince: Date?
+    /// Joined with Replace, and the other cellar has not arrived yet: this device's own
+    /// bottles stay here but are never sent (`CellarMerge.onlyStamped`), and are replaced
+    /// once the first sync goes through (docs/SYNC.md §5).
+    private(set) var pendingReplace = UserDefaults.standard.bool(forKey: SyncService.pendingReplaceKey)
 
     /// Away from home: where the encrypted files are (iCloud, a WebDAV folder or a relay), if anywhere.
     private(set) var remoteStorage: RemoteStorage?
@@ -85,10 +96,24 @@ final class SyncService {
     static let maxInboundSessions = 4
     /// The notification of changes being posted, awaited before a background run ends.
     @ObservationIgnored private var announcing: Task<Void, Never>?
+    /// Failed sessions in a row with each device on the network, and the retry waiting
+    /// for each (`SyncRetry`).
+    @ObservationIgnored private var failures: [UUID: Int] = [:]
+    @ObservationIgnored private var retries: [UUID: Task<Void, Never>] = [:]
 
     var isSetUp: Bool { membership != nil }
     /// Other devices of the cellar.
     var otherDevices: [Member] { (membership?.active ?? []).filter { $0.id != identity.id } }
+
+    /// Whether sync needs the user, for the sign on Settings (same rules on Android).
+    var health: SyncHealth {
+        SyncHealth.evaluate(isShared: !otherDevices.isEmpty, removed: wasRemoved,
+                            keyUnavailable: identityUnavailable && membership != nil,
+                            signInNeeded: needsWebDAVSignIn, localNetworkOff: localNetworkDenied,
+                            localFailingSince: localFailingSince, remoteFailingSince: remoteFailingSince,
+                            // A problem that is not a failed round (files refused, changes unreadable).
+                            remoteProblem: remoteProblem != nil && remoteFailedAt == nil)
+    }
 
     /// Changes made on this device are not on the storage away from home yet.
     var hasUnsentChanges: Bool {
@@ -176,6 +201,9 @@ final class SyncService {
         browser?.cancel(); browser = nil
         nearby = []
         endpoints = [:]
+        retries.values.forEach { $0.cancel() }
+        retries = [:]
+        failures = [:]
     }
 
     /// Syncs now with every device of the cellar on the network.
@@ -187,6 +215,26 @@ final class SyncService {
     func syncEverywhereNow() {
         syncNow()
         if remoteStorage != nil { Task { await remoteRound() } }
+    }
+
+    /// Sync Now from where the user is (pulling down the Cellar, Cellar › Sync Now): with
+    /// the devices on the network and away from home, waited for 15 seconds at most (the
+    /// sessions go on afterwards if they need longer).
+    func syncEverywhere() async {
+        let sessions = endpoints.compactMap { sync(with: $0.key, at: $0.value) }
+        let remote: Task<Void, Never>? = remoteStorage == nil ? nil : Task { await remoteRound() }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let once = Once()
+            Task {
+                for session in sessions { await session.value }
+                await remote?.value
+                once.run { continuation.resume() }
+            }
+            Task {
+                try? await Task.sleep(for: .seconds(15))
+                once.run { continuation.resume() }
+            }
+        }
     }
 
     /// How often to sync away from home, on this device only. On the same Wi-Fi,
@@ -267,9 +315,13 @@ final class SyncService {
         return next
     }
 
-    /// Stops syncing on this device. The cellar stays here as it is. The device
-    /// gets a new ID and key, so it can join a cellar again later.
-    func leave() {
+    /// Stops syncing on this device. The cellar stays here as it is. The other devices
+    /// are told first, for 10 seconds at most (docs/SYNC.md §2). The device then gets a
+    /// new ID and key, so it can join a cellar again later.
+    /// Returns false when other devices shared the cellar and none could be told.
+    @discardableResult
+    func leave() async -> Bool {
+        let told = await tellOthersAboutLeaving()
         forgetCellar()
         problem = nil
         localFailedAt = nil
@@ -282,6 +334,72 @@ final class SyncService {
                 problem = String(localized: "This device’s key could not be read from the Keychain, so sync is paused. Open Encave again once the device is unlocked.")
             }
         }
+        return told
+    }
+
+    /// Removes this device from the cellar's devices, then syncs once with the devices on
+    /// the network and away from home, so they stop listing it. No key rotation: the
+    /// devices that learn of it simply stop syncing with it. Results are not taken in.
+    private func tellOthersAboutLeaving() async -> Bool {
+        guard !isDemo, !wasRemoved, !identityUnavailable, !otherDevices.isEmpty,
+              let before = membership, var state, before.members[identity.id] != nil else { return true }
+        let connections = endpoints.values.map { NetworkTransport(connection: NWConnection(to: $0, using: .tcp)) }
+        // Nothing else runs meanwhile: no listener, browser or remote loop, and a round
+        // already running stores nothing.
+        pause()
+        generation += 1
+        var after = before
+        after.remove(identity.id, clock: &state.clock, by: identity.id)
+        self.state = state
+        membership = after
+        save()
+        guard let snapshot = snapshot() else { return false }
+        let identity = identity
+        let store = remoteStorage?.store(login: webDAVLogin)
+        let key = remoteKey.flatMap { $0.cellarID == after.cellarID ? $0 : nil }
+        let storage = remoteStorage?.string
+        let progress = remoteProgress
+        let pushes = Task { () -> Bool in
+            await withTaskGroup(of: Bool.self) { group in
+                for transport in connections {
+                    group.addTask { await Self.push(snapshot, handshakeWith: before, over: transport, identity: identity) }
+                }
+                if let store, let key {
+                    group.addTask {
+                        (try? await RemoteSync.run(store: store, identity: identity, key: key, local: snapshot,
+                                                   progress: progress, files: Self.files, storage: storage)) != nil
+                    }
+                }
+                var told = false
+                for await done in group { told = told || done }
+                return told
+            }
+        }
+        let deadline = Task {
+            try? await Task.sleep(for: .seconds(10))
+            pushes.cancel()
+        }
+        let told = await pushes.value
+        deadline.cancel()
+        return told
+    }
+
+    /// One session that only sends: the handshake with the devices from before this one
+    /// left (the other device still knows it), the exchange with the list without it.
+    nonisolated private static func push(_ snapshot: SyncSnapshot, handshakeWith membership: Membership,
+                                         over transport: NetworkTransport, identity: DeviceIdentity) async -> Bool {
+        defer { transport.close() }
+        let deadline = transport.closing(after: .seconds(10))
+        defer { deadline.cancel() }
+        do {
+            try await transport.start(timeout: .seconds(5))
+            let (channel, _) = try await SyncHandshake.initiate(over: transport, identity: identity, membership: membership)
+            transport.allowLargeFrames()
+            _ = try await SyncExchange.exchange(over: channel, isInitiator: true, local: snapshot, files: files, remote: nil)
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// Forgets the devices, stamps and remote sync of the cellar; the cellar itself stays.
@@ -293,6 +411,8 @@ final class SyncService {
         lastSync = [:]
         wasRemoved = false
         localFailedAt = nil
+        localFailingSince = nil
+        setPendingReplace(false)
         keep(nil, in: \.lastLocalChange, key: Self.lastLocalChangeKey)
         resetRemote()
         files?.deleteAll()
@@ -303,6 +423,7 @@ final class SyncService {
         useStorage(nil)
         remoteProblem = nil
         remoteFailedAt = nil
+        remoteFailingSince = nil
         keep(nil, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
@@ -339,7 +460,18 @@ final class SyncService {
 
     func snapshot() -> SyncSnapshot? {
         guard let model, let state, let membership else { return nil }
-        return SyncSnapshot(cellar: model.cellar, state: state, membership: membership)
+        return SyncSnapshot(cellar: sharedCellar(model.cellar, state), state: state, membership: membership)
+    }
+
+    /// The cellar as this device shares it: all of it, or only what changed since it
+    /// joined while a Replace waits for the other cellar.
+    private func sharedCellar(_ cellar: Cellar, _ state: SyncState) -> Cellar {
+        pendingReplace ? CellarMerge.onlyStamped(cellar, by: state) : cellar
+    }
+
+    private func setPendingReplace(_ pending: Bool) {
+        pendingReplace = pending
+        UserDefaults.standard.set(pending, forKey: Self.pendingReplaceKey)
     }
 
     /// Takes in the result of a session. The cellar may have changed during it, so the
@@ -348,23 +480,29 @@ final class SyncService {
         // A session that started before this device left or joined another cellar
         // brings nothing into the cellar it has now.
         guard let model, let state, let membership, result.membership.cellarID == membership.cellarID else { return }
-        let merge = CellarMerge.merge(local: model.cellar, state, remote: result.cellar, result.state)
+        // Joined with Replace: the merge starts from what this device shares, so its own
+        // bottles give way to the other cellar now that it has arrived.
+        let before = sharedCellar(model.cellar, state)
+        let merge = CellarMerge.merge(local: before, state, remote: result.cellar, result.state)
         var newState = state
         newState.stamps = merge.stamps
         newState.clock = max(merge.clock, newState.clock)
         self.state = newState
-        let before = model.cellar
         model.applySynced(merge.cellar)
+        if pendingReplace { setPendingReplace(false) }
         let members = membership.merged(with: result.membership)
         self.membership = members
-        if let peer { lastSync[peer] = .now }
-        localFailedAt = nil
+        if let peer {
+            lastSync[peer] = .now
+            localFailedAt = nil
+            localFailingSince = nil
+        }
         if members.members[identity.id] == nil {
             // Learned from an authenticated list of devices: this device was removed.
             wasRemoved = true
             problem = String(localized: "This device was removed from the cellar on another device.")
             pause()
-        } else {
+        } else if !localNetworkDenied {
             problem = nil
         }
         save()
@@ -375,11 +513,16 @@ final class SyncService {
         }
     }
 
-    private func sync(with device: UUID, at endpoint: NWEndpoint) {
-        guard !syncing.contains(device), let membership, !wasRemoved else { return }
+    /// One session with a device on the network, this device starting it. A failure is
+    /// retried a few times (`SyncRetry`).
+    @discardableResult
+    private func sync(with device: UUID, at endpoint: NWEndpoint) -> Task<Void, Never>? {
+        guard !syncing.contains(device), let membership, !wasRemoved else { return nil }
+        retries[device]?.cancel()
+        retries[device] = nil
         syncing.insert(device)
         let identity = identity
-        Task {
+        return Task {
             defer { syncing.remove(device) }
             let transport = NetworkTransport(connection: NWConnection(to: endpoint, using: .tcp))
             defer { transport.close() }
@@ -397,9 +540,29 @@ final class SyncService {
                                                                        files: Self.files, remote: remoteInfo)
                 apply(result, from: peer.id)
                 adoptRemote(remote)
+                failures[device] = nil
             } catch {
                 report(error)
+                retryLater(device, after: error)
             }
+        }
+    }
+
+    /// After a failed session: the same device again in 15 seconds, then 1 minute, then
+    /// 5 minutes, while it stays on the network. Not when the other device refuses this one.
+    private func retryLater(_ device: UUID, after error: Error) {
+        switch error {
+        case SyncError.removedDevice, SyncError.authenticationFailed, SyncError.unsupportedVersion: return
+        default: if localNetworkDenied { return }
+        }
+        let count = (failures[device] ?? 0) + 1
+        failures[device] = count
+        guard let delay = SyncRetry.delay(afterFailures: count) else { return }
+        retries[device] = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled, let self, let endpoint = self.endpoints[device] else { return }
+            self.retries[device] = nil
+            self.sync(with: device, at: endpoint)
         }
     }
 
@@ -436,7 +599,14 @@ final class SyncService {
     }
 
     func report(_ error: Error) {
-        if case SyncError.unknownDevice = error {} else { localFailedAt = .now }
+        if let error = error as? NWError, Self.isLocalNetworkDenied(error) {
+            noteLocalNetworkDenied()
+            return
+        }
+        if case SyncError.unknownDevice = error {} else {
+            localFailedAt = .now
+            if localFailingSince == nil { localFailingSince = .now }
+        }
         switch error {
         case SyncError.removedDevice:
             // Said before any authentication, so anyone on the network could say it:
@@ -452,6 +622,45 @@ final class SyncService {
             problem = String(localized: "Another device runs a different version of Encave. Update both devices.")
         default:
             problem = String(localized: "The connection to the other device was lost. Encave will try again.")
+        }
+    }
+
+    // MARK: Local network access
+
+    /// What to tell when Local Network access is off for Encave.
+    static var localNetworkMessage: String {
+        #if os(macOS)
+        String(localized: "Local Network access is off for Encave, so it can’t find your other devices. Turn it on in System Settings › Privacy & Security › Local Network.")
+        #else
+        String(localized: "Local Network access is off for Encave, so it can’t find your other devices. Turn it on in Settings › Encave.")
+        #endif
+    }
+
+    /// Bonjour refused by the system: the user turned Local Network access off for Encave.
+    nonisolated static func isLocalNetworkDenied(_ error: NWError) -> Bool {
+        if case .dns(let code) = error { return code == -65570 } // kDNSServiceErr_PolicyDenied
+        return false
+    }
+
+    private func noteLocalNetworkDenied() {
+        localNetworkDenied = true
+        localFailedAt = nil
+        problem = Self.localNetworkMessage
+    }
+
+    /// The listener or browser works: access was given (again).
+    private func noteLocalNetworkAllowed() {
+        guard localNetworkDenied else { return }
+        localNetworkDenied = false
+        if problem == Self.localNetworkMessage { problem = nil }
+    }
+
+    /// Listener and browser states: access refused, or working again.
+    private func networkStateChanged(failed: Bool, error: NWError?) {
+        if let error, Self.isLocalNetworkDenied(error) {
+            noteLocalNetworkDenied()
+        } else if !failed, error == nil {
+            noteLocalNetworkAllowed()
         }
     }
 
@@ -475,6 +684,7 @@ final class SyncService {
     static let lastRemoteSyncKey = "sync.lastRemoteSync"
     static let lastLocalChangeKey = "sync.lastLocalChange"
     static let remoteSentKey = "sync.remoteSentThrough"
+    static let pendingReplaceKey = "sync.pendingReplace"
 
     /// Sets one of the dates kept across launches.
     private func keep(_ date: Date?, in property: ReferenceWritableKeyPath<SyncService, Date?>, key: String) {
@@ -508,6 +718,7 @@ final class SyncService {
             storeWebDAVLogin(nil)
             remoteProblem = nil
             remoteFailedAt = nil
+            remoteFailingSince = nil
             keep(nil, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
             return
         }
@@ -564,6 +775,7 @@ final class SyncService {
         storeWebDAVLogin(login)
         remoteProblem = nil
         remoteFailedAt = nil
+        remoteFailingSince = nil
         startRemoteLoop()
         await remoteRound()
     }
@@ -688,7 +900,7 @@ final class SyncService {
                 key = try await rotateIfNeeded(store: store, key: key, local: local, round: round)
             } catch {
                 guard !Task.isCancelled else { return }
-                remoteFailedAt = .now
+                noteRemoteFailure()
                 remoteProblem = String(localized: "The removed device could not be shut out of syncing away from home yet. It will be tried again.")
                 return
             }
@@ -715,14 +927,19 @@ final class SyncService {
             keep(.now, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
             keep(started, in: \.remoteSentThrough, key: Self.remoteSentKey)
             remoteFailedAt = nil
+            remoteFailingSince = nil
             if !result.unreadable.isEmpty {
                 remoteProblem = String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
             } else if let refused = result.refusedFiles {
                 // The cellar synced; some photos or documents stay on this device for now.
                 remoteProblem = refusalMessage(refused)
             } else if remoteStorage == .iCloud, remoteProgress.seen.isEmpty, !otherDevices.isEmpty {
-                // Each Apple Account has its own iCloud: devices on different accounts never meet there.
-                remoteProblem = String(localized: "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.")
+                if otherDevices.contains(where: \.isApple) {
+                    // Each Apple Account has its own iCloud: devices on different accounts never meet there.
+                    remoteProblem = String(localized: "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.")
+                } else {
+                    remoteProblem = String(localized: "Your other devices are Android devices, which can’t use iCloud. To sync with them away from home, choose a WebDAV folder or a relay instead, on every device.")
+                }
             } else {
                 remoteProblem = nil
             }
@@ -730,23 +947,29 @@ final class SyncService {
             // iOS ended the background task early: not a failure, the next round retries.
             return
         } catch RemoteSyncError.unauthorized {
-            remoteFailedAt = .now
+            noteRemoteFailure()
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
             case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
             default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
             }
         } catch let error as RemoteSyncError where error == .fileTooLarge || error == .quotaExceeded {
-            remoteFailedAt = .now
+            noteRemoteFailure()
             remoteProblem = refusalMessage(error)
         } catch {
-            remoteFailedAt = .now
+            noteRemoteFailure()
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "iCloud could not be reached.")
             case .webDAV: remoteProblem = String(localized: "The WebDAV folder could not be reached.")
             default: remoteProblem = String(localized: "The relay could not be reached.")
             }
         }
+    }
+
+    /// A round away from home failed now; `remoteFailingSince` keeps the first failure.
+    private func noteRemoteFailure() {
+        remoteFailedAt = .now
+        if remoteFailingSince == nil { remoteFailingSince = .now }
     }
 
     /// The storage refused a file: too large for it (`fileTooLarge`) or full (`quotaExceeded`).
@@ -796,7 +1019,16 @@ final class SyncService {
                 MainActor.assumeIsolated { self?.respond(to: connection) }
             }
             listener.stateUpdateHandler = { [weak self] state in
-                if case .failed = state { MainActor.assumeIsolated { self?.listener = nil } }
+                MainActor.assumeIsolated {
+                    switch state {
+                    case .failed(let error):
+                        self?.listener = nil
+                        self?.networkStateChanged(failed: true, error: error)
+                    case .waiting(let error): self?.networkStateChanged(failed: false, error: error)
+                    case .ready: self?.networkStateChanged(failed: false, error: nil)
+                    default: break
+                    }
+                }
             }
             listener.start(queue: .main)
             self.listener = listener
@@ -812,6 +1044,18 @@ final class SyncService {
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             MainActor.assumeIsolated { self?.update(results) }
         }
+        browser.stateUpdateHandler = { [weak self] state in
+            MainActor.assumeIsolated {
+                switch state {
+                case .failed(let error):
+                    self?.browser = nil
+                    self?.networkStateChanged(failed: true, error: error)
+                case .waiting(let error): self?.networkStateChanged(failed: false, error: error)
+                case .ready: self?.networkStateChanged(failed: false, error: nil)
+                default: break
+                }
+            }
+        }
         browser.start(queue: .main)
         self.browser = browser
     }
@@ -826,6 +1070,12 @@ final class SyncService {
             found[id] = result.endpoint
         }
         let appeared = Set(found.keys).subtracting(nearby)
+        // Gone from the network: no retry, and a fresh start when it comes back.
+        for id in nearby.subtracting(found.keys) {
+            retries[id]?.cancel()
+            retries[id] = nil
+            failures[id] = nil
+        }
         endpoints = found
         nearby = Set(found.keys)
         // One side starts the session: the device with the smaller ID.
@@ -846,11 +1096,13 @@ final class SyncService {
             resetRemote()
         }
         if replace {
-            model.applySynced(Cellar(settings: model.cellar.settings))
-            state = SyncState(device: identity.id)
+            // The stamps start over; the bottles here stay until the other cellar has
+            // arrived, and are never sent (`pendingReplace`).
+            state = SyncState(device: identity.id, clock: state?.clock ?? 0)
         } else if state == nil {
             state = .starting(with: model.cellar, device: identity.id)
         }
+        setPendingReplace(replace)
         var members = received
         var clock = max(state?.clock ?? 0, received.stamps.values.map(\.counter).max() ?? 0)
         members.add(me, clock: &clock, by: identity.id)
@@ -970,6 +1222,11 @@ final class SyncService {
             for url in [devicesURL, lastSyncURL, remoteURL, syncState.fileURL] { try? FileManager.default.removeItem(at: url) }
         }
     }
+}
+
+extension Member {
+    /// An iPhone, iPad or Mac (which can use iCloud), not an Android device.
+    var isApple: Bool { platform != "android" }
 }
 
 /// How often a device syncs away from home by itself. Kept on the device, not synced.

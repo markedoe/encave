@@ -45,10 +45,13 @@ class PairingSession private constructor(
         data object WaitingForOther : Phase()
         data object Syncing : Phase()
         data class Done(val device: String) : Phase()
+
+        /** Added, but the first sync did not finish: the devices complete it the next time they meet. */
+        data class AddedNotSynced(val device: String) : Phase()
         data class Failed(val reason: Failure) : Phase()
     }
 
-    enum class Failure { Expired, NotFound, Rejected, NotVerified, OtherVersion, ConnectionLost, CannotListen }
+    enum class Failure { Expired, NotFound, Rejected, NotVerified, OtherVersion, ConnectionLost, CannotListen, LocalNetwork }
 
     private val phaseFlow = MutableStateFlow<Phase>(Phase.Waiting)
     val phase: StateFlow<Phase> = phaseFlow.asStateFlow()
@@ -79,7 +82,7 @@ class PairingSession private constructor(
         server = socket
         advertisement = network.advertise(
             "Encave-pair-" + code.rendezvous.take(6), socket.localPort, mapOf("p" to code.rendezvous),
-            onFailure = { phaseFlow.value = Phase.Failed(Failure.CannotListen) },
+            onFailure = { failWaiting(Failure.LocalNetwork) },
         )
         // Key exchange, merging and photos run off the main thread.
         job = scope.launch(Dispatchers.Default) {
@@ -140,6 +143,7 @@ class PairingSession private constructor(
                 if (service.attributes["p"] == rendezvous) scope.launch { connect(service, commitment, replace) }
             },
             onLost = {},
+            onFailure = { failWaiting(Failure.LocalNetwork) },
         )
         timer = scope.launch {
             delay(FIND_TIMEOUT_MS)
@@ -235,12 +239,19 @@ class PairingSession private constructor(
     private fun finishWithoutSync(device: String) {
         stop()
         sync.resume()
-        phaseFlow.value = Phase.Done(device)
+        phaseFlow.value = Phase.AddedNotSynced(device)
+    }
+
+    /** The network could not be used while waiting (local network access off). */
+    private fun failWaiting(reason: Failure) {
+        if (phaseFlow.value != Phase.Waiting) return
+        stop()
+        phaseFlow.value = Phase.Failed(reason)
     }
 
     private fun fail(error: Exception) {
         stop()
-        if (phaseFlow.value is Phase.Done) return
+        if (phaseFlow.value is Phase.Done || phaseFlow.value is Phase.AddedNotSynced) return
         phaseFlow.value = Phase.Failed(
             when ((error as? SyncException)?.error) {
                 SyncError.Rejected -> Failure.Rejected
@@ -272,14 +283,18 @@ class PairingSession private constructor(
             val session = PairingSession(Role.Inviting, PairingCode.random(), sync, scope)
             val host = PairingHost(sync.identity, sync.deviceName, sync.platform)
             session.qrPayload = session.code.qrPayload(host.commitment)
-            if (!sync.isDemo) session.listen(host)
+            if (!sync.isDemo) {
+                if (LocalNetwork.isAllowed(sync.appContext)) session.listen(host) else session.phaseFlow.value = Phase.Failed(Failure.LocalNetwork)
+            }
             return session
         }
 
         /** Looks for the device showing [code] and joins its cellar. */
         fun join(code: PairingCode, commitment: ByteArray?, replace: Boolean, sync: SyncManager, scope: CoroutineScope): PairingSession {
             val session = PairingSession(Role.Joining, code, sync, scope)
-            if (!sync.isDemo) session.find(commitment, replace)
+            if (!sync.isDemo) {
+                if (LocalNetwork.isAllowed(sync.appContext)) session.find(commitment, replace) else session.phaseFlow.value = Phase.Failed(Failure.LocalNetwork)
+            }
             return session
         }
     }

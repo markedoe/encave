@@ -69,6 +69,10 @@ targets:
         NSCameraUsageDescription: Encave uses the camera to read wine labels and barcodes, scan documents and scan the pairing code of your other devices. Images stay on your devices unless you turn on AI label recognition, which sends only the label photo to the service you chose.
         NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.
         NSBonjourServices: [_encave._tcp]
+        # encave://pair?code=…: the pairing QR code, scanned with the system camera, opens Join.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.encave.pair
+            CFBundleURLSchemes: [encave]
         # iCloud container for syncing away from home; empty hides the option (docs/development.md).
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
@@ -129,6 +133,10 @@ targets:
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
         NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.
         NSBonjourServices: [_encave._tcp]
+        # encave://pair?code=…: the pairing QR code, scanned with the system camera, opens Join.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.encave.pair
+            CFBundleURLSchemes: [encave]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           # Home-network names (RFC 8375), which local networking alone does not cover:

@@ -66,7 +66,8 @@ data class AddBottleRoute(
 @Serializable data object RestoreRoute
 @Serializable data object RemoteSyncRoute
 @Serializable data object InviteDeviceRoute
-@Serializable data object JoinDeviceRoute
+/** Join another device's cellar; a pairing link (encave://pair) fills the code in, the user taps Join. */
+@Serializable data class JoinDeviceRoute(val code: String? = null, val commitment: String? = null)
 
 /** The four sections, in navigation order. */
 enum class TopLevel(

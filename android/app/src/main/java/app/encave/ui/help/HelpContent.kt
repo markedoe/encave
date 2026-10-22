@@ -114,6 +114,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),
                     HelpSection(R.string.help_racks_moving, R.string.help_racks_moving_title),
                     HelpSection(R.string.help_racks_drag, R.string.help_racks_drag_title),
+                    HelpSection(R.string.help_racks_editing, R.string.help_racks_editing_title),
                     HelpSection(R.string.help_racks_several, R.string.help_racks_several_title),
                     HelpSection(R.string.help_racks_check, R.string.help_racks_check_title, Icons.Outlined.Checklist),
                     HelpSection(R.string.help_racks_irregular, R.string.help_racks_irregular_title),

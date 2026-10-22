@@ -82,8 +82,11 @@ public struct JSONFileCellarStore: CellarStore {
 
     public func save(_ cellar: Cellar) throws {
         let data = try Self.makeEncoder().encode(cellar)
-        // The file as it was, kept first when it was last saved on an earlier day.
-        versions?.keepCopy(of: fileURL)
+        // The file as it was, kept first when it was last saved on an earlier day. Only the
+        // copy is made here (saves run on the main thread); it is checked in the background.
+        if let versions, let copy = versions.copyIfNewDay(of: fileURL) {
+            DispatchQueue.global(qos: .utility).async { versions.tidy(checking: copy) }
+        }
         #if canImport(Darwin) && !os(macOS)
         try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         #else

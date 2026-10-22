@@ -63,6 +63,11 @@ struct RackEditor: View {
     @State private var shelves: [ShelfDraft] = []
     @State private var loaded = false
     @State private var confirmingDelete = false
+    /// The form as loaded, to ask before discarding changes.
+    @State private var initial: EditorState?
+    @State private var confirmingDiscard = false
+    /// Saving would leave bottles without a place: asked first.
+    @State private var confirmingTakeOut = false
 
     var body: some View {
         NavigationStack {
@@ -139,7 +144,10 @@ struct RackEditor: View {
                     if layered {
                         Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
                     } else {
-                        Text("Holds \(preview.capacity) bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Holds \(preview.capacity) bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.")
+                            outsideWarning
+                        }
                     }
                 }
 
@@ -165,7 +173,10 @@ struct RackEditor: View {
                     } header: {
                         Text("Shelves, from the top")
                     } footer: {
-                        Text("Holds \(preview.capacity) bottles. Touch and hold a shelf to duplicate it or apply it to all shelves.")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Holds \(preview.capacity) bottles. Touch and hold a shelf to duplicate it or apply it to all shelves.")
+                            outsideWarning
+                        }
                     }
                 }
 
@@ -213,7 +224,7 @@ struct RackEditor: View {
                     Section {
                         Button("Delete Rack", role: .destructive) { confirmingDelete = true }
                     } footer: {
-                        Text("Bottles in this rack stay in your cellar without a position.")
+                        Text("Bottles in this rack stay in your cellar without a place.")
                     }
                 }
                 Section {
@@ -225,13 +236,26 @@ struct RackEditor: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityIdentifier("sheet.cancel")
+                    Button("Cancel") {
+                        if isDirty { confirmingDiscard = true } else { dismiss() }
+                    }
+                    .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
+            }
+            .confirmationDialog("Discard Changes?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) { dismiss() }
+                Button("Keep Editing", role: .cancel) {}
+            }
+            .confirmationDialog(Text("\(outsideCount) bottles are in places you removed"),
+                                isPresented: $confirmingTakeOut, titleVisibility: .visible) {
+                Button("Take Them Out and Save", role: .destructive) { commit() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("They stay in your cellar without a place.")
             }
             .confirmationDialog("Delete this rack?", isPresented: $confirmingDelete, titleVisibility: .visible) {
                 Button("Delete Rack", role: .destructive) {
@@ -251,12 +275,49 @@ struct RackEditor: View {
                     rowColumns = Array(repeating: columns, count: rows)
                 }
             }
+            // Swiping the sheet away would lose the changes: Cancel asks first.
+            .interactiveDismissDisabled(isDirty)
         }
         .macSheetFrame(width: 560, height: 760)
     }
 
     /// A honeycomb on shelves, edited shelf by shelf.
     private var layered: Bool { kind == .staggered && onShelves }
+
+    private var current: EditorState {
+        EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
+                    customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves)
+    }
+
+    /// Something was changed since the editor opened.
+    private var isDirty: Bool { initial.map { $0 != current } ?? false }
+
+    /// Where the rows of the fridge go when its shelves were added, duplicated or removed:
+    /// its bottles stay on their shelf and layer.
+    private var rowMap: [Int: Int?] {
+        guard layered, let rackID, let old = model.cellar.rack(rackID) else { return [:] }
+        return Rack.shelfRowMap(from: old, to: preview, origins: shelves.map(\.originalShelf))
+    }
+
+    /// Bottles whose place this edit removes.
+    private var outsideCount: Int {
+        guard rackID != nil else { return 0 }
+        return model.cellar.displacedBottles(by: preview, rowMap: rowMap).count
+    }
+
+    /// Said under the size while bottles are in places removed.
+    @ViewBuilder
+    private var outsideWarning: some View {
+        let count = outsideCount
+        if count > 0 {
+            Label {
+                Text("\(count) bottles are in places you removed")
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .symbolRenderingMode(.multicolor)
+            }
+        }
+    }
 
     private var depthHelp: LocalizedStringKey {
         layered ? "Two rows, often head to tail." : "How many bottles fit one behind the other in each cell."
@@ -305,6 +366,7 @@ struct RackEditor: View {
             shelves = shelves.map { shelf in
                 var copy = source
                 copy.id = shelf.id
+                copy.originalShelf = shelf.originalShelf
                 copy.startsZone = shelf.startsZone
                 return copy
             }
@@ -372,7 +434,7 @@ struct RackEditor: View {
             depth = rack.depth; binCapacity = rack.binCapacity
             if rack.hasShelfLayers {
                 onShelves = true
-                shelves = ShelfDraft.shelves(of: rack)
+                shelves = ShelfDraft.shelves(of: rack, keepingOrigins: true)
             } else if let custom = rack.rowColumns {
                 rowColumns = custom
                 customRows = true
@@ -380,16 +442,43 @@ struct RackEditor: View {
         } else {
             name = model.cellar.racks.isEmpty ? String(localized: "Main rack") : ""
         }
+        initial = current
     }
 
     private func save() {
-        var rack = preview
-        rack.name = name.trimmingCharacters(in: .whitespaces)
-        let ok = model.update { cellar in
-            if rackID == nil { cellar.addRack(rack) } else { try cellar.updateRack(rack) }
+        guard rackID != nil else {
+            let rack = named(preview)
+            if model.update({ $0.addRack(rack) }) { dismiss() }
+            return
         }
-        if ok { dismiss() }
+        if outsideCount > 0 { confirmingTakeOut = true } else { commit() }
     }
+
+    /// Saves the edited rack, its bottles moved with their shelves; those whose place is
+    /// gone are taken out (the person agreed), with Undo.
+    private func commit() {
+        if model.updateRack(named(preview), rowMap: rowMap, takingOut: outsideCount) { dismiss() }
+    }
+
+    private func named(_ rack: Rack) -> Rack {
+        var rack = rack
+        rack.name = name.trimmingCharacters(in: .whitespaces)
+        return rack
+    }
+}
+
+/// What the rack editor holds, to tell whether anything changed.
+private struct EditorState: Equatable {
+    var name: String
+    var kind: RackKind
+    var rows: Int
+    var columns: Int
+    var depth: Int
+    var binCapacity: Int
+    var customRows: Bool
+    var rowColumns: [Int]
+    var onShelves: Bool
+    var shelves: [ShelfDraft]
 }
 
 /// One shelf of a fridge with bottles in layers, while editing.
@@ -402,6 +491,9 @@ struct ShelfDraft: Identifiable, Equatable {
     var counts: [Int]
     /// A divider above this shelf: it starts a new temperature zone.
     var startsZone = false
+    /// The shelf of the saved rack this one is (0 is the top one), so its bottles follow it
+    /// when shelves are added or removed above; nil for a new shelf.
+    var originalShelf: Int?
 
     /// A bottom layer of `bottom` bottles; each layer above rests in the gaps of the one below.
     init(layers: Int = 2, bottom: Int = 6) {
@@ -420,18 +512,22 @@ struct ShelfDraft: Identifiable, Equatable {
         self.counts = Array(all.prefix(3))
     }
 
+    /// A new shelf like `other`: it holds no bottles yet.
     init(copying other: ShelfDraft) {
         self = other
         id = UUID()
         startsZone = false
+        originalShelf = nil
     }
 
-    /// The shelves of a fridge with layers, from the top.
-    static func shelves(of rack: Rack) -> [ShelfDraft] {
+    /// The shelves of a fridge with layers, from the top. `keepingOrigins`: the rack being
+    /// edited, whose bottles follow their shelf.
+    static func shelves(of rack: Rack, keepingOrigins: Bool = false) -> [ShelfDraft] {
         rack.shelfRows.enumerated().map { shelf, rows in
             // From the bottom layer up: the shelf's last row first.
             var draft = ShelfDraft(layers: rows.count, counts: rows.reversed().map { rack.columns(inRow: $0) })
             draft.startsZone = rack.zoneBreaks?.contains(shelf) == true
+            if keepingOrigins { draft.originalShelf = shelf }
             return draft
         }
     }
@@ -631,13 +727,7 @@ struct MoveBottleView: View {
                             Form {
                                 TextField("Where is it?", text: $storageNote, prompt: Text("Kitchen, box in the garage…"))
                                 Button("Save") {
-                                    model.update { cellar in
-                                        try cellar.move(bottleID, to: nil)
-                                        if var updated = cellar.bottles[bottleID] {
-                                            updated.storageNote = storageNote.isEmpty ? nil : storageNote
-                                            try cellar.updateBottle(updated)
-                                        }
-                                    }
+                                    model.takeOutOfRack(bottleID, note: storageNote.isEmpty ? nil : storageNote)
                                     dismiss()
                                 }
                             }

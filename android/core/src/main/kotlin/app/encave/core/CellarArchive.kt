@@ -45,7 +45,8 @@ object CellarArchive {
     /** Largest photo or document read from an archive: the limit for adding a document. */
     const val MAX_FILE_BYTE_COUNT = Attachment.MAX_BYTE_COUNT
     private const val MAX_CELLAR_BYTE_COUNT = 256L * 1024 * 1024
-    private const val MAX_ENTRIES = 0xFFFF
+    /** 65,535 in the end record means ZIP64: one less is the most a plain ZIP holds. */
+    internal const val MAX_ENTRIES = 0xFFFE
 
     private const val README = "README.txt"
     private const val CELLAR = "cellar.json"
@@ -115,9 +116,17 @@ object CellarArchive {
     }
 
     /**
+     * What a backup holds of the photos and documents the cellar refers to: [included] in the
+     * archive, [missing] not on this device (not synced yet), [leftOut] because the archive
+     * would be over 4 GB or 65,535 files, the limits of a ZIP file every system opens.
+     */
+    data class WriteResult(val included: Int, val missing: Int, val leftOut: Int)
+
+    /**
      * Writes the archive to [output] (left open). [file] gives the local file of a photo or
-     * document, null if it is not on this device (it is then left out). Returns how many
-     * files were included. [isCancelled] is checked between files.
+     * document, null if it is not on this device (it is then left out). A file that would take
+     * the archive over the ZIP limits is left out too ([fitting]); the cellar itself is always
+     * written. [isCancelled] is checked between files.
      */
     fun write(
         cellar: Cellar,
@@ -125,8 +134,16 @@ object CellarArchive {
         output: OutputStream,
         file: (FileRef) -> File?,
         isCancelled: () -> Boolean = { false },
-    ): Int {
-        val present = plan(cellar).mapNotNull { item -> item.ref?.let(file)?.takeIf { it.isFile }?.let { item to it } }
+    ): WriteResult {
+        val readmeBytes = readme.toByteArray(Charsets.UTF_8)
+        val cellarBytes = CellarExport.json(cellar, exportedAt).toByteArray(Charsets.UTF_8)
+        val planned = plan(cellar)
+        val available = planned.mapNotNull { item -> item.ref?.let(file)?.takeIf { it.isFile }?.let { item to it } }
+        val fits = fitting(
+            available.map { (item, source) -> item.path.toByteArray(Charsets.UTF_8).size to source.length() },
+            fixedBytes = (readmeBytes.size + cellarBytes.size).toLong(),
+        )
+        val present = available.filterIndexed { index, _ -> fits[index] }
         val zip = ZipOutputStream(output)
         val time = LocalDateTime.ofInstant(exportedAt, ZoneOffset.UTC)
         fun entry(name: String, size: Long, crc: Long) = ZipEntry(name).apply {
@@ -141,8 +158,8 @@ object CellarArchive {
             zip.write(data)
             zip.closeEntry()
         }
-        add(README, readme.toByteArray(Charsets.UTF_8))
-        add(CELLAR, CellarExport.json(cellar, exportedAt).toByteArray(Charsets.UTF_8))
+        add(README, readmeBytes)
+        add(CELLAR, cellarBytes)
         // The manifest lists only what is written, and comes before the files.
         add(MANIFEST, manifestJson(Manifest(files = present.map { it.first })).toByteArray(Charsets.UTF_8))
         for ((item, source) in present) {
@@ -159,15 +176,50 @@ object CellarArchive {
                     size += read
                 }
             }
-            if (size >= 0xFFFF_FFFFL) throw ZipException("file too large")
+            if (size >= ZIP_LIMIT) throw ZipException("file too large")
             zip.putNextEntry(entry(item.path, size, crc.value))
             source.inputStream().use { it.copyTo(zip, CHUNK) }
             zip.closeEntry()
         }
         zip.finish()
         zip.flush()
-        return present.size
+        return WriteResult(present.size, planned.size - available.size, available.size - present.size)
     }
+
+    /**
+     * Which files fit in an archive, in order: at most 65,534 entries and 4 GB in all, with
+     * room for the headers, the manifest and the central directory. [files]: the size of each
+     * one's name in UTF-8 and its size; [fixedBytes]: the README and the cellar. Counted as
+     * CaveKit counts.
+     */
+    internal fun fitting(
+        files: List<Pair<Int, Long>>,
+        fixedBytes: Long,
+        limit: Long = ZIP_LIMIT,
+        maxEntries: Int = MAX_ENTRIES,
+    ): List<Boolean> {
+        // README, cellar and manifest: two headers each (local and central) and a name.
+        var total = fixedBytes + 3 * (30 + 46 + 16) + 22 + RESERVE
+        var entries = 3
+        return files.map { (nameBytes, size) ->
+            // Two headers, the name three times (twice in headers, once in the manifest), and the
+            // manifest's line for it (ID, kind, JSON).
+            val cost = size + 76 + 3L * nameBytes + 160
+            if (entries >= maxEntries || total + cost >= limit) {
+                false
+            } else {
+                total += cost
+                entries++
+                true
+            }
+        }
+    }
+
+    /** 0xFFFF_FFFF bytes, the most a plain ZIP file holds. */
+    internal const val ZIP_LIMIT = 0xFFFF_FFFFL
+
+    /** Room kept below the 4 GB limit for what the estimate leaves out. */
+    internal const val RESERVE = 1L shl 20
 
     internal fun manifestJson(manifest: Manifest): String =
         pretty.encodeToString(JsonElement.serializer(), CellarJson.sortKeys(json.encodeToJsonElement(Manifest.serializer(), manifest)))
@@ -209,7 +261,13 @@ object CellarArchive {
                     name == MANIFEST -> manifestText = runCatching { readText(zip, MAX_CELLAR_BYTE_COUNT) }.getOrNull()
                     name.startsWith(PHOTOS) || name.startsWith(DOCUMENTS) -> {
                         val target = File(workingFolder, "file-$count")
-                        val id = copy(zip, target)
+                        // A damaged file (its CRC-32) is skipped and the next ones read, as
+                        // CaveKit does; an archive cut short stops the reading (below).
+                        val id = try {
+                            copy(zip, target)
+                        } catch (_: ZipException) {
+                            null
+                        }
                         if (id == null) {
                             target.delete()
                             skipped++
@@ -222,7 +280,7 @@ object CellarArchive {
         } catch (error: ImportException) {
             throw error
         } catch (_: ZipException) {
-            // A damaged entry (its CRC-32), or an archive cut short.
+            // A damaged header, or an archive cut short.
             if (cellarText == null) throw ImportException(ImportError.DamagedArchive)
         } catch (_: java.io.IOException) {
             if (cellarText == null) throw ImportException(ImportError.DamagedArchive)

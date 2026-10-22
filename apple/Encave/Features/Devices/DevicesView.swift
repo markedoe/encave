@@ -13,6 +13,8 @@ struct DevicesView: View {
     @State private var joining = false
     @State private var removing: Member?
     @State private var confirmingLeave = false
+    @State private var leaving = false
+    @State private var leftUntold = false
     @State private var notifiesChanges = ChangeNotifications.isEnabled
     @State private var notificationsRefused = false
 
@@ -24,8 +26,12 @@ struct DevicesView: View {
                 Section {
                     Label(problem, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
+                    if sync.localNetworkDenied {
+                        Button("Open Settings") { SystemSettings.openForLocalNetwork() }
+                            .accessibilityIdentifier("devices.openSettings")
+                    }
                     if sync.wasRemoved {
-                        Button("Stop Syncing on This Device", role: .destructive) { sync.leave() }
+                        Button("Stop Syncing on This Device", role: .destructive) { Task { await sync.leave() } }
                     }
                 }
             }
@@ -33,7 +39,8 @@ struct DevicesView: View {
             Section {
                 DeviceRow(member: sync.me, isThisDevice: true, status: nil)
                 ForEach(sync.otherDevices) { member in
-                    DeviceRow(member: member, isThisDevice: false, status: status(of: member, sync))
+                    // "Synced 3 minutes ago" stays current.
+                    Ticking { DeviceRow(member: member, isThisDevice: false, status: status(of: member, sync)) }
                         .swipeActions {
                             Button("Remove", role: .destructive) { removing = member }
                         }
@@ -45,7 +52,9 @@ struct DevicesView: View {
                 Text("Devices sharing this cellar")
             } footer: {
                 if sync.otherDevices.isEmpty {
-                    Text("Add your iPad or Mac to have the same cellar on each, kept in sync.")
+                    Text("Add your other devices (iPhone, iPad, Mac or Android) to have the same cellar on each, kept in sync.")
+                } else if sync.remoteStorage != nil {
+                    Text("Devices sync on the same Wi-Fi while Encave is open, and away from home through the storage you chose. Changes made apart merge without losing anything.")
                 } else {
                     Text("Devices sync when they are on the same Wi-Fi and Encave is open. Changes made apart merge without losing anything.")
                 }
@@ -129,17 +138,36 @@ struct DevicesView: View {
 
             Section {
                 Label("Encrypted from end to end", systemImage: "lock.shield")
-                Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted from end to end. Away from home, if you turn it on, they sync through the storage you choose, which holds only encrypted files.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                Group {
+                    if sync.remoteStorage != nil {
+                        Text("Each device proves it belongs to the cellar with its own key, and everything is encrypted. On your network, devices talk directly. Away from home, the storage only holds encrypted files.")
+                    } else {
+                        Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.")
+                    }
+                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
                 HelpLink(topic: .devices, title: "Help with devices")
             }
 
             if sync.isSetUp, !sync.otherDevices.isEmpty {
                 Section {
-                    Button("Stop Syncing on This Device", role: .destructive) { confirmingLeave = true }
+                    Button(role: .destructive) {
+                        confirmingLeave = true
+                    } label: {
+                        if leaving {
+                            HStack(spacing: 8) {
+                                ProgressView().accessibilityHidden(true)
+                                Text("Stopping…")
+                            }
+                        } else {
+                            Text("Stop Syncing on This Device")
+                        }
+                    }
+                    .disabled(leaving)
+                    .accessibilityIdentifier("devices.leave")
                 } footer: {
-                    Text("The cellar stays on this device as it is. Other devices keep syncing together.")
+                    Text("The cellar stays on this device as it is. Your other devices are told and keep syncing together.")
                 }
             }
         }
@@ -164,7 +192,18 @@ struct DevicesView: View {
             Text("It keeps what it already has, but can no longer sync with your other devices.")
         }
         .confirmationDialog("Stop syncing on this device?", isPresented: $confirmingLeave, titleVisibility: .visible) {
-            Button("Stop Syncing", role: .destructive) { sync.leave() }
+            Button("Stop Syncing", role: .destructive) {
+                leaving = true
+                Task {
+                    leftUntold = !(await sync.leave())
+                    leaving = false
+                }
+            }
+        }
+        .alert("Syncing stopped on this device", isPresented: $leftUntold) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your other devices could not be told. If this device still appears on them, remove it there.")
         }
     }
 
@@ -365,6 +404,10 @@ struct RemoteSyncView: View {
     @State private var changingLogin = false
     @State private var checking = false
     @State private var error: String?
+    @State private var confirmingTurnOff = false
+
+    /// Android devices of the cellar, which cannot use iCloud.
+    private var androidDevices: [Member] { model.sync.otherDevices.filter { !$0.isApple } }
 
     var body: some View {
         let sync = model.sync
@@ -383,9 +426,9 @@ struct RemoteSyncView: View {
                         if sync.isSyncingRemotely {
                             Text("Syncing…")
                         } else if let problem = sync.remoteProblem {
-                            Text(problem).foregroundStyle(.orange)
+                            Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
                         } else if let date = sync.lastRemoteSync {
-                            Text("Synced \(date.formatted(.relative(presentation: .named)))")
+                            Ticking { Text("Synced \(date.formatted(.relative(presentation: .named)))") }
                         } else {
                             Text("Not synced yet")
                         }
@@ -396,9 +439,8 @@ struct RemoteSyncView: View {
                         Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                     }
                     .disabled(sync.isSyncingRemotely)
-                    Button("Turn Off", role: .destructive) {
-                        Task { try? await sync.setRemoteStorage(nil) }
-                    }
+                    Button("Turn Off", role: .destructive) { confirmingTurnOff = true }
+                        .accessibilityIdentifier("remote.turnOff")
                 } footer: {
                     Text("Your other devices that do not sync away from home yet receive this setting the next time they sync on the same Wi-Fi. Turning it off, or choosing another storage, applies to this device only: do the same on the others.")
                 }
@@ -413,6 +455,11 @@ struct RemoteSyncView: View {
                     .accessibilityIdentifier("remote.frequency")
                 } footer: {
                     Text("On the same Wi-Fi, changes are sent a few seconds after you make them. This setting is for this device only.")
+                }
+                if storage == .iCloud, !androidDevices.isEmpty {
+                    Section {
+                        androidNote
+                    }
                 }
                 if case .webDAV = storage {
                     if sync.needsWebDAVSignIn || changingLogin {
@@ -442,21 +489,8 @@ struct RemoteSyncView: View {
                     }
                 }
             } else {
-                if CloudKitMailboxStore.isConfigured {
-                    Section {
-                        Button {
-                            turnOn(.iCloud)
-                        } label: {
-                            Label("Use iCloud", systemImage: "icloud")
-                        }
-                        .disabled(checking)
-                        .accessibilityIdentifier("remote.icloud")
-                    } header: {
-                        Text("iCloud")
-                    } footer: {
-                        Text("For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.")
-                    }
-                }
+                // With an Android device, iCloud comes last: it cannot reach that device.
+                if androidDevices.isEmpty { iCloudSection }
                 Section {
                     TextField("Server address", text: $webDAVAddress, prompt: Text(verbatim: "https://"))
                         .urlField()
@@ -491,8 +525,9 @@ struct RemoteSyncView: View {
                 } header: {
                     Text("Relay")
                 } footer: {
-                    Text("For iPhone, iPad and Mac today, and Android later. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.")
+                    Text("For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.")
                 }
+                if !androidDevices.isEmpty { iCloudSection }
                 if let error {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
@@ -522,6 +557,52 @@ struct RemoteSyncView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Away from Home")
+        .confirmationDialog("Stop syncing away from home on this device?", isPresented: $confirmingTurnOff,
+                            titleVisibility: .visible) {
+            Button("Turn Off", role: .destructive) {
+                Task { try? await sync.setRemoteStorage(nil) }
+            }
+        } message: {
+            switch sync.remoteStorage {
+            case .iCloud:
+                Text("This device stops using iCloud. Your other devices keep using it: turn it off on them too if you want.")
+            case .webDAV:
+                Text("This device stops using the WebDAV folder and forgets its login. Your other devices keep using it: turn it off on them too if you want.")
+            default:
+                Text("This device stops using the relay. Your other devices keep using it: turn it off on them too if you want.")
+            }
+        }
+    }
+
+    @ViewBuilder private var iCloudSection: some View {
+        if CloudKitMailboxStore.isConfigured {
+            Section {
+                Button {
+                    turnOn(.iCloud)
+                } label: {
+                    Label("Use iCloud", systemImage: "icloud")
+                }
+                .disabled(checking)
+                .accessibilityIdentifier("remote.icloud")
+                if !androidDevices.isEmpty { androidNote }
+            } header: {
+                Text("iCloud")
+            } footer: {
+                Text("For devices signed in to the same Apple Account. Uses a little of your iCloud storage; Apple only receives encrypted files.")
+            }
+        }
+    }
+
+    /// iCloud never reaches an Android device of the cellar.
+    private var androidNote: some View {
+        let androidNames = androidDevices.map(\.name).formatted(.list(type: .and))
+        return Label {
+            Text("Android devices can’t use iCloud. To sync with \(androidNames) away from home, choose a WebDAV folder or a relay.")
+        } icon: {
+            Image(systemName: "info.circle")
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
     }
 
     /// HTTPS, or HTTP only for a server on the local network.
@@ -635,10 +716,7 @@ struct InviteDeviceView: View {
         .solidSheetBackground()
     }
 
-    private var isFinished: Bool {
-        if case .done = session?.phase { return true }
-        return false
-    }
+    private var isFinished: Bool { session?.phase.isFinished ?? false }
 }
 
 /// The code to type and the QR code to scan on the other device.
@@ -648,7 +726,7 @@ private struct CodeCard: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 22) {
-                Text("On the other device, open Settings › Devices › Join Another Device’s Cellar, then scan this code or type the numbers.")
+                Text("Scan this code with the other device’s camera, or type the numbers in Settings › Devices › Join Another Device’s Cellar.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
                 QRCodeView(payload: session.qrPayload)
@@ -715,10 +793,13 @@ struct QRCodeView: View {
 struct JoinDeviceView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @State private var digits = ""
+    @State private var digits: String
     @State private var commitment: Data?
     @State private var replace = false
     @State private var scanning = false
+    @State private var confirmingLeave = false
+    @State private var confirmingReplace = false
+    @State private var leaving = false
     @State private var session: PairingSession?
     @FocusState private var codeFocused: Bool
     #if os(iOS)
@@ -726,8 +807,15 @@ struct JoinDeviceView: View {
     @State private var cameraStatus = CameraAccess.status
     #endif
 
+    /// `code` and `commitment`: from a pairing link (the QR code scanned with the camera).
+    init(code: String = "", commitment: Data? = nil) {
+        _digits = State(initialValue: code)
+        _commitment = State(initialValue: commitment)
+    }
+
     private var code: PairingCode { PairingCode(digits: digits) }
     private var hasOwnBottles: Bool { !model.cellar.bottles.isEmpty }
+    private var sharedNames: String { model.sync.otherDevices.map(\.name).formatted(.list(type: .and)) }
 
     var body: some View {
         NavigationStack {
@@ -773,14 +861,29 @@ struct JoinDeviceView: View {
             #endif
         }
         .onDisappear { session?.cancel() }
+        .confirmationDialog("Join another cellar?", isPresented: $confirmingLeave, titleVisibility: .visible) {
+            Button("Leave and Join", role: .destructive) {
+                leaving = true
+                Task {
+                    await model.sync.leave()
+                    leaving = false
+                    continueJoining()
+                }
+            }
+        } message: {
+            Text("This device will leave the cellar it shares with \(sharedNames). Its bottles stay on it.")
+        }
+        .confirmationDialog(Text("Remove \(model.cellar.bottles.count) bottles from this device?"),
+                            isPresented: $confirmingReplace, titleVisibility: .visible) {
+            Button("Replace and Join", role: .destructive) { join() }
+        } message: {
+            Text("This device will show only the other device’s cellar.")
+        }
         .macSheetFrame(width: 460, height: 560)
         .solidSheetBackground()
     }
 
-    private var isFinished: Bool {
-        if case .done = session?.phase { return true }
-        return false
-    }
+    private var isFinished: Bool { session?.phase.isFinished ?? false }
 
     private var form: some View {
         Form {
@@ -841,11 +944,14 @@ struct JoinDeviceView: View {
             }
             Section {
                 Button(action: start) {
-                    Text("Join").frame(maxWidth: .infinity)
+                    Group {
+                        if leaving { ProgressView() } else { Text("Join") }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(!code.isValid)
+                .disabled(!code.isValid || leaving)
                 .listRowBackground(Color.clear)
                 .accessibilityIdentifier("devices.joinButton")
             }
@@ -855,16 +961,47 @@ struct JoinDeviceView: View {
     }
 
     private func start() {
-        guard code.isValid else { return }
+        guard code.isValid, !leaving else { return }
         codeFocused = false
-        session = PairingSession.join(code: code, commitment: commitment, replace: replace, using: model.sync)
+        // Already sharing a cellar: leaving it is asked first (the other devices are told).
+        if !model.sync.otherDevices.isEmpty {
+            confirmingLeave = true
+        } else {
+            continueJoining()
+        }
     }
+
+    private func continueJoining() {
+        // Replacing the bottles on this device is asked first.
+        if replace, hasOwnBottles {
+            confirmingReplace = true
+        } else {
+            join()
+        }
+    }
+
+    private func join() {
+        session = PairingSession.join(code: code, commitment: commitment, replace: replace && hasOwnBottles,
+                                      using: model.sync)
+    }
+
 }
 
 // MARK: - Progress and confirmation
 
+extension PairingSession.Phase {
+    /// The device was added: the sheet's button says Done.
+    var isFinished: Bool {
+        switch self {
+        case .done, .addedNotSynced: true
+        default: false
+        }
+    }
+}
+
 /// The steps after the code: compare, wait, sync, done.
 private struct PairingProgress<Waiting: View>: View {
+    @Environment(CellarModel.self) private var model
     let session: PairingSession
     let retry: () -> Void
     @ViewBuilder let waiting: () -> Waiting
@@ -883,9 +1020,36 @@ private struct PairingProgress<Waiting: View>: View {
                        message: Text("Sending the cellar and its photos. Keep both devices open."), showsProgress: true)
         case .done(let deviceName):
             StatusView(systemImage: "checkmark.circle.fill", title: Text("\(deviceName) added"),
-                       message: Text("Your cellar is now on both devices and stays in sync when they are on the same Wi-Fi."),
+                       message: model.sync.remoteStorage == nil
+                           ? Text("Your cellar is now on both devices and stays in sync when they are on the same Wi-Fi.")
+                           : Text("Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home."),
                        showsProgress: false)
                 .accessibilityIdentifier("devices.done")
+        case .addedNotSynced(let deviceName):
+            VStack(spacing: 18) {
+                StatusView(systemImage: "checkmark.circle", title: Text("\(deviceName) added"),
+                           message: Text("The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own."),
+                           showsProgress: false)
+                Button {
+                    model.sync.syncNow()
+                } label: {
+                    Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("devices.pairSyncNow")
+            }
+            .accessibilityIdentifier("devices.addedNotSynced")
+        case .localNetworkDenied:
+            VStack(spacing: 18) {
+                StatusView(systemImage: "wifi.exclamationmark", title: Text("Local Network Access Is Off"),
+                           message: Text(SyncService.localNetworkMessage), showsProgress: false)
+                HStack(spacing: 12) {
+                    Button("Try Again", action: retry)
+                        .buttonStyle(.bordered)
+                    Button("Open Settings") { SystemSettings.openForLocalNetwork() }
+                        .buttonStyle(.borderedProminent)
+                }
+            }
         case .failed(let message):
             VStack(spacing: 18) {
                 StatusView(systemImage: "xmark.octagon", title: Text("Not added"), message: Text(message), showsProgress: false)

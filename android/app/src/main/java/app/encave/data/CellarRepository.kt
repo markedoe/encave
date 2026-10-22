@@ -99,6 +99,23 @@ class CellarRepository(
     }
 
     /**
+     * Replaces the whole cellar with [cellar] only if it is still [expected]: the Undo of a
+     * restore, which would otherwise take back what changed since (here or by sync). Returns
+     * whether it was replaced.
+     */
+    suspend fun replaceIf(expected: Cellar, cellar: Cellar): Result<Boolean> = mutex.withLock {
+        if (loadFailed) return@withLock refused()
+        val before = state.value
+        if (before != expected) return@withLock Result.success(false)
+        val copy = cellar.copy()
+        withContext(io) { runCatching { store.save(copy) } }.map {
+            state.value = copy
+            onLocalChange?.let { record -> withContext(io) { record(before, copy) } }
+            true
+        }
+    }
+
+    /**
      * Applies what came from another device: [merge] gets the current cellar and
      * returns the new one, off the main thread. Not reported to [onLocalChange].
      * [onSaved] runs once the result is saved, still under the lock (sync keeps its

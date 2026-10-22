@@ -101,7 +101,11 @@ object CellarExport {
     }
 }
 
-/** Adds everything from a backup that is not already in this cellar (by id). */
+/**
+ * Adds everything from a backup that is not already in this cellar (by id), and the saved
+ * searches it does not have (by id and name). A bottle whose place is taken, or no longer in
+ * its rack (made smaller since), is added without a place.
+ */
 fun Cellar.merge(other: Cellar): ImportSummary {
     var wineCount = 0
     var bottleCount = 0
@@ -115,13 +119,19 @@ fun Cellar.merge(other: Cellar): ImportSummary {
     for ((id, bottle) in other.bottles) {
         if (bottles[id] == null) {
             val slot = bottle.slot
-            putBottle(if (slot != null && bottleAt(slot) != null) bottle.copy(slot = null) else bottle)
+            val placeable = slot == null || (bottleAt(slot) == null && rack(slot.rackId)?.contains(slot) == true)
+            putBottle(if (placeable) bottle else bottle.copy(slot = null))
             bottleCount++
         }
     }
     for ((id, discovery) in other.discoveries) {
         if (discoveries[id] == null && wines[discovery.wineId] != null) putDiscovery(discovery)
     }
+    val searches = settings.savedSearches.orEmpty()
+    val ids = searches.map { it.id }.toSet()
+    val names = searches.map { it.name.lowercase(java.util.Locale.ROOT) }.toSet()
+    val missing = other.settings.savedSearches.orEmpty().filter { it.id !in ids && it.name.lowercase(java.util.Locale.ROOT) !in names }
+    if (missing.isNotEmpty()) settings = settings.copy(savedSearches = SavedSearch.ordered(searches + missing))
     return ImportSummary(wineCount, bottleCount, 0)
 }
 
