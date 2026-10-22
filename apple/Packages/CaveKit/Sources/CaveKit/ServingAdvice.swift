@@ -41,3 +41,22 @@ public struct ServingAdvice: Equatable, Sendable {
         }
     }
 }
+
+#if canImport(Darwin)
+public extension ServingAdvice {
+    /// "16 – 18 °C", or Fahrenheit where the locale uses it: the unit once, after the range.
+    func temperatureRange(locale: Locale = .autoupdatingCurrent) -> String {
+        let style = Measurement<UnitTemperature>.FormatStyle(
+            width: .abbreviated, locale: locale, usage: .weather,
+            numberFormatStyle: .number.locale(locale).precision(.fractionLength(0))
+        )
+        let low = Measurement(value: Double(minTemperature), unit: UnitTemperature.celsius)
+        let high = Measurement(value: Double(maxTemperature), unit: UnitTemperature.celsius)
+        // The low end without its unit, in the unit the high end is shown in.
+        let lowText = low.formatted(style.attributed)
+        let lowNumber = lowText.runs.filter { $0.measurement == .value }
+            .map { String(lowText[$0.range].characters) }.joined()
+        return "\(lowNumber.isEmpty ? low.formatted(style) : lowNumber) – \(high.formatted(style))"
+    }
+}
+#endif

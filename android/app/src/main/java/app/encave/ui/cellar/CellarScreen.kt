@@ -1073,7 +1073,7 @@ private fun CellarSummary(
 
 /** A figure with its caption. A tile that opens a screen has a chevron; a filter tile is outlined while on. */
 @Composable
-private fun StatTile(
+internal fun StatTile(
     value: Int,
     caption: String,
     icon: ImageVector,

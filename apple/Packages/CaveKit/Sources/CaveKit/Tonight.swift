@@ -38,6 +38,13 @@ public extension Cellar {
         count > 0 ? (max(dayOfYear, 1) - 1) % count : 0
     }
 
+    /// The wine Tonight suggests first on a given day of the year, or nil when none is ready.
+    func tonightSuggestion(year: Int, dayOfYear: Int) -> WineGroup? {
+        let candidates = tonightCandidates(year: year)
+        guard !candidates.isEmpty else { return nil }
+        return candidates[Cellar.tonightStartIndex(dayOfYear: dayOfYear, count: candidates.count)]
+    }
+
     /// The young wine whose window opens first (free bottles only), to say when
     /// something will be ready while nothing is now.
     func nextToBeReady(year: Int) -> WineGroup? {

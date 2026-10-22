@@ -167,10 +167,8 @@ struct MacRoot: View {
 
     /// The wine Tonight suggests first today.
     private var todaysSuggestion: UUID? {
-        let candidates = model.cellar.tonightCandidates(year: model.currentYear)
-        guard !candidates.isEmpty else { return nil }
         let day = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 1
-        return candidates[Cellar.tonightStartIndex(dayOfYear: day, count: candidates.count)].wine.id
+        return model.cellar.tonightSuggestion(year: model.currentYear, dayOfYear: day)?.wine.id
     }
 
     private func follow(_ tab: AppTab) {
