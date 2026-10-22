@@ -25,12 +25,15 @@ conversation; see [SECURITY.md](SECURITY.md)).
 
 - **Native first.** Follow Apple's Human Interface Guidelines and Material 3.
   Prefer system components (lists, forms, sheets, swipe actions) over custom UI.
-- **Accessible.** Support Dynamic Type, VoiceOver, light and dark mode, and
-  never rely on color alone.
-- **Both languages.** Add every user-facing string in English and French.
+- **Accessible.** Support Dynamic Type and font scaling, VoiceOver and
+  TalkBack, light and dark mode, and never rely on color alone.
+- **Both languages.** Add every user-facing string in English and French:
+  in `apple/tools/l10n.py` and `android/tools/strings.py`, then run them to
+  regenerate the string files (never edit those by hand).
 - **Private.** User data stays on device or is end-to-end encrypted. No
   analytics or third-party SDKs that receive user data.
-- **Tests.** Add tests for model changes in `apple/Packages/CaveKit`.
+- **Tests.** Add tests for model changes in `apple/Packages/CaveKit` and
+  `android/core`, kept in step through the shared `fixtures/`.
 - **No real data.** Never commit credentials, signing files, personal data or
   screenshots of real cellars.
 
@@ -44,6 +47,7 @@ conversation; see [SECURITY.md](SECURITY.md)).
 
 - Swift 6 with strict concurrency, SwiftUI, Swift Testing.
 - Keep business logic in `CaveKit`; views stay thin.
+- Kotlin with Jetpack Compose and Material 3; logic in `android/core`.
 
 By contributing you agree that your contribution is licensed under the
 [AGPL-3.0](LICENSE).
