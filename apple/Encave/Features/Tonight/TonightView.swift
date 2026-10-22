@@ -47,9 +47,10 @@ struct TonightView: View {
                 if !candidates.isEmpty {
                     Section {
                         TonightPick(group: candidates[pickIndex % candidates.count]) {
-                            withAnimation(.snappy) { pickIndex += 1 }
+                            let next = pickIndex + 1
+                            withAnimation(.snappy) { pickIndex = next }
                             // The card changes without moving focus: say which wine it shows now.
-                            let wine = candidates[pickIndex % candidates.count].wine
+                            let wine = candidates[next % candidates.count].wine
                             AccessibilityNotification.Announcement([wine.displayName, wine.styleLine]
                                 .filter { !$0.isEmpty }.joined(separator: ", ")).post()
                         }
