@@ -60,9 +60,17 @@ class TonightTest {
         val day = LocalDate.of(2026, 10, 22)
         val picks = cellar.tonightPicks(2026, day)
         assertEquals(6, picks.size)
-        cellar.addBottles(Wine(name = "New", drinkFrom = 2020, drinkUntil = 2030), 1)
+        val first = picks.first().wine.id
+        // Another wine drunk: the same first pick.
         cellar.drink(picks.last().bottles.first().id, Tasting(rating = 7))
-        assertEquals(picks.first().wine.id, cellar.tonightPicks(2026, day).first().wine.id)
+        assertEquals(first, cellar.tonightPicks(2026, day).first().wine.id)
+        // Wines added: the pick kept by the app stays first, whatever their rank.
+        for (index in 1..6) cellar.addBottles(Wine(name = "New $index", drinkFrom = 2020, drinkUntil = 2030), 1)
+        assertEquals(first, cellar.tonightPicks(2026, day, kept = first).first().wine.id)
+        assertEquals(11, cellar.tonightPicks(2026, day, kept = first).size)
+        // Kept but drunk: the best ranked candidate instead.
+        cellar.drink(picks.first().bottles.first().id, Tasting(rating = 7))
+        assertEquals(cellar.tonightPicks(2026, day).first().wine.id, cellar.tonightPicks(2026, day, kept = first).first().wine.id)
         // Another day, another order; the same set of wines.
         assertEquals(
             cellar.tonightPicks(2026, day).map { it.wine.id }.toSet(),

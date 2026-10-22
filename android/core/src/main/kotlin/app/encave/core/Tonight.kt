@@ -46,13 +46,16 @@ fun Cellar.tonightCandidates(year: Int): List<WineGroup> {
 /**
  * Tonight's suggestions for a day, in the order "Another idea" goes through them: the
  * candidates ranked by [tonightRank], so the first is the same all day and does not change
- * when other wines are added or drunk, only when it is no longer a candidate.
+ * when other wines are drunk. [kept] (the first one shown today, remembered by the app)
+ * stays first while it is a candidate, so a wine added later does not take its place either.
  */
-fun Cellar.tonightPicks(year: Int, day: LocalDate): List<WineGroup> {
+fun Cellar.tonightPicks(year: Int, day: LocalDate, kept: UUID? = null): List<WineGroup> {
     val candidates = tonightCandidates(year)
     val ranks = candidates.associate { it.wine.id to tonightRank(it.wine.id, day) }
     // A stable sort: equal ranks (never in practice) keep the best-first order.
-    return candidates.sortedWith { a, b -> ranks.getValue(a.wine.id).compareTo(ranks.getValue(b.wine.id)) }
+    val ranked = candidates.sortedWith { a, b -> ranks.getValue(a.wine.id).compareTo(ranks.getValue(b.wine.id)) }
+    val first = ranked.firstOrNull { it.wine.id == kept } ?: return ranked
+    return listOf(first) + (ranked - first)
 }
 
 /**

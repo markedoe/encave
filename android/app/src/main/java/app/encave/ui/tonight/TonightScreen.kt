@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -131,7 +132,16 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val sections = remember(cellar, year) { cellar.groupsByMaturity(year) }
     // The local date, as on Apple: a new first suggestion each day from midnight.
     val today = LocalDate.now()
-    val candidates = remember(cellar, year, today) { cellar.tonightPicks(year, today) }
+    // The first wine shown today, "yyyy-MM-dd|id" on this device: it stays today's pick while
+    // it can be drunk, even when wines are added.
+    val tonightPrefs = LocalContext.current.getSharedPreferences("tonight", android.content.Context.MODE_PRIVATE)
+    val kept = tonightPrefs.getString("firstPick", null)?.takeIf { it.startsWith("$today|") }
+        ?.substringAfter('|')?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    val candidates = remember(cellar, year, today, kept) { cellar.tonightPicks(year, today, kept) }
+    val shown = candidates.firstOrNull()?.let { "$today|${it.wine.id}" }
+    LaunchedEffect(shown) {
+        if (shown != null && tonightPrefs.getString("firstPick", null) != shown) tonightPrefs.edit().putString("firstPick", shown).apply()
+    }
     // "Another idea" taps; the first suggestion of the day comes from the date.
     var pickOffset by rememberSaveable { mutableIntStateOf(0) }
     var drinking by rememberDrinking()

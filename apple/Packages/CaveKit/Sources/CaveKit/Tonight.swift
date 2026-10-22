@@ -34,8 +34,16 @@ public extension Cellar {
 
     /// Tonight's suggestions for a day, in the order "Another idea" goes through them: the
     /// candidates ranked by `tonightRank`, so the first is the same all day and does not
-    /// change when other wines are added or drunk, only when it is no longer a candidate.
-    func tonightPicks(year: Int, day: String) -> [WineGroup] {
+    /// change when other wines are drunk. `kept` (the first one shown today, remembered by
+    /// the app) stays first while it is a candidate, so a wine added later does not take
+    /// its place either.
+    func tonightPicks(year: Int, day: String, keeping kept: UUID? = nil) -> [WineGroup] {
+        let ranked = rankedTonightCandidates(year: year, day: day)
+        guard let kept, let index = ranked.firstIndex(where: { $0.wine.id == kept }) else { return ranked }
+        return [ranked[index]] + ranked[..<index] + ranked[(index + 1)...]
+    }
+
+    private func rankedTonightCandidates(year: Int, day: String) -> [WineGroup] {
         let candidates = tonightCandidates(year: year)
         let ranks = Dictionary(uniqueKeysWithValues: candidates.map { ($0.wine.id, Cellar.tonightRank(wineID: $0.wine.id, day: day)) })
         // A stable sort: equal ranks (never in practice) keep the best-first order.

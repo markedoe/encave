@@ -56,10 +56,20 @@ import Testing
         let picks = cellar.tonightPicks(year: 2026, day: day)
         #expect(picks.count == 6)
         let first = try #require(picks.first)
-        try cellar.addBottles(of: Wine(name: "New", drinkFrom: 2020, drinkUntil: 2030))
+        // Another wine drunk: the same first pick.
         let other = try #require(picks.last?.bottles.first)
         try cellar.drink(other.id, tasting: Tasting(rating: 7))
         #expect(cellar.tonightPicks(year: 2026, day: day).first?.wine.id == first.wine.id)
+        // Wines added: the pick kept by the app stays first, whatever their rank.
+        for index in 1...6 {
+            try cellar.addBottles(of: Wine(name: "New \(index)", drinkFrom: 2020, drinkUntil: 2030))
+        }
+        #expect(cellar.tonightPicks(year: 2026, day: day, keeping: first.wine.id).first?.wine.id == first.wine.id)
+        #expect(cellar.tonightPicks(year: 2026, day: day, keeping: first.wine.id).count == 11)
+        // Kept but drunk: the best ranked candidate instead.
+        try cellar.drink(try #require(first.bottles.first).id, tasting: Tasting(rating: 7))
+        #expect(cellar.tonightPicks(year: 2026, day: day, keeping: first.wine.id).first?.wine.id
+            == cellar.tonightPicks(year: 2026, day: day).first?.wine.id)
         // Another day, another order; the same set of wines.
         let tomorrow = cellar.tonightPicks(year: 2026, day: "2026-10-23")
         #expect(Set(tomorrow.map(\.wine.id)) == Set(cellar.tonightPicks(year: 2026, day: day).map(\.wine.id)))

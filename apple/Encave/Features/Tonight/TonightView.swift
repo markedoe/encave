@@ -10,6 +10,9 @@ struct TonightView: View {
     @State private var pickOffset = 0
     /// The wine opened from the suggestion card, on iPhone and iPad.
     @State private var openedWine: UUID?
+    /// The first wine shown today, "yyyy-MM-dd|id" on this device: it stays today's pick
+    /// while it can be drunk, even when wines are added.
+    @AppStorage("tonight.firstPick") private var firstPick = ""
 
     var body: some View {
         if let selection {
@@ -54,7 +57,9 @@ struct TonightView: View {
         let linking = selection == nil
         let year = model.currentYear
         // Today's suggestions: a new first wine each day, the same all day, as on Android.
-        let candidates = model.cellar.tonightPicks(year: year, day: Cellar.tonightDay(.now))
+        let day = Cellar.tonightDay(.now)
+        let kept = firstPick.hasPrefix(day + "|") ? UUID(uuidString: String(firstPick.dropFirst(day.count + 1))) : nil
+        let candidates = model.cellar.tonightPicks(year: year, day: day, keeping: kept)
         let reserved = model.cellar.reservedBottleCount
         Section {
             if sections.isEmpty {
@@ -80,6 +85,10 @@ struct TonightView: View {
                     AccessibilityNotification.Announcement([wine.displayName, wine.styleLine]
                         .filter { !$0.isEmpty }.joined(separator: ", ")).post()
                 })
+                .task(id: "\(day)|\(candidates[0].wine.id.uuidString)") {
+                    let shown = "\(day)|\(candidates[0].wine.id.uuidString)"
+                    if firstPick != shown { firstPick = shown }
+                }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
             }
