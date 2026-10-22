@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Wine fridges two deep with shelves in layers show each shelf twice: the
+  front bottles, then the back ones, each place tapped directly; with Back
+  bottles head-to-tail (synced), the back band shows their necks
 - First run: Join a Cellar from Another Device on the empty Cellar; while the
   sample cellar is there, a banner removes it alone (with Undo), and joining
   another device replaces a sample-only cellar

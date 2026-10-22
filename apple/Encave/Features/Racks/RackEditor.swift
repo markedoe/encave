@@ -14,12 +14,14 @@ struct RackPreset: Identifiable {
     var shelfLayers: [Int]?
     var shelfRows: [Int]?
     var zoneBreaks: [Int]?
+    /// Two deep: the back bottles lie head-to-tail.
+    var backReversed = false
     var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)-\(shelfLayers ?? [])-\(zoneBreaks ?? [])" }
 
     /// The fridge these shelves make.
     var shelvesRack: Rack? {
         shelfLayers.map { Rack(name: "", kind: kind, rows: rows, columns: columns, depth: depth, rowColumns: shelfRows,
-                               shelfLayers: $0, zoneBreaks: zoneBreaks) }
+                               shelfLayers: $0, zoneBreaks: zoneBreaks, backReversed: backReversed) }
     }
 
     // Computed: LocalizedStringKey is not Sendable, so it cannot be a stored static.
@@ -31,10 +33,10 @@ struct RackPreset: Identifiable {
             RackPreset(title: "5 rows of 8", kind: .staggered, rows: 5, columns: 8),
             RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
             RackPreset(title: "Wine fridge, shelves in layers", kind: .staggered, rows: 10, columns: 6, depth: 2,
-                       shelfLayers: Array(repeating: 2, count: 5)),
+                       shelfLayers: Array(repeating: 2, count: 5), backReversed: true),
             RackPreset(title: "Wine fridge, 2 zones", kind: .staggered, rows: SampleData.twoZoneFridgeRows.count, columns: 6,
                        depth: 2, shelfLayers: SampleData.twoZoneFridgeLayers, shelfRows: SampleData.twoZoneFridgeRows,
-                       zoneBreaks: [4]),
+                       zoneBreaks: [4], backReversed: true),
             RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
             RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
             RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
@@ -55,6 +57,8 @@ struct RackEditor: View {
     @State private var rows = 6
     @State private var columns = 8
     @State private var depth = 1
+    /// A fridge on shelves two deep: the back bottles lie head-to-tail.
+    @State private var backReversed = false
     @State private var binCapacity = 10
     @State private var customRows = false
     @State private var rowColumns: [Int] = []
@@ -131,17 +135,23 @@ struct RackEditor: View {
                         }
                         .fieldHelp("A diamond bin of about 30 cm holds around 10 standard bottles.")
                     case .staggered:
-                        Picker("Rows deep", selection: $depth) {
+                        Picker("Rows deep", selection: $depth.animation()) {
                             Text(verbatim: "1").tag(1)
                             Text(verbatim: "2").tag(2)
                         }
                         .pickerStyle(.segmented)
                         .fieldHelp(depthHelp)
+                        if layered, depth == 2 {
+                            Toggle("Back bottles head-to-tail", isOn: $backReversed)
+                                .fieldHelp("The back bottles lie the other way round: their necks face you between the bases of the front ones.")
+                        }
                     }
                 } header: {
                     Text("Size")
                 } footer: {
-                    if layered {
+                    if layered, depth == 2 {
+                        Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.")
+                    } else if layered {
                         Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
@@ -281,7 +291,8 @@ struct RackEditor: View {
 
     private var current: EditorState {
         EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
-                    customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves)
+                    customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves,
+                    backReversed: backReversed)
     }
 
     /// Something was changed since the editor opened.
@@ -327,7 +338,8 @@ struct RackEditor: View {
             return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: max(1, widths.count),
                         columns: shelves.map { $0.counts[0] }.max() ?? 1, depth: depth, rowColumns: widths,
                         shelfLayers: shelves.map(\.layers),
-                        zoneBreaks: shelves.indices.filter { $0 > 0 && shelves[$0].startsZone })
+                        zoneBreaks: shelves.indices.filter { $0 > 0 && shelves[$0].startsZone },
+                        backReversed: backReversed)
         }
         return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: rows,
                     columns: customRows ? (rowColumns.max() ?? columns) : columns,
@@ -400,6 +412,7 @@ struct RackEditor: View {
     private func matches(_ preset: RackPreset) -> Bool {
         if let fridge = preset.shelvesRack {
             return layered && depth == preset.depth && shelves == ShelfDraft.shelves(of: fridge)
+                && backReversed == preset.backReversed
         }
         return !customRows && !layered && rows == preset.rows && columns == preset.columns
             && (kind == .bins ? binCapacity == preset.binCapacity : depth == preset.depth)
@@ -410,15 +423,17 @@ struct RackEditor: View {
             kind = preset.kind; rows = preset.rows; columns = preset.columns
             depth = preset.depth; binCapacity = preset.binCapacity; customRows = false
             onShelves = preset.shelfLayers != nil
+            backReversed = preset.backReversed
             if let fridge = preset.shelvesRack { shelves = ShelfDraft.shelves(of: fridge) }
         }
     }
 
-    /// A new fridge on shelves: five shelves of 6 bottles and 5 on top, two deep.
+    /// A new fridge on shelves: five shelves of 6 bottles and 5 on top, two deep, head-to-tail.
     private func startShelves() {
         guard shelves.isEmpty else { return }
         shelves = (0..<5).map { _ in ShelfDraft() }
         depth = 2
+        backReversed = true
     }
 
     private func load() {
@@ -427,6 +442,7 @@ struct RackEditor: View {
         if let rackID, let rack = model.cellar.rack(rackID) {
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
+            backReversed = rack.isBackReversed
             if rack.hasShelfLayers {
                 onShelves = true
                 shelves = ShelfDraft.shelves(of: rack, keepingOrigins: true)
@@ -474,6 +490,7 @@ private struct EditorState: Equatable {
     var rowColumns: [Int]
     var onShelves: Bool
     var shelves: [ShelfDraft]
+    var backReversed: Bool
 }
 
 /// One shelf of a fridge with bottles in layers, while editing.
@@ -641,7 +658,7 @@ struct SlotPickerView: View {
 
     var body: some View {
         NavigationStack {
-            FittedRackGrid(rack: rack, selected: Set(selection)) { cell, _ in toggle(cell) }
+            FittedRackGrid(rack: rack, selected: Set(selection)) { place, _ in toggle(place) }
             .safeAreaInset(edge: .bottom) {
                 Text("\(selection.count) of \(limit) chosen")
                     .font(.subheadline.weight(.medium).monospacedDigit())
@@ -667,14 +684,15 @@ struct SlotPickerView: View {
 
     @Environment(CellarModel.self) private var model
 
-    /// Adds the next free place of a cell, or clears the cell when it is all chosen.
-    private func toggle(_ cell: RackCell) {
-        let free = model.cellar.freeSlots(in: rack).filter { $0.cell == cell }
-        let chosen = selection.filter { $0.cell == cell }
+    /// Adds the next free place of a cell, or clears the cell when it is all chosen (on a
+    /// fridge drawn front and back, the very place tapped).
+    private func toggle(_ place: RackPlace) {
+        let free = model.cellar.freeSlots(in: rack).filter(place.contains)
+        let chosen = selection.filter(place.contains)
         if let next = free.first(where: { !selection.contains($0) }), selection.count < limit {
             selection.append(next)
         } else if !chosen.isEmpty {
-            selection.removeAll { $0.cell == cell }
+            selection.removeAll(where: place.contains)
         } else if limit == 1, let first = free.first {
             selection = [first]
         }
@@ -701,14 +719,14 @@ struct MoveBottleView: View {
                         .pickerStyle(.menu)
                         .padding()
                         if let rack = rackID.flatMap({ model.cellar.rack($0) }) {
-                            FittedRackGrid(rack: rack, highlighted: bottle.slot) { cell, _ in
-                                    if bottle.slot?.cell == cell {
+                            FittedRackGrid(rack: rack, highlighted: bottle.slot) { place, _ in
+                                    if bottle.slot.map(place.contains) == true {
                                         dismiss()
-                                    } else if let free = model.cellar.freeSlot(in: cell) {
+                                    } else if let free = model.cellar.freeSlot(at: place) {
                                         model.move(bottleID, to: free)
                                         dismiss()
-                                    } else if rack.positionsPerCell == 1, let from = bottle.slot {
-                                        model.swap(from, Slot(rackID: cell.rackID, row: cell.row, column: cell.column))
+                                    } else if place.holdsOne(in: rack), let from = bottle.slot {
+                                        model.swap(from, place.firstSlot)
                                         dismiss()
                                     } else {
                                         model.showToast(String(localized: "This place is full."))

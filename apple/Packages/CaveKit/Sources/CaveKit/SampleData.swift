@@ -16,6 +16,7 @@ public enum SampleData {
         public var honeycomb = "Honeycomb rack"
         public var stairs = "Under the stairs"
         public var largeFridge = "Large wine fridge"
+        public var headToTailFridge = "Head-to-tail fridge"
         public var tastingNote = "Silky, red fruit, long finish."
         public var kitchen = "Kitchen"
         public var occasion = "Dinner with friends"
@@ -147,6 +148,33 @@ public enum SampleData {
                                       place: labels.restaurantPlace, rating: 5, note: labels.restaurantNote,
                                       tags: [labels.tagToBuy], price: 32, currency: cellar.settings.currency,
                                       wantsToBuy: true), wine: onTrip)
+
+        // A fridge two deep whose back bottles lie head-to-tail, necks facing you between the
+        // bases of the front ones: each shelf holds 4 bottles and 3 resting on them, front
+        // and back. Shelf 1 is nearly full, shelf 2 has a few bottles, shelf 3 is empty.
+        let headToTail = Rack(id: ids.next(.rack), name: labels.headToTailFridge, kind: .staggered, rows: 6, columns: 4,
+                              depth: 2, shelfLayers: [2, 2, 2], backReversed: true)
+        cellar.addRack(headToTail)
+        func places(_ row: Int, _ columns: Range<Int>, depth: Int) -> [Slot] {
+            columns.map { Slot(rackID: headToTail.id, row: row, column: $0, depth: depth) }
+        }
+        // (Entry of the wine above, places.) Row 0 is shelf 1's top layer, row 1 its bottom one.
+        let fridgeBottles: [(Int, [Slot])] = [
+            (0, places(1, 0..<4, depth: 0)),
+            (2, places(0, 0..<3, depth: 0)),
+            (5, places(1, 0..<4, depth: 1)),
+            (4, places(0, 1..<2, depth: 1)),
+            (9, places(3, 0..<2, depth: 0)),
+            (5, places(3, 1..<3, depth: 1)),
+        ]
+        for (index, (entry, slots)) in fridgeBottles.enumerated() {
+            let date = Date.now - Double(20 * (index + 1)) * day
+            let purchase = PurchaseInfo(date: date, price: prices[entry % prices.count], currency: cellar.settings.currency)
+            if let added = try? cellar.addBottles(of: entries[entry].0, quantity: slots.count, slots: slots,
+                                                  purchase: purchase, addedAt: date) {
+                ids.rekey(added, in: &cellar)
+            }
+        }
         return cellar
     }
 

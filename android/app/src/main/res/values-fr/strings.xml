@@ -523,7 +523,7 @@
     <string name="place_shelf_layer_top">Étagère %1$d, couche du haut, place %2$d</string>
     <string name="place_with_depth">%1$s, %2$s</string>
     <string name="depth_front">devant</string>
-    <string name="depth_back">derrière</string>
+    <string name="depth_back">fond</string>
     <string name="depth_middle">milieu</string>
     <string name="cell_bin">%1$s, %2$d sur %3$d bouteilles</string>
     <string name="rack_cell_full">Cet emplacement est plein.</string>
@@ -577,7 +577,7 @@
     <string name="help_field_staggered_depth">Combien de bouteilles tiennent l’une derrière l’autre dans chaque case.</string>
     <string name="help_field_shelf_depth">Combien de bouteilles tiennent l’une derrière l’autre sur une étagère.</string>
     <string name="help_field_bin">Un losange d’environ 30 cm contient une dizaine de bouteilles standard.</string>
-    <string name="help_rack_holds">Contient %1$d bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle de derrière.</string>
+    <string name="help_rack_holds">Contient %1$d bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière.</string>
     <string name="help_field_discovery_place">Où vous l’avez bu, pour retrouver le vin plus tard.</string>
     <string name="help_where_footer">La recherche du Journal cherche aussi dans le lieu, les notes et les tags.</string>
     <string name="help_tags_footer">Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal.</string>
@@ -642,7 +642,7 @@
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière.</string>
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu.</string>
     <string name="help_racks_places_title">Places</string>
-    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
+    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
     <string name="help_racks_finding_title">Trouver une bouteille</string>
     <string name="help_racks_finding">Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles.</string>
     <string name="help_racks_zooming_title">Zoomer</string>

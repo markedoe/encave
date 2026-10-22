@@ -130,6 +130,7 @@
         "rows": 2
       },
       {
+        "backReversed": true,
         "binCapacity": 12,
         "columns": 6,
         "depth": 2,

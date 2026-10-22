@@ -247,7 +247,19 @@ data class Rack(
      * start a new zone, below a divider. Null for a single zone.
      */
     val zoneBreaks: List<Int>? = null,
+    /**
+     * Fridge with shelf layers, two deep: the back bottles lie the other way round
+     * ("head-to-tail"), necks facing you between the front bottles' bases. Null (false)
+     * elsewhere; [normalized] keeps it only as true where it applies.
+     */
+    val backReversed: Boolean? = null,
 ) {
+    /** A fridge with shelf layers two deep: drawn as a front band and a back band per shelf. */
+    val hasDepthBands: Boolean get() = hasShelfLayers && depth == 2
+
+    /** The back bottles of a fridge drawn in bands lie head-to-tail (see [backReversed]). */
+    val isBackReversed: Boolean get() = backReversed == true && hasDepthBands
+
     /** The temperature zone of each shelf, 0 for the top one (only with shelf layers). */
     fun zoneOfShelf(shelf: Int): Int = zoneBreaks.orEmpty().count { it <= shelf }
 
@@ -397,7 +409,8 @@ data class Rack(
             shelfLayers = layers,
             zoneBreaks = breaks,
         )
-        return if (fixed == this) this else fixed
+        val reversed = fixed.copy(backReversed = if (backReversed == true && fixed.hasDepthBands) true else null)
+        return if (reversed == this) this else reversed
     }
 
     companion object {

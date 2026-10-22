@@ -97,7 +97,10 @@ object InteropFixture {
         val racks = listOf(
             Rack(grid, "Cave/left wall", RackKind.Grid, rows = 4, columns = 6, depth = 2, rowColumns = listOf(6, 6, 5, 4)),
             Rack(bins, "Bins", RackKind.Bins, rows = 2, columns = 3, binCapacity = 10),
-            Rack(fridge, "Fridge", RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1), zoneBreaks = listOf(1)),
+            Rack(
+                fridge, "Fridge", RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1),
+                zoneBreaks = listOf(1), backReversed = true,
+            ),
         )
         val searches = listOf(
             SavedSearch.of(

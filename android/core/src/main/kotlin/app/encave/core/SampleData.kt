@@ -25,6 +25,7 @@ object SampleData {
         val honeycomb: String = "Honeycomb rack",
         val stairs: String = "Under the stairs",
         val largeFridge: String = "Large wine fridge",
+        val headToTailFridge: String = "Head-to-tail fridge",
         val tastingNote: String = "Silky, red fruit, long finish.",
         val kitchen: String = "Kitchen",
         val occasion: String = "Dinner with friends",
@@ -188,6 +189,31 @@ object SampleData {
                 price = BigDecimal(32), currency = cellar.settings.currency, wantsToBuy = true),
             onTrip,
         )
+
+        // A fridge two deep whose back bottles lie head-to-tail, necks facing you between the
+        // bases of the front ones: each shelf holds 4 bottles and 3 resting on them, front
+        // and back. Shelf 1 is nearly full, shelf 2 has a few bottles, shelf 3 is empty.
+        val headToTail = Rack(
+            id = ids.next(Kind.Rack), name = labels.headToTailFridge, kind = RackKind.Staggered, rows = 6, columns = 4,
+            depth = 2, shelfLayers = listOf(2, 2, 2), backReversed = true,
+        )
+        cellar.addRack(headToTail)
+        fun places(row: Int, columns: IntRange, depth: Int) = columns.map { Slot(headToTail.id, row, it, depth) }
+        // (Entry of the wine above, places.) Row 0 is shelf 1's top layer, row 1 its bottom one.
+        val fridgeBottles = listOf(
+            0 to places(1, 0..3, depth = 0),
+            2 to places(0, 0..2, depth = 0),
+            5 to places(1, 0..3, depth = 1),
+            4 to places(0, 1..1, depth = 1),
+            9 to places(3, 0..1, depth = 0),
+            5 to places(3, 1..2, depth = 1),
+        )
+        fridgeBottles.forEachIndexed { index, (entry, slots) ->
+            val date = now - Duration.ofDays(20L * (index + 1))
+            val purchase = PurchaseInfo(date = date, price = prices[entry % prices.size], currency = cellar.settings.currency)
+            runCatching { cellar.addBottles(entries[entry].first, slots.size, slots, purchase, addedAt = date) }
+                .onSuccess { ids.rekey(it, cellar) }
+        }
         return cellar
     }
 

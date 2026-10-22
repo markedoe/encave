@@ -1,5 +1,6 @@
 package app.encave.core
 
+import app.encave.core.sync.SyncJson
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -263,5 +264,47 @@ class RackTest {
         assertTrue(racks.any { it.hasShelfLayers }, "a fridge with bottles in layers")
         racks.forEach { assertTrue(cellar.occupancy(it) > 0, "${it.name} has bottles") }
         assertTrue(cellar.bottlesInCellar.any { (it.slot?.depth ?: 0) > 0 }, "a bottle sits behind another")
+    }
+
+    @Test
+    fun headToTailBacksOnlyOnTwoDeepFridgesWithLayers() {
+        val fridge = Rack(
+            name = "F", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, shelfLayers = listOf(2, 2),
+            backReversed = true,
+        ).normalized()
+        assertTrue(fridge.hasDepthBands && fridge.isBackReversed && fridge.backReversed == true)
+        // Nowhere else: one deep, a continuous honeycomb, a grid; false is left out.
+        assertNull(Rack(name = "1", kind = RackKind.Staggered, rows = 2, columns = 4, shelfLayers = listOf(2), backReversed = true).normalized().backReversed)
+        assertNull(Rack(name = "H", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, backReversed = true).normalized().backReversed)
+        assertNull(Rack(name = "G", rows = 2, columns = 4, depth = 2, backReversed = true).normalized().backReversed)
+        assertNull(
+            Rack(name = "F", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, shelfLayers = listOf(2), backReversed = false)
+                .normalized().backReversed,
+        )
+
+        val encoded = SyncJson.encodeCellar(Cellar(racks = listOf(fridge))).decodeToString()
+        assertTrue(encoded.contains("\"backReversed\":true"), encoded)
+        assertEquals(fridge, SyncJson.decodeCellar(encoded.toByteArray()).racks.single())
+        val plain = SyncJson.encodeCellar(Cellar(racks = listOf(fridge.copy(backReversed = null)))).decodeToString()
+        assertFalse(plain.contains("backReversed"), plain)
+
+        // Older racks have no flag; a flag where it does not apply is dropped when read.
+        val id = UUID.randomUUID()
+        val old = """{"schemaVersion":2,"racks":[{"id":"$id","name":"Old","kind":"staggered","rows":2,"columns":4,"depth":2,"shelfLayers":[2]}]}"""
+        assertNull(SyncJson.decodeCellar(old.toByteArray()).racks.single().backReversed)
+        val grid = """{"schemaVersion":2,"racks":[{"id":"$id","name":"G","kind":"grid","rows":2,"columns":4,"depth":2,"backReversed":true}]}"""
+        val decoded = SyncJson.decodeCellar(grid.toByteArray()).racks.single()
+        assertNull(decoded.backReversed)
+        assertFalse(decoded.isBackReversed)
+    }
+
+    @Test
+    fun sampleHasAHeadToTailFridgeWithBottlesFrontAndBack() {
+        val cellar = SampleData.cellar(year = 2026)
+        val fridge = cellar.racks.firstOrNull { it.isBackReversed }
+        assertTrue(fridge?.shelfLayers?.all { it == 2 } == true)
+        assertEquals(listOf(3, 4), fridge?.let { rack -> (0 until 2).map { rack.columnsInRow(it) } })
+        val depths = cellar.bottlesInCellar.filter { it.slot?.rackId == fridge?.id }.mapNotNull { it.slot?.depth }.toSet()
+        assertEquals(setOf(0, 1), depths)
     }
 }
