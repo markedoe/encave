@@ -63,7 +63,12 @@ for appearance in light dark; do
         echo "::warning::$appearance $name: no window to capture"
         tail -n 40 "$log"
         # Where the app is: its main thread.
-        sample "$pid" 2 -file "$work/sample.txt" > /dev/null 2>&1 && sed -n '/^Call graph:/,/^Total number/p' "$work/sample.txt" | head -n 120
+        if sample "$pid" 3 -file "$work/sample.txt" > /dev/null 2>&1; then
+          echo "--- app frames on the main thread ---"
+          grep -E '\(in (Encave|CaveKit)\)' "$work/sample.txt" | sed -E 's/ +\[0x[0-9a-f]+\]//' | awk '!seen[$0]++' | head -n 150
+          echo "--- busiest functions ---"
+          sed -n '/^Sort by top of stack/,$p' "$work/sample.txt" | head -n 40
+        fi
         status=1
         failures=$((failures + 1))
       fi
