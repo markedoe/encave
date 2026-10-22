@@ -650,7 +650,9 @@ FR = {
     "Date": "Date",
     "Delete Rack": "Supprimer le casier",
     "Delete Wine": "Supprimer le vin",
-    "Delete this rack?": "Supprimer ce casier ?",
+    "Delete Rack…": "Supprimer le casier…",
+    "Delete “%@”?": "Supprimer « %@ » ?",
+    "It holds no bottles.": "Il ne contient aucune bouteille.",
     "Deleted %@": "%@ supprimé",
     "Describe your racks to see exactly where each bottle is.":
         "Décrivez vos casiers pour voir exactement où se trouve chaque bouteille.",
@@ -1347,7 +1349,7 @@ FR = {
     "Changing a rack": "Modifier un casier",
     "Check One by One…": "Vérifier une par une…",
     'Choose **Check This Rack**, tap each bottle you find, then **End Check**. Tapping a bin or a place with several bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a place shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.': 'Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un losange ou une place de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement et choisissez **Vérifier une par une…** (une place affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans place) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.',
-    'Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** keeps its bottles in your cellar without a place; **Undo** brings the rack back.': 'Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** garde ses bouteilles dans votre cave sans place ; **Annuler** rétablit le casier.',
+    'Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** asks first, saying how many bottles it holds; they stay in your cellar without a place, and **Undo** brings the rack back.': 'Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans place, et **Annuler** rétablit le casier.',
     "Choose where to put %@": "Choisissez où mettre %@",
     "Keep Editing": "Continuer",
     "Marks as found": "Marque comme trouvée",
@@ -1452,6 +1454,9 @@ FR = {
 
 # Keys with plural forms: English one/other and French one/other.
 PLURALS = {
+    "%lld bottles stay in your cellar without a place.": (
+        ("%lld bottle stays in your cellar without a place.", "%lld bottles stay in your cellar without a place."),
+        ("%lld bouteille reste dans votre cave sans emplacement.", "%lld bouteilles restent dans votre cave sans emplacement.")),
     "%lld other wines": (("%lld other wine", "%lld other wines"), ("%lld autre vin", "%lld autres vins")),
     "%lld documents": (("%lld document", "%lld documents"), ("%lld document", "%lld documents")),
     "%lld bottles opened": (("%lld bottle opened", "%lld bottles opened"),

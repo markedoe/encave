@@ -235,8 +235,8 @@ S = [
  ("rack_editor_edit", "Edit rack", "Modifier le casier"),
  ("rack_preview", "Preview", "Aperçu"),
  ("rack_delete", "Delete rack", "Supprimer le casier"),
- ("rack_delete_title", "Delete this rack?", "Supprimer ce casier ?"),
- ("rack_delete_body", "Its bottles stay in your cellar, without a place.", "Ses bouteilles restent dans votre cave, sans emplacement."),
+ ("rack_delete_title", "Delete “%1$s”?", "Supprimer « %1$s » ?"),
+ ("rack_delete_empty", "It holds no bottles.", "Il ne contient aucune bouteille."),
  ("rack_default_name", "Rack %1$d", "Casier %1$d"),
  ("cell_empty", "%1$s, empty", "%1$s, vide"),
  ("cell_filled", "%1$s, %2$s", "%1$s, %2$s"),
@@ -1139,7 +1139,7 @@ S = [
  ("help_start_table", "On tablets and large screens, the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.",
   "Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté."),
  ("help_racks_editing_title", "Changing a rack", "Modifier un casier"),
- ('help_racks_editing', 'Tap **Edit rack** to change its name, kind or size. On a wine fridge, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first and takes them out of the rack (they stay in the cellar without a place), and **Undo** puts everything back. **Delete rack** keeps its bottles in the cellar without a place, and can be undone too. To change the order of your racks, tap **Reorder racks** in the Racks list, then move each rack up or down.', 'Touchez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du casier (elles restent dans la cave sans place), et **Annuler** remet tout en place. **Supprimer le casier** garde ses bouteilles dans la cave sans place, et peut aussi être annulé. Pour changer l’ordre de vos casiers, touchez **Réorganiser les casiers** dans la liste des casiers, puis montez ou descendez chaque casier.'),
+ ('help_racks_editing', 'Tap **Edit rack** to change its name, kind or size. On a wine fridge, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first and takes them out of the rack (they stay in the cellar without a place), and **Undo** puts everything back. **Delete rack** asks first, saying how many bottles it holds; they stay in the cellar without a place, and it can be undone too. To change the order of your racks, tap **Reorder racks** in the Racks list, then move each rack up or down.', 'Touchez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du casier (elles restent dans la cave sans place), et **Annuler** remet tout en place. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans place, et cela peut aussi être annulé. Pour changer l’ordre de vos casiers, touchez **Réorganiser les casiers** dans la liste des casiers, puis montez ou descendez chaque casier.'),
  # Rack fixes: moving, undo, checking one by one, accessibility
  ("msg_taken_out_one", "Bottle taken out of the rack", "Bouteille sortie du casier"),
  ("msg_swapped", "Bottles swapped", "Bouteilles échangées"),
@@ -1393,6 +1393,7 @@ S = [
 ]
 
 P = [
+ ("rack_delete_body", ("%d bottle stays in your cellar without a place.", "%d bottles stay in your cellar without a place."), ("%d bouteille reste dans votre cave sans emplacement.", "%d bouteilles restent dans votre cave sans emplacement.")),
  ("licences_modules", ("%d module", "%d modules"), ("%d module", "%d modules")),
  ("msg_backup_saved_without", ("Backup saved, without %d photo or document: not on this device yet, or beyond the 4 GB a ZIP file holds.", "Backup saved, without %d photos or documents: not on this device yet, or beyond the 4 GB a ZIP file holds."), ("Sauvegarde enregistrée, sans %d photo ou document : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.", "Sauvegarde enregistrée, sans %d photos ou documents : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.")),
  ("bottle_count", ("%d bottle", "%d bottles"), ("%d bouteille", "%d bouteilles")),

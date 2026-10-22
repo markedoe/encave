@@ -5,6 +5,7 @@ struct RacksView: View {
     @Environment(CellarModel.self) private var model
     @Environment(SceneRouter.self) private var router: SceneRouter?
     @State private var path = NavigationPath()
+    @State private var deletingRackID: UUID?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -39,8 +40,8 @@ struct RacksView: View {
                                     Button("Move Down", systemImage: "arrow.down") { moveRack(at: index, by: 1) }
                                         .disabled(index == model.cellar.racks.count - 1)
                                     Divider()
-                                    Button("Delete Rack", systemImage: "trash", role: .destructive) {
-                                        model.deleteRack(rack.id)
+                                    Button("Delete Rack…", systemImage: "trash", role: .destructive) {
+                                        deletingRackID = rack.id
                                     }
                                 }
                                 .accessibilityActions {
@@ -58,6 +59,7 @@ struct RacksView: View {
                 }
             }
             .navigationTitle("Racks")
+            .confirmsRackDeletion($deletingRackID)
             .navigationDestination(for: UUID.self) { RackDetailView(rackID: $0) }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

@@ -213,8 +213,8 @@
     <string name="rack_editor_edit">Modifier le casier</string>
     <string name="rack_preview">Aperçu</string>
     <string name="rack_delete">Supprimer le casier</string>
-    <string name="rack_delete_title">Supprimer ce casier ?</string>
-    <string name="rack_delete_body">Ses bouteilles restent dans votre cave, sans emplacement.</string>
+    <string name="rack_delete_title">Supprimer « %1$s » ?</string>
+    <string name="rack_delete_empty">Il ne contient aucune bouteille.</string>
     <string name="rack_default_name">Casier %1$d</string>
     <string name="cell_empty">%1$s, vide</string>
     <string name="cell_filled">%1$s, %2$s</string>
@@ -1059,7 +1059,7 @@
     <string name="help_start_table_title">Liste ou tableau</string>
     <string name="help_start_table">Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.</string>
     <string name="help_racks_editing_title">Modifier un casier</string>
-    <string name="help_racks_editing">Touchez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du casier (elles restent dans la cave sans place), et **Annuler** remet tout en place. **Supprimer le casier** garde ses bouteilles dans la cave sans place, et peut aussi être annulé. Pour changer l’ordre de vos casiers, touchez **Réorganiser les casiers** dans la liste des casiers, puis montez ou descendez chaque casier.</string>
+    <string name="help_racks_editing">Touchez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du casier (elles restent dans la cave sans place), et **Annuler** remet tout en place. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans place, et cela peut aussi être annulé. Pour changer l’ordre de vos casiers, touchez **Réorganiser les casiers** dans la liste des casiers, puis montez ou descendez chaque casier.</string>
     <string name="msg_taken_out_one">Bouteille sortie du casier</string>
     <string name="msg_swapped">Bouteilles échangées</string>
     <string name="msg_rack_deleted">%1$s supprimé</string>
@@ -1290,6 +1290,11 @@
     <string name="insights_year_made_with">Réalisé avec Encave</string>
     <string name="help_journal_opened_title">Une bouteille de votre cave</string>
     <string name="help_journal_opened">Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir.</string>
+    <plurals name="rack_delete_body">
+        <item quantity="one">%d bouteille reste dans votre cave sans emplacement.</item>
+        <item quantity="many">%d bouteilles restent dans votre cave sans emplacement.</item>
+        <item quantity="other">%d bouteilles restent dans votre cave sans emplacement.</item>
+    </plurals>
     <plurals name="licences_modules">
         <item quantity="one">%d module</item>
         <item quantity="many">%d modules</item>

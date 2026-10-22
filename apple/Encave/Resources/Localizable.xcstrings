@@ -451,6 +451,46 @@
         }
       }
     },
+    "%lld bottles stay in your cellar without a place.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle stays in your cellar without a place."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles stay in your cellar without a place."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille reste dans votre cave sans emplacement."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles restent dans votre cave sans emplacement."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld devices": {
       "localizations": {
         "fr": {
@@ -3441,12 +3481,12 @@
         }
       }
     },
-    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** keeps its bottles in your cellar without a place; **Undo** brings the rack back.": {
+    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** asks first, saying how many bottles it holds; they stay in your cellar without a place, and **Undo** brings the rack back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** garde ses bouteilles dans votre cave sans place ; **Annuler** rétablit le casier."
+            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans place, et **Annuler** rétablit le casier."
           }
         }
       }
@@ -4051,6 +4091,16 @@
         }
       }
     },
+    "Delete Rack…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le casier…"
+          }
+        }
+      }
+    },
     "Delete Search": {
       "localizations": {
         "fr": {
@@ -4141,12 +4191,12 @@
         }
       }
     },
-    "Delete this rack?": {
+    "Delete “%@”?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer ce casier ?"
+            "value": "Supprimer « %@ » ?"
           }
         }
       }
@@ -6377,6 +6427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Elle apparaît en premier parmi les filtres, à portée d’un toucher."
+          }
+        }
+      }
+    },
+    "It holds no bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il ne contient aucune bouteille."
           }
         }
       }

@@ -214,8 +214,8 @@
     <string name="rack_editor_edit">Edit rack</string>
     <string name="rack_preview">Preview</string>
     <string name="rack_delete">Delete rack</string>
-    <string name="rack_delete_title">Delete this rack?</string>
-    <string name="rack_delete_body">Its bottles stay in your cellar, without a place.</string>
+    <string name="rack_delete_title">Delete “%1$s”?</string>
+    <string name="rack_delete_empty">It holds no bottles.</string>
     <string name="rack_default_name">Rack %1$d</string>
     <string name="cell_empty">%1$s, empty</string>
     <string name="cell_filled">%1$s, %2$s</string>
@@ -1060,7 +1060,7 @@
     <string name="help_start_table_title">List or table</string>
     <string name="help_start_table">On tablets and large screens, the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.</string>
     <string name="help_racks_editing_title">Changing a rack</string>
-    <string name="help_racks_editing">Tap **Edit rack** to change its name, kind or size. On a wine fridge, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first and takes them out of the rack (they stay in the cellar without a place), and **Undo** puts everything back. **Delete rack** keeps its bottles in the cellar without a place, and can be undone too. To change the order of your racks, tap **Reorder racks** in the Racks list, then move each rack up or down.</string>
+    <string name="help_racks_editing">Tap **Edit rack** to change its name, kind or size. On a wine fridge, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first and takes them out of the rack (they stay in the cellar without a place), and **Undo** puts everything back. **Delete rack** asks first, saying how many bottles it holds; they stay in the cellar without a place, and it can be undone too. To change the order of your racks, tap **Reorder racks** in the Racks list, then move each rack up or down.</string>
     <string name="msg_taken_out_one">Bottle taken out of the rack</string>
     <string name="msg_swapped">Bottles swapped</string>
     <string name="msg_rack_deleted">Deleted %1$s</string>
@@ -1291,6 +1291,10 @@
     <string name="insights_year_made_with">Made with Encave</string>
     <string name="help_journal_opened_title">A bottle from your cellar</string>
     <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine\'s name to open it.</string>
+    <plurals name="rack_delete_body">
+        <item quantity="one">%d bottle stays in your cellar without a place.</item>
+        <item quantity="other">%d bottles stay in your cellar without a place.</item>
+    </plurals>
     <plurals name="licences_modules">
         <item quantity="one">%d module</item>
         <item quantity="other">%d modules</item>

@@ -101,3 +101,40 @@ extension CellarModel {
         return cellar.locationLabel(for: bottle)
     }
 }
+
+/// Asks before deleting a rack, naming it and how many bottles lose their place; the
+/// deletion then shows an Undo banner. The same everywhere a rack can be deleted.
+struct RackDeleteConfirmation: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    @Binding var rackID: UUID?
+    var onDelete: () -> Void = {}
+
+    func body(content: Content) -> some View {
+        let rack = rackID.flatMap { model.cellar.rack($0) }
+        let rackName = rack?.name ?? ""
+        let count = rack.map { model.cellar.occupancy(of: $0) } ?? 0
+        content.confirmationDialog(Text("Delete “\(rackName)”?"), isPresented: Binding(
+            get: { rack != nil }, set: { if !$0 { rackID = nil } }
+        ), titleVisibility: .visible) {
+            Button("Delete Rack", role: .destructive) {
+                if let rack { model.deleteRack(rack.id) }
+                rackID = nil
+                onDelete()
+            }
+            Button("Cancel", role: .cancel) { rackID = nil }
+        } message: {
+            if count == 0 {
+                Text("It holds no bottles.")
+            } else {
+                Text("\(count) bottles stay in your cellar without a place.")
+            }
+        }
+    }
+}
+
+extension View {
+    /// Asks before deleting the rack `rackID` names (nil: nothing asked).
+    func confirmsRackDeletion(_ rackID: Binding<UUID?>, onDelete: @escaping () -> Void = {}) -> some View {
+        modifier(RackDeleteConfirmation(rackID: rackID, onDelete: onDelete))
+    }
+}
