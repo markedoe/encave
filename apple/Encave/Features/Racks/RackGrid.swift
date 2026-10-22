@@ -524,8 +524,8 @@ private struct DragAndDrop: ViewModifier {
         if let onDrop {
             content
                 .modifier(Draggable(bottle: bottle))
-                .dropDestination(for: String.self) { items, _ in
-                    guard let id = items.first.flatMap(UUID.init(uuidString:)) else { return false }
+                .dropDestination(for: BottleDrag.self) { items, _ in
+                    guard let id = items.first?.bottleID else { return false }
                     return onDrop(id, cell)
                 } isTargeted: { isTargeted = $0 }
         } else {
@@ -535,11 +535,12 @@ private struct DragAndDrop: ViewModifier {
 }
 
 private struct Draggable: ViewModifier {
+    @Environment(CellarModel.self) private var model
     let bottle: Bottle?
 
     func body(content: Content) -> some View {
         if let bottle {
-            content.draggable(bottle.id.uuidString)
+            content.draggable(BottleDrag(bottleID: bottle.id, name: model.cellar.wines[bottle.wineID]?.displayName ?? ""))
         } else {
             content
         }

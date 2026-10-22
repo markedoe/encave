@@ -84,6 +84,12 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         # Sync away from home in the background (an app refresh task), when iOS allows.
         UIBackgroundModes: [fetch]
+        # A bottle dragged between places of a rack (BottleDrag); its description is
+        # translated in InfoPlist.xcstrings (apple/tools/l10n.py).
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: app.encave.bottle
+            UTTypeDescription: Encave bottle
+            UTTypeConformsTo: [public.data]
         BGTaskSchedulerPermittedIdentifiers: [app.encave.sync.refresh]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -134,6 +140,12 @@ targets:
               NSIncludesSubdomains: true
               NSExceptionAllowsInsecureHTTPLoads: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        # A bottle dragged between places of a rack (BottleDrag); its description is
+        # translated in InfoPlist.xcstrings (apple/tools/l10n.py).
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: app.encave.bottle
+            UTTypeDescription: Encave bottle
+            UTTypeConformsTo: [public.data]
 
   # Screen tour with screenshots and layout checks (see EncaveUITests).
   EncaveUITests:

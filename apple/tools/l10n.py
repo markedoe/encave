@@ -1350,6 +1350,8 @@ INFO_PLIST = {
         "Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI or search server you may set in Settings.",
         "Encave trouve vos autres appareils sur ce réseau pour synchroniser votre cave, chiffrée de bout en bout. Il joint aussi le serveur d’IA ou de recherche que vous pouvez choisir dans les réglages.",
     ),
+    # A UTType description is looked up by its English text.
+    "Encave bottle": ("Encave bottle", "Bouteille Encave"),
 }
 
 # Siri and Shortcuts phrases ("${applicationName}" is the app's name).
