@@ -1,5 +1,7 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.devices.SettingsIcon
+import app.encave.ui.devices.SyncRefreshBox
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,8 +15,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
-import app.encave.ui.devices.SettingsIcon
-import app.encave.ui.devices.SyncRefreshBox
 import app.encave.ui.navigation.InsightsRoute
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
@@ -56,6 +56,10 @@ import androidx.compose.material.icons.outlined.Grass
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Deselect
+import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.VolunteerActivism
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.filled.Bookmark
@@ -209,7 +213,6 @@ private fun CellarList(
     val listState = rememberLazyListState()
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
     var drinking by remember { mutableStateOf<WineGroup?>(null) }
-    var deleting by remember { mutableStateOf<WineGroup?>(null) }
     val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
     val isEmpty = cellar.bottlesInCellar.isEmpty() && cellar.bottlesOnOrder.isEmpty()
     val orders = remember(cellar) { cellar.orderGroups() }
@@ -225,6 +228,7 @@ private fun CellarList(
     var selecting by rememberSaveable { mutableStateOf(false) }
     var picked by rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(setOf<java.util.UUID>()) }
     var confirmBulkDelete by remember { mutableStateOf(false) }
+    var reservingPicked by remember { mutableStateOf(false) }
     var namingSearch by remember { mutableStateOf(false) }
     var confirmSample by remember { mutableStateOf(false) }
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
@@ -239,12 +243,21 @@ private fun CellarList(
     Scaffold(
         topBar = {
             if (selecting) {
+                val allIds = groups.map { it.id }.toSet()
                 SelectionTopBar(
                     count = shownPicked.size,
                     racks = cellar.racks,
+                    allSelected = allIds.isNotEmpty() && shownPicked.containsAll(allIds),
+                    onSelectAll = { all -> picked = if (all) allIds else emptySet() },
                     onClose = ::endSelection,
                     onPlace = { rack -> viewModel.placeWines(shownPicked, rack.id); endSelection() },
                     onTakeOut = { viewModel.unplaceWines(shownPicked); endSelection() },
+                    onReserve = { reservingPicked = true },
+                    onGone = {
+                        // The bottles shown for these wines (those the filters keep), with one Undo.
+                        viewModel.markGone(groups.filter { it.id in shownPicked }.flatMap { it.bottles }.map { it.id }.toSet())
+                        endSelection()
+                    },
                     onDelete = { confirmBulkDelete = true },
                 )
             } else {
@@ -416,7 +429,8 @@ private fun CellarList(
                                         { navigator.open(RackDetailRoute(bottle.slot!!.rackId.toString(), bottle.id.toString())) }
                                     },
                                     onEdit = { navigator.open(EditWineRoute(group.id.toString())) },
-                                    onDelete = { deleting = group },
+                                    // With Undo, on screen longer than for other changes.
+                                    onDelete = { viewModel.deleteWine(group.id) },
                                     onSelect = {
                                         selecting = true
                                         picked = setOf(group.id)
@@ -466,13 +480,15 @@ private fun CellarList(
             onDismiss = { confirmBulkDelete = false },
         )
     }
-    deleting?.let { group ->
-        ConfirmDialog(
-            title = stringResource(R.string.confirm_delete_wine_title),
-            body = stringResource(R.string.confirm_delete_wine_body, group.wine.displayName),
-            confirm = stringResource(R.string.action_delete),
-            onConfirm = { viewModel.deleteWine(group.id) },
-            onDismiss = { deleting = null },
+    if (reservingPicked) {
+        ReserveDialog(
+            initial = cellar.reservations.firstOrNull().orEmpty(),
+            onKeep = { occasion ->
+                viewModel.reserve(groups.filter { it.id in shownPicked }.flatMap { it.bottles }.map { it.id }, occasion)
+                endSelection()
+            },
+            onDismiss = { reservingPicked = false },
+            plural = true,
         )
     }
 }
@@ -488,9 +504,7 @@ private fun CellarSearchBar(
     onSettings: () -> Unit,
     onShowTable: (() -> Unit)?,
 ) {
-    val suggestions = remember(cellar, query) {
-        cellar.wineSuggestions(query).filter { wine -> cellar.bottlesInCellar.any { it.wineId == wine.id } }
-    }
+    val suggestions = remember(cellar, query) { cellar.wineSuggestions(query, inCellarOnly = true) }
     if (!expanded) {
         // Collapsed: a pill that opens the search. A focusable text field here would
         // expand the search as soon as it gets focus (keyboard navigation, launch).
@@ -540,6 +554,25 @@ private fun CellarSearchBar(
                     leadingContent = { WineColorDot(wine.color, size = 16.dp) },
                     modifier = Modifier.clickable { onOpen(wine.id.toString()) },
                 )
+            }
+            // Never a blank page: say so, or show the list the search filters.
+            if (query.isNotBlank() && suggestions.isEmpty()) {
+                item(key = "none") {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.search_no_suggestion)) },
+                        leadingContent = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        modifier = Modifier.testTag("search.none"),
+                    )
+                }
+            }
+            if (query.isNotBlank()) {
+                item(key = "results") {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.search_show_results)) },
+                        leadingContent = { Icon(Icons.AutoMirrored.Outlined.List, contentDescription = null) },
+                        modifier = Modifier.clickable { onExpandedChange(false) }.testTag("search.results"),
+                    )
+                }
             }
         }
     }
@@ -864,17 +897,25 @@ private fun CellarRow(
     }
 }
 
-/** Contextual top bar while choosing several wines: place in a rack, take out, delete. */
+/**
+ * Contextual top bar while choosing several wines: select all, place in a rack, delete,
+ * and under More, take out, keep for an occasion or no longer in the cellar.
+ */
 @Composable
 private fun SelectionTopBar(
     count: Int,
     racks: List<app.encave.core.Rack>,
+    allSelected: Boolean,
+    onSelectAll: (Boolean) -> Unit,
     onClose: () -> Unit,
     onPlace: (app.encave.core.Rack) -> Unit,
     onTakeOut: () -> Unit,
+    onReserve: () -> Unit,
+    onGone: () -> Unit,
     onDelete: () -> Unit,
 ) {
     var rackMenu by remember { mutableStateOf(false) }
+    var moreMenu by remember { mutableStateOf(false) }
     androidx.compose.material3.TopAppBar(
         title = { Text(stringResource(R.string.selection_count, count), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) },
         navigationIcon = {
@@ -883,6 +924,12 @@ private fun SelectionTopBar(
             }
         },
         actions = {
+            IconButton(onClick = { onSelectAll(!allSelected) }, modifier = Modifier.testTag("cellar.select.all")) {
+                Icon(
+                    if (allSelected) Icons.Outlined.Deselect else Icons.Outlined.SelectAll,
+                    contentDescription = stringResource(if (allSelected) R.string.action_deselect_all else R.string.action_select_all),
+                )
+            }
             Box {
                 IconButton(
                     onClick = { rackMenu = true }, enabled = count > 0 && racks.isNotEmpty(),
@@ -894,11 +941,32 @@ private fun SelectionTopBar(
                     }
                 }
             }
-            IconButton(onClick = onTakeOut, enabled = count > 0) {
-                Icon(Icons.Outlined.Outbox, contentDescription = stringResource(R.string.action_take_out_of_racks))
-            }
             IconButton(onClick = onDelete, enabled = count > 0, modifier = Modifier.testTag("cellar.select.delete")) {
                 Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_delete))
+            }
+            Box {
+                IconButton(onClick = { moreMenu = true }, enabled = count > 0, modifier = Modifier.testTag("cellar.select.more")) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                }
+                DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_take_out_of_racks)) },
+                        leadingIcon = { Icon(Icons.Outlined.Outbox, contentDescription = null) },
+                        onClick = { moreMenu = false; onTakeOut() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_keep_for_occasion)) },
+                        leadingIcon = { Icon(Icons.Outlined.CardGiftcard, contentDescription = null) },
+                        onClick = { moreMenu = false; onReserve() },
+                        modifier = Modifier.testTag("cellar.select.reserve"),
+                    )
+                    DropdownMenuItem(
+                        text = { MenuText(stringResource(R.string.action_mark_gone), stringResource(R.string.action_mark_gone_detail)) },
+                        leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                        onClick = { moreMenu = false; onGone() },
+                        modifier = Modifier.testTag("cellar.select.gone"),
+                    )
+                }
             }
         },
         colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),

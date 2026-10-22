@@ -101,19 +101,37 @@ private class TableRow(val group: WineGroup, cellar: Cellar, year: Int) {
     val region: String = listOfNotNull(group.wine.region, group.wine.country).joinToString(", ")
 }
 
-private fun comparator(column: Column): Comparator<TableRow> {
+/**
+ * The order of a column, then the wine's name for rows alike. Non-vintage wines come after
+ * every year, and places follow the racks' order, then row, column and depth, as numbers;
+ * bottles without a place come last.
+ */
+private fun comparator(column: Column, racks: List<app.encave.core.Rack>): Comparator<TableRow> {
     val collator = Cellar.collator()
-    return when (column) {
-        Column.Wine -> Comparator { a, b -> Cellar.nameOrder(a.group.wine, b.group.wine, collator) }
-        Column.Vintage -> compareBy { it.group.wine.vintage ?: 0 }
+    val byName = Comparator<TableRow> { a, b -> Cellar.nameOrder(a.group.wine, b.group.wine, collator) }
+    val rackIndex = racks.withIndex().associate { it.value.id to it.index }
+    val slotOrder = compareBy<app.encave.core.Slot>({ rackIndex[it.rackId] ?: Int.MAX_VALUE }, { it.row }, { it.column }, { it.depth })
+    val order: Comparator<TableRow> = when (column) {
+        Column.Wine -> byName
+        Column.Vintage -> compareBy { it.group.wine.vintage ?: Int.MAX_VALUE }
         Column.Producer -> Comparator { a, b -> collator.compare(a.group.wine.producer.orEmpty(), b.group.wine.producer.orEmpty()) }
         Column.Style -> compareBy { it.group.wine.color?.ordinal ?: Int.MAX_VALUE }
         Column.Region -> Comparator { a, b -> collator.compare(a.region, b.region) }
         Column.When -> compareBy { it.maturity.ordinal }
         Column.Bottles -> compareBy { it.group.count }
-        Column.Location -> compareBy { it.group.bottles.firstOrNull()?.slot?.let { s -> "${s.rackId}/${s.row}/${s.column}" } ?: "~" }
+        Column.Location -> Comparator { a, b ->
+            val sa = a.group.bottles.mapNotNull { it.slot }.minWithOrNull(slotOrder)
+            val sb = b.group.bottles.mapNotNull { it.slot }.minWithOrNull(slotOrder)
+            when {
+                sa == null && sb == null -> 0
+                sa == null -> 1
+                sb == null -> -1
+                else -> slotOrder.compare(sa, sb)
+            }
+        }
         Column.Value -> compareBy { it.value }
     }
+    return if (column == Column.Wine) order else order.then(byName)
 }
 
 /**
@@ -129,7 +147,7 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     val year = viewModel.year
     val rows = remember(cellar, filter.query, sortColumn, ascending) {
-        val order = comparator(sortColumn).let { if (ascending) it else it.reversed() }
+        val order = comparator(sortColumn, cellar.racks).let { if (ascending) it else it.reversed() }
         cellar.groups(CellarFilter(query = filter.query), CellarSort.Name, year).map { TableRow(it, cellar, year) }.sortedWith(order)
     }
     val horizontal = rememberScrollState()

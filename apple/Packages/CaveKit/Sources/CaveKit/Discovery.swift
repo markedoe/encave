@@ -87,11 +87,8 @@ public extension Cellar {
                 return false
             }
             guard !needle.isEmpty else { return true }
-            if wines[discovery.wineID]?.matches(needle) == true { return true }
-            let fields = [discovery.place, discovery.note] + discovery.tags.map(Optional.some)
-            return fields.compactMap { $0 }.contains {
-                $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
-            }
+            let fields = ([discovery.place, discovery.note] + discovery.tags.map(Optional.some)).compactMap { $0 }
+            return SearchText.matches(needle, in: (wines[discovery.wineID]?.searchFields ?? []) + fields)
         }
         .sorted { $0.date == $1.date ? $0.id.uuidString < $1.id.uuidString : $0.date > $1.date }
     }
