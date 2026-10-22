@@ -82,13 +82,13 @@ data class Wine(
         get() = listOf(name, producer ?: "", vintage?.toString() ?: "")
             .joinToString("|") { it.trim().lowercase(Locale.ROOT) }
 
-    /** Case- and accent-insensitive search over the label fields and grapes. */
-    fun matches(needle: String): Boolean {
-        val folded = fold(needle)
-        val fields = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
+    /** What a search looks in: the label fields, grapes, barcodes and tags. */
+    val searchFields: List<String>
+        get() = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
             barcodes.orEmpty() + tags.orEmpty()
-        return fields.any { fold(it).contains(folded) }
-    }
+
+    /** Every word of [needle] is in one of the fields ("Margaux 2015", "syrah guigal"). */
+    fun matches(needle: String): Boolean = SearchText.matches(needle, searchFields)
 
     /** True if the wine has this tag, ignoring case. */
     fun hasTag(tag: String): Boolean = tags.orEmpty().any { it.equals(tag, ignoreCase = true) }
@@ -539,5 +539,23 @@ data class SavedSearch(
             colors = filter.colors.sortedBy { it.raw }, maturities = filter.maturities.sortedBy { it.raw },
             rackId = filter.rackId, tag = filter.tag, reservation = filter.reservation, grape = filter.grape,
         )
+    }
+}
+
+/**
+ * Searches by words: each word of the query must appear, ignoring case and accents, in
+ * one of the fields (not necessarily the same one). CaveKit does the same.
+ */
+object SearchText {
+    private val spaces = Regex("\\s+")
+
+    fun words(query: String): List<String> = query.split(spaces).filter { it.isNotEmpty() }
+
+    /** True for a blank query. */
+    fun matches(query: String, fields: List<String>): Boolean {
+        val words = words(query).map { Wine.fold(it) }
+        if (words.isEmpty()) return true
+        val folded = fields.map { Wine.fold(it) }
+        return words.all { word -> folded.any { it.contains(word) } }
     }
 }

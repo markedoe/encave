@@ -4,6 +4,9 @@ import SwiftUI
 struct WineDetailView: View {
     @Environment(CellarModel.self) private var model
     @Environment(SceneRouter.self) private var router: SceneRouter?
+    @Environment(\.dismiss) private var dismiss
+    /// Pushed on a stack (from Tonight, a rack, a list of wines), rather than its root.
+    @Environment(\.isPresented) private var isPresented
     let wineID: UUID
     @State private var searchingOnline = false
     @State private var findingPrice = false
@@ -45,6 +48,34 @@ struct WineDetailView: View {
                     .controlSize(.large)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
+                }
+
+                // Where the bottles are, and what to do with each, right under Drink and Add.
+                let orders = model.cellar.bottlesOnOrder.filter { $0.wineID == wineID }
+                    .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
+                if !bottles.isEmpty || orders.isEmpty {
+                    Section {
+                        ForEach(bottles) { bottle in
+                            BottleRow(bottle: bottle)
+                        }
+                    } header: {
+                        Text("\(bottles.count) bottles in the cellar")
+                    }
+                }
+                if !orders.isEmpty {
+                    Section {
+                        ForEach(orders) { bottle in
+                            OrderedBottleRow(bottle: bottle)
+                        }
+                        Button("Mark All Received", systemImage: "shippingbox") {
+                            model.receive(orders.map(\.id))
+                        }
+                        .accessibilityIdentifier("action.order.receive")
+                    } header: {
+                        Text("\(orders.count) bottles on order")
+                    } footer: {
+                        Text("Received bottles join the cellar without a place; move them to a rack from here.")
+                    }
                 }
 
                 Section("Drinking window") {
@@ -151,33 +182,6 @@ struct WineDetailView: View {
 
                 WineDocumentsSection(wineID: wineID, actions: documents)
 
-                let orders = model.cellar.bottlesOnOrder.filter { $0.wineID == wineID }
-                    .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
-                if !bottles.isEmpty || orders.isEmpty {
-                    Section {
-                        ForEach(bottles) { bottle in
-                            BottleRow(bottle: bottle)
-                        }
-                    } header: {
-                        Text("\(bottles.count) bottles in the cellar")
-                    }
-                }
-                if !orders.isEmpty {
-                    Section {
-                        ForEach(orders) { bottle in
-                            OrderedBottleRow(bottle: bottle)
-                        }
-                        Button("Mark All Received", systemImage: "shippingbox") {
-                            model.receive(orders.map(\.id))
-                        }
-                        .accessibilityIdentifier("action.order.receive")
-                    } header: {
-                        Text("\(orders.count) bottles on order")
-                    } footer: {
-                        Text("Received bottles join the cellar without a place; move them to a rack from here.")
-                    }
-                }
-
                 let discoveries = model.cellar.discoveries(of: wineID)
                 if !discoveries.isEmpty {
                     Section("Tasted elsewhere") {
@@ -250,6 +254,9 @@ struct WineDetailView: View {
             }
         } else {
             ContentUnavailableView("Wine not found", systemImage: "questionmark")
+                // Deleted while shown: back to where it was opened from. As the root of a
+                // stack, the list beside it selects another wine (`replacingDeletedWine`).
+                .onAppear { if isPresented { dismiss() } }
         }
     }
 
@@ -526,11 +533,12 @@ struct BottleRow: View {
             }
             .tint(.accentColor)
         }
-        .swipeActions(edge: .trailing) {
+        // No full swipe: the bottle leaves the cellar only on purpose.
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button {
                 model.markGone(bottle.id)
             } label: {
-                Label("Remove", systemImage: "minus.circle")
+                Label("No Longer in Cellar", systemImage: "minus.circle")
             }
             .tint(.red)
             Button {
@@ -562,7 +570,17 @@ struct BottleRow: View {
             }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()
-            Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { model.markGone(bottle.id) }
+            NoLongerInCellarButton { model.markGone(bottle.id) }
+            Button(role: .destructive) {
+                model.deleteBottle(bottle.id)
+            } label: {
+                Label {
+                    Text("Delete Bottle")
+                    Text("Entered by mistake")
+                } icon: {
+                    Image(systemName: "trash")
+                }
+            }
         }
         .alert("Keep for an Occasion", isPresented: $reserving) {
             TextField("Occasion", text: $occasion)
@@ -584,6 +602,22 @@ struct BottleRow: View {
         if let place = bottle.purchasePlace { parts.append(place) }
         if bottle.sizeML != 750 { parts.append(BottleSize.label(for: bottle.sizeML)) }
         return parts.isEmpty ? String(localized: "Added \(bottle.addedAt.formatted(date: .abbreviated, time: .omitted))") : parts.joined(separator: " · ")
+    }
+}
+
+/// A bottle that left the cellar without being drunk here, in the menus of a bottle.
+struct NoLongerInCellarButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(role: .destructive, action: action) {
+            Label {
+                Text("No Longer in Cellar")
+                Text("Given away, sold or broken")
+            } icon: {
+                Image(systemName: "minus.circle")
+            }
+        }
     }
 }
 

@@ -82,9 +82,7 @@ extension RackBottleList {
                 }
                 BottleDocumentButtons(bottle: bottle) { open($0) }
                 Divider()
-                Button("Given away or broken", systemImage: "minus.circle", role: .destructive) {
-                    model.markGone(bottle.id)
-                }
+                NoLongerInCellarButton { model.markGone(bottle.id) }
             }
     }
 

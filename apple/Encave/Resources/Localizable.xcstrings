@@ -581,6 +581,46 @@
         }
       }
     },
+    "%lld other wines": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld other wine"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld other wines"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autre vin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autres vins"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld positions": {
       "localizations": {
         "en": {
@@ -1207,6 +1247,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La fiche d’un vin"
+          }
+        }
+      }
+    },
+    "A wine's page shows its bottles first: where each one is, and what you can do with it. Tap a detail of the wine: when other wines of your cellar share its producer, vintage, style, appellation, region, country, a grape or a tag, it lists them, with how many bottles; otherwise, and for the other details, it opens the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
           }
         }
       }
@@ -2301,6 +2351,16 @@
         }
       }
     },
+    "Bottle deleted": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille supprimée"
+          }
+        }
+      }
+    },
     "Bottle not found": {
       "localizations": {
         "fr": {
@@ -3131,6 +3191,16 @@
         }
       }
     },
+    "Clear Filters": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer les filtres"
+          }
+        }
+      }
+    },
     "Clear filters": {
       "localizations": {
         "fr": {
@@ -3501,6 +3571,16 @@
         }
       }
     },
+    "Delete Bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la bouteille"
+          }
+        }
+      }
+    },
     "Delete File": {
       "localizations": {
         "fr": {
@@ -3547,6 +3627,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer les vins"
+          }
+        }
+      }
+    },
+    "Delete Wines…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les vins…"
           }
         }
       }
@@ -3677,6 +3767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Décrivez vos rangements pour que chaque bouteille ait sa place."
+          }
+        }
+      }
+    },
+    "Deselect All": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout désélectionner"
           }
         }
       }
@@ -4281,6 +4381,16 @@
         }
       }
     },
+    "Edits this detail of the wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifie ce détail du vin."
+          }
+        }
+      }
+    },
     "Elsewhere": {
       "localizations": {
         "fr": {
@@ -4461,6 +4571,16 @@
         }
       }
     },
+    "Entered by mistake": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisie par erreur"
+          }
+        }
+      }
+    },
     "Erase all data": {
       "localizations": {
         "fr": {
@@ -4541,12 +4661,12 @@
         }
       }
     },
-    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.": {
+    "Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, with several words if you like (“margaux 2015”), and filter by style, grape or when to drink: the chips show only what your bottles have, and stay while you search.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
           }
         }
       }
@@ -4691,6 +4811,16 @@
         }
       }
     },
+    "Filter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrer"
+          }
+        }
+      }
+    },
     "Filters": {
       "localizations": {
         "fr": {
@@ -4807,6 +4937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plat servi"
+          }
+        }
+      }
+    },
+    "For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No Longer in Cellar** on it. For one entered by mistake, choose **Delete Bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back; after deleting a wine, it stays a little longer.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), choisissez **Plus en cave** sur elle. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps."
           }
         }
       }
@@ -5131,12 +5271,12 @@
         }
       }
     },
-    "Given away or broken": {
+    "Given away, sold or broken": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Donnée ou cassée"
+            "value": "Donnée, vendue ou cassée"
           }
         }
       }
@@ -5581,12 +5721,12 @@
         }
       }
     },
-    "In the Cellar list (not the table), choose **Select Wines** in the sort menu, tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.": {
+    "In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack, take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la liste de la Cave (pas le tableau), choisissez **Sélectionner des vins** dans le menu de tri, cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place."
+            "value": "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier, sortez-les de leur emplacement ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit. **Annuler** remet tout en place."
           }
         }
       }
@@ -5847,6 +5987,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garder la bouteille"
+          }
+        }
+      }
+    },
+    "Keep Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder les bouteilles"
           }
         }
       }
@@ -6721,6 +6871,16 @@
         }
       }
     },
+    "No Longer in Cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus en cave"
+          }
+        }
+      }
+    },
     "No Previous Versions Yet": {
       "localizations": {
         "fr": {
@@ -6871,12 +7031,52 @@
         }
       }
     },
+    "No longer in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus en cave"
+          }
+        }
+      }
+    },
+    "No matching bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille ne correspond"
+          }
+        }
+      }
+    },
+    "No other bottle with this detail is in the cellar or on order.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune autre bouteille avec ce détail n’est dans la cave ou en commande."
+          }
+        }
+      }
+    },
     "No other device has synced through iCloud yet. Your devices must be signed in to the same Apple Account, with syncing away from home turned on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Aucun autre appareil ne s’est encore synchronisé via iCloud. Vos appareils doivent être connectés au même compte Apple, avec la synchronisation loin de la maison activée."
+          }
+        }
+      }
+    },
+    "No other wine in the cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun autre vin dans la cave"
           }
         }
       }
@@ -7451,12 +7651,12 @@
         }
       }
     },
-    "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it.": {
+    "On the Mac and the iPad, the buttons at the top of the Cellar show it as a list or as a table that sorts by any column, with the selected wine beside it. Both keep the same search and filters; in the table, **Filter** sets them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté."
+            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté. Les deux gardent la même recherche et les mêmes filtres ; dans le tableau, **Filtrer** les règle."
           }
         }
       }
@@ -9521,6 +9721,16 @@
         }
       }
     },
+    "Select All": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout sélectionner"
+          }
+        }
+      }
+    },
     "Select Wines": {
       "localizations": {
         "fr": {
@@ -9937,6 +10147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Voir dans le casier"
+          }
+        }
+      }
+    },
+    "Show only some wines": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher seulement certains vins"
           }
         }
       }
@@ -10731,16 +10951,6 @@
         }
       }
     },
-    "Tap a detail of a wine. Its producer, vintage, style, appellation, region, country, a grape or a tag lists the wines of your cellar that share it, with how many bottles; the other details open the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez un détail d’un vin. Son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag liste les vins de votre cave qui le partagent, avec le nombre de bouteilles ; les autres détails ouvrent le vin pour les modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
-          }
-        }
-      }
-    },
     "Tap a place in the rack to add a bottle there.": {
       "localizations": {
         "fr": {
@@ -11077,6 +11287,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La bouteille choisie sort de votre cave et sa place dans le casier se libère."
+          }
+        }
+      }
+    },
+    "The bottles stay in their places but are no longer suggested for tonight.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles restent à leur place mais ne sont plus proposées pour ce soir."
           }
         }
       }
@@ -11911,6 +12131,16 @@
         }
       }
     },
+    "This wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce vin"
+          }
+        }
+      }
+    },
     "To Drink Soon": {
       "localizations": {
         "fr": {
@@ -12087,6 +12317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Essayer"
+          }
+        }
+      }
+    },
+    "Try removing a filter.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayez de retirer un filtre."
           }
         }
       }
@@ -12297,16 +12537,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zone haute"
-          }
-        }
-      }
-    },
-    "Use **Given away or broken** for a bottle that left the cellar without being drunk by you.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utilisez **Donnée ou cassée** pour une bouteille sortie de la cave sans que vous l’ayez bue."
           }
         }
       }

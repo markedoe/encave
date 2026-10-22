@@ -60,6 +60,8 @@ struct MacRoot: View {
         }
         // The Wine menu acts on the wine selected in this window.
         .focusedSceneValue(\.selectedWineID, destination == .cellar || destination == .tonight ? wine : nil)
+        // The selected wine was deleted: the first of the Cellar takes its place.
+        .replacingDeletedWine($wine, selectsFirst: destination == .cellar)
         .onChange(of: model.highlightedSlot) { _, slot in
             if let slot { destination = .rack(slot.rackID) }
         }

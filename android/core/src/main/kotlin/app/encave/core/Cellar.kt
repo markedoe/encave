@@ -257,12 +257,13 @@ class Cellar(
         )
     }
 
-    /** Existing wines matching a query, for "add another bottle of...". */
-    fun wineSuggestions(query: String, limit: Int = 8): List<Wine> {
+    /** Existing wines matching a query, for "add another bottle of..."; [inCellarOnly]: with bottles in the cellar. */
+    fun wineSuggestions(query: String, limit: Int = 8, inCellarOnly: Boolean = false): List<Wine> {
         val needle = query.trim()
         if (needle.isEmpty()) return emptyList()
         val collator = collator()
-        return wineMap.values.filter { it.matches(needle) }
+        val inCellar = if (inCellarOnly) bottlesInCellar.mapTo(HashSet()) { it.wineId } else null
+        return wineMap.values.filter { (inCellar == null || it.id in inCellar) && it.matches(needle) }
             .sortedWith { a, b -> nameOrder(a, b, collator) }
             .take(limit)
     }
@@ -595,10 +596,18 @@ class Cellar(
         /** Case-insensitive, accent-sensitive, like `localizedCaseInsensitiveCompare`. */
         fun collator(): Collator = Collator.getInstance().apply { strength = Collator.SECONDARY }
 
+        /**
+         * Name, then vintage, then producer, then id: a total order, so wines alike keep
+         * their place whatever order the records are stored in (CaveKit does the same).
+         */
         fun nameOrder(a: Wine, b: Wine, collator: Collator = collator()): Int {
             val order = collator.compare(a.name, b.name)
             if (order != 0) return order
-            return (a.vintage ?: 0).compareTo(b.vintage ?: 0)
+            val vintages = (a.vintage ?: 0).compareTo(b.vintage ?: 0)
+            if (vintages != 0) return vintages
+            val producers = collator.compare(a.producer.orEmpty(), b.producer.orEmpty())
+            if (producers != 0) return producers
+            return a.id.toString().uppercase(Locale.ROOT).compareTo(b.id.toString().uppercase(Locale.ROOT))
         }
 
         private fun regionKey(wine: Wine) = listOf(wine.country ?: "", wine.region ?: "").joinToString("/")
