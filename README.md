@@ -10,11 +10,14 @@ where each bottle sits in your racks, and when it is ready to drink.
 ## What it does
 
 - **Cellar:** every bottle, searchable, with filters by style, maturity, rack and
-  your own tags, as a list or (on Mac and iPad) a sortable table.
+  your own tags, as a list or (on Mac, iPad and Android tablets) a sortable
+  table. Save the searches you use often.
   - Each wine shows its drinking window and why, serving temperature and
     decanting advice.
   - Bottles on order (deliveries, en primeur) wait apart until they arrive.
   - Keep bottles for an occasion, so they are not suggested for tonight.
+  - Several photos per wine, and documents (invoice, certificate, technical
+    sheet, up to 8 MB) attached to a wine or to one bottle.
   - A printable PDF inventory for insurance or a move.
 - **Adding a bottle in seconds:**
   - Scan the label: the text is read on the device, and the barcode recognizes
@@ -35,6 +38,7 @@ where each bottle sits in your racks, and when it is ready to drink.
   - See which bottle is where.
   - Find a wine with the key under the rack.
   - Pinch to zoom, and move bottles.
+  - Check a rack bottle by bottle.
 - **Tonight:** what to open now, the most urgent first, and food pairings.
   - **Ask your cellar** ("something light for a ratatouille"), answered with
     your own bottles by the on-device model of Apple Intelligence; nothing is
@@ -42,7 +46,7 @@ where each bottle sits in your racks, and when it is ready to drink.
 - **Journal:**
   - your tastings and insights, your year in wine, and the pace to drink your
     cellar before windows close;
-  - wines discovered elsewhere, with tags and a shopping list.
+  - wines tasted elsewhere, in the same diary, with tags and a shopping list.
 - **Your devices:**
   - Pair them with a QR code or a 6-digit code.
   - They sync directly on the same Wi-Fi, or away from home through a WebDAV
@@ -52,12 +56,23 @@ where each bottle sits in your racks, and when it is ready to drink.
 - **Reminders and Siri:** a monthly reminder of the bottles to drink, a reminder
   on delivery days, "What should I open tonight?", wines in Spotlight, and on
   the Mac a glass in the menu bar. Everything is worked out on the device.
+  - Shortcuts actions give the cellar as text or JSON to a local AI assistant
+    ([docs/SHORTCUTS.md](docs/SHORTCUTS.md)).
+  - On Android, home screen widgets: Tonight and Cellar.
+- **Backups:** previous versions kept on the device (7 daily, 4 weekly), a
+  weekly backup, **Back Up Now** as a ZIP file readable by other programs, and
+  a restore that shows what changes first. Import from CellarTracker, Vivino
+  or a spreadsheet; export to CSV.
 - French and English, light and dark mode, Dynamic Type, VoiceOver and TalkBack.
 
-Android has the same features, apart from Siri and Spotlight, label reading on
-the device (barcodes only), Ask your cellar and the Mac menu bar; iCloud sync is
-Apple-only, WebDAV folders and relays work for both (see the
+Android has the same features, apart from Siri, Spotlight and the Shortcuts
+actions, label reading on the device (barcodes only), the document scanner, the
+cut-out studio look, Ask your cellar, Suggest Details, Undo from the keyboard
+and the Mac menu bar. Home screen widgets are Android-only for now. iCloud sync
+is Apple-only; WebDAV folders and relays work for both (see the
 [roadmap](docs/ROADMAP.md)).
+
+Requirements: iOS and iPadOS 18, macOS 15, Android 15 or later.
 
 ## Principles
 
@@ -77,7 +92,9 @@ Apple-only, WebDAV folders and relays work for both (see the
 | `android/` | Kotlin and Jetpack Compose app, with its core module |
 | `relay/` | Self-hostable relay for syncing away from home ([README](relay/README.md)) |
 | `design/` | Design tokens and asset generators shared by all platforms |
-| `docs/` | [Roadmap](docs/ROADMAP.md), [sync protocol](docs/SYNC.md), [remote sync options](docs/REMOTE_SYNC.md), [encryption and export compliance](docs/ENCRYPTION.md), [development guide](docs/development.md) |
+| `fixtures/` | Test vectors shared by the Swift and Kotlin tests |
+| `scripts/` | Public-safety and commit message checks, public snapshot export |
+| `docs/` | [Roadmap](docs/ROADMAP.md), [sync protocol](docs/SYNC.md), [remote sync options](docs/REMOTE_SYNC.md), [Shortcuts for other apps](docs/SHORTCUTS.md), [encryption and export compliance](docs/ENCRYPTION.md), [development guide](docs/development.md) |
 
 ## Getting started
 

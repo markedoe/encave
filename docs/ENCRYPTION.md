@@ -11,11 +11,16 @@ release, and whenever the cryptography changes.
   authenticated and encrypted (handshake and frames in `docs/SYNC.md`).
 - **Sync away from home**: the files left on the relay, the WebDAV folder or
   iCloud are encrypted with the cellar's key before they leave the device; the
-  storage only ever sees ciphertext (`docs/REMOTE_SYNC.md`).
+  storage only ever sees ciphertext (`docs/SYNC.md`, section 8, and
+  `docs/REMOTE_SYNC.md`). A key grant, which gives the cellar's key to another
+  device, is encrypted with a key agreed with X25519 between a one-time key,
+  the sender's identity key and the recipient's.
 - **Keys on the device**: kept in the Keychain (Apple) or encrypted with a key
   of the Android Keystore.
 - **Connections** to the relay, WebDAV, iCloud, the AI service and the web
-  search provider use the system's HTTPS (TLS).
+  search provider use the system's HTTPS (TLS), except a server on the local
+  network (a relay, a WebDAV folder, an AI or SearXNG server), which the user
+  may reach over plain HTTP. Sync files are encrypted either way.
 
 The encryption protects the user's own data. It is not limited to
 authentication, and it cannot be used as a general encryption tool for other
@@ -31,7 +36,7 @@ Only standard, published algorithms; nothing proprietary:
 | Key derivation | HKDF-SHA256 | RFC 5869 |
 | Authentication of the handshake | HMAC-SHA256 | RFC 2104 |
 | Encryption of frames and files | ChaCha20-Poly1305 | RFC 8439 |
-| Content IDs of photos | SHA-256 | FIPS 180-4 |
+| Hashing (transcripts, commitments, mailbox IDs, content IDs of photos and documents) | SHA-256 | FIPS 180-4 |
 | Stored secrets (Android) | AES-GCM with an Android Keystore key | NIST SP 800-38D |
 
 ## Libraries

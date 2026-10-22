@@ -34,6 +34,31 @@ from a primary source and should be tested before anything depends on them.
 >   (Phase 3 below; phase 6 in the roadmap).
 > - V1 sends whole snapshots instead of per-device logs; logs remain an
 >   optimisation for large cellars.
+> - The protocol as built ([SYNC.md](SYNC.md), section 8) differs from the
+>   design in section 10:
+>   - a mailbox ID is `c` and the first 32 hex characters of the SHA-256 of
+>     its token (`HKDF(K, "encave/v1/relay-auth")`), not
+>     `HKDF(K, "encave/v1/mailbox")` in base32; the relay stores nothing;
+>   - a file is `"ENCV" ‖ 0x01 ‖ kind ‖ 12-byte nonce ‖ ciphertext ‖ tag`
+>     (ChaCha20-Poly1305, with the header and path as additional data): no
+>     epoch, device or sequence header, no XChaCha20, no padding, and no
+>     Ed25519 signature yet (planned);
+>   - there is no `meta.bin`, `roster/`, `log/` or `encave-v1/` root: a
+>     mailbox holds `snap/<device>/…` and `photo/<file ID>`;
+>   - photos and documents are named after the SHA-256 of their plaintext and
+>     encrypted with the epoch's data key (no per-photo keys), so they are
+>     uploaded again after a key rotation;
+>   - a new key goes to each remaining device as a grant in that device's own
+>     inbox, not as `keys/<e+1>-<dev>.bin` in the old mailbox; two keys of the
+>     same epoch are settled by the smaller SHA-256 of the key, not by the
+>     lowest device ID;
+>   - each device deletes its own snapshots beyond the newest two; nobody
+>     deletes photo files or old mailboxes (a relay deletes mailboxes not
+>     written to for 365 days); there is no 30-day clean-up;
+>   - the CloudKit store uses neither CKSyncEngine, `CKDatabaseSubscription`
+>     (no silent push: devices poll), `CKShare` nor iCloud Keychain. Each file
+>     is an `EncaveFile` record named after its path, with the bytes in a
+>     `CKAsset` field `data`, listed with zone change tokens.
 
 ---
 
@@ -168,6 +193,11 @@ third backend costs little. Section 10 specifies this layout.
 ---
 
 ## 4. Option 1: Apple CloudKit
+
+> **As built:** the Apple app stores each file as a record in one zone per
+> mailbox or inbox of the private database and polls; it uses no CKSyncEngine,
+> silent push, `CKShare` or iCloud Keychain (see [SYNC.md](SYNC.md), section 8,
+> "Storages"). The rest of this section is the original analysis.
 
 ### 4.1 How it works
 
@@ -469,8 +499,9 @@ app password covers NAS boxes, Nextcloud and pCloud
 **[unverified]**)
 without registering any app. Each device signs in with its own login; only the
 folder URL travels in grants. `If-None-Match: *` is sent on every `PUT`, but
-the protocol stays safe on a server that ignores it (overwrites are by the
-same writer with the same content). Not yet tried on real servers: Nextcloud,
+the protocol stays safe on a server that ignores it: snapshot and grant names
+end with a random part, so they are never written twice, and a photo or
+document file written again by another device has the same content. Not yet tried on real servers: Nextcloud,
 Synology, QNAP and pCloud behaviour (status codes for missing folders,
 `If-None-Match`, PROPFIND hrefs) is covered by tests against a fake server only.
 
@@ -721,6 +752,11 @@ one provider loses nothing.
 
 ## 10. Recommended protocol and storage layout
 
+> **Superseded:** the implementation differs from this design (keys, layout,
+> file format, rotation and clean-up); see [SYNC.md](SYNC.md), section 8, and
+> the corrections in the status at the top of this document. This section is
+> kept as the original analysis.
+
 The same layout serves every backend, so one sync core (Rust, per the
 roadmap, or Swift and Kotlin with shared test vectors until then) drives all
 of them.
@@ -802,6 +838,9 @@ magic "ENCV" | version u8 | kind u8 | epoch u32 | deviceId 16B | seq/lamport u64
 
 ### 10.4 Removing a device or member (key rotation)
 
+> **Superseded:** as built, the new key goes to each remaining device as a key
+> grant in its inbox; see [SYNC.md](SYNC.md), section 8, "Removing a device".
+
 1. The owner, or any editor, generates `K_{e+1}` and a new roster without the
    removed device, signed by the owner.
 2. It wraps `K_{e+1}` for each remaining device with an X25519 ECDH to that
@@ -834,6 +873,10 @@ magic "ENCV" | version u8 | kind u8 | epoch u32 | deviceId 16B | seq/lamport u64
    - With a `CKShare`, also remove the participant from the share.
 
 ### 10.5 Mapping to each backend
+
+> **Superseded** for the storages built (relay, WebDAV, CloudKit): see
+> [SYNC.md](SYNC.md), section 8, "Storages". None of them has a wake-up: devices
+> poll.
 
 | Operation | CloudKit | Drive `appDataFolder` | WebDAV | Relay | Dropbox |
 |---|---|---|---|---|---|

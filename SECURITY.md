@@ -17,7 +17,8 @@ Your cellar stays on your devices.
     with an iCloud container). A WebDAV username and password stay on the
     device that uses them (Keychain, Android Keystore) and are sent only to
     that server, over HTTPS (or HTTP on the local network).
-- **Pairing:** each device has its own identity key (Keychain). Pairing is
+- **Pairing:** each device has its own identity key (in the Keychain,
+  or encrypted with the Android Keystore). Pairing is
   confirmed by comparing a 6-digit code on both screens.
 - **Removing a device** shuts it out of the network handshake and rotates the key
   of the remote files. A removal is final: the device cannot add itself back.
@@ -68,9 +69,9 @@ These rules are enforced by:
 | `gitleaks` with `.gitleaks.toml` | pre-commit, CI (`secrets` job) and weekly on the whole history |
 | `scripts/check-public-safety.sh` | pre-commit, CI (`secrets` job) and weekly on the whole history |
 | `scripts/check-commit-message.sh` | commit-msg hook and CI (`secrets` job) |
+| GitHub secret scanning + push protection | repository settings |
 
 The `secrets` job runs on pull requests and on pushes to `main` and `claude/**`.
-| GitHub secret scanning + push protection | repository settings |
 
 Set up the local hooks once:
 

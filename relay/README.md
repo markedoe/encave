@@ -77,7 +77,7 @@ Until then, a relay the apps use runs without the key and relies on the
 limits above.
 
 Mailboxes not written to for a year are deleted, so a relay is a mailbox, not a
-backup. Keep backups with **Settings › Back Up**.
+backup. Keep backups with **Back Up Now** in **Settings › Your data**.
 
 ## Run it on your own server (Node)
 

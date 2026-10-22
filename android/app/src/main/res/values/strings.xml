@@ -605,7 +605,7 @@
     <string name="help_adding_title">Adding bottles</string>
     <string name="help_adding_summary">A new wine, or more bottles of one you already have.</string>
     <string name="help_adding_existing_title">Already in your cellar?</string>
-    <string name="help_adding_existing">Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go. When the name you type is a wine you already have (same name, producer and vintage), **Already in your cellar** shows it: tap **Add to this wine** so its bottles and tastings stay together, or **It’s a different wine**.</string>
+    <string name="help_adding_existing">Type a few letters in **Already in your cellar? Search**: if the wine is already there, choose it and only enter how many bottles you add and where they go. When the name you type is a wine you already have (same name and vintage, and the same producer when both have one), **Already in your cellar** shows it: tap **Add to this wine** so its bottles and tastings stay together, or **It’s a different wine**.</string>
     <string name="help_adding_wine">Only the **name** is required. The producer and the vintage help tell wines apart; leave the vintage empty for champagnes and blends without a year.</string>
     <string name="help_adding_style_title">Style and origin</string>
     <string name="help_adding_style">The style (red, white, sparkling…) is used for colors, serving temperature and food pairing. The appellation, region, country and grapes make search and pairing better.</string>
@@ -617,13 +617,13 @@
     <string name="help_scanning_title">Label photos</string>
     <string name="help_scanning_summary">Fill in a wine from a photo of its label.</string>
     <string name="help_scanning_device_title">On this device</string>
-    <string name="help_scanning_device">Take a photo of the label or choose one in the add form; the first time, Encave asks for the camera. Encave for Android does not read the label text on the device itself (that would need a third-party library): type the name, or scan the barcode to find a wine you already have. The photo is kept with the wine.</string>
+    <string name="help_scanning_device">Take a photo of the label or choose one in the add form; the first time, Encave asks for the camera, and if it is off, **Open settings** turns it on. Encave for Android does not read the label text on the device itself (that would need a third-party library): type the name, or scan the barcode to find a wine you already have. The photo is kept with the wine.</string>
     <string name="help_scanning_ai_title">With AI (optional)</string>
-    <string name="help_scanning_ai">If an AI service is set up in Settings, the label photo is sent to it to fill in the name, producer, vintage, style, region, grapes and drinking window. Only that photo is sent, never your cellar.</string>
+    <string name="help_scanning_ai">If an AI service is set up in Settings, the label photo is sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, with **Undo**. Only that photo is sent, never your cellar.</string>
     <string name="help_scanning_typed_title">What you typed stays</string>
     <string name="help_scanning_typed">The AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept.</string>
     <string name="help_scanning_photo_title">The photo</string>
-    <string name="help_scanning_photo">The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine.</string>
+    <string name="help_scanning_photo">The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look, light evened out on a clean background, made on this device; turn it off in **Settings › Appearance**.</string>
     <string name="help_racks_title">Racks</string>
     <string name="help_racks_summary">Describe your storage so every bottle has a place.</string>
     <string name="help_racks_grid">One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.</string>
@@ -645,9 +645,9 @@
     <string name="help_tonight_title">Tonight and drinking windows</string>
     <string name="help_tonight_summary">When each wine is at its best.</string>
     <string name="help_tonight_maturity_title">Maturity</string>
-    <string name="help_tonight_maturity">Each wine is **kept for later**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color.</string>
+    <string name="help_tonight_maturity">Each wine is **Keep for later**, **Ready to drink**, **Drink soon** (last year of its window) or **Past its peak**. The words and the symbol always say it, not only the color. A wine without a drinking window shows **No drinking window** and comes last in Tonight: set its window on its page.</string>
     <string name="help_tonight_suggestions_title">Suggestions</string>
-    <string name="help_tonight_suggestions">Tonight suggests one wine at its peak or to drink soon, a different one each day; **Another idea** shows the next. Bottles kept for an occasion are not suggested. When nothing is ready, Tonight says which wine will be ready first. Touch and hold a wine to drink it, show it in its rack or keep it for an occasion. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.</string>
+    <string name="help_tonight_suggestions">At the top, **Tonight, open…** suggests one bottle that is ready, a different one each day; **Another idea** picks another. Bottles kept for an occasion are not suggested; when nothing is ready, Tonight says which wine will be ready first. Below, the bottles to drink soon come first; touch and hold one to drink it, show it in its rack or keep it for an occasion. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.</string>
     <string name="help_tonight_serving">Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant.</string>
     <string name="help_drinking_title">Drinking a bottle</string>
     <string name="help_drinking_summary">Keep track of what you opened and what you thought.</string>
@@ -655,12 +655,13 @@
     <string name="help_drinking_note_title">Your note</string>
     <string name="help_drinking_note">Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food); hiding it again keeps what you wrote. Everything is optional and can be edited later from the Journal. If you close the sheet after typing, Encave asks before discarding the note.</string>
     <string name="help_drinking_gone_title">No longer in the cellar</string>
-    <string name="help_drinking_gone">For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No longer in cellar** in its menu. For one entered by mistake, choose **Delete bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back.</string>
+    <string name="help_drinking_gone">For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No longer in cellar** in its menu. For one entered by mistake, choose **Delete bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back. A bottle opened by mistake: open its tasting in the Journal and choose **Put back in the cellar**.</string>
     <string name="help_journal_title">Journal and shopping list</string>
     <string name="help_journal_summary">Bottles opened from your cellar and wines tasted elsewhere, in one diary.</string>
     <string name="help_journal_diary">The Journal lists everything you tasted, newest first and by month. Each entry says where it comes from: **From my cellar** for a bottle you opened, **Tasted elsewhere** and the place for a wine you had in a restaurant, at friends’ or at a fair.</string>
     <string name="help_journal_tags">Tags group wines tasted elsewhere your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested. In the Journal, their chips come after the filters.</string>
-    <string name="help_journal_list">Turn on **To buy** to add the wine to your shopping list, with the price you saw, or swipe it to the left in the Journal; **Undo** puts it back as it was. When you buy it, swipe it to the right (**Add to cellar**): it leaves the list once the bottles are added.</string>
+    <string name="help_journal_list">Turn on **To buy** to add the wine to your shopping list, with the price you saw, or swipe it to the left; **Undo** puts it back as it was. When you buy it, swipe it to the right (**Add to cellar**): once the bottles are added, it leaves the list and stays in the Journal marked **Bought**.</string>
+    <string name="help_journal_insights">**Insights**, in the top bar of the Journal, shows your cellar in figures: its value, what to drink and when, your year in wine and the pace to drink your bottles before their windows close.</string>
     <string name="help_journal_not_cellar_title">Not in the cellar</string>
     <string name="help_journal_not_cellar">Wines tasted elsewhere are not counted as bottles in your cellar and do not appear in racks or Tonight.</string>
     <string name="help_ai_title">Setting up AI</string>
@@ -672,7 +673,7 @@
     <string name="help_ai_check_title">Check the key</string>
     <string name="help_ai_check">Tap **Check key and load models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.</string>
     <string name="help_ai_local_title">Local server</string>
-    <string name="help_ai_local">Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, then tap **Connect and load models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On a phone or tablet, enter the computer’s IP address on your network (for example `http://192.0.2.10:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.</string>
+    <string name="help_ai_local">Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, or **Other server (OpenAI-compatible)** for any server with the same API, then tap **Connect and load models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On a phone or tablet, enter the computer’s IP address on your network (for example `http://192.0.2.10:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.</string>
     <string name="help_ai_url_title">Server URL</string>
     <string name="help_ai_url">Leave it empty to use the provider’s usual address. Change it only if the provider gives you another one, for example for its China region.</string>
     <string name="help_ai_sent_title">What is sent</string>
@@ -698,7 +699,7 @@
     <string name="help_privacy_title">Privacy</string>
     <string name="help_privacy_summary">Your cellar stays yours.</string>
     <string name="help_privacy_1">Your cellar, its photos and documents are kept on your devices, in Encave’s private storage, which Android encrypts. They are left out of Google cloud backups and move to a new phone only with a direct transfer from the old one. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.</string>
-    <string name="help_privacy_2">Sync between your devices and with the people you share a cellar with is encrypted from end to end. On the same Wi-Fi, devices talk directly. Away from home, if you turn it on, a relay or WebDAV folder stores the changes as encrypted files it can never read; it sees when devices sync, how much they send and their IP addresses.</string>
+    <string name="help_privacy_2">Sync between your devices is encrypted from end to end. On the same Wi-Fi, devices talk directly. Away from home, if you turn it on, a relay or WebDAV folder stores the changes as encrypted files it can never read; it sees when devices sync, how much they send and their IP addresses.</string>
     <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or tap Complete with AI; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.</string>
     <string name="help_privacy_4">Encave is open source: anyone can check what the app does.</string>
     <string name="settings_devices">Devices</string>
@@ -926,7 +927,7 @@
     <string name="detail_orders_footer">Received bottles join the cellar without a place; move them to a rack from here.</string>
     <string name="err_not_received">This bottle is on order: mark it received first.</string>
     <string name="help_adding_orders_title">Bottles on order</string>
-    <string name="help_adding_orders">Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right (or touch and hold) and choose **Received**. They then join the cellar without a place, ready to be put in a rack.</string>
+    <string name="help_adding_orders">Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right, or touch and hold them and choose **Mark received**. They then join the cellar without a place, ready to be put in a rack. An order that will not come: **Cancel order** in the bottle’s menu, on the wine’s page.</string>
     <string name="field_tags">Tags</string>
     <string name="help_wine_tags_footer">Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.</string>
     <string name="tag_hint">Gift, birth year…</string>
@@ -961,7 +962,7 @@
     <string name="reminders_now_ready">Now ready: %1$d</string>
     <string name="reminders_start_with">Start with %1$s.</string>
     <string name="reminders_delivery_title">Delivery expected today</string>
-    <string name="help_tonight_reminders">Turn on **Reminders** in Settings, or with **Turn on** when Tonight offers it: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open settings** takes you to the system settings to turn them on.</string>
+    <string name="help_tonight_reminders">Turn on **Reminders** in Settings, or with **Turn on** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open settings** takes you to the system settings to turn them on.</string>
     <string name="shortcut_scan">Scan a bottle</string>
     <string name="shortcut_tonight">What to open tonight</string>
     <string name="action_select_wines">Select wines</string>
@@ -1034,7 +1035,7 @@
     <string name="camera_unavailable">No camera app could take the photo.</string>
     <string name="action_open_app_settings">Open settings</string>
     <string name="help_scanning_barcodes_title">Barcodes</string>
-    <string name="help_scanning_barcodes">When adding bottles, tap **Scan the barcode**: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Barcodes are matched on this device only; Encave looks nothing up online.</string>
+    <string name="help_scanning_barcodes">When adding bottles, tap **Scan the barcode**: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Without the camera, type the digits under the barcode. Barcodes are matched on this device only; Encave looks nothing up online.</string>
     <string name="action_show_table">Show as a table</string>
     <string name="action_show_list">Show as a list</string>
     <string name="table_wine">Wine</string>
@@ -1071,7 +1072,7 @@
     <string name="help_racks_drag_title">Drag and drop</string>
     <string name="help_racks_drag">On tablets, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).</string>
     <string name="help_start_shortcuts_title">Shortcuts</string>
-    <string name="help_start_shortcuts">Touch and hold the Encave icon to **Scan a bottle** or see **What to open tonight** right away. A delivery reminder opens the wine on order.</string>
+    <string name="help_start_shortcuts">Touch and hold the Encave icon to **Scan a bottle** (its barcode) or see **What to open tonight** right away. A delivery reminder opens the wine on order.</string>
     <string name="action_keep_for_occasion">Keep for an occasion…</string>
     <string name="reserve_title">Keep for an occasion</string>
     <string name="reserve_body">The bottle stays in its place but is no longer suggested for tonight.</string>
@@ -1080,7 +1081,7 @@
     <string name="reserved_for">Kept for %1$s</string>
     <string name="msg_reservation_removed">Reservation removed</string>
     <string name="help_tonight_occasion_title">Keeping bottles for an occasion</string>
-    <string name="help_tonight_occasion">On a bottle in a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back.</string>
+    <string name="help_tonight_occasion">In the menu of a bottle on a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back. To keep several wines at once, select them in the Cellar.</string>
     <string name="settings_web_search">Web search</string>
     <string name="web_search_service">Search service</string>
     <string name="help_field_web_search_service">The search engine that looks up a wine on the web when you tap Search online.</string>
@@ -1135,13 +1136,13 @@
     <string name="help_web_off_title">Off by default</string>
     <string name="help_web_off">Nothing is looked up online until you choose a service in **Settings › Web search**.</string>
     <string name="help_web_service_title">Choose a service</string>
-    <string name="help_web_service">**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080`. Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test search** to check.</string>
+    <string name="help_web_service">**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test search** to check.</string>
     <string name="help_web_search_title">Search online</string>
-    <string name="help_web_search">On a wine’s page, or while adding or editing a wine, tap **Search online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.</string>
+    <string name="help_web_search">On a wine’s page, or while adding or editing a wine, tap **Search online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser. Touch and hold the producer or the appellation on a wine’s page to search the web for it alone.</string>
     <string name="help_web_price_title">Current price</string>
-    <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
+    <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size when it is not 75 cl, and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
     <string name="help_web_sent_title">What is sent</string>
-    <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.</string>
+    <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, with the word “wine” (“bottle” for pictures); for a price, the word “price” and the bottle size when it is not 75 cl. You see them and can change them first. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.</string>
     <string name="action_save_search">Save this search…</string>
     <string name="save_search_title">Save this search</string>
     <string name="save_search_body">It appears first among the filters, one tap away.</string>
@@ -1172,7 +1173,7 @@
     <string name="widget_tonight_description">The bottles to open now, the most urgent first.</string>
     <string name="widget_cellar_description">How many bottles you have, and how many to drink soon.</string>
     <string name="widget_empty_title">Add bottles in Encave</string>
-    <string name="widget_empty_body">Scan a label or type a name.</string>
+    <string name="widget_empty_body">Scan the barcode or type a name.</string>
     <string name="widget_tonight_none">No bottle is at its best right now.</string>
     <string name="widget_drink_soon">Drink soon: %1$d</string>
     <string name="widget_ready">Ready: %1$d</string>
@@ -1216,7 +1217,7 @@
     <string name="help_adding_documents_title">Documents</string>
     <string name="help_adding_documents">Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a document…** (a PDF, an image, a text or an office file, up to 8 MB), or **Photograph a paper**. Add them while adding bottles, or later under **Documents** on the wine’s page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), open the menu of the bottle on the wine’s page or in a rack and choose **Attach a document…**; a paperclip shows how many it has. Touch a document to open it in another app; its menu shares, renames or deletes it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.</string>
     <string name="help_start_widgets_title">Widgets</string>
-    <string name="help_start_widgets">On the home screen, touch and hold an empty spot, then choose **Widgets** and Encave. **Tonight** lists the bottles to open now and where they are (touch one to open it); **Cellar** shows how many bottles you have, and how many to drink soon or ready. Widgets show a summary kept on this device.</string>
+    <string name="help_start_widgets">On the home screen, touch and hold an empty spot, then choose **Widgets** and Encave. **Tonight** lists the bottles to open now and where they are (touch one to open it); **Cellar** shows how many bottles you have, and how many to drink soon, ready or on order. Widgets show a summary kept on this device.</string>
     <string name="journal_add">Add a tasting</string>
     <string name="journal_add_where">Where did you drink it?</string>
     <string name="journal_add_cellar">A bottle from my cellar</string>
