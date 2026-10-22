@@ -6,7 +6,8 @@ import ImageIO
 import UniformTypeIdentifiers
 
 /// Label photos for the sample cellar of the screen tour, drawn here (no image
-/// files, no real labels) and kept in memory only. The colors below are the
+/// files, no real labels) and kept in memory only (their studio versions are
+/// cached as for any photo). The colors below are the
 /// pixels of these made-up photos (glass, paper, ink), not interface colors. They give the studio look
 /// something to work on: whole bottles standing on a table, a close-up of a label,
 /// and a label without text.
@@ -18,13 +19,15 @@ enum SamplePhotos {
 
     private enum Shape { case bordeaux, burgundy, flute }
 
-    /// Gives every sample wine a label photo, drawn from its name, producer and vintage.
+    /// Gives one sample wine of each kind of shot a label photo, drawn from its name,
+    /// producer and vintage. Named after their content, as real photos, so their
+    /// studio versions are cached once and reused by the next launches of the tour.
     static func attach(to cellar: inout Cellar) {
-        for (index, original) in cellar.wines.values.sorted(by: { $0.id.uuidString < $1.id.uuidString }).enumerated()
-        where original.photoID == nil {
-            var wine = original
-            guard let data = jpeg(draw(shot(for: wine.color), wine: wine)) else { continue }
-            let id = "sample-label-\(index + 1)"
+        let wines = cellar.wines.values.sorted { $0.id.uuidString < $1.id.uuidString }
+        for color in [WineColor.red, .white, .rose, .sparkling, .fortified] {
+            guard var wine = wines.first(where: { $0.color == color && $0.photoID == nil }),
+                  let data = jpeg(draw(shot(for: color), wine: wine)) else { continue }
+            let id = PhotoID.make(for: data)
             PhotoStore.keepInMemory(data, id: id)
             wine.photoID = id
             cellar.wines[wine.id] = wine
@@ -48,9 +51,12 @@ enum SamplePhotos {
     private static let size = CGSize(width: 1200, height: 1600)
 
     private static func draw(_ shot: Shot, wine: Wine) -> CGImage? {
-        guard let context = CGContext(data: nil, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8,
-                                      bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+        // Drawn in a 1200 × 1600 space, saved at 720 × 960: enough for Vision, quick in the simulator.
+        let scale: CGFloat = 0.6
+        guard let context = CGContext(data: nil, width: Int(size.width * scale), height: Int(size.height * scale),
+                                      bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                       bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+        context.scaleBy(x: scale, y: scale)
         context.textMatrix = .identity
         switch shot {
         case let .bottle(glass, capsule, paper, ink, shape, text):

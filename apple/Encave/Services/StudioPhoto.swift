@@ -38,9 +38,6 @@ enum StudioPhoto {
         return folder
     }()
 
-    /// Results for photos kept in memory only (the screen tour), never written.
-    private static let memory = MemoryResults()
-
     /// The cut-out image, transparent around the subject, from the cache or made
     /// now. Nil when nothing stands out clearly: the photo is then shown as taken.
     static func cutout(for photoID: String, maxPixelSize: Int) async -> CGImage? {
@@ -52,11 +49,7 @@ enum StudioPhoto {
     /// PNG of the studio version. A photo with no usable result is remembered so
     /// it is not tried again.
     private static func studioData(for photoID: String) -> Data? {
-        guard PhotoStore.isSafe(photoID) else { return nil }
-        if PhotoStore.isInMemory(photoID) {
-            return memory.value(for: photoID) { make(photoID) }
-        }
-        guard let folder else { return nil }
+        guard PhotoStore.isSafe(photoID), let folder else { return nil }
         let png = folder.appendingPathComponent("\(photoID).png")
         let none = folder.appendingPathComponent("\(photoID).none")
         if let data = try? Data(contentsOf: png) { return data }
@@ -130,18 +123,6 @@ enum StudioPhoto {
         else { return nil }
         CGImageDestinationAddImage(destination, image, nil)
         return CGImageDestinationFinalize(destination) ? output as Data : nil
-    }
-
-    private final class MemoryResults: @unchecked Sendable {
-        private let lock = NSLock()
-        private var results: [String: Data?] = [:]
-
-        func value(for id: String, make: () -> Data?) -> Data? {
-            if let known = lock.withLock({ results[id] }) { return known }
-            let made = make()
-            lock.withLock { results[id] = .some(made) }
-            return made
-        }
     }
 }
 
