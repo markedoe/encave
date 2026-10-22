@@ -57,7 +57,7 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.results(from: data, status: status)
     }
@@ -73,7 +73,7 @@ enum WebSearchClient {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.httpBody = described.body
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return try provider.imageResults(from: data, status: status)
     }
@@ -120,5 +120,19 @@ enum WebSearchClient {
         case .invalidResponse:
             return String(localized: "The answer from the search service could not be read.")
         }
+    }
+}
+
+/// Follows a redirect only on the same host, over HTTPS (or HTTP on the local network, see
+/// `SameHostRedirect`): the search terms, or the AI key and the photo, never go to another
+/// host or in clear text. A refused redirect is answered with its own status.
+final class SameHostRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    static let shared = SameHostRedirects()
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest) async -> URLRequest? {
+        guard let origin = task.originalRequest?.url, let target = request.url,
+              SameHostRedirect.allows(from: origin, to: target) else { return nil }
+        return request
     }
 }

@@ -102,6 +102,25 @@ class SyncStorage(private val context: Context) {
         get() = runCatching { secrets.get(KEY_WEBDAV_LOGIN)?.let { Json.decodeFromString(WebDavLogin.serializer(), it) } }.getOrNull()
         set(value) {
             runCatching { secrets.set(KEY_WEBDAV_LOGIN, value?.let { Json.encodeToString(WebDavLogin.serializer(), it) }) }
+            webDavLoginRefused = false
+        }
+
+    /**
+     * The WebDAV server refused the login: no automatic round tries it again (a server may lock
+     * the account after a few refusals) until the user signs in again or taps Sync now.
+     */
+    var webDavLoginRefused: Boolean
+        get() = prefs.getBoolean(KEY_WEBDAV_REFUSED, false)
+        set(value) = prefs.edit { if (value) putBoolean(KEY_WEBDAV_REFUSED, true) else remove(KEY_WEBDAV_REFUSED) }
+
+    /**
+     * The cellar's first key, made when turning syncing away from home on and kept until it has
+     * been given to every device: a retry gives the same key, so grants already left stay valid.
+     */
+    var firstKey: CellarKey?
+        get() = runCatching { secrets.get(KEY_FIRST_KEY)?.let { SyncJson.decode(CellarKey.serializer(), it.toByteArray()) } }.getOrNull()
+        set(value) {
+            runCatching { secrets.set(KEY_FIRST_KEY, value?.let { SyncJson.encode(CellarKey.serializer(), it).decodeToString() }) }
         }
 
     var remoteKey: CellarKey?
@@ -179,6 +198,7 @@ class SyncStorage(private val context: Context) {
     fun resetRemote() {
         remoteKey = null
         pendingKey = null
+        firstKey = null
         webDavLogin = null
         file(REMOTE).delete()
         prefs.edit { remove(KEY_ROTATION).remove(KEY_LAST_REMOTE).remove(KEY_UNSENT).remove(KEY_REMOTE_OFF) }
@@ -217,6 +237,8 @@ class SyncStorage(private val context: Context) {
         private const val KEY_IDENTITY = "sync.identity"
         private const val KEY_CELLAR_KEY = "sync.cellarKey"
         private const val KEY_WEBDAV_LOGIN = "sync.webDavLogin"
+        private const val KEY_FIRST_KEY = "sync.firstCellarKey"
+        private const val KEY_WEBDAV_REFUSED = "webDavLoginRefused"
 
         /** The name other devices show for this one: the name set in system settings, or the model. */
         fun deviceName(context: Context): String =

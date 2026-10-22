@@ -103,6 +103,73 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(a.cellar.wines.isEmpty && b.cellar.wines.isEmpty)
     }
 
+    @Test func aChangeThatCouldNotBeSavedDoesNotSpread() throws {
+        let (cellar, wine, _) = try sample()
+        var (a, b) = pair(cellar)
+        // A deletes the wine, then the write fails: the cellar goes back to what was saved.
+        let saved = a.cellar
+        a.edit { $0.deleteWine(wine.id) }
+        let shown = a.cellar
+        a.cellar = saved
+        a.state.recordRevert(from: shown, to: saved)
+        syncBoth(&a, &b)
+        #expect(a.cellar.wines[wine.id] != nil)
+        #expect(b.cellar.wines[wine.id] != nil)
+        #expect(a.cellar == b.cellar)
+    }
+
+    @Test func theSampleRemovedBeforeSharingIsNotDeletedElsewhere() throws {
+        let sample = SampleData.cellar()
+        var host = Device(sample)
+        try host.edit { try $0.addBottles(of: Wine(name: "Mine"), quantity: 1) }
+        // Removed before the cellar is first shared: not recorded, its stamps forgotten.
+        let before = host.cellar
+        host.cellar = before.removingSample()
+        host.state.forget(from: before, to: host.cellar)
+        var other = Device(sample)
+        syncBoth(&host, &other)
+        // No deletion of the sample was sent: the other device keeps its own.
+        #expect(other.cellar.containsSample)
+        #expect(host.cellar.wines.values.map(\.name).contains("Mine"))
+        #expect(other.cellar.wines.values.map(\.name).contains("Mine"))
+    }
+
+    @Test func aRecordedSampleRemovalWouldDeleteItElsewhere() throws {
+        // What the fix avoids: the sample has the same IDs on every device.
+        let sample = SampleData.cellar()
+        var host = Device(sample)
+        try host.edit { try $0.addBottles(of: Wine(name: "Mine"), quantity: 1) }
+        host.edit { $0 = $0.removingSample() }
+        var other = Device(sample)
+        syncBoth(&host, &other)
+        #expect(!other.cellar.containsSample)
+    }
+
+    @Test func forgettingDropsOnlyTheRemovedRecords() throws {
+        let (cellar, wine, rack) = try sample()
+        let state = SyncState.starting(with: cellar, device: UUID())
+        var without = cellar
+        without.deleteWine(wine.id)
+        var forgotten = state
+        forgotten.forget(from: cellar, to: without)
+        #expect(forgotten.stamps[SyncKey(.wine, wine.id).string] == nil)
+        #expect(cellar.bottles.keys.allSatisfy { forgotten.stamps[SyncKey(.bottle, $0).string] == nil })
+        #expect(forgotten.stamps[SyncKey(.rack, rack.id).string] == state.stamps[SyncKey(.rack, rack.id).string])
+        #expect(forgotten.clock == state.clock)
+    }
+
+    @Test func aRevertLeavesChangesFromOtherDevicesAlone() throws {
+        let (cellar, wine, _) = try sample()
+        var (a, b) = pair(cellar)
+        try b.edit { var w = $0.wines[wine.id]!; w.notes = "from B"; try $0.updateWine(w) }
+        let saved = a.cellar
+        a.sync(with: b)
+        let stamps = a.state.stamps
+        // Saving what came from B failed: B's change is not stamped as A's.
+        a.state.recordRevert(from: a.cellar, to: saved)
+        #expect(a.state.stamps == stamps)
+    }
+
     @Test func editingABottleOfADeletedWineDoesNotLeaveAnOrphan() throws {
         let (cellar, wine, _) = try sample()
         var (a, b) = pair(cellar)

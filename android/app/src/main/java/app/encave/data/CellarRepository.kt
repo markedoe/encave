@@ -99,6 +99,22 @@ class CellarRepository(
     }
 
     /**
+     * Replaces the whole cellar with what [change] makes of the current one, under the lock (a
+     * restore: a sync that ran meanwhile is kept, not reverted). Returns the cellar before and
+     * the one saved.
+     */
+    suspend fun replaceWith(change: (Cellar) -> Cellar): Result<Pair<Cellar, Cellar>> = mutex.withLock {
+        if (loadFailed) return@withLock refused()
+        val before = state.value
+        val copy = runCatching { change(before.copy()) }.getOrElse { return@withLock Result.failure(it) }
+        withContext(io) { runCatching { store.save(copy) } }.map {
+            state.value = copy
+            onLocalChange?.let { record -> withContext(io) { record(before, copy) } }
+            before to copy
+        }
+    }
+
+    /**
      * Replaces the whole cellar with [cellar] only if it is still [expected]: the Undo of a
      * restore, which would otherwise take back what changed since (here or by sync). Returns
      * whether it was replaced.

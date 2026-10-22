@@ -167,14 +167,28 @@ class BackupManager(
         FileKind.Document -> documents.file(ref.id)
     }
 
-    /** Back up now: the archive of the cellar, written to [output] (a file the user chose). */
+    /**
+     * Back up now: the archive of the cellar, written to [output] (a file the user chose), which
+     * is then closed. It is a backup only once closed: a failing close is a failure.
+     */
     suspend fun writeArchive(output: OutputStream): Result<CellarArchive.WriteResult> = mutex.withLock {
         busy.value = true
         try {
             val cellar = repository.read { it.copy() }
             val now = clock()
-            withContext(Dispatchers.IO) { runCatching { CellarArchive.write(cellar, now, output, ::fileOf) } }
-                .onSuccess { noteBackup(now) }
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val written = try {
+                        CellarArchive.write(cellar, now, output, ::fileOf)
+                    } catch (error: Throwable) {
+                        runCatching { output.close() }
+                        throw error
+                    }
+                    output.flush()
+                    output.close()
+                    written
+                }
+            }.onSuccess { noteBackup(now) }
         } finally {
             busy.value = false
         }

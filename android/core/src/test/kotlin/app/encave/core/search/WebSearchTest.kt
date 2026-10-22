@@ -1,11 +1,13 @@
 package app.encave.core.search
 
 import app.encave.core.Wine
+import app.encave.core.sync.LocalAddress
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -45,6 +47,38 @@ object WebSearchFixtures {
 
 class WebSearchTest {
     private val fakeKey = "TEST-KEY-NOT-REAL"
+
+    @Test
+    fun redirectsStayOnTheSameHostAndNeverDropHttps() {
+        fun allows(from: String, to: String) = SameHostRedirect.allows(from, to)
+        assertTrue(allows("https://api.search.brave.com/res/v1/web/search?q=x", "https://api.search.brave.com/v2/search?q=x"))
+        assertTrue(allows("https://Search.Example.com/a", "https://search.example.com:8443/b"))
+        // Another host, or HTTPS to HTTP: the terms would go elsewhere, or in clear text.
+        assertFalse(allows("https://api.search.brave.com/a", "https://tracker.example/a"))
+        assertFalse(allows("https://search.example.com/a", "https://search.example.com.evil.example/a"))
+        assertFalse(allows("https://search.example.com/a", "http://search.example.com/a"))
+        assertFalse(allows("https://192.168.1.10/a", "http://192.168.1.10/a")) // public-safety: allow
+        // A local HTTP server: to itself (HTTP or HTTPS), never to another host.
+        assertTrue(allows("http://nas.local:8080/search", "http://nas.local:8080/searxng/search"))
+        assertTrue(allows("http://192.168.1.10/search", "https://192.168.1.10/search")) // public-safety: allow
+        assertFalse(allows("http://nas.local/search", "http://192.168.1.11/search")) // public-safety: allow
+        assertFalse(allows("http://nas.local/search", "https://search.example.com/search"))
+        assertFalse(allows("https://search.example.com/a", "ftp://search.example.com/a"))
+        assertFalse(allows("https://search.example.com/a", "not a url"))
+    }
+
+    @Test
+    fun localAddressesAreParsedStrictly() {
+        assertTrue(LocalAddress.isLocal("10.0.0.1")) // public-safety: allow
+        assertTrue(LocalAddress.isLocal("192.168.0.1")) // public-safety: allow
+        assertTrue(LocalAddress.isLocal("172.16.0.0")) // public-safety: allow
+        // Leading zeros are octal for some resolvers: 010.0.0.1 can be 8.0.0.1, a public address.
+        assertFalse(LocalAddress.isLocal("010.0.0.1"))
+        assertFalse(LocalAddress.isLocal("192.168.01.1")) // public-safety: allow
+        assertFalse(LocalAddress.isLocal("+10.0.0.1")) // public-safety: allow
+        assertFalse(LocalAddress.isLocal("10.0.0.256")) // public-safety: allow
+        assertFalse(LocalAddress.isLocal("8.8.8.8"))
+    }
 
     @Test
     fun queryHasProducerNameAppellationAndVintage() {

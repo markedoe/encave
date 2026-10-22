@@ -202,7 +202,7 @@
     <string name="err_not_backup">Ce fichier n’est pas une sauvegarde Encave.</string>
     <string name="err_newer_version">Cette sauvegarde a été faite par une version plus récente d’Encave. Mettez Encave à jour sur cet appareil, puis importez-la à nouveau.</string>
     <string name="err_unsupported_archive">Ce fichier ZIP n’a pas été fait par Encave, ou une autre app l’a modifié. Importez l’archive telle qu’Encave l’a faite, ou le fichier cellar.json qu’elle contient.</string>
-    <string name="err_damaged_archive">Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier.</string>
+    <string name="err_damaged_archive">Cette sauvegarde est abîmée ou incomplète.</string>
     <string name="err_empty_file">Le fichier est vide.</string>
     <string name="err_missing_name">Le fichier CSV doit avoir une colonne « name ».</string>
     <string name="racks_empty_title">Aucun casier</string>
@@ -718,7 +718,7 @@
     <string name="help_data_weekly_title">Sauvegarde hebdomadaire sur cet appareil</string>
     <string name="help_data_weekly">**Sauvegarde hebdomadaire sur cet appareil** est activée au départ : une fois par semaine, Encave fait une sauvegarde de lui-même, quand vous l’ouvrez et en arrière-plan (vérifié une fois par jour, quand la batterie et le stockage ne sont pas faibles). Il garde les deux dernières dans **Download/Encave**, en fichiers ZIP non chiffrés : l’app Fichiers les affiche, et les apps autorisées à accéder à tous les fichiers, ou un ordinateur branché en USB, peuvent les lire. Elles y restent si Encave est supprimé, et **Effacer toutes les données** les garde. Une fois Encave réinstallé, il ne peut plus supprimer celles qu’il avait faites : supprimez-les dans l’app Fichiers quand vous n’en avez plus besoin. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps. Désactivez l’option si vous n’en voulez pas.</string>
     <string name="help_data_restore_title">Restaurer</string>
-    <string name="help_data_restore">Choisissez une version précédente, ou **Importer une sauvegarde ou un fichier CSV** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis.</string>
+    <string name="help_data_restore">Choisissez une version précédente, ou **Importer une sauvegarde ou un fichier CSV** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis. Une sauvegarde tronquée, par exemple par une copie qui ne s’est pas terminée, affiche « Cette sauvegarde est abîmée ou incomplète. » et rien n’est restauré.</string>
     <string name="help_data_devices_title">La restauration et vos autres appareils</string>
     <string name="help_data_devices">Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais.</string>
     <string name="help_data_csv_title">Tableur</string>
@@ -824,6 +824,7 @@
     <string name="remote_hide_password">Masquer le mot de passe</string>
     <string name="remote_webdav_footer">Un stockage que vous avez déjà, pour tous les appareils. Seuls des fichiers chiffrés sont stockés dans ce dossier. Utilisez un mot de passe d’application si le serveur en propose ; il reste sur cet appareil, chiffré avec le Keystore Android. Par exemple : l’adresse WebDAV d’un NAS Synology ou QNAP, https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud, https://webdav.pcloud.com/Encave pour pCloud.</string>
     <string name="remote_webdav_invalid">Utilisez une adresse https:// (http seulement sur le réseau local).</string>
+    <string name="remote_webdav_forbidden">Le serveur a refusé l’accès à ce dossier. Vérifiez que ce compte peut y lire et y écrire.</string>
     <string name="remote_webdav_refused">Le serveur a refusé ce nom d’utilisateur ou ce mot de passe. Avec la validation en deux étapes, utilisez un mot de passe d’application.</string>
     <string name="remote_webdav_not_webdav">Cette adresse ne répond pas comme un dossier WebDAV. Vérifiez l’adresse et que WebDAV est activé sur le serveur.</string>
     <string name="remote_webdav_full">Le dossier WebDAV est plein. Libérez de l’espace sur le serveur.</string>
@@ -883,6 +884,7 @@
     <string name="pair_failed_version">L’autre appareil utilise une version différente d’Encave. Mettez les deux à jour.</string>
     <string name="pair_failed_connection">La connexion a été perdue. Réessayez avec un nouveau code.</string>
     <string name="pair_failed_listen">Cet appareil n’a pas pu attendre l’autre sur le réseau.</string>
+    <string name="pair_failed_sample">La cave d’exemple n’a pas pu être retirée de cet appareil, rien n’a donc été partagé. Vérifiez l’espace libre sur cet appareil, puis réessayez.</string>
     <string name="pair_not_synced_body">La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul.</string>
     <string name="pair_done_body_remote">Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison.</string>
     <string name="join_replace_confirm_body">Cet appareil n’affichera que la cave de l’autre appareil.</string>

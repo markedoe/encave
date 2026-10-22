@@ -79,6 +79,22 @@ data class SyncState(
         return copy(clock = clock, stamps = stamps)
     }
 
+    /**
+     * Records removed from the cellar without telling the other devices (the sample cellar,
+     * before the cellar is shared): their stamps go, so no deletion of them is ever sent.
+     */
+    fun forgetting(old: Cellar, new: Cellar): SyncState {
+        val stamps = stamps.toMutableMap()
+        fun <T> drop(kind: SyncKey.Kind, before: Map<UUID, T>, after: Map<UUID, T>) {
+            for (id in before.keys) if (id !in after) stamps.remove(SyncKey.of(kind, id))
+        }
+        drop(SyncKey.Kind.Wine, old.wines, new.wines)
+        drop(SyncKey.Kind.Bottle, old.bottles, new.bottles)
+        drop(SyncKey.Kind.Discovery, old.discoveries, new.discoveries)
+        drop(SyncKey.Kind.Rack, CellarMerge.byId(old.racks), CellarMerge.byId(new.racks))
+        return copy(stamps = stamps)
+    }
+
     /** The stamp of an object, or [Stamp.ZERO] if it exists but was never stamped. */
     internal fun stampFor(key: String, exists: Boolean): Stamp? = stamps[key] ?: if (exists) Stamp.ZERO else null
 

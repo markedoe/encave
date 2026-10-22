@@ -142,6 +142,7 @@ final class SyncService {
         lastLocalChange = UserDefaults.standard.object(forKey: Self.lastLocalChangeKey) as? Date
         remoteSentThrough = UserDefaults.standard.object(forKey: Self.remoteSentKey) as? Date
         model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
+        model.onSaveReverted = { [weak self] shown, saved in self?.recordRevert(from: shown, to: saved) }
         if identityUnavailable {
             // Changes are still stamped (with the device ID kept in the sync state); only
             // the network stays off.
@@ -214,7 +215,7 @@ final class SyncService {
     /// Sync Now in Devices: on the network, and away from home if it is set up.
     func syncEverywhereNow() {
         syncNow()
-        if remoteStorage != nil { Task { await remoteRound() } }
+        if remoteStorage != nil { Task { await remoteRound(userAsked: true) } }
     }
 
     /// Sync Now from where the user is (pulling down the Cellar, Cellar › Sync Now): with
@@ -222,7 +223,7 @@ final class SyncService {
     /// sessions go on afterwards if they need longer).
     func syncEverywhere() async {
         let sessions = endpoints.compactMap { sync(with: $0.key, at: $0.value) }
-        let remote: Task<Void, Never>? = remoteStorage == nil ? nil : Task { await remoteRound() }
+        let remote: Task<Void, Never>? = remoteStorage == nil ? nil : Task { await remoteRound(userAsked: true) }
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             let once = Once()
             Task {
@@ -257,7 +258,10 @@ final class SyncService {
 
     /// First device of a cellar: creates the list of devices with this one.
     func setUpIfNeeded() {
-        guard membership == nil, !identityUnavailable, let model else { return }
+        guard !identityUnavailable, let model else { return }
+        // Before the cellar is first shared (no other device yet): the sample is never sent.
+        if membership.map({ $0.members.keys.allSatisfy { $0 == identity.id } }) ?? true { removeSampleUnshared() }
+        guard membership == nil else { return }
         var members = Membership()
         var clock = state?.clock ?? 0
         members.add(me, clock: &clock, by: identity.id)
@@ -266,6 +270,19 @@ final class SyncService {
         state = newState
         membership = members
         save()
+    }
+
+    /// Removes the sample cellar without recording it as a change: its records have the same
+    /// IDs on every device, so a deletion sent would remove another device's sample too.
+    private func removeSampleUnshared() {
+        guard !isDemo, let model, model.cellar.containsSample else { return }
+        let before = model.cellar
+        let removed = before.removingSample()
+        model.applySynced(removed)
+        guard var state else { return }
+        state.forget(from: before, to: removed)
+        self.state = state
+        try? files?.syncState.save(state)
     }
 
     /// Removes another device: it can no longer sync with any device of the cellar.
@@ -292,6 +309,14 @@ final class SyncService {
     private var pendingKey: CellarKey? {
         get { Keychain.getData(Self.pendingKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) } }
         set { Keychain.setData(newValue.flatMap { try? JSONEncoder().encode($0) }, for: Self.pendingKeyAccount) }
+    }
+
+    /// The cellar's first key, made when turning syncing away from home on and kept until it
+    /// has been given to every device: a retry gives the same key, so a grant already left
+    /// with it stays valid and no device ends up with a key the others never use.
+    private var firstKey: CellarKey? {
+        get { Keychain.getData(Self.firstKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) } }
+        set { Keychain.setData(newValue.flatMap { try? JSONEncoder().encode($0) }, for: Self.firstKeyAccount) }
     }
 
     /// Rotates the remote key if a removal is waiting for it, and returns the key to use.
@@ -428,6 +453,7 @@ final class SyncService {
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         pendingKey = nil
+        firstKey = nil
         storeRemoteKey(nil)
         storeWebDAVLogin(nil)
     }
@@ -454,6 +480,16 @@ final class SyncService {
             self.syncNow()
             if self.remoteFrequency.interval != nil { self.syncRemotely() }
         }
+    }
+
+    /// A failed write took the cellar back: what was recorded but never saved is recorded again
+    /// as saved, so the next sync does not spread it (nor a deletion of what is still here).
+    private func recordRevert(from shown: Cellar, to saved: Cellar) {
+        guard isSetUp, var state else { return }
+        state.recordRevert(from: shown, to: saved)
+        guard state != self.state else { return }
+        self.state = state
+        try? files?.syncState.save(state)
     }
 
     // MARK: Sessions
@@ -678,6 +714,7 @@ final class SyncService {
     /// Builds before the pending key kept only this flag.
     static let rotationKey = "sync.rotationPending"
     static let pendingKeyAccount = "sync.pendingCellarKey"
+    static let firstKeyAccount = "sync.firstCellarKey"
     static let webDAVLoginAccount = "sync.webDAVLogin"
     /// The user turned syncing away from home off on this device.
     static let remoteOffKey = "sync.remoteTurnedOff"
@@ -685,6 +722,7 @@ final class SyncService {
     static let lastLocalChangeKey = "sync.lastLocalChange"
     static let remoteSentKey = "sync.remoteSentThrough"
     static let pendingReplaceKey = "sync.pendingReplace"
+    static let webDAVRefusedKey = "sync.webDAVLoginRefused"
 
     /// Sets one of the dates kept across launches.
     private func keep(_ date: Date?, in property: ReferenceWritableKeyPath<SyncService, Date?>, key: String) {
@@ -706,7 +744,11 @@ final class SyncService {
 
     /// The WebDAV server refused the login in the last round (a changed password): sync
     /// needs the user at once (sign in again) rather than failing for an hour first.
-    private(set) var webDAVLoginRefused = false
+    /// Kept across launches: while it is set, no automatic round tries the login again (a
+    /// server may lock the account after a few refusals); Sync Now and a new login still do.
+    private(set) var webDAVLoginRefused = UserDefaults.standard.bool(forKey: SyncService.webDAVRefusedKey) {
+        didSet { UserDefaults.standard.set(webDAVLoginRefused, forKey: Self.webDAVRefusedKey) }
+    }
 
     /// Turns syncing away from home on with a storage (or off with nil). Checks the
     /// storage first. The first device to turn it on creates the cellar's key and
@@ -737,12 +779,15 @@ final class SyncService {
                                                              current: nil) {
                 key = grant.cellarKey
             } else {
-                let new = CellarKey.random(cellarID: membership.cellarID)
+                let new = firstKey.flatMap { $0.cellarID == membership.cellarID ? $0 : nil }
+                    ?? CellarKey.random(cellarID: membership.cellarID)
+                firstKey = new
                 try await RemoteSync.grant(new, to: membership.active, store: store, identity: identity,
                                            storage: storage.string)
                 key = new
             }
         }
+        firstKey = nil
         if case .webDAV = storage { storeWebDAVLogin(login) }
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         useStorage(storage)
@@ -885,7 +930,10 @@ final class SyncService {
     }
     #endif
 
-    func remoteRound() async {
+    /// `userAsked`: Sync Now. A refused WebDAV login is tried again only then (or after a new login).
+    func remoteRound(userAsked: Bool = false) async {
+        if case .webDAV = remoteStorage,
+           !RemoteSync.mayRun(userAsked: userAsked, webDAVLoginRefused: webDAVLoginRefused) { return }
         guard let store = remoteStorage?.store(login: webDAVLogin), !isSyncingRemotely, !wasRemoved,
               !identityUnavailable, let local = snapshot() else { return }
         isSyncingRemotely = true
@@ -906,6 +954,10 @@ final class SyncService {
                 key = try await rotateIfNeeded(store: store, key: key, local: local, round: round)
             } catch {
                 guard !Task.isCancelled else { return }
+                if let error = error as? RemoteSyncError, error == .unauthorized || error == .forbidden {
+                    noteRefused(error)
+                    return
+                }
                 noteRemoteFailure()
                 remoteProblem = String(localized: "The removed device could not be shut out of syncing away from home yet. It will be tried again.")
                 return
@@ -953,14 +1005,8 @@ final class SyncService {
         } catch _ where Task.isCancelled {
             // iOS ended the background task early: not a failure, the next round retries.
             return
-        } catch RemoteSyncError.unauthorized {
-            noteRemoteFailure()
-            if case .webDAV = remoteStorage { webDAVLoginRefused = true }
-            switch remoteStorage {
-            case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
-            case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
-            default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
-            }
+        } catch let error as RemoteSyncError where error == .unauthorized || error == .forbidden {
+            noteRefused(error)
         } catch let error as RemoteSyncError where error == .fileTooLarge || error == .quotaExceeded {
             noteRemoteFailure()
             remoteProblem = refusalMessage(error)
@@ -971,6 +1017,22 @@ final class SyncService {
             case .webDAV: remoteProblem = String(localized: "The WebDAV folder could not be reached.")
             default: remoteProblem = String(localized: "The relay could not be reached.")
             }
+        }
+    }
+
+    /// The storage refused this device: a WebDAV login (sign in again, and no automatic
+    /// round until then) or, with the right login, the folder itself.
+    private func noteRefused(_ error: RemoteSyncError) {
+        noteRemoteFailure()
+        if error == .forbidden {
+            remoteProblem = String(localized: "The server refused access to this folder. Check that this account may read and write it.")
+            return
+        }
+        if case .webDAV = remoteStorage { webDAVLoginRefused = true }
+        switch remoteStorage {
+        case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
+        case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
+        default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
         }
     }
 
@@ -1109,7 +1171,7 @@ final class SyncService {
             state = SyncState(device: identity.id, clock: state?.clock ?? 0)
         } else {
             // Combining: the sample cellar is removed first, never sent to the other devices.
-            if model.cellar.containsSample { _ = model.update { $0 = $0.removingSample() } }
+            removeSampleUnshared()
             if state == nil { state = .starting(with: model.cellar, device: identity.id) }
         }
         setPendingReplace(replace)

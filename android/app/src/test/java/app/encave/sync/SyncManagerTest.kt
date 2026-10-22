@@ -10,6 +10,7 @@ import app.encave.core.containsSample
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.FileAccess
+import app.encave.core.sync.KeyGrant
 import app.encave.core.sync.Mailbox
 import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
@@ -104,6 +105,37 @@ class SyncManagerTest {
     }
 
     @Test
+    fun aRetryAfterAFailedGrantGivesTheSameKey() = runBlocking {
+        sync.setUpIfNeeded()
+        val first = addOther()
+        val second = addOther()
+        val members = sync.state.value.membership!!
+        val memory = MemoryMailboxStore()
+        var failing = true
+        // The inbox granted last cannot be written the first time: the other one has its grant then.
+        val last = members.active.last { it.id != sync.identity.id }.inbox
+        val flaky = object : MailboxStore {
+            override fun mailbox(id: String, token: String): Mailbox = memory.mailbox(id, token)
+            override fun inbox(id: String, token: String): Mailbox {
+                val box = memory.inbox(id, token)
+                if (id != last) return box
+                return object : Mailbox by box {
+                    override suspend fun create(path: String, data: ByteArray): Boolean =
+                        if (failing) throw RemoteSyncException(RemoteSyncError.Unavailable("offline")) else box.create(path, data)
+                }
+            }
+        }
+        assertTrue(runCatching { sync.turnOn(flaky, "https://relay.example") }.isFailure)
+        failing = false
+        sync.turnOn(flaky, "https://relay.example")
+        // Every grant left, for either device, holds the same key.
+        val keys = listOf(first, second).flatMap { device ->
+            memory.allFiles[device.inboxId].orEmpty().map { (path, data) -> KeyGrant.open(data, path, device, members).cellarKey }
+        }.toSet()
+        assertEquals(1, keys.size)
+    }
+
+    @Test
     fun turnedOffStaysOffWhenAnotherDeviceTellsItsStorage() = runBlocking {
         sync.setUpIfNeeded()
         addOther()
@@ -127,6 +159,48 @@ class SyncManagerTest {
         sync.storage.remoteStorage = SyncManager.WEBDAV_PREFIX + "https://nas.example.com/encave/"
         sync.remoteFailed(SyncManager.RemoteProblem.Refused)
         assertEquals(SyncHealth.NeedsAction(SyncHealth.Reason.SignInNeeded), sync.state.value.health(sync.identity.id))
+    }
+
+    @Test
+    fun aRefusedWebDavLoginIsNotTriedAgainUntilTheUserAsks() = runBlocking {
+        sync.setUpIfNeeded()
+        addOther()
+        val requests = java.util.concurrent.atomic.AtomicInteger()
+        val refusing = object : MailboxStore {
+            val box = object : Mailbox {
+                override suspend fun list(prefix: String): List<String> = refuse()
+                override suspend fun get(path: String): ByteArray? = refuse()
+                override suspend fun create(path: String, data: ByteArray): Boolean = refuse()
+                override suspend fun delete(path: String) = refuse()
+                fun refuse(): Nothing {
+                    requests.incrementAndGet()
+                    throw RemoteSyncException(RemoteSyncError.Unauthorized)
+                }
+            }
+            override fun mailbox(id: String, token: String): Mailbox = box
+            override fun inbox(id: String, token: String): Mailbox = box
+        }
+        sync.storeForTests = { refusing }
+        sync.storage.remoteStorage = SyncManager.WEBDAV_PREFIX + "https://nas.example.com/encave/"
+        sync.remoteRound()
+        assertTrue(requests.get() > 0)
+        assertTrue(sync.storage.webDavLoginRefused)
+        assertEquals(SyncHealth.NeedsAction(SyncHealth.Reason.SignInNeeded), sync.state.value.health(sync.identity.id))
+        // Automatic rounds (the loop, after a change, in the background) leave the server alone.
+        val before = requests.get()
+        sync.remoteRound()
+        sync.remoteRound()
+        assertEquals(before, requests.get())
+        // Sync now still tries.
+        sync.remoteRound(userAsked = true)
+        assertTrue(requests.get() > before)
+        assertTrue(sync.storage.webDavLoginRefused)
+        // A new login clears it: automatic rounds try again.
+        sync.storage.webDavLogin = WebDavLogin("https://nas.example.com/encave/", "me", "new password")
+        assertFalse(sync.storage.webDavLoginRefused)
+        val again = requests.get()
+        sync.remoteRound()
+        assertTrue(requests.get() > again)
     }
 
     @Test
@@ -161,6 +235,38 @@ class SyncManagerTest {
         // Only this device's own bottles are sent to the other devices.
         assertFalse(repository.cellar.value.containsSample)
         assertEquals(setOf("Mine"), sync.snapshot()!!.cellar.wines.values.map { it.name }.toSet())
+    }
+
+    @Test
+    fun theHostRemovesTheSampleBeforeSharingWithoutSendingADeletion() = runBlocking {
+        // A device alone in its cellar (sync state already there) loads the sample, then invites.
+        sync.setUpIfNeeded()
+        repository.replace(SampleData.cellar()).getOrThrow()
+        repository.update { it.addBottles(Wine(name = "Mine"), 2) }.getOrThrow()
+
+        sync.setUpIfNeeded()
+        assertFalse(repository.cellar.value.containsSample)
+        val shared = sync.snapshot()!!
+        assertEquals(setOf("Mine"), shared.cellar.wines.values.map { it.name }.toSet())
+        // The sample has the same IDs on every device: no stamp of it, deleted or not, is sent.
+        val sampleKeys = SampleData.ids.map { it.toString().lowercase() }.toSet()
+        assertTrue(shared.state.stamps.keys.none { it.substringAfter(':') in sampleKeys })
+    }
+
+    @Test
+    fun combineStopsWhenTheSampleCannotBeRemoved() = runBlocking {
+        repository.replace(SampleData.cellar()).getOrThrow()
+        // The cellar file can no longer be written.
+        File(context.filesDir, "cellar-test.json").apply { delete(); mkdirs(); File(this, "x").writeText("x") }
+        val (host, _) = DeviceIdentity.generate()
+        val (members, _) = Membership().adding(Member(host.id, "iPad", host.publicKey, "ipados"), 0, host.id)
+
+        val failure = runCatching { sync.adoptCellar(members, replace = false) }.exceptionOrNull()
+        assertTrue(failure is SampleNotRemovedException)
+        assertNull(sync.state.value.membership)
+        assertTrue(repository.cellar.value.containsSample)
+        File(context.filesDir, "cellar-test.json").deleteRecursively()
+        Unit
     }
 
     @Test

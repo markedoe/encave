@@ -453,3 +453,19 @@ public enum WebSearchSuggestions {
         }
     }
 }
+
+/// Which redirects a request to a search service (or an AI provider) may follow. The search
+/// terms (or the key and the photo) go only where the user pointed: the same host, over HTTPS,
+/// or over plain HTTP only from an HTTP server on the local network to the same host. Another
+/// host, or HTTPS to HTTP, is refused.
+public enum SameHostRedirect {
+    public static func allows(from origin: URL, to target: URL) -> Bool {
+        guard let host = origin.host?.lowercased(), !host.isEmpty, target.host?.lowercased() == host else { return false }
+        let from = origin.scheme?.lowercased(), to = target.scheme?.lowercased()
+        switch to {
+        case "https": return from == "https" || from == "http"
+        case "http": return from == "http" && LocalAddress.isLocal(host: host)
+        default: return false
+        }
+    }
+}

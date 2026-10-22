@@ -89,6 +89,10 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
     @Test func firstRoundComesOneIntervalAfterTheLastOne() {
         let now = Date(timeIntervalSinceReferenceDate: 1_000_000)
         #expect(RemoteSync.firstWait(interval: 900, lastRound: nil, now: now) == 0)
+        // A refused login: no automatic round until the user asks or signs in again.
+        #expect(!RemoteSync.mayRun(userAsked: false, webDAVLoginRefused: true))
+        #expect(RemoteSync.mayRun(userAsked: true, webDAVLoginRefused: true))
+        #expect(RemoteSync.mayRun(userAsked: false, webDAVLoginRefused: false))
         #expect(RemoteSync.firstWait(interval: 900, lastRound: now.addingTimeInterval(-3600), now: now) == 0)
         #expect(RemoteSync.firstWait(interval: 900, lastRound: now.addingTimeInterval(-600), now: now) == 300)
         // A last round in the future (the clock moved back) waits one interval at most.

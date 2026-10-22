@@ -93,6 +93,16 @@ class BackupManagerTest {
     }
 
     @Test
+    fun backUpNowFailsWhenTheFileCannotBeClosed() = runTest {
+        val (manager, _) = manager(SampleData.cellar(year = 2026))
+        val output = object : java.io.ByteArrayOutputStream() {
+            override fun close() = throw java.io.IOException("No space left")
+        }
+        assertTrue(manager.writeArchive(output).isFailure)
+        assertEquals(null, manager.lastBackup.value)
+    }
+
+    @Test
     fun backUpNowWritesAnArchiveThatReadsBack() = runTest {
         val cellar = SampleData.cellar(year = 2026)
         val photo = PhotoStore(context).save(byteArrayOf(1, 2, 3, 4))!!
