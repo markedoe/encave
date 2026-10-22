@@ -67,6 +67,8 @@ import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import app.encave.R
 import app.encave.core.Maturity
@@ -246,7 +248,42 @@ fun ActionContent(text: String, icon: ImageVector? = null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(Dimens.s))
         }
-        Text(text, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        // Two lines at most, never cut with an ellipsis: a long French title wraps.
+        Text(text, maxLines = 2, textAlign = TextAlign.Center)
+    }
+}
+
+/** From this font scale on, paired action buttons go one above the other. */
+const val STACKED_ACTIONS_FONT_SCALE = 1.5f
+
+/**
+ * Two action buttons side by side, or one above the other at the largest font scales
+ * (1.5 and up) so their titles are never broken or cut. Each slot gets the modifier its
+ * button must use. With [equalWidths], the pair takes the whole width, half each.
+ */
+@Composable
+fun ActionButtonPair(
+    modifier: Modifier = Modifier,
+    equalWidths: Boolean = true,
+    spacing: Dp = Dimens.s,
+    first: @Composable (Modifier) -> Unit,
+    second: @Composable (Modifier) -> Unit,
+) {
+    if (LocalDensity.current.fontScale >= STACKED_ACTIONS_FONT_SCALE) {
+        val width = if (equalWidths) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Max)
+        Column(modifier.then(width).testTag("action.pair.stacked"), verticalArrangement = Arrangement.spacedBy(spacing)) {
+            first(Modifier.fillMaxWidth())
+            second(Modifier.fillMaxWidth())
+        }
+    } else {
+        Row(
+            modifier.then(if (equalWidths) Modifier.fillMaxWidth() else Modifier),
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            first(if (equalWidths) Modifier.weight(1f) else Modifier)
+            second(if (equalWidths) Modifier.weight(1f) else Modifier)
+        }
     }
 }
 

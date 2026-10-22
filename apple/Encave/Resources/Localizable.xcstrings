@@ -4606,7 +4606,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer"
+            "value": "Abandonner"
           }
         }
       }
@@ -4636,7 +4636,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer la note ?"
+            "value": "Abandonner les modifications ?"
           }
         }
       }
@@ -9137,6 +9137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre le vin dans Encave."
+          }
+        }
+      }
+    },
+    "Opens the wine.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre le vin."
           }
         }
       }

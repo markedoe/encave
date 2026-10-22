@@ -102,6 +102,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.UiText
 import app.encave.ui.cellar.BottleDocumentsSheet
 import app.encave.ui.cellar.DocumentCount
+import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.EmptyState
@@ -581,12 +582,19 @@ private fun SelectedBottleCard(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = onDrink, modifier = Modifier.testTag("action.rack_drink")) {
-                    ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar)
-                }
-                OutlinedButton(onClick = onMove, modifier = Modifier.testTag("action.rack_move")) {
-                    ActionContent(stringResource(R.string.action_move), Icons.Outlined.OpenWith)
-                }
+                ActionButtonPair(
+                    equalWidths = false,
+                    first = { width ->
+                        Button(onClick = onDrink, modifier = width.testTag("action.rack_drink")) {
+                            ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar)
+                        }
+                    },
+                    second = { width ->
+                        OutlinedButton(onClick = onMove, modifier = width.testTag("action.rack_move")) {
+                            ActionContent(stringResource(R.string.action_move), Icons.Outlined.OpenWith)
+                        }
+                    },
+                )
                 Spacer(Modifier.weight(1f))
                 val documents = bottle.attachments?.size
                 if (documents != null) {

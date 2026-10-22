@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -25,8 +26,7 @@ import app.encave.core.PairingSuggestion
 import app.encave.core.bottleToOpen
 import app.encave.core.nextToBeReady
 import app.encave.core.reservedBottleCount
-import app.encave.core.tonightCandidates
-import app.encave.core.tonightStartIndex
+import app.encave.core.tonightPicks
 import app.encave.reminders.Reminders
 import app.encave.ui.UiText
 import app.encave.ui.cellar.ReserveDialog
@@ -103,6 +103,7 @@ import app.encave.core.WineGroup
 import app.encave.core.pairings
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
+import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.styleLine
 import androidx.compose.ui.semantics.contentDescription
@@ -129,10 +130,20 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val resources = LocalResources.current
     val year = viewModel.year
     val sections = remember(cellar, year) { cellar.groupsByMaturity(year) }
-    val candidates = remember(cellar, year) { cellar.tonightCandidates(year) }
+    // The local date, as on Apple: a new first suggestion each day from midnight.
+    val today = LocalDate.now()
+    // The first wine shown today, "yyyy-MM-dd|id" on this device: it stays today's pick while
+    // it can be drunk, even when wines are added.
+    val tonightPrefs = LocalContext.current.getSharedPreferences("tonight", android.content.Context.MODE_PRIVATE)
+    val kept = tonightPrefs.getString("firstPick", null)?.takeIf { it.startsWith("$today|") }
+        ?.substringAfter('|')?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    val candidates = remember(cellar, year, today, kept) { cellar.tonightPicks(year, today, kept) }
+    val shown = candidates.firstOrNull()?.let { "$today|${it.wine.id}" }
+    LaunchedEffect(shown) {
+        if (shown != null && tonightPrefs.getString("firstPick", null) != shown) tonightPrefs.edit().putString("firstPick", shown).apply()
+    }
     // "Another idea" taps; the first suggestion of the day comes from the date.
     var pickOffset by rememberSaveable { mutableIntStateOf(0) }
-    val dayOfYear = LocalDate.now().dayOfYear
     var drinking by rememberDrinking()
     var reserving by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmSample by rememberSaveable { mutableStateOf(false) }
@@ -179,14 +190,14 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         sections.isEmpty() -> NoteRow(Icons.Outlined.CardGiftcard, stringResource(R.string.tonight_all_reserved), Modifier.testTag("tonight.all_reserved"))
                         candidates.isEmpty() -> NothingReadyCard(cellar.nextToBeReady(year))
                         else -> {
-                            val start = tonightStartIndex(dayOfYear, candidates.size)
-                            val pick = candidates[(start + pickOffset) % candidates.size]
+                            val pick = candidates[pickOffset % candidates.size]
                             SurpriseCard(
                                 group = pick, cellar = cellar, year = year,
                                 onOpen = { navigator.open(WineDetailRoute(pick.id.toString())) },
                                 onDrink = { drinking = pick.bottles.bottleToOpen?.id?.toString() },
                                 onShowInRack = showInRack,
-                                onShuffle = { pickOffset++ },
+                                // Only when there is another wine to suggest.
+                                onShuffle = if (candidates.size > 1) ({ pickOffset++ }) else null,
                             )
                         }
                     }
@@ -430,7 +441,7 @@ private fun SurpriseCard(
     onOpen: () -> Unit,
     onDrink: () -> Unit,
     onShowInRack: (Bottle) -> Unit,
-    onShuffle: () -> Unit,
+    onShuffle: (() -> Unit)?,
 ) {
     // The bottle Drink opens first: a free one, as in the drink sheet.
     val bottle = group.bottles.bottleToOpen
@@ -467,16 +478,29 @@ private fun SurpriseCard(
                     Text(location, Modifier.padding(start = Dimens.s), style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
-                Text(location, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                // Not a button: the same icon, in the card's text color, as on Apple.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.GridView, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(location, Modifier.padding(start = Dimens.s), style = MaterialTheme.typography.bodyMedium)
+                }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
-                // A filled button: a tonal one is hardly visible on the card's own container color.
-                Button(onClick = onDrink, modifier = Modifier.weight(1f).testTag("action.surprise_drink")) {
+            // A filled button: a tonal one is hardly visible on the card's own container color.
+            val drink: @Composable (Modifier) -> Unit = { width ->
+                Button(onClick = onDrink, modifier = width.testTag("action.surprise_drink")) {
                     ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar)
                 }
-                OutlinedButton(onClick = onShuffle, modifier = Modifier.weight(1f).testTag("action.surprise_next")) {
-                    ActionContent(stringResource(R.string.action_surprise), Icons.Outlined.Casino)
-                }
+            }
+            if (onShuffle == null) {
+                drink(Modifier.fillMaxWidth())
+            } else {
+                ActionButtonPair(
+                    first = drink,
+                    second = { width ->
+                        OutlinedButton(onClick = onShuffle, modifier = width.testTag("action.surprise_next")) {
+                            ActionContent(stringResource(R.string.action_surprise), Icons.Outlined.Casino)
+                        }
+                    },
+                )
             }
         }
     }

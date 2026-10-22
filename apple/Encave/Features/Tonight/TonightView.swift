@@ -9,6 +9,14 @@ struct TonightView: View {
     /// "Another idea" taps since the screen opened.
     @State private var pickOffset = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The wine opened from the suggestion card, on iPhone and iPad.
+    @State private var openedWine: UUID?
+    /// The first wine shown today, "yyyy-MM-dd|id" on this device: it stays today's pick
+    /// while it can be drunk, even when wines are added.
+    /// Read once and written straight to the defaults, not @AppStorage: on the Mac that
+    /// redraws on every write to the defaults, AppKit's own included (see DefaultsFlag).
+    @State private var firstPick = UserDefaults.standard.string(forKey: Self.firstPickKey) ?? ""
+    static let firstPickKey = "tonight.firstPick"
 
     var body: some View {
         if let selection {
@@ -29,6 +37,7 @@ struct TonightView: View {
                     .toolbar { SettingsToolbarItem() }
                     #endif
                     .navigationDestination(for: UUID.self) { WineDetailView(wineID: $0) }
+                    .navigationDestination(item: $openedWine) { WineDetailView(wineID: $0) }
                     .navigationDestination(for: FoodPairingRoute.self) { _ in FoodPairingView() }
                     .navigationDestination(for: AskCellarRoute.self) { _ in AskCellarView() }
             }
@@ -41,19 +50,20 @@ struct TonightView: View {
         if model.bottlesInCellar.isEmpty {
             EmptyTonightView()
         } else if let selection {
-            List(selection: selection) { rows(sections: sections, linking: false) }
+            List(selection: selection) { rows(sections: sections, selection: selection) }
         } else {
-            List { rows(sections: sections, linking: true) }
+            List { rows(sections: sections, selection: nil) }
         }
     }
 
-    /// Today's place in the suggestions: a new wine each day, the same all day.
-    private var dayOfYear: Int { Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 1 }
-
     @ViewBuilder
-    private func rows(sections: [MaturitySection], linking: Bool) -> some View {
+    private func rows(sections: [MaturitySection], selection: Binding<UUID?>?) -> some View {
+        let linking = selection == nil
         let year = model.currentYear
-        let candidates = model.cellar.tonightCandidates(year: year)
+        // Today's suggestions: a new first wine each day, the same all day, as on Android.
+        let day = Cellar.tonightDay(.now)
+        let kept = firstPick.hasPrefix(day + "|") ? UUID(uuidString: String(firstPick.dropFirst(day.count + 1))) : nil
+        let candidates = model.cellar.tonightPicks(year: year, day: day, keeping: kept)
         let reserved = model.cellar.reservedBottleCount
         Section {
             if sections.isEmpty {
@@ -66,21 +76,34 @@ struct TonightView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             } else {
-                let start = Cellar.tonightStartIndex(dayOfYear: dayOfYear, count: candidates.count)
-                TonightPick(group: candidates[(start + pickOffset) % candidates.count]) {
+                let group = candidates[pickOffset % candidates.count]
+                // "Another idea" only when there is another wine to suggest.
+                // The card opens the wine, as a row of the list does.
+                TonightPick(group: group, open: {
+                    if let selection { selection.wrappedValue = group.wine.id } else { openedWine = group.wine.id }
+                }, next: candidates.count < 2 ? nil : {
                     let next = pickOffset + 1
                     withMotion(.snappy, reduceMotion: reduceMotion) { pickOffset = next }
                     // The card changes without moving focus: say which wine it shows now.
-                    let wine = candidates[(start + next) % candidates.count].wine
+                    let wine = candidates[next % candidates.count].wine
                     AccessibilityNotification.Announcement([wine.displayName, wine.styleLine]
                         .filter { !$0.isEmpty }.joined(separator: ", ")).post()
+                })
+                .task(id: "\(day)|\(candidates[0].wine.id.uuidString)") {
+                    let shown = "\(day)|\(candidates[0].wine.id.uuidString)"
+                    if firstPick != shown {
+                        firstPick = shown
+                        UserDefaults.standard.set(shown, forKey: Self.firstPickKey)
+                    }
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
             }
         } footer: {
             if reserved > 0, !sections.isEmpty {
+                // Wraps rather than cutting the count off (a narrow Mac column).
                 Text("Bottles kept for an occasion are not suggested: \(reserved)")
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         ReminderOffer()
@@ -253,7 +276,10 @@ private struct TonightPick: View {
     @Environment(CellarModel.self) private var model
     @Environment(SceneRouter.self) private var router: SceneRouter?
     let group: WineGroup
-    let next: () -> Void
+    /// Opens the wine's page.
+    let open: () -> Void
+    /// Nil when there is no other wine to suggest.
+    let next: (() -> Void)?
 
     var body: some View {
         let wine = group.wine
@@ -261,23 +287,14 @@ private struct TonightPick: View {
             Text("Tonight, open…")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
-            HStack(spacing: 16) {
-                BottleEnd(color: wine.color, size: 64)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(wine.displayName)
-                        .font(.title2.weight(.semibold))
-                        .fontDesign(.serif)
-                        .lineLimit(2)
-                    // The style in words, as in the cellar list, not only by the bottle's color.
-                    if !wine.styleLine.isEmpty {
-                        Text(verbatim: wine.styleLine).foregroundStyle(.secondary)
-                    }
-                    MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
-                        .font(.footnote.weight(.medium))
-                }
-            }
+            Button(action: open) { header(wine) }
+                .buttonStyle(.plain)
+                .accessibilityHint(Text("Opens the wine."))
+                .accessibilityIdentifier("action.tonight.open")
             // The bottle Drink opens first: a free one, as in the drink sheet.
-            if let bottle = group.bottles.bottleToOpen, let location = model.locationLabel(for: bottle) {
+            if let bottle = group.bottles.bottleToOpen {
+                // Not in a rack and no storage note: said, as on Android.
+                let location = model.locationLabel(for: bottle) ?? String(localized: "Not placed in a rack")
                 if bottle.slot != nil {
                     Button {
                         router?.showInRack(bottle, model: model)
@@ -294,7 +311,7 @@ private struct TonightPick: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            HStack(spacing: 12) {
+            ActionButtonRow {
                 Button {
                     if let bottle = group.bottles.bottleToOpen { router?.sheet = .drink(bottleID: bottle.id) }
                 } label: {
@@ -302,11 +319,13 @@ private struct TonightPick: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("action.tonight.drink")
-                Button(action: next) {
-                    ActionLabel("Another idea", systemImage: "shuffle").frame(maxWidth: .infinity)
+                if let next {
+                    Button(action: next) {
+                        ActionLabel("Another idea", systemImage: "shuffle").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("action.tonight.next")
                 }
-                .buttonStyle(.bordered)
-                .accessibilityIdentifier("action.tonight.next")
             }
             .controlSize(.large)
         }
@@ -319,5 +338,27 @@ private struct TonightPick: View {
         .padding(.vertical, 4)
         .id("pick-\(group.id)")
         .motionTransition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
+    }
+
+    private func header(_ wine: Wine) -> some View {
+        HStack(spacing: 16) {
+            BottleEnd(color: wine.color, size: 64)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(wine.displayName)
+                    .font(.title2.weight(.semibold))
+                    .fontDesign(.serif)
+                    .lineLimit(2)
+                // The style in words, as in the cellar list, not only by the bottle's color;
+                // wrapped, never cut, at the larger text sizes.
+                if !wine.styleLine.isEmpty {
+                    Text(verbatim: wine.styleLine).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                    .font(.footnote.weight(.medium))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Rectangle())
     }
 }

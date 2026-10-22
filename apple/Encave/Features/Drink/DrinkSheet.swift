@@ -269,7 +269,15 @@ struct TastingEditor: View {
             .onAppear {
                 guard !loaded else { return }
                 loaded = true
-                if let tasting = model.cellar.bottles[bottleID]?.tasting { draft = TastingDraft(tasting) }
+                if let bottle = model.cellar.bottles[bottleID] {
+                    if let tasting = bottle.tasting {
+                        draft = TastingDraft(tasting)
+                    } else {
+                        // Opened without a tasting (imported): the date the Journal shows, as on
+                        // Android, not today.
+                        draft.date = bottle.addedAt
+                    }
+                }
                 original = draft
             }
         }

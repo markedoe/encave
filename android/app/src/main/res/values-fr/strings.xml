@@ -204,7 +204,7 @@
     <string name="err_unsupported_archive">Ce fichier ZIP n’a pas été fait par Encave, ou une autre app l’a modifié. Importez l’archive telle qu’Encave l’a faite, ou le fichier cellar.json qu’elle contient.</string>
     <string name="err_damaged_archive">Cette sauvegarde est abîmée ou incomplète.</string>
     <string name="err_empty_file">Le fichier est vide.</string>
-    <string name="err_missing_name">Le fichier CSV doit avoir une colonne « name ».</string>
+    <string name="err_missing_name">Le fichier CSV doit avoir une colonne « name ».</string>
     <string name="racks_empty_title">Aucun casier</string>
     <string name="racks_empty_body">Décrivez vos casiers pour voir exactement où se trouve chaque bouteille.</string>
     <string name="rack_occupancy">%1$d bouteilles sur %2$d</string>
@@ -213,7 +213,7 @@
     <string name="rack_editor_edit">Modifier le casier</string>
     <string name="rack_preview">Aperçu</string>
     <string name="rack_delete">Supprimer le casier</string>
-    <string name="rack_delete_title">Supprimer « %1$s » ?</string>
+    <string name="rack_delete_title">Supprimer « %1$s » ?</string>
     <string name="rack_delete_empty">Il ne contient aucune bouteille.</string>
     <string name="rack_default_name">Casier %1$d</string>
     <string name="cell_empty">%1$s, vide</string>
@@ -270,6 +270,7 @@
     <string name="insights_grapes">Cépages principaux</string>
     <string name="insights_empty">Ajoutez des bouteilles pour voir les statistiques.</string>
     <string name="insights_nv">NM</string>
+    <string name="insights_decade">années %1$d</string>
     <string name="settings_cellar">Cave</string>
     <string name="settings_currency">Devise par défaut</string>
     <string name="settings_appearance">Affichage</string>
@@ -364,7 +365,7 @@
     <string name="msg_erased">Toutes les données ont été effacées</string>
     <string name="settings_ai">Reconnaissance des étiquettes par IA</string>
     <string name="settings_ai_off_body">Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.</string>
-    <string name="settings_ai_on_body">Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil.</string>
+    <string name="settings_ai_on_body">Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil.</string>
     <string name="ai_provider">Fournisseur</string>
     <string name="ai_local">Autre serveur (compatible OpenAI)</string>
     <string name="ai_connect">Se connecter et charger les modèles</string>
@@ -373,7 +374,7 @@
     <string name="ai_download_lmstudio">Télécharger LM Studio</string>
     <string name="ai_tip_ollama">Installez un modèle qui lit les images, par exemple : ollama pull gemma3. Pour l’utiliser depuis ce téléphone, lancez Ollama avec OLLAMA_HOST=0.0.0.0 sur l’ordinateur.</string>
     <string name="ai_tip_vllm">Lancez un modèle de vision avec : vllm serve &lt;modèle&gt; --host 0.0.0.0. Si vous utilisez --api-key, saisissez la même clé ici.</string>
-    <string name="ai_tip_lmstudio">Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis ce téléphone.</string>
+    <string name="ai_tip_lmstudio">Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis ce téléphone.</string>
     <string name="ai_tip_other">Tout serveur avec une API /chat/completions compatible OpenAI et un modèle qui lit les images.</string>
     <string name="ai_local_sent">Seule la photo de l’étiquette est envoyée, à votre propre serveur. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple http://192.0.2.10:11434) au lieu de localhost.</string>
     <string name="ai_server_url">Adresse du serveur</string>
@@ -1293,8 +1294,8 @@
     <string name="state_collapsed">Masquée</string>
     <string name="action_expand">Afficher</string>
     <string name="action_collapse">Masquer</string>
-    <string name="discard_note_title">Supprimer la note ?</string>
-    <string name="action_discard">Supprimer</string>
+    <string name="discard_note_title">Abandonner les modifications ?</string>
+    <string name="action_discard">Abandonner</string>
     <string name="action_keep_editing">Continuer</string>
     <string name="drink_choice_kept">%1$s · Gardée pour %2$s</string>
     <string name="action_turn_on">Activer</string>
