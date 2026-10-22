@@ -5,6 +5,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+- Empty places in shelves and wine fridges show their number only, and places
+  read "Shelf 1, place 6" everywhere (Shortcuts and reports too); layered
+  fridges are listed as wine fridges with the fridge icon
+- iPhone: Cellar selection actions no longer sit under the tab bar; Mac:
+  Cmd-Delete in a text field no longer deletes the selected wine
+- Reduce Motion is respected; paired buttons stack at large text sizes; rack
+  places tell VoiceOver and TalkBack their maturity, bin contents and check state
+- Tonight's suggestion stays the same all day, on both platforms; Another idea
+  needs two wines; French discard prompts no longer read as delete
+- AI completion says when it found nothing to add, and offers to merge a wine
+  that became a duplicate; tilted labels are straightened more often
+- A failed save no longer spreads a deletion; the sample cellar is never sent
+  to other devices; a refused WebDAV login stops automatic retries; damaged
+  backups say so; web search follows redirects only on the same host over HTTPS
+- Android matches Apple on drink-down plans, search folding (ß) and currency
+  codes typed in lower case
+- Help, privacy policy and store notes describe backups exactly (on by default,
+  not encrypted, where they are kept)
+
 ### Added
 - Privacy policy (docs/PRIVACY.md, linked from the apps) and store paperwork
   (docs/STORE.md); App Store listing in French and English (name, subtitle,
