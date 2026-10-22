@@ -394,7 +394,7 @@ S = [
  ("settings_ai_off_body", "Optional. Reads labels from a photo with the AI service you choose, using your own API key.",
   "Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API."),
  ("settings_ai_on_body", "Only the label photo is sent, directly to this service, when you add a label photo or tap “Complete with AI”. Your cellar is never sent. The key is encrypted with the Android Keystore on this device.",
-  "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil."),
+  "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil."),
  ("ai_provider", "Provider", "Fournisseur"),
  ("ai_local", "Other server (OpenAI-compatible)", "Autre serveur (compatible OpenAI)"),
  ("ai_connect", "Connect and load models", "Se connecter et charger les modèles"),
