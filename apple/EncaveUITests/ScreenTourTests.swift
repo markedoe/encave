@@ -589,13 +589,15 @@ final class ScreenTourTests: XCTestCase {
         sleep(1)
     }
 
-    /// The wine's producer lists the wines of the cellar from that producer.
+    /// The wine's country (or producer) lists the other wines of the cellar that share it.
+    /// A detail no other wine shares edits the wine instead.
     private func checkExplore() {
-        let producer = element("detail.explore.producer")
+        let country = element("detail.explore.country")
         // Below the fold on iPhone: the list makes the row only once it is scrolled to.
-        scrollIntoView(producer)
+        scrollIntoView(country)
+        let producer = country.exists ? country : element("detail.explore.producer")
         guard producer.waitForExistence(timeout: 5) else {
-            XCTFail("wine: no producer row")
+            XCTFail("wine: no detail shared with other wines")
             return
         }
         // The detail column can be out of reach of the scroll on some layouts: the step is skipped there.

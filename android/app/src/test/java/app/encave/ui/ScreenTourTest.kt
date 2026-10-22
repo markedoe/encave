@@ -381,12 +381,16 @@ class ScreenTourTest(private val device: String, private val language: String) {
     @Test
     fun wineExplore() {
         tap("wine.row")
-        scrollIn("wine.detail", "detail.explore.producer")
-        tap("detail.explore.producer")
+        // The first wine's country is shared with other wines; its producer is not, so it edits.
+        scrollIn("wine.detail", "detail.edit.producer")
+        scrollIn("wine.detail", "detail.explore.country")
+        tap("detail.explore.country")
         assertTrue(
-            "$device-$language: no wine listed for the producer",
+            "$device-$language: no other wine listed for the country",
             compose.onAllNodesWithTag("explore.row").fetchSemanticsNodes().isNotEmpty(),
         )
+        // The wine it was opened from comes first, and goes back to its page.
+        compose.onAllNodesWithTag("explore.current").onFirst().assertExists()
         capture("46-wine-explore")
         // A wine of the list opens its page.
         tap("explore.row")

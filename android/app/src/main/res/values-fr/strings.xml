@@ -22,7 +22,7 @@
     <string name="action_add_bottles">Ajouter</string>
     <string name="action_show_in_rack">Voir dans le casier</string>
     <string name="action_move">Déplacer</string>
-    <string name="action_mark_gone">Donnée, vendue ou cassée</string>
+    <string name="action_mark_gone">Plus en cave</string>
     <string name="action_open_wine">Ouvrir</string>
     <string name="action_sort">Trier</string>
     <string name="action_clear_search">Effacer la recherche</string>
@@ -91,7 +91,7 @@
     <string name="explore_empty_title">Aucun vin en cave</string>
     <string name="explore_empty_body">Plus aucune bouteille avec ce détail n’est en cave ou en commande.</string>
     <string name="help_start_wine_title">La fiche d’un vin</string>
-    <string name="help_start_wine">Touchez un détail d’un vin. Son style, son producteur, son millésime, son appellation, sa région, son pays, un cépage ou un tag liste les vins de votre cave qui le partagent, avec le nombre de bouteilles ; les autres détails ouvrent le vin pour les modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web.</string>
+    <string name="help_start_wine">La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son style, son producteur, son millésime, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web.</string>
     <string name="detail_window_now">Maintenant</string>
     <string name="detail_window_description">Fenêtre de dégustation de %1$d à %2$d. %3$s.</string>
     <string name="detail_window_missing">Ajoutez un millésime ou une fenêtre de dégustation pour savoir quand l’ouvrir.</string>
@@ -103,10 +103,6 @@
     <string name="non_vintage">Non millésimé</string>
     <string name="wine_not_found">Vin introuvable</string>
     <string name="unknown_wine">Vin inconnu</string>
-    <string name="confirm_delete_wine_title">Supprimer ce vin ?</string>
-    <string name="confirm_delete_wine_body">Cela supprime toutes les bouteilles de %1$s et leurs dégustations.</string>
-    <string name="confirm_delete_bottle_title">Supprimer cette bouteille ?</string>
-    <string name="confirm_delete_bottle_body">À utiliser pour une bouteille saisie par erreur. Pour noter que vous l’avez ouverte, utilisez Boire.</string>
     <string name="field_name">Nom</string>
     <string name="field_producer">Producteur</string>
     <string name="field_vintage">Millésime</string>
@@ -589,7 +585,7 @@
     <string name="help_create_key">Créer une clé d’API</string>
     <string name="help_start_title">Prise en main</string>
     <string name="help_start_summary">Les quatre sections et comment elles fonctionnent ensemble.</string>
-    <string name="help_start_cellar">Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont.</string>
+    <string name="help_start_cellar">Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont.</string>
     <string name="help_start_racks">Vos casiers, caves à vin et losanges dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille.</string>
     <string name="help_start_tonight">Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat.</string>
     <string name="help_start_journal">Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques.</string>
@@ -647,8 +643,8 @@
     <string name="help_drinking_drink">Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **Noter une dégustation** dans le Journal et choisissez **Une bouteille de ma cave**. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes.</string>
     <string name="help_drinking_note_title">Votre note</string>
     <string name="help_drinking_note">Ajoutez une note, quelques mots et l’occasion, ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal.</string>
-    <string name="help_drinking_gone_title">Donnée, vendue ou cassée</string>
-    <string name="help_drinking_gone">Utilisez **Donnée, vendue ou cassée** pour une bouteille sortie de la cave sans que vous l’ayez bue.</string>
+    <string name="help_drinking_gone_title">Plus en cave</string>
+    <string name="help_drinking_gone">Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), choisissez **Plus en cave** dans son menu. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place.</string>
     <string name="help_journal_title">Journal et liste d’achats</string>
     <string name="help_journal_summary">Les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, dans un seul carnet.</string>
     <string name="help_journal_diary">Le Journal liste tout ce que vous avez goûté, du plus récent au plus ancien et par mois. Chaque entrée dit d’où elle vient : **De ma cave** pour une bouteille que vous avez ouverte, **Goûté ailleurs** et le lieu pour un vin bu au restaurant, chez des amis ou dans un salon.</string>
@@ -945,7 +941,7 @@
     <string name="msg_bottles_gone">Bouteilles retirées de la cave : %1$d</string>
     <string name="msg_wines_deleted">Vins supprimés : %1$d</string>
     <string name="help_racks_several_title">Plusieurs vins à la fois</string>
-    <string name="help_racks_several">Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu de tri (ou maintenez un vin appuyé, puis **Sélectionner**), cochez les vins, puis rangez-les dans un casier, sortez-les de leur emplacement ou supprimez-les. **Annuler** remet tout en place.</string>
+    <string name="help_racks_several">Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu de tri (ou maintenez un vin appuyé, puis **Sélectionner**) et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier ou supprimez-les, ou, dans **Plus d’options**, sortez-les de leur emplacement, gardez leurs bouteilles pour une occasion ou indiquez qu’elles ne sont plus en cave. **Annuler** remet tout en place.</string>
     <string name="action_check_rack">Vérifier ce casier</string>
     <string name="audit_hint">Touchez chaque bouteille que vous trouvez dans le casier.</string>
     <string name="audit_found">Trouvées : %1$d sur %2$d</string>
@@ -1182,6 +1178,17 @@
     <string name="help_journal_diary_title">Un seul carnet</string>
     <string name="help_journal_filters_title">Filtres</string>
     <string name="help_journal_filters">Les filtres en haut montrent **Tout**, ou seulement **De ma cave**, **Goûté ailleurs** ou **À acheter**. La recherche porte sur les vins, les notes, les lieux et les tags.</string>
+    <string name="action_mark_gone_detail">Donnée, vendue ou cassée</string>
+    <string name="action_delete_bottle">Supprimer la bouteille</string>
+    <string name="action_delete_bottle_detail">Saisie par erreur</string>
+    <string name="detail_action_edit_detail">modifier ce détail</string>
+    <string name="explore_this_wine">Ce vin</string>
+    <string name="explore_no_other">Aucun autre vin de la cave n’a ce détail.</string>
+    <string name="search_no_suggestion">Aucun vin de la cave ne correspond</string>
+    <string name="search_show_results">Afficher les résultats dans la liste</string>
+    <string name="action_select_all">Tout sélectionner</string>
+    <string name="action_deselect_all">Tout désélectionner</string>
+    <string name="reserve_body_plural">Les bouteilles restent à leur place mais ne sont plus proposées pour ce soir.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>
@@ -1191,6 +1198,11 @@
         <item quantity="one">%d vin</item>
         <item quantity="many">%d vins</item>
         <item quantity="other">%d vins</item>
+    </plurals>
+    <plurals name="other_wine_count">
+        <item quantity="one">%d autre vin</item>
+        <item quantity="many">%d autres vins</item>
+        <item quantity="other">%d autres vins</item>
     </plurals>
     <plurals name="bottles_added">
         <item quantity="one">%d bouteille ajoutée</item>
