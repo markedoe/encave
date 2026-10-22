@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
@@ -282,6 +283,11 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 headlineContent = { Text(stringResource(R.string.settings_source)) },
                 supportingContent = { Text(stringResource(R.string.settings_source_body)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+            )
+            ListItem(
+                modifier = Modifier.testTag("settings.licences").clickable { navigator.open(app.encave.ui.navigation.LicencesRoute) },
+                leadingContent = { Icon(Icons.Outlined.Description, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_licences)) },
             )
             Text(
                 stringResource(R.string.settings_beta_note),

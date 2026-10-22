@@ -3161,6 +3161,16 @@
         }
       }
     },
+    "Copyright © 2026 the Encave contributors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copyright © 2026 les contributeurs d’Encave"
+          }
+        }
+      }
+    },
     "Counted from the left. Places are numbered 1, 2, 3…": {
       "localizations": {
         "fr": {
@@ -4077,6 +4087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide Encave"
+          }
+        }
+      }
+    },
+    "Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi."
           }
         }
       }
@@ -5921,12 +5941,32 @@
         }
       }
     },
+    "Libraries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèques"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Bibliothèque"
+          }
+        }
+      }
+    },
+    "Licences": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licences"
           }
         }
       }
@@ -7517,6 +7557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrez la page du fournisseur avec le lien sous le champ de la clé, créez une clé et collez-la. La clé est conservée dans le trousseau de cet appareil et n’est envoyée qu’à ce fournisseur."
+          }
+        }
+      }
+    },
+    "Open-source libraries included in Encave, each under its own licence.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèques open source incluses dans Encave, chacune sous sa propre licence."
           }
         }
       }

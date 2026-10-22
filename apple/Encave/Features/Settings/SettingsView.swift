@@ -222,6 +222,11 @@ struct SettingsView: View {
                 Link(destination: ProjectLinks.source) {
                     Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
                 }
+                NavigationLink {
+                    LicencesView()
+                } label: {
+                    Label("Licences", systemImage: "doc.text")
+                }
             } header: {
                 Text("About")
             } footer: {

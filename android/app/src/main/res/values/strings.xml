@@ -350,6 +350,11 @@
     <string name="settings_source">Source code</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
     <string name="settings_privacy_policy">Privacy policy</string>
+    <string name="settings_licences">Licences</string>
+    <string name="licences_agpl_notice">Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.</string>
+    <string name="licences_copyright">Copyright © 2026 the Encave contributors</string>
+    <string name="licences_libraries">Libraries</string>
+    <string name="licences_libraries_body">Open-source libraries included in Encave, each under its own licence.</string>
     <string name="msg_exported">Export saved</string>
     <string name="msg_export_failed">The export failed.</string>
     <string name="msg_imported">Imported. Wines: %1$d, bottles: %2$d</string>
@@ -1172,6 +1177,10 @@
     <string name="help_journal_diary_title">One diary</string>
     <string name="help_journal_filters_title">Filters</string>
     <string name="help_journal_filters">The chips at the top show **All**, or only **From my cellar**, **Tasted elsewhere** or **To buy**. Search looks in the wines, notes, places and tags.</string>
+    <plurals name="licences_modules">
+        <item quantity="one">%d module</item>
+        <item quantity="other">%d modules</item>
+    </plurals>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>

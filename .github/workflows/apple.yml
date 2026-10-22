@@ -3,9 +3,9 @@ name: Apple apps
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apple/**", "design/**", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apple/**", "design/**", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   workflow_dispatch:
 
 permissions:
@@ -33,6 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: python3 apple/tools/l10n.py --check
+      # The licences shown in Settings › About › Licences match Package.resolved.
+      - run: python3 apple/tools/licences.py --check
 
   mac-launch:
     name: Mac launch test

@@ -349,6 +349,11 @@
     <string name="settings_source">Code source</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
     <string name="settings_privacy_policy">Politique de confidentialité</string>
+    <string name="settings_licences">Licences</string>
+    <string name="licences_agpl_notice">Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi.</string>
+    <string name="licences_copyright">Copyright © 2026 les contributeurs d’Encave</string>
+    <string name="licences_libraries">Bibliothèques</string>
+    <string name="licences_libraries_body">Bibliothèques open source incluses dans Encave, chacune sous sa propre licence.</string>
     <string name="msg_exported">Export enregistré</string>
     <string name="msg_export_failed">L’export a échoué.</string>
     <string name="msg_imported">Importé. Vins : %1$d, bouteilles : %2$d</string>
@@ -1171,6 +1176,11 @@
     <string name="help_journal_diary_title">Un seul carnet</string>
     <string name="help_journal_filters_title">Filtres</string>
     <string name="help_journal_filters">Les filtres en haut montrent **Tout**, ou seulement **De ma cave**, **Goûté ailleurs** ou **À acheter**. La recherche porte sur les vins, les notes, les lieux et les tags.</string>
+    <plurals name="licences_modules">
+        <item quantity="one">%d module</item>
+        <item quantity="many">%d modules</item>
+        <item quantity="other">%d modules</item>
+    </plurals>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>

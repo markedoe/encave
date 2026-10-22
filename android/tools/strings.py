@@ -377,6 +377,11 @@ S = [
  ("settings_source", "Source code", "Code source"),
  ("settings_source_body", "github.com/markedoe/encave", "github.com/markedoe/encave"),
  ("settings_privacy_policy", 'Privacy policy', 'Politique de confidentialité'),
+ ("settings_licences", 'Licences', 'Licences'),
+ ("licences_agpl_notice", 'Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.', 'Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi.'),
+ ("licences_copyright", 'Copyright © 2026 the Encave contributors', 'Copyright © 2026 les contributeurs d’Encave'),
+ ("licences_libraries", 'Libraries', 'Bibliothèques'),
+ ("licences_libraries_body", 'Open-source libraries included in Encave, each under its own licence.', 'Bibliothèques open source incluses dans Encave, chacune sous sa propre licence.'),
  ("msg_exported", "Export saved", "Export enregistré"),
  ("msg_export_failed", "The export failed.", "L’export a échoué."),
  ("msg_imported", "Imported. Wines: %1$d, bottles: %2$d", "Importé. Vins : %1$d, bouteilles : %2$d"),
@@ -1282,6 +1287,7 @@ S = [
 ]
 
 P = [
+ ("licences_modules", ("%d module", "%d modules"), ("%d module", "%d modules")),
  ("bottle_count", ("%d bottle", "%d bottles"), ("%d bouteille", "%d bouteilles")),
  ("wine_count", ("%d wine", "%d wines"), ("%d vin", "%d vins")),
  ("bottles_added", ("%d bottle added", "%d bottles added"), ("%d bouteille ajoutée", "%d bouteilles ajoutées")),
