@@ -151,7 +151,21 @@ class SyncStorage(private val context: Context) {
         folder.deleteRecursively()
         remoteStorage = null
         resetRemote()
+        prefs.edit { remove(KEY_PENDING_REPLACE).remove(KEY_PEER_ICLOUD) }
     }
+
+    /**
+     * Joined with Replace, and no other device's cellar taken in yet: this device sends only
+     * what changed on it since, and its own bottles stay until that cellar arrives (SYNC.md §5).
+     */
+    var pendingReplace: Boolean
+        get() = prefs.getBoolean(KEY_PENDING_REPLACE, false)
+        set(value) = prefs.edit { putBoolean(KEY_PENDING_REPLACE, value) }
+
+    /** The other devices sync away from home through iCloud, which Android cannot use. */
+    var peerUsesICloud: Boolean
+        get() = prefs.getBoolean(KEY_PEER_ICLOUD, false)
+        set(value) = prefs.edit { putBoolean(KEY_PEER_ICLOUD, value) }
 
     /** Forgets the remote key, the pending one, the WebDAV login, the progress and its status (leaving, or joining another cellar). */
     fun resetRemote() {
@@ -189,6 +203,8 @@ class SyncStorage(private val context: Context) {
         private const val KEY_ROTATION = "rotationPending"
         private const val KEY_LAST_REMOTE = "lastRemoteSync"
         private const val KEY_UNSENT = "unsentChanges"
+        private const val KEY_PENDING_REPLACE = "pendingReplace"
+        private const val KEY_PEER_ICLOUD = "peerUsesICloud"
         private const val KEY_IDENTITY = "sync.identity"
         private const val KEY_CELLAR_KEY = "sync.cellarKey"
         private const val KEY_WEBDAV_LOGIN = "sync.webDavLogin"

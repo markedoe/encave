@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -45,6 +44,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.encave.ui.devices.SettingsIcon
 import app.encave.R
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
@@ -76,7 +76,7 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         }
                     }
                     IconButton(onClick = { navigator.open(SettingsRoute) }) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                        SettingsIcon()
                     }
                 },
                 scrollBehavior = scrollBehavior,

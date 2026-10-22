@@ -68,6 +68,7 @@ class EncaveApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        repository.onEdit = { preferences.setSampleUntouched(false) }
         sync.start()
         // Widgets follow every change, made here or synced from another device.
         WidgetPublisher(repository, widgetSnapshots, scope, onChanged = { Widgets.update(this) }).start()

@@ -59,7 +59,22 @@ class Preferences(context: Context) {
         notifyChanges.value = enabled
     }
 
+    private val sample = MutableStateFlow(prefs.getBoolean(KEY_SAMPLE_UNTOUCHED, false))
+
+    /**
+     * The cellar is the sample, as loaded: no change made since. Joining another device's
+     * cellar then offers to replace it.
+     */
+    val sampleUntouched: StateFlow<Boolean> = sample.asStateFlow()
+
+    fun setSampleUntouched(value: Boolean) {
+        if (sample.value == value) return
+        prefs.edit { putBoolean(KEY_SAMPLE_UNTOUCHED, value) }
+        sample.value = value
+    }
+
     private companion object {
+        const val KEY_SAMPLE_UNTOUCHED = "sample_untouched"
         const val KEY_SYNC_FREQUENCY = "sync_frequency"
         const val KEY_SYNC_NOTIFICATIONS = "sync_notifications"
         const val KEY_STUDIO_LOOK = "studio_look"

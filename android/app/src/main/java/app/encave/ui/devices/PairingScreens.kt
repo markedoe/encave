@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,6 +52,8 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -72,6 +75,7 @@ import app.encave.sync.PairingSession
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ActionContent
+import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.theme.Dimens
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -131,7 +135,7 @@ fun InviteDeviceScreen(navigator: AppNavigator) {
     val session by model.session.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { if (model.session.value == null) model.invite() }
     val phase = session?.phase?.collectAsStateWithLifecycle()?.value
-    PairingScaffold(R.string.invite_title, phase is PairingSession.Phase.Done, navigator) {
+    PairingScaffold(R.string.invite_title, phase.isFinished, navigator) {
         val current = session
         if (current != null && phase != null) {
             PairingProgress(current, phase, retry = { model.invite() }) { CodeCard(current) }
@@ -169,23 +173,83 @@ private fun CodeCard(session: PairingSession) {
     }
 }
 
-/** Types or scans the code shown on the other device. */
+private val PairingSession.Phase?.isFinished: Boolean
+    get() = this is PairingSession.Phase.Done || this is PairingSession.Phase.AddedNotSynced
+
+/**
+ * Types or scans the code shown on the other device. [linkCode] and [linkCommitment] come from
+ * a pairing link (the QR code scanned with the camera app): filled in, the user taps Join.
+ */
 @Composable
-fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode: String? = null, linkCommitment: String? = null) {
     val model: PairingViewModel = viewModel()
     val session by model.session.collectAsStateWithLifecycle()
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
-    var digits by rememberSaveable { mutableStateOf("") }
-    var commitment by rememberSaveable { mutableStateOf<String?>(null) }
-    var replace by rememberSaveable { mutableStateOf(false) }
+    val sampleUntouched by viewModel.preferences.sampleUntouched.collectAsStateWithLifecycle()
+    val sync = syncManager()
+    val status by sync.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val hasBottles = cellar.bottles.isNotEmpty()
+    // The sample as loaded: replacing it is what the user wants.
+    val isSample = hasBottles && sampleUntouched
+    var digits by rememberSaveable { mutableStateOf(linkCode?.filter { it in '0'..'9' }?.take(6).orEmpty()) }
+    var commitment by rememberSaveable { mutableStateOf(linkCommitment) }
+    var replace by rememberSaveable { mutableStateOf(isSample) }
     var scanning by rememberSaveable { mutableStateOf(false) }
+    var confirmingLeave by rememberSaveable { mutableStateOf(false) }
+    var confirmingReplace by rememberSaveable { mutableStateOf(false) }
+    val others = status.membership?.active.orEmpty().filter { it.id != sync.identity.id }
     val code = PairingCode(digits)
-    val start = rememberLocalNetworkAccess {
+    val begin = rememberLocalNetworkAccess {
         // Read when it runs, not when composed: a scanned code is set just before.
         val typed = PairingCode(digits)
         if (typed.isValid) model.join(typed, commitment?.let { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }, replace)
     }
+    // Replacing bottles of the user's own asks first; the sample is replaced without asking.
+    val checkReplace: () -> Unit = {
+        if (replace && hasBottles && !isSample) {
+            confirmingReplace = true
+        } else {
+            begin()
+        }
+    }
+    // Already sharing a cellar: joining another one leaves it first, once confirmed.
+    val start: () -> Unit = {
+        if (PairingCode(digits).isValid) {
+            if (others.isNotEmpty()) {
+                confirmingLeave = true
+            } else {
+                checkReplace()
+            }
+        }
+    }
     val phase = session?.phase?.collectAsStateWithLifecycle()?.value
+
+    if (confirmingLeave) {
+        val names = android.icu.text.ListFormatter.getInstance().format(others.map { it.name })
+        ConfirmDialog(
+            title = stringResource(R.string.join_leave_title),
+            body = stringResource(R.string.join_leave_body, names),
+            confirm = stringResource(R.string.join_leave_confirm),
+            onConfirm = {
+                scope.launch {
+                    sync.leave()
+                    checkReplace()
+                }
+            },
+            onDismiss = { confirmingLeave = false },
+        )
+    }
+    if (confirmingReplace) {
+        val count = cellar.bottles.size
+        ConfirmDialog(
+            title = pluralStringResource(R.plurals.join_replace_confirm_title, count, count),
+            body = stringResource(R.string.join_replace_confirm_body),
+            confirm = stringResource(R.string.join_replace_confirm),
+            onConfirm = { begin() },
+            onDismiss = { confirmingReplace = false },
+        )
+    }
 
     if (scanning) {
         QrScanner(
@@ -202,7 +266,7 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         return
     }
 
-    PairingScaffold(R.string.join_title, phase is PairingSession.Phase.Done, navigator) {
+    PairingScaffold(R.string.join_title, phase.isFinished, navigator) {
         val current = session
         if (current != null && phase != null) {
             PairingProgress(current, phase, retry = {
@@ -246,15 +310,15 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).testTag("devices.codeField"),
             )
-            if (cellar.bottles.isNotEmpty()) {
+            if (hasBottles) {
                 Text(
-                    stringResource(R.string.join_has_bottles),
+                    stringResource(if (isSample) R.string.join_has_sample else R.string.join_has_bottles),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = Dimens.l, end = Dimens.l, top = Dimens.l).semantics { heading() },
                 )
                 Column(Modifier.selectableGroup()) {
-                    listOf(false to R.string.join_combine, true to R.string.join_replace).forEach { (value, label) ->
+                    listOf(false to R.string.join_combine, true to if (isSample) R.string.join_replace_sample else R.string.join_replace).forEach { (value, label) ->
                         ListItem(
                             modifier = Modifier.selectable(selected = replace == value, role = Role.RadioButton) { replace = value },
                             leadingContent = { RadioButton(selected = replace == value, onClick = null) },
@@ -263,7 +327,13 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     }
                 }
                 Text(
-                    stringResource(if (replace) R.string.join_replace_footer else R.string.join_combine_footer),
+                    stringResource(
+                        when {
+                            !replace -> R.string.join_combine_footer
+                            isSample -> R.string.join_replace_sample_footer
+                            else -> R.string.join_replace_footer
+                        },
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = Dimens.l),
@@ -290,13 +360,34 @@ private fun PairingProgress(session: PairingSession, phase: PairingSession.Phase
         PairingSession.Phase.Syncing -> StatusView(
             Icons.Outlined.Sync, stringResource(R.string.pair_syncing), stringResource(R.string.pair_syncing_body), true,
         )
-        is PairingSession.Phase.Done -> StatusView(
-            Icons.Outlined.CheckCircle, stringResource(R.string.pair_done, phase.device), stringResource(R.string.pair_done_body), false,
-            Modifier.testTag("devices.done"),
-        )
+        is PairingSession.Phase.Done -> {
+            val remote = syncManager().state.collectAsStateWithLifecycle().value.remoteStorage != null
+            StatusView(
+                Icons.Outlined.CheckCircle, stringResource(R.string.pair_done, phase.device),
+                stringResource(if (remote) R.string.pair_done_body_remote else R.string.pair_done_body), false,
+                Modifier.testTag("devices.done"),
+            )
+        }
+        is PairingSession.Phase.AddedNotSynced -> {
+            val sync = syncManager()
+            StatusView(
+                Icons.Outlined.CheckCircle, stringResource(R.string.pair_done, phase.device), stringResource(R.string.pair_not_synced_body), false,
+                Modifier.testTag("devices.added_not_synced"),
+            ) {
+                Button(onClick = { sync.syncNow() }, modifier = Modifier.testTag("action.pair_sync_now")) {
+                    ActionContent(stringResource(R.string.devices_sync_now), Icons.Outlined.Sync)
+                }
+            }
+        }
         is PairingSession.Phase.Failed -> StatusView(
             Icons.Outlined.ErrorOutline, stringResource(R.string.pair_failed), stringResource(phase.reason.text), false,
         ) {
+            if (phase.reason == PairingSession.Failure.LocalNetwork) {
+                val context = LocalContext.current
+                OutlinedButton(onClick = { openAppSettings(context) }, modifier = Modifier.testTag("action.open_settings")) {
+                    ActionContent(stringResource(R.string.action_open_settings))
+                }
+            }
             Button(onClick = retry, modifier = Modifier.testTag("action.pair_retry")) { ActionContent(stringResource(R.string.pair_try_again)) }
         }
     }
@@ -311,6 +402,7 @@ private val PairingSession.Failure.text: Int
         PairingSession.Failure.OtherVersion -> R.string.pair_failed_version
         PairingSession.Failure.ConnectionLost -> R.string.pair_failed_connection
         PairingSession.Failure.CannotListen -> R.string.pair_failed_listen
+        PairingSession.Failure.LocalNetwork -> R.string.sync_problem_local_network
     }
 
 /** "Does the other device show this code?" */

@@ -135,7 +135,15 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 modifier = Modifier.testTag("settings.devices").clickable { navigator.open(DevicesRoute) },
                 leadingContent = { Icon(Icons.Outlined.Devices, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.devices_title)) },
-                supportingContent = { Text(stringResource(R.string.settings_devices_summary)) },
+                supportingContent = {
+                    // Sync that needs the user says so here, in words and with a symbol.
+                    val health = app.encave.ui.devices.rememberSyncHealth()
+                    if (health == app.encave.core.sync.SyncHealth.Ok) {
+                        Text(stringResource(R.string.settings_devices_summary))
+                    } else {
+                        app.encave.ui.devices.SyncHealthLabel(health, Modifier.testTag("settings.devices.health"))
+                    }
+                },
             )
 
             SectionHeader(stringResource(R.string.settings_cellar))
