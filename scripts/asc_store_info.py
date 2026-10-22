@@ -9,6 +9,8 @@ MODE=apply sets what docs/store/appstore.json gives, and nothing else:
   privacyPolicyUrl                 every app information language
   ageRating                        the age rating questionnaire (API attribute names)
   appInfo.<locale>                 name, subtitle (the language is added if missing)
+  build                            the build number to attach to the version (iOS);
+                                   App Store Connect shows the app's icon from it
   version.<locale>                 description, keywords, promotionalText,
                                    supportUrl, marketingUrl, whatsNew (the language
                                    is added to the version if missing)
@@ -71,6 +73,8 @@ def main():
     print("\n## Age rating")
     print(json.dumps({k: v for k, v in rating["attributes"].items() if v is not None}, sort_keys=True))
     print(f"\n## Version {version['attributes'].get('versionString')}")
+    attached = call("GET", f"/appStoreVersions/{version['id']}/build").get("data")
+    print(f"- build: {attached['attributes'].get('version') if attached else 'none'}")
     for locale, loc in version_locs.items():
         print(f"- {locale}:")
         for field in VERSION_FIELDS:
@@ -101,6 +105,16 @@ def main():
                     "type": "appInfoLocalizations", "id": loc["id"],
                     "attributes": {"privacyPolicyUrl": wanted["privacyPolicyUrl"]}}})
                 print(f"- app information {locale}: privacyPolicyUrl")
+
+    if wanted.get("build"):
+        builds = call("GET", "/builds", query={"filter[app]": app_id, "filter[version]": str(wanted["build"]),
+                                               "filter[preReleaseVersion.platform]": "IOS", "limit": 1})["data"]
+        if builds:
+            call("PATCH", f"/appStoreVersions/{version['id']}/relationships/build",
+                 {"data": {"type": "builds", "id": builds[0]["id"]}})
+            print(f"- build {wanted['build']} attached to the version")
+        else:
+            print(f"::warning::No iOS build {wanted['build']} in App Store Connect.")
 
     if wanted.get("ageRating"):
         try:

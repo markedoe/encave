@@ -1,4 +1,5 @@
 {
+  "build": "3231",
   "privacyPolicyUrl": "https://github.com/markedoe/encave/blob/main/docs/PRIVACY.md",
   "appInfo": {
     "fr-FR": {"name": "Encave", "subtitle": "Votre cave à vin, bien rangée"},
