@@ -4111,12 +4111,12 @@
         }
       }
     },
-    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change; a sync that fails is tried again after 15 seconds, 1 minute and 5 minutes. To sync right away, pull down the list in the Cellar, or on a Mac or an iPad with a keyboard choose **Cellar › Sync Now** (⌘R). You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins. When sync needs you (a WebDAV sign-in, Local Network access turned off, failures for over an hour), the Settings button shows a badge and **Devices** says what to do.": {
+    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change; a sync that fails is tried again after 15 seconds, 1 minute and 5 minutes. To sync right away, pull down the list in the Cellar, or on a Mac or an iPad with a keyboard choose **Cellar › Sync Now** (⌘R). You can edit on each device while apart: changes merge when they meet again. If the same bottle or wine was changed on both before they synced, one version of it is kept as a whole, usually the later one. When sync needs you (a WebDAV sign-in, Local Network access turned off, this device removed on another one) or keeps failing (for over an hour, or the storage away from home is full or refuses files), the Settings button shows a badge (on the Mac, the bottom of the sidebar says so) and **Devices** says what to do.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification ; une synchronisation qui échoue est retentée après 15 secondes, 1 minute et 5 minutes. Pour synchroniser tout de suite, tirez la liste de la Cave vers le bas, ou sur un Mac ou un iPad avec clavier choisissez **Cave › Synchroniser** (⌘R). Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte. Quand la synchronisation a besoin de vous (une connexion WebDAV, l’accès au réseau local désactivé, des échecs depuis plus d’une heure), le bouton Réglages affiche un badge et **Appareils** indique quoi faire."
+            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification ; une synchronisation qui échoue est retentée après 15 secondes, 1 minute et 5 minutes. Pour synchroniser tout de suite, tirez la liste de la Cave vers le bas, ou sur un Mac ou un iPad avec clavier choisissez **Cave › Synchroniser** (⌘R). Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si la même bouteille ou le même vin a été modifié sur les deux avant de se synchroniser, une seule version est gardée en entier, en général la plus récente. Quand la synchronisation a besoin de vous (une connexion WebDAV, l’accès au réseau local désactivé, cet appareil retiré depuis un autre) ou échoue sans cesse (depuis plus d’une heure, ou le stockage à distance est plein ou refuse des fichiers), le bouton Réglages affiche une pastille (sur le Mac, le bas de la barre latérale le signale) et **Appareils** indique quoi faire."
           }
         }
       }
@@ -4911,12 +4911,12 @@
         }
       }
     },
-    "Every bottle, wine, rack, Journal entry and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both, the later change wins. A deletion stays deleted, except that a wine comes back if someone added a bottle of it meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.": {
+    "Every bottle, wine, rack, Journal entry and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both before they synced, one version of it is kept as a whole, usually the later one. A deletion stays deleted, except that a wine comes back if one of its bottles or a tasting of it was added or changed meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille, vin, casier, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
+            "value": "Chaque bouteille, vin, casier, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux avant de se synchroniser, une seule version est gardée en entier, en général la plus récente. Une suppression reste définitive, sauf qu’un vin revient si l’une de ses bouteilles ou une dégustation de ce vin a été ajoutée ou modifiée entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
           }
         }
       }
@@ -5941,12 +5941,12 @@
         }
       }
     },
-    "In **Devices › Sync Away from Home**, **How often** sets how often this device syncs away from home by itself: every minute, every 5 or 15 minutes, or only when you tap **Sync Now**. Background sync on iPhone and iPad follows it, no more often than iOS allows. On the same Wi-Fi, changes are still sent a few seconds after you make them. The setting is for this device only.": {
+    "In **Devices › Sync Away from Home**, **How often** sets how often this device syncs away from home by itself: every minute (the default), every 5 or 15 minutes, or only when you tap **Sync Now**. Background sync on iPhone and iPad follows it, no more often than iOS allows. On the same Wi-Fi, changes are still sent a few seconds after you make them. The setting is for this device only.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans **Appareils › Synchroniser loin de la maison**, **Fréquence** règle la fréquence à laquelle cet appareil se synchronise à distance de lui-même : toutes les minutes, toutes les 5 ou 15 minutes, ou seulement quand vous touchez **Synchroniser**. La synchronisation en arrière-plan sur iPhone et iPad la suit, sans dépasser ce qu’iOS permet. Sur le même Wi-Fi, les modifications partent toujours quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil."
+            "value": "Dans **Appareils › Synchroniser loin de la maison**, **Fréquence** règle la fréquence à laquelle cet appareil se synchronise à distance de lui-même : toutes les minutes (par défaut), toutes les 5 ou 15 minutes, ou seulement quand vous touchez **Synchroniser**. La synchronisation en arrière-plan sur iPhone et iPad la suit, sans dépasser ce qu’iOS permet. Sur le même Wi-Fi, les modifications partent toujours quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil."
           }
         }
       }
@@ -7956,7 +7956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** ramène au formulaire pour saisir le vin). Sur Mac, **Scanner l’étiquette** dans le formulaire d’ajout lit une photo que vous choisissez. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
+            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** ramène au formulaire pour saisir le vin). Sur Mac, **Scanner l’étiquette** dans le formulaire d’ajout lit une photo que vous choisissez. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les réglages** permet de l’activer."
           }
         }
       }
@@ -8031,12 +8031,12 @@
         }
       }
     },
-    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, scan the QR code with the camera, or choose **Join Another Device’s Cellar** and scan it there (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi, and Encave needs Local Network access: if it is off, Encave says so and opens the settings where you turn it on.": {
+    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, scan the QR code with the camera (Encave opens with the code filled in: tap **Join**), or choose **Join Another Device’s Cellar** and scan it there (iPhone and iPad) or type the 6-digit code. The code is valid for 2 minutes, for one device. Both devices must be on the same Wi-Fi, and Encave needs Local Network access: if it is off, Encave says so, and **Open Settings** takes you to the switch.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, scannez le QR code avec l’appareil photo, ou choisissez **Rejoindre la cave d’un autre appareil** et scannez-le là (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi, et Encave doit avoir accès au réseau local : si cet accès est désactivé, Encave le signale et ouvre les réglages où l’activer."
+            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un code QR et un code à 6 chiffres. Sur le nouvel appareil, scannez le code QR avec l’appareil photo (Encave s’ouvre avec le code déjà saisi : touchez **Rejoindre**), ou choisissez **Rejoindre la cave d’un autre appareil** et scannez-le là (iPhone et iPad) ou saisissez le code à 6 chiffres. Le code est valable 2 minutes, pour un seul appareil. Les deux appareils doivent être sur le même Wi-Fi, et Encave doit avoir accès au réseau local : si cet accès est désactivé, Encave le signale, et **Ouvrir les réglages** mène à l’option."
           }
         }
       }
@@ -8117,6 +8117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur ce réseau"
+          }
+        }
+      }
+    },
+    "Once another device has been added, to sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for Apple devices on the same Apple Account; Android devices cannot use it), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only, after you confirm. If Android devices share the cellar, choose a WebDAV folder or a relay on every device: devices already on iCloud do not switch by themselves.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une fois un autre appareil ajouté, pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation. Si des appareils Android partagent la cave, choisissez un dossier WebDAV ou un relais sur chaque appareil : ceux déjà sur iCloud ne changent pas d’eux-mêmes."
           }
         }
       }
@@ -8481,12 +8491,12 @@
         }
       }
     },
-    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there and reads the others’, every minute while Encave is open unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
+    "Optional, in **Devices › Sync Away from Home**: iCloud (Apple devices on the same Apple Account), a WebDAV folder (a NAS, Nextcloud, pCloud) or a relay you trust. Each device leaves an encrypted copy of the cellar there a few seconds after a change, and reads the others’ while Encave is open, every minute unless you choose otherwise. iPhone and iPad also sync in the background when iOS allows, typically every 15 minutes to a few hours; a Mac syncs while Encave is open. The storage only ever sees encrypted files.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres, toutes les minutes quand Encave est ouvert, sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
+            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave quelques secondes après une modification, et lit celles des autres quand Encave est ouvert, toutes les minutes sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
           }
         }
       }
@@ -11331,6 +11341,16 @@
         }
       }
     },
+    "Synced: wines, bottles and their notes, racks, the Journal, saved searches, the currency, photos and documents. Stays on each device: its own keys, your AI and web search keys, your WebDAV login, backups and previous versions, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisés : vins, bouteilles et leurs notes, casiers, Journal, recherches enregistrées, devise, photos et documents. Restent sur chaque appareil : ses propres clés, vos clés d’IA et de recherche web, votre identifiant WebDAV, les sauvegardes et versions précédentes, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
+          }
+        }
+      }
+    },
     "Syncing": {
       "localizations": {
         "fr": {
@@ -12761,16 +12781,6 @@
         }
       }
     },
-    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for Apple devices on the same Apple Account; Android devices cannot use it), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only, after you confirm.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation."
-          }
-        }
-      }
-    },
     "Today": {
       "localizations": {
         "fr": {
@@ -12951,12 +12961,12 @@
         }
       }
     },
-    "Turn on **Tell Me About Changes from Other Devices** in **Devices** for a notification on this device when bottles are opened, added or removed on another one, for example “2 bottles opened, 1 bottle added” from Marc’s iPhone. Repeated syncs update the same notification. While Encave is in front, a short banner says where the changes come from instead. It is worked out on this device: nothing is sent anywhere.": {
+    "Turn on **Tell Me About Changes from Other Devices** in **Devices** for a notification on this device when a sync brings changes made on another device (bottles opened, added or removed, wines added to the shopping list, other changes), for example “2 bottles opened, 1 bottle added” from Marc’s iPhone. Repeated syncs update the same notification; tapping it opens the Cellar, or the Journal if bottles were only opened. While Encave is in front, a short banner says where the changes come from instead. It is off by default and worked out on this device: nothing is sent anywhere.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre, par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Tout est calculé sur cet appareil : rien n’est envoyé nulle part."
+            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand une synchronisation apporte des modifications faites sur un autre appareil (bouteilles ouvertes, ajoutées ou retirées, vins ajoutés à la liste d’achats, autres modifications), par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification ; la toucher ouvre la Cave, ou le Journal si des bouteilles ont seulement été ouvertes. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Désactivé par défaut, tout est calculé sur cet appareil : rien n’est envoyé nulle part."
           }
         }
       }
@@ -13541,12 +13551,12 @@
         }
       }
     },
-    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar.": {
+    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil . Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave."
+            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation."
           }
         }
       }
@@ -13561,12 +13571,12 @@
         }
       }
     },
-    "When you remove a device (lost or sold), the cellar’s key changes by itself and the remaining devices receive the new one in an encrypted message. The removed device keeps what it already had but cannot read anything new.": {
+    "When you remove a device (lost or sold), your other devices stop syncing with it. If you sync away from home, the key used there also changes by itself, and the remaining devices receive the new one in an encrypted message. The removed device keeps what it already had but cannot read anything new.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand vous retirez un appareil (perdu ou vendu), la clé de la cave change d’elle-même et les appareils restants reçoivent la nouvelle dans un message chiffré. L’appareil retiré garde ce qu’il avait déjà mais ne peut plus rien lire de nouveau."
+            "value": "Quand vous retirez un appareil (perdu ou vendu), vos autres appareils cessent de se synchroniser avec lui. Si vous synchronisez à distance, la clé utilisée change aussi d’elle-même, et les appareils restants reçoivent la nouvelle dans un message chiffré. L’appareil retiré garde ce qu’il avait déjà mais ne peut plus rien lire de nouveau."
           }
         }
       }
@@ -13907,16 +13917,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Année"
-          }
-        }
-      }
-    },
-    "Your AI and web search keys, your WebDAV login, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
           }
         }
       }
