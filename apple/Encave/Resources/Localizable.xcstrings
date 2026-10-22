@@ -1851,6 +1851,16 @@
         }
       }
     },
+    "Added %lld × %@, details completed by AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté : %1$lld × %2$@, fiche complétée par l’IA"
+          }
+        }
+      }
+    },
     "Added to your shopping list": {
       "localizations": {
         "fr": {
@@ -7997,6 +8007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En commande : %1$lld × %2$@"
+          }
+        }
+      }
+    },
+    "On order: %lld × %@, details completed by AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En commande : %1$lld × %2$@, fiche complétée par l’IA"
           }
         }
       }

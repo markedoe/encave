@@ -1024,6 +1024,8 @@
     <string name="same_wine_footer">Ajouter à ce vin garde ensemble ses bouteilles et ses dégustations.</string>
     <string name="msg_added">Ajouté : %1$d × %2$s</string>
     <string name="msg_ai_completed">Fiche complétée par l’IA : %1$s</string>
+    <string name="msg_added_ai_completed">Ajouté : %1$d × %2$s, fiche complétée par l’IA</string>
+    <string name="msg_on_order_ai_completed">En commande : %1$d × %2$s, fiche complétée par l’IA</string>
     <string name="quantity_case">Une caisse de</string>
     <string name="add_auto_slots">Rangées automatiquement aux premiers emplacements libres. Touchez un emplacement pour choisir.</string>
     <string name="discard_title">Abandonner les modifications ?</string>
