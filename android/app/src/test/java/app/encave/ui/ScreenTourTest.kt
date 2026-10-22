@@ -103,6 +103,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
     @After
     fun close() {
         scenario?.close()
+        RuntimeEnvironment.setFontScale(1f)
     }
 
     // region Helpers
@@ -228,6 +229,19 @@ class ScreenTourTest(private val device: String, private val language: String) {
         capture("21-insights")
         scrollTo("insights.drinkdown.chart")
         capture("29-insights-drink-down")
+    }
+
+    /** The cellar at 200 % font scale on a phone: the summary tiles stack, one above the other. */
+    @Test
+    fun cellarAtLargestFontScale() {
+        if (device != "phone") return
+        RuntimeEnvironment.setFontScale(2f)
+        scenario?.recreate()
+        compose.waitForIdle()
+        capture("05-cellar-font-200")
+        val bottles = compose.onNodeWithTag("cellar.stat.bottles").fetchSemanticsNode().boundsInRoot
+        val wines = compose.onNodeWithTag("cellar.stat.wines").fetchSemanticsNode().boundsInRoot
+        assertTrue("$device-$language: the cellar tiles are not stacked at 200 %", wines.top >= bottles.bottom - 1f)
     }
 
     @Test

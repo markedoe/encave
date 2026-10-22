@@ -2,6 +2,7 @@ import SwiftUI
 
 /// A figure with a caption, for summaries and insights.
 struct StatTile: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let value: String
     let caption: LocalizedStringKey
     var systemImage: String?
@@ -24,7 +25,9 @@ struct StatTile: View {
             Text(caption)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-                .lineLimit(2)
+                // At the accessibility sizes the tiles are stacked: the caption takes the lines it needs.
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .topTrailing) {
