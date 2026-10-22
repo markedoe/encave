@@ -48,7 +48,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
@@ -73,7 +75,9 @@ import app.encave.core.Wine
 import app.encave.core.WineColor
 import java.util.UUID
 import app.encave.ui.components.BottleEnd
+import app.encave.ui.components.depthName
 import app.encave.ui.components.displayLabel
+import app.encave.ui.components.labelRes
 import app.encave.ui.components.zoneName
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -219,7 +223,13 @@ fun RackGrid(
     showHeaders: Boolean = true,
     clickLabel: (List<Bottle>) -> String? = { null },
     onCellClick: ((RackCell, List<Bottle>) -> Unit)? = null,
+    /** Offered on the places where [longClickLabel] names what it does. */
     onCellLongClick: ((RackCell, List<Bottle>) -> Unit)? = null,
+    longClickLabel: (List<Bottle>) -> String? = { null },
+    /** More actions offered to TalkBack on a place. */
+    customActions: (RackCell, List<Bottle>) -> List<CustomAccessibilityAction> = { _, _ -> emptyList() },
+    /** Checking the rack: [selected] are the bottles found, shown as "8/10" while some are missing. */
+    countsFound: Boolean = false,
     onCellDoubleClick: ((RackCell) -> Unit)? = null,
     /**
      * Drag and drop (wide screens): touch and hold a bottle, then drag it to another place.
@@ -227,7 +237,8 @@ fun RackGrid(
      */
     onDrop: ((Bottle, RackCell) -> Unit)? = null,
 ) {
-    val byCell = cellar.bottlesByCell(rack)
+    // Only worked out again when the cellar or the rack changes, not at each redraw.
+    val byCell = remember(cellar, rack) { cellar.bottlesByCell(rack) }
     // Drag and drop: where each place is on screen, and the bottle being dragged.
     val cellBounds = remember(rack.id) { mutableMapOf<RackCell, Rect>() }
     var container by remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -240,7 +251,7 @@ fun RackGrid(
     val dropTarget = dragged?.let { cellAt(dragAt) }
     val currentByCell by rememberUpdatedState(byCell)
     val currentOnDrop by rememberUpdatedState(onDrop)
-    val selectedByCell = selected.filter { it.rackId == rack.id }.groupBy { it.cell }
+    val selectedByCell = remember(selected, rack.id) { selected.filter { it.rackId == rack.id }.groupBy { it.cell } }
     val size = if (rack.kind == RackKind.Bins) cellSize * 1.7f else cellSize
     val cellHeight = if (RackLabels.showsName(rack, cellSize)) size * RackLabels.NAME_HEIGHT_RATIO else size
     val spacing = when (rack.kind) {
@@ -356,7 +367,10 @@ fun RackGrid(
                                     focusWine = focusWine,
                                     clickLabel = clickLabel(bottles),
                                     onClick = onCellClick?.let { { it(cell, bottles) } },
-                                    onLongClick = onCellLongClick?.let { { it(cell, bottles) } },
+                                    longClickLabel = longClickLabel(bottles),
+                                    onLongClick = onCellLongClick?.takeIf { longClickLabel(bottles) != null }?.let { { it(cell, bottles) } },
+                                    customActions = customActions(cell, bottles),
+                                    countsFound = countsFound,
                                     onDoubleClick = onCellDoubleClick?.let { { it(cell) } },
                                     onPositioned = if (onDrop != null) ({ bounds -> cellBounds[cell] = bounds }) else null,
                                 )
@@ -437,25 +451,21 @@ private fun RackCellView(
     focusWine: UUID?,
     clickLabel: String?,
     onClick: (() -> Unit)?,
+    longClickLabel: String?,
     onLongClick: (() -> Unit)?,
+    customActions: List<CustomAccessibilityAction>,
+    countsFound: Boolean,
     onDoubleClick: (() -> Unit)?,
     onPositioned: ((Rect) -> Unit)? = null,
 ) {
     val resources = LocalResources.current
-    val place = rack.displayLabel(cell, resources)
-    val names = bottles.mapNotNull { cellar.wines[it.wineId]?.displayName }
-    val base = when {
-        rack.kind == RackKind.Bins -> stringResource(R.string.cell_bin, place, bottles.size, rack.positionsPerCell)
-        names.isEmpty() -> stringResource(R.string.cell_empty, place)
-        else -> stringResource(R.string.cell_filled, place, names.joinToString(", "))
-    }
-    val description = when {
-        selectedCount > 0 -> stringResource(R.string.slot_selected, base)
-        isHighlighted -> stringResource(R.string.cell_highlighted, base)
-        else -> base
-    }
     val isFocused = focusWine != null && bottles.any { it.wineId == focusWine }
     val isDimmed = focusWine != null && !isFocused
+    val description = cellDescription(
+        rack, cell, bottles, cellar, resources,
+        found = if (countsFound) selectedCount else null,
+        isSelected = selectedCount > 0, isShown = isHighlighted || isFocused, isDimmed = isDimmed,
+    )
     Box(
         Modifier
             .size(size, height)
@@ -465,6 +475,7 @@ private fun RackCellView(
                 if (onClick != null) {
                     Modifier.combinedClickable(
                         onClick = onClick, onLongClick = onLongClick, onDoubleClick = onDoubleClick, onClickLabel = clickLabel,
+                        onLongClickLabel = longClickLabel,
                     )
                 } else {
                     Modifier
@@ -477,15 +488,16 @@ private fun RackCellView(
                     role = Role.Button
                     onClick(label = clickLabel) { onClick(); true }
                 }
-                if (onLongClick != null) onLongClick { onLongClick(); true }
+                if (onLongClick != null) onLongClick(label = longClickLabel) { onLongClick(); true }
+                if (customActions.isNotEmpty()) this.customActions = customActions
             }
             .alpha(if (isDimmed) 0.25f else 1f),
         contentAlignment = Alignment.Center,
     ) {
         if (rack.kind == RackKind.Bins) {
-            Bin(rack, bottles, cellar, size, selectedCount, isHighlighted || isFocused)
+            Bin(rack, bottles, cellar, size, selectedCount, isHighlighted || isFocused, countsFound)
         } else {
-            Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused)
+            Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused, countsFound)
         }
     }
 }
@@ -502,6 +514,7 @@ private fun Position(
     selectedCount: Int,
     isHighlighted: Boolean,
     isFocused: Boolean,
+    countsFound: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
@@ -547,7 +560,7 @@ private fun Position(
             if (isHighlighted || isFocused) {
                 Box(Modifier.size(size * 0.86f).border(if (isHighlighted) 3.dp else 2.dp, scheme.primary, CircleShape))
             }
-            if (selectedCount > 0) SelectionBadge(rack, selectedCount, size)
+            if (selectedCount > 0) SelectionBadge(rack, selectedCount, if (countsFound) bottles.size else null, size)
             if (rack.positionsPerCell > 1) {
                 val y = if (rack.kind == RackKind.Shelves && !showsName) size * 0.12f else -size * 0.02f
                 DepthDots(rack, bottles, cellar, size, Modifier.align(Alignment.BottomCenter).offset(y = y))
@@ -566,6 +579,50 @@ private fun Position(
                 autoSize = TextAutoSize.StepBased(minFontSize = font * 0.7f, maxFontSize = font, stepSize = 0.5.sp),
             )
         }
+    }
+}
+
+/**
+ * What TalkBack reads for a place, in the same order as VoiceOver: the place, then each
+ * bottle with its style in words (the drawing shows it only by color), front first, then its
+ * state ("8 of 10 found", "selected", "shown", "other wine").
+ */
+internal fun cellDescription(
+    rack: Rack,
+    cell: RackCell,
+    bottles: List<Bottle>,
+    cellar: Cellar,
+    resources: android.content.res.Resources,
+    found: Int? = null,
+    isSelected: Boolean = false,
+    isShown: Boolean = false,
+    isDimmed: Boolean = false,
+): String {
+    val place = rack.displayLabel(cell, resources)
+    fun wine(bottle: Bottle): String? = cellar.wines[bottle.wineId]?.let { wine ->
+        wine.color?.let { resources.getString(R.string.cell_wine_style, wine.displayName, resources.getString(it.labelRes)) } ?: wine.displayName
+    }
+    val base = when {
+        rack.kind == RackKind.Bins -> resources.getString(R.string.cell_bin, place, bottles.size, rack.positionsPerCell)
+        rack.positionsPerCell == 1 -> bottles.firstOrNull()?.let(::wine)?.let { resources.getString(R.string.cell_filled, place, it) }
+            ?: resources.getString(R.string.cell_empty, place)
+        bottles.isEmpty() -> resources.getString(R.string.cell_empty, place)
+        else -> {
+            val parts = (0 until rack.positionsPerCell).map { depth ->
+                val name = rack.depthName(depth, resources)
+                bottles.firstOrNull { it.slot?.depth == depth }?.let(::wine)
+                    ?.let { resources.getString(R.string.cell_depth_filled, name, it) }
+                    ?: resources.getString(R.string.cell_depth_empty, name)
+            }
+            resources.getString(R.string.cell_depths, place, parts.joinToString("; "))
+        }
+    }
+    return when {
+        found != null && found > 0 && found < bottles.size -> resources.getString(R.string.cell_found_partial, place, found, bottles.size)
+        isSelected -> resources.getString(R.string.slot_selected, base)
+        isShown -> resources.getString(R.string.cell_highlighted, base)
+        isDimmed -> resources.getString(R.string.cell_dimmed, base)
+        else -> base
     }
 }
 
@@ -602,14 +659,17 @@ private fun DepthDots(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: D
     }
 }
 
+/** A check, "+2" for bottles chosen in a place, or "1/2" for the bottles found when only some are ([total]). */
 @Composable
-private fun SelectionBadge(rack: Rack, count: Int, size: Dp) {
+private fun SelectionBadge(rack: Rack, count: Int, total: Int?, size: Dp) {
     val scheme = MaterialTheme.colorScheme
     Box(
         Modifier.size(size * 0.74f).background(scheme.primaryContainer, CircleShape).border(2.dp, scheme.primary, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (rack.positionsPerCell > 1) {
+        if (total != null && count < total) {
+            Text("$count/$total", color = scheme.onPrimaryContainer, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        } else if (total == null && rack.positionsPerCell > 1) {
             Text("+$count", color = scheme.onPrimaryContainer, style = MaterialTheme.typography.labelLarge)
         } else {
             Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.onPrimaryContainer)
@@ -619,7 +679,7 @@ private fun SelectionBadge(rack: Rack, count: Int, size: Dp) {
 
 /** A diamond bin with a small pile of bottles (up to ten, as a pyramid) and "7/10". */
 @Composable
-private fun Bin(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, selectedCount: Int, isHighlighted: Boolean) {
+private fun Bin(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, selectedCount: Int, isHighlighted: Boolean, countsFound: Boolean) {
     val scheme = MaterialTheme.colorScheme
     val capacity = rack.positionsPerCell
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
@@ -633,7 +693,15 @@ private fun Bin(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, sel
                 "${bottles.size}/$capacity", style = MaterialTheme.typography.labelMedium,
                 color = if (bottles.size >= capacity) scheme.onSurface else scheme.onSurfaceVariant,
             )
-            if (selectedCount > 0) Text("+$selectedCount", style = MaterialTheme.typography.labelMedium, color = scheme.primary)
+            if (selectedCount > 0 && countsFound) {
+                // Checking: how many of its bottles were found.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(14.dp))
+                    Text("$selectedCount/${bottles.size}", style = MaterialTheme.typography.labelMedium, color = scheme.primary)
+                }
+            } else if (selectedCount > 0) {
+                Text("+$selectedCount", style = MaterialTheme.typography.labelMedium, color = scheme.primary)
+            }
         }
     }
 }

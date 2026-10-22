@@ -23,8 +23,9 @@ public protocol CellarVersionSource: Sendable {
 
 /// Automatic copies of the cellar file, in a folder next to it: when the cellar is saved
 /// on a new day, the file as it was (its last state of the day it was saved) is kept
-/// first. One copy is kept for each of the last 7 days the cellar changed, and one for
-/// each week of the last 4 weeks; older ones are removed. The Android app keeps them
+/// first. One copy is kept for each of the last 7 days the cellar changed, then one for
+/// each of the 4 weeks before; older ones are removed. Counted from the copies, not from
+/// today, so the last ones stay after weeks without a change. The Android app keeps them
 /// the same way.
 ///
 /// Only the cellar file is copied: photos and documents are named after their content
@@ -35,8 +36,8 @@ public struct CellarVersionFolder: CellarVersionSource {
     public var calendar: Calendar
 
     public static let dailyCount = 7
-    public static let weeklyDays = 28
-    static let prefix = "cellar-", suffix = ".json"
+    public static let weeklyCount = 4
+    static let prefix = "cellar-", suffix = ".json", temporarySuffix = ".tmp"
 
     public init(folder: URL, timeZone: TimeZone = .current) {
         self.folder = folder
@@ -46,30 +47,46 @@ public struct CellarVersionFolder: CellarVersionSource {
     }
 
     /// Called before `cellarFile` is saved over: keeps a copy of it if it was last saved on
-    /// an earlier day than `now`, holds a cellar that is not empty, and is not kept yet.
-    /// Then removes the versions no longer needed. Errors are ignored: a copy never stops
-    /// a save.
+    /// an earlier day than `now` and is not kept yet, then checks it and removes the versions
+    /// no longer needed (`tidy`). Errors are ignored: a copy never stops a save.
     public func keepCopy(of cellarFile: URL, now: Date = .now) {
+        if let copy = copyIfNewDay(of: cellarFile, now: now) { tidy(checking: copy) }
+    }
+
+    /// The quick part of `keepCopy`, done before the save: copies the file (a clone on APFS)
+    /// if it was last saved on an earlier day than `now`. Returns the copy made, which `tidy`
+    /// then checks, away from the main thread.
+    @discardableResult
+    public func copyIfNewDay(of cellarFile: URL, now: Date = .now) -> CellarVersion? {
         // Read from the file system each time: a URL's resource values are cached on Apple
         // platforms, and the store saves to the same URL all day long.
         guard let modified = (try? FileManager.default.attributesOfItem(atPath: cellarFile.path))?[.modificationDate] as? Date,
-              calendar.startOfDay(for: modified) < calendar.startOfDay(for: now) else { return }
+              calendar.startOfDay(for: modified) < calendar.startOfDay(for: now) else { return nil }
         let target = folder.appendingPathComponent(Self.name(for: modified))
-        guard !FileManager.default.fileExists(atPath: target.path),
-              let data = try? Data(contentsOf: cellarFile),
-              let cellar = try? JSONFileCellarStore.makeDecoder().decode(Cellar.self, from: data), !cellar.isEmpty
-        else { return }
+        guard !FileManager.default.fileExists(atPath: target.path) else { return nil }
+        let temporary = folder.appendingPathComponent(target.lastPathComponent + "." + UUID().uuidString + Self.temporarySuffix)
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            #if canImport(Darwin) && !os(macOS)
-            try data.write(to: target, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-            #else
-            try data.write(to: target, options: [.atomic])
-            #endif
+            try FileManager.default.copyItem(at: cellarFile, to: temporary)
+            try FileManager.default.moveItem(at: temporary, to: target)
         } catch {
-            return
+            try? FileManager.default.removeItem(at: temporary)
+            return nil
         }
-        prune(now: now)
+        return Self.date(fromName: target.lastPathComponent).map { CellarVersion(id: target.lastPathComponent, date: $0) }
+    }
+
+    /// Removes `copy` if it cannot be read or holds an empty cellar, copies left half made, and
+    /// the versions no longer kept.
+    public func tidy(checking copy: CellarVersion? = nil) {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+        for name in names where name.hasSuffix(Self.temporarySuffix) {
+            try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
+        }
+        if let copy, (try? cellar(of: copy))?.isEmpty ?? true {
+            try? FileManager.default.removeItem(at: folder.appendingPathComponent(copy.id))
+        }
+        prune()
     }
 
     /// Newest first.
@@ -93,32 +110,33 @@ public struct CellarVersionFolder: CellarVersionSource {
     }
 
     /// Removes the versions no longer kept.
-    public func prune(now: Date = .now) {
+    public func prune() {
         let all = versions()
-        let kept = Self.kept(all.map(\.date), now: now, calendar: calendar)
+        let kept = Self.kept(all.map(\.date), calendar: calendar)
         for version in all where !kept.contains(version.date) {
             try? FileManager.default.removeItem(at: folder.appendingPathComponent(version.id))
         }
     }
 
-    /// The dates kept: the newest of each of the last 7 days, and the newest of each ISO
-    /// week of the last 28 days. Versions dated later than `now` (a clock set back) count
-    /// as today's.
-    public static func kept(_ dates: [Date], now: Date, calendar: Calendar) -> Set<Date> {
-        let today = calendar.startOfDay(for: now)
+    /// The dates kept: the newest of each of the 7 latest days that have a version, then the
+    /// newest of each of the 4 latest ISO weeks before those days. Counted from the versions
+    /// themselves, not from today, so a long pause never removes them all.
+    public static func kept(_ dates: [Date], calendar: Calendar) -> Set<Date> {
         var days: [Date: Date] = [:]
-        var weeks: [String: Date] = [:]
         for date in dates {
             let day = calendar.startOfDay(for: date)
-            let age = max(0, calendar.dateComponents([.day], from: day, to: today).day ?? 0)
-            if age < dailyCount { days[day] = max(days[day] ?? date, date) }
-            if age < weeklyDays {
-                let week = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-                let key = "\(week.yearForWeekOfYear ?? 0)-\(week.weekOfYear ?? 0)"
-                weeks[key] = max(weeks[key] ?? date, date)
-            }
+            days[day] = max(days[day] ?? date, date)
         }
-        return Set(days.values).union(weeks.values)
+        let daily = days.keys.sorted(by: >).prefix(dailyCount)
+        guard let oldestDaily = daily.last else { return [] }
+        var weeks: [String: Date] = [:]
+        for date in dates where date < oldestDaily {
+            let week = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+            let key = "\(week.yearForWeekOfYear ?? 0)-\(week.weekOfYear ?? 0)"
+            weeks[key] = max(weeks[key] ?? date, date)
+        }
+        let weekly = weeks.values.sorted(by: >).prefix(weeklyCount)
+        return Set(daily.compactMap { days[$0] }).union(weekly)
     }
 
     /// "cellar-20261020-221430.json": the date in UTC, to the second.

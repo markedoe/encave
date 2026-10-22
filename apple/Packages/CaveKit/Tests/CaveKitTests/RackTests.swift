@@ -72,6 +72,62 @@ import Testing
         #expect(throws: CellarError.rackNotEmpty) { try cellar.updateRack(rack) }
     }
 
+    /// Shared with the Kotlin RackTest: a fridge of five shelves of two layers.
+    @Test func duplicatingAShelfMovesTheBottlesBelowIt() throws {
+        var cellar = Cellar()
+        let fridge = Rack(name: "F", kind: .staggered, rows: 10, columns: 6, depth: 2, shelfLayers: [2, 2, 2, 2, 2])
+        cellar.addRack(fridge)
+        // Shelf 3, bottom layer (its last row), place 3, back.
+        let bottle = try cellar.addBottles(of: Wine(name: "W"), slots: [Slot(rackID: fridge.id, row: 5, column: 2, depth: 1)])[0]
+        // Shelf 1 duplicated: a new shelf 2, the old shelves 2 to 5 one lower.
+        let edited = Rack(id: fridge.id, name: "F", kind: .staggered, rows: 12, columns: 6, depth: 2,
+                          shelfLayers: [2, 2, 2, 2, 2, 2])
+        let map = Rack.shelfRowMap(from: fridge, to: edited, origins: [0, nil, 1, 2, 3, 4])
+        #expect(map[5] == .some(7))
+        #expect(cellar.displacedBottles(by: edited, rowMap: map).isEmpty)
+        try cellar.updateRack(edited, rowMap: map)
+        let slot = try #require(cellar.bottles[bottle.id]?.slot)
+        #expect(slot == Slot(rackID: fridge.id, row: 7, column: 2, depth: 1))
+        #expect(edited.shelfPlace(ofRow: slot.row)?.shelf == 3)
+        #expect(edited.shelfPlace(ofRow: slot.row)?.layer == 0)
+    }
+
+    @Test func removingAShelfOrLayerDisplacesItsBottles() throws {
+        var cellar = Cellar()
+        let fridge = Rack(name: "F", kind: .staggered, rows: 6, columns: 6, depth: 2, shelfLayers: [2, 2, 2])
+        cellar.addRack(fridge)
+        let bottles = try cellar.addBottles(of: Wine(name: "W"), quantity: 3, slots: [
+            Slot(rackID: fridge.id, row: 2, column: 0),  // shelf 2, top layer
+            Slot(rackID: fridge.id, row: 3, column: 1),  // shelf 2, bottom layer
+            Slot(rackID: fridge.id, row: 5, column: 4),  // shelf 3, bottom layer
+        ])
+        // Shelf 2 removed, shelf 3 down to one layer of 4.
+        let edited = Rack(id: fridge.id, name: "F", kind: .staggered, rows: 3, columns: 6, depth: 2,
+                          rowColumns: [5, 6, 4], shelfLayers: [2, 1])
+        let map = Rack.shelfRowMap(from: fridge, to: edited, origins: [0, 2])
+        #expect(map[2] == .some(nil))
+        #expect(map[4] == .some(nil), "the top layer of shelf 3 is gone")
+        #expect(cellar.displacedBottles(by: edited, rowMap: map).map(\.id) == bottles.map(\.id),
+                "the third bottle's place 5 no longer fits a layer of 4")
+        #expect(throws: CellarError.rackNotEmpty) { try cellar.updateRack(edited, rowMap: map) }
+        try cellar.updateRack(edited, rowMap: map, takingOut: true)
+        #expect(bottles.allSatisfy { cellar.bottles[$0.id]?.slot == nil && cellar.bottles[$0.id]?.status == .inCellar })
+        #expect(cellar.racks[0].rows == 3)
+    }
+
+    @Test func shrinkingCanTakeBottlesOut() throws {
+        var cellar = Cellar()
+        var rack = Rack(name: "G", rows: 3, columns: 3)
+        cellar.addRack(rack)
+        let kept = try cellar.addBottles(of: Wine(name: "W"), slots: [Slot(rackID: rack.id, row: 0, column: 0)])[0]
+        let out = try cellar.addBottles(of: Wine(name: "W"), slots: [Slot(rackID: rack.id, row: 2, column: 1)])[0]
+        rack.rows = 2
+        #expect(cellar.displacedBottles(by: rack).map(\.id) == [out.id])
+        try cellar.updateRack(rack, takingOut: true)
+        #expect(cellar.bottles[out.id]?.slot == nil)
+        #expect(cellar.bottles[kept.id]?.slot == Slot(rackID: rack.id, row: 0, column: 0))
+    }
+
     @Test func oldRacksAndSlotsStillDecode() throws {
         let rackID = UUID(), wineID = UUID(), bottleID = UUID()
         let json = """

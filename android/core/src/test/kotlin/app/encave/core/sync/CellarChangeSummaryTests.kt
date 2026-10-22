@@ -65,7 +65,8 @@ class CellarChangeSummaryTests {
         assertEquals(2, summary.opened)
         assertEquals(3, summary.added)
         assertEquals(1, summary.removed)
-        assertEquals(1, summary.winesAdded)
+        // The new wine has a bottle: it is told by its bottle, not as a wine added.
+        assertEquals(0, summary.winesAdded)
         assertEquals(0, summary.other)
         assertEquals(marc, summary.singleDevice)
         assertFalse(summary.onlyOpened)

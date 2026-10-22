@@ -55,6 +55,8 @@ public final class ZipWriter {
 
     static let chunkSize = 256 * 1024
     static let limit: UInt64 = 0xFFFF_FFFF
+    /// 65,535 in the end record means ZIP64: one less is the most a plain ZIP holds.
+    static let maxEntries = 0xFFFE
 
     /// Creates (or empties) the file at `url`. Every entry gets `modified` as its date,
     /// in UTC, so the same content gives the same archive.
@@ -99,7 +101,7 @@ public final class ZipWriter {
     private func addEntry(name: String, size: UInt64, crc: UInt32, body: () throws -> Void) throws {
         precondition(!finished, "entry added after finish()")
         let nameBytes = Data(name.utf8)
-        guard nameBytes.count <= 0xFFFF, count < 0xFFFF else { throw ZipError.tooLarge }
+        guard nameBytes.count <= 0xFFFF, count < Self.maxEntries else { throw ZipError.tooLarge }
         let headerSize = UInt64(30 + nameBytes.count)
         guard offset + headerSize + size < Self.limit else { throw ZipError.tooLarge }
         let localOffset = offset
@@ -192,6 +194,8 @@ public final class ZipReader {
     private let handle: FileHandle
     private let fileSize: UInt64
     public let entries: [ZipEntry]
+    /// 65,534 entries with names of 1 KB.
+    static let maxDirectorySize: UInt64 = 0xFFFE * (46 + 1024)
 
     public init(url: URL) throws {
         let handle: FileHandle
@@ -270,6 +274,8 @@ public final class ZipReader {
         guard disk == 0, directoryDisk == 0, onDisk == total else { throw ZipError.unsupported }
         if total == 0xFFFF || directorySize == 0xFFFF_FFFF || directoryOffset == 0xFFFF_FFFF { throw ZipError.unsupported }
         guard directoryOffset + directorySize <= fileSize else { throw ZipError.notAZip }
+        // Read whole: refused when larger than any archive Encave writes could need.
+        guard directorySize <= Self.maxDirectorySize else { throw ZipError.tooLarge }
         try handle.seek(toOffset: directoryOffset)
         guard let directory = try handle.read(upToCount: Int(directorySize)), directory.count == Int(directorySize)
         else { throw ZipError.notAZip }

@@ -143,6 +143,65 @@ class RackTest {
         expectError(CellarError.RackNotEmpty) { cellar.updateRack(rack) }
     }
 
+    /** Shared with the Swift RackTests: a fridge of five shelves of two layers. */
+    @Test
+    fun duplicatingAShelfMovesTheBottlesBelowIt() {
+        val cellar = Cellar()
+        val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 10, columns = 6, depth = 2, shelfLayers = List(5) { 2 }).normalized()
+        cellar.addRack(fridge)
+        // Shelf 3, bottom layer (its last row), place 3, back.
+        val bottle = cellar.addBottles(Wine(name = "W"), slots = listOf(Slot(fridge.id, 5, 2, 1)))[0]
+        // Shelf 1 duplicated: a new shelf 2, the old shelves 2 to 5 one lower.
+        val edited = fridge.copy(rows = 12, shelfLayers = List(6) { 2 }).normalized()
+        val map = Rack.shelfRowMap(fridge, edited, listOf(0, null, 1, 2, 3, 4))
+        assertEquals(7, map[5])
+        assertTrue(cellar.displacedBottles(edited, map).isEmpty())
+        cellar.updateRack(edited, map)
+        val slot = cellar.bottles[bottle.id]?.slot
+        assertEquals(Slot(fridge.id, 7, 2, 1), slot)
+        assertEquals(3, edited.shelfPlace(slot!!.row)?.shelf)
+        assertEquals(0, edited.shelfPlace(slot.row)?.layer)
+    }
+
+    @Test
+    fun removingAShelfOrLayerDisplacesItsBottles() {
+        val cellar = Cellar()
+        val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 6, columns = 6, depth = 2, shelfLayers = listOf(2, 2, 2)).normalized()
+        cellar.addRack(fridge)
+        val bottles = cellar.addBottles(
+            Wine(name = "W"), quantity = 3,
+            slots = listOf(
+                Slot(fridge.id, 2, 0), // shelf 2, top layer
+                Slot(fridge.id, 3, 1), // shelf 2, bottom layer
+                Slot(fridge.id, 5, 4), // shelf 3, bottom layer
+            ),
+        )
+        // Shelf 2 removed, shelf 3 down to one layer of 4.
+        val edited = fridge.copy(rows = 3, rowColumns = listOf(5, 6, 4), shelfLayers = listOf(2, 1)).normalized()
+        val map = Rack.shelfRowMap(fridge, edited, listOf(0, 2))
+        assertTrue(map.containsKey(2) && map[2] == null)
+        assertTrue(map.containsKey(4) && map[4] == null, "the top layer of shelf 3 is gone")
+        assertEquals(bottles.map { it.id }, cellar.displacedBottles(edited, map).map { it.id }, "place 5 no longer fits a layer of 4")
+        expectError(CellarError.RackNotEmpty) { cellar.updateRack(edited, map) }
+        cellar.updateRack(edited, map, takingOut = true)
+        assertTrue(bottles.all { cellar.bottles[it.id]?.slot == null && cellar.bottles[it.id]?.status == Bottle.Status.InCellar })
+        assertEquals(3, cellar.racks[0].rows)
+    }
+
+    @Test
+    fun shrinkingCanTakeBottlesOut() {
+        val cellar = Cellar()
+        var rack = Rack(name = "G", rows = 3, columns = 3)
+        cellar.addRack(rack)
+        val kept = cellar.addBottles(Wine(name = "W"), slots = listOf(Slot(rack.id, 0, 0)))[0]
+        val out = cellar.addBottles(Wine(name = "W"), slots = listOf(Slot(rack.id, 2, 1)))[0]
+        rack = rack.copy(rows = 2)
+        assertEquals(listOf(out.id), cellar.displacedBottles(rack).map { it.id })
+        cellar.updateRack(rack, takingOut = true)
+        assertNull(cellar.bottles[out.id]?.slot)
+        assertEquals(Slot(rack.id, 0, 0), cellar.bottles[kept.id]?.slot)
+    }
+
     @Test
     fun oldRacksAndSlotsStillDecode() {
         val rackId = UUID.randomUUID()

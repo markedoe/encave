@@ -16,7 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class MainActivity : ComponentActivity() {
     /**
      * A link to open (reminder, notification, app shortcut, widget): encave://wine/<id>,
-     * encave://cellar, encave://tonight, encave://journal, encave://scan or encave://add.
+     * encave://cellar, encave://tonight, encave://journal, encave://scan, encave://add or a
+     * pairing link, encave://pair?code=…
      */
     private val links = MutableStateFlow<String?>(null)
 
@@ -62,6 +63,16 @@ class MainActivity : ComponentActivity() {
         private const val WINE_PREFIX = "encave://wine/"
 
         fun wineLink(id: String) = WINE_PREFIX + id
+
+        /**
+         * The code and commitment (Base64, no wrap) of a pairing link, encave://pair?code=…&c=…,
+         * as put in the QR code shown when adding a device; null for any other link.
+         */
+        fun pairing(link: String): Pair<String, String?>? {
+            if (!link.startsWith("encave://pair")) return null
+            val (code, commitment) = app.encave.core.sync.PairingCode.parse(link) ?: return null
+            return code.digits to commitment?.let { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) }
+        }
 
         /** The wine id of a wine link, or null. */
         fun wineId(link: String): String? = link.takeIf { it.startsWith(WINE_PREFIX) }?.removePrefix(WINE_PREFIX)?.substringBefore('?')

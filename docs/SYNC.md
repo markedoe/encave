@@ -225,6 +225,15 @@ leaves the device (Keychain on Apple platforms). Its device ID is a random UUID.
 (section 8); each device sets it in its own record, with a new stamp, when it
 is missing. Adding a member stamps it; removing it leaves a deletion stamp.
 
+**Leaving.** A device that stops syncing removes itself from its membership
+(a deletion stamp of its own), then, for about 10 seconds at most, tells the
+others: a sync session with each device of the cellar on the network (the
+handshake with the membership from before the removal, the exchange with the one
+after it, whose result it ignores) and one remote round. It then forgets the
+cellar's devices, stamps and keys, and takes a new ID and key. No key rotation
+follows: the devices that learn of it simply stop syncing with it. If neither
+reaches another device, the user removes it there.
+
 Two memberships merge per member with the stamp rule, except that **a removal
 is final**: a deletion stamp wins over any non-deletion stamp, whatever the
 counters. A removed device cannot add itself back by sending a newer record;
@@ -302,6 +311,11 @@ own limits (section 5).
 
 Device names are never advertised.
 
+**Retries.** After a session it started fails, a device tries that device again
+after 15 seconds, then 1 minute, then 5 minutes, and then waits until the device
+leaves the network and comes back, a session with it succeeds, or the user asks
+to sync. A success or the device going away resets the count.
+
 ## 5. Pairing
 
 The **host** shows a 6-digit code (and a QR code), the **joiner** types or scans
@@ -345,8 +359,16 @@ padding>`. A joiner that scanned it refuses a host whose commitment differs.
    the host as initiator: the pairing keys stay, and the frame counters go on.
 
 When joining, the user chooses to **combine** the joiner's own cellar with the
-host's, or to **replace** it (start from an empty cellar with no stamps; only
-the joiner's settings are kept).
+host's, or to **replace** it. With replace, the joiner resets its stamps (an
+empty `stamps`, its clock kept) but keeps its own objects on the device and a
+local "replace pending" flag until a snapshot from another device of the cellar
+has been taken in. While the flag is set, every snapshot it sends (sessions on
+the network and remote rounds) holds only the objects stamped since it joined,
+with the wines and racks they use and its settings (`onlyStamped` in both
+cores), and merging a received snapshot starts from that same cellar. The first
+merge that goes through replaces its cellar with the result and clears the
+flag. Its old objects never reach the other devices, and a first sync that
+fails leaves them in place: the next one completes the join.
 
 A code works for 2 minutes. The joiner looks for the host for 30 seconds; the
 key exchange (steps 1 to 3) gets 20 seconds. Once its user has answered, a
