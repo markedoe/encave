@@ -1761,16 +1761,6 @@
         }
       }
     },
-    "Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal. If you close the sheet after typing, Encave asks before discarding the note.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajoutez une note, quelques mots et l’occasion, ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal. Si vous fermez la feuille après avoir écrit, Encave demande avant de supprimer la note."
-          }
-        }
-      }
-    },
     "Add a rating, a few words, an occasion (Dinner at home, With friends…), or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal. If you close the sheet or leave a note after changing it, Encave asks before discarding it.": {
       "localizations": {
         "fr": {
