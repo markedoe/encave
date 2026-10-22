@@ -62,7 +62,8 @@ import Testing
             try cellar.move(s.bottles[0].id, to: nil)
             cellar.addRack(Rack(name: "Fridge", rows: 1, columns: 1))
         }
-        #expect(summary.winesAdded == 1)
+        // The new wine has a bottle: it is told by its bottle, not as a wine added.
+        #expect(summary.winesAdded == 0)
         // An ordered bottle counts as added.
         #expect(summary.bottlesAdded == 1)
         // The wine edited, the bottle moved, the new rack.

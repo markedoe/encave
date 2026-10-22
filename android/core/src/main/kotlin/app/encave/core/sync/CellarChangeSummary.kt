@@ -14,9 +14,11 @@ import java.util.UUID
  *   it is already drunk, and counted in **other** otherwise (given away);
  * - a bottle that becomes drunk is **opened**; one that disappears or becomes given away,
  *   sold or broken is **removed**; any other change to a bottle is **other**;
- * - a wine that appears is a **wine added**; a wine deleted is not counted (its bottles
- *   are); a wine edited, a rack, a discovery, a saved search, the settings, or the rack
- *   order when racks were only reordered, that changed is **other**;
+ * - a wine that appears without bottles, with a discovery to buy, is a **wine added** (to the
+ *   shopping list, its discovery not counted again); any other wine that appears is told by
+ *   its bottles or its discovery; a wine deleted is not counted (its bottles are); a wine
+ *   edited, a rack, a discovery, a saved search, the settings, or the rack order when racks
+ *   were only reordered, that changed is **other**;
  * - each change is credited to the device in the stamp of the changed object after the
  *   sync. Changes stamped by this device (repairs of the merge) are not counted; a change
  *   without a stamp counts, from an unknown device.
@@ -90,16 +92,27 @@ data class CellarChangeSummary(
                 }
                 true
             }
-            compare(SyncKey.Kind.Wine, before.wines, after.wines) { a, b ->
-                when {
-                    a == null -> winesAdded++
-                    b != null -> other++
-                    else -> return@compare false
+            val withBottles = after.bottles.values.mapTo(HashSet()) { it.wineId }
+            val toBuy = after.discoveries.values.filter { it.wantsToBuy }.mapTo(HashSet()) { it.wineId }
+            // Wines counted as added to the shopping list: their discovery is not counted again.
+            val listed = HashSet<UUID>()
+            for (id in before.wines.keys + after.wines.keys) {
+                val a = before.wines[id]
+                val b = after.wines[id] ?: continue
+                if (a == b) continue
+                if (a == null) {
+                    if (id in withBottles || id !in toBuy) continue
+                    change(SyncKey.of(SyncKey.Kind.Wine, id)) { winesAdded++; listed += id; true }
+                } else {
+                    change(SyncKey.of(SyncKey.Kind.Wine, id)) { other++; true }
                 }
-                true
             }
             val countOther: (Any?, Any?) -> Boolean = { _, _ -> other++; true }
-            compare(SyncKey.Kind.Discovery, before.discoveries, after.discoveries, countOther)
+            compare(SyncKey.Kind.Discovery, before.discoveries, after.discoveries) { a, b ->
+                if (a == null && b != null && b.wineId in listed) return@compare false
+                other++
+                true
+            }
             compare(SyncKey.Kind.Rack, CellarMerge.byId(before.racks), CellarMerge.byId(after.racks), countOther)
             compare(
                 SyncKey.Kind.Search,
