@@ -97,6 +97,14 @@ import Testing
         #expect(Set(read.attachments?.first?.unknownFields.values.keys ?? [:].keys) == Self.futureKeys)
     }
 
+    @Test func theOldRackLayoutKeyIsNotKept() throws {
+        let json = #"{"id":"00000000-0000-4000-8000-000000000031","name":"Old","layout":"diamond","rows":2,"columns":3}"#
+        let rack = try JSONDecoder.sync.decode(Rack.self, from: Data(json.utf8))
+        #expect(rack.unknownFields.isEmpty)
+        let written = try JSONSerialization.jsonObject(with: JSONEncoder.sync.encode(rack)) as? [String: Any]
+        #expect(written?["layout"] == nil)
+    }
+
     @Test func knownKeysWin() throws {
         var wine = try #require(try Self.cellar().wines[Self.wineID])
         wine.unknownFields.values["name"] = .string("Not the name")

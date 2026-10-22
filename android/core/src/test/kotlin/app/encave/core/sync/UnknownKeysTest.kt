@@ -116,6 +116,14 @@ class UnknownKeysTest {
     }
 
     @Test
+    fun theOldRackLayoutKeyIsNotKept() {
+        val json = """{"id":"00000000-0000-4000-8000-000000000031","name":"Old","layout":"diamond","rows":2,"columns":3}"""
+        val rack = SyncJson.decode(Rack.serializer(), json.toByteArray())
+        assertEquals(NoUnknownKeys, rack.unknownKeys)
+        assertEquals(null, tree(SyncJson.encode(Rack.serializer(), rack).decodeToString()).jsonObject["layout"])
+    }
+
+    @Test
     fun knownKeysWin() {
         val wine = cellar().wines.getValue(wineId)
         val odd = wine.copy(unknownKeys = JsonObject(wine.unknownKeys + mapOf("name" to JsonPrimitive("Not the name"), "vintage" to JsonPrimitive(1900))))
