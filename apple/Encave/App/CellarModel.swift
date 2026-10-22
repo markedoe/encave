@@ -1047,6 +1047,7 @@ extension SampleData.Labels {
         labels.honeycomb = String(localized: "Honeycomb rack")
         labels.stairs = String(localized: "Under the stairs")
         labels.largeFridge = String(localized: "Large wine fridge")
+        labels.headToTailFridge = String(localized: "Head-to-tail fridge")
         labels.tastingNote = String(localized: "Silky, red fruit, long finish.")
         labels.kitchen = String(localized: "Kitchen")
         labels.occasion = String(localized: "Dinner with friends")
