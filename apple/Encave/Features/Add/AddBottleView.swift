@@ -234,7 +234,7 @@ struct AddBottleView: View {
 
     private func slotSummary(rack: Rack) -> String {
         if chosenSlots.isEmpty { return String(localized: "Automatic") }
-        return chosenSlots.map { rack.label(for: $0) }.joined(separator: ", ")
+        return chosenSlots.map { rack.displayLabel(for: $0) }.joined(separator: ", ")
     }
 
     private func prepare() {
