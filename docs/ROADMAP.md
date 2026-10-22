@@ -230,10 +230,13 @@ on-device model.
   incompatible with the AGPL for third-party contributions. Before accepting
   outside contributions, add an AGPL section 7 additional permission for app
   store distribution, or a contributor license agreement.
-- **Encryption export rules.** An end-to-end encrypted app must answer the
-  export compliance questions in App Store Connect, and France requires a
-  declaration for encryption products. To verify before the first store
-  submission.
+- **Encryption export rules.** Settled for Apple and Android in
+  [ENCRYPTION.md](ENCRYPTION.md): both apps use only the system's encryption
+  (CryptoKit, the Android platform), so nothing is uploaded to App Store Connect
+  and no French declaration is needed on Apple's store. Remaining before the
+  public release: check whether the U.S. year-end self-classification report
+  (BIS) applies, and confirm the Android case against ANSSI's rules before
+  distributing the Android app in France.
 - **Shared core.** The model and the sync protocol are implemented twice
   (Swift, Kotlin), checked with shared test vectors. If the model grows much, revisit a shared Rust core
   (UniFFI) or a CRDT engine such as Automerge.

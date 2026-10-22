@@ -1,5 +1,8 @@
 package app.encave.ui.settings
 
+import app.encave.ui.ProjectLinks
+import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.ui.platform.testTag
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -71,8 +74,6 @@ import app.encave.ui.components.sampleLabels
 import java.time.LocalDate
 import androidx.compose.material.icons.outlined.AutoAwesome
 import app.encave.ui.theme.Dimens
-
-private const val SOURCE_URL = "https://github.com/markedoe/encave"
 
 @Composable
 fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
@@ -187,7 +188,15 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 headlineContent = {
                     val sync by (context.applicationContext as app.encave.EncaveApplication).sync.state.collectAsStateWithLifecycle()
                     val shared = (sync.membership?.members?.size ?: 0) > 1
-                    Text(stringResource(if (shared) R.string.settings_privacy_stored_devices else R.string.settings_privacy_stored))
+                    Text(
+                        stringResource(
+                            when {
+                                sync.remoteStorage != null -> R.string.settings_privacy_stored_remote
+                                shared -> R.string.settings_privacy_stored_devices
+                                else -> R.string.settings_privacy_stored
+                            },
+                        ),
+                    )
                 },
                 supportingContent = { Text(stringResource(R.string.settings_privacy_body)) },
             )
@@ -290,12 +299,25 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             )
             ListItem(
                 modifier = Modifier.clickable {
-                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, SOURCE_URL.toUri())) }
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, ProjectLinks.PRIVACY_POLICY.toUri())) }
+                },
+                leadingContent = { Icon(Icons.Outlined.PrivacyTip, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_privacy_policy)) },
+                trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+            )
+            ListItem(
+                modifier = Modifier.clickable {
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, ProjectLinks.SOURCE.toUri())) }
                 },
                 leadingContent = { Icon(Icons.Outlined.Code, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_source)) },
                 supportingContent = { Text(stringResource(R.string.settings_source_body)) },
                 trailingContent = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null) },
+            )
+            ListItem(
+                modifier = Modifier.testTag("settings.licences").clickable { navigator.open(app.encave.ui.navigation.LicencesRoute) },
+                leadingContent = { Icon(Icons.Outlined.Description, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_licences)) },
             )
             if (BuildConfig.BETA) {
                 Text(

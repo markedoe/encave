@@ -342,12 +342,7 @@ struct CellarTableRow: Identifiable, Sendable {
         valueText = totals.keys.sorted().map { code in
             (totals[code] ?? 0).formatted(.currency(code: code).precision(.fractionLength(0)))
         }.joined(separator: " + ")
-        let labels = group.bottles.compactMap { model.locationLabel(for: $0) }
-        if let first = labels.first {
-            location = labels.count > 1 ? String(localized: "\(first) and \(labels.count - 1) more") : first
-        } else {
-            location = ""
-        }
+        location = WineRow.places(group.bottles.compactMap { model.locationLabel(for: $0) }) ?? ""
     }
 }
 

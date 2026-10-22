@@ -49,6 +49,24 @@ final class ScreenTourTests: XCTestCase {
         openSection(3, "journal")
         snapshot("journal")
     }
+
+    /// The cellar at the largest text size (AX5): the summary tiles stack, one above the other.
+    func testLargestText() throws {
+        language = "ax5"
+        step = 0
+        continueAfterFailure = true
+        app = XCUIApplication()
+        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        guard app.horizontalSizeClassIsCompact else { return }
+        openSection(0, "cellar")
+        snapshot("cellar")
+        let bottles = element("cellar.stat.bottles"), wines = element("cellar.stat.wines")
+        if bottles.waitForExistence(timeout: 10), wines.exists {
+            XCTAssertGreaterThanOrEqual(wines.frame.minY, bottles.frame.maxY - 1, "The cellar tiles stack at AX5")
+        }
+    }
     #endif
 
     // MARK: Tour
@@ -504,7 +522,7 @@ final class ScreenTourTests: XCTestCase {
             "en": ["cellar": "Cellar", "racks": "Racks", "tonight": "Tonight", "journal": "Journal"],
             "fr": ["cellar": "Cave", "racks": "Casiers", "tonight": "Ce soir", "journal": "Journal"],
         ]
-        // The large-text tour ("xl") runs in English.
+        // The large-text tours ("xl", "ax5") run in English.
         return titles[language == "fr" ? "fr" : "en"]?[section] ?? section
     }
 

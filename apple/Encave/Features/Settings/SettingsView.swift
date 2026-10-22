@@ -139,15 +139,18 @@ struct SettingsView: View {
             WebSearchSettingsSection()
 
             Section {
-                if model.sync.otherDevices.isEmpty {
-                    Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
+                if model.sync.remoteStorage != nil {
+                    Label("Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.",
+                          systemImage: "lock.shield")
+                } else if model.sync.otherDevices.isEmpty {
+                    Label("Your cellar is kept on this device.", systemImage: "lock.shield")
                 } else {
-                    Label("Your cellar is stored only on your devices.", systemImage: "lock.shield")
+                    Label("Your cellar is kept on your devices.", systemImage: "lock.shield")
                 }
             } header: {
                 Text("Privacy")
             } footer: {
-                Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
+                Text("No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.")
             }
 
             Section {
@@ -236,8 +239,16 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("Version", value: version)
-                Link(destination: URL(string: "https://github.com/markedoe/encave")!) {
+                Link(destination: ProjectLinks.privacyPolicy) {
+                    Label("Privacy Policy", systemImage: "hand.raised")
+                }
+                Link(destination: ProjectLinks.source) {
                     Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                NavigationLink {
+                    LicencesView()
+                } label: {
+                    Label("Licences", systemImage: "doc.text")
                 }
             } header: {
                 Text("About")

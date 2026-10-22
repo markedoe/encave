@@ -57,6 +57,9 @@ data class AddBottleRoute(
 @Serializable data class HelpRoute(val topic: String? = null)
 @Serializable data object DevicesRoute
 
+/** Settings › About › Licences. */
+@Serializable data object LicencesRoute
+
 /** Settings › Your data › Previous versions. */
 @Serializable data object PreviousVersionsRoute
 

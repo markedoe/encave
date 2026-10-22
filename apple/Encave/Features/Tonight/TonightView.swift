@@ -55,7 +55,12 @@ struct TonightView: View {
                 if !candidates.isEmpty {
                     Section {
                         TonightPick(group: candidates[pickIndex % candidates.count]) {
-                            withAnimation(.snappy) { pickIndex += 1 }
+                            let next = pickIndex + 1
+                            withAnimation(.snappy) { pickIndex = next }
+                            // The card changes without moving focus: say which wine it shows now.
+                            let wine = candidates[next % candidates.count].wine
+                            AccessibilityNotification.Announcement([wine.displayName, wine.styleLine]
+                                .filter { !$0.isEmpty }.joined(separator: ", ")).post()
                         }
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
@@ -130,8 +135,9 @@ private struct TonightPick: View {
                         .font(.title2.weight(.semibold))
                         .fontDesign(.serif)
                         .lineLimit(2)
-                    if let producer = wine.producer {
-                        Text(producer).foregroundStyle(.secondary)
+                    // The style in words, as in the cellar list, not only by the bottle's color.
+                    if !wine.styleLine.isEmpty {
+                        Text(verbatim: wine.styleLine).foregroundStyle(.secondary)
                     }
                     MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
                         .font(.footnote.weight(.medium))

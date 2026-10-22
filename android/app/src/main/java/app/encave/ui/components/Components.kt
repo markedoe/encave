@@ -40,7 +40,7 @@ import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -58,6 +58,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.pluralStringResource
+import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -100,12 +106,12 @@ fun StyleLabel(color: WineColor?, modifier: Modifier = Modifier) {
     }
 }
 
-/** Icon, label and tint: never color alone. */
+/** A tinted icon and words in the text color: never color alone, and the words stay readable. */
 @Composable
 fun MaturityLabel(maturity: Maturity, modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
         Icon(maturity.icon, contentDescription = null, tint = maturity.tint, modifier = Modifier.size(18.dp))
-        Text(stringResource(maturity.labelRes), style = MaterialTheme.typography.labelLarge, color = maturity.tint)
+        Text(stringResource(maturity.labelRes), style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -125,23 +131,39 @@ fun RatingStars(rating: Int?, modifier: Modifier = Modifier, size: Dp = 16.dp) {
     }
 }
 
-/** Five toggles; tapping the current rating again clears it. Each change ticks, as on Apple. */
+/**
+ * Five stars; tapping the current rating again clears it. For TalkBack, one adjustable
+ * "Rating" (like a slider): its value is "4 stars" or "No rating", and the stars themselves
+ * are left out.
+ */
 @Composable
 fun RatingInput(rating: Int?, onChange: (Int?) -> Unit, modifier: Modifier = Modifier) {
+    // Each change ticks, as on Apple.
     val haptics = LocalHapticFeedback.current
-    Row(modifier) {
+    val label = stringResource(R.string.rating_label)
+    val value = if (rating != null) pluralStringResource(R.plurals.journal_rating_stars, rating, rating) else stringResource(R.string.rating_input_none)
+    Row(
+        modifier.clearAndSetSemantics {
+            contentDescription = label
+            stateDescription = value
+            progressBarRangeInfo = ProgressBarRangeInfo((rating ?: 0).toFloat(), 0f..5f, steps = 4)
+            setProgress { target ->
+                val stars = target.roundToInt().coerceIn(0, 5)
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onChange(stars.takeIf { it > 0 })
+                true
+            }
+        },
+    ) {
         for (index in 1..5) {
             val selected = rating != null && index <= rating
-            IconToggleButton(
-                checked = rating == index,
-                onCheckedChange = {
-                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                    onChange(if (rating == index) null else index)
-                },
-            ) {
+            IconButton(onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onChange(if (rating == index) null else index)
+            }) {
                 Icon(
                     if (selected) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                    contentDescription = stringResource(R.string.rating_star, index),
+                    contentDescription = null,
                     tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                     modifier = Modifier.size(32.dp),
                 )
