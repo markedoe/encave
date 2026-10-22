@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.map
@@ -141,9 +142,10 @@ class AppViewModel(
     /** The Journal's tag chip; cleared, like the filter, when a new entry would be hidden. */
     val journalTag = MutableStateFlow<String?>(null)
 
+    /** The cellar list, filtered and sorted off the main thread (a large cellar takes time). */
     val groups: StateFlow<List<WineGroup>> = combine(cellar, filter, sort) { cellar, filter, sort ->
         cellar.groups(filter, sort, year)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         viewModelScope.launch {
