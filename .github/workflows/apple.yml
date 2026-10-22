@@ -44,100 +44,6 @@ jobs:
       # The licences shown in Settings › About › Licences match Package.resolved.
       - run: python3 apple/tools/licences.py --check
 
-  mac-launch:
-    name: Mac launch test
-    needs: [cavekit, l10n]
-    runs-on: macos-latest
-    timeout-minutes: 40
-    defaults:
-      run:
-        working-directory: apple
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - name: Select newest Xcode
-        working-directory: .
-        run: |
-          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
-          sudo xcode-select -s "$xcode"
-
-      - name: Build the Mac app (Release, signed to run locally)
-        run: |
-          set -o pipefail
-          brew install xcodegen xcbeautify
-          xcodegen generate
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
-            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
-            | xcbeautify --renderer github-actions
-          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
-
-      - name: Launch twice and report crashes
-        run: |
-          app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
-          reports="$HOME/Library/Logs/DiagnosticReports"
-          status=0
-          # Empty first and second launch, then every tab with the sample cellar.
-          for attempt in first second cellar racks tonight journal; do
-            case "$attempt" in
-              first|second) args=() ;;
-              *) args=(--tab "$attempt" --sample-data) ;;
-            esac
-            "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
-            pid=$!
-            sleep 20
-            # What the window looks like (needs screen capture permission on the runner).
-            mkdir -p "$RUNNER_TEMP/mac-screens"
-            osascript -e 'tell application "System Events" to set frontmost of (first process whose unix id is '"$pid"') to true' || true
-            screencapture -x "$RUNNER_TEMP/mac-screens/$attempt.png" || echo "screen capture not allowed"
-            if kill -0 "$pid" 2>/dev/null; then
-              echo "$attempt launch: still running after 20 s"
-              kill "$pid"; wait "$pid" 2>/dev/null || true
-            else
-              wait "$pid"; code=$?
-              echo "::error::$attempt launch: exited with code $code"
-              status=1
-            fi
-            echo "--- output ($attempt launch) ---"
-            tail -n 80 "$RUNNER_TEMP/launch-$attempt.log"
-          done
-          sleep 5
-          for report in "$reports"/Encave*; do
-            [ -e "$report" ] || continue
-            echo "--- $report ---"
-            # The crash report is JSON after a one-line header: print the useful part.
-            python3 - "$report" <<'PY'
-          import json, sys
-          text = open(sys.argv[1]).read()
-          header, _, body = text.partition("\n")
-          try:
-              data = json.loads(body)
-          except Exception:
-              print(text[:6000]); sys.exit()
-          print(json.dumps(data.get("exception"), indent=1))
-          print(json.dumps(data.get("termination"), indent=1))
-          print(json.dumps(data.get("asi"), indent=1))
-          images = data.get("usedImages", [])
-          for thread in data.get("threads", []):
-              if not thread.get("triggered"):
-                  continue
-              for frame in thread.get("frames", [])[:40]:
-                  image = images[frame.get("imageIndex", 0)] if images else {}
-                  print(image.get("name", "?"), frame.get("symbol", ""), frame.get("sourceFile", ""), frame.get("sourceLine", ""))
-          PY
-            status=1
-          done
-          exit $status
-
-      - name: Upload Mac screenshots
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: mac-screens
-          path: ${{ runner.temp }}/mac-screens
-          retention-days: 7
-          if-no-files-found: ignore
-
   screens:
     name: Screen tour (iPhone, iPad, Mac)
     needs: [cavekit, l10n]
@@ -297,7 +203,7 @@ jobs:
           retention-days: 7
 
   apps:
-    name: Build${{ github.event_name != 'pull_request' && ' and upload to TestFlight' || '' }}
+    name: Build, Mac launch test${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && ', TestFlight upload' || '' }}
     needs: [cavekit, l10n]
     runs-on: macos-latest
     timeout-minutes: 60
@@ -334,16 +240,23 @@ jobs:
           brew install xcodegen xcbeautify
           xcodegen generate
 
-      - name: Build (no signing)
+      - name: Build the Mac app (Release, signed to run locally)
         if: env.UPLOAD != 'true'
         run: |
           set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
-            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -derivedDataPath "$RUNNER_TEMP/dd" \
-            -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app" \
-            "$RUNNER_TEMP/dd/Build/Products/Debug/Encave.app"
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
+          app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
+          ../scripts/check-privacy-manifest.sh "$app"
+          echo "MAC_APP=$app" >> "$GITHUB_ENV"
+          # The iPhone and iPad app builds while the Mac app is launched (the launch test
+          # mostly waits); its result is checked in the last step.
+          touch "$RUNNER_TEMP/ios-build.started"
+          nohup bash -c 'xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
+            -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
+            > "$RUNNER_TEMP/ios-build.log" 2>&1; echo $? > "$RUNNER_TEMP/ios-build.status"' > /dev/null 2>&1 &
 
       - name: App Store Connect key
         id: key
@@ -397,10 +310,89 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" ENCAVE_CHANNEL=beta \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
           ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app"
+          echo "MAC_APP=$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app" >> "$GITHUB_ENV"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
           echo "uploaded=true" >> "$GITHUB_OUTPUT"
+
+      - name: Mac launch test (twice, then each section; reports crashes)
+        # Also when the upload failed: the archived app is there.
+        if: ${{ !cancelled() && env.MAC_APP != '' }}
+        run: |
+          app="$MAC_APP"
+          reports="$HOME/Library/Logs/DiagnosticReports"
+          status=0
+          # Empty first and second launch, then every tab with the sample cellar.
+          for attempt in first second cellar racks tonight journal; do
+            case "$attempt" in
+              first|second) args=() ;;
+              *) args=(--tab "$attempt" --sample-data) ;;
+            esac
+            "$app/Contents/MacOS/Encave" "${args[@]}" > "$RUNNER_TEMP/launch-$attempt.log" 2>&1 &
+            pid=$!
+            sleep 20
+            # What the window looks like (needs screen capture permission on the runner).
+            mkdir -p "$RUNNER_TEMP/mac-screens"
+            osascript -e 'tell application "System Events" to set frontmost of (first process whose unix id is '"$pid"') to true' || true
+            screencapture -x "$RUNNER_TEMP/mac-screens/$attempt.png" || echo "screen capture not allowed"
+            if kill -0 "$pid" 2>/dev/null; then
+              echo "$attempt launch: still running after 20 s"
+              kill "$pid"; wait "$pid" 2>/dev/null || true
+            else
+              wait "$pid"; code=$?
+              echo "::error::$attempt launch: exited with code $code"
+              status=1
+            fi
+            echo "--- output ($attempt launch) ---"
+            tail -n 80 "$RUNNER_TEMP/launch-$attempt.log"
+          done
+          sleep 5
+          for report in "$reports"/Encave*; do
+            [ -e "$report" ] || continue
+            echo "--- $report ---"
+            # The crash report is JSON after a one-line header: print the useful part.
+            python3 - "$report" <<'PY'
+          import json, sys
+          text = open(sys.argv[1]).read()
+          header, _, body = text.partition("\n")
+          try:
+              data = json.loads(body)
+          except Exception:
+              print(text[:6000]); sys.exit()
+          print(json.dumps(data.get("exception"), indent=1))
+          print(json.dumps(data.get("termination"), indent=1))
+          print(json.dumps(data.get("asi"), indent=1))
+          images = data.get("usedImages", [])
+          for thread in data.get("threads", []):
+              if not thread.get("triggered"):
+                  continue
+              for frame in thread.get("frames", [])[:40]:
+                  image = images[frame.get("imageIndex", 0)] if images else {}
+                  print(image.get("name", "?"), frame.get("symbol", ""), frame.get("sourceFile", ""), frame.get("sourceLine", ""))
+          PY
+            status=1
+          done
+          exit $status
+
+      - name: Upload Mac screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mac-screens
+          path: ${{ runner.temp }}/mac-screens
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Build the iPhone and iPad app (simulator, no signing)
+        if: ${{ !cancelled() && env.UPLOAD != 'true' }}
+        timeout-minutes: 20
+        run: |
+          [ -e "$RUNNER_TEMP/ios-build.started" ] || { echo "::error::Not built: the Mac build failed first."; exit 1; }
+          while [ ! -e "$RUNNER_TEMP/ios-build.status" ]; do sleep 5; done
+          xcbeautify --renderer github-actions < "$RUNNER_TEMP/ios-build.log"
+          [ "$(cat "$RUNNER_TEMP/ios-build.status")" = 0 ] || exit 1
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app"
 
       - name: Remove key
         if: always()
