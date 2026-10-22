@@ -84,6 +84,21 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(throws: ZipError.corrupt) { try reader.data(of: reader.entries[0], maxSize: 100) }
     }
 
+    @Test func anArchiveCutShortIsDamagedNotAnotherFile() throws {
+        let folder = try TemporaryFolder()
+        let url = folder.file("cut.zip")
+        let writer = try ZipWriter(url: url, modified: .now)
+        try writer.add(name: "cellar.json", data: Data("{}".utf8))
+        try writer.add(name: "photos/a.jpg", data: Data(repeating: 7, count: 4000))
+        try writer.finish()
+        let bytes = try Data(contentsOf: url)
+        for length in [bytes.count / 2, bytes.count - 10] {
+            try bytes.prefix(length).write(to: url)
+            #expect(throws: ZipError.corrupt) { try ZipReader(url: url) }
+            #expect(throws: ImportError.damagedArchive) { try CellarArchive.read(url, workingFolder: folder.url) }
+        }
+    }
+
     @Test func refusesWhatIsNotAZipOrIsCompressed() throws {
         let folder = try TemporaryFolder()
         try Data("not a zip at all, just some text".utf8).write(to: folder.file("text.zip"))

@@ -202,7 +202,7 @@
     <string name="err_not_backup">Ce fichier n’est pas une sauvegarde Encave.</string>
     <string name="err_newer_version">Cette sauvegarde a été faite par une version plus récente d’Encave. Mettez Encave à jour sur cet appareil, puis importez-la à nouveau.</string>
     <string name="err_unsupported_archive">Ce fichier ZIP n’a pas été fait par Encave, ou une autre app l’a modifié. Importez l’archive telle qu’Encave l’a faite, ou le fichier cellar.json qu’elle contient.</string>
-    <string name="err_damaged_archive">Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier.</string>
+    <string name="err_damaged_archive">Cette sauvegarde est abîmée ou incomplète.</string>
     <string name="err_empty_file">Le fichier est vide.</string>
     <string name="err_missing_name">Le fichier CSV doit avoir une colonne « name ».</string>
     <string name="racks_empty_title">Aucun casier</string>

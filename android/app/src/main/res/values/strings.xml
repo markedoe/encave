@@ -203,7 +203,7 @@
     <string name="err_not_backup">This file is not an Encave backup.</string>
     <string name="err_newer_version">This backup was made by a newer version of Encave. Update Encave on this device, then import it again.</string>
     <string name="err_unsupported_archive">This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.</string>
-    <string name="err_damaged_archive">This backup is damaged: it could not be read in full.</string>
+    <string name="err_damaged_archive">This backup is damaged or incomplete.</string>
     <string name="err_empty_file">The file is empty.</string>
     <string name="err_missing_name">The CSV file needs a “name” column.</string>
     <string name="racks_empty_title">No racks yet</string>

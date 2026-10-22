@@ -163,11 +163,18 @@ class CellarArchiveTest {
         assertEquals(2, contents.files.size)
     }
 
-    private fun zip(name: String, vararg entries: Pair<String, ByteArray>): File {
+    /** A ZIP file written by another tool: entries stored, or [compressed]. */
+    private fun zip(name: String, vararg entries: Pair<String, ByteArray>, compressed: Boolean = false): File {
         val file = File(folder, name)
         java.util.zip.ZipOutputStream(file.outputStream()).use { out ->
             for ((path, data) in entries) {
-                out.putNextEntry(java.util.zip.ZipEntry(path))
+                val entry = java.util.zip.ZipEntry(path)
+                if (!compressed) {
+                    entry.method = java.util.zip.ZipEntry.STORED
+                    entry.size = data.size.toLong()
+                    entry.crc = java.util.zip.CRC32().also { it.update(data) }.value
+                }
+                out.putNextEntry(entry)
                 out.write(data)
                 out.closeEntry()
             }
@@ -180,7 +187,7 @@ class CellarArchiveTest {
         val (cellar, _) = sample()
         val photo = FileRef(PhotoId.make("label".toByteArray()), FileKind.Photo)
         val manifest = CellarArchive.manifestJson(CellarArchive.Manifest(files = listOf(CellarArchive.Item("photos/Label.jpg", photo))))
-        // Written by another tool (compressed), with a photo whose content changed, a file the
+        // Written by another tool, with a photo whose content changed, a file the
         // cellar does not refer to, a file outside the folders, and one without a manifest entry.
         val file = zip(
             "edited.zip",
@@ -228,6 +235,49 @@ class CellarArchiveTest {
         bytes[start] = (bytes[start].toInt() xor 0x01).toByte()
         val error = assertThrows<ImportException> { CellarArchive.read(ByteArrayInputStream(bytes), work()) }.error
         assertEquals(ImportError.DamagedArchive, error)
+    }
+
+    @Test
+    fun anArchiveCutShortIsRefusedAsDamaged() {
+        val (cellar, files) = sample()
+        val bytes = ByteArrayOutputStream().also { CellarArchive.write(cellar, Instant.now(), it, { ref -> files[ref] }) }.toByteArray()
+        fun read(data: ByteArray) = assertThrows<ImportException> { CellarArchive.read(ByteArrayInputStream(data), work()) }.error
+        // Cut in a photo, right after the cellar, and just before the end record.
+        val afterCellar = bytes.indexOfSequence(byteArrayOf(0x50, 0x4B, 0x03, 0x04), from = 4)
+        for (length in listOf(bytes.size / 2, afterCellar, bytes.size - 10)) {
+            assertEquals(ImportError.DamagedArchive, read(bytes.copyOf(length)), "cut at $length")
+        }
+        // The whole archive still reads.
+        assertEquals(files.keys, CellarArchive.read(ByteArrayInputStream(bytes), work()).files.keys)
+    }
+
+    @Test
+    fun compressedEntriesAreNeverInflated() {
+        val (cellar, _) = sample()
+        val json = CellarExport.json(cellar).toByteArray()
+        fun read(file: File) = file.inputStream().use { CellarArchive.read(it, work()) }
+        val error = assertThrows<ImportException> { read(zip("deflated.zip", "cellar.json" to json, compressed = true)) }.error
+        assertEquals(ImportError.UnsupportedArchive, error)
+        // A compressed photo (it could inflate to fill the disk) is left out.
+        val photo = "back".toByteArray()
+        val file = File(folder, "mixed.zip")
+        java.util.zip.ZipOutputStream(file.outputStream()).use { out ->
+            out.putNextEntry(
+                java.util.zip.ZipEntry("cellar.json").apply {
+                    method = java.util.zip.ZipEntry.STORED
+                    size = json.size.toLong()
+                    crc = java.util.zip.CRC32().also { it.update(json) }.value
+                },
+            )
+            out.write(json)
+            out.closeEntry()
+            out.putNextEntry(java.util.zip.ZipEntry("photos/Back.jpg"))
+            out.write(photo)
+            out.closeEntry()
+        }
+        val contents = read(file)
+        assertTrue(contents.files.isEmpty())
+        assertEquals(1, contents.skipped)
     }
 
     private fun ByteArray.indexOfSequence(sequence: ByteArray, from: Int = 0): Int =

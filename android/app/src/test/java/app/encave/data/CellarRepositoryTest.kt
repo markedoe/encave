@@ -4,8 +4,10 @@ import app.encave.core.Cellar
 import app.encave.core.CellarException
 import app.encave.core.CellarStore
 import app.encave.core.InMemoryCellarStore
+import app.encave.core.RestoreMode
 import app.encave.core.Slot
 import app.encave.core.Wine
+import app.encave.core.restoring
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -42,6 +44,20 @@ class CellarRepositoryTest {
         val result = repository.update { it.addBottles(Wine(name = "W"), slots = listOf(Slot(UUID.randomUUID(), 0, 0))) }
         assertTrue(result.exceptionOrNull() is CellarException)
         assertTrue(repository.cellar.value.isEmpty)
+    }
+
+    @Test
+    fun aRestoreKeepsWhatSyncBroughtMeanwhile() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = CellarRepository(InMemoryCellarStore(), TestScope(dispatcher), dispatcher)
+        advanceUntilIdle()
+        val backup = Cellar().also { it.addBottles(Wine(name = "Backup"), quantity = 1) }
+        // A sync lands after the preview was read: the restore starts from the cellar as it is now.
+        repository.applySynced({ it.also { cellar -> cellar.addBottles(Wine(name = "Synced"), quantity = 1) } })
+        val (before, restored) = repository.replaceWith { it.restoring(backup, RestoreMode.AddMissing) }.getOrThrow()
+        assertEquals(1, before.bottles.size)
+        assertEquals(2, restored.bottles.size)
+        assertEquals(setOf("Backup", "Synced"), repository.cellar.value.wines.values.map { it.name }.toSet())
     }
 
     @Test

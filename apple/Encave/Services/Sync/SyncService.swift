@@ -142,6 +142,7 @@ final class SyncService {
         lastLocalChange = UserDefaults.standard.object(forKey: Self.lastLocalChangeKey) as? Date
         remoteSentThrough = UserDefaults.standard.object(forKey: Self.remoteSentKey) as? Date
         model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
+        model.onSaveReverted = { [weak self] shown, saved in self?.recordRevert(from: shown, to: saved) }
         if identityUnavailable {
             // Changes are still stamped (with the device ID kept in the sync state); only
             // the network stays off.
@@ -454,6 +455,16 @@ final class SyncService {
             self.syncNow()
             if self.remoteFrequency.interval != nil { self.syncRemotely() }
         }
+    }
+
+    /// A failed write took the cellar back: what was recorded but never saved is recorded again
+    /// as saved, so the next sync does not spread it (nor a deletion of what is still here).
+    private func recordRevert(from shown: Cellar, to saved: Cellar) {
+        guard isSetUp, var state else { return }
+        state.recordRevert(from: shown, to: saved)
+        guard state != self.state else { return }
+        self.state = state
+        try? files?.syncState.save(state)
     }
 
     // MARK: Sessions

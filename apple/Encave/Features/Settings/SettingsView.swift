@@ -393,7 +393,7 @@ struct SettingsView: View {
         case .unsupportedArchive:
             String(localized: "This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.")
         case .damagedArchive:
-            String(localized: "This backup is damaged: it could not be read in full.")
+            String(localized: "This backup is damaged or incomplete.")
         case .notAnEncaveBackup, .emptyFile, .missingNameColumn:
             String(localized: "This file is not an Encave backup or a CSV with a name column.")
         }

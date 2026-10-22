@@ -70,6 +70,19 @@ public struct SyncState: Codable, Equatable, Sendable {
         if old.racks.map(\.id) != new.racks.map(\.id) { stamp(SyncKey.rackOrder, deleted: false) }
     }
 
+    /// A write failed and the cellar went back from `shown` to `saved`, what the file holds.
+    /// The records last changed on this device are stamped again with what was saved, so no
+    /// device takes a change that was never saved (or a deletion of a record still here).
+    /// Records last changed by other devices are left as they are.
+    public mutating func recordRevert(from shown: Cellar, to saved: Cellar) {
+        var reverted = self
+        reverted.record(from: shown, to: saved)
+        for key in reverted.stamps.keys.sorted() {
+            guard let stamp = reverted.stamps[key], stamps[key] != stamp, stamps[key]?.device == device else { continue }
+            self.stamp(key, deleted: stamp.deleted)
+        }
+    }
+
     private mutating func stamp(_ key: String, deleted: Bool) {
         // Clocks are kept far below the limit by `SyncState.check`, so this cannot overflow.
         clock += 1

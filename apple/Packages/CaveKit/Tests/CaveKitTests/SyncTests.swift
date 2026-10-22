@@ -103,6 +103,33 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(a.cellar.wines.isEmpty && b.cellar.wines.isEmpty)
     }
 
+    @Test func aChangeThatCouldNotBeSavedDoesNotSpread() throws {
+        let (cellar, wine, _) = try sample()
+        var (a, b) = pair(cellar)
+        // A deletes the wine, then the write fails: the cellar goes back to what was saved.
+        let saved = a.cellar
+        a.edit { $0.deleteWine(wine.id) }
+        let shown = a.cellar
+        a.cellar = saved
+        a.state.recordRevert(from: shown, to: saved)
+        syncBoth(&a, &b)
+        #expect(a.cellar.wines[wine.id] != nil)
+        #expect(b.cellar.wines[wine.id] != nil)
+        #expect(a.cellar == b.cellar)
+    }
+
+    @Test func aRevertLeavesChangesFromOtherDevicesAlone() throws {
+        let (cellar, wine, _) = try sample()
+        var (a, b) = pair(cellar)
+        try b.edit { var w = $0.wines[wine.id]!; w.notes = "from B"; try $0.updateWine(w) }
+        let saved = a.cellar
+        a.sync(with: b)
+        let stamps = a.state.stamps
+        // Saving what came from B failed: B's change is not stamped as A's.
+        a.state.recordRevert(from: a.cellar, to: saved)
+        #expect(a.state.stamps == stamps)
+    }
+
     @Test func editingABottleOfADeletedWineDoesNotLeaveAnOrphan() throws {
         let (cellar, wine, _) = try sample()
         var (a, b) = pair(cellar)

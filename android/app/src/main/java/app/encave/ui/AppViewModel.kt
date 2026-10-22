@@ -1038,7 +1038,8 @@ class AppViewModel(
         viewModelScope.launch {
             val result = runCatching {
                 val output = withContext(Dispatchers.IO) { requireNotNull(resolver.openOutputStream(uri, "wt")) }
-                output.use { backups.writeArchive(it).getOrThrow() }
+                // Closed by writeArchive: it is a backup only once the file is complete.
+                backups.writeArchive(output).getOrThrow()
             }
             result.onSuccess { written ->
                 val notIncluded = written.missing + written.leftOut
@@ -1082,11 +1083,10 @@ class AppViewModel(
         val source = restoreState.value ?: return
         viewModelScope.launch {
             withContext(Dispatchers.IO) { backups.install(source.files) }
-            val before = cellar.value.copy()
-            val restored = before.restoring(source.cellar, mode)
-            val summary = before.copy().merge(source.cellar)
-            repository.replace(restored)
-                .onSuccess {
+            // Under the repository lock: a sync that lands meanwhile is kept, not reverted.
+            repository.replaceWith { current -> current.restoring(source.cellar, mode) }
+                .onSuccess { (before, restored) ->
+                    val summary = before.copy().merge(source.cellar)
                     source.workingFolder?.let { folder -> withContext(Dispatchers.IO) { folder.deleteRecursively() } }
                     restoreState.value = null
                     confirm()

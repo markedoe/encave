@@ -13111,12 +13111,12 @@
         }
       }
     },
-    "This backup is damaged: it could not be read in full.": {
+    "This backup is damaged or incomplete.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier."
+            "value": "Cette sauvegarde est abîmée ou incomplète."
           }
         }
       }
