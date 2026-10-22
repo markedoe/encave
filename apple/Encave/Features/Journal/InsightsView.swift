@@ -8,6 +8,16 @@ struct InsightsView: View {
 
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
+        if stats.bottleCount == 0, stats.consumedCount == 0, model.cellar.discoveries.isEmpty {
+            ContentUnavailableView("No figures yet", systemImage: "chart.pie",
+                                   description: Text("Add bottles to see insights."))
+                .navigationTitle("Insights")
+        } else {
+            figures(stats)
+        }
+    }
+
+    private func figures(_ stats: CellarStatistics) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 YearInWineCard()
@@ -51,6 +61,33 @@ struct InsightsView: View {
                     }
                 }
 
+                let maturities: [(maturity: Maturity, count: Int)] = Maturity.allCases.sorted().compactMap { maturity in
+                    guard let count = stats.byMaturity[maturity], count > 0 else { return nil }
+                    return (maturity, count)
+                }
+                if !maturities.isEmpty {
+                    ChartCard(title: "By maturity") {
+                        let largest = Double(maturities.map(\.count).max() ?? 1)
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(maturities, id: \.maturity) { item in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        // The icon and the words, not only the color.
+                                        MaturityLabel(maturity: item.maturity)
+                                        Spacer()
+                                        Text(verbatim: "\(item.count)").monospacedDigit().foregroundStyle(.secondary)
+                                    }
+                                    .font(.subheadline)
+                                    ProgressView(value: Double(item.count), total: largest)
+                                        .tint(item.maturity.tint)
+                                        .accessibilityHidden(true)
+                                }
+                                .accessibilityElement(children: .combine)
+                            }
+                        }
+                    }
+                }
+
                 if !stats.byCountry.isEmpty {
                     ChartCard(title: "By country") {
                         Chart(stats.byCountry.prefix(8)) { slice in
@@ -63,6 +100,21 @@ struct InsightsView: View {
                         }
                         .chartXAxis(.hidden)
                         .frame(height: CGFloat(min(8, stats.byCountry.count)) * 34 + 10)
+                    }
+                }
+
+                if !stats.byRegion.isEmpty {
+                    ChartCard(title: "By region") {
+                        Chart(stats.byRegion.prefix(8)) { slice in
+                            BarMark(x: .value("Bottles", slice.count), y: .value("Region", slice.label))
+                                .foregroundStyle(Color.accentColor.gradient)
+                                .cornerRadius(4)
+                                .annotation(position: .trailing) {
+                                    Text(verbatim: "\(slice.count)").font(.caption).foregroundStyle(.secondary)
+                                }
+                        }
+                        .chartXAxis(.hidden)
+                        .frame(height: CGFloat(min(8, stats.byRegion.count)) * 34 + 10)
                     }
                 }
 
@@ -305,7 +357,8 @@ private struct YearInWineFacts: View {
                 if let styleName = recap.topColor?.name {
                     fact("wineglass", Text("Most opened style: \(styleName)"))
                 }
-                if let occasionName = recap.topOccasion {
+                if let occasion = recap.topOccasion {
+                    let occasionName = Occasion.displayName(occasion)
                     fact("person.2", Text("Favorite occasion: \(occasionName)"))
                 }
                 if let month = recap.busiestMonth {

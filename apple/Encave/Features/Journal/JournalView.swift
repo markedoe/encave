@@ -232,6 +232,7 @@ private struct DiaryEntryRow: View {
                 TastingRow(bottle: bottle, showsWine: true, showsSource: true)
             }
             .buttonStyle(.plain)
+            .modifier(OpenedBottleActions(bottle: bottle))
             .accessibilityIdentifier("journal.row.cellar")
         case .elsewhere(let discovery):
             Button {
@@ -243,6 +244,48 @@ private struct DiaryEntryRow: View {
             .modifier(ElsewhereActions(discovery: discovery))
             .accessibilityIdentifier("journal.row.elsewhere")
         }
+    }
+}
+
+/// Swipe actions and context menu of a bottle opened from the cellar: its wine, the
+/// note, more bottles of it, or back in the cellar if it was logged by mistake (with Undo).
+struct OpenedBottleActions: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    let bottle: Bottle
+
+    func body(content: Content) -> some View {
+        let wine = model.cellar.wines[bottle.wineID]
+        content
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                if let wine {
+                    Button {
+                        model.sheet = .addBottle(AddBottleContext(wine: wine))
+                    } label: {
+                        Label("Add Bottles", systemImage: "plus")
+                    }
+                    .tint(.accentColor)
+                }
+            }
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    model.putBack(bottle.id)
+                } label: {
+                    Label("Put Back in the Cellar", systemImage: "arrow.uturn.backward")
+                }
+            }
+            .contextMenu {
+                if let wine {
+                    Button("Show Wine", systemImage: "wineglass") { model.open(wine: wine.id) }
+                }
+                Button("Edit Note", systemImage: "pencil") { model.sheet = .editTasting(bottleID: bottle.id) }
+                if let wine {
+                    Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
+                }
+                Divider()
+                Button("Put Back in the Cellar", systemImage: "arrow.uturn.backward", role: .destructive) {
+                    model.putBack(bottle.id)
+                }
+            }
     }
 }
 

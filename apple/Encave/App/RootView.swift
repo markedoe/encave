@@ -21,6 +21,7 @@ struct RootView: View {
                 .environment(model)
         }
         .sensoryFeedback(.success, trigger: model.successCount)
+        .sensoryFeedback(.selection, trigger: model.selectionCount)
         // The monthly reminder reflects the cellar as it is now.
         .task(id: model.cellar) {
             try? await Task.sleep(for: .seconds(3))
