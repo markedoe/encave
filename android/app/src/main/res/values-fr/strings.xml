@@ -335,7 +335,7 @@
     <string name="settings_erase_body_devices">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil et des autres appareils synchronisés avec lui. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
     <string name="settings_privacy">Confidentialité</string>
     <string name="settings_privacy_stored">Votre cave est enregistrée uniquement sur cet appareil.</string>
-    <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave.</string>
+    <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur le même Wi-Fi, ou loin de la maison via un stockage de votre choix, toujours chiffrés de bout en bout : aucun serveur ne peut lire votre cave.</string>
     <string name="settings_privacy_stored_devices">Votre cave est enregistrée uniquement sur vos appareils.</string>
     <string name="settings_about">À propos</string>
     <string name="settings_beta">Bêta</string>

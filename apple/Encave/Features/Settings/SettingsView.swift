@@ -211,7 +211,7 @@ struct SettingsView: View {
             } header: {
                 Text("Privacy")
             } footer: {
-                Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
+                Text("Devices sync directly on the same Wi-Fi, or away from home through a storage you choose, always encrypted from end to end: no server can read your cellar.")
             }
 
             Section {

@@ -505,7 +505,7 @@ FR = {
     'Confirm the code on the other device too.': 'Confirmez aussi le code sur l’autre appareil.',
     'Devices': 'Appareils',
     'Devices sharing this cellar': 'Appareils partageant cette cave',
-    'Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.': 'Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave.',
+    'Devices sync directly on the same Wi-Fi, or away from home through a storage you choose, always encrypted from end to end: no server can read your cellar.': 'Les appareils se synchronisent directement sur le même Wi-Fi, ou loin de la maison via un stockage de votre choix, toujours chiffrés de bout en bout : aucun serveur ne peut lire votre cave.',
     'Devices sync when they are on the same Wi-Fi and Encave is open. Changes made apart merge without losing anything.': 'Les appareils se synchronisent quand ils sont sur le même Wi-Fi et qu’Encave est ouvert. Les modifications faites séparément se réunissent sans rien perdre.',
     'Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.': 'Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient.',
     'Does %@ show the same code?': '%@ affiche-t-il le même code ?',

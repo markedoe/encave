@@ -4071,12 +4071,12 @@
         }
       }
     },
-    "Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.": {
+    "Devices sync directly on the same Wi-Fi, or away from home through a storage you choose, always encrypted from end to end: no server can read your cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave."
+            "value": "Les appareils se synchronisent directement sur le même Wi-Fi, ou loin de la maison via un stockage de votre choix, toujours chiffrés de bout en bout : aucun serveur ne peut lire votre cave."
           }
         }
       }
