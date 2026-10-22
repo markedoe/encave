@@ -27,8 +27,6 @@ struct RootView: View {
             // Not for a cellar that could not be loaded: that would remove the reminders.
             guard !Task.isCancelled, !model.loadFailed else { return }
             await Reminders.schedule(for: model.cellar)
-            // Spotlight: an on-device index of the wines (not for the sample cellar of the screen tour).
-            if !model.sync.isDemo { await SpotlightIndex.update(model.cellar) }
         }
         // Sync runs while a window is open in the foreground; iOS suspends it in the
         // background anyway. With several windows (iPad, Mac), it stops with the last one.

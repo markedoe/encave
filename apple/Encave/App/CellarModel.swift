@@ -45,6 +45,8 @@ final class CellarModel {
 
     /// Previous versions, Back Up Now and the weekly archive.
     @ObservationIgnored let backups: BackupCenter
+    /// Spotlight's on-device index of the wines.
+    @ObservationIgnored private let spotlight = SpotlightIndex()
 
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     /// `versions`: earlier versions of the cellar when the store keeps none (previews).
@@ -95,6 +97,7 @@ final class CellarModel {
         guard !loadFailed else { return }
         // An Undo would apply to the cellar now loaded.
         toast = nil
+        indexInSpotlight()
         #if os(iOS)
         sync.scheduleBackgroundSync()
         #endif
@@ -178,6 +181,7 @@ final class CellarModel {
     static func live() -> CellarModel {
         let model = makeLive()
         current = model
+        model.indexInSpotlight()
         return model
     }
 
@@ -231,6 +235,7 @@ final class CellarModel {
             cellar = copy
             if !undoing { dropStaleUndo() }
             onLocalChange?(old, copy)
+            indexInSpotlight()
             return true
         } catch let error as CellarError {
             errorMessage = error.localizedMessage
@@ -247,6 +252,7 @@ final class CellarModel {
             try store.save(synced)
             cellar = synced
             dropStaleUndo()
+            indexInSpotlight()
         } catch {
             errorMessage = String(localized: "The change could not be saved.")
         }
@@ -450,6 +456,14 @@ final class CellarModel {
         #if os(iOS)
         sync.scheduleBackgroundSync()
         #endif
+        spotlight.flush()
+    }
+
+    /// Spotlight follows the cellar, a while after the last change; never for the sample
+    /// cellar of the screen tour, nor for a cellar that could not be loaded.
+    private func indexInSpotlight() {
+        guard !sync.isDemo, !loadFailed else { return }
+        spotlight.schedule(cellar)
     }
 
     func showInRack(_ bottle: Bottle) {
