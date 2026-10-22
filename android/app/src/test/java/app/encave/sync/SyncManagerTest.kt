@@ -121,6 +121,15 @@ class SyncManagerTest {
     }
 
     @Test
+    fun aRefusedWebDavLoginNeedsTheUserAtOnce() = runBlocking {
+        sync.setUpIfNeeded()
+        addOther()
+        sync.storage.remoteStorage = SyncManager.WEBDAV_PREFIX + "https://nas.example.com/encave/"
+        sync.remoteFailed(SyncManager.RemoteProblem.Refused)
+        assertEquals(SyncHealth.NeedsAction(SyncHealth.Reason.SignInNeeded), sync.state.value.health(sync.identity.id))
+    }
+
+    @Test
     fun replaceKeepsTheBottlesUntilTheOtherCellarArrives() = runBlocking {
         repository.update { it.addBottles(Wine(name = "Mine"), 4) }.getOrThrow()
         // The other device's cellar and devices.

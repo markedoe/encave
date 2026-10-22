@@ -1221,12 +1221,12 @@
         }
       }
     },
-    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too.": {
+    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants."
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt."
           }
         }
       }

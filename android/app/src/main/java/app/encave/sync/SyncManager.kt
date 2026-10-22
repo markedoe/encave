@@ -1131,6 +1131,7 @@ class SyncManager(
                 }
                 it.copy(
                     lastRemoteSync = now,
+                    needsWebDavSignIn = needsSignIn(storage.remoteStorage),
                     remoteProblem = problem,
                     remoteProblemAt = if (problem != null) now else null,
                     remoteFailingSince = null,
@@ -1155,9 +1156,17 @@ class SyncManager(
         }
     }
 
-    private fun remoteFailed(problem: RemoteProblem) {
+    internal fun remoteFailed(problem: RemoteProblem) {
         val now = Instant.now()
-        status.update { it.copy(remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now) }
+        // A WebDAV server that refuses the login (a changed password): sync needs the user at
+        // once (sign in again) rather than failing for an hour first.
+        val loginRefused = problem == RemoteProblem.Refused && storage.remoteStorage?.startsWith(WEBDAV_PREFIX) == true
+        status.update {
+            it.copy(
+                remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now,
+                needsWebDavSignIn = it.needsWebDavSignIn || loginRefused,
+            )
+        }
     }
 
     /** Rotates the remote key if a removal is waiting for it, and returns the key to use. */

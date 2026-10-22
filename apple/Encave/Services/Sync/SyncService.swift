@@ -701,8 +701,12 @@ final class SyncService {
     /// the user to sign in instead of failing silently.
     var needsWebDAVSignIn: Bool {
         guard case .webDAV(let url) = remoteStorage else { return false }
-        return webDAVLogin?.folder != url.absoluteString
+        return webDAVLoginRefused || webDAVLogin?.folder != url.absoluteString
     }
+
+    /// The WebDAV server refused the login in the last round (a changed password): sync
+    /// needs the user at once (sign in again) rather than failing for an hour first.
+    private(set) var webDAVLoginRefused = false
 
     /// Turns syncing away from home on with a storage (or off with nil). Checks the
     /// storage first. The first device to turn it on creates the cellar's key and
@@ -753,6 +757,7 @@ final class SyncService {
     /// old one stores nothing.
     private func useStorage(_ storage: RemoteStorage?) {
         guard storage != remoteStorage else { return }
+        webDAVLoginRefused = false
         generation += 1
         stopRemoteLoop()
         remoteStorage = storage
@@ -782,6 +787,7 @@ final class SyncService {
 
     private func storeWebDAVLogin(_ login: WebDAVLogin?) {
         webDAVLogin = login
+        webDAVLoginRefused = false
         Keychain.setData(login.flatMap { try? JSONEncoder().encode($0) }, for: Self.webDAVLoginAccount)
     }
 
@@ -928,6 +934,7 @@ final class SyncService {
             keep(started, in: \.remoteSentThrough, key: Self.remoteSentKey)
             remoteFailedAt = nil
             remoteFailingSince = nil
+            webDAVLoginRefused = false
             if !result.unreadable.isEmpty {
                 remoteProblem = String(localized: "Changes from another device could not be read. Update Encave on all your devices.")
             } else if let refused = result.refusedFiles {
@@ -948,6 +955,7 @@ final class SyncService {
             return
         } catch RemoteSyncError.unauthorized {
             noteRemoteFailure()
+            if case .webDAV = remoteStorage { webDAVLoginRefused = true }
             switch remoteStorage {
             case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
             case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
