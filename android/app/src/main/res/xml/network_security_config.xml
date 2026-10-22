@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The only network uses are sync and the optional AI label recognition and web
-     search. Plain HTTP is allowed so a self-hosted server on the local network (Ollama,
-     OpenWebUI, SearXNG on a NAS) can be used; the default providers are HTTPS. -->
+<!-- The only network uses are sync and the optional AI label recognition and web search.
+     The app itself sends plain HTTP only to a server on this device or the local network
+     (localhost, *.local, *.home.arpa, RFC 1918, link-local and unique local addresses):
+     LocalAddress.isLocal, checked before every AI, web search, relay and WebDAV request.
+     This file cannot express address ranges, so cleartext stays allowed in general for
+     such a server reached by its address (Ollama, OpenWebUI, SearXNG or WebDAV on a NAS);
+     as a second line of defence, it is refused for the cloud AI and search services. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- AI services (AiProvider) -->
+        <domain includeSubdomains="true">openai.com</domain>
+        <domain includeSubdomains="true">anthropic.com</domain>
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <domain includeSubdomains="true">x.ai</domain>
+        <domain includeSubdomains="true">mistral.ai</domain>
+        <domain includeSubdomains="true">deepseek.com</domain>
+        <domain includeSubdomains="true">aliyuncs.com</domain>
+        <domain includeSubdomains="true">moonshot.ai</domain>
+        <domain includeSubdomains="true">z.ai</domain>
+        <domain includeSubdomains="true">minimax.io</domain>
+        <domain includeSubdomains="true">openrouter.ai</domain>
+        <!-- Web search services (WebSearchService) -->
+        <domain includeSubdomains="true">search.brave.com</domain>
+        <domain includeSubdomains="true">tavily.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

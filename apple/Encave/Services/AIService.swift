@@ -282,6 +282,8 @@ enum AIServiceError: LocalizedError {
     case refused
     case server(status: Int, message: String)
     case invalidResponse
+    /// Not an https:// address, or plain http:// to a server outside the local network.
+    case insecureURL
 
     var errorDescription: String? {
         switch self {
@@ -292,6 +294,8 @@ enum AIServiceError: LocalizedError {
         case .server(let status, let message):
             message.isEmpty ? String(localized: "The AI service returned error \(status).") : message
         case .invalidResponse: String(localized: "The answer from the AI service could not be read.")
+        case .insecureURL:
+            String(localized: "Enter the full server address, starting with https:// (http:// only for a server on your local network).")
         }
     }
 }
@@ -436,7 +440,7 @@ enum AIService {
     }
 
     private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?, format: JSONObject?) async throws -> LabelAnalysis {
-        guard let url = URL(string: settings.effectiveBaseURL + "/chat/completions"), url.scheme == "https" || url.scheme == "http" else {
+        guard let url = URL(string: settings.effectiveBaseURL + "/chat/completions") else {
             throw AIServiceError.notConfigured
         }
         var request = URLRequest(url: url)
@@ -539,7 +543,20 @@ enum AIService {
 
     // MARK: Helpers
 
+    /// HTTPS, or plain HTTP only for a server on this device or the local network, as for
+    /// web search and WebDAV: elsewhere anyone on the way would read the key and the photo.
+    static func isAllowed(_ url: URL?) -> Bool {
+        guard let url, let host = url.host, !host.isEmpty else { return false }
+        switch url.scheme?.lowercased() {
+        case "https": return true
+        case "http": return LocalAddress.isLocal(host: host)
+        default: return false
+        }
+    }
+
+    /// Every request goes through here.
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
+        guard isAllowed(request.url) else { throw AIServiceError.insecureURL }
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
