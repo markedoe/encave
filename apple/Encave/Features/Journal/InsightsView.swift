@@ -14,9 +14,9 @@ struct InsightsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 YearInWineCard()
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
-                    StatTile(value: stats.bottleCount.formatted(), caption: "bottles in the cellar [count \(stats.bottleCount)]", systemImage: "wineglass")
-                    StatTile(value: stats.wineCount.formatted(), caption: "different wines [count \(stats.wineCount)]", systemImage: "list.bullet")
-                    StatTile(value: stats.consumedCount.formatted(), caption: "bottles opened [count \(stats.consumedCount)]", systemImage: "book.closed")
+                    StatTile(count: stats.bottleCount, caption: .count("bottles in the cellar", stats.bottleCount), systemImage: "wineglass")
+                    StatTile(count: stats.wineCount, caption: .count("different wines", stats.wineCount), systemImage: "list.bullet")
+                    StatTile(count: stats.consumedCount, caption: .count("bottles opened", stats.consumedCount), systemImage: "book.closed")
                     StatTile(value: stats.averageRating.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "–",
                              caption: "average rating", systemImage: "star")
                     ForEach(stats.valueByCurrency.keys.sorted(), id: \.self) { currency in
@@ -305,10 +305,10 @@ private struct YearInWineFacts: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 18) {
-                figure(recap.bottlesOpened, caption: "bottles opened [count \(recap.bottlesOpened)]")
-                figure(recap.differentWines, caption: "different wines [count \(recap.differentWines)]")
+                figure(recap.bottlesOpened, caption: .count("bottles opened", recap.bottlesOpened))
+                figure(recap.differentWines, caption: .count("different wines", recap.differentWines))
                 if recap.discoveries > 0 {
-                    figure(recap.discoveries, caption: "tasted elsewhere [count \(recap.discoveries)]")
+                    figure(recap.discoveries, caption: .count("tasted elsewhere", recap.discoveries))
                 }
             }
             VStack(alignment: .leading, spacing: 8) {
@@ -334,10 +334,10 @@ private struct YearInWineFacts: View {
         }
     }
 
-    private func figure(_ value: Int, caption: LocalizedStringKey) -> some View {
+    private func figure(_ value: Int, caption: CountCaption) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(verbatim: value.formatted()).font(.title.weight(.semibold).monospacedDigit())
-            Text(caption).font(.footnote).foregroundStyle(.secondary)
+            Text(caption.key).font(.footnote).foregroundStyle(.secondary)
         }
     }
 

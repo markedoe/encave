@@ -339,12 +339,12 @@ private struct CellarSummary: View {
         VStack(alignment: .leading, spacing: 14) {
             tiles {
                 Button(action: onBottles) {
-                    StatTile(value: stats.bottleCount.formatted(), caption: "bottles [count \(stats.bottleCount)]", systemImage: "wineglass", opens: true)
+                    StatTile(count: stats.bottleCount, caption: .count("bottles", stats.bottleCount), systemImage: "wineglass", opens: true)
                 }
                 .accessibilityHint(Text("Shows your cellar in figures."))
                 .accessibilityIdentifier("cellar.stat.bottles")
                 Button(action: onWines) {
-                    StatTile(value: stats.wineCount.formatted(), caption: "wines [count \(stats.wineCount)]", systemImage: "list.bullet")
+                    StatTile(count: stats.wineCount, caption: .count("wines", stats.wineCount), systemImage: "list.bullet")
                 }
                 .accessibilityHint(Text("Shows all your wines."))
                 .accessibilityIdentifier("cellar.stat.wines")

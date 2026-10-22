@@ -13261,122 +13261,98 @@
         }
       }
     },
-    "bottles [count %lld]": {
+    "bottles [one]": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bottle"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bottles"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle"
           }
         },
         "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bouteille"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bouteilles"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille"
           }
         }
       }
     },
-    "bottles in the cellar [count %lld]": {
+    "bottles [other]": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bottle in the cellar"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bottles in the cellar"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles"
           }
         },
         "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bouteille en cave"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bouteilles en cave"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles"
           }
         }
       }
     },
-    "bottles opened [count %lld]": {
+    "bottles in the cellar [one]": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bottle opened"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bottles opened"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle in the cellar"
           }
         },
         "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bouteille ouverte"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "bouteilles ouvertes"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille en cave"
+          }
+        }
+      }
+    },
+    "bottles in the cellar [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles in the cellar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles en cave"
+          }
+        }
+      }
+    },
+    "bottles opened [one]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle opened"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille ouverte"
+          }
+        }
+      }
+    },
+    "bottles opened [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles opened"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles ouvertes"
           }
         }
       }
@@ -13391,42 +13367,34 @@
         }
       }
     },
-    "different wines [count %lld]": {
+    "different wines [one]": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "different wine"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "different wines"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "different wine"
           }
         },
         "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "vin différent"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "vins différents"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin différent"
+          }
+        }
+      }
+    },
+    "different wines [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "different wines"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vins différents"
           }
         }
       }
@@ -13541,42 +13509,34 @@
         }
       }
     },
-    "tasted elsewhere [count %lld]": {
+    "tasted elsewhere [one]": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "tasted elsewhere"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "tasted elsewhere"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "tasted elsewhere"
           }
         },
         "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "goûté ailleurs"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "goûtés ailleurs"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "goûté ailleurs"
+          }
+        }
+      }
+    },
+    "tasted elsewhere [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tasted elsewhere"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "goûtés ailleurs"
           }
         }
       }
@@ -13621,42 +13581,34 @@
         }
       }
     },
-    "wines [count %lld]": {
+    "wines [one]": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "wine"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "wines"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "wine"
           }
         },
         "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "vin"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "vins"
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin"
+          }
+        }
+      }
+    },
+    "wines [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wines"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vins"
           }
         }
       }

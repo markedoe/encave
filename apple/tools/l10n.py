@@ -1357,16 +1357,17 @@ PLURALS = {
          "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.")),
 }
 
-# Captions shown under a figure ("12" above "bottles"): plural forms without the number,
-# which the figure already shows. The key holds the count so the right form is picked.
+# Captions shown under a figure ("12" above "bottles"): the noun without the number, which
+# the figure already shows. Xcode needs the number in a plural variation, so each caption is
+# two strings, "<name> [one]" and "<name> [other]", that the app picks (StatTile.swift).
 CAPTIONS = {
-    "bottles [count %lld]": (("bottle", "bottles"), ("bouteille", "bouteilles")),
-    "wines [count %lld]": (("wine", "wines"), ("vin", "vins")),
-    "bottles in the cellar [count %lld]": (("bottle in the cellar", "bottles in the cellar"),
-                                           ("bouteille en cave", "bouteilles en cave")),
-    "different wines [count %lld]": (("different wine", "different wines"), ("vin différent", "vins différents")),
-    "bottles opened [count %lld]": (("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
-    "tasted elsewhere [count %lld]": (("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
+    "bottles": (("bottle", "bottles"), ("bouteille", "bouteilles")),
+    "wines": (("wine", "wines"), ("vin", "vins")),
+    "bottles in the cellar": (("bottle in the cellar", "bottles in the cellar"),
+                              ("bouteille en cave", "bouteilles en cave")),
+    "different wines": (("different wine", "different wines"), ("vin différent", "vins différents")),
+    "bottles opened": (("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
+    "tasted elsewhere": (("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
 }
 
 INFO_PLIST = {
@@ -1454,7 +1455,10 @@ def extract():
 def catalogs():
     """The catalog files, as written: {path: text}."""
     strings = {key: {"localizations": {"fr": unit(french(value))}} for key, value in FR.items() if key.strip() == key}
-    for key, ((en_one, en_other), (fr_one, fr_other)) in (PLURALS | CAPTIONS).items():
+    for name, ((en_one, en_other), (fr_one, fr_other)) in CAPTIONS.items():
+        for form, en, fr in (("one", en_one, fr_one), ("other", en_other, fr_other)):
+            strings[f"{name} [{form}]"] = {"localizations": {"en": unit(en), "fr": unit(french(fr))}}
+    for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
         strings[key] = {"localizations": {
             "en": {"variations": {"plural": {"one": unit(en_one), "other": unit(en_other)}}},
             "fr": {"variations": {"plural": {"one": unit(french(fr_one)), "other": unit(french(fr_other))}}},
@@ -1489,7 +1493,7 @@ def placeholders(text):
 
 
 def check():
-    known = set(FR) | set(PLURALS) | set(CAPTIONS)
+    known = set(FR) | set(PLURALS)
     problems = []
     for key in sorted(k for k in extract() if to_key(k) not in known and k not in known):
         problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
@@ -1501,9 +1505,14 @@ def check():
         for form in forms[0] + forms[1]:
             if placeholders(form) != placeholders(key):
                 problems.append(f"placeholders differ in a plural form: {key!r} -> {form!r}")
-    for key, forms in CAPTIONS.items():
-        if placeholders(key) != ["%lld"] or any(placeholders(form) for form in forms[0] + forms[1]):
-            problems.append(f"a caption key holds one count and its forms none: {key!r}")
+    for name, forms in CAPTIONS.items():
+        if placeholders(name) or any(placeholders(form) for form in forms[0] + forms[1]):
+            problems.append(f"a caption holds no number: {name!r}")
+    # Captions used in the app ("caption: .count(\"bottles\", ...)") must be in CAPTIONS.
+    for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
+        for name in re.findall(r'\.count\("((?:[^"\\]|\\.)*)", ', Path(path).read_text()):
+            if name not in CAPTIONS:
+                problems.append(f"caption not in CAPTIONS: {name!r}")
     # Keys with spaces around them are dropped from the catalog: the text would stay in English.
     for key in FR:
         if key.strip() != key:
