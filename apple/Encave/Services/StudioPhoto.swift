@@ -11,10 +11,11 @@ import Vision
 /// The "studio" look of a label photo, made on this device from the label photo
 /// (kept exactly as taken) with Vision and Core Image only; nothing is sent
 /// anywhere. In order:
-/// - the photo is first turned so the label's text is level (up to 25°);
+/// - a bottle leaning (up to 25°) is turned upright from the axis of its cut-out;
 /// - a clear cut-out of a standing bottle is framed on its label, the label about
 ///   80% of the picture, the glass running off its top and bottom edges;
-/// - a clear cut-out of anything else (a label held up, a box) is shown whole;
+/// - a clear cut-out of anything else is shown whole, a label seen at an angle
+///   straightened from its corners;
 /// - without a clear cut-out, a label in a rectangle is straightened, else the photo
 ///   is shown filling the picture, centred on its label, with its light evened out.
 ///
@@ -135,16 +136,22 @@ enum StudioPhoto {
     // MARK: Making the picture
 
     private static func render(_ image: CGImage) -> Picture? {
-        let level = straightened(image)
-        guard let upright = context.createCGImage(level, from: level.extent) else { return nil }
-        let handler = VNImageRequestHandler(cgImage: upright, options: [:])
-        let photo = CIImage(cgImage: upright)
+        var photo = CIImage(cgImage: image)
+        var handler = VNImageRequestHandler(cgImage: image, options: [:])
+        var lifted = liftedSubject(handler, photo)
+        // A leaning bottle: the photo is turned upright and the bottle cut out again.
+        if let lean = lifted?.lean, let level = upright(photo, degrees: lean),
+           let turned = context.createCGImage(level, from: level.extent) {
+            photo = CIImage(cgImage: turned)
+            handler = VNImageRequestHandler(cgImage: turned, options: [:])
+            lifted = liftedSubject(handler, photo)
+        }
         var made: (picture: CIImage, kind: Kind)
-        if let cut = liftedSubject(handler, photo) {
+        if let cut = lifted?.cut {
             if let framed = LabelFrame.crop(cut, context: context) {
                 made = (framed, .label)
             } else {
-                made = (cut, .cutout)
+                made = (LabelFrame.squared(cut, context: context) ?? cut, .cutout)
             }
         } else {
             made = LabelFrame.withoutCutout(photo, handler: handler)
@@ -155,37 +162,25 @@ enum StudioPhoto {
         return Picture(image: output, kind: made.kind)
     }
 
-    /// The photo turned so the lines of text read on it are level (their median
-    /// angle, between 1.5° and 25°); as it is otherwise.
-    private static func straightened(_ image: CGImage) -> CIImage {
-        let photo = CIImage(cgImage: image)
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .fast
-        request.usesLanguageCorrection = false
-        let handler = VNImageRequestHandler(cgImage: image, options: [:])
-        guard (try? handler.perform([request])) != nil else { return photo }
-        let width = Double(image.width), height = Double(image.height)
-        var angles: [Double] = []
-        for line in request.results ?? [] where line.boundingBox.width >= 0.08 {
-            let dx = Double(line.topRight.x - line.topLeft.x) * width
-            let dy = Double(line.topRight.y - line.topLeft.y) * height
-            angles.append(atan2(dy, dx) * 180 / .pi)
-        }
-        guard let degrees = LabelFraming.straightening(lineAngles: angles) else { return photo }
+    /// The photo turned by `degrees` (counterclockwise) around its centre, without
+    /// the empty corners the turn leaves.
+    private static func upright(_ photo: CIImage, degrees: Double) -> CIImage? {
         let center = CGPoint(x: photo.extent.midX, y: photo.extent.midY)
         let turn = CGAffineTransform(translationX: center.x, y: center.y)
             .rotated(by: CGFloat(degrees * .pi / 180))
             .translatedBy(x: -center.x, y: -center.y)
-        // Without the empty corners the turn leaves.
         let slant = abs(sin(CGFloat(degrees * .pi / 180)))
         let inner = photo.extent.insetBy(dx: photo.extent.height * slant / 2, dy: photo.extent.width * slant / 2)
+        guard inner.width > 0, inner.height > 0 else { return nil }
         return photo.transformed(by: turn).cropped(to: inner)
     }
 
     /// The largest thing that stands out, cut out with a softened edge (about a
-    /// pixel), or nil when the cut-out is not clear: low confidence, nearly the
-    /// whole photo or a tiny part of it, or a ragged shape that fills little of its frame.
-    private static func liftedSubject(_ handler: VNImageRequestHandler, _ photo: CIImage) -> CIImage? {
+    /// pixel), and how much it leans when it is long like a bottle (degrees to turn
+    /// the photo by, counterclockwise; nil when upright or leaning too much to be
+    /// sure). Nil when the cut-out is not clear: low confidence, nearly the whole
+    /// photo or a tiny part of it, or a ragged shape that fills little of its frame.
+    private static func liftedSubject(_ handler: VNImageRequestHandler, _ photo: CIImage) -> (cut: CIImage, lean: Double?)? {
         let lift = VNGenerateForegroundInstanceMaskRequest()
         guard (try? handler.perform([lift])) != nil, let observation = lift.results?.first,
               observation.confidence >= 0.5,
@@ -203,14 +198,18 @@ enum StudioPhoto {
         let box = shape.box
         let rect = CGRect(x: extent.minX + box.minX * extent.width, y: extent.minY + (1 - box.maxY) * extent.height,
                           width: box.width * extent.width, height: box.height * extent.height).integral
-        return cut.cropped(to: rect.intersection(extent))
+        let leans = shape.elongation >= 3 && abs(shape.lean) >= LabelFraming.minimumTilt
+            && abs(shape.lean) <= LabelFraming.maximumTilt
+        return (cut.cropped(to: rect.intersection(extent)), leans ? shape.lean : nil)
     }
 
     /// The instance covering the most pixels in Vision's low-resolution instance
-    /// mask: its frame (0 to 1, from the top left), its share of the photo and how
-    /// much of its frame it fills.
+    /// mask: its frame (0 to 1, from the top left), its share of the photo, how much
+    /// of its frame it fills, how long it is (its main axis over its width) and how
+    /// far its main axis leans from upright (degrees, positive when the top leans
+    /// right, which a counterclockwise turn by as much puts upright).
     private static func largestInstance(_ mask: CVPixelBuffer, among instances: IndexSet)
-        -> (instance: Int, box: CGRect, share: CGFloat, fill: CGFloat)? {
+        -> (instance: Int, box: CGRect, share: CGFloat, fill: CGFloat, elongation: Double, lean: Double)? {
         CVPixelBufferLockBaseAddress(mask, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(mask, .readOnly) }
         guard let base = CVPixelBufferGetBaseAddress(mask) else { return nil }
@@ -219,6 +218,9 @@ enum StudioPhoto {
         var counts = [Int](repeating: 0, count: 256)
         var minX = [Int](repeating: Int.max, count: 256), maxX = [Int](repeating: -1, count: 256)
         var minY = [Int](repeating: Int.max, count: 256), maxY = [Int](repeating: -1, count: 256)
+        var sumX = [Double](repeating: 0, count: 256), sumY = [Double](repeating: 0, count: 256)
+        var sumXX = [Double](repeating: 0, count: 256), sumYY = [Double](repeating: 0, count: 256)
+        var sumXY = [Double](repeating: 0, count: 256)
         for y in 0..<height {
             let row = base.advanced(by: y * rowBytes).assumingMemoryBound(to: UInt8.self)
             for x in 0..<width {
@@ -229,6 +231,12 @@ enum StudioPhoto {
                 maxX[label] = max(maxX[label], x)
                 minY[label] = min(minY[label], y)
                 maxY[label] = max(maxY[label], y)
+                let fx = Double(x), fy = Double(y)
+                sumX[label] += fx
+                sumY[label] += fy
+                sumXX[label] += fx * fx
+                sumYY[label] += fy * fy
+                sumXY[label] += fx * fy
             }
         }
         guard let best = instances.filter({ $0 < 256 }).max(by: { counts[$0] < counts[$1] }), counts[best] > 0 else {
@@ -239,7 +247,19 @@ enum StudioPhoto {
                          width: CGFloat(boxWidth) / CGFloat(width), height: CGFloat(boxHeight) / CGFloat(height))
         let share = CGFloat(boxWidth * boxHeight) / CGFloat(width * height)
         let fill = CGFloat(counts[best]) / CGFloat(boxWidth * boxHeight)
-        return (best, box, share, fill)
+        // The main axis from the second moments of the shape (y going down).
+        let n = Double(counts[best])
+        let meanX = sumX[best] / n, meanY = sumY[best] / n
+        let xx: Double = sumXX[best] / n - meanX * meanX
+        let yy: Double = sumYY[best] / n - meanY * meanY
+        let xy: Double = sumXY[best] / n - meanX * meanY
+        let theta: Double = 0.5 * atan2(2 * xy, xx - yy) * 180 / Double.pi
+        let lean: Double = theta > 0 ? theta - 90 : theta + 90
+        let half: Double = (xx - yy) / 2
+        let spread: Double = (half * half + xy * xy).squareRoot()
+        let major: Double = (xx + yy) / 2 + spread
+        let minor: Double = max((xx + yy) / 2 - spread, 1e-9)
+        return (best, box, share, fill, (major / minor).squareRoot(), lean)
     }
 
     /// The light evened out, lightly: only the tone curve and the shadows and
@@ -291,6 +311,34 @@ enum LabelFrame {
         let below = CGFloat(1 - frame.upperBound), kept = CGFloat(frame.upperBound - frame.lowerBound)
         return cut.cropped(to: CGRect(x: extent.minX, y: extent.minY + extent.height * below,
                                       width: extent.width, height: extent.height * kept))
+    }
+
+    /// A cut-out that is a rectangle seen at an angle (a label photographed close
+    /// up), straightened from its four corners. Nil when no clear rectangle fills it.
+    static func squared(_ cut: CIImage, context: CIContext) -> CIImage? {
+        let extent = cut.extent
+        let gray = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5)).cropped(to: extent)
+        guard let flat = context.createCGImage(cut.composited(over: gray), from: extent) else { return nil }
+        let request = VNDetectRectanglesRequest()
+        request.maximumObservations = 1
+        request.minimumSize = 0.5
+        request.minimumAspectRatio = 0.3
+        request.maximumAspectRatio = 1
+        request.quadratureTolerance = 25
+        request.minimumConfidence = 0.8
+        guard (try? VNImageRequestHandler(cgImage: flat, options: [:]).perform([request])) != nil,
+              let quad = request.results?.first,
+              quad.boundingBox.width * quad.boundingBox.height >= 0.5 else { return nil }
+        func point(_ p: CGPoint) -> CGPoint {
+            CGPoint(x: extent.minX + p.x * extent.width, y: extent.minY + p.y * extent.height)
+        }
+        let correction = CIFilter.perspectiveCorrection()
+        correction.inputImage = cut
+        correction.topLeft = point(quad.topLeft)
+        correction.topRight = point(quad.topRight)
+        correction.bottomLeft = point(quad.bottomLeft)
+        correction.bottomRight = point(quad.bottomRight)
+        return correction.outputImage
     }
 
     /// A photo without a clear cut-out: the label straightened when a rectangle
