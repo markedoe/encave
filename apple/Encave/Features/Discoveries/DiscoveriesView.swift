@@ -63,10 +63,7 @@ struct ElsewhereActions: ViewModifier {
     }
 
     private func toggleToBuy() {
-        model.update { cellar in
-            cellar.discoveries[discovery.id]?.wantsToBuy.toggle()
-            if cellar.discoveries[discovery.id]?.wantsToBuy == true { cellar.discoveries[discovery.id]?.boughtAt = nil }
-        }
+        model.toggleToBuy(discovery.id)
     }
 }
 

@@ -72,12 +72,15 @@ class NotificationSwitchTest {
 
         compose.onNodeWithTag("switch").assertIsOff()
         compose.onNodeWithText(refusedText).assertExists()
+        // A way to the notification settings, next to the message.
+        compose.onNodeWithTag("switch.open_settings").assertExists()
         compose.onNodeWithTag("switch").assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
         assertEquals(emptyList<Boolean>(), changes)
 
         manager.setNotificationsEnabled(true)
         leaveAndReturn()
         compose.onNodeWithText(refusedText).assertDoesNotExist()
+        compose.onNodeWithTag("switch.open_settings").assertDoesNotExist()
         compose.onNodeWithText("Footer").assertExists()
         compose.onNodeWithTag("switch").assertIsOff()
 

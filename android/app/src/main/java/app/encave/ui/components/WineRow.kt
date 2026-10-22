@@ -65,6 +65,8 @@ fun WineGroupRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
+    /** What a long press does, read by TalkBack ("double tap and hold to …"). */
+    onLongClickLabel: String? = null,
     selected: Boolean = false,
     showMaturity: Boolean = true,
     extra: (@Composable () -> Unit)? = null,
@@ -81,7 +83,7 @@ fun WineGroupRow(
         modifier = if (checked != null) {
             modifier.toggleable(checked, role = Role.Checkbox, onValueChange = { onClick() })
         } else {
-            modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel)
         },
         colors = if (selected || checked == true) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
         leadingContent = {

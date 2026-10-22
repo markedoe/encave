@@ -551,10 +551,20 @@ class AppViewModel(
         }
     }
 
-    fun toggleToBuy(id: UUID) = change<Unit> { cellar ->
-        val discovery = cellar.discoveries[id] ?: return@change
-        val wants = !discovery.wantsToBuy
-        cellar.updateDiscovery(discovery.copy(wantsToBuy = wants, boughtAt = if (wants) null else discovery.boughtAt))
+    /** Puts a wine tasted elsewhere on the shopping list or takes it off, with Undo. */
+    fun toggleToBuy(id: UUID) {
+        val before = cellar.value.discoveries[id] ?: return
+        val wants = !before.wantsToBuy
+        change<Unit>({
+            post(UiText.Res(if (wants) R.string.discovery_added_to_list else R.string.discovery_removed_from_list)) {
+                change<Unit> { c ->
+                    c.discoveries[id]?.let { c.updateDiscovery(it.copy(wantsToBuy = before.wantsToBuy, boughtAt = before.boughtAt)) }
+                }
+            }
+        }) { cellar ->
+            val discovery = cellar.discoveries[id] ?: return@change
+            cellar.updateDiscovery(discovery.copy(wantsToBuy = wants, boughtAt = if (wants) null else discovery.boughtAt))
+        }
     }
 
     fun deleteDiscovery(id: UUID) {

@@ -46,6 +46,7 @@ object Reminders {
     private const val KEY_ENABLED = "enabled"
     private const val KEY_LAST_MONTH = "last_month"
     private const val KEY_DELIVERED = "delivered"
+    private const val KEY_OFFERED = "offered"
     private const val MONTHLY_ID = 1
     /** At most this many delivery reminders a day. */
     private const val MAX_DELIVERIES = 20
@@ -53,6 +54,11 @@ object Reminders {
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     fun isEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_ENABLED, false)
+
+    /** Set once reminders were turned on or off, or the offer in Tonight was answered: Tonight no longer offers them. */
+    fun wasOffered(context: Context): Boolean = prefs(context).getBoolean(KEY_OFFERED, false)
+
+    fun markOffered(context: Context) = prefs(context).edit { putBoolean(KEY_OFFERED, true) }
 
     /** Notifications are allowed: the permission is granted and they are on for the app. */
     fun canNotify(context: Context): Boolean =
@@ -63,6 +69,7 @@ object Reminders {
     fun setEnabled(context: Context, enabled: Boolean, today: LocalDate = LocalDate.now()) {
         prefs(context).edit {
             putBoolean(KEY_ENABLED, enabled)
+            putBoolean(KEY_OFFERED, true)
             if (enabled) putString(KEY_LAST_MONTH, YearMonth.from(today).toString())
         }
         if (enabled) schedule(context) else cancel(context)

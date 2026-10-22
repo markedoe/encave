@@ -20,6 +20,8 @@ final class CellarModel {
     var toast: Toast?
     /// Bumped on successful actions, drives haptic feedback.
     var successCount = 0
+    /// Bumped when something is switched on or off (the shopping list), for a lighter haptic.
+    var selectionCount = 0
     /// Slot to highlight when jumping to a rack ("Show in rack").
     var highlightedSlot: Slot?
     /// Selected tab, so other screens can jump between sections.
@@ -562,6 +564,25 @@ final class CellarModel {
         showToast(discovery.wantsToBuy
                   ? String(localized: "Added to your shopping list")
                   : String(localized: "Saved to your journal"))
+    }
+
+    /// Puts a wine tasted elsewhere on the shopping list or takes it off, with Undo.
+    func toggleToBuy(_ id: UUID) {
+        guard let before = cellar.discoveries[id] else { return }
+        guard update({ cellar in
+            cellar.discoveries[id]?.wantsToBuy.toggle()
+            if cellar.discoveries[id]?.wantsToBuy == true { cellar.discoveries[id]?.boughtAt = nil }
+        }) else { return }
+        selectionCount += 1
+        showToast(before.wantsToBuy
+                  ? String(localized: "Removed from your shopping list")
+                  : String(localized: "Added to your shopping list")) { [weak self] in
+            self?.update { cellar in
+                guard cellar.discoveries[id] != nil else { return }
+                cellar.discoveries[id]?.wantsToBuy = before.wantsToBuy
+                cellar.discoveries[id]?.boughtAt = before.boughtAt
+            }
+        }
     }
 
     func deleteDiscovery(_ id: UUID) {

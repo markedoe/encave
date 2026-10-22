@@ -23,6 +23,9 @@ enum CellarAssistant {
     struct Answer: Equatable {
         var text: String
         var wineIDs: [UUID]
+        /// Wines the model was given, of all those in the cellar: a large cellar is cut to fit.
+        var considered: Int
+        var total: Int
     }
 
     enum Failure: Error {
@@ -52,8 +55,8 @@ private struct CellarReply {
 
 @available(iOS 26.0, macOS 26.0, *)
 private enum Generator {
-    /// The model's context is small: a large cellar is tried with fewer wines (the
-    /// most urgent first) before giving up.
+    /// The model's context is small: a large cellar is tried with fewer wines (those
+    /// closest to the question, then the most urgent) before giving up.
     @MainActor
     static func ask(_ question: String, model: CellarModel) async throws -> CellarAssistant.Answer {
         guard case .available = SystemLanguageModel.default.availability else { throw CellarAssistant.Failure.unavailable }
@@ -69,7 +72,9 @@ private enum Generator {
 
     @MainActor
     private static func ask(_ question: String, model: CellarModel, limit: Int) async throws -> CellarAssistant.Answer {
-        let catalog = model.cellar.assistantCatalog(year: model.currentYear, limit: limit) { model.locationLabel(for: $0) }
+        let catalog = model.cellar.assistantCatalog(year: model.currentYear, limit: limit, question: question) {
+            model.locationLabel(for: $0)
+        }
         let language = Locale.current.localizedString(forLanguageCode: Locale.current.language.languageCode?.identifier ?? "en")
             ?? "English"
         let prompt = """
@@ -86,7 +91,8 @@ private enum Generator {
             let reply = try await session.respond(to: prompt, generating: CellarReply.self).content
             var seen = Set<UUID>()
             let ids = reply.wines.compactMap { catalog.wineID(number: $0) }.filter { seen.insert($0).inserted }
-            return CellarAssistant.Answer(text: reply.answer, wineIDs: Array(ids.prefix(4)))
+            return CellarAssistant.Answer(text: reply.answer, wineIDs: Array(ids.prefix(4)),
+                                          considered: catalog.entries.count, total: catalog.total)
         } catch let error as LanguageModelSession.GenerationError {
             switch error {
             case .guardrailViolation: throw CellarAssistant.Failure.refused
@@ -162,6 +168,12 @@ struct AskCellarView: View {
                     }
                 } header: {
                     Text("Answer")
+                } footer: {
+                    if answer.considered < answer.total {
+                        let considered = answer.considered, total = answer.total
+                        Text("Based on \(considered) of \(total) wines: the closest matches and the most urgent.")
+                            .accessibilityIdentifier("ask.partial")
+                    }
                 }
             } else if !asking {
                 Section("Ideas") {
