@@ -2,6 +2,7 @@ package app.encave.ui
 
 import android.content.ContentResolver
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -872,14 +873,46 @@ class AppViewModel(
     /** The backup or version shown before restoring it (RestorePreviewScreen). */
     val pendingRestore: StateFlow<RestoreSource?> = restoreState
 
-    /** Back up now: the archive written to a file the user chose. */
+    private val reading = MutableStateFlow(false)
+
+    /** A backup the user picked is being read (a large archive takes a while). */
+    val readingBackup: StateFlow<Boolean> = reading
+
+    /** Shows [source] in the preview; the files of one shown before and not restored go. */
+    private fun showRestore(source: RestoreSource) {
+        val previous = restoreState.value
+        restoreState.value = source
+        if (previous != null && previous.workingFolder != source.workingFolder) discardFiles(previous)
+    }
+
+    private fun discardFiles(source: RestoreSource) {
+        source.workingFolder?.let { folder -> viewModelScope.launch(Dispatchers.IO) { folder.deleteRecursively() } }
+    }
+
+    /** The preview was left without restoring: the files read from the backup go. */
+    fun discardRestore() {
+        val source = restoreState.value ?: return
+        restoreState.value = null
+        discardFiles(source)
+    }
+
+    /**
+     * Back up now: the archive written to a file the user chose. A file left half written (no
+     * space, the drive removed) is deleted, so it is never taken for a backup.
+     */
     fun backUpNow(resolver: ContentResolver, uri: Uri) {
         viewModelScope.launch {
             val result = runCatching {
                 val output = withContext(Dispatchers.IO) { requireNotNull(resolver.openOutputStream(uri, "wt")) }
                 output.use { backups.writeArchive(it).getOrThrow() }
             }
-            post(UiText.Res(if (result.isSuccess) R.string.msg_backup_saved else R.string.err_backup_failed))
+            result.onSuccess { written ->
+                val notIncluded = written.missing + written.leftOut
+                post(if (notIncluded > 0) UiText.Plural(R.plurals.msg_backup_saved_without, notIncluded) else UiText.Res(R.string.msg_backup_saved))
+            }.onFailure {
+                withContext(Dispatchers.IO) { runCatching { DocumentsContract.deleteDocument(resolver, uri) } }
+                post(UiText.Res(R.string.err_backup_failed))
+            }
         }
     }
 
@@ -887,7 +920,7 @@ class AppViewModel(
     fun openVersion(version: CellarVersion, onReady: () -> Unit) {
         viewModelScope.launch {
             runCatching { backups.source(version) }
-                .onSuccess { restoreState.value = it; onReady() }
+                .onSuccess { showRestore(it); onReady() }
                 .onFailure { post(UiText.Res(R.string.err_version_unreadable)) }
         }
     }
@@ -899,7 +932,7 @@ class AppViewModel(
             if (source == null) {
                 post(UiText.Res(R.string.err_version_unreadable))
             } else {
-                restoreState.value = source
+                showRestore(source)
                 onReady()
             }
         }
@@ -908,9 +941,10 @@ class AppViewModel(
     /**
      * Restores the backup or version shown, with Undo. An archive's photos and documents are
      * copied first. Replace is a change made here like any other: sync takes it to the other
-     * devices (what is not in the backup is deleted there too).
+     * devices (what is not in the backup is deleted there too). [onDone] tells whether it was
+     * restored.
      */
-    fun restore(mode: RestoreMode, onDone: () -> Unit) {
+    fun restore(mode: RestoreMode, onDone: (Boolean) -> Unit) {
         val source = restoreState.value ?: return
         viewModelScope.launch {
             withContext(Dispatchers.IO) { backups.install(source.files) }
@@ -922,16 +956,24 @@ class AppViewModel(
                     source.workingFolder?.let { folder -> withContext(Dispatchers.IO) { folder.deleteRecursively() } }
                     restoreState.value = null
                     val text = if (mode == RestoreMode.Replace) UiText.Res(R.string.msg_restored) else importText(summary)
-                    val undo: (() -> Unit)? = if (restored == before) null else ({ undoRestore(before) })
+                    val undo: (() -> Unit)? = if (restored == before) null else ({ undoRestore(before, restored) })
                     messageChannel.trySend(UiMessage(text, undo))
-                    onDone()
+                    onDone(true)
                 }
-                .onFailure { post(errorText(it)) }
+                .onFailure {
+                    post(errorText(it))
+                    onDone(false)
+                }
         }
     }
 
-    private fun undoRestore(before: Cellar) {
-        viewModelScope.launch { repository.replace(before).onFailure { post(errorText(it)) } }
+    /** Puts back the cellar as it was before a restore, unless it changed since (here or by sync). */
+    private fun undoRestore(before: Cellar, restored: Cellar) {
+        viewModelScope.launch {
+            repository.replaceIf(restored, before)
+                .onSuccess { undone -> if (!undone) post(UiText.Res(R.string.msg_undo_restore_too_late)) }
+                .onFailure { post(errorText(it)) }
+        }
     }
 
     // endregion
@@ -982,9 +1024,15 @@ class AppViewModel(
             val isZip = head.size >= 4 && head[0] == 0x50.toByte() && head[1] == 0x4B.toByte() && head[2] == 3.toByte() && head[3] == 4.toByte()
             val isJson = head.toString(Charsets.UTF_8).trimStart('\uFEFF', ' ', '\n', '\r', '\t').startsWith("{")
             if (isZip || isJson) {
-                runCatching { backups.source(resolver, uri) }
-                    .onSuccess { restoreState.value = it; onBackup() }
-                    .onFailure { post(errorText(it)) }
+                reading.value = true
+                try {
+                    runCatching { backups.source(resolver, uri) }
+                        .onSuccess { showRestore(it); onBackup() }
+                        // Reading, not saving, failed: not "could not be saved".
+                        .onFailure { post(if (it is java.io.IOException) UiText.Res(R.string.err_document_unreadable) else errorText(it)) }
+                } finally {
+                    reading.value = false
+                }
                 return@launch
             }
             val text = withContext(Dispatchers.IO) {

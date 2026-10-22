@@ -96,30 +96,77 @@ public enum CellarArchive {
         return items
     }
 
+    /// What a backup holds of the photos and documents the cellar refers to.
+    public struct WriteResult: Equatable, Sendable {
+        /// Written in the archive.
+        public var included: Int
+        /// Not on this device (not synced yet): left out.
+        public var missing: Int
+        /// Left out because the archive would be over 4 GB or 65,535 files, the limits of a
+        /// ZIP file every system opens.
+        public var leftOut: Int
+
+        public init(included: Int, missing: Int, leftOut: Int) {
+            self.included = included
+            self.missing = missing
+            self.leftOut = leftOut
+        }
+    }
+
     /// Writes the archive to `url`. `fileURL` gives the local file of a photo or document,
-    /// nil if it is not on this device (it is then left out). Returns how many files were
-    /// included. `isCancelled` is checked between files (a background task running out of time).
+    /// nil if it is not on this device (it is then left out). A file that would take the
+    /// archive over the ZIP limits is left out too (`fitting`); the cellar itself is always
+    /// written. `isCancelled` is checked between files (a background task running out of time).
     @discardableResult
     public static func write(_ cellar: Cellar, exportedAt: Date, to url: URL, fileURL: (FileRef) -> URL?,
-                             isCancelled: () -> Bool = { false }) throws -> Int {
+                             isCancelled: () -> Bool = { false }) throws -> WriteResult {
         let writer = try ZipWriter(url: url, modified: exportedAt)
-        try writer.add(name: readmePath, data: Data(readme.utf8))
-        try writer.add(name: cellarPath, data: try CellarExport.json(cellar, exportedAt: exportedAt))
-        let present = plan(for: cellar).filter { item in
-            item.ref.flatMap(fileURL).map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        let readmeData = Data(readme.utf8)
+        let cellarData = try CellarExport.json(cellar, exportedAt: exportedAt)
+        try writer.add(name: readmePath, data: readmeData)
+        try writer.add(name: cellarPath, data: cellarData)
+        var available: [(item: Item, url: URL, size: UInt64)] = []
+        var missing = 0
+        for item in plan(for: cellar) {
+            guard let ref = item.ref, let source = fileURL(ref),
+                  let size = (try? FileManager.default.attributesOfItem(atPath: source.path))?[.size] as? NSNumber
+            else { missing += 1; continue }
+            available.append((item, source, size.uint64Value))
         }
-        var included: [Item] = []
+        let fits = fitting(available.map { (Data($0.item.path.utf8).count, $0.size) },
+                           fixedBytes: UInt64(readmeData.count + cellarData.count))
+        let present = zip(available, fits).filter(\.1).map(\.0)
         // The manifest lists only what is written, and comes before the files.
-        try writer.add(name: manifestPath, data: try manifestData(Manifest(files: present)))
-        for item in present {
+        try writer.add(name: manifestPath, data: try manifestData(Manifest(files: present.map(\.item))))
+        for file in present {
             if isCancelled() { throw CancellationError() }
-            guard let ref = item.ref, let source = fileURL(ref) else { continue }
-            try writer.add(name: item.path, contentsOf: source)
-            included.append(item)
+            try writer.add(name: file.item.path, contentsOf: file.url)
         }
         try writer.finish()
-        return included.count
+        return WriteResult(included: present.count, missing: missing, leftOut: available.count - present.count)
     }
+
+    /// Which files fit in an archive, in order: at most 65,534 entries and 4 GB in all, with
+    /// room for the headers, the manifest and the central directory. `fixedBytes`: the README
+    /// and the cellar. The Android app counts the same way.
+    static func fitting(_ files: [(nameBytes: Int, size: UInt64)], fixedBytes: UInt64,
+                        limit: UInt64 = ZipWriter.limit, maxEntries: Int = ZipWriter.maxEntries) -> [Bool] {
+        // README, cellar and manifest: two headers each (local and central) and a name.
+        var total = fixedBytes + 3 * (30 + 46 + 16) + 22 + reserve
+        var entries = 3
+        return files.map { file in
+            // Two headers, the name three times (twice in headers, once in the manifest), and
+            // the manifest's line for it (ID, kind, JSON).
+            let cost = file.size + UInt64(76 + 3 * file.nameBytes + 160)
+            guard entries < maxEntries, total + cost < limit else { return false }
+            total += cost
+            entries += 1
+            return true
+        }
+    }
+
+    /// Room kept below the 4 GB limit for what the estimate leaves out.
+    static let reserve: UInt64 = 1 << 20
 
     static func manifestData(_ manifest: Manifest) throws -> Data {
         let encoder = JSONEncoder()
@@ -170,6 +217,12 @@ public enum CellarArchive {
                 : entry.name.hasPrefix(documentFolder) ? .document : nil
             guard let kind = kinds[entry.name]?.ref?.kind ?? folderKind else { continue }
             guard entry.size <= maxFileByteCount else { skipped += 1; continue }
+            // Named by the manifest as a file the cellar does not refer to, or one already read:
+            // not copied at all.
+            if let named = kinds[entry.name]?.ref, !referenced.contains(named) || files[named] != nil {
+                skipped += 1
+                continue
+            }
             let target = workingFolder.appendingPathComponent("file-\(index)")
             var hash = SHA256()
             do {

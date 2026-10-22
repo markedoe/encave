@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -97,6 +98,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         uri?.let { viewModel.import(resolver, it) { navigator.open(app.encave.ui.navigation.RestoreRoute) } }
     }
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
+    val readingBackup by viewModel.readingBackup.collectAsStateWithLifecycle()
     // A cellar file that could not be read at launch, kept aside: it can be saved elsewhere.
     var keptChanged by remember { mutableStateOf(0) }
     val keptAside = remember(cellar, keptChanged) { viewModel.keptAside().lastOrNull() }
@@ -198,7 +200,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 supportingContent = { Text(stringResource(R.string.settings_export_pdf_body)) },
             )
             ListItem(
-                modifier = Modifier.clickable {
+                modifier = Modifier.clickable(enabled = !readingBackup) {
                     import.launch(
                         arrayOf(
                             "application/zip", "application/x-zip-compressed", "application/json", "text/csv",
@@ -206,8 +208,14 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         ),
                     )
                 }.testTag("settings.import"),
-                leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null) },
-                headlineContent = { Text(stringResource(R.string.settings_import)) },
+                leadingContent = {
+                    if (readingBackup) {
+                        CircularProgressIndicator(Modifier.padding(Dimens.xs))
+                    } else {
+                        Icon(Icons.Outlined.FileUpload, contentDescription = null)
+                    }
+                },
+                headlineContent = { Text(stringResource(if (readingBackup) R.string.settings_reading_backup else R.string.settings_import)) },
                 supportingContent = { Text(stringResource(R.string.settings_import_body)) },
             )
             ListItem(

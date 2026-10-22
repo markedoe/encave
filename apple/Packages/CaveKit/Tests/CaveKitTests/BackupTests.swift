@@ -180,8 +180,8 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         let (cellar, urls) = try sample(in: folder)
         let zipURL = folder.file("backup.zip")
         let exportedAt = Date(timeIntervalSince1970: 1_790_000_000)
-        let count = try CellarArchive.write(cellar, exportedAt: exportedAt, to: zipURL, fileURL: { urls[$0] })
-        #expect(count == 3)
+        let result = try CellarArchive.write(cellar, exportedAt: exportedAt, to: zipURL, fileURL: { urls[$0] })
+        #expect(result == CellarArchive.WriteResult(included: 3, missing: 0, leftOut: 0))
 
         let reader = try ZipReader(url: zipURL)
         let names = reader.entries.map(\.name)
@@ -212,11 +212,35 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         let (cellar, urls) = try sample(in: folder)
         let zipURL = folder.file("backup.zip")
         let photo = urls.keys.first { $0.kind == .photo }!
-        try CellarArchive.write(cellar, exportedAt: .now, to: zipURL, fileURL: { $0 == photo ? nil : urls[$0] })
+        let result = try CellarArchive.write(cellar, exportedAt: .now, to: zipURL, fileURL: { $0 == photo ? nil : urls[$0] })
+        #expect(result == CellarArchive.WriteResult(included: 2, missing: 1, leftOut: 0))
         let reader = try ZipReader(url: zipURL)
         let manifest = try JSONDecoder().decode(CellarArchive.Manifest.self, from: reader.data(of: reader.entry(named: "files.json")!, maxSize: 10_000))
         #expect(manifest.files.count == 2)
         #expect(reader.entries.count == 5)
+    }
+
+    @Test func filesBeyondTheZipLimitsAreLeftOut() {
+        // 100 bytes of room: the first file fits, the second is too large, the third fits.
+        let fixed: UInt64 = 1000
+        let base = fixed + 3 * (30 + 46 + 16) + 22 + CellarArchive.reserve
+        let cost = { (size: UInt64) in size + 76 + 3 * 10 + 160 }
+        let limit = base + cost(40) + cost(10) + 1
+        let fits = CellarArchive.fitting([(10, 40), (10, 200), (10, 10)], fixedBytes: fixed, limit: limit)
+        #expect(fits == [true, false, true])
+        // At most 65,534 entries: README, cellar and manifest, then the files.
+        let many = CellarArchive.fitting(Array(repeating: (10, 1), count: 5), fixedBytes: 0, maxEntries: 6)
+        #expect(many == [true, true, true, false, false])
+    }
+
+    @Test func aZipHoldsAtMost65534Entries() throws {
+        let folder = try TemporaryFolder()
+        let writer = try ZipWriter(url: folder.file("many.zip"), modified: .now)
+        for index in 0..<ZipWriter.maxEntries { try writer.add(name: "\(index)", data: Data()) }
+        #expect(throws: ZipError.tooLarge) { try writer.add(name: "one more", data: Data()) }
+        try writer.finish()
+        // Its own reader takes it back (65,535 would mean ZIP64).
+        #expect(try ZipReader(url: folder.file("many.zip")).entries.count == ZipWriter.maxEntries)
     }
 
     @Test func filesThatAreNotWhatTheySayAreIgnored() throws {
@@ -297,22 +321,33 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
     @Test func keepsTheNewestOfEachOfTheLastSevenDaysAndFourWeeks() {
         var calendar = Calendar(identifier: .iso8601)
         calendar.timeZone = utc
-        let now = day(0, hour: 9)
         // One version a day for 40 days, two on some days.
         let dates = (0..<40).map { day(-$0) } + [day(-1, hour: 8), day(-10, hour: 8)]
-        let kept = CellarVersionFolder.kept(dates, now: now, calendar: calendar)
+        let kept = CellarVersionFolder.kept(dates, calendar: calendar)
         // The last 7 days (today included).
         let daily = (0..<7).map { day(-$0) }
         #expect(daily.allSatisfy(kept.contains))
         #expect(!kept.contains(day(-1, hour: 8)))
-        // Then the newest of each ISO week, back 28 days: Sundays 2026-10-11, 10-04 and 09-27.
+        // Then the newest of each of the 4 ISO weeks before: Wednesday 2026-10-14 (the rest of
+        // the week of the oldest daily one), Sundays 10-11, 10-04 and 09-27.
         let weekly = kept.subtracting(daily).sorted(by: >)
-        #expect(weekly == [day(-10), day(-17), day(-24)])
-        #expect(kept.count == 10)
-        // Run again the next day, nothing new: the oldest daily one becomes weekly or goes.
-        let later = CellarVersionFolder.kept(Array(kept), now: day(1, hour: 9), calendar: calendar)
-        #expect(later.count <= kept.count)
-        #expect(later.contains(day(-10)) && !later.contains(day(-24)) || later.contains(day(-24)))
+        #expect(weekly == [day(-7), day(-10), day(-17), day(-24)])
+        #expect(kept.count == 11)
+        // A day later, with one more version: still 7 + 4, nothing kept comes back.
+        let later = CellarVersionFolder.kept(Array(kept) + [day(1)], calendar: calendar)
+        #expect(later.count == 11)
+        #expect(later.isSubset(of: kept.union([day(1)])))
+    }
+
+    @Test func aLongPauseKeepsTheLastVersions() {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = utc
+        // Versions from two months ago, then nothing: they are counted from the newest one.
+        let dates = (60..<100).map { day(-$0) }
+        let kept = CellarVersionFolder.kept(dates, calendar: calendar)
+        #expect(kept.count == 11)
+        #expect(kept.contains(day(-60)))
+        #expect(CellarVersionFolder.kept([], calendar: calendar).isEmpty)
     }
 
     @Test func aCopyIsKeptWhenTheFileWasLastSavedOnAnEarlierDay() throws {
@@ -347,11 +382,36 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         versions.keepCopy(of: store.fileURL, now: day(0))
         #expect(versions.versions().count == 1)
 
-        // Old versions are pruned when a new one is kept.
+        // After weeks without a change, the copy is kept with the one before.
         try store.save(SampleData.cellar(year: 2026))
         try setModified(day(40))
         versions.keepCopy(of: store.fileURL, now: day(41))
-        #expect(versions.versions().map(\.date) == [day(40)])
+        #expect(versions.versions().map(\.date) == [day(40), day(-1, hour: 22)])
+
+        // Beyond 7 days and 4 weeks, the oldest go.
+        for offset in 41..<70 {
+            try setModified(day(offset))
+            versions.keepCopy(of: store.fileURL, now: day(offset + 1))
+        }
+        #expect(versions.versions().count == 11)
+        #expect(versions.versions().first?.date == day(69))
+        #expect(!versions.versions().contains { $0.date == day(40) })
+    }
+
+    @Test func aCopyThatCannotBeReadIsNotKept() throws {
+        let folder = try TemporaryFolder()
+        let versions = CellarVersionFolder(folder: folder.file("Versions"), timeZone: utc)
+        let file = folder.file("cellar.json")
+        try Data("not json".utf8).write(to: file)
+        try FileManager.default.setAttributes([.modificationDate: day(-1)], ofItemAtPath: file.path)
+        let copy = try #require(versions.copyIfNewDay(of: file, now: day(0)))
+        #expect(versions.versions().count == 1)
+        versions.tidy(checking: copy)
+        #expect(versions.versions().isEmpty)
+        // Copies left half made are removed too.
+        try Data("x".utf8).write(to: folder.file("Versions/cellar-20261020-000000.json.1.tmp"))
+        versions.tidy()
+        #expect((try FileManager.default.contentsOfDirectory(atPath: folder.file("Versions").path)).isEmpty)
     }
 
     @Test func theStoreKeepsTheOldFileBeforeSavingOnANewDay() throws {
@@ -428,7 +488,33 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(added.wines[extra.id] != nil)
         #expect(added.settings.currency == "CHF")
 
+        // Replace takes the backup, but the settings stay those of the cellar.
         let replaced = current.restoring(backup, mode: .replace)
-        #expect(replaced == backup)
+        var expected = backup
+        expected.settings = current.settings
+        #expect(replaced == expected)
+        #expect(replaced.settings.currency == "CHF")
+    }
+
+    @Test func addMissingBringsBackSavedSearchesAndKeepsBottlesInTheirRack() throws {
+        var backup = SampleData.cellar(year: 2026)
+        backup.saveSearch("Ready", filter: CellarFilter(query: "bordeaux"))
+        backup.saveSearch("Old", filter: CellarFilter(query: "1990"))
+        var current = backup
+        // A search deleted since, one renamed and saved again under the same name.
+        current.settings.savedSearches = backup.settings.savedSearches?.filter { $0.name == "Old" }
+            .map { var search = $0; search.id = UUID(); return search }
+        // A bottle in the second row of a rack, deleted since; the rack now has one row.
+        let bottle = try #require(backup.bottlesInCellar.first { ($0.slot?.row ?? 0) >= 1 })
+        let slot = try #require(bottle.slot)
+        current.bottles[bottle.id] = nil
+        let index = try #require(current.racks.firstIndex { $0.id == slot.rackID })
+        current.racks[index].rows = 1
+
+        let added = current.restoring(backup, mode: .addMissing)
+        #expect(added.bottles[bottle.id] != nil)
+        #expect(added.bottles[bottle.id]?.slot == nil)
+        #expect(added.settings.savedSearches?.map(\.name) == ["Old", "Ready"])
+        #expect(added.settings.savedSearches?.first?.id == current.settings.savedSearches?.first?.id)
     }
 }

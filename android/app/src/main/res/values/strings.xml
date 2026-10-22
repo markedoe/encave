@@ -280,6 +280,7 @@
     <string name="settings_backup_now">Back up now</string>
     <string name="settings_backing_up">Backing up…</string>
     <string name="settings_backup_now_body">A ZIP file with your whole cellar, its photos and documents, to keep somewhere safe</string>
+    <string name="settings_reading_backup">Reading the backup…</string>
     <string name="versions_title">Previous versions</string>
     <string name="settings_versions_body">Your cellar as it was in the last days and weeks, kept on this device</string>
     <string name="settings_weekly_backup">Weekly backup on this device</string>
@@ -290,7 +291,7 @@
     <string name="settings_restore_latest_body">Your cellar as Encave last kept it, before the file could not be read</string>
     <string name="versions_empty_title">No previous versions yet</string>
     <string name="versions_empty_body">Encave keeps a copy of your cellar on each day it changes. The first one appears tomorrow.</string>
-    <string name="versions_footer">A copy of your cellar is kept on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. They stay on this device; the photos and documents they need are kept with them.</string>
+    <string name="versions_footer">A copy of your cellar is kept on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before. They stay on this device; the photos and documents they need are kept with them.</string>
     <string name="restore_title_version">Previous version</string>
     <string name="restore_title_backup">Backup</string>
     <string name="restore_saved_on">Saved on</string>
@@ -312,11 +313,12 @@
     <string name="restore_files_included">Photos and documents included</string>
     <string name="restore_add">Add what is missing</string>
     <string name="restore_replace">Replace this cellar</string>
-    <string name="restore_footer">Add what is missing adds the wines, bottles, racks and Journal entries that are not in your cellar and changes nothing else. Replace this cellar makes your cellar exactly as in this backup. You can undo right after.</string>
+    <string name="restore_footer">Add what is missing adds the wines, bottles, racks, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace this cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.</string>
     <string name="restore_replace_title">Replace this cellar?</string>
     <string name="restore_replace_body">Your cellar becomes exactly as in this backup: what is not in it is deleted. You can undo right after.</string>
     <string name="restore_replace_body_devices">Your cellar becomes exactly as in this backup, on this device and on the other devices that sync with it: what is not in it is deleted there too. You can undo right after.</string>
     <string name="msg_restored">Cellar restored from the backup</string>
+    <string name="msg_undo_restore_too_late">Not undone: the cellar changed since the restore.</string>
     <string name="msg_backup_saved">Backup saved</string>
     <string name="err_backup_failed">The backup could not be made. Check that this device has enough free space, then try again.</string>
     <string name="err_version_unreadable">This version could not be read.</string>
@@ -673,15 +675,15 @@
     <string name="help_data_sync_title">Sync is not a backup</string>
     <string name="help_data_sync">Sync keeps the same cellar on your devices: a bottle deleted by mistake, or **Erase all data**, is deleted on all of them. Keep backups too: they hold your cellar as it was.</string>
     <string name="help_data_versions_title">Previous versions</string>
-    <string name="help_data_versions">Encave keeps a copy of your cellar on this device on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. Open **Settings › Your data › Previous versions**, choose a date to see what it holds and how it differs from your cellar, then restore it. The photos and documents a version needs are kept with it.</string>
+    <string name="help_data_versions">Encave keeps a copy of your cellar on this device on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before, even if you did not open Encave for a while. Open **Settings › Your data › Previous versions**, choose a date to see what it holds and how it differs from your cellar, then restore it. The photos and documents a version needs are kept with it.</string>
     <string name="help_data_backup_title">Back up now</string>
-    <string name="help_data_backup">**Back up now** saves a backup of your whole cellar, with its photos and documents, where you choose: a folder of this device, a USB key or a cloud drive. It is a standard ZIP file, not encrypted, named like “Encave Backup 2026-10-21.zip”: keep it somewhere safe.</string>
+    <string name="help_data_backup">**Back up now** saves a backup of your whole cellar, with its photos and documents, where you choose: a folder of this device, a USB key or a cloud drive. It is a standard ZIP file, not encrypted, named like “Encave Backup 2026-10-21.zip”: keep it somewhere safe. Photos not yet synced to this device are left out, and a ZIP file holds at most 4 GB: Encave says when files are missing, and the cellar itself is always complete.</string>
     <string name="help_data_contents_title">What the backup holds</string>
     <string name="help_data_contents">**cellar.json** is your cellar itself: wines, bottles, racks, the Journal and settings, readable by other programs. **photos** and **documents** hold the files under readable names, such as “Château X 2015.jpg” or “Invoice.pdf”, and **files.json** says which is which. **README.txt** explains it in English and French. A backup made on an Android device, an iPhone, an iPad or a Mac restores on any of them.</string>
     <string name="help_data_weekly_title">Weekly backup on this device</string>
-    <string name="help_data_weekly">With **Weekly backup on this device** (on at first), Encave makes a backup once a week and keeps the last two in **Download/Encave**, which the Files app shows; they stay there if Encave is removed. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.</string>
+    <string name="help_data_weekly">With **Weekly backup on this device** (on at first), Encave makes a backup once a week and keeps the last two in **Download/Encave**, which the Files app shows; they stay there if Encave is removed. After Encave is installed again, it can no longer delete the ones it made before: delete them in the Files app when you no longer need them. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.</string>
     <string name="help_data_restore_title">Restore</string>
-    <string name="help_data_restore">Choose a previous version, or **Import a backup or a CSV file** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add what is missing** adds the wines, bottles, racks and Journal entries you no longer have and changes nothing else. **Replace this cellar** makes your cellar exactly as in the backup: what is not in it is deleted. You can undo right after.</string>
+    <string name="help_data_restore">Choose a previous version, or **Import a backup or a CSV file** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add what is missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace this cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after, unless the cellar changed since.</string>
     <string name="help_data_devices_title">Restoring and your other devices</string>
     <string name="help_data_devices">A restore is a change made on this device: the devices that sync with this one take it too. After **Replace this cellar**, what the backup brings back returns on them, and what is not in it is deleted on them. Their sync keys stay as they are: a backup never holds them.</string>
     <string name="help_data_csv_title">Spreadsheet</string>
@@ -1245,6 +1247,10 @@
     <string name="action_select_all">Select all</string>
     <string name="action_deselect_all">Deselect all</string>
     <string name="reserve_body_plural">The bottles stay in their places but are no longer suggested for tonight.</string>
+    <plurals name="msg_backup_saved_without">
+        <item quantity="one">Backup saved, without %d photo or document: not on this device yet, or beyond the 4 GB a ZIP file holds.</item>
+        <item quantity="other">Backup saved, without %d photos or documents: not on this device yet, or beyond the 4 GB a ZIP file holds.</item>
+    </plurals>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
