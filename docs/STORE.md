@@ -1,8 +1,11 @@
 # Store paperwork (draft)
 
-> **Draft for the owner.** Answers for the App Store Connect and Google Play
-> Console forms, with the reasoning, checked against the code as it is. The
-> owner fills in the forms. Recheck them whenever the apps start sending
+> Answers for the App Store Connect and Google Play Console forms, with the
+> reasoning, checked against the code as it is. On the App Store side, the
+> "App Store listing" workflow applies `docs/store/appstore.json` (privacy
+> policy URL, age rating, texts in French and English); the App Privacy label
+> is answered in App Store Connect by hand (no API). Google Play is filled in
+> by hand. Recheck them whenever the apps start sending
 > something new. The privacy policy is [PRIVACY.md](PRIVACY.md).
 
 ## Facts the answers rest on
@@ -126,3 +129,13 @@ the app out of the Families programme.
   cellar from Settings while the cellar is empty.
 - **Google Play: ads**: the app contains no ads.
 - **Google Play: health apps, financial features, government apps, news**: No.
+
+## App Store header and search results image
+
+`docs/store/header-fr.png` and `header-en.png`: one universal image per
+language (5244 x 2950 PNG, no transparency), made by `docs/store/make_header.py`
+from the screen tour's sample cellar. The "App Store header image" workflow
+(run by hand) reads App Store Connect with `inspect`, and with `upload` places
+each image as the product page header and the search results asset of the
+version being prepared. It submits nothing: the images go to review with the
+version. Shown on iOS and iPadOS 27 and later.

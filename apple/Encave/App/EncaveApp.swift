@@ -4,6 +4,10 @@ import UserNotifications
 
 @main
 struct EncaveApp: App {
+    #if os(macOS)
+    // First, before the model sets up this device: it tells whether the app ran before.
+    private let menuBarKept: Void = MenuBarSetting.keepForExistingUsers()
+    #endif
     @State private var model = CellarModel.live()
     private let notifications = NotificationRouter()
     #if os(macOS)
@@ -178,4 +182,16 @@ private struct CellarTableToggle: View {
 enum MenuBarSetting {
     static let key = "menuBar.enabled"
     static let defaultValue = false
+    static let checkedKey = "menuBar.checkedExistingUser"
+
+    /// Earlier versions showed it unless turned off: for someone who used one, it stays
+    /// shown. Checked once; a new install keeps it off.
+    static func keepForExistingUsers(_ defaults: UserDefaults = .standard) {
+        guard !defaults.bool(forKey: checkedKey) else { return }
+        defaults.set(true, forKey: checkedKey)
+        // Set at the first launch of every earlier version (the device's sync identity, the
+        // first use for backup reminders).
+        let launchedBefore = defaults.object(forKey: "sync.deviceID") != nil || defaults.object(forKey: "backup.firstUse") != nil
+        if launchedBefore, defaults.object(forKey: key) == nil { defaults.set(true, forKey: key) }
+    }
 }

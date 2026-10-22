@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import app.encave.core.Cellar
 import app.encave.core.JsonFileCellarStore
+import app.encave.core.SampleData
 import app.encave.core.Wine
+import app.encave.core.containsSample
+import app.encave.core.sync.CellarKey
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.FileAccess
 import app.encave.core.sync.Mailbox
@@ -12,6 +15,7 @@ import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
 import app.encave.core.sync.MemoryMailboxStore
 import app.encave.core.sync.Membership
+import app.encave.core.sync.RemoteInfo
 import app.encave.core.sync.RemoteSyncError
 import app.encave.core.sync.RemoteSyncException
 import app.encave.core.sync.SyncHealth
@@ -100,6 +104,32 @@ class SyncManagerTest {
     }
 
     @Test
+    fun turnedOffStaysOffWhenAnotherDeviceTellsItsStorage() = runBlocking {
+        sync.setUpIfNeeded()
+        addOther()
+        sync.turnOn(MemoryMailboxStore(), "https://relay.example")
+        sync.setRemoteStorage(null)
+        val cellarId = sync.state.value.membership!!.cellarId
+        val offer = RemoteInfo(CellarKey.random(cellarId), "https://relay.example")
+        sync.adoptRemote(offer)
+        assertNull(sync.storage.remoteStorage)
+        // Also after a restart.
+        assertTrue(SyncStorage(context).remoteTurnedOff)
+        // Picking a storage again here lifts it.
+        sync.turnOn(MemoryMailboxStore(), "https://relay.example")
+        assertFalse(sync.storage.remoteTurnedOff)
+    }
+
+    @Test
+    fun aRefusedWebDavLoginNeedsTheUserAtOnce() = runBlocking {
+        sync.setUpIfNeeded()
+        addOther()
+        sync.storage.remoteStorage = SyncManager.WEBDAV_PREFIX + "https://nas.example.com/encave/"
+        sync.remoteFailed(SyncManager.RemoteProblem.Refused)
+        assertEquals(SyncHealth.NeedsAction(SyncHealth.Reason.SignInNeeded), sync.state.value.health(sync.identity.id))
+    }
+
+    @Test
     fun replaceKeepsTheBottlesUntilTheOtherCellarArrives() = runBlocking {
         repository.update { it.addBottles(Wine(name = "Mine"), 4) }.getOrThrow()
         // The other device's cellar and devices.
@@ -118,6 +148,19 @@ class SyncManagerTest {
         assertFalse(sync.isReplacePending)
         assertEquals(setOf("Theirs"), repository.cellar.value.wines.values.map { it.name }.toSet())
         assertEquals(2, repository.cellar.value.bottles.size)
+    }
+
+    @Test
+    fun combineRemovesTheSampleFirst() = runBlocking {
+        repository.replace(SampleData.cellar()).getOrThrow()
+        repository.update { it.addBottles(Wine(name = "Mine"), 2) }.getOrThrow()
+        val (host, _) = DeviceIdentity.generate()
+        val (members, _) = Membership().adding(Member(host.id, "iPad", host.publicKey, "ipados"), 0, host.id)
+
+        sync.adoptCellar(members, replace = false)
+        // Only this device's own bottles are sent to the other devices.
+        assertFalse(repository.cellar.value.containsSample)
+        assertEquals(setOf("Mine"), sync.snapshot()!!.cellar.wines.values.map { it.name }.toSet())
     }
 
     @Test

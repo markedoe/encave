@@ -141,7 +141,7 @@ val RackKind.columnsRes: Int
     }
 
 /**
- * "B3", "B3, back", "Shelf B, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
+ * "B3", "B3, back", "Shelf 2, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
  * for people (files use "B3-2").
  */
 fun Rack.displayLabel(slot: Slot, resources: Resources): String {
@@ -182,11 +182,12 @@ fun Rack.zoneName(zone: Int, resources: Resources): String = when {
 
 private fun Rack.displayLabelByKind(cell: RackCell, resources: Resources): String = when (kind) {
     RackKind.Grid, RackKind.Staggered -> label(cell)
-    RackKind.Shelves -> resources.getString(R.string.place_shelf, Rack.rowLetters(cell.row), cell.column + 1)
+    // Shelves are numbered from the top, as in layered fridges.
+    RackKind.Shelves -> resources.getString(R.string.place_shelf, cell.row + 1, cell.column + 1)
     RackKind.Bins -> resources.getString(R.string.place_bin, label(cell))
 }
 
-/** "Main rack · Shelf B, 3, back", the storage note, or null. */
+/** "Main rack · Shelf 2, 3, back", the storage note, or null. */
 fun Cellar.displayLocation(bottle: Bottle, resources: Resources): String? {
     val slot = bottle.slot
     val rack = slot?.let { rack(it.rackId) }
