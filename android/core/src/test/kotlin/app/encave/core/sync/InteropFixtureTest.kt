@@ -68,6 +68,7 @@ object InteropFixture {
                 Attachment(invoice, "Facture n°12 – Cave du coin.pdf", "application/pdf", 245_760, date(782_000_000.75)),
                 Attachment(back, "Back label.jpg", "image/jpeg", 4, date(-12.5)),
             ),
+            aiCompletedAt = date(790_100_000.25),
         )
         val plain = Wine(id = plainWine, name = "Vin de table")
         val bottles = listOf(

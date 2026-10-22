@@ -8,6 +8,7 @@ import app.encave.data.ai.LabelAnalysis
 import app.encave.data.ai.completed
 import app.encave.data.ai.completing
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -47,15 +48,18 @@ class AddFormLogicTest {
         assertEquals("Bourgogne", completed.region)
         assertEquals(listOf("Pinot Noir"), completed.grapes)
         assertEquals(2023, completed.drinkFrom)
+        assertNotNull(completed.aiCompletedAt)
         // The region was typed on another device meanwhile: it is kept.
         val live = saved.copy(region = "Côte de Nuits")
         val updated = live.completed(from = saved, to = completed)
         assertEquals("Côte de Nuits", updated.region)
         assertEquals(WineColor.Red, updated.color)
+        assertEquals(completed.aiCompletedAt, updated.aiCompletedAt)
         // Undo puts back what the AI filled, and only that.
         val undone = updated.copy(country = "France").completed(from = updated, to = live)
         assertNull(undone.color)
         assertEquals("Côte de Nuits", undone.region)
         assertEquals("France", undone.country)
+        assertNull(undone.aiCompletedAt)
     }
 }

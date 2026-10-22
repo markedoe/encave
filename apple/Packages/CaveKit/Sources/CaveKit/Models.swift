@@ -47,6 +47,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var attachments: [Attachment]? {
         didSet { attachments = Attachment.unique(attachments) }
     }
+    /// When the details were last completed by the AI from the label photo, so the app
+    /// can say so. Nil when never.
+    public var aiCompletedAt: Date?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -88,6 +91,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
         coverPhotoID = try c.decodeIfPresent(String.self, forKey: .coverPhotoID)
         attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
+        aiCompletedAt = try c.decodeIfPresent(Date.self, forKey: .aiCompletedAt)
     }
 
     /// The label photo first, then the others, then the cover.

@@ -95,6 +95,9 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
     var photoRemoved by mutableStateOf(false)
     val hasPhoto: Boolean get() = newPhoto != null || (storedPhotoId != null && !photoRemoved)
 
+    /** When the AI last completed the details: set by [apply], kept on save. */
+    var aiCompletedAt by mutableStateOf(initial?.aiCompletedAt)
+
     /** Values filled automatically from the label; those may be replaced again, typed ones never. */
     private val autoFilled = mutableMapOf<String, Any>()
 
@@ -152,6 +155,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
             manualWindow = analysis.drinkFrom..analysis.drinkUntil
             windowEnabled = true
         }
+        aiCompletedAt = app.encave.core.ReferenceDates.now()
     }
 
     /** Another vintage of [wine] (one barcode for several vintages): its details, the vintage left to fill. */
@@ -171,7 +175,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
     /** What the user can edit, to tell whether anything changed since it was taken (Discard changes?). */
     fun snapshot(): List<Any?> = listOf(
         name, producer, vintageText, color, region, country, appellation, grapes.toList(), grapeInput, notes,
-        tags.toList(), tagInput, newPhoto != null, photoRemoved, manualWindow, windowEnabled,
+        tags.toList(), tagInput, newPhoto != null, photoRemoved, manualWindow, windowEnabled, aiCompletedAt,
     )
 
     fun addGrape() {
@@ -197,6 +201,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
             grapes = grapes.toList(), drinkFrom = window?.first, drinkUntil = window?.last, notes = notes.orNull(),
             photoId = if (photoRemoved) null else storedPhotoId,
             tags = tags.toList().ifEmpty { null },
+            aiCompletedAt = aiCompletedAt,
         )
     }
 }

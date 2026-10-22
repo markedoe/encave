@@ -389,6 +389,8 @@
     <string name="ai_show_key">Afficher la clé</string>
     <string name="ai_hide_key">Masquer la clé</string>
     <string name="ai_complete">Compléter avec l’IA</string>
+    <string name="ai_complete_again">Compléter à nouveau</string>
+    <string name="ai_completed_on">Complétée par l’IA · %1$s</string>
     <string name="ai_reading">Lecture de l’étiquette…</string>
     <string name="ai_filled">Informations remplies d’après l’étiquette. Vérifiez-les avant d’ajouter.</string>
     <string name="ai_err_not_configured">Choisissez un service d’IA dans les réglages.</string>
@@ -685,6 +687,8 @@
     <string name="help_ai_local">Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple `http://192.0.2.10:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.</string>
     <string name="help_ai_url_title">Adresse du serveur</string>
     <string name="help_ai_url">Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine.</string>
+    <string name="help_ai_complete_title">Compléter avec l’IA</string>
+    <string name="help_ai_complete">Après avoir ajouté une photo d’étiquette, ou en modifiant un vin qui en a une, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Utilisez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché.</string>
     <string name="help_ai_sent_title">Ce qui est envoyé</string>
     <string name="help_ai_sent">Seulement la photo de l’étiquette, quand vous ajoutez une photo d’étiquette ou touchez **Compléter avec l’IA**. Votre cave, vos notes et vos prix ne sont jamais envoyés.</string>
     <string name="help_data_title">Sauvegarde, export et import</string>

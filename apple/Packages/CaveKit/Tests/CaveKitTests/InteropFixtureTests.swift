@@ -34,6 +34,7 @@ enum InteropFixture {
         wine.currentPriceCurrency = "EUR"
         wine.currentPriceDate = date(790_000_000.5)
         wine.coverPhotoID = cover
+        wine.aiCompletedAt = date(790_100_000.25)
         wine.attachments = [
             Attachment(id: invoice, name: "Facture n°12 – Cave du coin.pdf", contentType: "application/pdf",
                        byteCount: 245_760, addedAt: date(782_000_000.75)),
