@@ -214,8 +214,8 @@
     <string name="rack_editor_edit">Edit rack</string>
     <string name="rack_preview">Preview</string>
     <string name="rack_delete">Delete rack</string>
-    <string name="rack_delete_title">Delete this rack?</string>
-    <string name="rack_delete_body">Its bottles stay in your cellar, without a place.</string>
+    <string name="rack_delete_title">Delete “%1$s”?</string>
+    <string name="rack_delete_empty">It holds no bottles.</string>
     <string name="rack_default_name">Rack %1$d</string>
     <string name="cell_empty">%1$s, empty</string>
     <string name="cell_filled">%1$s, %2$s</string>
@@ -516,7 +516,7 @@
     <string name="preset_bins_2x3">Diamond bins, 2 × 3 of 10</string>
     <string name="preset_crates_6">Crates of 6, 3 × 4</string>
     <string name="preset_crates_12">Crates of 12, 2 × 4</string>
-    <string name="place_shelf">Shelf %1$s, %2$d</string>
+    <string name="place_shelf">Shelf %1$d, %2$d</string>
     <string name="place_bin">Bin %1$s</string>
     <string name="place_shelf_layer_single">Shelf %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Shelf %1$d, bottom layer, place %2$d</string>
@@ -643,7 +643,7 @@
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.</string>
     <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
     <string name="help_racks_places_title">Places</string>
-    <string name="help_racks_places">Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, places read like **Shelf B, 3**; in bins, like **Bin B3**. The same name shows on the wine’s page, in the bottle list.</string>
+    <string name="help_racks_places">Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine’s page, in the bottle list.</string>
     <string name="help_racks_finding_title">Finding a bottle</string>
     <string name="help_racks_finding">Each bottle shows its vintage; in grid racks and wine fridges, its name too once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all. On a wine’s page, **Show in rack** opens the rack with its bottles lit up.</string>
     <string name="help_racks_zooming_title">Zooming</string>
@@ -840,6 +840,7 @@
     <string name="join_combine">Combine with the other cellar</string>
     <string name="join_replace">Replace with the other cellar</string>
     <string name="join_combine_footer">Both cellars are put together.</string>
+    <string name="join_combine_sample_footer">Both cellars are put together. The sample cellar is removed first.</string>
     <string name="join_replaces_sample">The sample cellar on this device will be replaced.</string>
     <string name="join_replace_footer">This device will show only the other device’s cellar. Make a backup first if you may need these bottles.</string>
     <string name="join_button">Join</string>
@@ -903,13 +904,13 @@
     <string name="help_devices_sync_title">Staying in sync</string>
     <string name="help_devices_sync">Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same bottle or wine was changed on both before they synced, one version of it is kept as a whole, usually the later one.</string>
     <string name="help_devices_bottles_title">Bottles already on the new device</string>
-    <string name="help_devices_bottles">When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device’s cellar: Encave asks first, then this device’s bottles, racks and Journal are replaced, so make a backup first if you may need them. They stay on this device until the other cellar has arrived. Joining another cellar while this device already shares one leaves that one first, once you confirm. If this device holds only the sample cellar, it is replaced without asking.</string>
+    <string name="help_devices_bottles">When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device’s cellar: Encave asks first, then this device’s bottles, racks and Journal are replaced, so make a backup first if you may need them. They stay on this device until the other cellar has arrived. Joining another cellar while this device already shares one leaves that one first, once you confirm. If this device holds only the sample cellar, it is replaced without asking. With Combine, the sample cellar is removed first: it is never sent to the other devices.</string>
     <string name="help_devices_remove_title">Removing a device</string>
     <string name="help_devices_remove">Swipe a device to the left, or open its ⋮ menu and choose **Remove device**, then confirm. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one’s key is no longer accepted. To use it with your cellar again later, choose **Stop syncing on this device** on it, then add it as a new device. That also tells the other devices, so it leaves their list too; if they cannot be reached, remove it there.</string>
     <string name="help_devices_away_title">Away from home</string>
     <string name="help_devices_away">Once another device has been added, to sync when your devices are not on the same Wi-Fi, open **Devices › Sync away from home** and choose a **WebDAV folder** you already have, or enter the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only. Android can’t use iCloud: if your Apple devices sync through iCloud, choose a WebDAV folder or a relay on every device.</string>
     <string name="help_devices_webdav_title">WebDAV folder</string>
-    <string name="help_devices_webdav">A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder’s address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too.</string>
+    <string name="help_devices_webdav">A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder’s address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once.</string>
     <string name="help_devices_privacy_title">Privacy</string>
     <string name="help_devices_privacy">On the same Wi-Fi, devices talk directly; no server is involved. Through a WebDAV folder or a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.</string>
     <string name="sample_main_rack">Main rack</string>
@@ -1059,7 +1060,7 @@
     <string name="help_start_table_title">List or table</string>
     <string name="help_start_table">On tablets and large screens, the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.</string>
     <string name="help_racks_editing_title">Changing a rack</string>
-    <string name="help_racks_editing">Tap **Edit rack** to change its name, kind or size. On a wine fridge, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first and takes them out of the rack (they stay in the cellar without a place), and **Undo** puts everything back. **Delete rack** keeps its bottles in the cellar without a place, and can be undone too. To change the order of your racks, tap **Reorder racks** in the Racks list, then move each rack up or down.</string>
+    <string name="help_racks_editing">Tap **Edit rack** to change its name, kind or size. On a wine fridge, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first and takes them out of the rack (they stay in the cellar without a place), and **Undo** puts everything back. **Delete rack** asks first, saying how many bottles it holds; they stay in the cellar without a place, and it can be undone too. To change the order of your racks, tap **Reorder racks** in the Racks list, then move each rack up or down.</string>
     <string name="msg_taken_out_one">Bottle taken out of the rack</string>
     <string name="msg_swapped">Bottles swapped</string>
     <string name="msg_rack_deleted">Deleted %1$s</string>
@@ -1290,6 +1291,10 @@
     <string name="insights_year_made_with">Made with Encave</string>
     <string name="help_journal_opened_title">A bottle from your cellar</string>
     <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine\'s name to open it.</string>
+    <plurals name="rack_delete_body">
+        <item quantity="one">%d bottle stays in your cellar without a place.</item>
+        <item quantity="other">%d bottles stay in your cellar without a place.</item>
+    </plurals>
     <plurals name="licences_modules">
         <item quantity="one">%d module</item>
         <item quantity="other">%d modules</item>

@@ -2,6 +2,8 @@ package app.encave.sync
 
 import android.content.Context
 import app.encave.core.Cellar
+import app.encave.core.containsSample
+import app.encave.core.removingSample
 import app.encave.core.sync.CellarChangeSummary
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.CellarMerge
@@ -515,6 +517,11 @@ class SyncManager(
         // Replace: this device's bottles stay until the other cellar has arrived (a first sync
         // that fails loses nothing); meanwhile only what changes here is sent.
         runCatching { storage.pendingReplace = replace }
+        // Combining: the sample cellar is removed first, never sent to the other devices.
+        if (!replace) {
+            val withoutSample = repository.read { if (it.containsSample) it.removingSample() else null }
+            if (withoutSample != null) repository.replace(withoutSample)
+        }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
             replacing = replace
@@ -879,6 +886,8 @@ class SyncManager(
         if (url == null) {
             storage.remoteStorage = null
             storage.webDavLogin = null
+            // Kept, as on Apple: another device on the network must not turn it back on.
+            storage.remoteTurnedOff = true
             synchronized(this) {
                 remoteLoop?.cancel()
                 remoteLoop = null
@@ -950,6 +959,7 @@ class SyncManager(
             }
         }
         if (login != null) storage.webDavLogin = login
+        storage.remoteTurnedOff = false
         storage.remoteStorage = storageString
         storage.peerUsesICloud = false
         // A key received meanwhile from a device on the network may supersede this one.
@@ -978,8 +988,9 @@ class SyncManager(
         }
         // Only a storage this device can use: an HTTPS relay or WebDAV folder. iCloud ("icloud")
         // is Apple-only. A WebDAV folder then asks for this device's own login.
+        // Not after the user turned it off here.
         val offered = info.storage?.let(::acceptedFromPeer)
-        if (storage.remoteStorage == null && offered != null) {
+        if (storage.remoteStorage == null && !storage.remoteTurnedOff && offered != null) {
             storage.remoteStorage = offered
             status.update { it.copy(remoteStorage = offered, needsWebDavSignIn = needsSignIn(offered)) }
             scheduleBackground()
@@ -1120,6 +1131,7 @@ class SyncManager(
                 }
                 it.copy(
                     lastRemoteSync = now,
+                    needsWebDavSignIn = needsSignIn(storage.remoteStorage),
                     remoteProblem = problem,
                     remoteProblemAt = if (problem != null) now else null,
                     remoteFailingSince = null,
@@ -1144,9 +1156,17 @@ class SyncManager(
         }
     }
 
-    private fun remoteFailed(problem: RemoteProblem) {
+    internal fun remoteFailed(problem: RemoteProblem) {
         val now = Instant.now()
-        status.update { it.copy(remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now) }
+        // A WebDAV server that refuses the login (a changed password): sync needs the user at
+        // once (sign in again) rather than failing for an hour first.
+        val loginRefused = problem == RemoteProblem.Refused && storage.remoteStorage?.startsWith(WEBDAV_PREFIX) == true
+        status.update {
+            it.copy(
+                remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now,
+                needsWebDavSignIn = it.needsWebDavSignIn || loginRefused,
+            )
+        }
     }
 
     /** Rotates the remote key if a removal is waiting for it, and returns the key to use. */

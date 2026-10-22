@@ -213,8 +213,8 @@
     <string name="rack_editor_edit">Modifier le casier</string>
     <string name="rack_preview">Aperçu</string>
     <string name="rack_delete">Supprimer le casier</string>
-    <string name="rack_delete_title">Supprimer ce casier ?</string>
-    <string name="rack_delete_body">Ses bouteilles restent dans votre cave, sans emplacement.</string>
+    <string name="rack_delete_title">Supprimer « %1$s » ?</string>
+    <string name="rack_delete_empty">Il ne contient aucune bouteille.</string>
     <string name="rack_default_name">Casier %1$d</string>
     <string name="cell_empty">%1$s, vide</string>
     <string name="cell_filled">%1$s, %2$s</string>
@@ -515,7 +515,7 @@
     <string name="preset_bins_2x3">Losanges, 2 × 3 de 10</string>
     <string name="preset_crates_6">Caisses de 6, 3 × 4</string>
     <string name="preset_crates_12">Caisses de 12, 2 × 4</string>
-    <string name="place_shelf">Étagère %1$s, %2$d</string>
+    <string name="place_shelf">Étagère %1$d, %2$d</string>
     <string name="place_bin">Casier %1$s</string>
     <string name="place_shelf_layer_single">Étagère %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Étagère %1$d, couche du bas, place %2$d</string>
@@ -642,7 +642,7 @@
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière.</string>
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu.</string>
     <string name="help_racks_places_title">Places</string>
-    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les places se lisent comme **Étagère B, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
+    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
     <string name="help_racks_finding_title">Trouver une bouteille</string>
     <string name="help_racks_finding">Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles.</string>
     <string name="help_racks_zooming_title">Zoomer</string>
@@ -839,6 +839,7 @@
     <string name="join_combine">Réunir avec l’autre cave</string>
     <string name="join_replace">Remplacer par l’autre cave</string>
     <string name="join_combine_footer">Les deux caves sont réunies.</string>
+    <string name="join_combine_sample_footer">Les deux caves sont réunies. La cave d’exemple est d’abord supprimée.</string>
     <string name="join_replaces_sample">La cave d’exemple de cet appareil sera remplacée.</string>
     <string name="join_replace_footer">Cet appareil n’affichera que la cave de l’autre appareil. Faites d’abord une sauvegarde si vous pourriez avoir besoin de ces bouteilles.</string>
     <string name="join_button">Rejoindre</string>
@@ -902,13 +903,13 @@
     <string name="help_devices_sync_title">Rester synchronisé</string>
     <string name="help_devices_sync">Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification. Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si la même bouteille ou le même vin a été modifié sur les deux avant de se synchroniser, une seule version est gardée en entier, en général la plus récente.</string>
     <string name="help_devices_bottles_title">Bouteilles déjà sur le nouvel appareil</string>
-    <string name="help_devices_bottles">En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil : Encave demande d’abord, puis les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Elles restent sur cet appareil jusqu’à l’arrivée de l’autre cave. Rejoindre une autre cave alors que cet appareil en partage déjà une quitte d’abord celle-ci, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander.</string>
+    <string name="help_devices_bottles">En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil : Encave demande d’abord, puis les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Elles restent sur cet appareil jusqu’à l’arrivée de l’autre cave. Rejoindre une autre cave alors que cet appareil en partage déjà une quitte d’abord celle-ci, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander. Avec Réunir, la cave d’exemple est d’abord supprimée : elle n’est jamais envoyée aux autres appareils.</string>
     <string name="help_devices_remove_title">Retirer un appareil</string>
     <string name="help_devices_remove">Balayez un appareil vers la gauche, ou ouvrez son menu ⋮ et choisissez **Retirer l’appareil**, puis confirmez. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation sur cet appareil** dessus, puis ajoutez-le comme nouvel appareil. Cela prévient aussi les autres appareils, qui le retirent de leur liste ; s’ils ne peuvent pas être joints, retirez-le depuis l’un d’eux.</string>
     <string name="help_devices_away_title">Loin de la maison</string>
     <string name="help_devices_away">Une fois un autre appareil ajouté, pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison** et choisissez un **dossier WebDAV** que vous avez déjà, ou saisissez l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil. Android ne peut pas utiliser iCloud : si vos appareils Apple se synchronisent par iCloud, choisissez un dossier WebDAV ou un relais sur chaque appareil.</string>
     <string name="help_devices_webdav_title">Dossier WebDAV</string>
-    <string name="help_devices_webdav">Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent sur cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants.</string>
+    <string name="help_devices_webdav">Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent sur cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt.</string>
     <string name="help_devices_privacy_title">Confidentialité</string>
     <string name="help_devices_privacy">Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un dossier WebDAV ou un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège.</string>
     <string name="sample_main_rack">Casier principal</string>
@@ -1058,7 +1059,7 @@
     <string name="help_start_table_title">Liste ou tableau</string>
     <string name="help_start_table">Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.</string>
     <string name="help_racks_editing_title">Modifier un casier</string>
-    <string name="help_racks_editing">Touchez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du casier (elles restent dans la cave sans place), et **Annuler** remet tout en place. **Supprimer le casier** garde ses bouteilles dans la cave sans place, et peut aussi être annulé. Pour changer l’ordre de vos casiers, touchez **Réorganiser les casiers** dans la liste des casiers, puis montez ou descendez chaque casier.</string>
+    <string name="help_racks_editing">Touchez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du casier (elles restent dans la cave sans place), et **Annuler** remet tout en place. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans place, et cela peut aussi être annulé. Pour changer l’ordre de vos casiers, touchez **Réorganiser les casiers** dans la liste des casiers, puis montez ou descendez chaque casier.</string>
     <string name="msg_taken_out_one">Bouteille sortie du casier</string>
     <string name="msg_swapped">Bouteilles échangées</string>
     <string name="msg_rack_deleted">%1$s supprimé</string>
@@ -1289,6 +1290,11 @@
     <string name="insights_year_made_with">Réalisé avec Encave</string>
     <string name="help_journal_opened_title">Une bouteille de votre cave</string>
     <string name="help_journal_opened">Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir.</string>
+    <plurals name="rack_delete_body">
+        <item quantity="one">%d bouteille reste dans votre cave sans emplacement.</item>
+        <item quantity="many">%d bouteilles restent dans votre cave sans emplacement.</item>
+        <item quantity="other">%d bouteilles restent dans votre cave sans emplacement.</item>
+    </plurals>
     <plurals name="licences_modules">
         <item quantity="one">%d module</item>
         <item quantity="many">%d modules</item>

@@ -544,10 +544,11 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         )
     }
     if (confirmDelete && existing != null) {
+        val count = cellar.occupancy(existing)
         ConfirmDialog(
-            title = stringResource(R.string.rack_delete_title),
-            body = stringResource(R.string.rack_delete_body),
-            confirm = stringResource(R.string.action_delete),
+            title = stringResource(R.string.rack_delete_title, existing.name),
+            body = if (count == 0) stringResource(R.string.rack_delete_empty) else pluralStringResource(R.plurals.rack_delete_body, count, count),
+            confirm = stringResource(R.string.rack_delete),
             onConfirm = {
                 viewModel.removeRack(existing.id)
                 navigator.back()

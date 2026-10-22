@@ -2,9 +2,12 @@ package app.encave.widget
 
 import android.content.Context
 import app.encave.EncaveApplication
+import app.encave.core.Bottle
+import app.encave.core.Cellar
 import app.encave.core.SampleData
 import app.encave.core.WidgetSnapshot
 import app.encave.data.CellarRepository
+import app.encave.ui.components.displayLocation
 import app.encave.ui.components.sampleLabels
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -77,6 +80,8 @@ class WidgetPublisher(
     private val onChanged: suspend () -> Unit,
     private val io: CoroutineDispatcher = Dispatchers.IO,
     private val year: () -> Int = { LocalDate.now().year },
+    /** A bottle's place as the lists name it. */
+    private val place: (Cellar, Bottle) -> String? = { cellar, bottle -> cellar.locationLabel(bottle) },
 ) {
     @OptIn(FlowPreview::class)
     fun start() {
@@ -85,7 +90,7 @@ class WidgetPublisher(
             repository.cellar.debounce(DELAY_MS).collectLatest { cellar ->
                 // A cellar that could not be read is not summarized as empty.
                 if (repository.loadFailed) return@collectLatest
-                val written = runCatching { store.write(WidgetSnapshot.of(cellar, year())) }.getOrDefault(false)
+                val written = runCatching { store.write(WidgetSnapshot.of(cellar, year(), place = { place(cellar, it) })) }.getOrDefault(false)
                 if (written) runCatching { onChanged() }
             }
         }
@@ -109,7 +114,8 @@ object WidgetData {
         if (saved != null && saved.year == year) return saved
         app.repository.loaded.first { it }
         if (app.repository.loadFailed) return saved
-        val fresh = WidgetSnapshot.of(app.repository.cellar.value, year)
+        val cellar = app.repository.cellar.value
+        val fresh = WidgetSnapshot.of(cellar, year, place = { cellar.displayLocation(it, app.resources) })
         withContext(Dispatchers.IO) { runCatching { store.write(fresh) } }
         return fresh
     }
@@ -117,6 +123,7 @@ object WidgetData {
     /** The sample cellar, for the widget picker's previews. */
     fun preview(context: Context): WidgetSnapshot {
         val year = LocalDate.now().year
-        return WidgetSnapshot.of(SampleData.cellar(year = year, labels = sampleLabels(context.resources)), year)
+        val cellar = SampleData.cellar(year = year, labels = sampleLabels(context.resources))
+        return WidgetSnapshot.of(cellar, year, place = { cellar.displayLocation(it, context.resources) })
     }
 }

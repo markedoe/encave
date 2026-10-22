@@ -947,6 +947,8 @@ struct JoinDeviceView: View {
                 } footer: {
                     if replace {
                         Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
+                    } else if model.cellar.containsSample {
+                        Text("Both cellars are put together. The sample cellar is removed first.")
                     } else {
                         Text("Both cellars are put together.")
                     }

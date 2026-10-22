@@ -451,6 +451,46 @@
         }
       }
     },
+    "%lld bottles stay in your cellar without a place.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle stays in your cellar without a place."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles stay in your cellar without a place."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille reste dans votre cave sans emplacement."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles restent dans votre cave sans emplacement."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld devices": {
       "localizations": {
         "fr": {
@@ -1221,12 +1261,12 @@
         }
       }
     },
-    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too.": {
+    "A NAS (Synology, QNAP), Nextcloud, pCloud and many other services offer WebDAV. Enter the folder's address, for example https://…/remote.php/dav/files/username/Encave for Nextcloud or https://webdav.pcloud.com/Encave for pCloud, with a username and an app password if the service offers one. Encave creates the folder if needed and checks that it can write there. Only encrypted files are stored in it. The username and password stay in the Keychain on this device: the other devices receive only the address, and show **Sign in to this WebDAV folder** until you enter a login on them too. If the server later refuses the login (a changed password), the device shows it again at once.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants."
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants. Si le serveur refuse ensuite les identifiants (un mot de passe changé), l’appareil l’affiche de nouveau aussitôt."
           }
         }
       }
@@ -2651,6 +2691,16 @@
         }
       }
     },
+    "Both cellars are put together. The sample cellar is removed first.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les deux caves sont réunies. La cave d’exemple est d’abord supprimée."
+          }
+        }
+      }
+    },
     "Both devices then show the same 6 digits and ask if they match. Check them before answering **They Match**: different codes mean another device is in between, so answer **No**. This is what keeps your cellar private, even on a shared network.": {
       "localizations": {
         "fr": {
@@ -3431,12 +3481,12 @@
         }
       }
     },
-    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** keeps its bottles in your cellar without a place; **Undo** brings the rack back.": {
+    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** asks first, saying how many bottles it holds; they stay in your cellar without a place, and **Undo** brings the rack back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** garde ses bouteilles dans votre cave sans place ; **Annuler** rétablit le casier."
+            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans place, et **Annuler** rétablit le casier."
           }
         }
       }
@@ -4041,6 +4091,16 @@
         }
       }
     },
+    "Delete Rack…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le casier…"
+          }
+        }
+      }
+    },
     "Delete Search": {
       "localizations": {
         "fr": {
@@ -4131,12 +4191,12 @@
         }
       }
     },
-    "Delete this rack?": {
+    "Delete “%@”?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer ce casier ?"
+            "value": "Supprimer « %@ » ?"
           }
         }
       }
@@ -6367,6 +6427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Elle apparaît en premier parmi les filtres, à portée d’un toucher."
+          }
+        }
+      }
+    },
+    "It holds no bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il ne contient aucune bouteille."
           }
         }
       }
@@ -10201,12 +10271,12 @@
         }
       }
     },
-    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, places read like **Shelf B, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
+    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les places se lisent comme **Étagère B, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
           }
         }
       }
@@ -10811,22 +10881,22 @@
         }
       }
     },
-    "Shelf %@, %lld": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Étagère %@, %lld"
-          }
-        }
-      }
-    },
     "Shelf %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Étagère %lld"
+          }
+        }
+      }
+    },
+    "Shelf %lld, %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étagère %lld, %lld"
           }
         }
       }
@@ -14051,12 +14121,12 @@
         }
       }
     },
-    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking.": {
+    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking. With Combine, the sample cellar is removed first: it is never sent to the other devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander."
+            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander. Avec Réunir, la cave d’exemple est d’abord supprimée : elle n’est jamais envoyée aux autres appareils."
           }
         }
       }
