@@ -17,7 +17,7 @@ struct SettingsView: View {
     @State private var restoreSource: RestoreSource?
     @State private var remindersOn = Reminders.isEnabled
     #if os(macOS)
-    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = MenuBarSetting.defaultValue
+    @Bindable private var menuBar = DefaultsFlag.menuBar
     #endif
     @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     @State private var remindersRefused = false
@@ -104,7 +104,7 @@ struct SettingsView: View {
 
             #if os(macOS)
             Section {
-                Toggle(isOn: $showsMenuBarExtra) {
+                Toggle(isOn: $menuBar.isOn) {
                     Label("Show Tonight in the Menu Bar", systemImage: "menubar.arrow.up.rectangle")
                 }
             } footer: {

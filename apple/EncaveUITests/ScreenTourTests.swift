@@ -31,8 +31,9 @@ final class ScreenTourTests: XCTestCase {
         step = 0
         continueAfterFailure = true
         app = XCUIApplication()
-        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
-                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"]
+        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL",
+                               "--sample-data"]
         app.launch()
         guard app.horizontalSizeClassIsCompact else { return }
         openSection(0, "cellar")
@@ -56,8 +57,9 @@ final class ScreenTourTests: XCTestCase {
         step = 0
         continueAfterFailure = true
         app = XCUIApplication()
-        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
-                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+                               "--sample-data"]
         app.launch()
         guard app.horizontalSizeClassIsCompact else { return }
         openSection(0, "cellar")
@@ -113,8 +115,10 @@ final class ScreenTourTests: XCTestCase {
         step = 0
         continueAfterFailure = true
         app = XCUIApplication()
-        app.launchArguments = ["--sample-data", "-AppleLanguages", "(\(language))",
-                               "-AppleLocale", language == "fr" ? "fr_FR" : "en_US"]
+        // --sample-data last: on the Mac, AppKit takes "--sample-data -AppleLanguages" for
+        // a setting and opens the word after it as a document, without a window.
+        app.launchArguments = ["-AppleLanguages", "(\(language))",
+                               "-AppleLocale", language == "fr" ? "fr_FR" : "en_US", "--sample-data"]
         app.launch()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20))
         #if os(macOS)

@@ -18,11 +18,11 @@ struct MacRoot: View {
     @State private var bottle: UUID?
     @State private var columns: NavigationSplitViewVisibility = .all
     @State private var deletingRackID: UUID?
-    @AppStorage(CellarLayout.key) private var showsTable = false
+    private var layout = DefaultsFlag.cellarTable
 
     var body: some View {
         Group {
-            if destination == .cellar && showsTable {
+            if destination == .cellar && layout.isOn {
                 // The table needs the width: sidebar, then the table with the wine
                 // in an inspector.
                 NavigationSplitView(columnVisibility: $columns) {
