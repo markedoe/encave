@@ -279,6 +279,7 @@
     <string name="settings_backup_now">Sauvegarder maintenant</string>
     <string name="settings_backing_up">Sauvegarde…</string>
     <string name="settings_backup_now_body">Un fichier ZIP avec toute votre cave, ses photos et ses documents, à garder en lieu sûr</string>
+    <string name="settings_reading_backup">Lecture de la sauvegarde…</string>
     <string name="versions_title">Versions précédentes</string>
     <string name="settings_versions_body">Votre cave telle qu’elle était ces derniers jours et semaines, gardée sur cet appareil</string>
     <string name="settings_weekly_backup">Sauvegarde hebdomadaire sur cet appareil</string>
@@ -289,7 +290,7 @@
     <string name="settings_restore_latest_body">Votre cave telle qu’Encave l’a gardée en dernier, avant que le fichier ne puisse plus être lu</string>
     <string name="versions_empty_title">Pas encore de version précédente</string>
     <string name="versions_empty_body">Encave garde une copie de votre cave chaque jour où elle change. La première apparaîtra demain.</string>
-    <string name="versions_footer">Une copie de votre cave est gardée chaque jour où elle change : une par jour pour les 7 derniers jours, puis une par semaine pendant 4 semaines. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles.</string>
+    <string name="versions_footer">Une copie de votre cave est gardée chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles.</string>
     <string name="restore_title_version">Version précédente</string>
     <string name="restore_title_backup">Sauvegarde</string>
     <string name="restore_saved_on">Enregistrée le</string>
@@ -311,11 +312,12 @@
     <string name="restore_files_included">Photos et documents inclus</string>
     <string name="restore_add">Ajouter ce qui manque</string>
     <string name="restore_replace">Remplacer cette cave</string>
-    <string name="restore_footer">Ajouter ce qui manque ajoute les vins, bouteilles, casiers et entrées du Journal absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde. Vous pouvez annuler juste après.</string>
+    <string name="restore_footer">Ajouter ce qui manque ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde ; vos réglages restent tels quels. Vous pouvez annuler juste après.</string>
     <string name="restore_replace_title">Remplacer cette cave ?</string>
     <string name="restore_replace_body">Votre cave devient exactement comme dans cette sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après.</string>
     <string name="restore_replace_body_devices">Votre cave devient exactement comme dans cette sauvegarde, sur cet appareil et sur les autres appareils synchronisés avec lui : ce qui n’y est pas y est aussi supprimé. Vous pouvez annuler juste après.</string>
     <string name="msg_restored">Cave restaurée depuis la sauvegarde</string>
+    <string name="msg_undo_restore_too_late">Pas annulé : la cave a changé depuis la restauration.</string>
     <string name="msg_backup_saved">Sauvegarde enregistrée</string>
     <string name="err_backup_failed">La sauvegarde n’a pas pu être faite. Vérifiez qu’il reste assez d’espace libre sur cet appareil, puis réessayez.</string>
     <string name="err_version_unreadable">Cette version n’a pas pu être lue.</string>
@@ -672,15 +674,15 @@
     <string name="help_data_sync_title">La synchronisation n’est pas une sauvegarde</string>
     <string name="help_data_sync">La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était.</string>
     <string name="help_data_versions_title">Versions précédentes</string>
-    <string name="help_data_versions">Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une par jour pour les 7 derniers jours, puis une par semaine pendant 4 semaines. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle.</string>
+    <string name="help_data_versions">Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant, même si vous n’avez pas ouvert Encave depuis longtemps. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle.</string>
     <string name="help_data_backup_title">Sauvegarder maintenant</string>
-    <string name="help_data_backup">**Sauvegarder maintenant** enregistre une sauvegarde de toute votre cave, avec ses photos et ses documents, où vous voulez : un dossier de cet appareil, une clé USB ou un stockage en ligne. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr.</string>
+    <string name="help_data_backup">**Sauvegarder maintenant** enregistre une sauvegarde de toute votre cave, avec ses photos et ses documents, où vous le choisissez : un dossier de cet appareil, une clé USB ou un stockage en ligne. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète.</string>
     <string name="help_data_contents_title">Ce que contient la sauvegarde</string>
     <string name="help_data_contents">**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un appareil Android, un iPhone, un iPad ou un Mac se restaure sur chacun d’eux.</string>
     <string name="help_data_weekly_title">Sauvegarde hebdomadaire sur cet appareil</string>
-    <string name="help_data_weekly">Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine et garde les deux dernières dans **Download/Encave**, que l’app Fichiers affiche ; elles y restent si Encave est supprimé. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps.</string>
+    <string name="help_data_weekly">Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine et garde les deux dernières dans **Download/Encave**, que l’app Fichiers affiche ; elles y restent si Encave est supprimé. Une fois Encave réinstallé, il ne peut plus supprimer celles qu’il avait faites : supprimez-les dans l’app Fichiers quand vous n’en avez plus besoin. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps.</string>
     <string name="help_data_restore_title">Restaurer</string>
-    <string name="help_data_restore">Choisissez une version précédente, ou **Importer une sauvegarde ou un fichier CSV** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers et entrées du Journal que vous n’avez plus, sans rien changer d’autre. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après.</string>
+    <string name="help_data_restore">Choisissez une version précédente, ou **Importer une sauvegarde ou un fichier CSV** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis.</string>
     <string name="help_data_devices_title">La restauration et vos autres appareils</string>
     <string name="help_data_devices">Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais.</string>
     <string name="help_data_csv_title">Tableur</string>
@@ -1193,6 +1195,11 @@
     <string name="action_select_all">Tout sélectionner</string>
     <string name="action_deselect_all">Tout désélectionner</string>
     <string name="reserve_body_plural">Les bouteilles restent à leur place mais ne sont plus proposées pour ce soir.</string>
+    <plurals name="msg_backup_saved_without">
+        <item quantity="one">Sauvegarde enregistrée, sans %d photo ou document : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.</item>
+        <item quantity="many">Sauvegarde enregistrée, sans %d photos ou documents : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.</item>
+        <item quantity="other">Sauvegarde enregistrée, sans %d photos ou documents : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.</item>
+    </plurals>
     <plurals name="bottle_count">
         <item quantity="one">%d bouteille</item>
         <item quantity="many">%d bouteilles</item>
