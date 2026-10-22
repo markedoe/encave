@@ -635,9 +635,9 @@
     <string name="help_tonight_title">Ce soir et fenêtres de dégustation</string>
     <string name="help_tonight_summary">Quand chaque vin est à son meilleur.</string>
     <string name="help_tonight_maturity_title">Maturité</string>
-    <string name="help_tonight_maturity">Chaque vin est **à garder**, **prêt**, **à boire bientôt** (dernière année de sa fenêtre) ou **après l’apogée**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur.</string>
+    <string name="help_tonight_maturity">Chaque vin est **À garder**, **Prêt à boire**, **À boire bientôt** (dernière année de sa fenêtre) ou **Après l’apogée**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur. Un vin sans fenêtre de dégustation affiche **Pas de fenêtre de dégustation** et passe en dernier dans Ce soir : fixez sa fenêtre sur sa fiche.</string>
     <string name="help_tonight_suggestions_title">Suggestions</string>
-    <string name="help_tonight_suggestions">Ce soir montre d’abord les bouteilles à boire bientôt. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi.</string>
+    <string name="help_tonight_suggestions">En haut, **Ce soir, pourquoi pas…** propose une bouteille prête ; **Surprenez-moi** en choisit une autre. En dessous, les bouteilles à boire bientôt passent en premier ; maintenez-en une appuyée pour la boire. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi.</string>
     <string name="help_tonight_serving">La fiche de chaque vin propose une température de service et, pour les rouges jeunes et corsés, une durée de carafage.</string>
     <string name="help_drinking_title">Boire une bouteille</string>
     <string name="help_drinking_summary">Gardez la trace de ce que vous avez ouvert et de ce que vous en avez pensé.</string>
@@ -650,7 +650,8 @@
     <string name="help_journal_summary">Les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, dans un seul carnet.</string>
     <string name="help_journal_diary">Le Journal liste tout ce que vous avez goûté, du plus récent au plus ancien et par mois. Chaque entrée dit d’où elle vient : **De ma cave** pour une bouteille que vous avez ouverte, **Goûté ailleurs** et le lieu pour un vin bu au restaurant, chez des amis ou dans un salon.</string>
     <string name="help_journal_tags">Les tags regroupent les vins goûtés ailleurs à votre façon : idées cadeaux, pour l’été, à regoûter. Touchez un tag pour le choisir ou tapez-en un nouveau ; ceux déjà utilisés sont proposés. Dans le Journal, ils suivent les filtres.</string>
-    <string name="help_journal_list">Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu. Quand vous l’achetez, balayez-le vers la droite (**Ajouter à la cave**) : il quitte la liste une fois les bouteilles ajoutées.</string>
+    <string name="help_journal_list">Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu, ou balayez-le vers la gauche. Quand vous l’achetez, balayez-le vers la droite (**Ajouter à la cave**) : une fois les bouteilles ajoutées, il quitte la liste et reste dans le Journal marqué **Acheté**.</string>
+    <string name="help_journal_insights">**Statistiques**, dans la barre du haut du Journal, montre votre cave en chiffres : sa valeur, quoi boire et quand, votre année en vin et le rythme pour boire vos bouteilles avant la fin de leur fenêtre.</string>
     <string name="help_journal_not_cellar_title">Hors de la cave</string>
     <string name="help_journal_not_cellar">Les vins goûtés ailleurs ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans les casiers ni dans Ce soir.</string>
     <string name="help_ai_title">Configurer l’IA</string>
@@ -662,7 +663,7 @@
     <string name="help_ai_check_title">Vérifier la clé</string>
     <string name="help_ai_check">Touchez **Vérifier la clé et charger les modèles** : l’app demande au fournisseur les modèles accessibles avec votre clé et remplit le menu. Choisissez un modèle qui lit les images.</string>
     <string name="help_ai_local_title">Serveur local</string>
-    <string name="help_ai_local">Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple `http://192.0.2.10:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.</string>
+    <string name="help_ai_local">Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple `http://192.0.2.10:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.</string>
     <string name="help_ai_url_title">Adresse du serveur</string>
     <string name="help_ai_url">Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine.</string>
     <string name="help_ai_sent_title">Ce qui est envoyé</string>
@@ -688,8 +689,8 @@
     <string name="help_privacy_title">Confidentialité</string>
     <string name="help_privacy_summary">Votre cave reste la vôtre.</string>
     <string name="help_privacy_1">Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité.</string>
-    <string name="help_privacy_2">La synchronisation entre vos appareils et avec les personnes qui partagent votre cave est chiffrée de bout en bout : un relais ou un dossier WebDAV qui stocke les modifications ne peut jamais les lire.</string>
-    <string name="help_privacy_3">En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher.</string>
+    <string name="help_privacy_2">La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via un dossier WebDAV ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire.</string>
+    <string name="help_privacy_3">En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête.</string>
     <string name="help_privacy_4">Encave est open source : chacun peut vérifier ce que fait l’app.</string>
     <string name="settings_devices">Appareils</string>
     <string name="settings_devices_summary">La même cave sur vos autres appareils</string>
@@ -927,7 +928,7 @@
     <string name="reminders_now_ready">Désormais prêtes : %1$d</string>
     <string name="reminders_start_with">Commencez par %1$s.</string>
     <string name="reminders_delivery_title">Livraison prévue aujourd’hui</string>
-    <string name="help_tonight_reminders">Activez **Rappels** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée, et une autre arrive le jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil.</string>
+    <string name="help_tonight_reminders">Activez **Rappels** dans les réglages : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil.</string>
     <string name="shortcut_scan">Scanner une bouteille</string>
     <string name="shortcut_tonight">Que boire ce soir</string>
     <string name="action_select_wines">Sélectionner des vins</string>
@@ -1022,7 +1023,7 @@
     <string name="reserved_for">Gardée pour %1$s</string>
     <string name="msg_reservation_removed">Réservation retirée</string>
     <string name="help_tonight_occasion_title">Garder des bouteilles pour une occasion</string>
-    <string name="help_tonight_occasion">Sur une bouteille, dans la page d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible.</string>
+    <string name="help_tonight_occasion">Dans le menu d’une bouteille, sur la fiche d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible. Pour garder plusieurs vins d’un coup, sélectionnez-les dans la Cave.</string>
     <string name="settings_web_search">Recherche web</string>
     <string name="web_search_service">Service de recherche</string>
     <string name="help_field_web_search_service">Le moteur qui cherche un vin sur le web quand vous touchez Chercher en ligne.</string>
@@ -1077,13 +1078,13 @@
     <string name="help_web_off_title">Désactivée par défaut</string>
     <string name="help_web_off">Rien n’est cherché en ligne tant que vous n’avez pas choisi un service dans **Réglages › Recherche web**.</string>
     <string name="help_web_service_title">Choisir un service</string>
-    <string name="help_web_service">**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080`. Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier.</string>
+    <string name="help_web_service">**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier.</string>
     <string name="help_web_search_title">Chercher en ligne</string>
-    <string name="help_web_search">Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur.</string>
+    <string name="help_web_search">Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur. Maintenez le producteur ou l’appellation appuyé sur la fiche d’un vin pour le chercher seul sur le Web.</string>
     <string name="help_web_price_title">Prix actuel</string>
-    <string name="help_web_price">Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**.</string>
+    <string name="help_web_price">Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**.</string>
     <string name="help_web_sent_title">Ce qui est envoyé</string>
-    <string name="help_web_sent">Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, et pour un prix le format de la bouteille et le mot « prix ». Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est chiffrée avec le Keystore Android sur cet appareil.</string>
+    <string name="help_web_sent">Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est chiffrée avec le Keystore Android sur cet appareil.</string>
     <string name="action_save_search">Enregistrer cette recherche…</string>
     <string name="save_search_title">Enregistrer cette recherche</string>
     <string name="save_search_body">Elle apparaît en premier parmi les filtres, à portée d’un toucher.</string>

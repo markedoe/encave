@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.EventRepeat
 import androidx.compose.material.icons.outlined.Restore
@@ -146,6 +147,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_journal_filters, R.string.help_journal_filters_title, Icons.Outlined.FilterList),
                     HelpSection(R.string.help_journal_tags, R.string.discovery_tags),
                     HelpSection(R.string.help_journal_list, R.string.discovery_shopping_list, Icons.Outlined.ShoppingCart),
+                    HelpSection(R.string.help_journal_insights, R.string.action_insights, Icons.Outlined.Insights),
                     HelpSection(R.string.help_journal_not_cellar, R.string.help_journal_not_cellar_title),
                 ),
             ),

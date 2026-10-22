@@ -636,9 +636,9 @@
     <string name="help_tonight_title">Tonight and drinking windows</string>
     <string name="help_tonight_summary">When each wine is at its best.</string>
     <string name="help_tonight_maturity_title">Maturity</string>
-    <string name="help_tonight_maturity">Each wine is **kept for later**, **ready**, **to drink soon** (last year of its window) or **past its peak**. The label and the symbol always say it, not only the color.</string>
+    <string name="help_tonight_maturity">Each wine is **Keep for later**, **Ready to drink**, **Drink soon** (last year of its window) or **Past its peak**. The words and the symbol always say it, not only the color. A wine without a drinking window shows **No drinking window** and comes last in Tonight: set its window on its page.</string>
     <string name="help_tonight_suggestions_title">Suggestions</string>
-    <string name="help_tonight_suggestions">Tonight shows the bottles to drink soon first. Choose a dish to see the wines from your cellar that go with it, and why.</string>
+    <string name="help_tonight_suggestions">At the top, **Tonight, why not…** suggests one bottle that is ready; **Surprise me** picks another. Below, the bottles to drink soon come first; touch and hold one to drink it. Choose a dish to see the wines from your cellar that go with it, and why.</string>
     <string name="help_tonight_serving">Each wine page suggests a serving temperature and, for young full-bodied reds, how long to decant.</string>
     <string name="help_drinking_title">Drinking a bottle</string>
     <string name="help_drinking_summary">Keep track of what you opened and what you thought.</string>
@@ -651,7 +651,8 @@
     <string name="help_journal_summary">Bottles opened from your cellar and wines tasted elsewhere, in one diary.</string>
     <string name="help_journal_diary">The Journal lists everything you tasted, newest first and by month. Each entry says where it comes from: **From my cellar** for a bottle you opened, **Tasted elsewhere** and the place for a wine you had in a restaurant, at friends’ or at a fair.</string>
     <string name="help_journal_tags">Tags group wines tasted elsewhere your way: gift ideas, for summer, to try again. Tap a tag to select it, or type a new one; tags you used before are suggested. In the Journal, their chips come after the filters.</string>
-    <string name="help_journal_list">Turn on **To buy** to add the wine to your shopping list, with the price you saw. When you buy it, swipe it to the right (**Add to cellar**): it leaves the list once the bottles are added.</string>
+    <string name="help_journal_list">Turn on **To buy** to add the wine to your shopping list, with the price you saw, or swipe it to the left. When you buy it, swipe it to the right (**Add to cellar**): once the bottles are added, it leaves the list and stays in the Journal marked **Bought**.</string>
+    <string name="help_journal_insights">**Insights**, in the top bar of the Journal, shows your cellar in figures: its value, what to drink and when, your year in wine and the pace to drink your bottles before their windows close.</string>
     <string name="help_journal_not_cellar_title">Not in the cellar</string>
     <string name="help_journal_not_cellar">Wines tasted elsewhere are not counted as bottles in your cellar and do not appear in racks or Tonight.</string>
     <string name="help_ai_title">Setting up AI</string>
@@ -663,7 +664,7 @@
     <string name="help_ai_check_title">Check the key</string>
     <string name="help_ai_check">Tap **Check key and load models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.</string>
     <string name="help_ai_local_title">Local server</string>
-    <string name="help_ai_local">Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, then tap **Connect and load models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On a phone or tablet, enter the computer’s IP address on your network (for example `http://192.0.2.10:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.</string>
+    <string name="help_ai_local">Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, or **Other server (OpenAI-compatible)** for any server with the same API, then tap **Connect and load models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On a phone or tablet, enter the computer’s IP address on your network (for example `http://192.0.2.10:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.</string>
     <string name="help_ai_url_title">Server URL</string>
     <string name="help_ai_url">Leave it empty to use the provider’s usual address. Change it only if the provider gives you another one, for example for its China region.</string>
     <string name="help_ai_sent_title">What is sent</string>
@@ -689,8 +690,8 @@
     <string name="help_privacy_title">Privacy</string>
     <string name="help_privacy_summary">Your cellar stays yours.</string>
     <string name="help_privacy_1">Your cellar is stored only on your devices. There is no account, no tracking and no advertising.</string>
-    <string name="help_privacy_2">Sync between your devices and with the people you share a cellar with is encrypted from end to end: a relay or WebDAV folder that stores the changes can never read them.</string>
-    <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.</string>
+    <string name="help_privacy_2">Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them.</string>
+    <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.</string>
     <string name="help_privacy_4">Encave is open source: anyone can check what the app does.</string>
     <string name="settings_devices">Devices</string>
     <string name="settings_devices_summary">The same cellar on your other devices</string>
@@ -928,7 +929,7 @@
     <string name="reminders_now_ready">Now ready: %1$d</string>
     <string name="reminders_start_with">Start with %1$s.</string>
     <string name="reminders_delivery_title">Delivery expected today</string>
-    <string name="help_tonight_reminders">Turn on **Reminders** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak, and another comes on the day bottles on order are expected. It is worked out on this device.</string>
+    <string name="help_tonight_reminders">Turn on **Reminders** in Settings: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device.</string>
     <string name="shortcut_scan">Scan a bottle</string>
     <string name="shortcut_tonight">What to open tonight</string>
     <string name="action_select_wines">Select wines</string>
@@ -1023,7 +1024,7 @@
     <string name="reserved_for">Kept for %1$s</string>
     <string name="msg_reservation_removed">Reservation removed</string>
     <string name="help_tonight_occasion_title">Keeping bottles for an occasion</string>
-    <string name="help_tonight_occasion">On a bottle in a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back.</string>
+    <string name="help_tonight_occasion">In the menu of a bottle on a wine’s page, choose **Keep for an occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free this bottle** gives it back. To keep several wines at once, select them in the Cellar.</string>
     <string name="settings_web_search">Web search</string>
     <string name="web_search_service">Search service</string>
     <string name="help_field_web_search_service">The search engine that looks up a wine on the web when you tap Search online.</string>
@@ -1078,13 +1079,13 @@
     <string name="help_web_off_title">Off by default</string>
     <string name="help_web_off">Nothing is looked up online until you choose a service in **Settings › Web search**.</string>
     <string name="help_web_service_title">Choose a service</string>
-    <string name="help_web_service">**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080`. Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test search** to check.</string>
+    <string name="help_web_service">**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test search** to check.</string>
     <string name="help_web_search_title">Search online</string>
-    <string name="help_web_search">On a wine’s page, or while adding or editing a wine, tap **Search online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.</string>
+    <string name="help_web_search">On a wine’s page, or while adding or editing a wine, tap **Search online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser. Touch and hold the producer or the appellation on a wine’s page to search the web for it alone.</string>
     <string name="help_web_price_title">Current price</string>
-    <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
+    <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size when it is not 75 cl, and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
     <string name="help_web_sent_title">What is sent</string>
-    <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.</string>
+    <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, with the word “wine” (“bottle” for pictures); for a price, the word “price” and the bottle size when it is not 75 cl. You see them and can change them first. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.</string>
     <string name="action_save_search">Save this search…</string>
     <string name="save_search_title">Save this search</string>
     <string name="save_search_body">It appears first among the filters, one tap away.</string>
