@@ -881,7 +881,7 @@ FR = {
     'Choose a rack to see exactly where the bottles are, or note where they are kept.': 'Choisissez un casier pour savoir exactement où sont les bouteilles, ou indiquez où elles sont rangées.',
     'Choose it to add bottles without typing the wine again.': 'Choisissez-le pour ajouter des bouteilles sans ressaisir le vin.',
     'Color, intensity, clarity.': 'Couleur, intensité, limpidité.',
-    'Counted from the left. Places are numbered 1, 2, 3…': 'Comptées depuis la gauche. Les emplacements sont numérotés 1, 2, 3…',
+    'Counted from the left. Places are numbered 1, 2, 3…': 'Comptées depuis la gauche. Les places sont numérotées 1, 2, 3…',
     'Counted from the top. Rows are lettered A, B, C…': 'Comptées depuis le haut. Les rangées sont nommées A, B, C…',
     'Create a key': 'Créer une clé',
     'Create an API key': 'Créer une clé d’API',
@@ -1438,8 +1438,8 @@ PLURALS = {
     "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.": (
         ("Holds %lld bottle. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.",
          "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."),
-        ("Contient %lld bouteille. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond.",
-         "Contient %lld bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond.")),
+        ("Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle du fond.",
+         "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle du fond.")),
     "%lld bottles are in places you removed": (
         ("%lld bottle is in a place you removed", "%lld bottles are in places you removed"),
         ("%lld bouteille est dans un emplacement supprimé", "%lld bouteilles sont dans des emplacements supprimés")),

@@ -567,12 +567,12 @@
     <string name="help_field_rack_name">Un nom que vous reconnaîtrez : mur gauche de la cave, cave de la cuisine…</string>
     <string name="help_kind_footer">Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin, des casiers en losange.</string>
     <string name="help_field_rows">Comptées depuis le haut. Les rangées sont nommées A, B, C…</string>
-    <string name="help_field_columns">Comptées depuis la gauche. Les emplacements sont numérotés 1, 2, 3…</string>
+    <string name="help_field_columns">Comptées depuis la gauche. Les places sont numérotées 1, 2, 3…</string>
     <string name="help_field_grid_depth">Les casiers profonds accueillent une deuxième bouteille derrière la première.</string>
     <string name="help_field_staggered_depth">Combien de bouteilles tiennent l’une derrière l’autre dans chaque case.</string>
     <string name="help_field_shelf_depth">Combien de bouteilles tiennent l’une derrière l’autre sur une étagère.</string>
     <string name="help_field_bin">Un losange d’environ 30 cm contient une dizaine de bouteilles standard.</string>
-    <string name="help_rack_holds">Contient %1$d bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle de derrière.</string>
+    <string name="help_rack_holds">Contient %1$d bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle de derrière.</string>
     <string name="help_field_discovery_place">Où vous l’avez bu, pour retrouver le vin plus tard.</string>
     <string name="help_where_footer">La recherche du Journal cherche aussi dans le lieu, les notes et les tags.</string>
     <string name="help_tags_footer">Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal.</string>

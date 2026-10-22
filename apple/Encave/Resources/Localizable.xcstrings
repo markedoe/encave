@@ -3686,7 +3686,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comptées depuis la gauche. Les emplacements sont numérotés 1, 2, 3…"
+            "value": "Comptées depuis la gauche. Les places sont numérotées 1, 2, 3…"
           }
         }
       }
@@ -5737,13 +5737,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
+                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle du fond."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
+                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle du fond."
                 }
               }
             }
