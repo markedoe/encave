@@ -2,6 +2,7 @@ package app.encave.data
 
 import android.content.Context
 import androidx.core.content.edit
+import app.encave.core.DishCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,7 +60,20 @@ class Preferences(context: Context) {
         notifyChanges.value = enabled
     }
 
+    private val dish = MutableStateFlow(
+        DishCategory.entries.firstOrNull { it.raw == prefs.getString(KEY_PAIRING_DISH, null) } ?: DishCategory.RedMeat,
+    )
+
+    /** The dish last chosen in food pairing (red meat at first). */
+    val pairingDish: StateFlow<DishCategory> = dish.asStateFlow()
+
+    fun setPairingDish(value: DishCategory) {
+        prefs.edit { putString(KEY_PAIRING_DISH, value.raw) }
+        dish.value = value
+    }
+
     private companion object {
+        const val KEY_PAIRING_DISH = "pairing_dish"
         const val KEY_SYNC_FREQUENCY = "sync_frequency"
         const val KEY_SYNC_NOTIFICATIONS = "sync_notifications"
         const val KEY_STUDIO_LOOK = "studio_look"
