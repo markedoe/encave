@@ -11,14 +11,23 @@ import AppKit
 struct WineExploreView: View {
     @Environment(CellarModel.self) private var model
     let attribute: WineAttribute
+    /// The wine whose page this was opened from: shown first, without a link back to itself.
+    var currentWineID: UUID?
 
     var body: some View {
-        let groups = model.cellar.wines(sharing: attribute)
+        let all = model.cellar.wines(sharing: attribute)
+        let current = all.first { $0.wine.id == currentWineID }
+        let groups = all.filter { $0.wine.id != currentWineID }
         let bottleCount = groups.reduce(0) { $0 + $1.count }
         List {
+            if let current {
+                Section("This wine") {
+                    WineRow(group: current)
+                }
+            }
             if groups.isEmpty {
-                ContentUnavailableView("No wine in the cellar", systemImage: "wineglass",
-                                       description: Text("No bottle with this detail is left in the cellar or on order."))
+                ContentUnavailableView("No other wine in the cellar", systemImage: "wineglass",
+                                       description: Text("No other bottle with this detail is in the cellar or on order."))
                     .listRowBackground(Color.clear)
             } else {
                 Section {
@@ -31,7 +40,11 @@ struct WineExploreView: View {
                         .accessibilityIdentifier("explore.row")
                     }
                 } header: {
-                    Text("\(groups.count) wines") + Text(verbatim: " · ") + Text("\(bottleCount) bottles")
+                    if current != nil {
+                        Text("\(groups.count) other wines") + Text(verbatim: " · ") + Text("\(bottleCount) bottles")
+                    } else {
+                        Text("\(groups.count) wines") + Text(verbatim: " · ") + Text("\(bottleCount) bottles")
+                    }
                 }
             }
         }
@@ -109,8 +122,8 @@ extension WineAttribute {
     }
 }
 
-/// A detail of the wine's page that other wines can share: tap to list them.
-/// Touch and hold to copy, edit or search the web for it.
+/// A detail of the wine's page that other wines can share: tap to list them (or, when no
+/// other wine has it, to edit it). Touch and hold to copy, edit or search the web for it.
 struct ExploreDetailRow<Value: View>: View {
     @Environment(CellarModel.self) private var model
     let title: LocalizedStringKey
@@ -130,27 +143,41 @@ struct ExploreDetailRow<Value: View>: View {
     }
 
     var body: some View {
-        let count = model.cellar.wines(sharing: attribute).count
-        NavigationLink {
-            WineExploreView(attribute: attribute)
-        } label: {
-            LabeledContent {
-                VStack(alignment: .trailing, spacing: 2) {
-                    content
-                    // Only when other wines share it, so the tap is worth it before trying.
-                    if count > 1 {
-                        Text("\(count) wines")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        let sharing = model.cellar.wines(sharing: attribute)
+        let others = sharing.filter { $0.wine.id != wineID }.count
+        Group {
+            if others > 0 {
+                NavigationLink {
+                    WineExploreView(attribute: attribute, currentWineID: wineID)
+                } label: {
+                    LabeledContent {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            content
+                            Text("\(sharing.count) wines")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .multilineTextAlignment(.trailing)
+                    } label: {
+                        Text(title)
                     }
                 }
-                .multilineTextAlignment(.trailing)
-            } label: {
-                Text(title)
+                .accessibilityHint(attribute.hint)
+                .accessibilityIdentifier("detail.explore.\(attribute.identifier)")
+            } else {
+                // No other wine shares it: a list of this wine alone would lead nowhere.
+                EditDetailRow(hint: Text("Edits this detail of the wine.")) {
+                    model.sheet = .editWine(wineID: wineID, field: attribute.field)
+                } content: {
+                    LabeledContent {
+                        content.multilineTextAlignment(.trailing)
+                    } label: {
+                        Text(title)
+                    }
+                }
+                .accessibilityIdentifier("detail.edit.\(attribute.identifier)")
             }
         }
-        .accessibilityHint(attribute.hint)
-        .accessibilityIdentifier("detail.explore.\(attribute.identifier)")
         .contextMenu {
             DetailMenu(value: attribute.value,
                        onEdit: { model.sheet = .editWine(wineID: wineID, field: attribute.field) },

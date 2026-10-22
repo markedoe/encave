@@ -57,6 +57,8 @@ struct MacRoot: View {
             wine = id
             model.openWineRequest = nil
         }
+        // The selected wine was deleted: the first of the Cellar takes its place.
+        .replacingDeletedWine($wine, selectsFirst: destination == .cellar)
         .onChange(of: model.highlightedSlot) { _, slot in
             if let slot { destination = .rack(slot.rackID) }
         }
