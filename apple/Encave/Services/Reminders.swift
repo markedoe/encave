@@ -11,6 +11,12 @@ import UserNotifications
 enum Reminders {
     nonisolated static let enabledKey = "reminders.enabled"
     nonisolated static let identifier = "encave.monthly"
+    /// The digests of the next months: scheduled ahead, so they still come when the app
+    /// is not opened for a while (each opening schedules them again from the cellar).
+    nonisolated static let monthsAhead = 3
+    nonisolated static var monthlyIdentifiers: [String] {
+        [identifier] + (1..<monthsAhead).map { identifier + ".\($0)" }
+    }
     /// Tapping the notification opens Tonight.
     nonisolated static let tabKey = "tab"
     /// Tapping a delivery reminder opens the wine.
@@ -53,7 +59,7 @@ enum Reminders {
     static func disable() {
         UserDefaults.standard.set(false, forKey: enabledKey)
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        center.removePendingNotificationRequests(withIdentifiers: monthlyIdentifiers)
         Task { await removeDeliveries(center) }
     }
 
@@ -62,17 +68,28 @@ enum Reminders {
         center.removePendingNotificationRequests(withIdentifiers: pending.filter { $0.hasPrefix(deliveryPrefix) })
     }
 
-    /// Replaces the pending reminder with one for the first of next month, from the
-    /// cellar as it is now. Called when the app opens and after changes.
+    /// Replaces the pending reminders with ones for the first of the next months, from
+    /// the cellar as it is now. Called when the app opens and after changes.
     static func schedule(for cellar: Cellar) async {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        center.removePendingNotificationRequests(withIdentifiers: monthlyIdentifiers)
         await removeDeliveries(center)
         guard isEnabled else { return }
         await scheduleDeliveries(for: cellar, center: center)
         let calendar = Calendar.current
-        guard let next = calendar.nextDate(after: .now, matching: DateComponents(day: 1, hour: 10, minute: 0),
-                                           matchingPolicy: .nextTime) else { return }
+        var after = Date.now
+        for id in monthlyIdentifiers {
+            guard let next = calendar.nextDate(after: after, matching: DateComponents(day: 1, hour: 10, minute: 0),
+                                               matchingPolicy: .nextTime) else { return }
+            after = next
+            await scheduleDigest(for: cellar, at: next, identifier: id, center: center)
+        }
+    }
+
+    /// The digest of the first of one month, at 10:00.
+    private static func scheduleDigest(for cellar: Cellar, at next: Date, identifier id: String,
+                                       center: UNUserNotificationCenter) async {
+        let calendar = Calendar.current
         let digest = cellar.drinkingDigest(year: CellarYear.of(next))
         guard !digest.isEmpty else { return }
 
@@ -84,7 +101,7 @@ enum Reminders {
         content.threadIdentifier = identifier
         let trigger = UNCalendarNotificationTrigger(
             dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: next), repeats: false)
-        try? await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+        try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
     }
 
     /// One reminder per wine and expected day, at 10:00 on that day, counting the
