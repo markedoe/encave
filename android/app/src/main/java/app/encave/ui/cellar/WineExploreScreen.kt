@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -69,7 +70,7 @@ private val WineAttribute.rawValue: String
         is WineAttribute.Color -> color.raw
     }
 
-fun WineAttribute.route() = WineExploreRoute(kind.name, rawValue)
+fun WineAttribute.route(currentWineId: java.util.UUID? = null) = WineExploreRoute(kind.name, rawValue, currentWineId?.toString())
 
 fun WineExploreRoute.attribute(): WineAttribute? = when (ExploreKind.entries.firstOrNull { it.name == kind }) {
     ExploreKind.Producer -> WineAttribute.Producer(value)
@@ -130,7 +131,9 @@ fun WineAttribute.actionLabel(): String = stringResource(
 fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: WineExploreRoute) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val attribute = route.attribute()
-    val groups = attribute?.let { cellar.winesSharing(it) }.orEmpty()
+    val all = attribute?.let { cellar.winesSharing(it) }.orEmpty()
+    val current = all.firstOrNull { it.id.toString() == route.currentWineId }
+    val groups = all.filter { it !== current }
     val bottles = groups.sumOf { it.count }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
@@ -148,7 +151,7 @@ fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: W
         },
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
-        if (groups.isEmpty()) {
+        if (groups.isEmpty() && current == null) {
             EmptyState(
                 icon = Icons.Outlined.LocalBar,
                 title = stringResource(R.string.explore_empty_title),
@@ -158,11 +161,27 @@ fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: W
             return@Scaffold
         }
         LazyColumn(Modifier.fillMaxSize().testTag("explore.list"), contentPadding = padding) {
-            item {
-                SectionHeader(
-                    pluralStringResource(R.plurals.wine_count, groups.size, groups.size) + " · " +
-                        pluralStringResource(R.plurals.bottle_count, bottles, bottles),
-                )
+            if (current != null) {
+                item { SectionHeader(stringResource(R.string.explore_this_wine)) }
+                item(key = "current") {
+                    // Its own page is the one this list was opened from: back to it.
+                    WineGroupRow(current, cellar, viewModel.year, onClick = { navigator.back() }, modifier = Modifier.testTag("explore.current"))
+                }
+            }
+            if (groups.isEmpty()) {
+                item {
+                    Text(
+                        stringResource(R.string.explore_no_other),
+                        Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                item {
+                    val wines = if (current != null) pluralStringResource(R.plurals.other_wine_count, groups.size, groups.size)
+                    else pluralStringResource(R.plurals.wine_count, groups.size, groups.size)
+                    SectionHeader(wines + " · " + pluralStringResource(R.plurals.bottle_count, bottles, bottles))
+                }
             }
             items(groups, key = { it.id.toString() }) { group ->
                 WineGroupRow(

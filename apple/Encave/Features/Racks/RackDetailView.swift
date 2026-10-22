@@ -575,7 +575,7 @@ private struct BottleInCellRow: View {
                     }
                     Button("Attach a Document…", systemImage: "doc.badge.plus") { onAction(.documents(bottle, importing: true)) }
                     Divider()
-                    Button("Given away or broken", systemImage: "minus.circle", role: .destructive) { onAction(.remove(bottle)) }
+                    NoLongerInCellarButton { onAction(.remove(bottle)) }
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")
                         .labelStyle(.iconOnly)

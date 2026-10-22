@@ -23,7 +23,7 @@
     <string name="action_add_bottles">Add bottles</string>
     <string name="action_show_in_rack">Show in rack</string>
     <string name="action_move">Move</string>
-    <string name="action_mark_gone">Given away, sold or broken</string>
+    <string name="action_mark_gone">No longer in cellar</string>
     <string name="action_open_wine">Open</string>
     <string name="action_sort">Sort</string>
     <string name="action_clear_search">Clear search</string>
@@ -88,7 +88,7 @@
     <string name="explore_empty_title">No wine in the cellar</string>
     <string name="explore_empty_body">No bottle with this detail is left in the cellar or on order.</string>
     <string name="help_start_wine_title">A wine’s page</string>
-    <string name="help_start_wine">Tap a detail of a wine. Its style, producer, vintage, appellation, region, country, a grape or a tag lists the wines of your cellar that share it, with how many bottles; the other details open the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.</string>
+    <string name="help_start_wine">A wine’s page shows its bottles first: where each one is, and what you can do with it. Tap a detail of the wine: when other wines of your cellar share its style, producer, vintage, appellation, region, country, a grape or a tag, it lists them, with how many bottles; otherwise, and for the other details, it opens the wine to edit them. Touch and hold a detail to copy it, edit it or, for the producer and the appellation when web search is set up, search the web for it.</string>
     <string name="detail_window_now">Now</string>
     <string name="detail_window_description">Drinking window from %1$d to %2$d. %3$s.</string>
     <string name="detail_window_missing">Add a vintage or a drinking window to know when to open it.</string>
@@ -100,10 +100,6 @@
     <string name="non_vintage">Non-vintage</string>
     <string name="wine_not_found">Wine not found</string>
     <string name="unknown_wine">Unknown wine</string>
-    <string name="confirm_delete_wine_title">Delete this wine?</string>
-    <string name="confirm_delete_wine_body">This deletes every bottle of %1$s and its tastings.</string>
-    <string name="confirm_delete_bottle_title">Delete this bottle?</string>
-    <string name="confirm_delete_bottle_body">Use this for a bottle entered by mistake. To record that you opened it, use Drink.</string>
     <string name="field_name">Name</string>
     <string name="field_producer">Producer</string>
     <string name="field_vintage">Vintage</string>
@@ -591,7 +587,7 @@
     <string name="help_create_key">Create an API key</string>
     <string name="help_start_title">Getting started</string>
     <string name="help_start_summary">The four sections and how they work together.</string>
-    <string name="help_start_cellar">Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, and filter by style, grape or when to drink: the chips show only what your bottles have.</string>
+    <string name="help_start_cellar">Every bottle you keep, grouped by wine. Search by name, producer, region, grape or vintage, with several words if you like (“margaux 2015”), and filter by style, grape or when to drink: the chips show only what your bottles have.</string>
     <string name="help_start_racks">Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.</string>
     <string name="help_start_tonight">What to open now: bottles at their peak or to drink soon first, and ideas to match a dish.</string>
     <string name="help_start_journal">Your tasting diary: the bottles you opened from your cellar and the wines you tasted elsewhere, with your notes, your shopping list and insights.</string>
@@ -649,8 +645,8 @@
     <string name="help_drinking_drink">Swipe a wine to the right, use **Drink** on its page, or tap **Add a tasting** in the Journal and choose **A bottle from my cellar**. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.</string>
     <string name="help_drinking_note_title">Your note</string>
     <string name="help_drinking_note">Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal.</string>
-    <string name="help_drinking_gone_title">Given away, sold or broken</string>
-    <string name="help_drinking_gone">Use **Given away, sold or broken** for a bottle that left the cellar without being drunk by you.</string>
+    <string name="help_drinking_gone_title">No longer in the cellar</string>
+    <string name="help_drinking_gone">For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No longer in cellar** in its menu. For one entered by mistake, choose **Delete bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back.</string>
     <string name="help_journal_title">Journal and shopping list</string>
     <string name="help_journal_summary">Bottles opened from your cellar and wines tasted elsewhere, in one diary.</string>
     <string name="help_journal_diary">The Journal lists everything you tasted, newest first and by month. Each entry says where it comes from: **From my cellar** for a bottle you opened, **Tasted elsewhere** and the place for a wine you had in a restaurant, at friends’ or at a fair.</string>
@@ -950,7 +946,7 @@
     <string name="msg_bottles_gone">Bottles removed from the cellar: %1$d</string>
     <string name="msg_wines_deleted">Wines deleted: %1$d</string>
     <string name="help_racks_several_title">Several wines at once</string>
-    <string name="help_racks_several">In the Cellar list, choose **Select wines** in the sort menu (or touch and hold a wine, then **Select**), tick the wines, then place them in a rack, take them out of their places or delete them. **Undo** puts everything back.</string>
+    <string name="help_racks_several">In the Cellar list, choose **Select wines** in the sort menu (or touch and hold a wine, then **Select**) and tick the wines, or **Select all** for those the search and filters show. Then place them in a rack or delete them, or, under **More options**, take them out of their places, keep their bottles for an occasion or mark them as no longer in the cellar. **Undo** puts everything back.</string>
     <string name="action_check_rack">Check this rack</string>
     <string name="audit_hint">Tap each bottle you find in the rack.</string>
     <string name="audit_found">Found: %1$d of %2$d</string>
@@ -1187,6 +1183,17 @@
     <string name="help_journal_diary_title">One diary</string>
     <string name="help_journal_filters_title">Filters</string>
     <string name="help_journal_filters">The chips at the top show **All**, or only **From my cellar**, **Tasted elsewhere** or **To buy**. Search looks in the wines, notes, places and tags.</string>
+    <string name="action_mark_gone_detail">Given away, sold or broken</string>
+    <string name="action_delete_bottle">Delete bottle</string>
+    <string name="action_delete_bottle_detail">Entered by mistake</string>
+    <string name="detail_action_edit_detail">edit this detail</string>
+    <string name="explore_this_wine">This wine</string>
+    <string name="explore_no_other">No other wine in the cellar has this detail.</string>
+    <string name="search_no_suggestion">No wine in the cellar matches</string>
+    <string name="search_show_results">Show the results in the list</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_deselect_all">Deselect all</string>
+    <string name="reserve_body_plural">The bottles stay in their places but are no longer suggested for tonight.</string>
     <plurals name="bottle_count">
         <item quantity="one">%d bottle</item>
         <item quantity="other">%d bottles</item>
@@ -1194,6 +1201,10 @@
     <plurals name="wine_count">
         <item quantity="one">%d wine</item>
         <item quantity="other">%d wines</item>
+    </plurals>
+    <plurals name="other_wine_count">
+        <item quantity="one">%d other wine</item>
+        <item quantity="other">%d other wines</item>
     </plurals>
     <plurals name="bottles_added">
         <item quantity="one">%d bottle added</item>
