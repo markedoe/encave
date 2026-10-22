@@ -24,6 +24,32 @@ struct DiscoveryEditor: View {
     @State private var wantsToBuy = false
     @State private var loaded = false
     @State private var confirmingDelete = false
+    @State private var confirmingDiscard = false
+    /// The fields as they opened, to know whether something changed.
+    @State private var original: Fields?
+
+    /// What the form holds, compared with how it opened.
+    private struct Fields: Equatable {
+        var draft: WineDraft
+        var date: Date
+        var setting: Discovery.Setting?
+        var place: String
+        var rating: Int?
+        var note: String
+        var tags: [String]
+        var pendingTag: String
+        var price: Decimal?
+        var wantsToBuy: Bool
+        var photo: Bool
+    }
+
+    private var fields: Fields {
+        Fields(draft: draft, date: date, setting: setting, place: place, rating: rating, note: note, tags: tags,
+               pendingTag: pendingTag, price: price, wantsToBuy: wantsToBuy,
+               photo: newPhoto != nil || photoRemoved || scan.photo != nil)
+    }
+
+    private var isDirty: Bool { original.map { $0 != fields } ?? false }
 
     private var existing: Discovery? { discoveryID.flatMap { model.cellar.discoveries[$0] } }
 
@@ -113,8 +139,10 @@ struct DiscoveryEditor: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityIdentifier("sheet.cancel")
+                    Button("Cancel") {
+                        if isDirty { confirmingDiscard = true } else { dismiss() }
+                    }
+                    .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
@@ -128,6 +156,7 @@ struct DiscoveryEditor: View {
                     dismiss()
                 }
             }
+            .discardGuard(isDirty: isDirty, isAsking: $confirmingDiscard) { dismiss() }
             .onAppear(perform: load)
             .onChange(of: scan.matchedWine) { _, wine in
                 guard let wine else { return }
@@ -144,6 +173,7 @@ struct DiscoveryEditor: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
+        defer { original = fields }
         guard let discovery = existing, let wine = model.cellar.wines[discovery.wineID] else { return }
         draft = WineDraft(wine)
         date = discovery.date
