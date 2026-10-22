@@ -38,7 +38,7 @@
     <string name="action_clear_filters">Clear filters</string>
     <string name="action_change">Change</string>
     <string name="action_put_back">Put back in the cellar</string>
-    <string name="search_hint">Wine, producer, region, vintage</string>
+    <string name="search_hint">Wine, producer, region, grape, vintage</string>
     <string name="search_suggestions">Wines in your cellar</string>
     <string name="cellar_empty_title">Your cellar is empty</string>
     <string name="cellar_empty_body">Add the bottles you keep at home to know what you have, where it is and when to open it.</string>

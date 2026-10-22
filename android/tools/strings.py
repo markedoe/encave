@@ -48,7 +48,7 @@ S = [
  ("action_change", "Change", "Changer"),
  ("action_put_back", "Put back in the cellar", "Remettre en cave"),
 
- ("search_hint", "Wine, producer, region, vintage", "Vin, producteur, région, millésime"),
+ ('search_hint', 'Wine, producer, region, grape, vintage', 'Vin, producteur, région, cépage, millésime'),
  ("search_suggestions", "Wines in your cellar", "Vins de votre cave"),
  ("cellar_empty_title", "Your cellar is empty", "Votre cave est vide"),
  ("cellar_empty_body", "Add the bottles you keep at home to know what you have, where it is and when to open it.",

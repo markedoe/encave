@@ -37,7 +37,7 @@
     <string name="action_clear_filters">Retirer les filtres</string>
     <string name="action_change">Changer</string>
     <string name="action_put_back">Remettre en cave</string>
-    <string name="search_hint">Vin, producteur, région, millésime</string>
+    <string name="search_hint">Vin, producteur, région, cépage, millésime</string>
     <string name="search_suggestions">Vins de votre cave</string>
     <string name="cellar_empty_title">Votre cave est vide</string>
     <string name="cellar_empty_body">Ajoutez les bouteilles que vous gardez chez vous pour savoir ce que vous avez, où elles sont et quand les ouvrir.</string>

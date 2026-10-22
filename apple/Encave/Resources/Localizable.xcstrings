@@ -9281,12 +9281,12 @@
         }
       }
     },
-    "Reads the label on this device to fill in the name and vintage.": {
+    "Reads the label on this device to fill in the name, producer, vintage and appellation.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lit l’étiquette sur cet appareil pour remplir le nom et le millésime."
+            "value": "Lit l’étiquette sur cet appareil pour remplir le nom, le producteur, le millésime et l’appellation."
           }
         }
       }
@@ -12301,12 +12301,12 @@
         }
       }
     },
-    "The text is read on this device to fill in the name, producer and vintage.": {
+    "The text is read on this device to fill in the name, producer, vintage and appellation.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le texte est lu sur cet appareil pour remplir le nom, le producteur et le millésime."
+            "value": "Le texte est lu sur cet appareil pour remplir le nom, le producteur, le millésime et l’appellation."
           }
         }
       }

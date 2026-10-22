@@ -198,7 +198,7 @@ struct LabelScanSection: View {
                 if scan.aiEnabled {
                     Text("Reads the label on this device, then completes the details with the AI service set in Settings.")
                 } else {
-                    Text("Reads the label on this device to fill in the name and vintage.")
+                    Text("Reads the label on this device to fill in the name, producer, vintage and appellation.")
                 }
             }
             .animation(.default, value: scan.photo)

@@ -730,8 +730,7 @@ FR = {
     "Rack, 48": "Casier, 48",
     "Racks": "Casiers",
     "Rated %lld out of 5": "Noté %lld sur 5",
-    "Reads the label on this device to fill in the name and vintage.":
-        "Lit l’étiquette sur cet appareil pour remplir le nom et le millésime.",
+    'Reads the label on this device to fill in the name, producer, vintage and appellation.': 'Lit l’étiquette sur cet appareil pour remplir le nom, le producteur, le millésime et l’appellation.',
     "Ready": "Prêt",
     "Ready first": "Prêts d’abord",
     "Ready to drink": "Prêt à boire",
@@ -775,8 +774,7 @@ FR = {
     "The file could not be read.": "Le fichier n’a pas pu être lu.",
     "The first free positions are used unless you choose them.":
         "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez.",
-    "The text is read on this device to fill in the name, producer and vintage.":
-        "Le texte est lu sur cet appareil pour remplir le nom, le producteur et le millésime.",
+    'The text is read on this device to fill in the name, producer, vintage and appellation.': 'Le texte est lu sur cet appareil pour remplir le nom, le producteur, le millésime et l’appellation.',
     "This bottle has already been opened.": "Cette bouteille a déjà été ouverte.",
     "This file is not an Encave backup or a CSV with a name column.":
         "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name ».",
