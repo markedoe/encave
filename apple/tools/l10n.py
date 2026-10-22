@@ -1375,7 +1375,7 @@ FR = {
     'On iPad and Mac, in racks with one bottle per place, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them. **Undo** puts them back.': 'Sur iPad et Mac, dans les casiers à une bouteille par place, faites glisser une bouteille vers une autre place pour la déplacer, ou sur une autre bouteille du même casier pour les échanger. **Annuler** les remet en place.',
     "Order of racks": "Ordre des casiers",
     "Puts the bottle here": "Met la bouteille ici",
-    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": 'Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri.',
+    "In grids and honeycombs, rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places along each shelf: **Shelf 2, place 3**, and the one behind it **Shelf 2, place 3, back**; an empty place shows only its number. In bins, places read like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": 'Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places le long de chaque étagère : **Étagère 2, place 3**, et celle derrière **Étagère 2, place 3, fond** ; une place vide n’affiche que son numéro. Dans des losanges, les places se lisent comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri.',
     "Shows this bottle": "Affiche cette bouteille",
     "Swaps the two bottles": "Échange les deux bouteilles",
     "Take Them Out and Save": "Les retirer et enregistrer",
@@ -1578,18 +1578,62 @@ def unit(value):
     return {"stringUnit": {"state": "translated", "value": value}}
 
 
-# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
-# so the mark never starts a line. URLs and format specifiers are left as they are.
+# French typography: a narrow no-break space before ? ! ; and inside « », and a no-break
+# space before :, so the mark never starts or ends a line. URLs and format specifiers are
+# left as they are.
 NARROW_NBSP, NBSP = "\u202f", "\u00a0"
 VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?(?:lld|ld|d|@|lf|f|s))")
 LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+LOOSE_GUILLEMETS = (re.compile(r"«[ \u00a0\u202f]*"), re.compile(r"[ \u00a0\u202f]*»"))
 
 
 def french(text):
     parts = VERBATIM.split(text)
     for i in range(0, len(parts), 2):
         parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+        parts[i] = LOOSE_GUILLEMETS[0].sub("«" + NARROW_NBSP, parts[i])
+        parts[i] = LOOSE_GUILLEMETS[1].sub(NARROW_NBSP + "»", parts[i])
     return "".join(parts)
+
+
+def loose_guillemets(text):
+    """« or » without a narrow no-break space inside."""
+    return re.findall(r"«(?!\u202f)\S{0,12}|\S{0,12}(?<!\u202f)»", text)
+
+
+HELP = ROOT / "Encave" / "Features" / "Help" / "HelpContent.swift"
+# Bold words of the help that are not text of the app: services named in CaveKit, file
+# names and examples.
+HELP_NAMES = {"8/10", "Brave Search", "Tavily", "README.txt", "files.json"}
+LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+FORMAT = re.compile(r"%(?:\d+\$)?(?:lld|ld|d|@|lf|f)")
+
+
+def help_words_missing():
+    """The bold words of the help bodies (each step of "Settings › Your data") that the rest
+    of the app never shows, in English and in French: a button, setting or screen that was
+    renamed or removed. Place names such as "Shelf 2, place 3" match their pattern."""
+    literals = set()
+    for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
+        if Path(path) != HELP:
+            literals.update(to_key(k) for k in LITERAL.findall(Path(path).read_text()))
+    english = sorted(literals)
+    french_texts = sorted({FR[k] for k in literals if k in FR} | {f for k in literals if k in PLURALS for f in PLURALS[k][1]}
+                          | literals)
+    bodies = LITERAL.findall("\n".join(re.findall(r'body: "(?:[^"\\]|\\.)*"', HELP.read_text())))
+    missing = []
+    for lang, texts, helps in (("English", english, bodies), ("French", french_texts, [FR.get(b, "") for b in bodies])):
+        joined = "\n".join(texts)
+        patterns = [re.compile(r"(?:\d+|.+?)".join(re.escape(p) for p in FORMAT.split(t)), re.I)
+                    for t in texts if FORMAT.search(t) and len(re.findall(r"[^\W\d_]", FORMAT.sub("", t))) >= 4]
+        for text in helps:
+            for term in re.findall(r"\*\*(.+?)\*\*", text):
+                for word in (w.strip().rstrip("…") for w in term.split(" › ")):
+                    whole = re.compile(r"(?<!\w)" + re.escape(word) + r"(?!\w)", re.I)
+                    if word in HELP_NAMES or whole.search(joined) or any(p.fullmatch(word) for p in patterns):
+                        continue
+                    missing.append((lang, word))
+    return missing
 
 
 def plain_space_before_mark(text):
@@ -1699,6 +1743,15 @@ def check():
             for value in (u["stringUnit"]["value"] for u in units):
                 for found in plain_space_before_mark(value):
                     problems.append(f"{path.name}: plain space before a mark in French: {found!r} (key {key!r})")
+                for found in loose_guillemets(value):
+                    problems.append(f"{path.name}: « » without a narrow no-break space inside: {found!r} (key {key!r})")
+    # Help: every body translated, and its bold words (buttons, settings, screens) shown
+    # elsewhere in the app, in English and in French.
+    for body in re.findall(r'body: "((?:[^"\\]|\\.)*)"', HELP.read_text()):
+        if FR.get(body) == body and len(body) > 20:
+            problems.append(f"help text not translated: {body[:60]!r}")
+    for lang, word in help_words_missing():
+        problems.append(f"help names something the app does not show in {lang}: {word!r}")
     # The committed catalogs must be the ones this script writes.
     for path, text in catalogs().items():
         if not path.exists() or path.read_text() != text:

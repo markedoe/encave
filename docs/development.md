@@ -45,6 +45,15 @@ python3 apple/tools/l10n.py           # regenerate Localizable and InfoPlist cat
 python3 apple/tools/l10n.py --check   # fails if a string has no French (run in CI)
 ```
 
+The French is written with plain spaces; the scripts put a narrow no-break space
+before ; ! ? and inside « », and a no-break space before :. Both `--check`
+commands (this one and Android's `strings.py --check`, run in CI) also fail when
+a help text is left in English, and when a **bold** word of the help (a button,
+setting or screen, each step of "Settings › Your data") is no longer a text the
+app shows, in English or in French. Place names in the help, such as
+"Shelf 2, place 3", must match a place pattern of the app; services, file names
+and examples go in `HELP_NAMES`.
+
 Avoid building strings with `? "a" : "b"` inside `Text`: write two `Text`
 views so both strings are extracted and translated.
 

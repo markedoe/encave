@@ -683,7 +683,7 @@ S = [
  ("help_scanning_typed_title", "What you typed stays", "Ce que vous avez saisi reste"),
  ("help_scanning_typed", "The AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept.", "L’IA ne remplace que les champs vides ou remplis automatiquement. Tout ce que vous avez saisi vous-même est conservé."),
  ("help_scanning_photo_title", "The photo", "La photo"),
- ('help_scanning_photo', 'The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists and on the wine’s page it is shown in a studio look, made on this device with nothing sent anywhere: the photo is cut to the band of its label (found where the print is densest), its light evened out, and shown filling the picture, centred on the label, with a light vignette. The bottle is not cut out of its background. A photo that is already a close-up of the label is shown whole. Covers are shown on a backdrop of a softly lit cellar in the wine’s color. Tap the picture on the wine’s page to see it large: the label photo as taken, or the picture chosen for the wine if it has one. Turn the look off in **Settings › Appearance**.', 'La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin. Dans les listes et sur la fiche du vin, elle s’affiche en aspect studio, fait sur cet appareil sans rien envoyer : la photo est recadrée sur la bande de son étiquette (trouvée là où l’impression est la plus dense), sa lumière corrigée, et remplit l’image, centrée sur l’étiquette, avec un léger vignettage. La bouteille n’est pas détourée de son arrière-plan. Une photo qui est déjà un gros plan de l’étiquette est montrée entière. Les couvertures s’affichent sur un fond de cave aux lumières floues, de la couleur du vin. Touchez l’image sur la fiche du vin pour l’afficher en grand : la photo de l’étiquette telle que prise, ou l’image choisie pour le vin s’il en a une. Désactivez l’aspect dans **Réglages › Apparence**.'),
+ ('help_scanning_photo', 'The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists and on the wine’s page it is shown in a studio look, made on this device with nothing sent anywhere: the photo is cut to the band of its label (found where the print is densest), its light evened out, and shown filling the picture, centred on the label, with a light vignette. The bottle is not cut out of its background. A photo that is already a close-up of the label is shown whole. Covers are shown on a backdrop of a softly lit cellar in the wine’s color. Tap the picture on the wine’s page to see it large: the label photo as taken, or the picture chosen for the wine if it has one. Turn the look off in **Settings › Display**.', 'La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin. Dans les listes et sur la fiche du vin, elle s’affiche en aspect studio, fait sur cet appareil sans rien envoyer : la photo est recadrée sur la bande de son étiquette (trouvée là où l’impression est la plus dense), sa lumière corrigée, et remplit l’image, centrée sur l’étiquette, avec un léger vignettage. La bouteille n’est pas détourée de son arrière-plan. Une photo qui est déjà un gros plan de l’étiquette est montrée entière. Les couvertures s’affichent sur un fond de cave aux lumières floues, de la couleur du vin. Touchez l’image sur la fiche du vin pour l’afficher en grand : la photo de l’étiquette telle que prise, ou l’image choisie pour le vin s’il en a une. Désactivez l’aspect dans **Réglages › Affichage**.'),
 
  ("help_racks_title", "Racks", "Casiers"),
  ("help_racks_summary", "Describe your storage so every bottle has a place.", "Décrivez vos rangements pour que chaque bouteille ait sa place."),
@@ -697,7 +697,7 @@ S = [
  ("help_racks_shelves", "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.", "Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière."),
  ('help_racks_bins', 'Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.', 'Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu.'),
  ('help_racks_places_title', 'Places', 'Places'),
- ('help_racks_places', 'Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine’s page, in the bottle list.', 'Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.'),
+ ('help_racks_places', 'In grids and honeycombs, rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places along each shelf: **Shelf 2, place 3**, and the one behind it **Shelf 2, place 3, back**; an empty place shows only its number. In bins, places read like **Bin B3**. The same name shows on the wine’s page and in the bottle list.', 'Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places le long de chaque étagère : **Étagère 2, place 3**, et celle derrière **Étagère 2, place 3, fond** ; une place vide n’affiche que son numéro. Dans des losanges, les places se lisent comme **Casier B3**. Le même nom s’affiche sur la fiche du vin et dans la liste des bouteilles.'),
  ("help_racks_finding_title", "Finding a bottle", "Trouver une bouteille"),
  ('help_racks_finding', 'Each bottle shows its vintage; in grid racks and wine fridges, its name too once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all. On a wine’s page, **Show in rack** opens the rack with its bottles lit up.', 'Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles.'),
  ("help_racks_zooming_title", "Zooming", "Zoomer"),
@@ -1448,18 +1448,52 @@ P = [
  ("chart_item_bottles", ("%1$s: %2$d bottle", "%1$s: %2$d bottles"), ("%1$s : %2$d bouteille", "%1$s : %2$d bouteilles")),
 ]
 
-# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
-# so the mark never starts a line. URLs and format specifiers are left as they are.
+# French typography: a narrow no-break space before ? ! ; and inside « », and a no-break
+# space before :, so the mark never starts or ends a line. URLs and format specifiers are
+# left as they are.
 NARROW_NBSP, NBSP = "\u202f", "\u00a0"
 VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[sdf])")
 LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+LOOSE_GUILLEMETS = (re.compile(r"«[ \u00a0\u202f]*"), re.compile(r"[ \u00a0\u202f]*»"))
 
 
 def french(text):
     parts = VERBATIM.split(text)
     for i in range(0, len(parts), 2):
         parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+        parts[i] = LOOSE_GUILLEMETS[0].sub("«" + NARROW_NBSP, parts[i])
+        parts[i] = LOOSE_GUILLEMETS[1].sub(NARROW_NBSP + "»", parts[i])
     return "".join(parts)
+
+
+def loose_guillemets(text):
+    """« or » without a narrow no-break space inside."""
+    return re.findall(r"«(?!\u202f)\S{0,12}|\S{0,12}(?<!\u202f)»", text)
+
+
+# Bold words of the help that are not text of the app: services, file names, examples
+# made of several app texts, and words of the system.
+HELP_NAMES = {"8/10", "Brave Search", "Tavily", "README.txt", "files.json", "Widgets",
+              "B3, back", "B3, fond", "Bin B3"}
+PLACEHOLDER = re.compile(r"%(?:\d+\$)?[sdf]")
+
+
+def help_words_missing(helps, texts):
+    """The bold words of the help (each step of "Settings › Data") that no other string
+    holds: a button, setting or screen that was renamed or removed. Place names such as
+    "Shelf 2, place 3" match their pattern ("Shelf %1$d, place %2$d")."""
+    joined = "\n".join(texts)
+    patterns = [re.compile(r"(?:\d+|.+?)".join(re.escape(p) for p in PLACEHOLDER.split(t)), re.I)
+                for t in texts if PLACEHOLDER.search(t) and len(re.findall(r"[^\W\d_]", PLACEHOLDER.sub("", t))) >= 4]
+    missing = []
+    for name, text in helps:
+        for term in re.findall(r"\*\*(.+?)\*\*", text):
+            for word in (w.strip().rstrip("…") for w in term.split(" › ")):
+                whole = re.compile(r"(?<!\w)" + re.escape(word) + r"(?!\w)", re.I)
+                if word in HELP_NAMES or whole.search(joined) or any(p.fullmatch(word) for p in patterns):
+                    continue
+                missing.append((name, word))
+    return missing
 
 
 def plain_space_before_mark(text):
@@ -1516,6 +1550,19 @@ def check(res):
     for name, value in french_texts:
         for found in plain_space_before_mark(value):
             problems.append(f"plain space before a mark in French: {found!r} ({name})")
+        for found in loose_guillemets(value):
+            problems.append(f"« » without a narrow no-break space inside: {found!r} ({name})")
+    # Help: every entry translated, and its bold words (buttons, settings, screens) found in
+    # the other strings, in English and in French.
+    helps = [row for row in S if row[0].startswith("help_")]
+    others = [row for row in S if not row[0].startswith("help_")]
+    for name, en, fr in helps:
+        if en == fr and len(en) > 20:
+            problems.append(f"help string not translated: {name}")
+    for lang, idx in (("English", 1), ("French", 2)):
+        texts = [row[idx] for row in others] + [form for row in P for form in row[idx]]
+        for name, word in help_words_missing([(row[0], row[idx]) for row in helps], texts):
+            problems.append(f"help names something no other {lang} string holds: {word!r} ({name})")
     for problem in problems:
         print(problem)
     return 1 if problems else 0

@@ -1126,7 +1126,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
+            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
           }
         }
       }
@@ -1246,7 +1246,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
+            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
           }
         }
       }
@@ -2086,7 +2086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Après un scan, ou en modifiant un vin qui a une photo d’étiquette, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Touchez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché."
+            "value": "Après un scan, ou en modifiant un vin qui a une photo d’étiquette, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Touchez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché."
           }
         }
       }
@@ -2436,7 +2436,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
+            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
           }
         }
       }
@@ -3556,7 +3556,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio."
+            "value": "Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio."
           }
         }
       }
@@ -4286,7 +4286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer « %@ » ?"
+            "value": "Supprimer « %@ » ?"
           }
         }
       }
@@ -5296,7 +5296,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
           }
         }
       }
@@ -6147,13 +6147,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
+                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
+                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
                 }
               }
             }
@@ -6396,7 +6396,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis l’iPhone ou l’iPad."
+            "value": "Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis l’iPhone ou l’iPad."
           }
         }
       }
@@ -6417,6 +6417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dans cette sauvegarde"
+          }
+        }
+      }
+    },
+    "In grids and honeycombs, rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places along each shelf: **Shelf 2, place 3**, and the one behind it **Shelf 2, place 3, back**; an empty place shows only its number. In bins, places read like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places le long de chaque étagère : **Étagère 2, place 3**, et celle derrière **Étagère 2, place 3, fond** ; une place vide n’affiche que son numéro. Dans des losanges, les places se lisent comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
           }
         }
       }
@@ -8426,7 +8436,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
+            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
           }
         }
       }
@@ -8446,7 +8456,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit."
+            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit."
           }
         }
       }
@@ -8766,7 +8776,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous scannez une étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -8826,7 +8836,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -10381,16 +10391,6 @@
         }
       }
     },
-    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
-          }
-        }
-      }
-    },
     "Rows deep": {
       "localizations": {
         "fr": {
@@ -10756,7 +10756,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cherche « vin Chablis » pour vérifier les réglages."
+            "value": "Cherche « vin Chablis » pour vérifier les réglages."
           }
         }
       }
@@ -13356,7 +13356,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name »."
+            "value": "Ce fichier n’est ni une sauvegarde Encave, ni un CSV avec une colonne « name »."
           }
         }
       }
@@ -13686,7 +13686,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand une synchronisation apporte des modifications faites sur un autre appareil (bouteilles ouvertes, ajoutées ou retirées, vins ajoutés à la liste d’achats, autres modifications), par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification ; la toucher ouvre la Cave, ou le Journal si des bouteilles ont seulement été ouvertes. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Désactivé par défaut, tout est calculé sur cet appareil : rien n’est envoyé nulle part."
+            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand une synchronisation apporte des modifications faites sur un autre appareil (bouteilles ouvertes, ajoutées ou retirées, vins ajoutés à la liste d’achats, autres modifications), par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification ; la toucher ouvre la Cave, ou le Journal si des bouteilles ont seulement été ouvertes. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Désactivé par défaut, tout est calculé sur cet appareil : rien n’est envoyé nulle part."
           }
         }
       }
@@ -13946,7 +13946,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment."
+            "value": "Sert à « Ce soir » pour suggérer quoi ouvrir. Modifiable à tout moment."
           }
         }
       }
@@ -14716,7 +14716,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Fichiers de cave illisibles."
+            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Fichiers de cave illisibles."
           }
         }
       }
