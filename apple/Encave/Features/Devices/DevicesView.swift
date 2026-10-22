@@ -797,7 +797,6 @@ struct JoinDeviceView: View {
     @State private var digits: String
     @State private var commitment: Data?
     @State private var replace = false
-    @State private var choseDefault = false
     @State private var scanning = false
     @State private var cameraRefused = false
     @State private var confirmingLeave = false
@@ -814,8 +813,6 @@ struct JoinDeviceView: View {
 
     private var code: PairingCode { PairingCode(digits: digits) }
     private var hasOwnBottles: Bool { !model.cellar.bottles.isEmpty }
-    /// Only the sample cellar, as loaded: replacing it is the likely choice.
-    private var hasOnlySample: Bool { hasOwnBottles && model.hasUntouchedSample }
     private var sharedNames: String { model.sync.otherDevices.map(\.name).formatted(.list(type: .and)) }
 
     var body: some View {
@@ -862,11 +859,6 @@ struct JoinDeviceView: View {
             #endif
         }
         .onDisappear { session?.cancel() }
-        .onAppear {
-            guard !choseDefault else { return }
-            choseDefault = true
-            if hasOnlySample { replace = true }
-        }
         .confirmationDialog("Join another cellar?", isPresented: $confirmingLeave, titleVisibility: .visible) {
             Button("Leave and Join", role: .destructive) {
                 leaving = true
@@ -936,24 +928,14 @@ struct JoinDeviceView: View {
                 Section {
                     Picker("This device’s bottles", selection: $replace) {
                         Text("Combine with the other cellar").tag(false)
-                        if hasOnlySample {
-                            Text("Replace the sample cellar").tag(true)
-                        } else {
-                            Text("Replace with the other cellar").tag(true)
-                        }
+                        Text("Replace with the other cellar").tag(true)
                     }
                     .pickerStyle(.inline)
                     .labelsHidden()
                 } header: {
-                    if hasOnlySample {
-                        Text("This device has the sample cellar")
-                    } else {
-                        Text("This device already has bottles")
-                    }
+                    Text("This device already has bottles")
                 } footer: {
-                    if replace, hasOnlySample {
-                        Text("The sample bottles are replaced by the other device’s cellar.")
-                    } else if replace {
+                    if replace {
                         Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
                     } else {
                         Text("Both cellars are put together. Choose Replace if this device only has the sample cellar.")
@@ -990,8 +972,8 @@ struct JoinDeviceView: View {
     }
 
     private func continueJoining() {
-        // Replacing bottles entered here (not the sample) is asked first.
-        if replace, hasOwnBottles, !model.hasUntouchedSample {
+        // Replacing the bottles on this device is asked first.
+        if replace, hasOwnBottles {
             confirmingReplace = true
         } else {
             join()

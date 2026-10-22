@@ -185,16 +185,13 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
     val model: PairingViewModel = viewModel()
     val session by model.session.collectAsStateWithLifecycle()
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
-    val sampleUntouched by viewModel.preferences.sampleUntouched.collectAsStateWithLifecycle()
     val sync = syncManager()
     val status by sync.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val hasBottles = cellar.bottles.isNotEmpty()
-    // The sample as loaded: replacing it is what the user wants.
-    val isSample = hasBottles && sampleUntouched
     var digits by rememberSaveable { mutableStateOf(linkCode?.filter { it in '0'..'9' }?.take(6).orEmpty()) }
     var commitment by rememberSaveable { mutableStateOf(linkCommitment) }
-    var replace by rememberSaveable { mutableStateOf(isSample) }
+    var replace by rememberSaveable { mutableStateOf(false) }
     var scanning by rememberSaveable { mutableStateOf(false) }
     var confirmingLeave by rememberSaveable { mutableStateOf(false) }
     var confirmingReplace by rememberSaveable { mutableStateOf(false) }
@@ -207,7 +204,7 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
     }
     // Replacing bottles of the user's own asks first; the sample is replaced without asking.
     val checkReplace: () -> Unit = {
-        if (replace && hasBottles && !isSample) {
+        if (replace && hasBottles) {
             confirmingReplace = true
         } else {
             begin()
@@ -312,13 +309,13 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
             )
             if (hasBottles) {
                 Text(
-                    stringResource(if (isSample) R.string.join_has_sample else R.string.join_has_bottles),
+                    stringResource(R.string.join_has_bottles),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = Dimens.l, end = Dimens.l, top = Dimens.l).semantics { heading() },
                 )
                 Column(Modifier.selectableGroup()) {
-                    listOf(false to R.string.join_combine, true to if (isSample) R.string.join_replace_sample else R.string.join_replace).forEach { (value, label) ->
+                    listOf(false to R.string.join_combine, true to R.string.join_replace).forEach { (value, label) ->
                         ListItem(
                             modifier = Modifier.selectable(selected = replace == value, role = Role.RadioButton) { replace = value },
                             leadingContent = { RadioButton(selected = replace == value, onClick = null) },
@@ -327,13 +324,7 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
                     }
                 }
                 Text(
-                    stringResource(
-                        when {
-                            !replace -> R.string.join_combine_footer
-                            isSample -> R.string.join_replace_sample_footer
-                            else -> R.string.join_replace_footer
-                        },
-                    ),
+                    stringResource(if (replace) R.string.join_replace_footer else R.string.join_combine_footer),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = Dimens.l),

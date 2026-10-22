@@ -849,9 +849,6 @@
     <string name="pair_failed_listen">Cet appareil n’a pas pu attendre l’autre sur le réseau.</string>
     <string name="pair_not_synced_body">La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul.</string>
     <string name="pair_done_body_remote">Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison.</string>
-    <string name="join_has_sample">Cet appareil a la cave d’exemple</string>
-    <string name="join_replace_sample">Remplacer la cave d’exemple</string>
-    <string name="join_replace_sample_footer">Les bouteilles d’exemple sont remplacées par la cave de l’autre appareil.</string>
     <string name="join_replace_confirm_body">Cet appareil n’affichera que la cave de l’autre appareil.</string>
     <string name="join_replace_confirm">Remplacer et rejoindre</string>
     <string name="join_leave_title">Rejoindre une autre cave ?</string>
@@ -888,7 +885,7 @@
     <string name="help_devices_sync_title">Rester synchronisé</string>
     <string name="help_devices_sync">Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification. Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte.</string>
     <string name="help_devices_bottles_title">Bouteilles déjà sur le nouvel appareil</string>
-    <string name="help_devices_bottles">En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil ; ce choix est fait pour vous quand cet appareil n’a que la cave d’exemple, et Encave demande avant de remplacer vos propres bouteilles. Elles restent sur cet appareil jusqu’à l’arrivée de l’autre cave. Rejoindre une autre cave alors que cet appareil en partage déjà une quitte d’abord celle-ci, après confirmation.</string>
+    <string name="help_devices_bottles">En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil ; Encave demande avant de remplacer vos bouteilles. Elles restent sur cet appareil jusqu’à l’arrivée de l’autre cave. Rejoindre une autre cave alors que cet appareil en partage déjà une quitte d’abord celle-ci, après confirmation.</string>
     <string name="help_devices_remove_title">Retirer un appareil</string>
     <string name="help_devices_remove">Balayez un appareil dans la liste, ou ouvrez son menu, et choisissez **Retirer**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. **Arrêter la synchronisation sur cet appareil** prévient les autres appareils, qui le retirent aussi de leur liste ; s’ils ne peuvent pas être joints, retirez-le depuis l’un d’eux.</string>
     <string name="help_devices_away_title">Loin de la maison</string>

@@ -73,9 +73,6 @@ class CellarRepository(
      */
     @Volatile var onLocalChange: ((old: Cellar, new: Cellar) -> Unit)? = null
 
-    /** Told after each change made on this device is saved (the sample is no longer as loaded). */
-    @Volatile var onEdit: (() -> Unit)? = null
-
     /** Applies [change] to a copy, saves it, then publishes it. */
     suspend fun <T> update(change: (Cellar) -> T): Result<T> = mutex.withLock {
         if (loadFailed) return@withLock refused()
@@ -87,7 +84,6 @@ class CellarRepository(
         saved.exceptionOrNull()?.let { return@withLock Result.failure(it) }
         state.value = copy
         onLocalChange?.let { record -> withContext(io) { record(before, copy) } }
-        onEdit?.invoke()
         result
     }
 
@@ -99,7 +95,6 @@ class CellarRepository(
         withContext(io) { runCatching { store.save(copy) } }.onSuccess {
             state.value = copy
             onLocalChange?.let { record -> withContext(io) { record(before, copy) } }
-            onEdit?.invoke()
         }
     }
 

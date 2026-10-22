@@ -8741,16 +8741,6 @@
         }
       }
     },
-    "Replace the sample cellar": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remplacer la cave d’exemple"
-          }
-        }
-      }
-    },
     "Replace this cellar?": {
       "localizations": {
         "fr": {
@@ -11251,16 +11241,6 @@
         }
       }
     },
-    "The sample bottles are replaced by the other device’s cellar.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les bouteilles d’exemple sont remplacées par la cave de l’autre appareil."
-          }
-        }
-      }
-    },
     "The sample cellar is offered while your cellar is empty and no other device syncs with this one.": {
       "localizations": {
         "fr": {
@@ -11547,16 +11527,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cet appareil n’a pas pu attendre l’autre sur le réseau."
-          }
-        }
-      }
-    },
-    "This device has the sample cellar": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cet appareil a la cave d’exemple"
           }
         }
       }
@@ -12581,12 +12551,12 @@
         }
       }
     },
-    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar; with the sample cellar, **Replace the sample cellar** is chosen for you. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar.": {
+    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil ; avec la cave d’exemple, **Remplacer la cave d’exemple** est choisi pour vous. Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave."
+            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil . Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave."
           }
         }
       }

@@ -850,9 +850,6 @@
     <string name="pair_failed_listen">This device could not wait for the other one on the network.</string>
     <string name="pair_not_synced_body">The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.</string>
     <string name="pair_done_body_remote">Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.</string>
-    <string name="join_has_sample">This device has the sample cellar</string>
-    <string name="join_replace_sample">Replace the sample cellar</string>
-    <string name="join_replace_sample_footer">The sample bottles are replaced by the other device’s cellar.</string>
     <string name="join_replace_confirm_body">This device will show only the other device’s cellar.</string>
     <string name="join_replace_confirm">Replace and join</string>
     <string name="join_leave_title">Join another cellar?</string>
@@ -889,7 +886,7 @@
     <string name="help_devices_sync_title">Staying in sync</string>
     <string name="help_devices_sync">Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins.</string>
     <string name="help_devices_bottles_title">Bottles already on the new device</string>
-    <string name="help_devices_bottles">When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device’s cellar; it is chosen for you when this device only has the sample cellar, and Encave asks first before replacing your own bottles. They stay on this device until the other cellar has arrived. Joining another cellar while this device already shares one leaves that one first, once you confirm.</string>
+    <string name="help_devices_bottles">When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device’s cellar; Encave asks first before replacing your bottles. They stay on this device until the other cellar has arrived. Joining another cellar while this device already shares one leaves that one first, once you confirm.</string>
     <string name="help_devices_remove_title">Removing a device</string>
     <string name="help_devices_remove">Swipe a device in the list, or open its menu, and choose **Remove**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one’s key is no longer accepted. **Stop syncing on this device** tells the other devices, so it leaves their list too; if they cannot be reached, remove it there.</string>
     <string name="help_devices_away_title">Away from home</string>

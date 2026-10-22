@@ -632,13 +632,7 @@ class AppViewModel(
     /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices). */
     fun loadSample(labels: SampleData.Labels) {
         if (!canLoadSample(cellar.value, sharedWithDevices.value)) return
-        change<Boolean>({ loaded ->
-            if (loaded) {
-                // After the change's own edit notice: the sample is as loaded.
-                preferences.setSampleUntouched(true)
-                post(UiText.Res(R.string.msg_sample_loaded))
-            }
-        }) { c ->
+        change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) }) { c ->
             val empty = c.isEmpty
             if (empty) c.merge(SampleData.cellar(year, labels))
             empty
