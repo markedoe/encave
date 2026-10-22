@@ -155,7 +155,8 @@ enum StudioPhoto {
 enum LabelFrame {
     static func crop(_ cut: CIImage, context: CIContext) -> CIImage {
         let extent = cut.extent
-        guard LabelFraming.isStandingBottle(width: extent.width, height: extent.height) else { return cut }
+        let width = Double(extent.width), height = Double(extent.height)
+        guard LabelFraming.isStandingBottle(width: width, height: height) else { return cut }
         // Vision reads the bottle on a plain gray background, in the cut-out's coordinates.
         let gray = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5)).cropped(to: extent)
         guard let flat = context.createCGImage(cut.composited(over: gray), from: extent) else { return cut }
@@ -167,9 +168,10 @@ enum LabelFrame {
         } else {
             band = rectangleBand(handler) ?? LabelFraming.fallbackBand
         }
-        guard let frame = LabelFraming.frame(label: band, width: extent.width, height: extent.height) else { return cut }
-        let rect = CGRect(x: extent.minX, y: extent.minY + extent.height * (1 - frame.upperBound),
-                          width: extent.width, height: extent.height * (frame.upperBound - frame.lowerBound))
+        guard let frame = LabelFraming.frame(label: band, width: width, height: height) else { return cut }
+        let below = CGFloat(1 - frame.upperBound), kept = CGFloat(frame.upperBound - frame.lowerBound)
+        let rect = CGRect(x: extent.minX, y: extent.minY + extent.height * below,
+                          width: extent.width, height: extent.height * kept)
         var result = cut.cropped(to: rect)
         // Soft edges where the bottle is cut, so it fades into the backdrop.
         let fade = rect.height * 0.08
@@ -184,8 +186,10 @@ enum LabelFrame {
         request.recognitionLevel = .fast
         request.usesLanguageCorrection = false
         guard (try? handler.perform([request])) != nil else { return [] }
-        return (request.results ?? []).map {
-            LabelFraming.Line(minY: $0.boundingBox.minY, maxY: $0.boundingBox.maxY, width: $0.boundingBox.width)
+        let observations: [VNRecognizedTextObservation] = request.results ?? []
+        return observations.map { observation -> LabelFraming.Line in
+            let box = observation.boundingBox
+            return LabelFraming.Line(minY: Double(box.minY), maxY: Double(box.maxY), width: Double(box.width))
         }
     }
 
@@ -197,11 +201,16 @@ enum LabelFrame {
         request.minimumAspectRatio = 0.2
         request.maximumAspectRatio = 1
         request.quadratureTolerance = 30
-        guard (try? handler.perform([request])) != nil,
-              let box = (request.results ?? []).map(\.boundingBox)
-                  .filter({ $0.width >= 0.5 && $0.height < 0.5 })
-                  .max(by: { $0.width * $0.height < $1.width * $1.height }) else { return nil }
-        return Double(1 - box.maxY)...Double(1 - box.minY)
+        guard (try? handler.perform([request])) != nil else { return nil }
+        let boxes: [CGRect] = (request.results ?? []).map { $0.boundingBox }
+        var best: CGRect?
+        for box in boxes where box.width >= 0.5 && box.height < 0.5 {
+            if let current = best, current.width * current.height >= box.width * box.height { continue }
+            best = box
+        }
+        guard let box = best else { return nil }
+        let top = Double(1 - box.maxY), bottom = Double(1 - box.minY)
+        return top...bottom
     }
 
     /// The image fading out towards `edge` (a y coordinate), fully shown from `inner`.
@@ -317,8 +326,8 @@ enum VineArt {
     static let grapes: [CGPoint] = {
         var points: [CGPoint] = []
         for (row, count) in [4, 5, 4, 4, 3, 2, 1].enumerated() {
-            let y = 28 + CGFloat(row) * 10.4
-            let start = 52 - CGFloat(row) * 0.6 - CGFloat(count - 1) * 6
+            let y: CGFloat = 28 + CGFloat(row) * 10.4
+            let start: CGFloat = 52 - CGFloat(row) * 0.6 - CGFloat(count - 1) * 6
             for index in 0..<count { points.append(CGPoint(x: start + CGFloat(index) * 12, y: y)) }
         }
         return points
@@ -326,8 +335,8 @@ enum VineArt {
 
     /// A spiral of 1.5 turns, starting at the cane.
     static let tendril: [CGPoint] = (0...40).map { step in
-        let t = CGFloat(step) / 40 * 3 * .pi
-        let r = 7 * (1 - t / (3.6 * .pi))
+        let t: CGFloat = CGFloat(step) * 3 * CGFloat.pi / 40
+        let r: CGFloat = 7 - 7 * t / (3.6 * CGFloat.pi)
         return CGPoint(x: 34 + r * cos(t), y: 14 + r * sin(t))
     }
 
@@ -335,15 +344,17 @@ enum VineArt {
     /// are measured from the tip, clockwise.
     static func leafOutline(center: CGPoint, radius: CGFloat, rotation: CGFloat) -> [CGPoint] {
         (0..<90).map { step in
-            let theta = CGFloat(step) / 90 * 2 * .pi
-            let notch = 1 - 0.45 * exp(-pow((theta - .pi) / 0.25, 2))
-            let r = radius * (0.78 + 0.22 * cos(5 * theta)) * notch
+            let theta: CGFloat = CGFloat(step) * 2 * CGFloat.pi / 90
+            let distance: CGFloat = (theta - CGFloat.pi) / 0.25
+            let notch: CGFloat = 1 - 0.45 * exp(-distance * distance)
+            let lobes: CGFloat = 0.78 + 0.22 * cos(5 * theta)
+            let r: CGFloat = radius * lobes * notch
             return point(center, r, theta, rotation)
         }
     }
 
     static func point(_ center: CGPoint, _ r: CGFloat, _ theta: CGFloat, _ rotation: CGFloat) -> CGPoint {
-        let angle = theta + rotation * .pi / 180
+        let angle: CGFloat = theta + rotation * CGFloat.pi / 180
         return CGPoint(x: center.x + r * sin(angle), y: center.y - r * cos(angle))
     }
 
