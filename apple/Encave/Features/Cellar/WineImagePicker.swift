@@ -37,7 +37,7 @@ struct WineImagePicker: View {
                             }
                             .accessibilityAddTraits(wine.coverPhotoID == nil ? .isSelected : [])
                         } footer: {
-                            Text("Shown in the studio look when it is on in Settings: cut out and straightened on a clean background.")
+                            Text("Shown in the studio look when it is on in Settings: cut out and framed on its label, on a backdrop in the wine's color.")
                         }
                     }
 

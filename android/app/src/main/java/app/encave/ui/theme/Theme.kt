@@ -39,6 +39,15 @@ private fun maturityPalette(dark: Boolean): MaturityPalette {
 
 val LocalMaturityPalette = staticCompositionLocalOf { maturityPalette(dark = false) }
 
+/** The studio backdrop's colors for the current theme (design/tokens.json). */
+@Immutable
+data class StudioPalette(val backdrop: Color, val glow: Color, val dark: Boolean)
+
+private fun studioPalette(dark: Boolean) =
+    StudioPalette(DesignTokens.studioBackdrop.resolve(dark), DesignTokens.studioGlow.resolve(dark), dark)
+
+val LocalStudioPalette = staticCompositionLocalOf { studioPalette(dark = false) }
+
 private fun DesignTokens.ThemedColor.resolve(dark: Boolean) = Color(if (dark) this.dark else light)
 
 private fun winePalette(dark: Boolean, unknown: Color) = WinePalette(
@@ -158,6 +167,7 @@ fun EncaveTheme(
     CompositionLocalProvider(
         LocalWinePalette provides winePalette(darkTheme, scheme.outlineVariant),
         LocalMaturityPalette provides maturityPalette(darkTheme),
+        LocalStudioPalette provides studioPalette(darkTheme),
     ) {
         MaterialTheme(colorScheme = scheme, typography = baseTypography, content = content)
     }

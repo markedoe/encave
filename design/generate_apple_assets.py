@@ -25,6 +25,8 @@ NAMES = {
     "maturity-past-peak": "MaturityPastPeak",
     "maturity-keep": "MaturityKeep",
     "warning": "Warning",
+    "studio-backdrop": "StudioBackdrop",
+    "studio-glow": "StudioGlow",
 }
 
 

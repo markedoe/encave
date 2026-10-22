@@ -134,7 +134,7 @@ struct SettingsView: View {
             } header: {
                 Text("Display")
             } footer: {
-                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+                Text("Label photos are shown cut out and framed on the label, on a backdrop in the wine's color, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
             }
 
             AISettingsSection()

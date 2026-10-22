@@ -5,6 +5,7 @@ import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,8 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -22,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.encave.core.AutoLevels
+import app.encave.core.LabelCrop
 import app.encave.core.Wine
 import app.encave.data.PhotoStore
 import app.encave.ui.theme.LocalWinePalette
@@ -39,9 +46,10 @@ fun PhotoStore.hasPicture(wine: Wine?): Boolean = wine != null && (exists(wine.c
 
 /**
  * The picture shown for a wine: its cover (a picture from the internet) if any,
- * else its label photo. In the studio look the photo's light is evened out on the
- * device and it is shown whole on a clean background tinted by the wine's color;
- * the stored photo is never changed.
+ * else its label photo. In the studio look the label photo is framed on its label
+ * (where its edges are densest, see [LabelCrop]) with its light evened out, on the
+ * device, and shown with soft edges on a backdrop in the wine's color; a cover is
+ * shown whole on the same backdrop. The stored photo is never changed.
  */
 @Composable
 fun WineImage(
@@ -57,52 +65,78 @@ fun WineImage(
     val cover = wine.coverPhotoId?.takeIf { photos.exists(it) }
     val id = cover ?: wine.photoId?.takeIf { photos.exists(it) } ?: return
     val enhance = studio && cover == null
-    val bitmap by produceState<Bitmap?>(null, id, enhance, maxPixelSize) {
+    val picture by produceState<StudioPicture?>(null, id, enhance, maxPixelSize) {
         value = withContext(Dispatchers.Default) {
-            if (enhance) StudioBitmaps.get(photos, id, maxPixelSize) else photos.load(id, maxPixelSize)
+            if (enhance) StudioBitmaps.get(photos, id, maxPixelSize) else photos.load(id, maxPixelSize)?.let { StudioPicture(it, framed = false) }
         }
     }
     val shape = RoundedCornerShape(corner)
     if (!studio) {
         Box(modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
-            bitmap?.let {
-                Image(it.asImageBitmap(), contentDescription, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            picture?.let {
+                Image(it.bitmap.asImageBitmap(), contentDescription, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
         }
         return
     }
-    val tint = LocalWinePalette.current[wine.color]
-    Box(
-        modifier.clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .background(Brush.verticalGradient(listOf(tint.copy(alpha = 0.22f), Color.Transparent))),
-    ) {
-        bitmap?.let {
+    Box(modifier.clip(shape), contentAlignment = Alignment.Center) {
+        StudioBackdrop(LocalWinePalette.current[wine.color], Modifier.matchParentSize())
+        picture?.let {
+            val bitmap = it.bitmap
+            val image = Modifier.padding(inset).aspectRatio(bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1))
             Image(
-                it.asImageBitmap(), contentDescription, Modifier.fillMaxSize().padding(inset).clip(RoundedCornerShape(corner / 2)),
+                bitmap.asImageBitmap(), contentDescription,
+                if (it.framed) image.softEdges() else image.clip(RoundedCornerShape(corner / 2)),
                 contentScale = ContentScale.Fit,
             )
         }
     }
 }
 
-/** Studio versions of label photos, made once per size and kept in memory. */
-private object StudioBitmaps {
-    // Sized by memory, not by count: a large label photo weighs megabytes.
-    private val cache = object : LruCache<String, Bitmap>((Runtime.getRuntime().maxMemory() / 1024 / 8).toInt()) {
-        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / 1024
+/** A picture for [WineImage]; [framed] when it was cut to the label, so its edges fade out. */
+internal class StudioPicture(val bitmap: Bitmap, val framed: Boolean)
+
+/** Fades the edges into the backdrop: 12% at the top and bottom, 10% at the sides. */
+private fun Modifier.softEdges() = graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+    .drawWithContent {
+        drawContent()
+        val clear = Color.Black.copy(alpha = 0f)
+        drawRect(Brush.verticalGradient(0f to clear, 0.12f to Color.Black, 0.88f to Color.Black, 1f to clear), blendMode = BlendMode.DstIn)
+        drawRect(Brush.horizontalGradient(0f to clear, 0.1f to Color.Black, 0.9f to Color.Black, 1f to clear), blendMode = BlendMode.DstIn)
     }
 
-    fun get(photos: PhotoStore, id: String, maxPixelSize: Int): Bitmap? {
+/** Studio versions of label photos, made once per size and kept in memory. */
+internal object StudioBitmaps {
+    // Sized by memory, not by count: a large label photo weighs megabytes.
+    private val cache = object : LruCache<String, StudioPicture>((Runtime.getRuntime().maxMemory() / 1024 / 8).toInt()) {
+        override fun sizeOf(key: String, value: StudioPicture): Int = value.bitmap.byteCount / 1024
+    }
+
+    fun get(photos: PhotoStore, id: String, maxPixelSize: Int): StudioPicture? {
         val key = "$id@$maxPixelSize"
         cache.get(key)?.let { return it }
-        val source = photos.load(id, maxPixelSize) ?: return null
-        val width = source.width
-        val height = source.height
-        val pixels = IntArray(width * height)
-        source.getPixels(pixels, 0, width, 0, 0, width, height)
-        val result = Bitmap.createBitmap(AutoLevels.apply(pixels), width, height, Bitmap.Config.ARGB_8888)
+        // Framed from a larger copy than shown, so the label keeps its detail.
+        val source = photos.load(id, minOf(1200, maxPixelSize * 3).coerceAtLeast(maxPixelSize)) ?: return null
+        val result = studio(source, maxPixelSize)
         cache.put(key, result)
         return result
+    }
+
+    /** The photo framed on its label (or whole), light evened out, at most [maxPixelSize] on its longest side. */
+    fun studio(source: Bitmap, maxPixelSize: Int): StudioPicture {
+        val pixels = IntArray(source.width * source.height)
+        source.getPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
+        val box = LabelCrop.find(pixels, source.width, source.height)
+        val (left, top, width, height) = box?.let { listOf(it.left, it.top, it.width, it.height) }
+            ?: listOf(0, 0, source.width, source.height)
+        val part = IntArray(width * height)
+        for (y in 0 until height) System.arraycopy(pixels, (top + y) * source.width + left, part, y * width, width)
+        var bitmap = Bitmap.createBitmap(AutoLevels.apply(part), width, height, Bitmap.Config.ARGB_8888)
+        val longest = maxOf(width, height)
+        if (longest > maxPixelSize) {
+            val scale = maxPixelSize.toFloat() / longest
+            bitmap = Bitmap.createScaledBitmap(bitmap, (width * scale).toInt().coerceAtLeast(1), (height * scale).toInt().coerceAtLeast(1), true)
+        }
+        return StudioPicture(bitmap, framed = box != null)
     }
 }

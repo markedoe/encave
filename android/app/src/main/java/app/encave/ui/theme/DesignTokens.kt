@@ -15,6 +15,11 @@ object DesignTokens {
     /** Text and icons of a warning, always next to an icon or words. */
     val warning = ThemedColor(light = 0xFF8F5300, dark = 0xFFF2B04A)
 
+    /** Base of the studio backdrop behind label photos and covers; the wine color is laid over it. */
+    val studioBackdrop = ThemedColor(light = 0xFFF5EFEC, dark = 0xFF1C1719)
+    /** Soft light behind the picture on the studio backdrop, so its shadow reads. */
+    val studioGlow = ThemedColor(light = 0xFFFFFFFF, dark = 0xFF4A3F43)
+
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
         "wine-red" to ThemedColor(light = 0xFF8C1C2B, dark = 0xFFC8454F),

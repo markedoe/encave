@@ -253,7 +253,7 @@ final class CellarModel {
         // Launch test in CI: sample data in memory, never written to disk.
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--sample-data") {
-            let model = preview()
+            let model = preview(labelPhotos: true)
             if let index = arguments.firstIndex(of: "--tab"), arguments.indices.contains(index + 1),
                let tab = AppTab(rawValue: arguments[index + 1]) {
                 model.request(.show(tab))
@@ -280,8 +280,11 @@ final class CellarModel {
         return CellarModel(store: InMemoryCellarStore())
     }
 
-    static func preview() -> CellarModel {
-        let sample = SampleData.cellar(labels: .localized)
+    /// The sample cellar in memory; with `labelPhotos` (the screen tour), its wines
+    /// get label photos drawn on the device and kept in memory.
+    static func preview(labelPhotos: Bool = false) -> CellarModel {
+        var sample = SampleData.cellar(labels: .localized)
+        if labelPhotos { SamplePhotos.attach(to: &sample) }
         return CellarModel(store: InMemoryCellarStore(sample), versions: DemoVersions.make(from: sample))
     }
 

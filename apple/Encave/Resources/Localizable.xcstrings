@@ -6781,12 +6781,12 @@
         }
       }
     },
-    "Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.": {
+    "Label photos are shown cut out and framed on the label, on a backdrop in the wine's color, made on this device. The photo you took is kept as is; turn this off to see it as taken.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise."
+            "value": "Les photos d’étiquette sont détourées et cadrées sur l’étiquette, sur un fond de la couleur du vin, sur cet appareil. La photo prise est gardée telle quelle ; désactivez ceci pour la voir telle que prise."
           }
         }
       }
@@ -11091,12 +11091,12 @@
         }
       }
     },
-    "Shown in the studio look when it is on in Settings: cut out and straightened on a clean background.": {
+    "Shown in the studio look when it is on in Settings: cut out and framed on its label, on a backdrop in the wine's color.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net."
+            "value": "Affichée en aspect studio s’il est activé dans Réglages : détourée et cadrée sur son étiquette, sur un fond de la couleur du vin."
           }
         }
       }
@@ -12491,12 +12491,12 @@
         }
       }
     },
-    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look: the bottle or label cut out and straightened on a clean background, made on this device. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": {
+    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists and on the wine's page it is shown in a studio look, made on this device with nothing sent anywhere: the bottle is cut out and framed on its label, with a little of the shoulder above, on a backdrop in the wine's color with a vine drawing. A photo that is already a close-up of the label is straightened and shown whole. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**."
+            "value": "La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin. Dans les listes et sur la fiche du vin, elle s’affiche en aspect studio, fait sur cet appareil sans rien envoyer : la bouteille est détourée et cadrée sur son étiquette, avec un peu de l’épaule au-dessus, sur un fond de la couleur du vin orné d’une vigne. Une photo qui est déjà un gros plan de l’étiquette est redressée et montrée entière. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez l’aspect dans les **Réglages**."
           }
         }
       }
