@@ -169,8 +169,10 @@ data class Wine(
         fun matchKey(text: String): String = fold(text.trim().split(Regex("\\s+")).joinToString(" "))
 
         private val marks = Regex("\\p{Mn}+")
+        /** Without accents and case, as Apple's folding: upper then lower case gives the full
+         *  case mapping, so "ß" matches "ss" and "ﬁ" matches "fi". */
         internal fun fold(text: String): String =
-            marks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)
+            marks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "").uppercase(Locale.ROOT).lowercase(Locale.ROOT)
     }
 }
 

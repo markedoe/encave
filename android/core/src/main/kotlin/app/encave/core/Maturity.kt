@@ -107,8 +107,11 @@ fun Cellar.drinkDownPlan(year: Int, month: Int, horizon: Int = 15): DrinkDownPla
     var pastPeak = 0
     var withoutWindow = 0
     for (bottle in bottlesInCellar) {
-        val until = wines[bottle.wineId]?.drinkUntil
-        if (until == null) {
+        // The same windows as maturity: both years, in order (as on Apple).
+        val wine = wines[bottle.wineId]
+        val from = wine?.drinkFrom
+        val until = wine?.drinkUntil
+        if (from == null || until == null || from > until) {
             withoutWindow++
             continue
         }

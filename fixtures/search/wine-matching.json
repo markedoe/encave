@@ -19,6 +19,10 @@
     {
       "name": "Rully", "producer": "Domaine Jacqueson", "vintage": 2020,
       "region": "Bourgogne", "country": "France", "grapes": ["Chardonnay"]
+    },
+    {
+      "name": "Weißburgunder", "producer": "Schloss Gobelsburg", "vintage": 2022,
+      "region": "Kamptal", "country": "Austria", "grapes": ["Pinot Blanc"]
     }
   ],
   "searches": [
@@ -35,6 +39,9 @@
     { "query": "gift figeac", "matches": ["Château Figeac"] },
     { "query": "3760123456789", "matches": ["La Landonne"] },
     { "query": "bourgogne chardonnay 2020 jacqueson", "matches": ["Rully"] },
-    { "query": "   ", "matches": ["Château Figeac", "Château Palmer", "La Landonne", "Rully"] }
+    { "query": "weissburgunder", "matches": ["Weißburgunder"] },
+    { "query": "WEISSBURGUNDER kamptal", "matches": ["Weißburgunder"] },
+    { "query": "weißburgunder", "matches": ["Weißburgunder"] },
+    { "query": "   ", "matches": ["Château Figeac", "Château Palmer", "La Landonne", "Rully", "Weißburgunder"] }
   ]
 }

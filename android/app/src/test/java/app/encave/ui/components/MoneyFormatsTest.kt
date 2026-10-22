@@ -30,6 +30,13 @@ class MoneyFormatsTest {
     }
 
     @Test
+    fun aCodeTypedInLowerCaseIsStillItsCurrency() {
+        // A CSV import keeps "eur" as typed: it is still euros, not the device's currency.
+        assertEquals("€12.50", money("en-US", "12.5", "eur"))
+        assertEquals("€12.50", money("en-US", "12.5", " Eur "))
+    }
+
+    @Test
     fun pricesInEnglish() {
         assertEquals("€12.50", money("en-US", "12.5", "EUR"))
         assertEquals("$1,234.50", money("en-US", "1234.5", "USD"))

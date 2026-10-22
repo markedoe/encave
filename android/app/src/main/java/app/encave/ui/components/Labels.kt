@@ -336,7 +336,8 @@ object Formats {
 
     fun money(amount: BigDecimal, code: String?): String {
         val format = NumberFormat.getCurrencyInstance(locale())
-        runCatching { if (code != null) format.currency = Currency.getInstance(code) }
+        // Codes are kept as typed ("eur" from a CSV): ISO codes are upper case.
+        runCatching { if (code != null) format.currency = Currency.getInstance(code.trim().uppercase(Locale.ROOT)) }
         return format.format(amount)
     }
 

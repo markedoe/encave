@@ -40,7 +40,7 @@ jobs:
           tar -xzf "$archive" -C /opt
           echo "/opt/node-v${NODE_VERSION}-linux-x64/bin" >> "$GITHUB_PATH"
       - name: Relay tests
-        run: node --test relay/test/relay.test.mjs relay/test/worker.test.mjs
+        run: node --test relay/test/relay.test.mjs relay/test/worker.test.mjs relay/test/handler.test.mjs
       - name: Remote sync through the relay
         run: |
           mkdir -p "$RUNNER_TEMP/relay"

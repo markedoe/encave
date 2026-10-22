@@ -125,6 +125,16 @@
       "wines": [],
       "years": [[2026, 0]],
       "pastPeak": 0, "withoutWindow": 0, "bottlesPerMonth": 0.0, "isEmpty": true
+    },
+    {
+      "about": "A window needs both years, in order: an end year alone, or a start after the end, counts as no window.",
+      "year": 2026, "month": 1,
+      "wines": [
+        {"name": "A", "from": null, "until": 2027, "inCellar": 2},
+        {"name": "B", "from": 2030, "until": 2027, "inCellar": 1}
+      ],
+      "years": [[2026, 0]],
+      "pastPeak": 0, "withoutWindow": 3, "bottlesPerMonth": 0.0, "isEmpty": true
     }
   ]
 }
