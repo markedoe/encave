@@ -126,3 +126,13 @@ the app out of the Families programme.
   cellar from Settings while the cellar is empty.
 - **Google Play: ads**: the app contains no ads.
 - **Google Play: health apps, financial features, government apps, news**: No.
+
+## App Store header and search results image
+
+`docs/store/header-fr.png` and `header-en.png`: one universal image per
+language (5244 x 2950 PNG, no transparency), made by `docs/store/make_header.py`
+from the screen tour's sample cellar. The "App Store header image" workflow
+(run by hand) reads App Store Connect with `inspect`, and with `upload` places
+each image as the product page header and the search results asset of the
+version being prepared. It submits nothing: the images go to review with the
+version. Shown on iOS and iPadOS 27 and later.
