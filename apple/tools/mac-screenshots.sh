@@ -24,12 +24,15 @@ cat "$work/display.log"
 
 status=0
 count=0
+failures=0
 for appearance in light dark; do
   for language in en fr; do
     locale=$([ "$language" = fr ] && echo fr_FR || echo en_US)
     step=0
     for section in cellar racks tonight journal; do
       step=$((step + 1))
+      # Something is wrong with every launch: say so once rather than 16 times.
+      [ "$failures" -ge 2 ] && break 3
       name=$(printf "%s-%02d-%s" "$language" "$step" "$section")
       log="$work/$appearance-$name.log"
       "$app/Contents/MacOS/Encave" --sample-data --tab "$section" \
@@ -57,7 +60,10 @@ for appearance in light dark; do
       else
         echo "::warning::$appearance $name: no window to capture"
         tail -n 40 "$log"
+        # Where the app is: its main thread.
+        sample "$pid" 2 -file "$work/sample.txt" > /dev/null 2>&1 && sed -n '/^Call graph:/,/^Total number/p' "$work/sample.txt" | head -n 120
         status=1
+        failures=$((failures + 1))
       fi
       kill "$pid" 2>/dev/null
       wait "$pid" 2>/dev/null

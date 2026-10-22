@@ -15,6 +15,7 @@ enum MacScreenshotMode {
         let defaults = UserDefaults.standard
         guard !started, defaults.bool(forKey: "EncaveScreenshots") else { return }
         started = true
+        log("started")
         switch defaults.string(forKey: "EncaveAppearance") {
         case "dark": NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
         case "light": NSApplication.shared.appearance = NSAppearance(named: .aqua)
@@ -80,8 +81,7 @@ enum MacScreenshotMode {
     }
 
     private static func log(_ line: String) {
-        print("encave-screenshots: " + line)
-        fflush(stdout)
+        FileHandle.standardError.write(Data(("encave-screenshots: " + line + "\n").utf8))
     }
 }
 #endif
