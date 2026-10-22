@@ -285,7 +285,7 @@ class WebDavTests {
         val mailbox = server.store().mailbox("c" + "c".repeat(32), "")
         val cases = listOf(
             401 to RemoteSyncError.Unauthorized,
-            403 to RemoteSyncError.Unauthorized,
+            403 to RemoteSyncError.Forbidden,
             507 to RemoteSyncError.QuotaExceeded,
             413 to RemoteSyncError.FileTooLarge,
             500 to RemoteSyncError.Unavailable("WebDAV status 500"),

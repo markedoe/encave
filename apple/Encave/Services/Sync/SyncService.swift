@@ -215,7 +215,7 @@ final class SyncService {
     /// Sync Now in Devices: on the network, and away from home if it is set up.
     func syncEverywhereNow() {
         syncNow()
-        if remoteStorage != nil { Task { await remoteRound() } }
+        if remoteStorage != nil { Task { await remoteRound(userAsked: true) } }
     }
 
     /// Sync Now from where the user is (pulling down the Cellar, Cellar › Sync Now): with
@@ -223,7 +223,7 @@ final class SyncService {
     /// sessions go on afterwards if they need longer).
     func syncEverywhere() async {
         let sessions = endpoints.compactMap { sync(with: $0.key, at: $0.value) }
-        let remote: Task<Void, Never>? = remoteStorage == nil ? nil : Task { await remoteRound() }
+        let remote: Task<Void, Never>? = remoteStorage == nil ? nil : Task { await remoteRound(userAsked: true) }
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             let once = Once()
             Task {
@@ -712,6 +712,7 @@ final class SyncService {
     static let lastLocalChangeKey = "sync.lastLocalChange"
     static let remoteSentKey = "sync.remoteSentThrough"
     static let pendingReplaceKey = "sync.pendingReplace"
+    static let webDAVRefusedKey = "sync.webDAVLoginRefused"
 
     /// Sets one of the dates kept across launches.
     private func keep(_ date: Date?, in property: ReferenceWritableKeyPath<SyncService, Date?>, key: String) {
@@ -733,7 +734,11 @@ final class SyncService {
 
     /// The WebDAV server refused the login in the last round (a changed password): sync
     /// needs the user at once (sign in again) rather than failing for an hour first.
-    private(set) var webDAVLoginRefused = false
+    /// Kept across launches: while it is set, no automatic round tries the login again (a
+    /// server may lock the account after a few refusals); Sync Now and a new login still do.
+    private(set) var webDAVLoginRefused = UserDefaults.standard.bool(forKey: SyncService.webDAVRefusedKey) {
+        didSet { UserDefaults.standard.set(webDAVLoginRefused, forKey: Self.webDAVRefusedKey) }
+    }
 
     /// Turns syncing away from home on with a storage (or off with nil). Checks the
     /// storage first. The first device to turn it on creates the cellar's key and
@@ -912,7 +917,10 @@ final class SyncService {
     }
     #endif
 
-    func remoteRound() async {
+    /// `userAsked`: Sync Now. A refused WebDAV login is tried again only then (or after a new login).
+    func remoteRound(userAsked: Bool = false) async {
+        if case .webDAV = remoteStorage,
+           !RemoteSync.mayRun(userAsked: userAsked, webDAVLoginRefused: webDAVLoginRefused) { return }
         guard let store = remoteStorage?.store(login: webDAVLogin), !isSyncingRemotely, !wasRemoved,
               !identityUnavailable, let local = snapshot() else { return }
         isSyncingRemotely = true
@@ -933,6 +941,10 @@ final class SyncService {
                 key = try await rotateIfNeeded(store: store, key: key, local: local, round: round)
             } catch {
                 guard !Task.isCancelled else { return }
+                if let error = error as? RemoteSyncError, error == .unauthorized || error == .forbidden {
+                    noteRefused(error)
+                    return
+                }
                 noteRemoteFailure()
                 remoteProblem = String(localized: "The removed device could not be shut out of syncing away from home yet. It will be tried again.")
                 return
@@ -980,14 +992,8 @@ final class SyncService {
         } catch _ where Task.isCancelled {
             // iOS ended the background task early: not a failure, the next round retries.
             return
-        } catch RemoteSyncError.unauthorized {
-            noteRemoteFailure()
-            if case .webDAV = remoteStorage { webDAVLoginRefused = true }
-            switch remoteStorage {
-            case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
-            case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
-            default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
-            }
+        } catch let error as RemoteSyncError where error == .unauthorized || error == .forbidden {
+            noteRefused(error)
         } catch let error as RemoteSyncError where error == .fileTooLarge || error == .quotaExceeded {
             noteRemoteFailure()
             remoteProblem = refusalMessage(error)
@@ -998,6 +1004,22 @@ final class SyncService {
             case .webDAV: remoteProblem = String(localized: "The WebDAV folder could not be reached.")
             default: remoteProblem = String(localized: "The relay could not be reached.")
             }
+        }
+    }
+
+    /// The storage refused this device: a WebDAV login (sign in again, and no automatic
+    /// round until then) or, with the right login, the folder itself.
+    private func noteRefused(_ error: RemoteSyncError) {
+        noteRemoteFailure()
+        if error == .forbidden {
+            remoteProblem = String(localized: "The server refused access to this folder. Check that this account may read and write it.")
+            return
+        }
+        if case .webDAV = remoteStorage { webDAVLoginRefused = true }
+        switch remoteStorage {
+        case .iCloud: remoteProblem = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
+        case .webDAV: remoteProblem = String(localized: "The WebDAV server refused the username or password. Sign in again.")
+        default: remoteProblem = String(localized: "The relay refused this device. Check the relay address.")
         }
     }
 

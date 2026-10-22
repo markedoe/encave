@@ -40,6 +40,9 @@ interface MailboxStore {
 
 sealed class RemoteSyncError {
     data object Unauthorized : RemoteSyncError()
+
+    /** The login is right but the server refused access to the folder (WebDAV 403). */
+    data object Forbidden : RemoteSyncError()
     data object QuotaExceeded : RemoteSyncError()
 
     /** One file is larger than the storage accepts (a very large cellar). */
@@ -230,6 +233,12 @@ data class RemoteProgress(
 object RemoteSync {
     /** Snapshots kept per device: the newest two (a reader may be fetching the previous one). */
     const val KEPT_SNAPSHOTS = 2
+
+    /**
+     * Whether a round may run: after a refused WebDAV login, only when the user asks (Sync now)
+     * or signs in again, never automatically (a server may lock the account).
+     */
+    fun mayRun(userAsked: Boolean, webDavLoginRefused: Boolean): Boolean = userAsked || !webDavLoginRefused
 
     data class Result(
         /** The merged copy, or null if nothing came in. */

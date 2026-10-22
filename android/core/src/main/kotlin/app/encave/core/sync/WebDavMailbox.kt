@@ -65,7 +65,7 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
 
     /**
      * Sends a request. Statuses that say the same thing on every server become errors:
-     * 401/403 refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
+     * 401 login refused, 403 folder refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
      */
     internal suspend fun send(
         method: String,
@@ -86,7 +86,8 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
             throw RemoteSyncException(RemoteSyncError.Unavailable(error.message ?: "no connection"))
         }
         when (status) {
-            401, 403 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)
+            401 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)
+            403 -> throw RemoteSyncException(RemoteSyncError.Forbidden)
             413 -> throw RemoteSyncException(RemoteSyncError.FileTooLarge)
             507 -> throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
             in 300..399 -> throw RemoteSyncException(RemoteSyncError.Unavailable("redirected ($status): use the final address"))

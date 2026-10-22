@@ -825,6 +825,7 @@
     <string name="remote_hide_password">Hide password</string>
     <string name="remote_webdav_footer">Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays on this device, encrypted with the Android Keystore. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.</string>
     <string name="remote_webdav_invalid">Use an https:// address (http only on the local network).</string>
+    <string name="remote_webdav_forbidden">The server refused access to this folder. Check that this account may read and write it.</string>
     <string name="remote_webdav_refused">The server refused this username or password. With two-step verification, use an app password.</string>
     <string name="remote_webdav_not_webdav">This address does not answer as a WebDAV folder. Check the address and that the server has WebDAV turned on.</string>
     <string name="remote_webdav_full">The WebDAV folder is full. Free some space on the server.</string>

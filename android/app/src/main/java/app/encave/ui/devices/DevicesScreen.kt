@@ -127,6 +127,7 @@ internal val SyncManager.Problem.text: Int
 /** For a WebDAV folder, the problems that differ from a relay's. */
 private fun SyncManager.RemoteProblem.text(webDav: Boolean): Int = when {
     webDav && this == SyncManager.RemoteProblem.Refused -> R.string.remote_problem_webdav_refused
+    this == SyncManager.RemoteProblem.Forbidden -> R.string.remote_webdav_forbidden
     webDav && this == SyncManager.RemoteProblem.Full -> R.string.remote_webdav_full
     webDav && this == SyncManager.RemoteProblem.FileTooLarge -> R.string.remote_problem_webdav_too_large
     else -> text
@@ -135,6 +136,7 @@ private fun SyncManager.RemoteProblem.text(webDav: Boolean): Int = when {
 private val SyncManager.RemoteProblem.text: Int
     get() = when (this) {
         SyncManager.RemoteProblem.Refused -> R.string.remote_problem_refused
+        SyncManager.RemoteProblem.Forbidden -> R.string.remote_webdav_forbidden
         SyncManager.RemoteProblem.Full -> R.string.remote_problem_full
         SyncManager.RemoteProblem.FileTooLarge -> R.string.remote_problem_too_large
         SyncManager.RemoteProblem.Unreachable -> R.string.remote_problem_unreachable
@@ -309,7 +311,7 @@ fun DevicesScreen(navigator: AppNavigator) {
     val syncLocally = rememberLocalNetworkAccess { sync.syncNow() }
     // Away from home does not need the local network: only the sessions on it wait for the permission.
     val syncNow = {
-        if (status.remoteStorage != null) scope.launch { sync.remoteRound() }
+        if (status.remoteStorage != null) scope.launch { sync.remoteRound(userAsked = true) }
         syncLocally()
     }
     LaunchedEffect(others.isEmpty()) { if (others.isNotEmpty()) withNetwork() }
@@ -572,6 +574,7 @@ private fun RemovableDeviceRow(member: Member, status: String, onRemove: () -> U
 /** What went wrong when checking a WebDAV folder or its login, or when giving the key there. */
 private fun webDavError(error: Throwable): Int = when ((error as? RemoteSyncException)?.error) {
     RemoteSyncError.Unauthorized -> R.string.remote_webdav_refused
+    RemoteSyncError.Forbidden -> R.string.remote_webdav_forbidden
     RemoteSyncError.QuotaExceeded -> R.string.remote_webdav_full
     else -> if (error is java.io.IOException) R.string.remote_problem_unreachable else R.string.remote_webdav_not_webdav
 }
@@ -674,7 +677,7 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                     },
                 )
                 Row(Modifier.padding(horizontal = Dimens.l), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Dimens.s)) {
-                    Button(onClick = { scope.launch { sync.remoteRound() } }, enabled = !status.syncingRemotely, modifier = Modifier.testTag("action.remote_sync")) {
+                    Button(onClick = { scope.launch { sync.remoteRound(userAsked = true) } }, enabled = !status.syncingRemotely, modifier = Modifier.testTag("action.remote_sync")) {
                         ActionContent(stringResource(R.string.devices_sync_now), Icons.Outlined.Sync)
                     }
                     OutlinedButton(onClick = { confirmingOff = true }, modifier = Modifier.testTag("action.remote_off")) {

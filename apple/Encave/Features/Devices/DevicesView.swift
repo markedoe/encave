@@ -437,7 +437,7 @@ struct RemoteSyncView: View {
                         }
                     }
                     Button {
-                        Task { await sync.remoteRound() }
+                        Task { await sync.remoteRound(userAsked: true) }
                     } label: {
                         Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                     }
@@ -671,6 +671,8 @@ struct RemoteSyncView: View {
         switch error as? RemoteSyncError {
         case .unauthorized:
             String(localized: "The server refused this username or password. With two-step verification, use an app password.")
+        case .forbidden:
+            String(localized: "The server refused access to this folder. Check that this account may read and write it.")
         case .quotaExceeded:
             String(localized: "The WebDAV folder is full. Free some space on the server.")
         default:

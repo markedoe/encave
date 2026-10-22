@@ -130,6 +130,48 @@ class SyncManagerTest {
     }
 
     @Test
+    fun aRefusedWebDavLoginIsNotTriedAgainUntilTheUserAsks() = runBlocking {
+        sync.setUpIfNeeded()
+        addOther()
+        val requests = java.util.concurrent.atomic.AtomicInteger()
+        val refusing = object : MailboxStore {
+            val box = object : Mailbox {
+                override suspend fun list(prefix: String): List<String> = refuse()
+                override suspend fun get(path: String): ByteArray? = refuse()
+                override suspend fun create(path: String, data: ByteArray): Boolean = refuse()
+                override suspend fun delete(path: String) = refuse()
+                fun refuse(): Nothing {
+                    requests.incrementAndGet()
+                    throw RemoteSyncException(RemoteSyncError.Unauthorized)
+                }
+            }
+            override fun mailbox(id: String, token: String): Mailbox = box
+            override fun inbox(id: String, token: String): Mailbox = box
+        }
+        sync.storeForTests = { refusing }
+        sync.storage.remoteStorage = SyncManager.WEBDAV_PREFIX + "https://nas.example.com/encave/"
+        sync.remoteRound()
+        assertTrue(requests.get() > 0)
+        assertTrue(sync.storage.webDavLoginRefused)
+        assertEquals(SyncHealth.NeedsAction(SyncHealth.Reason.SignInNeeded), sync.state.value.health(sync.identity.id))
+        // Automatic rounds (the loop, after a change, in the background) leave the server alone.
+        val before = requests.get()
+        sync.remoteRound()
+        sync.remoteRound()
+        assertEquals(before, requests.get())
+        // Sync now still tries.
+        sync.remoteRound(userAsked = true)
+        assertTrue(requests.get() > before)
+        assertTrue(sync.storage.webDavLoginRefused)
+        // A new login clears it: automatic rounds try again.
+        sync.storage.webDavLogin = WebDavLogin("https://nas.example.com/encave/", "me", "new password")
+        assertFalse(sync.storage.webDavLoginRefused)
+        val again = requests.get()
+        sync.remoteRound()
+        assertTrue(requests.get() > again)
+    }
+
+    @Test
     fun replaceKeepsTheBottlesUntilTheOtherCellarArrives() = runBlocking {
         repository.update { it.addBottles(Wine(name = "Mine"), 4) }.getOrThrow()
         // The other device's cellar and devices.

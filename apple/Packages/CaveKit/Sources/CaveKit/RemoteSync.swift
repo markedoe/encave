@@ -32,6 +32,8 @@ public protocol MailboxStore: Sendable {
 
 public enum RemoteSyncError: Error, Equatable, Sendable {
     case unauthorized
+    /// The login is right but the server refused access to the folder (WebDAV 403).
+    case forbidden
     case quotaExceeded
     /// One file is larger than the storage accepts (a very large cellar).
     case fileTooLarge
@@ -247,6 +249,12 @@ public enum RemoteSync {
     public static func firstWait(interval: TimeInterval, lastRound: Date?, now: Date = .now) -> TimeInterval {
         let elapsed = now.timeIntervalSince(lastRound ?? .distantPast)
         return min(interval, max(0, interval - elapsed))
+    }
+
+    /// Whether a round may run: after a refused WebDAV login, only when the user asks
+    /// (Sync Now) or signs in again, never automatically (a server may lock the account).
+    public static func mayRun(userAsked: Bool, webDAVLoginRefused: Bool) -> Bool {
+        userAsked || !webDAVLoginRefused
     }
 
     public struct Result: Sendable {

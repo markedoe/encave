@@ -131,7 +131,7 @@ class SyncManager(
     }
 
     enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen, LocalNetworkUnavailable }
-    enum class RemoteProblem { Refused, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
+    enum class RemoteProblem { Refused, Forbidden, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
 
     val storage = SyncStorage(context)
     internal val appContext: Context get() = context
@@ -328,7 +328,7 @@ class SyncManager(
     /** Sync now (Devices): with the devices on the network, and away from home if it is set up. */
     fun syncEverywhereNow() {
         syncNow()
-        if (storage.remoteStorage != null) scope.launch { remoteRound() }
+        if (storage.remoteStorage != null) scope.launch { remoteRound(userAsked = true) }
     }
 
     /**
@@ -338,7 +338,7 @@ class SyncManager(
      */
     suspend fun syncEverywhere(local: Boolean = true) {
         coroutineScope {
-            val remote = if (storage.remoteStorage != null) async { remoteRound() } else null
+            val remote = if (storage.remoteStorage != null) async { remoteRound(userAsked = true) } else null
             if (local) withTimeoutOrNull(EVERYWHERE_TIMEOUT_MS) { startSessions().joinAll() }
             remote?.await()
         }
@@ -1050,6 +1050,9 @@ class SyncManager(
         }
     }
 
+    /** Tests: the store to use instead of the one for the storage (tests have no Keystore for a login). */
+    @Volatile internal var storeForTests: ((String) -> MailboxStore?)? = null
+
     /** The store for a storage string; null for a WebDAV folder without a login on this device. */
     private fun storeFor(storageString: String): MailboxStore? {
         if (!storageString.startsWith(WEBDAV_PREFIX)) return RelayMailboxStore(storageString)
@@ -1059,20 +1062,23 @@ class SyncManager(
     }
 
     private fun needsSignIn(storageString: String?): Boolean =
-        storageString != null && storageString.startsWith(WEBDAV_PREFIX) && storage.webDavLogin?.folder != storageString.removePrefix(WEBDAV_PREFIX)
+        storageString != null && storageString.startsWith(WEBDAV_PREFIX) &&
+            (storage.webDavLoginRefused || storage.webDavLogin?.folder != storageString.removePrefix(WEBDAV_PREFIX))
 
     /**
      * One round through the relay or WebDAV folder, off the main thread. Also run by
-     * [RemoteSyncWorker] in the background.
+     * [RemoteSyncWorker] in the background. [userAsked]: Sync now. A refused WebDAV login is
+     * tried again only then (or after a new login), never by an automatic round.
      */
-    suspend fun remoteRound() {
+    suspend fun remoteRound(userAsked: Boolean = false) {
         awaitStarted()
-        withContext(Dispatchers.Default) { runRemoteRound() }
+        withContext(Dispatchers.Default) { runRemoteRound(userAsked) }
     }
 
-    private suspend fun runRemoteRound() {
+    private suspend fun runRemoteRound(userAsked: Boolean) {
         val url = storage.remoteStorage ?: return
-        val store = storeFor(url)
+        if (url.startsWith(WEBDAV_PREFIX) && !RemoteSync.mayRun(userAsked, storage.webDavLoginRefused)) return
+        val store = storeForTests?.invoke(url) ?: storeFor(url)
         if (store == null) {
             status.update { it.copy(needsWebDavSignIn = true) }
             return
@@ -1094,8 +1100,14 @@ class SyncManager(
                 rotateIfNeeded(store, key, local, url)
             } catch (error: CancellationException) {
                 throw error
-            } catch (_: Exception) {
-                remoteFailed(RemoteProblem.RemovalPending)
+            } catch (error: Exception) {
+                remoteFailed(
+                    when ((error as? RemoteSyncException)?.error) {
+                        RemoteSyncError.Unauthorized -> RemoteProblem.Refused
+                        RemoteSyncError.Forbidden -> RemoteProblem.Forbidden
+                        else -> RemoteProblem.RemovalPending
+                    },
+                )
                 return
             }
             val current = synchronized(this) { progress }
@@ -1134,6 +1146,7 @@ class SyncManager(
             runCatching {
                 storage.lastRemoteSync = now
                 if (sent) storage.unsentChanges = false
+                storage.webDavLoginRefused = false
             }
             status.update {
                 // The cellar synced; files the storage refused stay on this device for now.
@@ -1155,6 +1168,7 @@ class SyncManager(
         } catch (error: RemoteSyncException) {
             val problem = when (error.error) {
                 RemoteSyncError.Unauthorized -> RemoteProblem.Refused
+                RemoteSyncError.Forbidden -> RemoteProblem.Forbidden
                 RemoteSyncError.QuotaExceeded -> RemoteProblem.Full
                 RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
@@ -1175,6 +1189,7 @@ class SyncManager(
         // A WebDAV server that refuses the login (a changed password): sync needs the user at
         // once (sign in again) rather than failing for an hour first.
         val loginRefused = problem == RemoteProblem.Refused && storage.remoteStorage?.startsWith(WEBDAV_PREFIX) == true
+        if (loginRefused) runCatching { storage.webDavLoginRefused = true }
         status.update {
             it.copy(
                 remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now,

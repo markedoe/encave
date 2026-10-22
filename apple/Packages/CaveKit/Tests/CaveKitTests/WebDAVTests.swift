@@ -280,7 +280,7 @@ final class FakeWebDAVProtocol: URLProtocol {
     @Test func statusesBecomeErrors() async throws {
         let server = FakeWebDAV()
         let mailbox = server.store().mailbox(id: "c" + String(repeating: "c", count: 32), token: "")
-        let cases: [(Int, RemoteSyncError)] = [(401, .unauthorized), (403, .unauthorized), (507, .quotaExceeded),
+        let cases: [(Int, RemoteSyncError)] = [(401, .unauthorized), (403, .forbidden), (507, .quotaExceeded),
                                                (413, .fileTooLarge), (500, .unavailable("WebDAV status 500")),
                                                (423, .unavailable("WebDAV status 423"))]
         for (status, error) in cases {
