@@ -62,7 +62,7 @@ struct RackEditor: View {
     @State private var onShelves = false
     @State private var shelves: [ShelfDraft] = []
     @State private var loaded = false
-    @State private var confirmingDelete = false
+    @State private var deletingRackID: UUID?
     /// The form as loaded, to ask before discarding changes.
     @State private var initial: EditorState?
     @State private var confirmingDiscard = false
@@ -222,7 +222,7 @@ struct RackEditor: View {
 
                 if rackID != nil {
                     Section {
-                        Button("Delete Rack", role: .destructive) { confirmingDelete = true }
+                        Button("Delete Rack…", role: .destructive) { deletingRackID = rackID }
                     } footer: {
                         Text("Bottles in this rack stay in your cellar without a place.")
                     }
@@ -257,12 +257,7 @@ struct RackEditor: View {
             } message: {
                 Text("They stay in your cellar without a place.")
             }
-            .confirmationDialog("Delete this rack?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                Button("Delete Rack", role: .destructive) {
-                    if let rackID { model.deleteRack(rackID) }
-                    dismiss()
-                }
-            }
+            .confirmsRackDeletion($deletingRackID) { dismiss() }
             .onAppear(perform: load)
             .onChange(of: rows) { _, count in if customRows { resizeRows(count) } }
             .onChange(of: onShelves) { _, on in if on { startShelves() } }

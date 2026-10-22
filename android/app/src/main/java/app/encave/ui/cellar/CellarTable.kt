@@ -35,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -146,9 +147,10 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
     var ascending by rememberSaveable { mutableStateOf(true) }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     val year = viewModel.year
-    val rows = remember(cellar, filter.query, sortColumn, ascending) {
+    // The list's search and filters, as on Apple: switching between them keeps both.
+    val rows = remember(cellar, filter, sortColumn, ascending) {
         val order = comparator(sortColumn, cellar.racks).let { if (ascending) it else it.reversed() }
-        cellar.groups(CellarFilter(query = filter.query), CellarSort.Name, year).map { TableRow(it, cellar, year) }.sortedWith(order)
+        cellar.groups(filter, CellarSort.Name, year).map { TableRow(it, cellar, year) }.sortedWith(order)
     }
     val horizontal = rememberScrollState()
 
@@ -192,7 +194,13 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
         Row(Modifier.padding(padding).fillMaxSize()) {
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 if (rows.isEmpty()) {
-                    EmptyState(Icons.Filled.Search, stringResource(R.string.cellar_no_match), stringResource(R.string.cellar_no_match_body))
+                    EmptyState(Icons.Filled.Search, stringResource(R.string.cellar_no_match), stringResource(R.string.cellar_no_match_body)) {
+                        if (filter.isActive) {
+                            TextButton(onClick = { viewModel.filter.value = CellarFilter(query = filter.query) }) {
+                                Text(stringResource(R.string.action_clear_filters))
+                            }
+                        }
+                    }
                 } else {
                     Column(Modifier.fillMaxSize()) {
                         HeaderRow(horizontal, sortColumn, ascending) { column ->

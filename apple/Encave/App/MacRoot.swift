@@ -17,6 +17,7 @@ struct MacRoot: View {
     @State private var wine: UUID?
     @State private var bottle: UUID?
     @State private var columns: NavigationSplitViewVisibility = .all
+    @State private var deletingRackID: UUID?
     @AppStorage(CellarLayout.key) private var showsTable = false
 
     var body: some View {
@@ -103,8 +104,8 @@ struct MacRoot: View {
                         .contextMenu {
                             Button("Edit Rack", systemImage: "pencil") { router.sheet = .editRack(rackID: rack.id) }
                             Divider()
-                            Button("Delete Rack", systemImage: "trash", role: .destructive) {
-                                model.deleteRack(rack.id)
+                            Button("Delete Rack…", systemImage: "trash", role: .destructive) {
+                                deletingRackID = rack.id
                             }
                         }
                 }
@@ -120,6 +121,7 @@ struct MacRoot: View {
             }
         }
         .listStyle(.sidebar)
+        .confirmsRackDeletion($deletingRackID)
         .safeAreaInset(edge: .bottom) { SyncAttentionFooter() }
     }
 

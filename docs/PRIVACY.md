@@ -1,16 +1,14 @@
 # Privacy policy · Politique de confidentialité
 
-> **Draft for the owner.** Review it, fill in the contact and date, then publish
-> it where the stores can link to it (the apps link to this file:
-> `ProjectLinks` in `apple/Encave/App/ProjectLinks.swift` and
-> `android/app/src/main/java/app/encave/ui/ProjectLinks.kt`). Keep it true for
-> the code: change it with any change to what the apps send.
+<!-- Published at this address: the apps (ProjectLinks on both platforms) and the
+store listings link to it. Keep it true for the code: change it, and its date,
+with any change to what the apps send. -->
 
 [English](#english) · [Français](#français)
 
 ## English
 
-Effective date: *[date of publication]*
+Effective date: October 22, 2026
 
 Encave is a wine cellar app for iPhone, iPad, Mac and Android. This policy
 covers those apps. In short: **the developer of Encave collects nothing.**
@@ -96,12 +94,12 @@ storage, AI or search service you choose, their own policies apply.
 
 Changes to this policy are published here, with the date above. Encave is open
 source: anyone can check what the apps do at
-<https://github.com/markedoe/encave>. Questions: *[contact to fill in]*, or an
-issue on the project page.
+<https://github.com/markedoe/encave>. Questions: open an issue on
+<https://github.com/markedoe/encave/issues>.
 
 ## Français
 
-Date d'effet : *[date de publication]*
+Date d'effet : 22 octobre 2026
 
 Encave est une app de cave à vin pour iPhone, iPad, Mac et Android. Cette
 politique couvre ces apps. En bref : **le développeur d'Encave ne collecte
@@ -195,5 +193,5 @@ choisissez, leurs propres politiques s'appliquent.
 
 Les modifications de cette politique sont publiées ici, avec la date
 ci-dessus. Encave est open source : chacun peut vérifier ce que font les apps
-sur <https://github.com/markedoe/encave>. Questions : *[contact à compléter]*,
-ou un ticket sur la page du projet.
+sur <https://github.com/markedoe/encave>. Questions : ouvrez un ticket sur
+<https://github.com/markedoe/encave/issues>.
