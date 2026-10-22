@@ -36,10 +36,11 @@ Store Connect API key with the Admin role).
 
 The workflow uses two macOS jobs per run (one on pushes to other branches):
 
-- **Build, Mac launch test, TestFlight upload**: on main and manual runs, archives
-  and uploads both apps, then launches the archived Mac app (twice empty, then
-  each section with the sample cellar) and reports crashes. On other branches and
-  pull requests, builds the Mac app in Release for the same launch test, and the
+- **Build, Mac launch test, TestFlight upload**: on main (pushes and manual
+  runs), archives and uploads both apps, then launches the archived Mac app
+  (twice empty, then each section with the sample cellar) and reports crashes.
+  On other branches (manual runs included: they never upload) and pull
+  requests, builds the Mac app in Release for the same launch test, and the
   iPhone and iPad app for the simulator while the Mac app runs. Every build
   checks the privacy manifest.
 - **Screen tour** (main, pull requests and manual runs): builds the UI tests

@@ -253,7 +253,7 @@ jobs:
           retention-days: 7
 
   apps:
-    name: Build, Mac launch test${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && ', TestFlight upload' || '' }}
+    name: Build, Mac launch test${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && ', TestFlight upload' || '' }}
     needs: [cavekit, l10n]
     runs-on: macos-latest
     timeout-minutes: 60
@@ -270,10 +270,10 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      # Uploads on a push to main or a manual run, only when the secrets are available
-      # (never on forks). Pushes to other branches only build. A manual run from another
-      # branch reaches the internal testers only: external testers get main (testers job).
-      UPLOAD: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && secrets.ASC_KEY_ID != '' }}
+      # Uploads on a push to main or a manual run on main, only when the secrets are
+      # available (never on forks). Other branches, manual runs on them included, only
+      # build: their builds never reach the testers.
+      UPLOAD: ${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && secrets.ASC_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
