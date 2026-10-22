@@ -1375,6 +1375,26 @@ def unit(value):
     return {"stringUnit": {"state": "translated", "value": value}}
 
 
+# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
+# so the mark never starts a line. URLs and format specifiers are left as they are.
+NARROW_NBSP, NBSP = "\u202f", "\u00a0"
+VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?(?:lld|ld|d|@|lf|f|s))")
+LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+
+
+def french(text):
+    parts = VERBATIM.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+    return "".join(parts)
+
+
+def plain_space_before_mark(text):
+    """The marks still preceded by a plain space, outside URLs and format specifiers."""
+    return [m.group(0) for i, part in enumerate(VERBATIM.split(text)) if i % 2 == 0
+            for m in re.finditer(r"\S{0,12} [?!;:]", part)]
+
+
 def to_key(literal):
     """Swift interpolation → format key ("\\(count) bottles" → "%lld bottles")."""
     def repl(match):
@@ -1405,15 +1425,15 @@ def extract():
 
 def catalogs():
     """The catalog files, as written: {path: text}."""
-    strings = {key: {"localizations": {"fr": unit(value)}} for key, value in FR.items() if key.strip() == key}
+    strings = {key: {"localizations": {"fr": unit(french(value))}} for key, value in FR.items() if key.strip() == key}
     for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
         strings[key] = {"localizations": {
             "en": {"variations": {"plural": {"one": unit(en_one), "other": unit(en_other)}}},
-            "fr": {"variations": {"plural": {"one": unit(fr_one), "other": unit(fr_other)}}},
+            "fr": {"variations": {"plural": {"one": unit(french(fr_one)), "other": unit(french(fr_other))}}},
         }}
     catalog = {"sourceLanguage": "en", "strings": dict(sorted(strings.items())), "version": "1.0"}
-    info = {key: {"localizations": {"en": unit(en), "fr": unit(fr)}} for key, (en, fr) in INFO_PLIST.items()}
-    shortcuts = {key: {"localizations": {"fr": unit(value)}} for key, value in APP_SHORTCUTS.items()}
+    info = {key: {"localizations": {"en": unit(en), "fr": unit(french(fr))}} for key, (en, fr) in INFO_PLIST.items()}
+    shortcuts = {key: {"localizations": {"fr": unit(french(value))}} for key, value in APP_SHORTCUTS.items()}
 
     def text(value):
         return json.dumps(value, indent=2, ensure_ascii=False) + "\n"
@@ -1457,6 +1477,14 @@ def check():
     for key in FR:
         if key.strip() != key:
             problems.append(f"key with leading or trailing spaces is not written: {key!r}")
+    # French typography: no plain space before ? ! ; or : in any written French text.
+    for path, text in catalogs().items():
+        for key, entry in json.loads(text)["strings"].items():
+            fr = entry["localizations"].get("fr", {})
+            units = [fr] if "stringUnit" in fr else list(fr.get("variations", {}).get("plural", {}).values())
+            for value in (u["stringUnit"]["value"] for u in units):
+                for found in plain_space_before_mark(value):
+                    problems.append(f"{path.name}: plain space before a mark in French: {found!r} (key {key!r})")
     # The committed catalogs must be the ones this script writes.
     for path, text in catalogs().items():
         if not path.exists() or path.read_text() != text:
