@@ -401,6 +401,7 @@ private struct CellarSelectionList: View {
 /// Quick figures at the top of the cellar.
 private struct CellarStats: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Binding var filter: CellarFilter
     /// Bottles: the cellar in figures.
     var onBottles: () -> Void
@@ -411,14 +412,16 @@ private struct CellarStats: View {
         let stats = model.cellar.statistics(year: model.currentYear)
         let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil && filter.tag == nil
             && filter.reservation == nil && filter.grape == nil
-        HStack(spacing: 10) {
+        // Side by side, or one above the other at the accessibility text sizes so captions fit.
+        let tiles = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 10))
+        tiles {
             Button(action: onBottles) {
-                StatTile(value: "\(stats.bottleCount)", caption: "bottles", systemImage: "wineglass", opens: true)
+                StatTile(count: stats.bottleCount, caption: .count("bottles", stats.bottleCount), systemImage: "wineglass", opens: true)
             }
             .accessibilityHint(Text("Shows your cellar in figures."))
             .accessibilityIdentifier("cellar.stat.bottles")
             Button(action: onWines) {
-                StatTile(value: "\(stats.wineCount)", caption: "wines", systemImage: "list.bullet")
+                StatTile(count: stats.wineCount, caption: .count("wines", stats.wineCount), systemImage: "list.bullet")
             }
             .accessibilityHint(Text("Shows all your wines."))
             .accessibilityIdentifier("cellar.stat.wines")
@@ -427,7 +430,7 @@ private struct CellarStats: View {
                     filter = soonOnly ? CellarFilter(query: filter.query) : CellarFilter(query: filter.query, maturities: [.drinkSoon])
                 }
             } label: {
-                StatTile(value: "\(stats.byMaturity[.drinkSoon, default: 0])", caption: "to drink soon",
+                StatTile(value: stats.byMaturity[.drinkSoon, default: 0].formatted(), caption: "to drink soon",
                          systemImage: "hourglass", isSelected: soonOnly)
             }
             .accessibilityHint(Text("Shows only the wines to drink soon."))

@@ -20,6 +20,10 @@ NAMES = {
     "wine-dessert": "WineDessert",
     "wine-fortified": "WineFortified",
     "wine-orange": "WineOrange",
+    "maturity-drink-soon": "MaturityDrinkSoon",
+    "maturity-ready": "MaturityReady",
+    "maturity-past-peak": "MaturityPastPeak",
+    "maturity-keep": "MaturityKeep",
     "warning": "Warning",
 }
 

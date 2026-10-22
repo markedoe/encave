@@ -6,13 +6,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave uses the camera to read wine labels, scan documents and scan the pairing code of your other devices. Images stay on your devices."
+            "value": "Encave uses the camera to read wine labels and barcodes, scan documents and scan the pairing code of your other devices. Images stay on your devices unless you turn on AI label recognition, which sends only the label photo to the service you chose."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave utilise l’appareil photo pour lire les étiquettes, numériser des documents et scanner le code d’appairage de vos autres appareils. Les images restent sur vos appareils."
+            "value": "Encave utilise l’appareil photo pour lire les étiquettes et les codes-barres, numériser des documents et scanner le code d’appairage de vos autres appareils. Les images restent sur vos appareils, sauf si vous activez la reconnaissance des étiquettes par IA, qui envoie seulement la photo de l’étiquette au service que vous avez choisi."
           }
         }
       }
@@ -22,13 +22,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI or search server you may set in Settings."
+            "value": "Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave trouve vos autres appareils sur ce réseau pour synchroniser votre cave, chiffrée de bout en bout. Il joint aussi le serveur d’IA ou de recherche que vous pouvez choisir dans les réglages."
+            "value": "Encave trouve vos autres appareils sur ce réseau pour y synchroniser votre cave, chiffrée de bout en bout. Il se connecte aussi aux serveurs de ce réseau que vous choisissez dans les réglages, comme un serveur d’IA ou de recherche web, ou un dossier WebDAV."
           }
         }
       }

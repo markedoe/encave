@@ -104,6 +104,10 @@ import app.encave.core.pairings
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
+import app.encave.ui.components.styleLine
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.pluralStringResource
+import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.MaturityLabel
 import app.encave.ui.components.WineGroupRow
@@ -220,10 +224,15 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                             Icon(section.maturity.icon, contentDescription = null, tint = section.maturity.tint)
                             Text(
                                 stringResource(section.maturity.labelRes),
-                                style = MaterialTheme.typography.titleMedium, color = section.maturity.tint,
+                                style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(start = Dimens.s).weight(1f),
                             )
-                            Text(section.groups.sumOf { it.count }.toString(), style = MaterialTheme.typography.labelLarge)
+                            val bottles = section.groups.sumOf { it.count }
+                            val bottlesDescription = pluralStringResource(R.plurals.bottle_count, bottles, bottles)
+                            Text(
+                                Formats.integer(bottles), style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.semantics { contentDescription = bottlesDescription },
+                            )
                         }
                     }
                     items(section.groups, key = { section.maturity.raw + it.id }) { group ->
@@ -441,10 +450,8 @@ private fun SurpriseCard(
             }
             Column(Modifier.clickable(onClick = onOpen).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
                 Text(group.wine.displayName, style = SerifDisplay)
-                Text(
-                    listOfNotNull(group.wine.producer, group.wine.region).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                // The style in words, not only by the bottle's color.
+                Text(group.wine.styleLine(), style = MaterialTheme.typography.bodyMedium)
                 MaturityLabel(Maturity.of(group.wine, year), Modifier.padding(top = Dimens.xs))
             }
             val location = bottle?.let { cellar.displayLocation(it) } ?: stringResource(R.string.location_none)

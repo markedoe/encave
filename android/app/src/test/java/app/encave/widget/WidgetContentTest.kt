@@ -73,8 +73,8 @@ class WidgetContentTest {
         provideComposable { EncaveGlanceTheme(dynamicColor = false) { CellarContent(snapshot) } }
         onNode(hasText("Cave")).assertExists()
         onNode(hasText("3 bouteilles")).assertExists()
-        onNode(hasText("À boire bientôt : 2")).assertExists()
-        onNode(hasText("En commande : 3")).assertExists()
+        onNode(hasText("À boire bientôt\u00a0: 2")).assertExists()
+        onNode(hasText("En commande\u00a0: 3")).assertExists()
     }
 
     @Test

@@ -660,6 +660,7 @@ class AppViewModel(
         AiError.NoModel -> UiText.Res(R.string.ai_err_no_model)
         AiError.Refused -> UiText.Res(R.string.ai_err_refused)
         AiError.InvalidResponse -> UiText.Res(R.string.ai_err_invalid)
+        AiError.InsecureUrl -> UiText.Res(R.string.search_err_server_url)
         is AiError.Server -> if (error.status == 0) UiText.Res(R.string.ai_err_network) else UiText.Res(R.string.ai_err_server, listOf(error.status))
         else -> UiText.Res(R.string.err_generic)
     }

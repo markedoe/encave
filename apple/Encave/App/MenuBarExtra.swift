@@ -33,8 +33,7 @@ struct CellarMenuBarContent: View {
                                     .lineLimit(1)
                                 HStack(spacing: 6) {
                                     let maturity = Maturity.of(group.wine, year: model.currentYear)
-                                    Label(maturity.shortTitle, systemImage: maturity.systemImage)
-                                        .foregroundStyle(maturity.tint)
+                                    MaturityLabel(maturity: maturity, short: true)
                                     if let place = group.bottles.first.flatMap({ model.locationLabel(for: $0) }) {
                                         Text(verbatim: place).foregroundStyle(.secondary).lineLimit(1)
                                     }

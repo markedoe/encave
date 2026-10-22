@@ -114,7 +114,7 @@ FR = {
     "This address does not answer as a WebDAV folder. Check the address and that WebDAV is turned on on the server.": "Cette adresse ne répond pas comme un dossier WebDAV. Vérifiez l’adresse et que WebDAV est activé sur le serveur.",
     'To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for Apple devices on the same Apple Account; Android devices cannot use it), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only, after you confirm.': 'Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation.',
     "On the same Wi-Fi, devices talk directly; no server is involved. Through iCloud, a WebDAV folder or a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège.",
-    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud, a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them.": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire.",
+    'Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud, your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.': 'La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud, votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP.',
     "On a wine's page, **Change Picture…** then **Search Pictures** finds pictures of the bottle with the same service. The one you tap is downloaded from its site and shown for the wine; the label photo is always kept. The thumbnails and the picture come from the sites that host them, which see the request. Pictures from shops are for your private use.": "Sur la fiche d’un vin, **Changer l’image…** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé.",
     "Pictures": "Images",
     "bottle": "bouteille",
@@ -204,7 +204,7 @@ FR = {
     "On a wine's page, or while adding or editing a wine, tap **Search Online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser.": "Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur.",
     "On devices with Apple Intelligence, **Suggest Details** reads the results on the device and proposes the producer, region, appellation, country, grapes and drinking window. Each suggestion is shown next to the current value, and only the ones you select are used. The results are not sent to any AI service.": "Sur les appareils avec Apple Intelligence, **Suggérer des détails** lit les résultats sur l’appareil et propose le producteur, la région, l’appellation, le pays, les cépages et la fenêtre de dégustation. Chaque suggestion s’affiche à côté de la valeur actuelle, et seules celles que vous choisissez sont utilisées. Les résultats ne sont envoyés à aucun service d’IA.",
     "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, and for a price the bottle size and the word “price”. Your cellar, notes, prices and places are never sent. The key is stored in the Keychain on this device.": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, et pour un prix le format de la bouteille et le mot « prix ». Votre cave, vos notes, vos prix et vos emplacements ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil.",
-    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête.",
+    'Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or ask the AI to complete a wine; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.': 'En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou demandez à l’IA de compléter un vin ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande.',
     'Reading the label…': 'Lecture de l’étiquette…',
     'Sends the label photo again to the AI service set in Settings and fills the empty fields. The photo stays with the wine, so this can be done again at any time.': 'Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment.',
     'Details completed by AI: %@': 'Fiche complétée par l’IA : %@',
@@ -387,8 +387,6 @@ FR = {
     '**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.': '**Exporter un tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement.',
     'Your year in wine': 'Votre année en vin',
     'Year': 'Année',
-    'bottles opened': 'bouteilles ouvertes',
-    'different wines': 'vins différents',
     'Most opened region: %@': 'Région la plus ouverte : %@',
     'Favorite occasion: %@': 'Occasion préférée : %@',
     'Busiest month: %@': 'Mois le plus actif : %@',
@@ -504,7 +502,7 @@ FR = {
     'Confirm the code on the other device too.': 'Confirmez aussi le code sur l’autre appareil.',
     'Devices': 'Appareils',
     'Devices sharing this cellar': 'Appareils partageant cette cave',
-    'Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.': 'Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave.',
+    'No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.': 'Pas de compte, pas de mesure d’audience, pas de publicité. La synchronisation est chiffrée de bout en bout : sur le même Wi-Fi, vos appareils se connectent directement, et à distance le stockage que vous choisissez ne contient que des fichiers chiffrés. Si vous les activez, la reconnaissance des étiquettes par IA n’envoie que la photo de l’étiquette à votre service d’IA, et la recherche web que les termes de recherche à votre service de recherche.',
     'Devices sync when they are on the same Wi-Fi and Encave is open. Changes made apart merge without losing anything.': 'Les appareils se synchronisent quand ils sont sur le même Wi-Fi et qu’Encave est ouvert. Les modifications faites séparément se réunissent sans rien perdre.',
     'Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.': 'Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient.',
     'Does %@ show the same code?': '%@ affiche-t-il le même code ?',
@@ -554,7 +552,8 @@ FR = {
     'Waiting for the other device': 'En attente de l’autre appareil',
     'Waiting for the other device…': 'En attente de l’autre appareil…',
     'Your cellar is now on both devices and stays in sync when they are on the same Wi-Fi.': 'Votre cave est maintenant sur les deux appareils et reste synchronisée quand ils sont sur le même Wi-Fi.',
-    'Your cellar is stored only on your devices.': 'Votre cave est enregistrée uniquement sur vos appareils.',
+    'Your cellar is kept on your devices.': 'Votre cave est gardée sur vos appareils.',
+    'Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.': 'Votre cave est gardée sur vos appareils, avec une copie chiffrée dans le stockage choisi pour la synchronisation à distance.',
     '%lld devices': '%lld appareils',
     '%@ added': '%@ ajouté',
     'This device will show only the other device’s cellar. Make a backup first if you may need these bottles.': 'Cet appareil n’affichera que la cave de l’autre appareil. Faites d’abord une sauvegarde si vous pourriez avoir besoin de ces bouteilles.',
@@ -767,6 +766,7 @@ FR = {
     "Tastings": "Dégustations",
     "Test data": "Données de test",
     "The change could not be saved.": "La modification n’a pas pu être enregistrée.",
+    "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.": "Vos dernières modifications n’ont pas pu être enregistrées : votre cave est affichée telle qu’elle a été enregistrée la dernière fois. Vérifiez l’espace libre de cet appareil.",
     "The file could not be read.": "Le fichier n’a pas pu être lu.",
     "The first free positions are used unless you choose them.":
         "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez.",
@@ -802,28 +802,31 @@ FR = {
     "With friends": "Entre amis",
     "Your cellar in figures": "Votre cave en chiffres",
     "Your cellar is empty": "Votre cave est vide",
-    "Your cellar is stored only on this device.": "Votre cave est enregistrée uniquement sur cet appareil.",
+    'Your cellar is kept on this device.': 'Votre cave est gardée sur cet appareil.',
+    'Privacy Policy': 'Politique de confidentialité',
+    'Licences': 'Licences',
+    'Libraries': 'Bibliothèques',
+    'Open-source libraries included in Encave, each under its own licence.': 'Bibliothèques open source incluses dans Encave, chacune sous sa propre licence.',
+    'Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.': 'Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi.',
+    'Copyright © 2026 the Encave contributors': 'Copyright © 2026 les contributeurs d’Encave',
     "Your data": "Vos données",
     "Zoom In": "Agrandir",
     "Zoom Out": "Réduire",
-    "%@ and %lld more": "%1$@ et %2$lld autres",
+    "%@ and %@": "%1$@ et %2$@",
+    "Rating": "Note",
+    "No rating": "Sans note",
     "%@, %@": "%1$@, %2$@",
     "%@, empty": "%@, vide",
     "%lld of %lld": "%1$lld sur %2$lld",
     "%lld of %lld chosen": "%1$lld sur %2$lld choisis",
     "%lld of %lld positions used": "%1$lld sur %2$lld emplacements occupés",
     "average rating": "note moyenne",
-    "bottles": "bouteilles",
-    "bottles in the cellar": "bouteilles en cave",
-    "bottles opened": "bouteilles ouvertes",
     "classic style for this dish": "style classique pour ce plat",
-    "different wines": "vins différents",
     "purchase value": "valeur d’achat",
     "ready to drink": "prêt à boire",
     "region known for it": "région réputée pour ça",
     "suited grape": "cépage adapté",
     "to drink soon": "à boire bientôt",
-    "wines": "vins",
     # AI label recognition, photos and serving
     "AI label recognition": "Reconnaissance des étiquettes par IA",
     "API key": "Clé d’API",
@@ -983,7 +986,7 @@ FR = {
     'With AI (optional)': 'Avec l’IA (facultatif)',
     "Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, then tap **Connect and Load Models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On iPhone and iPad, enter the computer's IP address or its name ending in `.local` (for example `http://my-mac.local:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.": 'Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.',
     'Works out the window from the style and the vintage. Turn off to enter the years yourself.': 'Déduit la fenêtre du type et du millésime. Désactivez pour saisir les années vous-même.',
-    'Your cellar is stored only on your devices. There is no account, no tracking and no advertising.': 'Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité.',
+    'Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.': 'Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien.',
     'Your cellar stays yours.': 'Votre cave reste la vôtre.',
     'Your note': 'Votre note',
     'Your own groups, such as gift ideas or for summer. Tap a tag to select it, or type a new one and press Return. Filter by tag in the Journal.': 'Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal.',
@@ -1200,7 +1203,6 @@ FR = {
     "From my cellar": "De ma cave",
     "Tasted elsewhere": "Goûté ailleurs",
     "Tasted elsewhere · %@": "Goûté ailleurs · %@",
-    "tasted elsewhere": "goûtés ailleurs",
     "Add a Tasting": "Noter une dégustation",
     "A Bottle from My Cellar": "Une bouteille de ma cave",
     "It leaves your cellar.": "Elle sort de votre cave.",
@@ -1452,6 +1454,7 @@ PLURALS = {
     "%lld new wines": (("%lld new wine", "%lld new wines"), ("%lld nouveau vin", "%lld nouveaux vins")),
     "%lld wines tasted elsewhere": (("%lld wine tasted elsewhere", "%lld wines tasted elsewhere"), ("%lld vin goûté ailleurs", "%lld vins goûtés ailleurs")),
     "%lld wines": (("%lld wine", "%lld wines"), ("%lld vin", "%lld vins")),
+    "%lld more": (("%lld more", "%lld more"), ("%lld autre", "%lld autres")),
     "Only %lld free positions: the other bottles will have no position.": (
         ("Only %lld free position: the other bottles will have no position.",
          "Only %lld free positions: the other bottles will have no position."),
@@ -1480,14 +1483,27 @@ PLURALS = {
          '%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète.')),
 }
 
+# Captions shown under a figure ("12" above "bottles"): the noun without the number, which
+# the figure already shows. Xcode needs the number in a plural variation, so each caption is
+# two strings, "<name> [one]" and "<name> [other]", that the app picks (StatTile.swift).
+CAPTIONS = {
+    "bottles": (("bottle", "bottles"), ("bouteille", "bouteilles")),
+    "wines": (("wine", "wines"), ("vin", "vins")),
+    "bottles in the cellar": (("bottle in the cellar", "bottles in the cellar"),
+                              ("bouteille en cave", "bouteilles en cave")),
+    "different wines": (("different wine", "different wines"), ("vin différent", "vins différents")),
+    "bottles opened": (("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
+    "tasted elsewhere": (("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
+}
+
 INFO_PLIST = {
     "NSCameraUsageDescription": (
-        "Encave uses the camera to read wine labels, scan documents and scan the pairing code of your other devices. Images stay on your devices.",
-        "Encave utilise l’appareil photo pour lire les étiquettes, numériser des documents et scanner le code d’appairage de vos autres appareils. Les images restent sur vos appareils.",
+        "Encave uses the camera to read wine labels and barcodes, scan documents and scan the pairing code of your other devices. Images stay on your devices unless you turn on AI label recognition, which sends only the label photo to the service you chose.",
+        "Encave utilise l’appareil photo pour lire les étiquettes et les codes-barres, numériser des documents et scanner le code d’appairage de vos autres appareils. Les images restent sur vos appareils, sauf si vous activez la reconnaissance des étiquettes par IA, qui envoie seulement la photo de l’étiquette au service que vous avez choisi.",
     ),
     "NSLocalNetworkUsageDescription": (
-        "Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI or search server you may set in Settings.",
-        "Encave trouve vos autres appareils sur ce réseau pour synchroniser votre cave, chiffrée de bout en bout. Il joint aussi le serveur d’IA ou de recherche que vous pouvez choisir dans les réglages.",
+        "Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.",
+        "Encave trouve vos autres appareils sur ce réseau pour y synchroniser votre cave, chiffrée de bout en bout. Il se connecte aussi aux serveurs de ce réseau que vous choisissez dans les réglages, comme un serveur d’IA ou de recherche web, ou un dossier WebDAV.",
     ),
 }
 
@@ -1512,6 +1528,26 @@ CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
 def unit(value):
     return {"stringUnit": {"state": "translated", "value": value}}
+
+
+# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
+# so the mark never starts a line. URLs and format specifiers are left as they are.
+NARROW_NBSP, NBSP = "\u202f", "\u00a0"
+VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?(?:lld|ld|d|@|lf|f|s))")
+LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+
+
+def french(text):
+    parts = VERBATIM.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+    return "".join(parts)
+
+
+def plain_space_before_mark(text):
+    """The marks still preceded by a plain space, outside URLs and format specifiers."""
+    return [m.group(0) for i, part in enumerate(VERBATIM.split(text)) if i % 2 == 0
+            for m in re.finditer(r"\S{0,12} [?!;:]", part)]
 
 
 def to_key(literal):
@@ -1544,15 +1580,18 @@ def extract():
 
 def catalogs():
     """The catalog files, as written: {path: text}."""
-    strings = {key: {"localizations": {"fr": unit(value)}} for key, value in FR.items() if key.strip() == key}
+    strings = {key: {"localizations": {"fr": unit(french(value))}} for key, value in FR.items() if key.strip() == key}
+    for name, ((en_one, en_other), (fr_one, fr_other)) in CAPTIONS.items():
+        for form, en, fr in (("one", en_one, fr_one), ("other", en_other, fr_other)):
+            strings[f"{name} [{form}]"] = {"localizations": {"en": unit(en), "fr": unit(french(fr))}}
     for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
         strings[key] = {"localizations": {
             "en": {"variations": {"plural": {"one": unit(en_one), "other": unit(en_other)}}},
-            "fr": {"variations": {"plural": {"one": unit(fr_one), "other": unit(fr_other)}}},
+            "fr": {"variations": {"plural": {"one": unit(french(fr_one)), "other": unit(french(fr_other))}}},
         }}
     catalog = {"sourceLanguage": "en", "strings": dict(sorted(strings.items())), "version": "1.0"}
-    info = {key: {"localizations": {"en": unit(en), "fr": unit(fr)}} for key, (en, fr) in INFO_PLIST.items()}
-    shortcuts = {key: {"localizations": {"fr": unit(value)}} for key, value in APP_SHORTCUTS.items()}
+    info = {key: {"localizations": {"en": unit(en), "fr": unit(french(fr))}} for key, (en, fr) in INFO_PLIST.items()}
+    shortcuts = {key: {"localizations": {"fr": unit(french(value))}} for key, value in APP_SHORTCUTS.items()}
 
     def text(value):
         return json.dumps(value, indent=2, ensure_ascii=False) + "\n"
@@ -1592,10 +1631,26 @@ def check():
         for form in forms[0] + forms[1]:
             if placeholders(form) != placeholders(key):
                 problems.append(f"placeholders differ in a plural form: {key!r} -> {form!r}")
+    for name, forms in CAPTIONS.items():
+        if placeholders(name) or any(placeholders(form) for form in forms[0] + forms[1]):
+            problems.append(f"a caption holds no number: {name!r}")
+    # Captions used in the app ("caption: .count(\"bottles\", ...)") must be in CAPTIONS.
+    for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
+        for name in re.findall(r'\.count\("((?:[^"\\]|\\.)*)", ', Path(path).read_text()):
+            if name not in CAPTIONS:
+                problems.append(f"caption not in CAPTIONS: {name!r}")
     # Keys with spaces around them are dropped from the catalog: the text would stay in English.
     for key in FR:
         if key.strip() != key:
             problems.append(f"key with leading or trailing spaces is not written: {key!r}")
+    # French typography: no plain space before ? ! ; or : in any written French text.
+    for path, text in catalogs().items():
+        for key, entry in json.loads(text)["strings"].items():
+            fr = entry["localizations"].get("fr", {})
+            units = [fr] if "stringUnit" in fr else list(fr.get("variations", {}).get("plural", {}).values())
+            for value in (u["stringUnit"]["value"] for u in units):
+                for found in plain_space_before_mark(value):
+                    problems.append(f"{path.name}: plain space before a mark in French: {found!r} (key {key!r})")
     # The committed catalogs must be the ones this script writes.
     for path, text in catalogs().items():
         if not path.exists() or path.read_text() != text:

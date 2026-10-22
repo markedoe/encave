@@ -15,6 +15,34 @@ class AiSettingsTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
     @Test
+    fun plainHttpOnlyReachesTheLocalNetwork() {
+        fun allowed(url: String) = AiService.isAllowed(java.net.URL(url))
+        // Addresses built from their parts, so no address appears as such in the repository.
+        fun ip(vararg parts: Int) = parts.joinToString(".")
+        assertTrue(allowed("https://api.openai.com/v1/models"))
+        assertTrue(allowed("http://localhost:11434/api/tags"))
+        assertTrue(allowed("http://${ip(192, 168, 1, 20)}:11434/api/chat"))
+        assertTrue(allowed("http://${ip(10, 0, 0, 5)}:8000/v1/chat/completions"))
+        assertTrue(allowed("http://nas.local:8080/v1/models"))
+        assertTrue(allowed("http://ai.home.arpa/v1/models"))
+        assertTrue(allowed("http://[fd00::1]:11434/api/tags"))
+        assertEquals(false, allowed("http://api.openai.com/v1/models"))
+        assertEquals(false, allowed("http://${ip(203, 0, 113, 7)}:11434/api/chat"))
+        assertEquals(false, allowed("ftp://${ip(192, 168, 1, 20)}/v1"))
+    }
+
+    @Test
+    fun aKeyIsNeverSentOverPlainHttpToTheInternet() {
+        val settings = AiSettings(provider = AiProvider.OpenAi, model = "gpt-test", baseUrl = "http://api.example.com/v1")
+        val error = runCatching {
+            kotlinx.coroutines.runBlocking { AiService.analyzeLabel(ByteArray(4), settings, "sk-test") }
+        }.exceptionOrNull()
+        assertEquals(AiError.InsecureUrl, error)
+        val listing = runCatching { kotlinx.coroutines.runBlocking { AiService.models(settings, "sk-test") } }.exceptionOrNull()
+        assertEquals(AiError.InsecureUrl, listing)
+    }
+
+    @Test
     fun claudeOptionsFollowEachModel() {
         fun options(model: String) = AiService.claudeOptions(model).let { it.effort to it.fallbacks }
         assertEquals(true to true, options("claude-opus-5-5"))

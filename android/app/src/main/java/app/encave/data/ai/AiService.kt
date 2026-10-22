@@ -1,6 +1,7 @@
 package app.encave.data.ai
 
 import android.util.Base64
+import app.encave.core.sync.LocalAddress
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -86,6 +87,8 @@ sealed class AiError : Exception() {
     data object Refused : AiError()
     data class Server(val status: Int, override val message: String) : AiError()
     data object InvalidResponse : AiError()
+    /** Not an https:// address, or plain http:// to a server outside the local network. */
+    data object InsecureUrl : AiError()
 }
 
 /** Sends the label photo (a resized JPEG), and nothing else, to the configured provider. */
@@ -243,8 +246,7 @@ object AiService {
     }
 
     private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, format: JsonObject?): LabelAnalysis {
-        val url = runCatching { URL(settings.effectiveBaseUrl + "/chat/completions") }.getOrNull()
-        if (url == null || (url.protocol != "https" && url.protocol != "http")) throw AiError.NotConfigured
+        val url = runCatching { URL(settings.effectiveBaseUrl + "/chat/completions") }.getOrElse { throw AiError.NotConfigured }
         val body = buildJsonObject {
             put("model", settings.effectiveModel)
             if (format != null) put("response_format", format)
@@ -342,10 +344,20 @@ object AiService {
         vision.ifEmpty { sorted }
     }
 
-    /** POST when [body] is set, GET otherwise. */
+    /**
+     * HTTPS, or plain HTTP only for a server on this device or the local network, as for
+     * web search and WebDAV: elsewhere anyone on the way would read the key and the photo.
+     */
+    internal fun isAllowed(url: URL): Boolean = url.host.isNotEmpty() &&
+        (url.protocol == "https" || (url.protocol == "http" && LocalAddress.isLocal(url.host)))
+
+    /** POST when [body] is set, GET otherwise. Every request goes through here. */
     private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
+        if (!isAllowed(url)) throw AiError.InsecureUrl
         val connection = url.openConnection() as HttpURLConnection
         try {
+            // A redirect could take the key to another server.
+            connection.instanceFollowRedirects = false
             connection.requestMethod = if (body != null) "POST" else "GET"
             connection.connectTimeout = 30_000
             connection.readTimeout = timeout
