@@ -1,5 +1,6 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.Canvas
@@ -239,20 +240,22 @@ fun WineDetailScreen(
                 }
             }
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.s),
-                ) {
-                    Button(
-                        // A free bottle first: one kept for an occasion only when no other is left.
-                        onClick = { drinking = bottles.bottleToOpen?.id?.toString() }, enabled = bottles.isNotEmpty(),
-                        modifier = Modifier.weight(1f).testTag("action.drink"),
-                    ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
-                    FilledTonalButton(
-                        onClick = { navigator.open(AddBottleRoute(wineId = wineId)) },
-                        modifier = Modifier.weight(1f).testTag("action.add_bottles"),
-                    ) { ActionContent(stringResource(R.string.action_add_bottles), Icons.Filled.Add) }
-                }
+                ActionButtonPair(
+                    Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
+                    first = { width ->
+                        Button(
+                            // A free bottle first: one kept for an occasion only when no other is left.
+                            onClick = { drinking = bottles.bottleToOpen?.id?.toString() }, enabled = bottles.isNotEmpty(),
+                            modifier = width.testTag("action.drink"),
+                        ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
+                    },
+                    second = { width ->
+                        FilledTonalButton(
+                            onClick = { navigator.open(AddBottleRoute(wineId = wineId)) },
+                            modifier = width.testTag("action.add_bottles"),
+                        ) { ActionContent(stringResource(R.string.action_add_bottles), Icons.Filled.Add) }
+                    },
+                )
             }
             if (bottles.isNotEmpty() || orders.isEmpty()) {
                 item { SectionHeader("${stringResource(R.string.detail_bottles)} (${bottles.size})") }

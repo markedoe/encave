@@ -271,6 +271,8 @@
     <string name="insights_grapes">Top grapes</string>
     <string name="insights_empty">Add bottles to see insights.</string>
     <string name="insights_nv">NV</string>
+    <!-- A decade of vintages, from its first year: "2010s". -->
+    <string name="insights_decade">%1$ds</string>
     <string name="settings_cellar">Cellar</string>
     <string name="settings_currency">Default currency</string>
     <string name="settings_appearance">Display</string>

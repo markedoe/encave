@@ -76,6 +76,7 @@ import app.encave.core.sync.PairingCode
 import app.encave.sync.PairingSession
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
+import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.theme.Dimens
@@ -441,14 +442,19 @@ private fun ConfirmCode(code: String, device: String, answer: (Boolean) -> Unit)
             textAlign = TextAlign.Center,
             modifier = Modifier.widthIn(max = 460.dp),
         )
-        Row(Modifier.widthIn(max = 460.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
-            OutlinedButton(onClick = { answer(false) }, modifier = Modifier.weight(1f).testTag("action.pair_reject")) {
-                ActionContent(stringResource(R.string.pair_no), Icons.Outlined.Close)
-            }
-            Button(onClick = { answer(true) }, modifier = Modifier.weight(1f).testTag("action.pair_accept")) {
-                ActionContent(stringResource(R.string.pair_match), Icons.Outlined.Check)
-            }
-        }
+        ActionButtonPair(
+            Modifier.widthIn(max = 460.dp), spacing = Dimens.m,
+            first = { width ->
+                OutlinedButton(onClick = { answer(false) }, modifier = width.testTag("action.pair_reject")) {
+                    ActionContent(stringResource(R.string.pair_no), Icons.Outlined.Close)
+                }
+            },
+            second = { width ->
+                Button(onClick = { answer(true) }, modifier = width.testTag("action.pair_accept")) {
+                    ActionContent(stringResource(R.string.pair_match), Icons.Outlined.Check)
+                }
+            },
+        )
     }
 }
 

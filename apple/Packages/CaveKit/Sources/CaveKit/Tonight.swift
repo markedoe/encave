@@ -32,10 +32,36 @@ public extension Cellar {
             .map(\.1)
     }
 
-    /// Where Tonight's suggestions start on a given day of the year (1…366): a new wine
-    /// each day, the same one all day. "Another idea" goes on from there.
-    static func tonightStartIndex(dayOfYear: Int, count: Int) -> Int {
-        count > 0 ? (max(dayOfYear, 1) - 1) % count : 0
+    /// Tonight's suggestions for a day, in the order "Another idea" goes through them: the
+    /// candidates ranked by `tonightRank`, so the first is the same all day and does not
+    /// change when other wines are added or drunk, only when it is no longer a candidate.
+    func tonightPicks(year: Int, day: String) -> [WineGroup] {
+        let candidates = tonightCandidates(year: year)
+        let ranks = Dictionary(uniqueKeysWithValues: candidates.map { ($0.wine.id, Cellar.tonightRank(wineID: $0.wine.id, day: day)) })
+        // A stable sort: equal ranks (never in practice) keep the best-first order.
+        return candidates.enumerated()
+            .sorted { a, b in
+                let rankA = ranks[a.element.wine.id]!, rankB = ranks[b.element.wine.id]!
+                return rankA != rankB ? rankA < rankB : a.offset < b.offset
+            }
+            .map(\.element)
+    }
+
+    /// A wine's place among Tonight's suggestions on a day: the 64-bit FNV-1a hash of the
+    /// UTF-8 text "<lowercase wine id>|<day>". The same on Android (fixtures/tonight-vectors.json).
+    static func tonightRank(wineID: UUID, day: String) -> UInt64 {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in "\(wineID.uuidString.lowercased())|\(day)".utf8 {
+            hash = (hash ^ UInt64(byte)) &* 0x0000_0100_0000_01b3
+        }
+        return hash
+    }
+
+    /// The day Tonight's suggestion is for, "yyyy-MM-dd" in the Gregorian calendar and the
+    /// user's time zone, as on Android: a new wine each day from midnight.
+    static func tonightDay(_ date: Date) -> String {
+        let parts = CellarYear.calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 
     /// The young wine whose window opens first (free bottles only), to say when

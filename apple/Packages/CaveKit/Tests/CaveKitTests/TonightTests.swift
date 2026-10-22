@@ -19,11 +19,57 @@ import Testing
         #expect(cellar.reservedBottleCount == 1)
     }
 
-    @Test func startIndexChangesDailyAndStaysInRange() {
-        #expect(Cellar.tonightStartIndex(dayOfYear: 1, count: 3) == 0)
-        #expect(Cellar.tonightStartIndex(dayOfYear: 2, count: 3) == 1)
-        #expect(Cellar.tonightStartIndex(dayOfYear: 4, count: 3) == 0)
-        #expect(Cellar.tonightStartIndex(dayOfYear: 200, count: 0) == 0)
+    /// The vectors shared with the Android core, in `fixtures/tonight-vectors.json`.
+    struct Vectors: Decodable {
+        struct Rank: Decodable { var wineId: String; var day: String; var rank: String }
+        struct Order: Decodable { var day: String; var wineIds: [String]; var order: [String] }
+        var ranks: [Rank]
+        var orders: [Order]
+    }
+
+    @Test func ranksAndOrdersMatchTheSharedVectors() throws {
+        let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent() // CaveKitTests
+            .deletingLastPathComponent().deletingLastPathComponent() // CaveKit
+            .deletingLastPathComponent().deletingLastPathComponent() // apple
+            .deletingLastPathComponent().appendingPathComponent("fixtures/tonight-vectors.json")
+        let vectors = try JSONDecoder().decode(Vectors.self, from: Data(contentsOf: file))
+        #expect(!vectors.ranks.isEmpty && !vectors.orders.isEmpty)
+        for vector in vectors.ranks {
+            let id = try #require(UUID(uuidString: vector.wineId))
+            #expect(String(Cellar.tonightRank(wineID: id, day: vector.day), radix: 16).leftPadded(16) == vector.rank)
+        }
+        for vector in vectors.orders {
+            let sorted = vector.wineIds.sorted {
+                Cellar.tonightRank(wineID: UUID(uuidString: $0)!, day: vector.day)
+                    < Cellar.tonightRank(wineID: UUID(uuidString: $1)!, day: vector.day)
+            }
+            #expect(sorted == vector.order)
+        }
+    }
+
+    @Test func todaysPickStaysWhenOtherWinesComeAndGo() throws {
+        var cellar = Cellar()
+        for index in 1...6 {
+            try cellar.addBottles(of: Wine(name: "Wine \(index)", drinkFrom: 2020, drinkUntil: 2030))
+        }
+        let day = "2026-10-22"
+        let picks = cellar.tonightPicks(year: 2026, day: day)
+        #expect(picks.count == 6)
+        let first = try #require(picks.first)
+        try cellar.addBottles(of: Wine(name: "New", drinkFrom: 2020, drinkUntil: 2030))
+        let other = try #require(picks.last?.bottles.first)
+        try cellar.drink(other.id, tasting: Tasting(rating: 7))
+        #expect(cellar.tonightPicks(year: 2026, day: day).first?.wine.id == first.wine.id)
+        // Another day, another order; the same set of wines.
+        let tomorrow = cellar.tonightPicks(year: 2026, day: "2026-10-23")
+        #expect(Set(tomorrow.map(\.wine.id)) == Set(cellar.tonightPicks(year: 2026, day: day).map(\.wine.id)))
+    }
+
+    @Test func dayIsTheGregorianDateInTheUserTimeZone() {
+        var parts = DateComponents()
+        parts.year = 2026; parts.month = 3; parts.day = 7; parts.hour = 23; parts.minute = 59
+        let date = CellarYear.calendar.date(from: parts)!
+        #expect(Cellar.tonightDay(date) == "2026-03-07")
     }
 
     @Test func nextToBeReadyIsTheYoungWineWhoseWindowOpensFirst() throws {
@@ -85,4 +131,8 @@ import Testing
         // Without a word that tells wines apart, the most urgent first.
         #expect(cellar.assistantCatalog(year: 2026, limit: 1, question: "What should I open?").entries.first?.line.hasPrefix("1. Urgent") == true)
     }
+}
+
+private extension String {
+    func leftPadded(_ length: Int) -> String { String(repeating: "0", count: max(0, length - count)) + self }
 }

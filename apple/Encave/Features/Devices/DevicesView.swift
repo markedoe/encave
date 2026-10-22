@@ -1096,7 +1096,7 @@ private struct ConfirmCodeView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            HStack(spacing: 12) {
+            ActionButtonRow {
                 Button { answer(false) } label: {
                     ActionLabel("No", systemImage: "xmark")
                         .frame(maxWidth: .infinity)

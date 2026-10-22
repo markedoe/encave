@@ -188,8 +188,20 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             if (stats.byRegion.isNotEmpty()) ChartCard(stringResource(R.string.insights_by_region)) { Bars(stats.byRegion.map { BarItem(it.label, it.count) }) }
             if (stats.byVintageDecade.isNotEmpty()) {
                 val nv = stringResource(R.string.insights_nv)
+                val resources = LocalResources.current
                 ChartCard(stringResource(R.string.insights_by_decade)) {
-                    Bars(stats.byVintageDecade.map { BarItem(if (it.label == CellarStatistics.NON_VINTAGE) nv else it.label, it.count) })
+                    Bars(
+                        stats.byVintageDecade.map {
+                            // "2010s" from the core: "the 2010s" in the user's language ("années 2010").
+                            val decade = it.label.removeSuffix("s").toIntOrNull()
+                            val label = when {
+                                it.label == CellarStatistics.NON_VINTAGE -> nv
+                                decade != null -> resources.getString(R.string.insights_decade, decade)
+                                else -> it.label
+                            }
+                            BarItem(label, it.count)
+                        },
+                    )
                 }
             }
             if (stats.topGrapes.isNotEmpty()) ChartCard(stringResource(R.string.insights_grapes)) { Bars(stats.topGrapes.map { BarItem(it.label, it.count) }) }
@@ -238,6 +250,9 @@ private fun StyleDonut(stats: CellarStatistics) {
     val description = stats.byColor.zip(labels).joinToString(", ") { (slice, label) ->
         resources.getQuantityString(R.plurals.chart_item_bottles, slice.count, label, slice.count)
     }
+    // Whole percentages that add up to 100, written the user's way ("12 %" in French, "12%" in English).
+    val shares = CellarStatistics.percentages(stats.byColor.map { it.count })
+    val percent = java.text.NumberFormat.getPercentInstance(LocalConfiguration.current.locales[0])
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
         Canvas(Modifier.size(140.dp).clearAndSetSemantics { contentDescription = description }) {
             val stroke = size.minDimension * 0.18f
@@ -262,10 +277,11 @@ private fun StyleDonut(stats: CellarStatistics) {
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.s), modifier = Modifier.clearAndSetSemantics { }) {
-            stats.byColor.zip(labels).forEach { (slice, label) ->
+            stats.byColor.zip(labels).forEachIndexed { index, (slice, label) ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                     WineColorDot(slice.color)
-                    Text("$label · ${Formats.integer(slice.count)} (${100 * slice.count / total} %)", style = MaterialTheme.typography.bodyMedium)
+                    val share = percent.format(shares[index] / 100.0)
+                    Text("$label · ${Formats.integer(slice.count)} ($share)", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -306,8 +322,11 @@ private fun MonthColumns(months: List<CellarStatistics.MonthCount>) {
     val bar = MaterialTheme.colorScheme.primary
     val baseline = MaterialTheme.colorScheme.outlineVariant
     val locale = LocalConfiguration.current.locales[0]
+    val resources = LocalResources.current
+    // "October 2026: 3 bottles", with the unit.
     val description = months.joinToString(", ") {
-        "${it.month.month.getDisplayName(TextStyle.FULL_STANDALONE, locale)} ${it.month.year}: ${it.count}"
+        val name = "${it.month.month.getDisplayName(TextStyle.FULL_STANDALONE, locale)} ${it.month.year}"
+        resources.getQuantityString(R.plurals.chart_item_bottles, it.count, name, it.count)
     }
     Row(
         Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
@@ -390,7 +409,11 @@ private fun YearColumns(years: List<DrinkDownPlan.Year>) {
     val bar = MaterialTheme.colorScheme.primary
     val baseline = MaterialTheme.colorScheme.outlineVariant
     val short = years.size > 8
-    val description = years.joinToString(", ") { "${it.year}: ${it.leaving}" }
+    val resources = LocalResources.current
+    // "2027: 3 bottles", with the unit.
+    val description = years.joinToString(", ") {
+        resources.getQuantityString(R.plurals.chart_item_bottles, it.leaving, it.year.toString(), it.leaving)
+    }
     Row(
         Modifier.fillMaxWidth().testTag("insights.drinkdown.chart").clearAndSetSemantics { contentDescription = description },
         horizontalArrangement = Arrangement.SpaceBetween,

@@ -91,24 +91,12 @@ struct DiscoveryRow: View {
                 }
             }
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
-                    if showsWine {
-                        Text(wine?.displayName ?? String(localized: "Unknown wine"))
-                            .font(.headline)
-                    } else {
-                        Text(discovery.date, format: .dateTime.day().month(.wide).year())
-                            .font(.headline)
-                    }
-                    Spacer()
-                    if discovery.wantsToBuy {
-                        Label("To buy", systemImage: "cart.fill")
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(Color.accentColor)
-                    } else if discovery.boughtAt != nil {
-                        Label("Bought", systemImage: "checkmark.circle.fill")
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(.secondary)
-                    }
+                // As a bottle from the cellar: the wine, the date at the top right.
+                if showsWine {
+                    JournalRowHeader(title: Text(wine?.displayName ?? String(localized: "Unknown wine")), date: discovery.date)
+                } else {
+                    Text(discovery.date, format: .dateTime.day().month(.wide).year())
+                        .font(.headline)
                 }
                 if showsSource {
                     Label(discovery.sourceText, systemImage: discovery.setting?.systemImage ?? "mappin.and.ellipse")
@@ -128,8 +116,17 @@ struct DiscoveryRow: View {
                             Label(setting.title, systemImage: setting.systemImage)
                         }
                     }
-                    if showsWine {
-                        Text(discovery.date, format: .dateTime.day().month(.abbreviated))
+                    // To buy (or bought): a badge at the end of the details line.
+                    if discovery.wantsToBuy || discovery.boughtAt != nil {
+                        Spacer(minLength: 0)
+                        if discovery.wantsToBuy {
+                            Label("To buy", systemImage: "cart.fill")
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(Color.accentColor)
+                        } else {
+                            Label("Bought", systemImage: "checkmark.circle.fill")
+                                .labelStyle(.iconOnly)
+                        }
                     }
                 }
                 .font(.subheadline)

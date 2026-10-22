@@ -1,6 +1,13 @@
 package app.encave.core
 
+import java.io.File
 import java.time.LocalDate
+import java.util.UUID
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.time.ZoneOffset
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -27,13 +34,43 @@ class TonightTest {
         assertEquals(1, cellar.reservedBottleCount)
     }
 
+    /** The vectors shared with CaveKit, in `fixtures/tonight-vectors.json`. */
     @Test
-    fun startIndexChangesDailyAndStaysInRange() {
-        assertEquals(0, tonightStartIndex(1, 3))
-        assertEquals(1, tonightStartIndex(2, 3))
-        assertEquals(0, tonightStartIndex(4, 3))
-        assertEquals(0, tonightStartIndex(200, 0))
+    fun ranksAndOrdersMatchTheSharedVectors() {
+        val root = Json.parseToJsonElement(File("../../fixtures/tonight-vectors.json").readText()).jsonObject
+        val ranks = root.getValue("ranks").jsonArray
+        val orders = root.getValue("orders").jsonArray
+        assertTrue(ranks.isNotEmpty() && orders.isNotEmpty())
+        for (vector in ranks.map { it.jsonObject }) {
+            val rank = tonightRank(UUID.fromString(vector.string("wineId")), LocalDate.parse(vector.string("day")))
+            assertEquals(vector.string("rank"), rank.toString(16).padStart(16, '0'))
+        }
+        for (vector in orders.map { it.jsonObject }) {
+            val day = LocalDate.parse(vector.string("day"))
+            val ids = vector.getValue("wineIds").jsonArray.map { it.jsonPrimitive.content }
+            val expected = vector.getValue("order").jsonArray.map { it.jsonPrimitive.content }
+            assertEquals(expected, ids.sortedBy { tonightRank(UUID.fromString(it), day) })
+        }
     }
+
+    @Test
+    fun todaysPickStaysWhenOtherWinesComeAndGo() {
+        val cellar = Cellar()
+        for (index in 1..6) cellar.addBottles(Wine(name = "Wine $index", drinkFrom = 2020, drinkUntil = 2030), 1)
+        val day = LocalDate.of(2026, 10, 22)
+        val picks = cellar.tonightPicks(2026, day)
+        assertEquals(6, picks.size)
+        cellar.addBottles(Wine(name = "New", drinkFrom = 2020, drinkUntil = 2030), 1)
+        cellar.drink(picks.last().bottles.first().id, Tasting(rating = 7))
+        assertEquals(picks.first().wine.id, cellar.tonightPicks(2026, day).first().wine.id)
+        // Another day, another order; the same set of wines.
+        assertEquals(
+            cellar.tonightPicks(2026, day).map { it.wine.id }.toSet(),
+            cellar.tonightPicks(2026, day.plusDays(1)).map { it.wine.id }.toSet(),
+        )
+    }
+
+    private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
 
     @Test
     fun nextToBeReadyIsTheYoungWineWhoseWindowOpensFirst() {

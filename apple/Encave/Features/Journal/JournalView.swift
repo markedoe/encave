@@ -154,18 +154,22 @@ private struct DiaryFilterBar: View {
                 } leading: {
                     Image(systemName: "book.closed")
                 }
+                // One choice of four, read as such ("1 of 4"), not four separate buttons.
+                .accessibilityValue(Text("\(1) of \(4)"))
                 .accessibilityIdentifier("journal.filter.all")
                 ChoiceChip(title: "From my cellar", isSelected: model.journalFilter == .cellar) {
                     select(.cellar)
                 } leading: {
                     Image(systemName: "house")
                 }
+                .accessibilityValue(Text("\(2) of \(4)"))
                 .accessibilityIdentifier("journal.filter.cellar")
                 ChoiceChip(title: "Tasted elsewhere", isSelected: model.journalFilter == .elsewhere) {
                     select(.elsewhere)
                 } leading: {
                     Image(systemName: "mappin.and.ellipse")
                 }
+                .accessibilityValue(Text("\(3) of \(4)"))
                 .accessibilityIdentifier("journal.filter.elsewhere")
                 ChoiceChip(title: "To buy", isSelected: model.journalFilter == .toBuy) {
                     select(.toBuy)
@@ -175,6 +179,7 @@ private struct DiaryFilterBar: View {
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityValue(Text("\(4) of \(4)"))
                 .accessibilityIdentifier("journal.filter.toBuy")
                 if model.journalFilter.showsElsewhere {
                     ForEach(model.cellar.discoveryTags, id: \.self) { name in
@@ -311,20 +316,12 @@ struct TastingRow: View {
                 BottleEnd(color: wine?.color, size: 30)
             }
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
-                    if showsWine {
-                        Text(wine?.displayName ?? String(localized: "Unknown wine"))
-                            .font(.headline)
-                    } else if let date = tasting?.date {
-                        Text(date, format: .dateTime.day().month(.wide).year())
-                            .font(.headline)
-                    }
-                    Spacer()
-                    if showsWine {
-                        Text(tasting?.date ?? bottle.addedAt, format: .dateTime.day().month(.abbreviated))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                if showsWine {
+                    JournalRowHeader(title: Text(wine?.displayName ?? String(localized: "Unknown wine")),
+                                     date: tasting?.date ?? bottle.addedAt)
+                } else if let date = tasting?.date {
+                    Text(date, format: .dateTime.day().month(.wide).year())
+                        .font(.headline)
                 }
                 if showsSource {
                     Label("From my cellar", systemImage: "house")
@@ -332,15 +329,7 @@ struct TastingRow: View {
                         .foregroundStyle(.secondary)
                         .labelStyle(CompactLabelStyle())
                 }
-                if let rating = tasting?.rating {
-                    RatingView(rating: rating)
-                }
-                if let note = tasting?.note, !note.isEmpty {
-                    Text(note)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                }
+                // The same order as a wine tasted elsewhere: details, rating, note.
                 HStack(spacing: 10) {
                     // The style in words, not only by the bottle's color.
                     if showsWine, let style = wine?.color?.name {
@@ -353,9 +342,18 @@ struct TastingRow: View {
                         Label("Full note", systemImage: "text.alignleft")
                     }
                 }
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .labelStyle(CompactLabelStyle())
+                if let rating = tasting?.rating {
+                    RatingView(rating: rating)
+                }
+                if let note = tasting?.note, !note.isEmpty {
+                    Text(note)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -381,5 +379,27 @@ struct TastingRow: View {
         if let note = tasting?.note, !note.isEmpty { parts.append(note) }
         if tasting?.isDetailed == true { parts.append(String(localized: "Full note")) }
         return parts.joined(separator: ", ")
+    }
+}
+
+/// The first line of a Journal row: the wine, and the date at the top right; the date goes
+/// under the wine at the accessibility text sizes so neither is squeezed.
+struct JournalRowHeader: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let title: Text
+    let date: Date
+
+    var body: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline))
+        layout {
+            title.font(.headline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(date, format: .dateTime.day().month(.abbreviated))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize()
+        }
     }
 }

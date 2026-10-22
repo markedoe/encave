@@ -33,3 +33,19 @@ struct ActionLabel: View {
             .accessibilityHidden(true)
     }
 }
+
+/// Action buttons side by side, or one above the other at the accessibility text sizes so
+/// their titles are never broken mid-word. Give the buttons `.frame(maxWidth: .infinity)`
+/// inside their labels to share the width; without it, stacked buttons keep their own width.
+struct ActionButtonRow<Content: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    var spacing: CGFloat = 12
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: spacing))
+            : AnyLayout(HStackLayout(spacing: spacing))
+        layout { content }
+    }
+}

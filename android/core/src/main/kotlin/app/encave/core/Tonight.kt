@@ -1,6 +1,8 @@
 package app.encave.core
 
 import java.text.Normalizer
+import java.time.LocalDate
+import java.util.UUID
 
 /** The bottle a quick "Drink" opens: one not kept for an occasion when there is one. */
 val List<Bottle>.bottleToOpen: Bottle? get() = firstOrNull { it.reservedFor == null } ?: firstOrNull()
@@ -42,10 +44,29 @@ fun Cellar.tonightCandidates(year: Int): List<WineGroup> {
 }
 
 /**
- * Where Tonight's suggestions start on a given day of the year (1…366): a new wine each
- * day, the same one all day. "Another idea" goes on from there.
+ * Tonight's suggestions for a day, in the order "Another idea" goes through them: the
+ * candidates ranked by [tonightRank], so the first is the same all day and does not change
+ * when other wines are added or drunk, only when it is no longer a candidate.
  */
-fun tonightStartIndex(dayOfYear: Int, count: Int): Int = if (count > 0) (maxOf(dayOfYear, 1) - 1) % count else 0
+fun Cellar.tonightPicks(year: Int, day: LocalDate): List<WineGroup> {
+    val candidates = tonightCandidates(year)
+    val ranks = candidates.associate { it.wine.id to tonightRank(it.wine.id, day) }
+    // A stable sort: equal ranks (never in practice) keep the best-first order.
+    return candidates.sortedWith { a, b -> ranks.getValue(a.wine.id).compareTo(ranks.getValue(b.wine.id)) }
+}
+
+/**
+ * A wine's place among Tonight's suggestions on a day: the 64-bit FNV-1a hash of the UTF-8
+ * text "<lowercase wine id>|<yyyy-MM-dd>". The same on Apple (fixtures/tonight-vectors.json).
+ * The day is the local date, in the ISO (Gregorian) calendar, as on Apple.
+ */
+fun tonightRank(wineId: UUID, day: LocalDate): ULong {
+    var hash = 0xcbf29ce484222325uL
+    for (byte in "${wineId.toString().lowercase()}|$day".toByteArray(Charsets.UTF_8)) {
+        hash = (hash xor byte.toUByte().toULong()) * 0x100000001b3uL
+    }
+    return hash
+}
 
 /** The young wine whose window opens first (free bottles only), to say when something will be ready. */
 fun Cellar.nextToBeReady(year: Int): WineGroup? {

@@ -28,7 +28,7 @@ struct WineDetailView: View {
                 }
 
                 Section {
-                    HStack(spacing: 12) {
+                    ActionButtonRow {
                         Button {
                             if let bottle = bottles.bottleToOpen { router?.sheet = .drink(bottleID: bottle.id) }
                         } label: {

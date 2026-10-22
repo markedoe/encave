@@ -379,12 +379,14 @@ private struct SelectedBottleCard: View {
                 .accessibilityIdentifier("rack.selection.close")
             }
             HStack(spacing: 10) {
-                Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("action.rack.drink")
-                Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
-                    .buttonStyle(.bordered)
-                    .accessibilityIdentifier("action.rack.move")
+                ActionButtonRow(spacing: 10) {
+                    Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("action.rack.drink")
+                    Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("action.rack.move")
+                }
                 Spacer(minLength: 0)
                 Button {
                     onAction(.documents(bottle, importing: bottle.attachments == nil))
@@ -596,10 +598,12 @@ private struct BottleInCellRow: View {
                 }
             }
             HStack(spacing: 10) {
-                Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
-                    .buttonStyle(.borderedProminent)
-                Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
-                    .buttonStyle(.bordered)
+                ActionButtonRow(spacing: 10) {
+                    Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
+                        .buttonStyle(.borderedProminent)
+                    Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
+                        .buttonStyle(.bordered)
+                }
                 Spacer()
                 Menu {
                     if bottle.attachments != nil {
