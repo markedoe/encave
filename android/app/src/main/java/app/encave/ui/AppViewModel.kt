@@ -1042,25 +1042,9 @@ class AppViewModel(
                     onDone(true)
                 }
                 .onFailure {
-                    removeUnused(newPhotos, newDocuments)
                     post(errorText(it))
                     onDone(false)
                 }
-        }
-    }
-
-    /**
-     * Removes files written for a save that failed. One the cellar refers to meanwhile (the
-     * same photo or document, received from another device) is kept.
-     */
-    private suspend fun removeUnused(photoIds: List<String>, documentIds: List<String>) {
-        if (photoIds.isEmpty() && documentIds.isEmpty()) return
-        val now = cellar.value
-        val usedPhotos = now.photoIds
-        val usedDocuments = now.attachmentIds
-        withContext(Dispatchers.IO) {
-            photoIds.filterNot { it in usedPhotos }.forEach(photos::delete)
-            documentIds.filterNot { it in usedDocuments }.forEach(documents::delete)
         }
     }
 
