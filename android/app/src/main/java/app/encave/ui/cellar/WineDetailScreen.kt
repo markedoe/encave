@@ -99,7 +99,9 @@ import app.encave.ui.components.StyleLabel
 import app.encave.ui.components.labelRes
 import app.encave.ui.components.sizeLabel
 import app.encave.ui.components.tint
+import app.encave.core.bottleToOpen
 import app.encave.ui.drink.DrinkSheet
+import app.encave.ui.drink.rememberDrinking
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.EditWineRoute
 import app.encave.ui.navigation.RackDetailRoute
@@ -144,7 +146,7 @@ fun WineDetailScreen(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    var drinking by remember { mutableStateOf<Bottle?>(null) }
+    var drinking by rememberDrinking()
     var deletingBottle by remember { mutableStateOf<Bottle?>(null) }
     var reserving by remember { mutableStateOf<Bottle?>(null) }
     var findingPrice by remember { mutableStateOf(false) }
@@ -241,7 +243,8 @@ fun WineDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(Dimens.s),
                 ) {
                     Button(
-                        onClick = { drinking = bottles.first() }, enabled = bottles.isNotEmpty(),
+                        // A free bottle first: one kept for an occasion only when no other is left.
+                        onClick = { drinking = bottles.bottleToOpen?.id?.toString() }, enabled = bottles.isNotEmpty(),
                         modifier = Modifier.weight(1f).testTag("action.drink"),
                     ) { ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar) }
                     FilledTonalButton(
@@ -287,7 +290,7 @@ fun WineDetailScreen(
             items(bottles, key = { it.id.toString() }) { bottle ->
                 BottleRow(
                     cellar, bottle,
-                    onDrink = { drinking = bottle },
+                    onDrink = { drinking = bottle.id.toString() },
                     onShowInRack = bottle.slot?.let { slot ->
                         { navigator.open(RackDetailRoute(slot.rackId.toString(), bottle.id.toString())) }
                     },
@@ -349,11 +352,10 @@ fun WineDetailScreen(
         }
     }
 
-    drinking?.let { bottle ->
+    drinking?.let { id ->
         DrinkSheet(
             cellar = cellar,
-            bottles = cellar.bottlesOf(bottle.wineId),
-            initialBottleId = bottle.id,
+            bottleId = id,
             onDismiss = { drinking = null },
             onDrink = { chosen, tasting -> viewModel.drink(chosen.id, tasting) },
         )
@@ -547,7 +549,7 @@ fun DrinkingWindowGauge(from: Int, until: Int, year: Int, maturity: Maturity, mo
 
 /** Names the occasion a bottle is kept for. */
 @Composable
-private fun ReserveDialog(initial: String, onKeep: (String) -> Unit, onDismiss: () -> Unit) {
+internal fun ReserveDialog(initial: String, onKeep: (String) -> Unit, onDismiss: () -> Unit) {
     var occasion by remember { mutableStateOf(initial) }
     // Full width with margins: a text field in a default-width dialog never settles in tests.
     androidx.compose.material3.AlertDialog(

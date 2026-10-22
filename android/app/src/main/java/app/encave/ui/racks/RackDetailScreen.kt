@@ -99,6 +99,7 @@ import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.MaturityLabel
 import app.encave.ui.components.displayLabel
 import app.encave.ui.drink.DrinkSheet
+import app.encave.ui.drink.rememberDrinking
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.RackEditorRoute
@@ -129,7 +130,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var focusWineId by rememberSaveable { mutableStateOf<String?>(null) }
     var highlightId by rememberSaveable { mutableStateOf(route.highlightBottleId) }
     var showsList by rememberSaveable { mutableStateOf(false) }
-    var drinking by remember { mutableStateOf<Bottle?>(null) }
+    var drinking by rememberDrinking()
     /** A bottle whose documents are shown, and whether the file picker opens at once. */
     var bottleDocuments by remember { mutableStateOf<Pair<UUID, Boolean>?>(null) }
     // Checking the rack: the places whose bottles were found.
@@ -347,7 +348,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             bottle = bottle,
                             cellar = cellar,
                             year = viewModel.year,
-                            onDrink = { drinking = bottle },
+                            onDrink = { drinking = bottle.id.toString() },
                             onMove = {
                                 selectedKey = null
                                 movingId = bottle.id.toString()
@@ -398,7 +399,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             title = cellar.wines[actionBottle.wineId]?.displayName.orEmpty(),
             onDismiss = { actionsId = null },
             onOpen = { navigator.open(WineDetailRoute(actionBottle.wineId.toString())) },
-            onDrink = { drinking = actionBottle },
+            onDrink = { drinking = actionBottle.id.toString() },
             onMove = { movingId = actionBottle.id.toString() },
             onTakeOut = { viewModel.move(actionBottle.id, null) },
             onGone = { viewModel.markGone(actionBottle.id) },
@@ -427,10 +428,10 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             },
         )
     }
-    drinking?.let { bottle ->
+    drinking?.let { id ->
         DrinkSheet(
             cellar = cellar,
-            bottles = listOf(bottle),
+            bottleId = id,
             onDismiss = { drinking = null },
             onDrink = { chosen, tasting -> viewModel.drink(chosen.id, tasting) },
         )
