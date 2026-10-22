@@ -20,6 +20,7 @@ NAMES = {
     "wine-dessert": "WineDessert",
     "wine-fortified": "WineFortified",
     "wine-orange": "WineOrange",
+    "warning": "Warning",
 }
 
 

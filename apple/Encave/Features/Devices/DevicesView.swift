@@ -793,17 +793,19 @@ struct QRCodeView: View {
 struct JoinDeviceView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.scenePhase) private var scenePhase
     @State private var digits: String
     @State private var commitment: Data?
     @State private var replace = false
     @State private var scanning = false
-    @State private var cameraRefused = false
     @State private var confirmingLeave = false
     @State private var confirmingReplace = false
     @State private var leaving = false
     @State private var session: PairingSession?
     @FocusState private var codeFocused: Bool
+    #if os(iOS)
+    /// The QR scanner needs the camera: asked on the first tap, explained when refused.
+    @State private var cameraStatus = CameraAccess.status
+    #endif
 
     /// `code` and `commitment`: from a pairing link (the QR code scanned with the camera).
     init(code: String = "", commitment: Data? = nil) {
@@ -877,12 +879,6 @@ struct JoinDeviceView: View {
         } message: {
             Text("This device will show only the other device’s cellar.")
         }
-        #if os(iOS)
-        .onChange(of: scenePhase) { _, phase in
-            // Back from Settings: the camera may be allowed now.
-            if phase == .active, cameraRefused, CameraAccess.state == .allowed { cameraRefused = false }
-        }
-        #endif
         .macSheetFrame(width: 460, height: 560)
         .solidSheetBackground()
     }
@@ -894,15 +890,19 @@ struct JoinDeviceView: View {
             #if os(iOS)
             if QRScannerView.isSupported {
                 Section {
-                    Button(action: scan) {
-                        Label("Scan the QR Code", systemImage: "qrcode.viewfinder")
-                    }
-                    .accessibilityIdentifier("devices.scan")
-                    if cameraRefused {
-                        Label("Camera access is off for Encave. Turn it on in Settings › Encave, or type the code.",
-                              systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.orange)
-                        Button("Open Settings") { SystemSettings.openAppSettings() }
+                    if CameraAccess.isOff(cameraStatus) {
+                        CameraOffRow()
+                    } else {
+                        Button {
+                            Task {
+                                let allowed = await CameraAccess.request()
+                                cameraStatus = CameraAccess.status
+                                if allowed { scanning = true }
+                            }
+                        } label: {
+                            Label("Scan the QR Code", systemImage: "qrcode.viewfinder")
+                        }
+                        .accessibilityIdentifier("devices.scan")
                     }
                 }
             }
@@ -985,19 +985,6 @@ struct JoinDeviceView: View {
                                       using: model.sync)
     }
 
-    #if os(iOS)
-    /// Asks for the camera the first time; says how to turn it on when it was refused.
-    private func scan() {
-        Task {
-            if await CameraAccess.request() {
-                cameraRefused = false
-                if QRScannerView.isAvailable { scanning = true }
-            } else {
-                cameraRefused = true
-            }
-        }
-    }
-    #endif
 }
 
 // MARK: - Progress and confirmation
@@ -1152,10 +1139,8 @@ struct QRScannerView: View {
     let onScan: (String) -> Void
     @Environment(\.dismiss) private var dismiss
 
-    /// The device can scan (camera and hardware); whether access is given is asked on tap.
+    /// The device can scan; the camera is asked for when the scanner is opened.
     static var isSupported: Bool { DataScannerViewController.isSupported }
-    /// Scanning can start now: supported, and camera access given.
-    static var isAvailable: Bool { DataScannerViewController.isSupported && DataScannerViewController.isAvailable }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -1180,6 +1165,20 @@ struct QRScannerView: View {
                 .accessibilityIdentifier("sheet.cancel")
             }
             .padding()
+        }
+    }
+}
+
+/// Camera access is off: the code can still be typed, or the camera allowed in Settings.
+private struct CameraOffRow: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        Label("Camera access is off. Allow it in Settings to scan the code, or type the code below.", systemImage: "video.slash")
+            .foregroundStyle(.secondary)
+        if let url = CameraAccess.settingsURL {
+            Button("Open Settings") { openURL(url) }
+                .accessibilityIdentifier("camera.settings")
         }
     }
 }

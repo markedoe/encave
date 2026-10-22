@@ -254,14 +254,31 @@ final class CellarModel {
 
     // MARK: - Actions with feedback
 
+    /// Adds bottles, with Undo. `discoveryID`: a wine of the shopping list, marked bought
+    /// in the same change (so the Undo takes both back).
     @discardableResult
-    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo) -> Bool {
-        let ok = update { try $0.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase) }
+    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo, discoveryID: UUID? = nil) -> Bool {
+        let previousWine = cellar.wines[wine.id]
+        let previousDiscovery = discoveryID.flatMap { cellar.discoveries[$0] }
+        var added: [Bottle] = []
+        let ok = update { cellar in
+            added = try cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase)
+            if let discoveryID, cellar.discoveries[discoveryID] != nil { try cellar.markBought(discoveryID) }
+        }
         guard ok else { return false }
         successCount += 1
+        let bottleIDs = added.map(\.id)
         showToast(purchase.isOrdered
                   ? String(localized: "On order: \(quantity) × \(wine.displayName)")
-                  : String(localized: "Added \(quantity) × \(wine.displayName)"))
+                  : String(localized: "Added \(quantity) × \(wine.displayName)")) { [weak self] in
+            self?.update { cellar in
+                // A new wine left without bottles goes with them; a wine that was there
+                // gets back its record as it was (barcodes, photo, documents added here).
+                bottleIDs.forEach { cellar.deleteBottle($0) }
+                if let previousWine { cellar.wines[previousWine.id] = previousWine }
+                if let previousDiscovery { cellar.discoveries[previousDiscovery.id] = previousDiscovery }
+            }
+        }
         return true
     }
 
@@ -585,6 +602,8 @@ struct AddBottleContext: Identifiable {
     var slot: Slot?
     /// Set when buying a wine from the shopping list: it leaves the list once added.
     var discoveryID: UUID?
+    /// Opens on the label scanner when the device has one (Cancel leaves the form).
+    var scan = false
 }
 
 struct Toast: Identifiable {

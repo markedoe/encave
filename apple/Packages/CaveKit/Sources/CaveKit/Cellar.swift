@@ -339,14 +339,44 @@ public extension Cellar {
         return nil
     }
 
-    /// The wine a barcode was seen on, preferring one with bottles in the cellar.
+    /// The wine a barcode was seen on, preferring one with bottles in the cellar (see `wines(barcode:)`).
     func wine(barcode: String) -> Wine? {
+        wines(barcode: barcode).first
+    }
+
+    /// The wines a barcode was seen on: producers often keep one barcode for every vintage.
+    /// Those with bottles in the cellar first, then the newest vintage (non-vintage last).
+    func wines(barcode: String) -> [Wine] {
         let code = Wine.normalizedBarcode(barcode)
-        guard !code.isEmpty else { return nil }
-        let matching = wines.values.filter { ($0.barcodes ?? []).contains(code) }
+        guard !code.isEmpty else { return [] }
         let inCellar = Set(bottlesInCellar.map(\.wineID))
-        return matching.sorted { (inCellar.contains($0.id) ? 0 : 1, $0.displayName) < (inCellar.contains($1.id) ? 0 : 1, $1.displayName) }
-            .first
+        return wines.values.filter { ($0.barcodes ?? []).contains(code) }.sorted { a, b in
+            let aIn = inCellar.contains(a.id), bIn = inCellar.contains(b.id)
+            if aIn != bIn { return aIn }
+            if a.vintage != b.vintage { return (a.vintage ?? .min) > (b.vintage ?? .min) }
+            if a.displayName != b.displayName { return a.displayName < b.displayName }
+            return a.id.uuidString < b.id.uuidString
+        }
+    }
+
+    /// A wine of the cellar that `draft` would duplicate: the same name and vintage, ignoring
+    /// case, accents and extra spaces, and the same producer or no producer on one side.
+    /// The draft's own record (same id) is left out. The same producer is preferred, then
+    /// a wine with bottles in the cellar.
+    func wine(matching draft: Wine) -> Wine? {
+        let name = Wine.matchKey(draft.name)
+        guard !name.isEmpty else { return nil }
+        let producer = Wine.matchKey(draft.producer ?? "")
+        let inCellar = Set(bottlesInCellar.map(\.wineID))
+        func rank(_ wine: Wine) -> (Int, Int, String) {
+            (Wine.matchKey(wine.producer ?? "") == producer ? 0 : 1, inCellar.contains(wine.id) ? 0 : 1, wine.id.uuidString)
+        }
+        return wines.values.filter { wine in
+            guard wine.id != draft.id, wine.vintage == draft.vintage, Wine.matchKey(wine.name) == name else { return false }
+            let other = Wine.matchKey(wine.producer ?? "")
+            return other == producer || other.isEmpty || producer.isEmpty
+        }
+        .min { rank($0) < rank($1) }
     }
 
     /// Existing wines matching a query, for "add another bottle of...".
@@ -611,6 +641,12 @@ public extension Cellar {
 }
 
 extension Wine {
+    /// A name or producer compared for `Cellar.wine(matching:)`: without case, accents or extra spaces.
+    static func matchKey(_ text: String) -> String {
+        text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+    }
+
     func matches(_ needle: String) -> Bool {
         let fields = [name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
             + (barcodes ?? []).map(Optional.some) + (tags ?? []).map(Optional.some)

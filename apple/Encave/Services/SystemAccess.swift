@@ -1,6 +1,5 @@
 import Foundation
 #if os(iOS)
-import AVFoundation
 import UIKit
 #else
 import AppKit
@@ -27,28 +26,3 @@ enum SystemSettings {
     }
     #endif
 }
-
-#if os(iOS)
-/// Camera access, asked for when the user first scans something (a label, a document,
-/// a pairing code), never before.
-enum CameraAccess {
-    enum State { case allowed, notAsked, refused }
-
-    static var state: State {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized: .allowed
-        case .notDetermined: .notAsked
-        default: .refused
-        }
-    }
-
-    /// Asks if needed; true when the camera can be used.
-    static func request() async -> Bool {
-        switch state {
-        case .allowed: true
-        case .refused: false
-        case .notAsked: await AVCaptureDevice.requestAccess(for: .video)
-        }
-    }
-}
-#endif

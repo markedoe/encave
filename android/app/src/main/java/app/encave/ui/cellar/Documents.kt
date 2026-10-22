@@ -2,7 +2,6 @@ package app.encave.ui.cellar
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -75,7 +74,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.core.Attachment
@@ -87,7 +85,6 @@ import app.encave.ui.components.ActionContent
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.displayLocation
 import app.encave.ui.theme.Dimens
-import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.launch
 
@@ -134,7 +131,6 @@ class DocumentAdder(val pick: () -> Unit, val photograph: () -> Unit, val busy: 
 
 @Composable
 fun rememberDocumentAdder(viewModel: AppViewModel, onStaged: (List<PendingDocument>) -> Unit): DocumentAdder {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     val deliver by rememberUpdatedState(onStaged)
@@ -148,28 +144,18 @@ fun rememberDocumentAdder(viewModel: AppViewModel, onStaged: (List<PendingDocume
             }
         }
     }
-    // The camera app writes the photo to this file in our cache.
-    var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
-        val uri = cameraUri
-        if (ok && uri != null) {
-            busy = true
-            scope.launch {
-                val staged = viewModel.stagePhotoOfPaper(uri)
-                busy = false
-                if (staged != null) deliver(listOf(staged))
-            }
+    // Asks for the camera first: see rememberCameraCapture.
+    val photograph = app.encave.ui.components.rememberCameraCapture(viewModel, "paper.jpg") { uri ->
+        busy = true
+        scope.launch {
+            val staged = viewModel.stagePhotoOfPaper(uri)
+            busy = false
+            if (staged != null) deliver(listOf(staged))
         }
     }
     return DocumentAdder(
         pick = { runCatching { picker.launch(documentTypes) }.onFailure { viewModel.showMessage(UiText.Res(R.string.err_document_unreadable)) } },
-        photograph = {
-            val target = cameraUri ?: runCatching {
-                val file = File(context.cacheDir, "camera/paper.jpg").apply { parentFile?.mkdirs() }
-                FileProvider.getUriForFile(context, "${context.packageName}.files", file)
-            }.getOrNull()?.also { cameraUri = it }
-            if (target != null) runCatching { camera.launch(target) }.onFailure { viewModel.showMessage(UiText.Res(R.string.photo_failed)) }
-        },
+        photograph = photograph,
         busy = busy,
     )
 }
