@@ -34,7 +34,8 @@ again. It needs these repository secrets:
 `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` (App
 Store Connect API key with the Admin role).
 
-The workflow uses two macOS jobs per run (one on pushes to other branches):
+The workflow uses three macOS jobs per run on main, pull requests and manual
+runs, and one on pushes to other branches:
 
 - **Build, Mac launch test, TestFlight upload**: on main (pushes and manual
   runs), archives and uploads both apps, then launches the archived Mac app
@@ -45,11 +46,14 @@ The workflow uses two macOS jobs per run (one on pushes to other branches):
   checks the privacy manifest. On main, pull requests and manual runs, the same
   Mac app then makes the Mac screenshots for the App Store
   (`tools/mac-screenshots.sh`, artifact `mac-screens`).
-- **Screen tour** (main, pull requests and manual runs): builds the UI tests
-  once, runs the model tests on macOS, starts three simulators, then runs the
-  tour on all three at once: the iPhone (with the large text checks), and the
-  iPad in English and in French (artifact `screens`, one folder per device).
-  Then the Mac tour. Runs on main are never cancelled by a later push.
+- **Screen tour (iPhone, Mac)** and **Screen tour (iPad)** (main, pull requests
+  and manual runs): each builds the UI tests once, starts two copies of the
+  newest iPhone or iPad simulator and runs the English and the French tour side
+  by side (two simulators run as fast as one on GitHub's runners; three do not).
+  The iPhone job also runs the large text checks, the model tests on macOS and
+  the Mac tour. A third job merges their screenshots into the `screens` artifact
+  (one folder per device). The external testers get a build of main once both
+  tour jobs have passed. Runs on main are never cancelled by a later push.
 
 The same split runs locally, for example the French iPhone tour only:
 
