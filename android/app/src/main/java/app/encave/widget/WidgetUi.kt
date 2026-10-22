@@ -19,6 +19,7 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.components.TitleBar
 import androidx.glance.color.ColorProviders
+import androidx.compose.ui.graphics.Color
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
@@ -74,13 +75,19 @@ val Maturity.widgetIcon: Int
     }
 
 /** Same roles as in the app; always with a symbol and words, never color alone. */
+/** The maturity token colors (design/tokens.json), as in the app; for the symbol only. */
 val Maturity.widgetTint: ColorProvider
-    @Composable get() = when (this) {
-        Maturity.DrinkSoon -> GlanceTheme.colors.tertiary
-        Maturity.Ready -> GlanceTheme.colors.primary
-        Maturity.PastPeak -> GlanceTheme.colors.error
-        Maturity.Young -> GlanceTheme.colors.secondary
-        Maturity.Unknown -> GlanceTheme.colors.onSurfaceVariant
+    @Composable get() {
+        fun token(name: String) = DesignTokens.maturityColors.getValue(name).let {
+            androidx.glance.color.ColorProvider(day = Color(it.light), night = Color(it.dark))
+        }
+        return when (this) {
+            Maturity.DrinkSoon -> token("maturity-drink-soon")
+            Maturity.Ready -> token("maturity-ready")
+            Maturity.PastPeak -> token("maturity-past-peak")
+            Maturity.Young -> token("maturity-keep")
+            Maturity.Unknown -> GlanceTheme.colors.onSurfaceVariant
+        }
     }
 
 /** The widget frame: a Material title bar with the section's symbol, then the content. */

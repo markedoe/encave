@@ -128,7 +128,7 @@ fun PickRow(pick: WidgetSnapshot.Pick, compact: Boolean) {
         }
         Spacer(GlanceModifier.height(2.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconLine(pick.maturity.widgetIcon, maturity, pick.maturity.widgetTint, textColor = pick.maturity.widgetTint)
+            IconLine(pick.maturity.widgetIcon, maturity, pick.maturity.widgetTint, textColor = GlanceTheme.colors.onSurface)
             val place = pick.place
             if (!compact && place != null) {
                 Spacer(GlanceModifier.width(WidgetDimens.s))

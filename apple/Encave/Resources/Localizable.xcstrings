@@ -21,12 +21,12 @@
         }
       }
     },
-    "%@ and %lld more": {
+    "%@ and %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ et %2$lld autres"
+            "value": "%1$@ et %2$@"
           }
         }
       }
@@ -136,7 +136,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ : %2$@"
+            "value": "%1$@ : %2$@"
           }
         }
       }
@@ -146,7 +146,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ : %2$@."
+            "value": "%1$@ : %2$@."
           }
         }
       }
@@ -156,7 +156,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ : %2$@. Marquez-les comme reçues à leur arrivée."
+            "value": "%1$@ : %2$@. Marquez-les comme reçues à leur arrivée."
           }
         }
       }
@@ -541,6 +541,46 @@
         }
       }
     },
+    "%lld more": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autre"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld autres"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld new wines": {
       "localizations": {
         "en": {
@@ -727,13 +767,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld photo ou document n’est pas encore sur cet appareil : il n’est pas dans cette sauvegarde. Sauvegardez depuis l’appareil qui l’a, ou après la prochaine synchronisation."
+                  "value": "%lld photo ou document n’est pas encore sur cet appareil : il n’est pas dans cette sauvegarde. Sauvegardez depuis l’appareil qui l’a, ou après la prochaine synchronisation."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld photos ou documents ne sont pas encore sur cet appareil : ils ne sont pas dans cette sauvegarde. Sauvegardez depuis l’appareil qui les a, ou après la prochaine synchronisation."
+                  "value": "%lld photos ou documents ne sont pas encore sur cet appareil : ils ne sont pas dans cette sauvegarde. Sauvegardez depuis l’appareil qui les a, ou après la prochaine synchronisation."
                 }
               }
             }
@@ -767,13 +807,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld photo ou document n’y est pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
+                  "value": "%lld photo ou document n’y est pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
+                  "value": "%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
                 }
               }
             }
@@ -1036,7 +1076,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
+            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
           }
         }
       }
@@ -1046,7 +1086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
+            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
           }
         }
       }
@@ -1056,7 +1096,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Appareils** montre où en est la synchronisation, sur le même Wi-Fi et loin de la maison : synchronisation en cours, dernière synchronisation, dernière tentative échouée et pourquoi, modifications de cet appareil pas encore envoyées, et prochaine synchronisation prévue. **Synchroniser** synchronise tout de suite, avec les appareils du même Wi-Fi et par le stockage à distance."
+            "value": "**Appareils** montre où en est la synchronisation, sur le même Wi-Fi et loin de la maison : synchronisation en cours, dernière synchronisation, dernière tentative échouée et pourquoi, modifications de cet appareil pas encore envoyées, et prochaine synchronisation prévue. **Synchroniser** synchronise tout de suite, avec les appareils du même Wi-Fi et par le stockage à distance."
           }
         }
       }
@@ -1086,7 +1126,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Statistiques**, en haut du Journal (à côté sur Mac), montre votre cave en chiffres : sa valeur, quoi boire et quand, votre année en vin et le rythme pour boire vos bouteilles avant la fin de leur fenêtre."
+            "value": "**Statistiques**, en haut du Journal (à côté sur Mac), montre votre cave en chiffres : sa valeur, quoi boire et quand, votre année en vin et le rythme pour boire vos bouteilles avant la fin de leur fenêtre."
           }
         }
       }
@@ -1096,7 +1136,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
+            "value": "**Inventaire à imprimer (PDF)** liste chaque vin avec son nombre de bouteilles, ses emplacements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
           }
         }
       }
@@ -1106,7 +1146,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
+            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
           }
         }
       }
@@ -1156,7 +1196,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde JSON ne contient aucun fichier de photo ou de document : ceux qui ne sont pas sur cet appareil apparaissent comme absents jusqu’à la synchronisation avec un appareil qui les a."
+            "value": "Une sauvegarde JSON ne contient aucun fichier de photo ou de document : ceux qui ne sont pas sur cet appareil apparaissent comme absents jusqu’à la synchronisation avec un appareil qui les a."
           }
         }
       }
@@ -1166,7 +1206,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants."
+            "value": "Un NAS (Synology, QNAP), Nextcloud, pCloud et beaucoup d’autres services proposent WebDAV. Saisissez l’adresse du dossier, par exemple https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud ou https://webdav.pcloud.com/Encave pour pCloud, avec un nom d’utilisateur et un mot de passe d’application si le service en propose. Encave crée le dossier si besoin et vérifie qu’il peut y écrire. Seuls des fichiers chiffrés y sont stockés. Le nom d’utilisateur et le mot de passe restent dans le trousseau de cet appareil : les autres appareils ne reçoivent que l’adresse, et affichent **Se connecter à ce dossier WebDAV** tant que vous n’y avez pas saisi d’identifiants."
           }
         }
       }
@@ -1186,7 +1226,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un fichier ZIP avec toute votre cave, ses photos et ses documents. Il n’est pas chiffré : gardez-le en lieu sûr, par exemple dans iCloud Drive ou sur un ordinateur."
+            "value": "Un fichier ZIP avec toute votre cave, ses photos et ses documents. Il n’est pas chiffré : gardez-le en lieu sûr, par exemple dans iCloud Drive ou sur un ordinateur."
           }
         }
       }
@@ -1196,7 +1236,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, Mac, iPhone ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, Mac, iPhone ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -1206,7 +1246,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, iPhone ou Android. Celle de chaque semaine reste dans Fichiers › Sur mon iPhone › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, iPhone ou Android. Celle de chaque semaine reste dans Fichiers › Sur mon iPhone › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -1236,7 +1276,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une copie de votre cave est gardée chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles."
+            "value": "Une copie de votre cave est gardée chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles."
           }
         }
       }
@@ -1286,7 +1326,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un verre dans la barre des menus liste les bouteilles à ouvrir maintenant ; cliquez sur l’une d’elles pour l’ouvrir."
+            "value": "Un verre dans la barre des menus liste les bouteilles à ouvrir maintenant ; cliquez sur l’une d’elles pour l’ouvrir."
           }
         }
       }
@@ -1306,7 +1346,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un nom que vous reconnaîtrez : mur gauche de la cave, cave de la cuisine…"
+            "value": "Un nom que vous reconnaîtrez : mur gauche de la cave, cave de la cuisine…"
           }
         }
       }
@@ -1376,7 +1416,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais."
+            "value": "Une restauration est une modification faite sur cet appareil : les appareils synchronisés avec lui la reçoivent aussi. Après **Remplacer cette cave**, ce que la sauvegarde ramène revient sur eux, et ce qui n’y est pas y est supprimé. Leurs clés de synchronisation restent les mêmes : une sauvegarde ne les contient jamais."
           }
         }
       }
@@ -1396,7 +1436,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."
+            "value": "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."
           }
         }
       }
@@ -1416,7 +1456,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
+            "value": "La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
           }
         }
       }
@@ -1566,7 +1606,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde ; vos réglages restent tels quels. Vous pouvez annuler juste après."
+            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde ; vos réglages restent tels quels. Vous pouvez annuler juste après."
           }
         }
       }
@@ -1806,7 +1846,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouté : %1$lld × %2$@"
+            "value": "Ajouté : %1$lld × %2$@"
           }
         }
       }
@@ -1826,7 +1866,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter un appareil affiche un code sur celui-ci ; saisissez-le ou scannez-le sur l’autre. Les deux doivent être sur le même Wi-Fi."
+            "value": "Ajouter un appareil affiche un code sur celui-ci ; saisissez-le ou scannez-le sur l’autre. Les deux doivent être sur le même Wi-Fi."
           }
         }
       }
@@ -1946,7 +1986,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Déjà dans votre cave ?"
+            "value": "Déjà dans votre cave ?"
           }
         }
       }
@@ -1966,7 +2006,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
+            "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
           }
         }
       }
@@ -2061,12 +2101,12 @@
         }
       }
     },
-    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": {
+    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or ask the AI to complete a wine; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête."
+            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou demandez à l’IA de compléter un vin ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande."
           }
         }
       }
@@ -2146,7 +2186,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apple Intelligence lit ces résultats sur cet appareil et propose des détails. Les résultats ne sont envoyés nulle part ailleurs. Vérifiez chaque suggestion : les pages web peuvent se tromper."
+            "value": "Apple Intelligence lit ces résultats sur cet appareil et propose des détails. Les résultats ne sont envoyés nulle part ailleurs. Vérifiez chaque suggestion : les pages web peuvent se tromper."
           }
         }
       }
@@ -2186,7 +2226,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arômes : fruits, fleurs, épices, bois…"
+            "value": "Arômes : fruits, fleurs, épices, bois…"
           }
         }
       }
@@ -2206,7 +2246,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
+            "value": "Demandez à Siri « Que boire ce soir avec Encave ? », « Où est Chablis dans Encave ? » ou « Ajouter une bouteille à Encave ». Les mêmes actions sont dans l’app Raccourcis. Les vins apparaissent aussi dans la recherche Spotlight. Les réponses sont calculées sur cet appareil."
           }
         }
       }
@@ -2276,7 +2316,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En haut, **Ce soir, ouvrez…** propose une bouteille prête : **Buvez**-la, ou touchez **Autre idée**. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi."
+            "value": "En haut, **Ce soir, ouvrez…** propose une bouteille prête : **Buvez**-la, ou touchez **Autre idée**. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi."
           }
         }
       }
@@ -2496,7 +2536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les deux appareils affichent alors les mêmes 6 chiffres et demandent s’ils sont identiques. Vérifiez-les avant de répondre **Ils sont identiques** : des codes différents signifient qu’un autre appareil s’est glissé entre les deux, répondez alors **Non**. C’est ce qui protège votre cave, même sur un réseau partagé."
+            "value": "Les deux appareils affichent alors les mêmes 6 chiffres et demandent s’ils sont identiques. Vérifiez-les avant de répondre **Ils sont identiques** : des codes différents signifient qu’un autre appareil s’est glissé entre les deux, répondez alors **Non**. C’est ce qui protège votre cave, même sur un réseau partagé."
           }
         }
       }
@@ -2636,7 +2676,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles introuvables : %lld"
+            "value": "Bouteilles introuvables : %lld"
           }
         }
       }
@@ -2726,7 +2766,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles rangées : %lld"
+            "value": "Bouteilles rangées : %lld"
           }
         }
       }
@@ -2736,7 +2776,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles reçues : %lld"
+            "value": "Bouteilles reçues : %lld"
           }
         }
       }
@@ -2746,7 +2786,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles retirées de la cave : %lld"
+            "value": "Bouteilles retirées de la cave : %lld"
           }
         }
       }
@@ -2756,7 +2796,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles empilées en quinconce : %lld en bas, %lld au milieu, %lld au-dessus."
+            "value": "Bouteilles empilées en quinconce : %lld en bas, %lld au milieu, %lld au-dessus."
           }
         }
       }
@@ -2766,7 +2806,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles empilées en quinconce : %lld en bas, %lld au-dessus."
+            "value": "Bouteilles empilées en quinconce : %lld en bas, %lld au-dessus."
           }
         }
       }
@@ -2786,7 +2826,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles sorties de leur emplacement : %lld"
+            "value": "Bouteilles sorties de leur emplacement : %lld"
           }
         }
       }
@@ -2806,7 +2846,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles à boire cette année : %lld."
+            "value": "Bouteilles à boire cette année : %lld."
           }
         }
       }
@@ -2816,7 +2856,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles sans fenêtre de dégustation non comptées : %lld"
+            "value": "Bouteilles sans fenêtre de dégustation non comptées : %lld"
           }
         }
       }
@@ -2866,7 +2906,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite (**Reçues**), ou touchées longuement pour choisir **Marquer comme reçu**. Elles rejoignent alors la cave sans place, prêtes à être rangées dans un casier. Une commande qui n’arrivera pas : **Annuler la commande** sur la bouteille, sur la fiche du vin."
+            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite (**Reçues**), ou touchées longuement pour choisir **Marquer comme reçu**. Elles rejoignent alors la cave sans place, prêtes à être rangées dans un casier. Une commande qui n’arrivera pas : **Annuler la commande** sur la bouteille, sur la fiche du vin."
           }
         }
       }
@@ -2886,7 +2926,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mois le plus actif : %@"
+            "value": "Mois le plus actif : %@"
           }
         }
       }
@@ -3236,7 +3276,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un casier ou un emplacement de deux bouteilles les marque toutes ; pour les cocher une par une, touchez-le longuement et choisissez **Vérifier une par une…** (un emplacement affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un casier ou un emplacement de deux bouteilles les marque toutes ; pour les cocher une par une, touchez-le longuement et choisissez **Vérifier une par une…** (un emplacement affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
           }
         }
       }
@@ -3246,7 +3286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des emplacements occupés, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, et ces bouteilles restent dans votre cave sans emplacement. **Annuler** remet tout en place."
+            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des emplacements occupés, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, et ces bouteilles restent dans votre cave sans emplacement. **Annuler** remet tout en place."
           }
         }
       }
@@ -3256,7 +3296,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio."
+            "value": "Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur iPhone et iPad, saisissez l’adresse IP de l’ordinateur ou son nom terminé par `.local` (par exemple `http://mon-mac.local:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio."
           }
         }
       }
@@ -3306,7 +3346,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après."
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après."
           }
         }
       }
@@ -3621,6 +3661,16 @@
         }
       }
     },
+    "Copyright © 2026 the Encave contributors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copyright © 2026 les contributeurs d’Encave"
+          }
+        }
+      }
+    },
     "Counted from the left. Places are numbered 1, 2, 3…": {
       "localizations": {
         "fr": {
@@ -3896,7 +3946,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer ces vins ?"
+            "value": "Supprimer ces vins ?"
           }
         }
       }
@@ -3906,7 +3956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer cette entrée du journal ?"
+            "value": "Supprimer cette entrée du journal ?"
           }
         }
       }
@@ -3916,7 +3966,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer ce fichier ?"
+            "value": "Supprimer ce fichier ?"
           }
         }
       }
@@ -3926,7 +3976,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer ce casier ?"
+            "value": "Supprimer ce casier ?"
           }
         }
       }
@@ -3976,7 +4026,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin, des casiers en losange."
+            "value": "Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin, des casiers en losange."
           }
         }
       }
@@ -4036,7 +4086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fiche complétée par l’IA : %@"
+            "value": "Fiche complétée par l’IA : %@"
           }
         }
       }
@@ -4066,17 +4116,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification ; une synchronisation qui échoue est retentée après 15 secondes, 1 minute et 5 minutes. Pour synchroniser tout de suite, tirez la liste de la Cave vers le bas, ou sur un Mac ou un iPad avec clavier choisissez **Cave › Synchroniser** (⌘R). Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte. Quand la synchronisation a besoin de vous (une connexion WebDAV, l’accès au réseau local désactivé, des échecs depuis plus d’une heure), le bouton Réglages affiche un badge et **Appareils** indique quoi faire."
-          }
-        }
-      }
-    },
-    "Devices sync directly on the same Wi-Fi, or away from home through a storage you choose, always encrypted from end to end: no server can read your cellar.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les appareils se synchronisent directement sur le même Wi-Fi, ou loin de la maison via un stockage de votre choix, toujours chiffrés de bout en bout : aucun serveur ne peut lire votre cave."
+            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification ; une synchronisation qui échoue est retentée après 15 secondes, 1 minute et 5 minutes. Pour synchroniser tout de suite, tirez la liste de la Cave vers le bas, ou sur un Mac ou un iPad avec clavier choisissez **Cave › Synchroniser** (⌘R). Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte. Quand la synchronisation a besoin de vous (une connexion WebDAV, l’accès au réseau local désactivé, des échecs depuis plus d’une heure), le bouton Réglages affiche un badge et **Appareils** indique quoi faire."
           }
         }
       }
@@ -4116,7 +4156,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils communiquent directement sur votre réseau ; aucun serveur n’intervient. Chaque échange est chiffré de bout en bout avec une nouvelle clé à chaque fois. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
+            "value": "Les appareils communiquent directement sur votre réseau ; aucun serveur n’intervient. Chaque échange est chiffré de bout en bout avec une nouvelle clé à chaque fois. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
           }
         }
       }
@@ -4146,7 +4186,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez un casier pour voir son contenu."
+            "value": "Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez un casier pour voir son contenu."
           }
         }
       }
@@ -4226,7 +4266,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abandonner les modifications ?"
+            "value": "Abandonner les modifications ?"
           }
         }
       }
@@ -4286,7 +4326,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ affiche-t-il le même code ?"
+            "value": "%@ affiche-t-il le même code ?"
           }
         }
       }
@@ -4456,7 +4496,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille est suivie séparément : vous pouvez les boire ou les déplacer une par une."
+            "value": "Chaque bouteille est suivie séparément : vous pouvez les boire ou les déplacer une par une."
           }
         }
       }
@@ -4466,7 +4506,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher."
+            "value": "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher."
           }
         }
       }
@@ -4496,7 +4536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque vin est **À garder**, **Prêt à boire**, **À boire bientôt** (dernière année de sa fenêtre) ou **Après l’apogée**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur. Un vin sans fenêtre de dégustation affiche **Pas de fenêtre de dégustation** et passe en dernier dans Ce soir : fixez sa fenêtre sur sa fiche."
+            "value": "Chaque vin est **À garder**, **Prêt à boire**, **À boire bientôt** (dernière année de sa fenêtre) ou **Après l’apogée**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur. Un vin sans fenêtre de dégustation affiche **Pas de fenêtre de dégustation** et passe en dernier dans Ce soir : fixez sa fenêtre sur sa fiche."
           }
         }
       }
@@ -4631,12 +4671,22 @@
         }
       }
     },
+    "Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi."
+          }
+        }
+      }
+    },
     "Encave is in beta: features can still change and some bugs remain. Make a backup from time to time (**Settings › Your data**), and report problems on the project page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet."
+            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps (**Réglages › Vos données**) et signalez les problèmes sur la page du projet."
           }
         }
       }
@@ -4646,7 +4696,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps."
+            "value": "Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps."
           }
         }
       }
@@ -4666,7 +4716,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave est open source : chacun peut vérifier ce que fait l’app."
+            "value": "Encave est open source : chacun peut vérifier ce que fait l’app."
           }
         }
       }
@@ -4686,7 +4736,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant, même si vous n’avez pas ouvert Encave depuis longtemps. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle."
+            "value": "Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant, même si vous n’avez pas ouvert Encave depuis longtemps. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle."
           }
         }
       }
@@ -4736,7 +4786,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bonne dégustation : %@"
+            "value": "Bonne dégustation : %@"
           }
         }
       }
@@ -4786,7 +4836,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Effacer toutes les données ?"
+            "value": "Effacer toutes les données ?"
           }
         }
       }
@@ -4816,7 +4866,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Estimée d’après le style et le millésime : prêt %1$lld ans après la vendange, puis à son meilleur pendant %2$lld ans. Ajustez-la si le producteur ou un guide indique autre chose."
+            "value": "Estimée d’après le style et le millésime : prêt %1$lld ans après la vendange, puis à son meilleur pendant %2$lld ans. Ajustez-la si le producteur ou un guide indique autre chose."
           }
         }
       }
@@ -4856,7 +4906,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
           }
         }
       }
@@ -4866,7 +4916,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille, vin, casier, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
+            "value": "Chaque bouteille, vin, casier, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux, la modification la plus récente l’emporte. Une suppression reste définitive, sauf qu’un vin revient si quelqu’un en a ajouté une bouteille entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
           }
         }
       }
@@ -4956,7 +5006,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Occasion préférée : %@"
+            "value": "Occasion préférée : %@"
           }
         }
       }
@@ -4966,7 +5016,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Préféré : %1$@, %2$@"
+            "value": "Préféré : %1$@, %2$@"
           }
         }
       }
@@ -5086,7 +5136,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "D’abord, vous appairez vos appareils, une seule fois (voir **Vos appareils**). Ensuite, ils échangent leurs modifications d’eux-mêmes : directement quand ils sont sur le même Wi-Fi, ou par un stockage de votre choix quand ils sont éloignés. Votre cave est chiffrée de bout en bout tout du long."
+            "value": "D’abord, vous appairez vos appareils, une seule fois (voir **Vos appareils**). Ensuite, ils échangent leurs modifications d’eux-mêmes : directement quand ils sont sur le même Wi-Fi, ou par un stockage de votre choix quand ils sont éloignés. Votre cave est chiffrée de bout en bout tout du long."
           }
         }
       }
@@ -5126,7 +5176,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), balayez-la vers la gauche sur la fiche du vin, ou touchez-la longuement, et choisissez **Plus en cave**. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps. Une bouteille ouverte par erreur : ouvrez sa dégustation dans le Journal et choisissez **Remettre en cave**."
+            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), balayez-la vers la gauche sur la fiche du vin, ou touchez-la longuement, et choisissez **Plus en cave**. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps. Une bouteille ouverte par erreur : ouvrez sa dégustation dans le Journal et choisissez **Remettre en cave**."
           }
         }
       }
@@ -5136,7 +5186,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une cave à deux zones de température : un séparateur est dessiné au-dessus de cette étagère."
+            "value": "Pour une cave à deux zones de température : un séparateur est dessiné au-dessus de cette étagère."
           }
         }
       }
@@ -5156,7 +5206,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin, 2 zones** est un point de départ tout prêt."
+            "value": "Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin, 2 zones** est un point de départ tout prêt."
           }
         }
       }
@@ -5166,7 +5216,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
+            "value": "Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
           }
         }
       }
@@ -5186,7 +5236,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés."
+            "value": "Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés."
           }
         }
       }
@@ -5226,7 +5276,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trouvé : %@"
+            "value": "Trouvé : %@"
           }
         }
       }
@@ -5236,7 +5286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trouvées : %lld sur %lld"
+            "value": "Trouvées : %lld sur %lld"
           }
         }
       }
@@ -5516,7 +5566,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag parmi les pastilles de filtre, après les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."
+            "value": "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag parmi les pastilles de filtre, après les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."
           }
         }
       }
@@ -5637,13 +5687,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                  "value": "Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                  "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
                 }
               }
             }
@@ -5677,13 +5727,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
+                  "value": "Contient %lld bouteille. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
+                  "value": "Contient %lld bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
                 }
               }
             }
@@ -5826,7 +5876,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "C’était comment ?"
+            "value": "C’était comment ?"
           }
         }
       }
@@ -5846,7 +5896,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, avec **Annuler**. Seule cette photo est envoyée, jamais votre cave."
+            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, avec **Annuler**. Seule cette photo est envoyée, jamais votre cave."
           }
         }
       }
@@ -5876,7 +5926,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Importé : %@."
+            "value": "Importé : %@."
           }
         }
       }
@@ -5896,7 +5946,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans **Appareils › Synchroniser loin de la maison**, **Fréquence** règle la fréquence à laquelle cet appareil se synchronise à distance de lui-même : toutes les minutes, toutes les 5 ou 15 minutes, ou seulement quand vous touchez **Synchroniser**. La synchronisation en arrière-plan sur iPhone et iPad la suit, sans dépasser ce qu’iOS permet. Sur le même Wi-Fi, les modifications partent toujours quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil."
+            "value": "Dans **Appareils › Synchroniser loin de la maison**, **Fréquence** règle la fréquence à laquelle cet appareil se synchronise à distance de lui-même : toutes les minutes, toutes les 5 ou 15 minutes, ou seulement quand vous touchez **Synchroniser**. La synchronisation en arrière-plan sur iPhone et iPad la suit, sans dépasser ce qu’iOS permet. Sur le même Wi-Fi, les modifications partent toujours quelques secondes après les avoir faites. Ce réglage ne concerne que cet appareil."
           }
         }
       }
@@ -5906,7 +5956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans **Réglages › IA**, choisissez un fournisseur. Il vous faut un compte chez lui et une clé d’API ; le fournisseur vous facture directement ce que vous utilisez, en général une fraction de centime par étiquette."
+            "value": "Dans **Réglages › IA**, choisissez un fournisseur. Il vous faut un compte chez lui et une clé d’API ; le fournisseur vous facture directement ce que vous utilisez, en général une fraction de centime par étiquette."
           }
         }
       }
@@ -5916,7 +5966,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis l’iPhone ou l’iPad."
+            "value": "Dans LM Studio, chargez un modèle de vision et démarrez le serveur ; activez « Serve on Local Network » pour l’utiliser depuis l’iPhone ou l’iPad."
           }
         }
       }
@@ -6016,7 +6066,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Installez un modèle qui lit les images, par exemple : ollama pull gemma3. Pour l’utiliser depuis l’iPhone ou l’iPad, lancez Ollama avec OLLAMA_HOST=0.0.0.0 sur l’ordinateur."
+            "value": "Installez un modèle qui lit les images, par exemple : ollama pull gemma3. Pour l’utiliser depuis l’iPhone ou l’iPad, lancez Ollama avec OLLAMA_HOST=0.0.0.0 sur l’ordinateur."
           }
         }
       }
@@ -6036,7 +6086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Factures, certificats, fiches techniques, articles : pour toutes les bouteilles de ce vin. Ils se synchronisent avec vos appareils, chiffrés."
+            "value": "Factures, certificats, fiches techniques, articles : pour toutes les bouteilles de ce vin. Ils se synchronisent avec vos appareils, chiffrés."
           }
         }
       }
@@ -6156,7 +6206,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rejoindre une autre cave ?"
+            "value": "Rejoindre une autre cave ?"
           }
         }
       }
@@ -6266,7 +6316,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin et choisissez **Joindre un document…**, ou touchez-la dans un casier puis le trombone ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
+            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin et choisissez **Joindre un document…**, ou touchez-la dans un casier puis le trombone ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
           }
         }
       }
@@ -6326,7 +6376,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un stockage qui ne contient que des données chiffrées : iCloud, un dossier WebDAV ou un relais."
+            "value": "Garde les appareils synchronisés quand ils ne sont pas sur le même Wi-Fi, grâce à un stockage qui ne contient que des données chiffrées : iCloud, un dossier WebDAV ou un relais."
           }
         }
       }
@@ -6356,7 +6406,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Conservés quand Encave n’a pas pu lire votre cave au lancement. Partagez-en un pour le garder ailleurs ou signaler le problème ; supprimez-le quand vous n’en avez plus besoin."
+            "value": "Conservés quand Encave n’a pas pu lire votre cave au lancement. Partagez-en un pour le garder ailleurs ou signaler le problème ; supprimez-le quand vous n’en avez plus besoin."
           }
         }
       }
@@ -6366,7 +6416,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gardé avec le vin et utilisé pour la valeur estimée de votre cave dans les Statistiques. Les prix du web varient : vérifiez-les sur les sites."
+            "value": "Gardé avec le vin et utilisé pour la valeur estimée de votre cave dans les Statistiques. Les prix du web varient : vérifiez-les sur les sites."
           }
         }
       }
@@ -6446,7 +6496,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise."
+            "value": "Les photos d’étiquette sont détourées et redressées sur un fond net, sur cet appareil. La photo prise est gardée telle quelle ; désactivez pour la voir telle que prise."
           }
         }
       }
@@ -6486,7 +6536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière tentative échouée : %@"
+            "value": "Dernière tentative échouée : %@"
           }
         }
       }
@@ -6496,7 +6546,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière sauvegarde : %@"
+            "value": "Dernière sauvegarde : %@"
           }
         }
       }
@@ -6506,7 +6556,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En retard : prévue le %@"
+            "value": "En retard : prévue le %@"
           }
         }
       }
@@ -6591,6 +6641,16 @@
         }
       }
     },
+    "Libraries": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèques"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "fr": {
@@ -6601,12 +6661,22 @@
         }
       }
     },
+    "Licences": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licences"
+          }
+        }
+      }
+    },
     "Liked a wine at friends’ or in a restaurant? Tap + and choose Somewhere Else to remember it, add notes and tags, and put it on your shopping list.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un vin vous a plu chez des amis ou au restaurant ? Touchez + et choisissez Ailleurs pour vous en souvenir, ajouter des notes et des tags, et le mettre sur votre liste d’achats."
+            "value": "Un vin vous a plu chez des amis ou au restaurant ? Touchez + et choisissez Ailleurs pour vous en souvenir, ajouter des notes et des tags, et le mettre sur votre liste d’achats."
           }
         }
       }
@@ -6656,7 +6726,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Charger la cave d’exemple ?"
+            "value": "Charger la cave d’exemple ?"
           }
         }
       }
@@ -6716,7 +6786,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Serveur local : installer Ollama"
+            "value": "Serveur local : installer Ollama"
           }
         }
       }
@@ -6946,7 +7016,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Région la plus ouverte : %@"
+            "value": "Région la plus ouverte : %@"
           }
         }
       }
@@ -6956,7 +7026,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Style le plus ouvert : %@"
+            "value": "Style le plus ouvert : %@"
           }
         }
       }
@@ -7106,7 +7176,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nouveau millésime : %lld"
+            "value": "Nouveau millésime : %lld"
           }
         }
       }
@@ -7157,6 +7227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas encore de version précédente"
+          }
+        }
+      }
+    },
+    "No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de compte, pas de mesure d’audience, pas de publicité. La synchronisation est chiffrée de bout en bout : sur le même Wi-Fi, vos appareils se connectent directement, et à distance le stockage que vous choisissez ne contient que des fichiers chiffrés. Si vous les activez, la reconnaissance des étiquettes par IA n’envoie que la photo de l’étiquette à votre service d’IA, et la recherche web que les termes de recherche à votre service de recherche."
           }
         }
       }
@@ -7407,6 +7487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun casier"
+          }
+        }
+      }
+    },
+    "No rating": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans note"
           }
         }
       }
@@ -7676,7 +7766,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rien de nouveau : tout ce que contient ce fichier est déjà dans votre cave."
+            "value": "Rien de nouveau : tout ce que contient ce fichier est déjà dans votre cave."
           }
         }
       }
@@ -7706,7 +7796,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Désormais prêtes : %lld"
+            "value": "Désormais prêtes : %lld"
           }
         }
       }
@@ -7716,7 +7806,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Actuel : %@"
+            "value": "Actuel : %@"
           }
         }
       }
@@ -7726,7 +7816,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Actuel : non renseigné"
+            "value": "Actuel : non renseigné"
           }
         }
       }
@@ -7806,7 +7896,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur la fiche d’un vin, **Changer l’image…** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé."
+            "value": "Sur la fiche d’un vin, **Changer l’image…** puis **Chercher des images** trouve des images de la bouteille avec le même service. Celle que vous touchez est téléchargée depuis son site et affichée pour le vin ; la photo de l’étiquette est toujours conservée. Les miniatures et l’image viennent des sites qui les hébergent, qui voient la requête. Les images des boutiques sont pour votre usage privé."
           }
         }
       }
@@ -7816,7 +7906,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
+            "value": "Sur la fiche d’un vin, **Trouver le prix actuel** cherche le vin, son format s’il n’est pas de 75 cl, et le mot « prix ». Chaque prix trouvé est listé avec son site ; les prix pour plusieurs bouteilles, la livraison ou un autre format sont écartés. La valeur médiane dans votre devise est proposée : modifiez-la ou touchez un autre prix, puis **Enregistrer le prix**. Les Statistiques additionnent ces prix pour les bouteilles de votre cave en **valeur estimée aujourd’hui**. Avec Apple Intelligence, **Estimer sur cet appareil** lit les prix sur l’appareil."
           }
         }
       }
@@ -7826,7 +7916,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur. Touchez longuement le producteur ou l’appellation sur la fiche d’un vin pour le chercher seul sur le Web."
+            "value": "Sur la fiche d’un vin, ou en ajoutant ou modifiant un vin, touchez **Chercher en ligne**. Les termes de recherche s’affichent d’abord et vous pouvez les modifier ; rien n’est envoyé avant que vous touchiez **Chercher**. Chaque résultat affiche son titre, un extrait et le site, et s’ouvre dans votre navigateur. Touchez longuement le producteur ou l’appellation sur la fiche d’un vin pour le chercher seul sur le Web."
           }
         }
       }
@@ -7836,7 +7926,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées."
+            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées."
           }
         }
       }
@@ -7866,7 +7956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** ramène au formulaire pour saisir le vin). Sur Mac, **Scanner l’étiquette** dans le formulaire d’ajout lit une photo que vous choisissez. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
+            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** ramène au formulaire pour saisir le vin). Sur Mac, **Scanner l’étiquette** dans le formulaire d’ajout lit une photo que vous choisissez. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
           }
         }
       }
@@ -7896,7 +7986,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En commande : %1$lld × %2$@"
+            "value": "En commande : %1$lld × %2$@"
           }
         }
       }
@@ -7916,7 +8006,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté. Les deux gardent la même recherche et les mêmes filtres ; dans le tableau, **Filtrer** les règle."
+            "value": "Sur Mac et iPad, les boutons en haut de la Cave l’affichent en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté. Les deux gardent la même recherche et les mêmes filtres ; dans le tableau, **Filtrer** les règle."
           }
         }
       }
@@ -7936,7 +8026,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur l’appareil qui a déjà votre cave : Réglages › Appareils › Ajouter un appareil."
+            "value": "Sur l’appareil qui a déjà votre cave : Réglages › Appareils › Ajouter un appareil."
           }
         }
       }
@@ -7946,7 +8036,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, scannez le QR code avec l’appareil photo, ou choisissez **Rejoindre la cave d’un autre appareil** et scannez-le là (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi, et Encave doit avoir accès au réseau local : si cet accès est désactivé, Encave le signale et ouvre les réglages où l’activer."
+            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, scannez le QR code avec l’appareil photo, ou choisissez **Rejoindre la cave d’un autre appareil** et scannez-le là (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi, et Encave doit avoir accès au réseau local : si cet accès est désactivé, Encave le signale et ouvre les réglages où l’activer."
           }
         }
       }
@@ -7996,7 +8086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
+            "value": "Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège."
           }
         }
       }
@@ -8097,13 +8187,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Seulement %lld emplacement libre : les autres bouteilles n’auront pas d’emplacement."
+                  "value": "Seulement %lld emplacement libre : les autres bouteilles n’auront pas d’emplacement."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
+                  "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
                 }
               }
             }
@@ -8126,7 +8216,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seul le **nom** est obligatoire. Le producteur et le millésime aident à distinguer les vins ; laissez le millésime sur **Non millésimé** pour les champagnes et assemblages sans année."
+            "value": "Seul le **nom** est obligatoire. Le producteur et le millésime aident à distinguer les vins ; laissez le millésime sur **Non millésimé** pour les champagnes et assemblages sans année."
           }
         }
       }
@@ -8186,7 +8276,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés."
+            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés."
           }
         }
       }
@@ -8196,7 +8286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -8321,6 +8411,16 @@
         }
       }
     },
+    "Open-source libraries included in Encave, each under its own licence.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèques open source incluses dans Encave, chacune sous sa propre licence."
+          }
+        }
+      }
+    },
     "OpenAI-compatible": {
       "localizations": {
         "fr": {
@@ -8346,7 +8446,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvre les réglages ; choisissez ensuite Appareils."
+            "value": "Ouvre les réglages ; choisissez ensuite Appareils."
           }
         }
       }
@@ -8386,7 +8486,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres, toutes les minutes quand Encave est ouvert, sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
+            "value": "Facultatif, dans **Appareils › Synchroniser loin de la maison** : iCloud (appareils Apple connectés au même compte Apple), un dossier WebDAV (un NAS, Nextcloud, pCloud) ou un relais de confiance. Chaque appareil y dépose une copie chiffrée de la cave et lit celles des autres, toutes les minutes quand Encave est ouvert, sauf si vous choisissez une autre fréquence. L’iPhone et l’iPad se synchronisent aussi en arrière-plan quand iOS le permet, en général toutes les 15 minutes à quelques heures ; un Mac se synchronise quand Encave est ouvert. Le stockage ne voit jamais que des fichiers chiffrés."
           }
         }
       }
@@ -8446,7 +8546,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif : prix par bouteille, date, caviste ou personne qui vous l’a offerte. Les prix servent à la valeur de votre cave dans les Statistiques."
+            "value": "Facultatif : prix par bouteille, date, caviste ou personne qui vous l’a offerte. Les prix servent à la valeur de votre cave dans les Statistiques."
           }
         }
       }
@@ -8596,7 +8696,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Après leur apogée : %lld"
+            "value": "Après leur apogée : %lld"
           }
         }
       }
@@ -8911,6 +9011,16 @@
         }
       }
     },
+    "Privacy Policy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Politique de confidentialité"
+          }
+        }
+      }
+    },
     "Producer": {
       "localizations": {
         "fr": {
@@ -8976,7 +9086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Valeur d’achat : %@"
+            "value": "Valeur d’achat : %@"
           }
         }
       }
@@ -9087,6 +9197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noté %lld sur 5"
+          }
+        }
+      }
+    },
+    "Rating": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note"
           }
         }
       }
@@ -9216,7 +9336,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page."
+            "value": "Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page."
           }
         }
       }
@@ -9306,7 +9426,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Retirer %@ ?"
+            "value": "Retirer %@ ?"
           }
         }
       }
@@ -9337,13 +9457,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Retirer %lld bouteille de cet appareil ?"
+                  "value": "Retirer %lld bouteille de cet appareil ?"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Retirer %lld bouteilles de cet appareil ?"
+                  "value": "Retirer %lld bouteilles de cet appareil ?"
                 }
               }
             }
@@ -9426,7 +9546,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Retirer un appareil donne une nouvelle clé aux autres : il ne peut plus rien lire de nouveau."
+            "value": "Retirer un appareil donne une nouvelle clé aux autres : il ne peut plus rien lire de nouveau."
           }
         }
       }
@@ -9496,7 +9616,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remplacer cette cave ?"
+            "value": "Remplacer cette cave ?"
           }
         }
       }
@@ -9606,7 +9726,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Renvoie un vin de votre cave en texte : sa fiche, l’emplacement de ses bouteilles et vos notes de dégustation."
+            "value": "Renvoie un vin de votre cave en texte : sa fiche, l’emplacement de ses bouteilles et vos notes de dégustation."
           }
         }
       }
@@ -9666,7 +9786,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les emplacements numérotés depuis la gauche : **B3** est la deuxième rangée, troisième emplacement. Avec deux bouteilles par emplacement, **B3, derrière** est celle du fond. Le même nom s’affiche partout : dans le casier, la liste des bouteilles, la fiche du vin et Siri."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les emplacements numérotés depuis la gauche : **B3** est la deuxième rangée, troisième emplacement. Avec deux bouteilles par emplacement, **B3, derrière** est celle du fond. Le même nom s’affiche partout : dans le casier, la liste des bouteilles, la fiche du vin et Siri."
           }
         }
       }
@@ -9706,7 +9826,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lignes sans nom de vin, ignorées : %lld"
+            "value": "Lignes sans nom de vin, ignorées : %lld"
           }
         }
       }
@@ -9926,7 +10046,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "SearXNG doit répondre en JSON : ajoutez json sous search: formats: dans son settings.yml."
+            "value": "SearXNG doit répondre en JSON : ajoutez json sous search: formats: dans son settings.yml."
           }
         }
       }
@@ -9986,7 +10106,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu **Trier et filtrer**. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
+            "value": "Cherchez ou choisissez des filtres, puis **Enregistrer cette recherche…** dans le menu **Trier et filtrer**. La recherche apparaît en premier parmi les pastilles de filtre ; touchez-la pour l’appliquer à nouveau, ou maintenez-la pour la supprimer. Les recherches enregistrées se synchronisent avec vos appareils."
           }
         }
       }
@@ -10106,7 +10226,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sélection : %lld"
+            "value": "Sélection : %lld"
           }
         }
       }
@@ -10126,7 +10246,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment."
+            "value": "Renvoie la photo d’étiquette au service IA choisi dans Réglages et remplit les champs vides. La photo reste avec le vin : vous pouvez recommencer à tout moment."
           }
         }
       }
@@ -10526,7 +10646,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net."
+            "value": "Affichée en aspect studio s’il est activé dans Réglages : détourée et redressée sur un fond net."
           }
         }
       }
@@ -10876,7 +10996,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lancez un modèle de vision avec : vllm serve <modèle> --host 0.0.0.0. Si vous utilisez --api-key, saisissez la même clé ici."
+            "value": "Lancez un modèle de vision avec : vllm serve <modèle> --host 0.0.0.0. Si vous utilisez --api-key, saisissez la même clé ici."
           }
         }
       }
@@ -10936,7 +11056,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arrêter la synchronisation à distance sur cet appareil ?"
+            "value": "Arrêter la synchronisation à distance sur cet appareil ?"
           }
         }
       }
@@ -10946,7 +11066,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arrêter la synchronisation sur cet appareil ?"
+            "value": "Arrêter la synchronisation sur cet appareil ?"
           }
         }
       }
@@ -10976,7 +11096,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un stockage que vous avez déjà, pour tous les appareils. Seuls des fichiers chiffrés sont stockés dans ce dossier. Utilisez un mot de passe d’application si le serveur en propose ; il reste dans le trousseau de cet appareil. Par exemple : l’adresse WebDAV d’un NAS Synology ou QNAP, https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud, https://webdav.pcloud.com/Encave pour pCloud."
+            "value": "Un stockage que vous avez déjà, pour tous les appareils. Seuls des fichiers chiffrés sont stockés dans ce dossier. Utilisez un mot de passe d’application si le serveur en propose ; il reste dans le trousseau de cet appareil. Par exemple : l’adresse WebDAV d’un NAS Synology ou QNAP, https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud, https://webdav.pcloud.com/Encave pour pCloud."
           }
         }
       }
@@ -11066,7 +11186,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil. **Arrêter la synchronisation sur cet appareil** prévient les autres appareils sur le même Wi-Fi ou à distance, pour qu’ils ne l’affichent plus ; si aucun n’est joignable, retirez-le depuis l’un d’eux."
+            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil. **Arrêter la synchronisation sur cet appareil** prévient les autres appareils sur le même Wi-Fi ou à distance, pour qu’ils ne l’affichent plus ; si aucun n’est joignable, retirez-le depuis l’un d’eux."
           }
         }
       }
@@ -11121,12 +11241,12 @@
         }
       }
     },
-    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud, a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them.": {
+    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud, your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire."
+            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud, votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
           }
         }
       }
@@ -11156,7 +11276,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était."
+            "value": "La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était."
           }
         }
       }
@@ -11276,7 +11396,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les tags regroupent les vins goûtés ailleurs à votre façon : idées cadeaux, pour l’été, à regoûter. Touchez un tag pour le choisir ou tapez-en un nouveau ; ceux déjà utilisés sont proposés. Dans le Journal, ils suivent les filtres."
+            "value": "Les tags regroupent les vins goûtés ailleurs à votre façon : idées cadeaux, pour l’été, à regoûter. Touchez un tag pour le choisir ou tapez-en un nouveau ; ceux déjà utilisés sont proposés. Dans le Journal, ils suivent les filtres."
           }
         }
       }
@@ -11336,7 +11456,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez **+** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : scannez la bouteille et ajoutez le lieu, une note, du texte et des tags ; votre cave ne change pas."
+            "value": "Touchez **+** dans le Journal et choisissez où vous l’avez bu. **Une bouteille de ma cave** : choisissez le vin, puis ajoutez votre note ; la bouteille sort de votre cave. **Ailleurs** : scannez la bouteille et ajoutez le lieu, une note, du texte et des tags ; votre cave ne change pas."
           }
         }
       }
@@ -11346,7 +11466,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez **Vérifier la clé et charger les modèles** : l’app demande au fournisseur les modèles accessibles avec votre clé et remplit le menu. Choisissez un modèle qui lit les images."
+            "value": "Touchez **Vérifier la clé et charger les modèles** : l’app demande au fournisseur les modèles accessibles avec votre clé et remplit le menu. Choisissez un modèle qui lit les images."
           }
         }
       }
@@ -11356,7 +11476,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange. **Annuler** dans le bandeau les remet en place. **Annuler** (ou Échap) arrête un déplacement. Pour mettre une bouteille dans un autre casier, choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
+            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange. **Annuler** dans le bandeau les remet en place. **Annuler** (ou Échap) arrête un déplacement. Pour mettre une bouteille dans un autre casier, choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
           }
         }
       }
@@ -11376,7 +11496,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez un emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
+            "value": "Touchez un emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
           }
         }
       }
@@ -11416,7 +11536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Goût et structure : sucrosité, acidité, tanins, corps."
+            "value": "Goût et structure : sucrosité, acidité, tanins, corps."
           }
         }
       }
@@ -11586,7 +11706,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le Journal liste tout ce que vous avez goûté, du plus récent au plus ancien et par mois. Chaque entrée dit d’où elle vient : **De ma cave** pour une bouteille que vous avez ouverte, **Goûté ailleurs** et le lieu pour un vin bu au restaurant, chez des amis ou dans un salon."
+            "value": "Le Journal liste tout ce que vous avez goûté, du plus récent au plus ancien et par mois. Chaque entrée dit d’où elle vient : **De ma cave** pour une bouteille que vous avez ouverte, **Goûté ailleurs** et le lieu pour un vin bu au restaurant, chez des amis ou dans un salon."
           }
         }
       }
@@ -11706,7 +11826,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul."
+            "value": "La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul."
           }
         }
       }
@@ -11866,7 +11986,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**."
+            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur emplacement ; cliquez sur l’une d’elles pour l’ouvrir. Désactivez-le dans les **Réglages**."
           }
         }
       }
@@ -11896,7 +12016,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**."
+            "value": "La photo d’étiquette est gardée avec le vin, redimensionnée et sans données de lieu. Vous pouvez la changer ou la retirer en modifiant le vin. Dans les listes, elle s’affiche en aspect studio : la bouteille ou l’étiquette détourée et redressée sur un fond net, sur cet appareil. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez cet aspect dans **Réglages**."
           }
         }
       }
@@ -12186,7 +12306,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les années où le vin est à son meilleur. Avec **Estimer automatiquement**, elles sont déduites du style et du millésime ; désactivez-le pour saisir les années du producteur ou d’un guide."
+            "value": "Les années où le vin est à son meilleur. Avec **Estimer automatiquement**, elles sont déduites du style et du millésime ; désactivez-le pour saisir les années du producteur ou d’un guide."
           }
         }
       }
@@ -12296,7 +12416,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier."
+            "value": "Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier."
           }
         }
       }
@@ -12326,7 +12446,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette bouteille est en commande : marquez-la d’abord comme reçue."
+            "value": "Cette bouteille est en commande : marquez-la d’abord comme reçue."
           }
         }
       }
@@ -12366,7 +12486,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet appareil ne fait plus partie de la cave synchronisée : sa clé a changé, par exemple après la restauration d’une sauvegarde. La cave reste ici. Rejoignez de nouveau la cave depuis un autre appareil."
+            "value": "Cet appareil ne fait plus partie de la cave synchronisée : sa clé a changé, par exemple après la restauration d’une sauvegarde. La cave reste ici. Rejoignez de nouveau la cave depuis un autre appareil."
           }
         }
       }
@@ -12386,7 +12506,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet appareil n’utilise plus iCloud. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+            "value": "Cet appareil n’utilise plus iCloud. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
           }
         }
       }
@@ -12396,7 +12516,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet appareil n’utilise plus le dossier WebDAV et oublie son identifiant. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+            "value": "Cet appareil n’utilise plus le dossier WebDAV et oublie son identifiant. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
           }
         }
       }
@@ -12406,7 +12526,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet appareil n’utilise plus le relais. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+            "value": "Cet appareil n’utilise plus le relais. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
           }
         }
       }
@@ -12546,7 +12666,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela garantit que personne ne s’est glissé entre les deux. Codes différents : répondez Non et recommencez."
+            "value": "Cela garantit que personne ne s’est glissé entre les deux. Codes différents : répondez Non et recommencez."
           }
         }
       }
@@ -12636,7 +12756,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "À boire cette année : %lld"
+            "value": "À boire cette année : %lld"
           }
         }
       }
@@ -12646,7 +12766,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation."
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation."
           }
         }
       }
@@ -12746,7 +12866,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez longuement un casier et choisissez **Monter** ou **Descendre** ; sur Mac, faites-le glisser dans la barre latérale."
+            "value": "Touchez longuement un casier et choisissez **Monter** ou **Descendre** ; sur Mac, faites-le glisser dans la barre latérale."
           }
         }
       }
@@ -12806,7 +12926,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Rappel mensuel** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée. C’est calculé sur cet appareil."
+            "value": "Activez **Rappel mensuel** dans les réglages : le premier de chaque mois, une notification indique combien de bouteilles boire cette année, lesquelles viennent d’être prêtes et lesquelles ont passé leur apogée. C’est calculé sur cet appareil."
           }
         }
       }
@@ -12816,7 +12936,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Rappels** dans les réglages : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil."
+            "value": "Activez **Rappels** dans les réglages : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil."
           }
         }
       }
@@ -12836,7 +12956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre, par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Tout est calculé sur cet appareil : rien n’est envoyé nulle part."
+            "value": "Activez **Me prévenir des modifications des autres appareils** dans **Appareils** pour recevoir une notification sur cet appareil quand des bouteilles sont ouvertes, ajoutées ou retirées sur un autre, par exemple « 2 bouteilles ouvertes, 1 bouteille ajoutée » depuis l’iPhone de Marc. Les synchronisations suivantes mettent à jour la même notification. Quand Encave est au premier plan, un court bandeau indique d’où viennent les modifications à la place. Tout est calculé sur cet appareil : rien n’est envoyé nulle part."
           }
         }
       }
@@ -12846,7 +12966,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu, ou balayez-le vers la gauche. Quand vous l’achetez, balayez-le vers la droite (**Ajouter à la cave**) : une fois les bouteilles ajoutées, il quitte la liste et reste dans le Journal marqué **Acheté**."
+            "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu, ou balayez-le vers la gauche. Quand vous l’achetez, balayez-le vers la droite (**Ajouter à la cave**) : une fois les bouteilles ajoutées, il quitte la liste et reste dans le Journal marqué **Acheté**."
           }
         }
       }
@@ -12896,7 +13016,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tapez quelques lettres dans **Rechercher dans vos vins** : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont. Quand un scan ou le nom saisi correspond à un vin que vous avez déjà (même nom et millésime, et même producteur quand les deux en ont un), **Déjà dans votre cave** l’affiche : touchez **Ajouter à ce vin** pour garder ensemble ses bouteilles et ses dégustations, ou **C’est un autre vin**."
+            "value": "Tapez quelques lettres dans **Rechercher dans vos vins** : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont. Quand un scan ou le nom saisi correspond à un vin que vous avez déjà (même nom et millésime, et même producteur quand les deux en ont un), **Déjà dans votre cave** l’affiche : touchez **Ajouter à ce vin** pour garder ensemble ses bouteilles et ses dégustations, ou **C’est un autre vin**."
           }
         }
       }
@@ -12916,7 +13036,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an."
+            "value": "Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an."
           }
         }
       }
@@ -13066,7 +13186,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "À utiliser si la bouteille a été notée par erreur. Sa note de dégustation est supprimée ; vous pouvez annuler juste après."
+            "value": "À utiliser si la bouteille a été notée par erreur. Sa note de dégustation est supprimée ; vous pouvez annuler juste après."
           }
         }
       }
@@ -13306,7 +13426,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Qu’est-ce qui va avec un poulet rôti ce soir ?"
+            "value": "Qu’est-ce qui va avec un poulet rôti ce soir ?"
           }
         }
       }
@@ -13356,7 +13476,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat."
+            "value": "Quoi ouvrir maintenant : d’abord les bouteilles à leur apogée ou à boire bientôt, et des idées selon le plat."
           }
         }
       }
@@ -13466,7 +13586,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Où est-elle ?"
+            "value": "Où est-elle ?"
           }
         }
       }
@@ -13486,7 +13606,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quelle bouteille ?"
+            "value": "Quelle bouteille ?"
           }
         }
       }
@@ -13496,7 +13616,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les producteurs gardent souvent un code-barres pour tous les millésimes : chaque millésime que vous avez est proposé, et **Autre millésime** commence un nouveau vin avec les mêmes informations et le millésime de l’étiquette. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
+            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les producteurs gardent souvent un code-barres pour tous les millésimes : chaque millésime que vous avez est proposé, et **Autre millésime** commence un nouveau vin avec les mêmes informations et le millésime de l’étiquette. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
           }
         }
       }
@@ -13506,7 +13626,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec elle, **Charger une cave d’exemple** (sur l’écran Cave vide ou dans les **Réglages**) la remplit de vins d’exemple pour découvrir chaque écran. **Effacer toutes les données** dans les Réglages les supprime quand vous êtes prêt à ajouter vos bouteilles ; dans une cave partagée avec d’autres appareils, elle est aussi effacée sur ceux-ci."
+            "value": "Tant que votre cave est vide et qu’aucun autre appareil ne se synchronise avec elle, **Charger une cave d’exemple** (sur l’écran Cave vide ou dans les **Réglages**) la remplit de vins d’exemple pour découvrir chaque écran. **Effacer toutes les données** dans les Réglages les supprime quand vous êtes prêt à ajouter vos bouteilles ; dans une cave partagée avec d’autres appareils, elle est aussi effacée sur ceux-ci."
           }
         }
       }
@@ -13696,7 +13816,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vins supprimés : %lld"
+            "value": "Vins supprimés : %lld"
           }
         }
       }
@@ -13736,7 +13856,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine quand vous l’ouvrez, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et elles sont supprimées avec Encave. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
+            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine quand vous l’ouvrez, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et elles sont supprimées avec Encave. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
           }
         }
       }
@@ -13796,7 +13916,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
+            "value": "Vos clés d’IA et de recherche web, votre identifiant WebDAV, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
           }
         }
       }
@@ -13806,7 +13926,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Votre cave devient exactement comme dans cette sauvegarde, sur cet appareil et sur les autres appareils synchronisés avec lui : ce qui n’y est pas y est aussi supprimé. Vous pouvez annuler juste après."
+            "value": "Votre cave devient exactement comme dans cette sauvegarde, sur cet appareil et sur les autres appareils synchronisés avec lui : ce qui n’y est pas y est aussi supprimé. Vous pouvez annuler juste après."
           }
         }
       }
@@ -13816,7 +13936,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Votre cave devient exactement comme dans cette sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après."
+            "value": "Votre cave devient exactement comme dans cette sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après."
           }
         }
       }
@@ -13871,6 +13991,36 @@
         }
       }
     },
+    "Your cellar is kept on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est gardée sur cet appareil."
+          }
+        }
+      }
+    },
+    "Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est gardée sur vos appareils, avec une copie chiffrée dans le stockage choisi pour la synchronisation à distance."
+          }
+        }
+      }
+    },
+    "Your cellar is kept on your devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est gardée sur vos appareils."
+          }
+        }
+      }
+    },
     "Your cellar is now on both devices and stays in sync when they are on the same Wi-Fi.": {
       "localizations": {
         "fr": {
@@ -13887,36 +14037,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison."
-          }
-        }
-      }
-    },
-    "Your cellar is stored only on this device.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre cave est enregistrée uniquement sur cet appareil."
-          }
-        }
-      }
-    },
-    "Your cellar is stored only on your devices.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre cave est enregistrée uniquement sur vos appareils."
-          }
-        }
-      }
-    },
-    "Your cellar is stored only on your devices. There is no account, no tracking and no advertising.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité."
           }
         }
       }
@@ -13947,6 +14067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave ce mois-ci"
+          }
+        }
+      }
+    },
+    "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien."
           }
         }
       }
@@ -13987,6 +14117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre impression"
+          }
+        }
+      }
+    },
+    "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos dernières modifications n’ont pas pu être enregistrées : votre cave est affichée telle qu’elle a été enregistrée la dernière fois. Vérifiez l’espace libre de cet appareil."
           }
         }
       }
@@ -14036,7 +14176,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vos autres appareils qui ne se synchronisent pas encore à distance recevront ce réglage à leur prochaine synchronisation sur le même Wi-Fi. La désactiver, ou choisir un autre stockage, ne concerne que cet appareil : faites de même sur les autres."
+            "value": "Vos autres appareils qui ne se synchronisent pas encore à distance recevront ce réglage à leur prochaine synchronisation sur le même Wi-Fi. La désactiver, ou choisir un autre stockage, ne concerne que cet appareil : faites de même sur les autres."
           }
         }
       }
@@ -14086,7 +14226,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques."
+            "value": "Votre carnet de dégustation : les bouteilles ouvertes de votre cave et les vins goûtés ailleurs, avec vos notes, votre liste d’achats et vos statistiques."
           }
         }
       }
@@ -14191,8 +14331,30 @@
         }
       }
     },
-    "bottles": {
+    "bottles [one]": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille"
+          }
+        }
+      }
+    },
+    "bottles [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -14201,8 +14363,30 @@
         }
       }
     },
-    "bottles in the cellar": {
+    "bottles in the cellar [one]": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle in the cellar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille en cave"
+          }
+        }
+      }
+    },
+    "bottles in the cellar [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles in the cellar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -14211,8 +14395,30 @@
         }
       }
     },
-    "bottles opened": {
+    "bottles opened [one]": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle opened"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille ouverte"
+          }
+        }
+      }
+    },
+    "bottles opened [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles opened"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -14231,8 +14437,30 @@
         }
       }
     },
-    "different wines": {
+    "different wines [one]": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "different wine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin différent"
+          }
+        }
+      }
+    },
+    "different wines [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "different wines"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -14351,8 +14579,30 @@
         }
       }
     },
-    "tasted elsewhere": {
+    "tasted elsewhere [one]": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tasted elsewhere"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "goûté ailleurs"
+          }
+        }
+      }
+    },
+    "tasted elsewhere [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tasted elsewhere"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -14401,8 +14651,30 @@
         }
       }
     },
-    "wines": {
+    "wines [one]": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin"
+          }
+        }
+      }
+    },
+    "wines [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wines"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

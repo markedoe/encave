@@ -3,9 +3,10 @@
 Every string has its English and French text side by side, so a missing
 translation cannot slip through. Edit the table, then run:
 
-    python3 android/tools/strings.py
+    python3 android/tools/strings.py           # regenerate strings.xml
+    python3 android/tools/strings.py --check   # fail if strings.xml is not up to date
 """
-import sys, os
+import re, sys, os
 from xml.sax.saxutils import escape
 
 S = [
@@ -77,6 +78,10 @@ S = [
  ("maturity_past_peak", "Past its peak", "Après l’apogée"),
  ("maturity_young", "Keep for later", "À garder"),
  ("maturity_unknown", "No drinking window", "Pas de fenêtre de dégustation"),
+ ("maturity_short_drink_soon", "Drink soon", "À boire bientôt"),
+ ("maturity_short_ready", "Ready", "Prêt"),
+ ("maturity_short_past_peak", "Past peak", "Après l’apogée"),
+ ("maturity_short_keep", "Keep", "À garder"),
 
  ("detail_window", "Drinking window", "Fenêtre de dégustation"),
  ("detail_window_range", "%1$d – %2$d", "%1$d – %2$d"),
@@ -176,9 +181,10 @@ S = [
  ("drink_title", "Open a bottle", "Ouvrir une bouteille"),
  ("drink_which", "Which bottle?", "Quelle bouteille ?"),
  ("drink_rating", "Rating", "Note"),
- ("rating_star", "%1$d out of 5", "%1$d sur 5"),
  ("rating_value", "Rated %1$d out of 5", "Noté %1$d sur 5"),
  ("rating_none", "Not rated", "Non noté"),
+ ("rating_label", "Rating", "Note"),
+ ("rating_input_none", "No rating", "Sans note"),
  ("drink_note", "How was it?", "Comment était-il ?"),
  ("drink_full_note", "Add a full tasting note", "Ajouter une note de dégustation complète"),
  ("occasion_dinner", "Dinner", "Dîner"),
@@ -269,16 +275,11 @@ S = [
  ("tasting_title", "My tasting", "Ma dégustation"),
  ("tasting_not_found", "Tasting not found", "Dégustation introuvable"),
 
- ("insights_bottles", "Bottles", "Bouteilles"),
- ("cellar_stat_bottles", "bottles", "bouteilles"),
- ("cellar_stat_wines", "wines", "vins"),
  ("cellar_stat_soon", "to drink soon", "à boire bientôt"),
  ("cellar_stat_bottles_hint", "Shows your cellar in figures.", "Affiche votre cave en chiffres."),
  ("cellar_stat_wines_hint", "Shows all your wines.", "Affiche tous vos vins."),
  ("cellar_stat_soon_hint", "Shows only the wines to drink soon.", "N’affiche que les vins à boire bientôt."),
- ("insights_wines", "Wines", "Vins"),
- ("insights_opened", "Opened", "Ouvertes"),
- ("insights_avg_rating", "Average rating", "Note moyenne"),
+ ("insights_avg_rating", "average rating", "note moyenne"),
  ("insights_rating_value", "%1$s / 5", "%1$s / 5"),
  ("insights_value", "Cellar value", "Valeur de la cave"),
  ("insights_value_none", "No purchase prices recorded yet.", "Aucun prix d’achat enregistré."),
@@ -291,7 +292,6 @@ S = [
  ("insights_grapes", "Top grapes", "Cépages principaux"),
  ("insights_empty", "Add bottles to see insights.", "Ajoutez des bouteilles pour voir les statistiques."),
  ("insights_nv", "NV", "NM"),
- ("chart_item", "%1$s: %2$d", "%1$s : %2$d"),
 
  ("settings_cellar", "Cellar", "Cave"),
  ("settings_currency", "Default currency", "Devise par défaut"),
@@ -359,9 +359,10 @@ S = [
  ("settings_erase_body", "This erases every bottle, wine, rack and Journal entry on this device. Your settings (currency, saved searches) are kept.", "Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil. Vos réglages (devise, recherches enregistrées) sont conservés."),
  ("settings_erase_body_devices", "This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings (currency, saved searches) are kept.", "Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil et des autres appareils synchronisés avec lui. Vos réglages (devise, recherches enregistrées) sont conservés."),
  ("settings_privacy", "Privacy", "Confidentialité"),
- ("settings_privacy_stored", "Your cellar is stored only on this device.", "Votre cave est enregistrée uniquement sur cet appareil."),
- ('settings_privacy_body', 'No account, no tracking, no advertising. Devices sync directly on the same Wi-Fi, or away from home through a storage you choose, always encrypted from end to end: no server can read your cellar.', 'Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur le même Wi-Fi, ou loin de la maison via un stockage de votre choix, toujours chiffrés de bout en bout : aucun serveur ne peut lire votre cave.'),
- ("settings_privacy_stored_devices", "Your cellar is stored only on your devices.", "Votre cave est enregistrée uniquement sur vos appareils."),
+ ("settings_privacy_stored", 'Your cellar is kept on this device.', 'Votre cave est gardée sur cet appareil.'),
+ ("settings_privacy_body", 'No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.', 'Pas de compte, pas de mesure d’audience, pas de publicité. La synchronisation est chiffrée de bout en bout : sur le même Wi-Fi, vos appareils se connectent directement, et à distance le stockage que vous choisissez ne contient que des fichiers chiffrés. Si vous les activez, la reconnaissance des étiquettes par IA n’envoie que la photo de l’étiquette à votre service d’IA, et la recherche web que les termes de recherche à votre service de recherche.'),
+ ("settings_privacy_stored_devices", 'Your cellar is kept on your devices.', 'Votre cave est gardée sur vos appareils.'),
+ ("settings_privacy_stored_remote", 'Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.', 'Votre cave est gardée sur vos appareils, avec une copie chiffrée dans le stockage choisi pour la synchronisation à distance.'),
  ("settings_about", "About", "À propos"),
  ("settings_beta", "Beta", "Bêta"),
  ("settings_beta_note", 'Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.', 'Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps.'),
@@ -370,6 +371,12 @@ S = [
  ("settings_version", "Version", "Version"),
  ("settings_source", "Source code", "Code source"),
  ("settings_source_body", "github.com/markedoe/encave", "github.com/markedoe/encave"),
+ ("settings_privacy_policy", 'Privacy policy', 'Politique de confidentialité'),
+ ("settings_licences", 'Licences', 'Licences'),
+ ("licences_agpl_notice", 'Encave is free software: you can redistribute it and modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.', 'Encave est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la licence publique générale GNU Affero, version 3, publiée par la Free Software Foundation. Il est fourni SANS AUCUNE GARANTIE, dans la mesure permise par la loi.'),
+ ("licences_copyright", 'Copyright © 2026 the Encave contributors', 'Copyright © 2026 les contributeurs d’Encave'),
+ ("licences_libraries", 'Libraries', 'Bibliothèques'),
+ ("licences_libraries_body", 'Open-source libraries included in Encave, each under its own licence.', 'Bibliothèques open source incluses dans Encave, chacune sous sa propre licence.'),
  ("msg_exported", "Export saved", "Export enregistré"),
  ("msg_export_failed", "The export failed.", "L’export a échoué."),
  ("msg_imported", "Imported. Wines: %1$d, bottles: %2$d", "Importé. Vins : %1$d, bouteilles : %2$d"),
@@ -733,9 +740,9 @@ S = [
 
  ("help_privacy_title", "Privacy", "Confidentialité"),
  ("help_privacy_summary", "Your cellar stays yours.", "Votre cave reste la vôtre."),
- ("help_privacy_1", "Your cellar is stored only on your devices. There is no account, no tracking and no advertising.", "Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité."),
- ('help_privacy_2', 'Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them.', 'La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via un dossier WebDAV ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire.'),
- ('help_privacy_3', 'Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.', 'En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête.'),
+ ("help_privacy_1", 'Your cellar, its photos and documents are kept on your devices, in Encave’s private storage, which Android encrypts. They are left out of Google cloud backups and move to a new phone only with a direct transfer from the old one. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.', 'Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage privé d’Encave, qu’Android chiffre. Ils sont exclus des sauvegardes Google dans le cloud et ne passent sur un nouveau téléphone que par un transfert direct depuis l’ancien. Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien.'),
+ ("help_privacy_2", 'Sync between your devices is encrypted from end to end. On the same Wi-Fi, devices talk directly. Away from home, if you turn it on, a relay or WebDAV folder stores the changes as encrypted files it can never read; it sees when devices sync, how much they send and their IP addresses.', 'La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, les appareils communiquent directement. À distance, si vous l’activez, un relais ou un dossier WebDAV stocke les modifications sous forme de fichiers chiffrés qu’il ne peut jamais lire ; il voit quand les appareils se synchronisent, combien ils envoient et leurs adresses IP.'),
+ ("help_privacy_3", 'Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or tap Complete with AI; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.', 'En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou touchez Compléter avec l’IA ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande.'),
  ("help_privacy_4", "Encave is open source: anyone can check what the app does.", "Encave est open source : chacun peut vérifier ce que fait l’app."),
 
  ("settings_devices", "Devices", "Appareils"),
@@ -771,7 +778,7 @@ S = [
  ("devices_remote_webdav", "WebDAV folder", "Dossier WebDAV"),
  ("devices_webdav_sign_in", "Sign in to this WebDAV folder", "Se connecter à ce dossier WebDAV"),
  ("devices_e2e", "Encrypted from end to end", "Chiffré de bout en bout"),
- ("devices_e2e_body", "Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.", "Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient."),
+ ("devices_e2e_body", 'Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted from end to end. Away from home, if you turn it on, they sync through the storage you choose, which holds only encrypted files.', 'Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré de bout en bout. À distance, si vous l’activez, ils se synchronisent par le stockage que vous choisissez, qui ne contient que des fichiers chiffrés.'),
  ("devices_help", "Help with devices", "Aide sur les appareils"),
  ("devices_leave", "Stop syncing on this device", "Arrêter la synchronisation sur cet appareil"),
  ("devices_leave_footer", "The cellar stays on this device as it is. Your other devices are told and keep syncing together.", "La cave reste telle quelle sur cet appareil. Vos autres appareils en sont prévenus et continuent de se synchroniser entre eux."),
@@ -1000,9 +1007,6 @@ S = [
  ("insights_without_window", "Bottles without a drinking window are left out: %1$d", "Bouteilles sans fenêtre de dégustation non comptées : %1$d"),
  ("insights_year_title", "Your year in wine", "Votre année en vin"),
  ("insights_year_choose", "Choose the year", "Choisir l’année"),
- ("insights_year_opened", "bottles opened", "bouteilles ouvertes"),
- ("insights_year_wines", "different wines", "vins différents"),
- ("insights_year_elsewhere", "tasted elsewhere", "goûtés ailleurs"),
  ("insights_year_region", "Most opened region: %1$s", "Région la plus ouverte : %1$s"),
  ("insights_year_style", "Most opened style: %1$s", "Style le plus ouvert : %1$s"),
  ("insights_year_occasion", "Favorite occasion: %1$s", "Occasion préférée : %1$s"),
@@ -1348,6 +1352,7 @@ S = [
 ]
 
 P = [
+ ("licences_modules", ("%d module", "%d modules"), ("%d module", "%d modules")),
  ("msg_backup_saved_without", ("Backup saved, without %d photo or document: not on this device yet, or beyond the 4 GB a ZIP file holds.", "Backup saved, without %d photos or documents: not on this device yet, or beyond the 4 GB a ZIP file holds."), ("Sauvegarde enregistrée, sans %d photo ou document : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.", "Sauvegarde enregistrée, sans %d photos ou documents : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.")),
  ("bottle_count", ("%d bottle", "%d bottles"), ("%d bouteille", "%d bouteilles")),
  ("wine_count", ("%d wine", "%d wines"), ("%d vin", "%d vins")),
@@ -1373,7 +1378,35 @@ P = [
  ("sync_next_in", ("Next sync in about %d minute", "Next sync in about %d minutes"), ("Prochaine synchronisation dans environ %d minute", "Prochaine synchronisation dans environ %d minutes")),
  ("rack_displaced", ("%d bottle is in a place you removed", "%d bottles are in places you removed"), ("%d bouteille est dans un emplacement supprimé", "%d bouteilles sont dans des emplacements supprimés")),
  ("journal_rating_stars", ("%d star", "%d stars"), ("%d étoile", "%d étoiles")),
+ # Captions under a figure: the figure shows the number, the caption agrees with it.
+ ("stat_bottles", ("bottle", "bottles"), ("bouteille", "bouteilles")),
+ ("stat_wines", ("wine", "wines"), ("vin", "vins")),
+ ("stat_bottles_in_cellar", ("bottle in the cellar", "bottles in the cellar"), ("bouteille en cave", "bouteilles en cave")),
+ ("stat_different_wines", ("different wine", "different wines"), ("vin différent", "vins différents")),
+ ("stat_bottles_opened", ("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
+ ("stat_tasted_elsewhere", ("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
+ ("chart_item_bottles", ("%1$s: %2$d bottle", "%1$s: %2$d bottles"), ("%1$s : %2$d bouteille", "%1$s : %2$d bouteilles")),
 ]
+
+# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
+# so the mark never starts a line. URLs and format specifiers are left as they are.
+NARROW_NBSP, NBSP = "\u202f", "\u00a0"
+VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[sdf])")
+LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+
+
+def french(text):
+    parts = VERBATIM.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+    return "".join(parts)
+
+
+def plain_space_before_mark(text):
+    """The marks still preceded by a plain space, outside URLs and format specifiers."""
+    return [m.group(0) for i, part in enumerate(VERBATIM.split(text)) if i % 2 == 0
+            for m in re.finditer(r"\S{0,12} [?!;:]", part)]
+
 
 def esc(text):
     t = escape(text).replace("'", "\\'").replace('"', '\\"')
@@ -1381,31 +1414,59 @@ def esc(text):
         t = "\\" + t
     return t
 
-def write(path, lang):
+def text_for(row_text, lang):
+    return french(row_text) if lang == "fr" else row_text
+
+
+def render(lang):
     idx = 1 if lang == "en" else 2
-    keys = [k for k, *_ in S]
+    keys = [k for k, *_ in S] + [k for k, *_ in P]
     assert len(keys) == len(set(keys)), "duplicate keys"
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
              '<!-- Generated by android/tools/strings.py: edit the table there, not this file. -->',
-             '<resources>']
+             '<resources xmlns:tools="http://schemas.android.com/tools">']
     for row in S:
         attrs = ' translatable="false"' if row[0] == "app_name" and lang == "en" else ""
         if row[0] == "app_name" and lang == "fr":
             continue
-        lines.append(f'    <string name="{row[0]}"{attrs}>{esc(row[idx])}</string>')
+        lines.append(f'    <string name="{row[0]}"{attrs}>{esc(text_for(row[idx], lang))}</string>')
     for name, en, fr in P:
         one, other = en if lang == "en" else fr
-        lines.append(f'    <plurals name="{name}">')
-        lines.append(f'        <item quantity="one">{esc(one)}</item>')
+        # A caption under a figure has no number of its own: the figure is shown above it.
+        attrs = ' tools:ignore="ImpliedQuantity"' if "%" not in one else ""
+        lines.append(f'    <plurals name="{name}"{attrs}>')
+        lines.append(f'        <item quantity="one">{esc(text_for(one, lang))}</item>')
         if lang == "fr":
-            lines.append(f'        <item quantity="many">{esc(other)}</item>')
-        lines.append(f'        <item quantity="other">{esc(other)}</item>')
+            lines.append(f'        <item quantity="many">{esc(text_for(other, lang))}</item>')
+        lines.append(f'        <item quantity="other">{esc(text_for(other, lang))}</item>')
         lines.append('    </plurals>')
     lines.append('</resources>')
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    open(path, "w").write("\n".join(lines) + "\n")
+    return "\n".join(lines) + "\n"
 
-res = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "res")
-write(f"{res}/values/strings.xml", "en")
-write(f"{res}/values-fr/strings.xml", "fr")
+
+def check(res):
+    problems = []
+    for lang, folder in (("en", "values"), ("fr", "values-fr")):
+        path = f"{res}/{folder}/strings.xml"
+        if not os.path.exists(path) or open(path, encoding="utf-8").read() != render(lang):
+            problems.append(f"{folder}/strings.xml is not up to date: run python3 android/tools/strings.py")
+    # French typography: no plain space before ? ! ; or : in any written French text.
+    french_texts = [(row[0], text_for(row[2], "fr")) for row in S if row[0] != "app_name"]
+    french_texts += [(name, text_for(form, "fr")) for name, _, fr in P for form in fr]
+    for name, value in french_texts:
+        for found in plain_space_before_mark(value):
+            problems.append(f"plain space before a mark in French: {found!r} ({name})")
+    for problem in problems:
+        print(problem)
+    return 1 if problems else 0
+
+
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+res = args[0] if args else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "res")
+if "--check" in sys.argv:
+    sys.exit(check(res))
+for lang, folder in (("en", "values"), ("fr", "values-fr")):
+    path = f"{res}/{folder}/strings.xml"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w", encoding="utf-8").write(render(lang))
 print(len(S), "strings,", len(P), "plurals")

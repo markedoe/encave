@@ -48,6 +48,16 @@ python3 apple/tools/l10n.py --check   # fails if a string has no French (run in 
 Avoid building strings with `? "a" : "b"` inside `Text`: write two `Text`
 views so both strings are extracted and translated.
 
+### Licences and privacy manifest
+
+Settings › About › Licences lists the libraries in each app with their licence
+(see `licences/README.md`). After changing a dependency, run
+`python3 apple/tools/licences.py` or `python3 android/tools/licences.py`; CI
+fails with `--check` while the list is out of date. The Apple privacy manifest
+is `apple/Encave/Resources/PrivacyInfo.xcprivacy`: declare there any new
+required-reason API the code starts using (UserDefaults, file timestamps, disk
+space, system boot time, active keyboards).
+
 ### AI label recognition (optional)
 
 Off by default. In Settings, choose a cloud provider with your own API key
@@ -99,6 +109,45 @@ cd android
   `android/app/build/screens` (never commit them) and checks the layout:
   centered `action.*` buttons, equal side-by-side buttons, racks that fit.
 
+### Android release
+
+The release build is shrunk and obfuscated with R8 (keep rules in
+`android/app/proguard-rules.pro`) and must pass `:app:lintRelease`.
+
+- **Version:** `versionName` is read from `MARKETING_VERSION` in
+  `apple/project.yml`, so both apps share one version. `versionCode` comes from
+  the `BUILD_NUMBER` environment variable (1 when absent); CI sets it as
+  `apple.yml` does: `1000 + run number * 10 + attempt`.
+- **Signing:** only from the environment: `ENCAVE_KEYSTORE_PATH`,
+  `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS` and `ENCAVE_KEY_PASSWORD`.
+  Without all four the release is unsigned (never signed with the debug key).
+- **CI:** the `release` job of `android.yml` (pushes to `main` and manual runs)
+  runs `:app:lintRelease :app:bundleRelease` and uploads the bundle
+  (`encave-release-aab`) and the R8 mapping (`encave-release-mapping`, needed
+  to read crash stack traces). It signs when these repository secrets are set:
+  `ENCAVE_KEYSTORE_BASE64`, `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS` and
+  `ENCAVE_KEY_PASSWORD`. Nothing is uploaded to Google Play.
+
+Create the upload keystore once, outside the repository, and keep it and its
+passwords in a password manager (never commit it):
+
+```bash
+keytool -genkeypair -v -keystore encave-upload.jks -storetype PKCS12 \
+  -alias upload -keyalg RSA -keysize 4096 -validity 10000
+base64 -w0 encave-upload.jks   # value of ENCAVE_KEYSTORE_BASE64 (macOS: base64 -i encave-upload.jks)
+```
+
+With Play App Signing (the default for new apps), Google keeps the app signing
+key and this keystore is only the upload key: if it is lost, the upload key can
+be reset from the Play Console. Build a signed bundle locally with:
+
+```bash
+cd android
+BUILD_NUMBER=2 ENCAVE_KEYSTORE_PATH=path/to/encave-upload.jks ENCAVE_KEY_ALIAS=upload \
+  ENCAVE_KEYSTORE_PASSWORD=... ENCAVE_KEY_PASSWORD=... ./gradlew :app:lintRelease :app:bundleRelease
+# app/build/outputs/bundle/release/app-release.aab and app/build/outputs/mapping/release/mapping.txt
+```
+
 ## Sync
 
 The protocol is specified in [SYNC.md](SYNC.md); the Swift implementation is in
@@ -142,9 +191,9 @@ a container:
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
-| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone, iPad and Mac (artifact `screens`; on main, pull requests and manual runs only), builds both apps; on a push to main, uploads to TestFlight and gives the build to the external testers (a manual run on another branch uploads without giving it to them) |
+| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone, iPad and Mac (artifact `screens`; on main, pull requests and manual runs only), builds both apps and checks they bundle the privacy manifest; on a push to main, uploads to TestFlight and gives the build to the external testers (a manual run on another branch uploads without giving it to them) |
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
-| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`) |
+| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`) |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
 
 TestFlight uploads need these repository secrets: `APPLE_TEAM_ID`,

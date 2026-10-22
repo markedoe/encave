@@ -103,6 +103,13 @@ fun WineGroupRow(
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(listOf(style, origin).filter { it.isNotEmpty() }.joinToString(" · "), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (showMaturity && !isOrder && maturity != Maturity.Unknown) {
+                    // The symbol in the maturity color, the words in the text color.
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(maturity.icon, contentDescription = null, tint = maturity.tint, modifier = Modifier.size(16.dp))
+                        Text(stringResource(maturity.shortLabelRes), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
                 if (isOrder) {
                     ArrivalLabel(group.bottles.first().expectedAt)
                 } else {
@@ -116,19 +123,11 @@ fun WineGroupRow(
         },
         trailingContent = {
             val countDescription = pluralStringResource(R.plurals.bottle_count, group.count, group.count)
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(R.string.count_times, group.count),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { contentDescription = countDescription },
-                )
-                if (showMaturity && !isOrder && maturity != Maturity.Unknown) {
-                    Icon(
-                        maturity.icon, contentDescription = stringResource(maturity.labelRes),
-                        tint = maturity.tint, modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
+            Text(
+                stringResource(R.string.count_times, group.count),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { contentDescription = countDescription },
+            )
         },
     )
 }
