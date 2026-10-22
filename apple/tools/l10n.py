@@ -387,8 +387,6 @@ FR = {
     '**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place.': '**Exporter un tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement.',
     'Your year in wine': 'Votre année en vin',
     'Year': 'Année',
-    'bottles opened': 'bouteilles ouvertes',
-    'different wines': 'vins différents',
     'Most opened region: %@': 'Région la plus ouverte : %@',
     'Favorite occasion: %@': 'Occasion préférée : %@',
     'Busiest month: %@': 'Mois le plus actif : %@',
@@ -814,24 +812,21 @@ FR = {
     "Your data": "Vos données",
     "Zoom In": "Agrandir",
     "Zoom Out": "Réduire",
-    "%@ and %lld more": "%1$@ et %2$lld autres",
+    "%@ and %@": "%1$@ et %2$@",
+    "Rating": "Note",
+    "No rating": "Sans note",
     "%@, %@": "%1$@, %2$@",
     "%@, empty": "%@, vide",
     "%lld of %lld": "%1$lld sur %2$lld",
     "%lld of %lld chosen": "%1$lld sur %2$lld choisis",
     "%lld of %lld positions used": "%1$lld sur %2$lld emplacements occupés",
     "average rating": "note moyenne",
-    "bottles": "bouteilles",
-    "bottles in the cellar": "bouteilles en cave",
-    "bottles opened": "bouteilles ouvertes",
     "classic style for this dish": "style classique pour ce plat",
-    "different wines": "vins différents",
     "purchase value": "valeur d’achat",
     "ready to drink": "prêt à boire",
     "region known for it": "région réputée pour ça",
     "suited grape": "cépage adapté",
     "to drink soon": "à boire bientôt",
-    "wines": "vins",
     # AI label recognition, photos and serving
     "AI label recognition": "Reconnaissance des étiquettes par IA",
     "API key": "Clé d’API",
@@ -1208,7 +1203,6 @@ FR = {
     "From my cellar": "De ma cave",
     "Tasted elsewhere": "Goûté ailleurs",
     "Tasted elsewhere · %@": "Goûté ailleurs · %@",
-    "tasted elsewhere": "goûtés ailleurs",
     "Add a Tasting": "Noter une dégustation",
     "A Bottle from My Cellar": "Une bouteille de ma cave",
     "It leaves your cellar.": "Elle sort de votre cave.",
@@ -1433,6 +1427,7 @@ PLURALS = {
     "%lld new wines": (("%lld new wine", "%lld new wines"), ("%lld nouveau vin", "%lld nouveaux vins")),
     "%lld wines tasted elsewhere": (("%lld wine tasted elsewhere", "%lld wines tasted elsewhere"), ("%lld vin goûté ailleurs", "%lld vins goûtés ailleurs")),
     "%lld wines": (("%lld wine", "%lld wines"), ("%lld vin", "%lld vins")),
+    "%lld more": (("%lld more", "%lld more"), ("%lld autre", "%lld autres")),
     "Only %lld free positions: the other bottles will have no position.": (
         ("Only %lld free position: the other bottles will have no position.",
          "Only %lld free positions: the other bottles will have no position."),
@@ -1459,6 +1454,19 @@ PLURALS = {
          '%lld photos or documents were left out: a ZIP file holds at most 4 GB. The cellar itself is complete.'),
         ('%lld photo ou document n’y est pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète.',
          '%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète.')),
+}
+
+# Captions shown under a figure ("12" above "bottles"): the noun without the number, which
+# the figure already shows. Xcode needs the number in a plural variation, so each caption is
+# two strings, "<name> [one]" and "<name> [other]", that the app picks (StatTile.swift).
+CAPTIONS = {
+    "bottles": (("bottle", "bottles"), ("bouteille", "bouteilles")),
+    "wines": (("wine", "wines"), ("vin", "vins")),
+    "bottles in the cellar": (("bottle in the cellar", "bottles in the cellar"),
+                              ("bouteille en cave", "bouteilles en cave")),
+    "different wines": (("different wine", "different wines"), ("vin différent", "vins différents")),
+    "bottles opened": (("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
+    "tasted elsewhere": (("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
 }
 
 INFO_PLIST = {
@@ -1495,6 +1503,26 @@ def unit(value):
     return {"stringUnit": {"state": "translated", "value": value}}
 
 
+# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
+# so the mark never starts a line. URLs and format specifiers are left as they are.
+NARROW_NBSP, NBSP = "\u202f", "\u00a0"
+VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?(?:lld|ld|d|@|lf|f|s))")
+LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+
+
+def french(text):
+    parts = VERBATIM.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+    return "".join(parts)
+
+
+def plain_space_before_mark(text):
+    """The marks still preceded by a plain space, outside URLs and format specifiers."""
+    return [m.group(0) for i, part in enumerate(VERBATIM.split(text)) if i % 2 == 0
+            for m in re.finditer(r"\S{0,12} [?!;:]", part)]
+
+
 def to_key(literal):
     """Swift interpolation → format key ("\\(count) bottles" → "%lld bottles")."""
     def repl(match):
@@ -1525,15 +1553,18 @@ def extract():
 
 def catalogs():
     """The catalog files, as written: {path: text}."""
-    strings = {key: {"localizations": {"fr": unit(value)}} for key, value in FR.items() if key.strip() == key}
+    strings = {key: {"localizations": {"fr": unit(french(value))}} for key, value in FR.items() if key.strip() == key}
+    for name, ((en_one, en_other), (fr_one, fr_other)) in CAPTIONS.items():
+        for form, en, fr in (("one", en_one, fr_one), ("other", en_other, fr_other)):
+            strings[f"{name} [{form}]"] = {"localizations": {"en": unit(en), "fr": unit(french(fr))}}
     for key, ((en_one, en_other), (fr_one, fr_other)) in PLURALS.items():
         strings[key] = {"localizations": {
             "en": {"variations": {"plural": {"one": unit(en_one), "other": unit(en_other)}}},
-            "fr": {"variations": {"plural": {"one": unit(fr_one), "other": unit(fr_other)}}},
+            "fr": {"variations": {"plural": {"one": unit(french(fr_one)), "other": unit(french(fr_other))}}},
         }}
     catalog = {"sourceLanguage": "en", "strings": dict(sorted(strings.items())), "version": "1.0"}
-    info = {key: {"localizations": {"en": unit(en), "fr": unit(fr)}} for key, (en, fr) in INFO_PLIST.items()}
-    shortcuts = {key: {"localizations": {"fr": unit(value)}} for key, value in APP_SHORTCUTS.items()}
+    info = {key: {"localizations": {"en": unit(en), "fr": unit(french(fr))}} for key, (en, fr) in INFO_PLIST.items()}
+    shortcuts = {key: {"localizations": {"fr": unit(french(value))}} for key, value in APP_SHORTCUTS.items()}
 
     def text(value):
         return json.dumps(value, indent=2, ensure_ascii=False) + "\n"
@@ -1573,10 +1604,26 @@ def check():
         for form in forms[0] + forms[1]:
             if placeholders(form) != placeholders(key):
                 problems.append(f"placeholders differ in a plural form: {key!r} -> {form!r}")
+    for name, forms in CAPTIONS.items():
+        if placeholders(name) or any(placeholders(form) for form in forms[0] + forms[1]):
+            problems.append(f"a caption holds no number: {name!r}")
+    # Captions used in the app ("caption: .count(\"bottles\", ...)") must be in CAPTIONS.
+    for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
+        for name in re.findall(r'\.count\("((?:[^"\\]|\\.)*)", ', Path(path).read_text()):
+            if name not in CAPTIONS:
+                problems.append(f"caption not in CAPTIONS: {name!r}")
     # Keys with spaces around them are dropped from the catalog: the text would stay in English.
     for key in FR:
         if key.strip() != key:
             problems.append(f"key with leading or trailing spaces is not written: {key!r}")
+    # French typography: no plain space before ? ! ; or : in any written French text.
+    for path, text in catalogs().items():
+        for key, entry in json.loads(text)["strings"].items():
+            fr = entry["localizations"].get("fr", {})
+            units = [fr] if "stringUnit" in fr else list(fr.get("variations", {}).get("plural", {}).values())
+            for value in (u["stringUnit"]["value"] for u in units):
+                for found in plain_space_before_mark(value):
+                    problems.append(f"{path.name}: plain space before a mark in French: {found!r} (key {key!r})")
     # The committed catalogs must be the ones this script writes.
     for path, text in catalogs().items():
         if not path.exists() or path.read_text() != text:

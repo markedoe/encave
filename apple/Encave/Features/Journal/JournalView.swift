@@ -83,7 +83,8 @@ struct JournalView: View {
                             DiaryEntryRow(entry: entry)
                         }
                     } header: {
-                        Text(month, format: .dateTime.month(.wide).year())
+                        // A heading on its own: "Octobre 2026" in French, not "octobre 2026".
+                        Text(month, format: Date.FormatStyle(capitalizationContext: .beginningOfSentence).month(.wide).year())
                     }
                 }
             }

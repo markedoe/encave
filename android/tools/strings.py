@@ -3,9 +3,10 @@
 Every string has its English and French text side by side, so a missing
 translation cannot slip through. Edit the table, then run:
 
-    python3 android/tools/strings.py
+    python3 android/tools/strings.py           # regenerate strings.xml
+    python3 android/tools/strings.py --check   # fail if strings.xml is not up to date
 """
-import sys, os
+import re, sys, os
 from xml.sax.saxutils import escape
 
 S = [
@@ -77,6 +78,10 @@ S = [
  ("maturity_past_peak", "Past its peak", "Après l’apogée"),
  ("maturity_young", "Keep for later", "À garder"),
  ("maturity_unknown", "No drinking window", "Pas de fenêtre de dégustation"),
+ ("maturity_short_drink_soon", "Drink soon", "À boire bientôt"),
+ ("maturity_short_ready", "Ready", "Prêt"),
+ ("maturity_short_past_peak", "Past peak", "Après l’apogée"),
+ ("maturity_short_keep", "Keep", "À garder"),
 
  ("detail_window", "Drinking window", "Fenêtre de dégustation"),
  ("detail_window_range", "%1$d – %2$d", "%1$d – %2$d"),
@@ -176,9 +181,10 @@ S = [
  ("drink_title", "Open a bottle", "Ouvrir une bouteille"),
  ("drink_which", "Which bottle?", "Quelle bouteille ?"),
  ("drink_rating", "Rating", "Note"),
- ("rating_star", "%1$d out of 5", "%1$d sur 5"),
  ("rating_value", "Rated %1$d out of 5", "Noté %1$d sur 5"),
  ("rating_none", "Not rated", "Non noté"),
+ ("rating_label", "Rating", "Note"),
+ ("rating_input_none", "No rating", "Sans note"),
  ("drink_note", "How was it?", "Comment était-il ?"),
  ("drink_full_note", "Add a full tasting note", "Ajouter une note de dégustation complète"),
  ("occasion_dinner", "Dinner", "Dîner"),
@@ -269,16 +275,11 @@ S = [
  ("tasting_title", "My tasting", "Ma dégustation"),
  ("tasting_not_found", "Tasting not found", "Dégustation introuvable"),
 
- ("insights_bottles", "Bottles", "Bouteilles"),
- ("cellar_stat_bottles", "bottles", "bouteilles"),
- ("cellar_stat_wines", "wines", "vins"),
  ("cellar_stat_soon", "to drink soon", "à boire bientôt"),
  ("cellar_stat_bottles_hint", "Shows your cellar in figures.", "Affiche votre cave en chiffres."),
  ("cellar_stat_wines_hint", "Shows all your wines.", "Affiche tous vos vins."),
  ("cellar_stat_soon_hint", "Shows only the wines to drink soon.", "N’affiche que les vins à boire bientôt."),
- ("insights_wines", "Wines", "Vins"),
- ("insights_opened", "Opened", "Ouvertes"),
- ("insights_avg_rating", "Average rating", "Note moyenne"),
+ ("insights_avg_rating", "average rating", "note moyenne"),
  ("insights_rating_value", "%1$s / 5", "%1$s / 5"),
  ("insights_value", "Cellar value", "Valeur de la cave"),
  ("insights_value_none", "No purchase prices recorded yet.", "Aucun prix d’achat enregistré."),
@@ -291,7 +292,6 @@ S = [
  ("insights_grapes", "Top grapes", "Cépages principaux"),
  ("insights_empty", "Add bottles to see insights.", "Ajoutez des bouteilles pour voir les statistiques."),
  ("insights_nv", "NV", "NM"),
- ("chart_item", "%1$s: %2$d", "%1$s : %2$d"),
 
  ("settings_cellar", "Cellar", "Cave"),
  ("settings_currency", "Default currency", "Devise par défaut"),
@@ -1007,9 +1007,6 @@ S = [
  ("insights_without_window", "Bottles without a drinking window are left out: %1$d", "Bouteilles sans fenêtre de dégustation non comptées : %1$d"),
  ("insights_year_title", "Your year in wine", "Votre année en vin"),
  ("insights_year_choose", "Choose the year", "Choisir l’année"),
- ("insights_year_opened", "bottles opened", "bouteilles ouvertes"),
- ("insights_year_wines", "different wines", "vins différents"),
- ("insights_year_elsewhere", "tasted elsewhere", "goûtés ailleurs"),
  ("insights_year_region", "Most opened region: %1$s", "Région la plus ouverte : %1$s"),
  ("insights_year_style", "Most opened style: %1$s", "Style le plus ouvert : %1$s"),
  ("insights_year_occasion", "Favorite occasion: %1$s", "Occasion préférée : %1$s"),
@@ -1385,7 +1382,35 @@ P = [
  ("sync_next_in", ("Next sync in about %d minute", "Next sync in about %d minutes"), ("Prochaine synchronisation dans environ %d minute", "Prochaine synchronisation dans environ %d minutes")),
  ("rack_displaced", ("%d bottle is in a place you removed", "%d bottles are in places you removed"), ("%d bouteille est dans un emplacement supprimé", "%d bouteilles sont dans des emplacements supprimés")),
  ("journal_rating_stars", ("%d star", "%d stars"), ("%d étoile", "%d étoiles")),
+ # Captions under a figure: the figure shows the number, the caption agrees with it.
+ ("stat_bottles", ("bottle", "bottles"), ("bouteille", "bouteilles")),
+ ("stat_wines", ("wine", "wines"), ("vin", "vins")),
+ ("stat_bottles_in_cellar", ("bottle in the cellar", "bottles in the cellar"), ("bouteille en cave", "bouteilles en cave")),
+ ("stat_different_wines", ("different wine", "different wines"), ("vin différent", "vins différents")),
+ ("stat_bottles_opened", ("bottle opened", "bottles opened"), ("bouteille ouverte", "bouteilles ouvertes")),
+ ("stat_tasted_elsewhere", ("tasted elsewhere", "tasted elsewhere"), ("goûté ailleurs", "goûtés ailleurs")),
+ ("chart_item_bottles", ("%1$s: %2$d bottle", "%1$s: %2$d bottles"), ("%1$s : %2$d bouteille", "%1$s : %2$d bouteilles")),
 ]
+
+# French typography: a narrow no-break space before ? ! ; and a no-break space before :,
+# so the mark never starts a line. URLs and format specifiers are left as they are.
+NARROW_NBSP, NBSP = "\u202f", "\u00a0"
+VERBATIM = re.compile(r"(https?://\S+|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[sdf])")
+LOOSE_FRENCH_MARK = re.compile(r"[ \u00a0\u202f]+([?!;:])")
+
+
+def french(text):
+    parts = VERBATIM.split(text)
+    for i in range(0, len(parts), 2):
+        parts[i] = LOOSE_FRENCH_MARK.sub(lambda m: (NBSP if m.group(1) == ":" else NARROW_NBSP) + m.group(1), parts[i])
+    return "".join(parts)
+
+
+def plain_space_before_mark(text):
+    """The marks still preceded by a plain space, outside URLs and format specifiers."""
+    return [m.group(0) for i, part in enumerate(VERBATIM.split(text)) if i % 2 == 0
+            for m in re.finditer(r"\S{0,12} [?!;:]", part)]
+
 
 def esc(text):
     t = escape(text).replace("'", "\\'").replace('"', '\\"')
@@ -1393,31 +1418,59 @@ def esc(text):
         t = "\\" + t
     return t
 
-def write(path, lang):
+def text_for(row_text, lang):
+    return french(row_text) if lang == "fr" else row_text
+
+
+def render(lang):
     idx = 1 if lang == "en" else 2
-    keys = [k for k, *_ in S]
+    keys = [k for k, *_ in S] + [k for k, *_ in P]
     assert len(keys) == len(set(keys)), "duplicate keys"
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
              '<!-- Generated by android/tools/strings.py: edit the table there, not this file. -->',
-             '<resources>']
+             '<resources xmlns:tools="http://schemas.android.com/tools">']
     for row in S:
         attrs = ' translatable="false"' if row[0] == "app_name" and lang == "en" else ""
         if row[0] == "app_name" and lang == "fr":
             continue
-        lines.append(f'    <string name="{row[0]}"{attrs}>{esc(row[idx])}</string>')
+        lines.append(f'    <string name="{row[0]}"{attrs}>{esc(text_for(row[idx], lang))}</string>')
     for name, en, fr in P:
         one, other = en if lang == "en" else fr
-        lines.append(f'    <plurals name="{name}">')
-        lines.append(f'        <item quantity="one">{esc(one)}</item>')
+        # A caption under a figure has no number of its own: the figure is shown above it.
+        attrs = ' tools:ignore="ImpliedQuantity"' if "%" not in one else ""
+        lines.append(f'    <plurals name="{name}"{attrs}>')
+        lines.append(f'        <item quantity="one">{esc(text_for(one, lang))}</item>')
         if lang == "fr":
-            lines.append(f'        <item quantity="many">{esc(other)}</item>')
-        lines.append(f'        <item quantity="other">{esc(other)}</item>')
+            lines.append(f'        <item quantity="many">{esc(text_for(other, lang))}</item>')
+        lines.append(f'        <item quantity="other">{esc(text_for(other, lang))}</item>')
         lines.append('    </plurals>')
     lines.append('</resources>')
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    open(path, "w").write("\n".join(lines) + "\n")
+    return "\n".join(lines) + "\n"
 
-res = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "res")
-write(f"{res}/values/strings.xml", "en")
-write(f"{res}/values-fr/strings.xml", "fr")
+
+def check(res):
+    problems = []
+    for lang, folder in (("en", "values"), ("fr", "values-fr")):
+        path = f"{res}/{folder}/strings.xml"
+        if not os.path.exists(path) or open(path, encoding="utf-8").read() != render(lang):
+            problems.append(f"{folder}/strings.xml is not up to date: run python3 android/tools/strings.py")
+    # French typography: no plain space before ? ! ; or : in any written French text.
+    french_texts = [(row[0], text_for(row[2], "fr")) for row in S if row[0] != "app_name"]
+    french_texts += [(name, text_for(form, "fr")) for name, _, fr in P for form in fr]
+    for name, value in french_texts:
+        for found in plain_space_before_mark(value):
+            problems.append(f"plain space before a mark in French: {found!r} ({name})")
+    for problem in problems:
+        print(problem)
+    return 1 if problems else 0
+
+
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+res = args[0] if args else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "res")
+if "--check" in sys.argv:
+    sys.exit(check(res))
+for lang, folder in (("en", "values"), ("fr", "values-fr")):
+    path = f"{res}/{folder}/strings.xml"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w", encoding="utf-8").write(render(lang))
 print(len(S), "strings,", len(P), "plurals")
