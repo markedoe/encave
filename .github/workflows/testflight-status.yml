@@ -66,7 +66,7 @@ jobs:
                     f"feedback email {'set' if la.get('feedbackEmail') else 'MISSING'}")
 
           print("\n## Latest builds\n")
-          print("| Build | Platform | Uploaded | Processing | External state | Beta App Review | External groups |")
+          print("| Build | Platform | Uploaded (Apple time zone) | Processing | External state | Beta App Review | External groups |")
           print("|---|---|---|---|---|---|---|")
           response = safe("GET", "/builds", query={
               "filter[app]": app_id, "sort": "-uploadedDate", "limit": 12,
@@ -81,7 +81,7 @@ jobs:
               beta = rel(build, "buildBetaDetail")
               review = rel(build, "betaAppReviewSubmission")
               print(f"| {version.get('version', '?')} ({a['version']}) | {version.get('platform', '?')} "
-                    f"| {a.get('uploadedDate', '')[:16]} | {a.get('processingState')} "
+                    f"| {a.get('uploadedDate', '')} | {a.get('processingState')} "
                     f"| {beta.get('externalBuildState', '-')} | {review.get('betaReviewState', '-')} "
                     f"| {', '.join(in_group.get(build['id'], [])) or '-'} |")
           EOF
