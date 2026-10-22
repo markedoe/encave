@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
@@ -132,8 +131,6 @@ import app.encave.ui.components.sampleLabels
 import app.encave.ui.drink.DrinkSheet
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
-import app.encave.ui.navigation.EditWineRoute
-import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.SettingsRoute
 import app.encave.ui.theme.Dimens
 import kotlinx.coroutines.launch
@@ -208,7 +205,6 @@ private fun CellarList(
     val listState = rememberLazyListState()
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
     var drinking by remember { mutableStateOf<WineGroup?>(null) }
-    var deleting by remember { mutableStateOf<WineGroup?>(null) }
     val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
     val isEmpty = cellar.bottlesInCellar.isEmpty() && cellar.bottlesOnOrder.isEmpty()
     val orders = remember(cellar) { cellar.orderGroups() }
@@ -405,15 +401,11 @@ private fun CellarList(
                             CellarRow(
                                 group = group,
                                 cellar = cellar,
-                                year = viewModel.year,
+                                viewModel = viewModel,
+                                navigator = navigator,
                                 selected = group.id.toString() == selectedId,
                                 onOpen = { onOpen(group.id.toString()) },
                                 onDrink = { drinking = group },
-                                onShowInRack = group.bottles.firstOrNull { it.slot != null }?.let { bottle ->
-                                    { navigator.open(RackDetailRoute(bottle.slot!!.rackId.toString(), bottle.id.toString())) }
-                                },
-                                onEdit = { navigator.open(EditWineRoute(group.id.toString())) },
-                                onDelete = { deleting = group },
                                 onSelect = {
                                     selecting = true
                                     picked = setOf(group.id)
@@ -460,15 +452,6 @@ private fun CellarList(
             confirm = stringResource(R.string.action_delete_wines),
             onConfirm = { viewModel.deleteWines(shownPicked); endSelection() },
             onDismiss = { confirmBulkDelete = false },
-        )
-    }
-    deleting?.let { group ->
-        ConfirmDialog(
-            title = stringResource(R.string.confirm_delete_wine_title),
-            body = stringResource(R.string.confirm_delete_wine_body, group.wine.displayName),
-            confirm = stringResource(R.string.action_delete),
-            onConfirm = { viewModel.deleteWine(group.id) },
-            onDismiss = { deleting = null },
         )
     }
 }
@@ -779,33 +762,27 @@ private fun SaveSearchDialog(initial: String, onSave: (String) -> Unit, onDismis
     )
 }
 
-/** Swipe right to drink; long press (or TalkBack actions) for the other actions. */
+/** Swipe right to drink; long press (or TalkBack actions) for the other actions (see [WineMenuBox]). */
 @Composable
 private fun CellarRow(
     group: WineGroup,
     cellar: Cellar,
-    year: Int,
+    viewModel: AppViewModel,
+    navigator: AppNavigator,
     selected: Boolean,
     onOpen: () -> Unit,
     onDrink: () -> Unit,
-    onShowInRack: (() -> Unit)?,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var menu by remember { mutableStateOf(false) }
     val drinkLabel = stringResource(R.string.action_drink)
-    val rackLabel = stringResource(R.string.action_show_in_rack)
-    val editLabel = stringResource(R.string.action_edit)
-    val deleteLabel = stringResource(R.string.action_delete)
     val swipe = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.StartToEnd) onDrink()
             false // The row snaps back; the drink sheet takes over.
         },
     )
-    Box(modifier) {
+    WineMenuBox(group, cellar, viewModel, navigator, onDrink = onDrink, modifier = modifier, onSelect = onSelect) { rowModifier, openMenu ->
         SwipeToDismissBox(
             state = swipe,
             enableDismissFromEndToStart = false,
@@ -821,40 +798,8 @@ private fun CellarRow(
             },
         ) {
             WineGroupRow(
-                group = group, cellar = cellar, year = year, selected = selected,
-                onClick = onOpen, onLongClick = { menu = true },
-                modifier = Modifier.semantics {
-                    customActions = listOfNotNull(
-                        CustomAccessibilityAction(drinkLabel) { onDrink(); true },
-                        onShowInRack?.let { CustomAccessibilityAction(rackLabel) { it(); true } },
-                        CustomAccessibilityAction(editLabel) { onEdit(); true },
-                        CustomAccessibilityAction(deleteLabel) { onDelete(); true },
-                    )
-                },
-            )
-        }
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(
-                text = { Text(drinkLabel) }, onClick = { menu = false; onDrink() },
-                leadingIcon = { Icon(Icons.Outlined.LocalBar, contentDescription = null) },
-            )
-            if (onShowInRack != null) {
-                DropdownMenuItem(
-                    text = { Text(rackLabel) }, onClick = { menu = false; onShowInRack() },
-                    leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
-                )
-            }
-            DropdownMenuItem(
-                text = { Text(editLabel) }, onClick = { menu = false; onEdit() },
-                leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.action_select)) }, onClick = { menu = false; onSelect() },
-                leadingIcon = { Icon(Icons.Outlined.Checklist, contentDescription = null) },
-            )
-            DropdownMenuItem(
-                text = { Text(deleteLabel, color = MaterialTheme.colorScheme.error) }, onClick = { menu = false; onDelete() },
-                leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                group = group, cellar = cellar, year = viewModel.year, selected = selected,
+                onClick = onOpen, onLongClick = openMenu, modifier = rowModifier,
             )
         }
     }
