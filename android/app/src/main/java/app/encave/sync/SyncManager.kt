@@ -131,7 +131,7 @@ class SyncManager(
     }
 
     enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen, LocalNetworkUnavailable }
-    enum class RemoteProblem { Refused, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
+    enum class RemoteProblem { Refused, Forbidden, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
 
     val storage = SyncStorage(context)
     internal val appContext: Context get() = context
@@ -328,7 +328,7 @@ class SyncManager(
     /** Sync now (Devices): with the devices on the network, and away from home if it is set up. */
     fun syncEverywhereNow() {
         syncNow()
-        if (storage.remoteStorage != null) scope.launch { remoteRound() }
+        if (storage.remoteStorage != null) scope.launch { remoteRound(userAsked = true) }
     }
 
     /**
@@ -338,7 +338,7 @@ class SyncManager(
      */
     suspend fun syncEverywhere(local: Boolean = true) {
         coroutineScope {
-            val remote = if (storage.remoteStorage != null) async { remoteRound() } else null
+            val remote = if (storage.remoteStorage != null) async { remoteRound(userAsked = true) } else null
             if (local) withTimeoutOrNull(EVERYWHERE_TIMEOUT_MS) { startSessions().joinAll() }
             remote?.await()
         }
@@ -369,6 +369,8 @@ class SyncManager(
 
     /** First device of a cellar: creates the list of devices with this one. */
     suspend fun setUpIfNeeded() {
+        // Before the cellar is first shared (no other device yet): the sample is never sent.
+        if (otherDevices.isEmpty()) removeSampleUnshared()
         if (isSetUp) return
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
@@ -518,10 +520,7 @@ class SyncManager(
         // that fails loses nothing); meanwhile only what changes here is sent.
         runCatching { storage.pendingReplace = replace }
         // Combining: the sample cellar is removed first, never sent to the other devices.
-        if (!replace) {
-            val withoutSample = repository.read { if (it.containsSample) it.removingSample() else null }
-            if (withoutSample != null) repository.replace(withoutSample)
-        }
+        if (!replace) removeSampleUnshared()
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
             replacing = replace
@@ -533,6 +532,21 @@ class SyncManager(
         }
         status.update { it.copy(membership = membership, wasRemoved = false, problem = null) }
         save()
+    }
+
+    /**
+     * Removes the sample cellar without recording it as a change: its records have the same
+     * IDs on every device, so a deletion sent would remove another device's sample too.
+     * Throws [SampleNotRemovedException] if it could not be saved: nothing is shared then.
+     */
+    private suspend fun removeSampleUnshared() {
+        if (isDemo || !repository.read { it.containsSample }) return
+        var removed: Pair<Cellar, Cellar>? = null
+        repository.applySynced(
+            { current -> if (current.containsSample) current.removingSample().also { removed = current to it } else current },
+            onSaved = { removed?.let { (old, new) -> synchronized(this) { syncState = syncState?.forgetting(old, new) } } },
+        ).getOrElse { throw SampleNotRemovedException(it) }
+        if (removed != null) save()
     }
 
     /** Adds the device that just joined. */
@@ -954,10 +968,15 @@ class SyncManager(
         if (storage.remoteKey == null && membership != null) {
             // Maybe another device already turned it on and left a key for this one.
             val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, null) }.getOrNull()
-            key = grant?.cellarKey ?: CellarKey.random(membership.cellarId).also {
-                RemoteSync.grant(it, membership.active, store, identity, storageString)
+            key = grant?.cellarKey ?: run {
+                // Kept until every device has it: a retry after a failure gives the same key.
+                val first = firstKey?.takeIf { it.cellarId == membership.cellarId } ?: CellarKey.random(membership.cellarId)
+                firstKey = first
+                RemoteSync.grant(first, membership.active, store, identity, storageString)
+                first
             }
         }
+        firstKey = null
         if (login != null) storage.webDavLogin = login
         storage.remoteTurnedOff = false
         storage.remoteStorage = storageString
@@ -1036,6 +1055,18 @@ class SyncManager(
         }
     }
 
+    /** See [SyncStorage.firstKey]; also kept here for when the Keystore cannot keep it. */
+    @Volatile private var firstKeyHere: CellarKey? = null
+    private var firstKey: CellarKey?
+        get() = storage.firstKey ?: firstKeyHere
+        set(value) {
+            firstKeyHere = value
+            storage.firstKey = value
+        }
+
+    /** Tests: the store to use instead of the one for the storage (tests have no Keystore for a login). */
+    @Volatile internal var storeForTests: ((String) -> MailboxStore?)? = null
+
     /** The store for a storage string; null for a WebDAV folder without a login on this device. */
     private fun storeFor(storageString: String): MailboxStore? {
         if (!storageString.startsWith(WEBDAV_PREFIX)) return RelayMailboxStore(storageString)
@@ -1045,20 +1076,23 @@ class SyncManager(
     }
 
     private fun needsSignIn(storageString: String?): Boolean =
-        storageString != null && storageString.startsWith(WEBDAV_PREFIX) && storage.webDavLogin?.folder != storageString.removePrefix(WEBDAV_PREFIX)
+        storageString != null && storageString.startsWith(WEBDAV_PREFIX) &&
+            (storage.webDavLoginRefused || storage.webDavLogin?.folder != storageString.removePrefix(WEBDAV_PREFIX))
 
     /**
      * One round through the relay or WebDAV folder, off the main thread. Also run by
-     * [RemoteSyncWorker] in the background.
+     * [RemoteSyncWorker] in the background. [userAsked]: Sync now. A refused WebDAV login is
+     * tried again only then (or after a new login), never by an automatic round.
      */
-    suspend fun remoteRound() {
+    suspend fun remoteRound(userAsked: Boolean = false) {
         awaitStarted()
-        withContext(Dispatchers.Default) { runRemoteRound() }
+        withContext(Dispatchers.Default) { runRemoteRound(userAsked) }
     }
 
-    private suspend fun runRemoteRound() {
+    private suspend fun runRemoteRound(userAsked: Boolean) {
         val url = storage.remoteStorage ?: return
-        val store = storeFor(url)
+        if (url.startsWith(WEBDAV_PREFIX) && !RemoteSync.mayRun(userAsked, storage.webDavLoginRefused)) return
+        val store = storeForTests?.invoke(url) ?: storeFor(url)
         if (store == null) {
             status.update { it.copy(needsWebDavSignIn = true) }
             return
@@ -1080,8 +1114,14 @@ class SyncManager(
                 rotateIfNeeded(store, key, local, url)
             } catch (error: CancellationException) {
                 throw error
-            } catch (_: Exception) {
-                remoteFailed(RemoteProblem.RemovalPending)
+            } catch (error: Exception) {
+                remoteFailed(
+                    when ((error as? RemoteSyncException)?.error) {
+                        RemoteSyncError.Unauthorized -> RemoteProblem.Refused
+                        RemoteSyncError.Forbidden -> RemoteProblem.Forbidden
+                        else -> RemoteProblem.RemovalPending
+                    },
+                )
                 return
             }
             val current = synchronized(this) { progress }
@@ -1120,6 +1160,7 @@ class SyncManager(
             runCatching {
                 storage.lastRemoteSync = now
                 if (sent) storage.unsentChanges = false
+                storage.webDavLoginRefused = false
             }
             status.update {
                 // The cellar synced; files the storage refused stay on this device for now.
@@ -1141,6 +1182,7 @@ class SyncManager(
         } catch (error: RemoteSyncException) {
             val problem = when (error.error) {
                 RemoteSyncError.Unauthorized -> RemoteProblem.Refused
+                RemoteSyncError.Forbidden -> RemoteProblem.Forbidden
                 RemoteSyncError.QuotaExceeded -> RemoteProblem.Full
                 RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
@@ -1161,6 +1203,7 @@ class SyncManager(
         // A WebDAV server that refuses the login (a changed password): sync needs the user at
         // once (sign in again) rather than failing for an hour first.
         val loginRefused = problem == RemoteProblem.Refused && storage.remoteStorage?.startsWith(WEBDAV_PREFIX) == true
+        if (loginRefused) runCatching { storage.webDavLoginRefused = true }
         status.update {
             it.copy(
                 remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now,
@@ -1225,3 +1268,6 @@ class SyncManager(
         const val REMOTE_DELAY_MS = 3_000L
     }
 }
+
+/** The sample cellar could not be removed before sharing the cellar: nothing was shared. */
+class SampleNotRemovedException(cause: Throwable) : Exception(cause)

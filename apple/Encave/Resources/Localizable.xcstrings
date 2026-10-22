@@ -13061,6 +13061,16 @@
         }
       }
     },
+    "The server refused access to this folder. Check that this account may read and write it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur a refusé l’accès à ce dossier. Vérifiez que ce compte peut y lire et y écrire."
+          }
+        }
+      }
+    },
     "The server refused this username or password. With two-step verification, use an app password.": {
       "localizations": {
         "fr": {
@@ -13241,12 +13251,12 @@
         }
       }
     },
-    "This backup is damaged: it could not be read in full.": {
+    "This backup is damaged or incomplete.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette sauvegarde est endommagée : elle n’a pas pu être lue en entier."
+            "value": "Cette sauvegarde est abîmée ou incomplète."
           }
         }
       }

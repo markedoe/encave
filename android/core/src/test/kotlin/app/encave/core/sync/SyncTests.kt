@@ -7,9 +7,13 @@ import app.encave.core.Slot
 import app.encave.core.Tasting
 import app.encave.core.Wine
 import app.encave.core.RestoreMode
+import app.encave.core.SampleData
+import app.encave.core.containsSample
+import app.encave.core.removingSample
 import app.encave.core.restoring
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -71,6 +75,46 @@ class SyncTests {
     }
 
     private fun Cellar.note(id: UUID, notes: String) = updateWine(wines.getValue(id).copy(notes = notes))
+
+    @Test
+    fun theSampleRemovedBeforeSharingIsNotDeletedElsewhere() {
+        val sample = SampleData.cellar(year = 2026)
+        val host = Device(sample)
+        host.edit { it.addBottles(Wine(name = "Mine"), 1) }
+        // Removed before the cellar is first shared: not recorded, its stamps forgotten.
+        val before = host.cellar.copy()
+        host.cellar = before.removingSample()
+        host.state = host.state.forgetting(before, host.cellar)
+        val other = Device(sample)
+        syncBoth(host, other)
+        // No deletion of the sample was sent: the other device keeps its own.
+        assertTrue(other.cellar.containsSample)
+        assertTrue(other.cellar.wines.values.any { it.name == "Mine" })
+    }
+
+    @Test
+    fun aRecordedSampleRemovalWouldDeleteItElsewhere() {
+        // What the fix avoids: the sample has the same IDs on every device.
+        val sample = SampleData.cellar(year = 2026)
+        val host = Device(sample)
+        host.edit { it.addBottles(Wine(name = "Mine"), 1) }
+        host.replace(host.cellar.removingSample())
+        val other = Device(sample)
+        syncBoth(host, other)
+        assertFalse(other.cellar.containsSample)
+    }
+
+    @Test
+    fun forgettingDropsOnlyTheRemovedRecords() {
+        val (cellar, wine, rack) = sample()
+        val state = SyncState.starting(cellar, UUID.randomUUID())
+        val without = cellar.copy().also { it.deleteWine(wine.id) }
+        val forgotten = state.forgetting(cellar, without)
+        assertNull(forgotten.stamps[SyncKey.of(SyncKey.Kind.Wine, wine.id)])
+        assertTrue(cellar.bottles.keys.none { forgotten.stamps.containsKey(SyncKey.of(SyncKey.Kind.Bottle, it)) })
+        assertEquals(state.stamps[SyncKey.of(SyncKey.Kind.Rack, rack.id)], forgotten.stamps[SyncKey.of(SyncKey.Kind.Rack, rack.id)])
+        assertEquals(state.clock, forgotten.clock)
+    }
 
     @Test
     fun joiningDeviceGetsTheWholeCellar() {

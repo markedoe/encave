@@ -10,7 +10,7 @@ public enum ZipError: Error, Equatable, Sendable {
     case notAZip
     /// Compressed, encrypted, split or ZIP64: not an archive Encave writes.
     case unsupported
-    /// An entry's content does not match its CRC-32.
+    /// An entry's content does not match its CRC-32, or the archive is cut short.
     case corrupt
     /// Over 4 GB, 65,535 entries, or an entry over the size asked for.
     case tooLarge
@@ -267,7 +267,14 @@ public final class ZipReader {
         try handle.seek(toOffset: fileSize - tailSize)
         guard let tail = try handle.read(upToCount: Int(tailSize)), tail.count == Int(tailSize) else { throw ZipError.notAZip }
         guard let endIndex = stride(from: tail.count - 22, through: 0, by: -1).first(where: { tail.uint32(at: $0) == 0x0605_4B50 })
-        else { throw ZipError.notAZip }
+        else {
+            // A ZIP file (it starts with an entry) without its end record was cut short.
+            try handle.seek(toOffset: 0)
+            if let start = try handle.read(upToCount: 4), start.count == 4, start.uint32(at: 0) == 0x0403_4B50 {
+                throw ZipError.corrupt
+            }
+            throw ZipError.notAZip
+        }
         let disk = tail.uint16(at: endIndex + 4), directoryDisk = tail.uint16(at: endIndex + 6)
         let onDisk = tail.uint16(at: endIndex + 8), total = tail.uint16(at: endIndex + 10)
         let directorySize = UInt64(tail.uint32(at: endIndex + 12)), directoryOffset = UInt64(tail.uint32(at: endIndex + 16))

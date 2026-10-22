@@ -203,7 +203,7 @@
     <string name="err_not_backup">This file is not an Encave backup.</string>
     <string name="err_newer_version">This backup was made by a newer version of Encave. Update Encave on this device, then import it again.</string>
     <string name="err_unsupported_archive">This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.</string>
-    <string name="err_damaged_archive">This backup is damaged: it could not be read in full.</string>
+    <string name="err_damaged_archive">This backup is damaged or incomplete.</string>
     <string name="err_empty_file">The file is empty.</string>
     <string name="err_missing_name">The CSV file needs a “name” column.</string>
     <string name="racks_empty_title">No racks yet</string>
@@ -825,6 +825,7 @@
     <string name="remote_hide_password">Hide password</string>
     <string name="remote_webdav_footer">Storage you already have, for every device. Only encrypted files are stored in this folder. Use an app password if the server offers one; it stays on this device, encrypted with the Android Keystore. For example: the WebDAV address of a Synology or QNAP NAS, https://…/remote.php/dav/files/username/Encave for Nextcloud, https://webdav.pcloud.com/Encave for pCloud.</string>
     <string name="remote_webdav_invalid">Use an https:// address (http only on the local network).</string>
+    <string name="remote_webdav_forbidden">The server refused access to this folder. Check that this account may read and write it.</string>
     <string name="remote_webdav_refused">The server refused this username or password. With two-step verification, use an app password.</string>
     <string name="remote_webdav_not_webdav">This address does not answer as a WebDAV folder. Check the address and that the server has WebDAV turned on.</string>
     <string name="remote_webdav_full">The WebDAV folder is full. Free some space on the server.</string>
@@ -884,6 +885,7 @@
     <string name="pair_failed_version">The other device runs a different version of Encave. Update both devices.</string>
     <string name="pair_failed_connection">The connection was lost. Try again with a new code.</string>
     <string name="pair_failed_listen">This device could not wait for the other one on the network.</string>
+    <string name="pair_failed_sample">The sample cellar could not be removed from this device, so nothing was shared. Check the free space on this device, then try again.</string>
     <string name="pair_not_synced_body">The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.</string>
     <string name="pair_done_body_remote">Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.</string>
     <string name="join_replace_confirm_body">This device will show only the other device’s cellar.</string>

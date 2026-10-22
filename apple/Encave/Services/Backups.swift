@@ -178,7 +178,10 @@ final class BackupCenter {
         let result: URL? = await withTaskCancellationHandler {
             await Task.detached(priority: .utility) { () -> URL? in
                 do {
-                    let temporary = try Self.newTemporaryFolder().appendingPathComponent(name)
+                    let work = try Self.newTemporaryFolder()
+                    // Its own folder goes in any case: a failed or cancelled archive is never left there.
+                    defer { try? FileManager.default.removeItem(at: work) }
+                    let temporary = work.appendingPathComponent(name)
                     try CellarArchive.write(cellar, exportedAt: now, to: temporary, fileURL: Self.fileURL,
                                             isCancelled: { cancelled.isSet })
                     let target = folder.appendingPathComponent(name)

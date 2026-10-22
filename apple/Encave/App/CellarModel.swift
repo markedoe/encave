@@ -49,6 +49,8 @@ final class CellarModel {
     private var syncVersion = 0
     /// Told about every local change (old and new cellar), to record it for sync.
     @ObservationIgnored var onLocalChange: ((Cellar, Cellar) -> Void)?
+    /// Told when a failed write took the cellar back (shown, then saved), to record it again.
+    @ObservationIgnored var onSaveReverted: ((Cellar, Cellar) -> Void)?
 
     /// The cellar file could not be read at launch: where it was kept (see `unreadableFiles`).
     @ObservationIgnored private(set) var unreadableFile: URL?
@@ -377,7 +379,10 @@ final class CellarModel {
     private func saveFailed(lastSaved: Cellar) -> Int {
         errorMessage = String(localized: "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.")
         if cellar != lastSaved {
+            let shown = cellar
             cellar = lastSaved
+            // Sync recorded the changes as they were made: it records them again as saved.
+            onSaveReverted?(shown, lastSaved)
             // Every banner's Undo was about changes now gone.
             toast?.undo?.cancel()
             toast = nil

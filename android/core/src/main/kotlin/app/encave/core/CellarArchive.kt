@@ -248,15 +248,21 @@ object CellarArchive {
         class Extracted(val name: String, val file: File, val id: String)
         val extracted = mutableListOf<Extracted>()
         var skipped = 0
+        val tail = TailInputStream(input)
+        var count = 0
         try {
-            val zip = ZipInputStream(input)
-            var count = 0
+            val zip = ZipInputStream(tail)
             while (true) {
                 val entry = zip.nextEntry ?: break
                 if (++count > MAX_ENTRIES) throw ImportException(ImportError.DamagedArchive)
                 val name = entry.name
+                // Encave stores every entry: a compressed one could inflate to fill the disk,
+                // so it is never inflated (CaveKit refuses it too).
+                val compressed = entry.method != ZipEntry.STORED
                 when {
                     entry.isDirectory -> Unit
+                    (name == CELLAR || name == MANIFEST) && compressed -> throw ImportException(ImportError.UnsupportedArchive)
+                    compressed -> skipped++
                     name == CELLAR -> cellarText = readText(zip, MAX_CELLAR_BYTE_COUNT)
                     name == MANIFEST -> manifestText = runCatching { readText(zip, MAX_CELLAR_BYTE_COUNT) }.getOrNull()
                     name.startsWith(PHOTOS) || name.startsWith(DOCUMENTS) -> {
@@ -277,13 +283,17 @@ object CellarArchive {
                     }
                 }
             }
+            // What is left is the central directory: read to the end, which the archive must have.
+            if (count > 0) {
+                tail.drain()
+                if (!tail.endsWithEndRecord()) throw ImportException(ImportError.DamagedArchive)
+            }
         } catch (error: ImportException) {
             throw error
-        } catch (_: ZipException) {
-            // A damaged header, or an archive cut short.
-            if (cellarText == null) throw ImportException(ImportError.DamagedArchive)
         } catch (_: java.io.IOException) {
-            if (cellarText == null) throw ImportException(ImportError.DamagedArchive)
+            // A damaged header, or an archive cut short (ZipException is one too): never restored
+            // in part, without the photos it was missing.
+            throw ImportException(ImportError.DamagedArchive)
         }
         val backup = CellarExport.backupFromJson(cellarText ?: throw ImportException(ImportError.NotAnEncaveBackup))
 
@@ -327,6 +337,76 @@ object CellarArchive {
             out.write(buffer, 0, read)
         }
         return out.toString(Charsets.UTF_8)
+    }
+
+    /**
+     * Passes [input] through, keeping its last bytes: a ZIP file ends with its end record (22
+     * bytes and a comment of up to 65,535). A streaming reader stops at the central directory
+     * without telling whether the file was cut short; a file without its end record was.
+     */
+    private class TailInputStream(input: InputStream) : java.io.FilterInputStream(input) {
+        private val ring = ByteArray(22 + 0xFFFF)
+        private var total = 0L
+
+        private fun keep(bytes: ByteArray, offset: Int, length: Int) {
+            // Only the last ring.size bytes can matter.
+            val kept = minOf(length, ring.size)
+            var from = offset + length - kept
+            var at = ((total + length - kept) % ring.size).toInt()
+            var left = kept
+            while (left > 0) {
+                val run = minOf(left, ring.size - at)
+                System.arraycopy(bytes, from, ring, at, run)
+                from += run
+                left -= run
+                at = (at + run) % ring.size
+            }
+            total += length
+        }
+
+        override fun read(): Int {
+            val byte = super.read()
+            if (byte >= 0) keep(byteArrayOf(byte.toByte()), 0, 1)
+            return byte
+        }
+
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            val read = super.read(b, off, len)
+            if (read > 0) keep(b, off, read)
+            return read
+        }
+
+        override fun skip(n: Long): Long {
+            val buffer = ByteArray(CHUNK)
+            var skipped = 0L
+            while (skipped < n) {
+                val read = read(buffer, 0, minOf(buffer.size.toLong(), n - skipped).toInt())
+                if (read < 0) break
+                skipped += read
+            }
+            return skipped
+        }
+
+        override fun markSupported() = false
+
+        fun drain() {
+            val buffer = ByteArray(CHUNK)
+            while (read(buffer, 0, buffer.size) >= 0) Unit
+        }
+
+        /** Whether the bytes read end with an end record whose comment runs to the end. */
+        fun endsWithEndRecord(): Boolean {
+            val size = minOf(total, ring.size.toLong()).toInt()
+            val start = total - size
+            fun at(index: Int): Int = ring[((start + index) % ring.size).toInt()].toInt() and 0xFF
+            for (index in size - 22 downTo 0) {
+                if (at(index) == 0x50 && at(index + 1) == 0x4B && at(index + 2) == 0x05 && at(index + 3) == 0x06) {
+                    val comment = at(index + 20) or (at(index + 21) shl 8)
+                    if (index + 22 + comment == size) return true
+                }
+            }
+            return false
+        }
     }
 
     /** Copies an entry to [target], at most [MAX_FILE_BYTE_COUNT] bytes; its ID, or null if too large. */

@@ -39,6 +39,36 @@ enum WebSearchFixtures {
 
     // MARK: Query
 
+    @Test func redirectsStayOnTheSameHostAndNeverDropHTTPS() throws {
+        func allows(_ from: String, _ to: String) throws -> Bool {
+            SameHostRedirect.allows(from: try #require(URL(string: from)), to: try #require(URL(string: to)))
+        }
+        #expect(try allows("https://api.search.brave.com/res/v1/web/search?q=x", "https://api.search.brave.com/v2/search?q=x"))
+        #expect(try allows("https://Search.Example.com/a", "https://search.example.com:8443/b"))
+        // Another host, or HTTPS to HTTP: the terms would go elsewhere, or in clear text.
+        #expect(try !allows("https://api.search.brave.com/a", "https://tracker.example/a"))
+        #expect(try !allows("https://search.example.com/a", "https://search.example.com.evil.example/a"))
+        #expect(try !allows("https://search.example.com/a", "http://search.example.com/a"))
+        #expect(try !allows("https://192.168.1.10/a", "http://192.168.1.10/a")) // public-safety: allow
+        // A local HTTP server: to itself (HTTP or HTTPS), never to another host.
+        #expect(try allows("http://nas.local:8080/search", "http://nas.local:8080/searxng/search"))
+        #expect(try allows("http://192.168.1.10/search", "https://192.168.1.10/search")) // public-safety: allow
+        #expect(try !allows("http://nas.local/search", "http://192.168.1.11/search")) // public-safety: allow
+        #expect(try !allows("http://nas.local/search", "https://search.example.com/search"))
+        #expect(try !allows("https://search.example.com/a", "ftp://search.example.com/a"))
+    }
+
+    @Test func localAddressesAreParsedStrictly() {
+        #expect(LocalAddress.isLocal(host: "10.0.0.1")) // public-safety: allow
+        #expect(LocalAddress.isLocal(host: "192.168.0.1")) // public-safety: allow
+        // Leading zeros are octal for some resolvers: 010.0.0.1 can be 8.0.0.1, a public address.
+        #expect(!LocalAddress.isLocal(host: "010.0.0.1"))
+        #expect(!LocalAddress.isLocal(host: "192.168.01.1")) // public-safety: allow
+        #expect(!LocalAddress.isLocal(host: "+10.0.0.1")) // public-safety: allow
+        #expect(!LocalAddress.isLocal(host: "10.0.0.256")) // public-safety: allow
+        #expect(!LocalAddress.isLocal(host: "8.8.8.8"))
+    }
+
     @Test func queryHasProducerNameAppellationAndVintage() {
         let wine = Wine(name: "1er Cru Montmains", producer: "Domaine Example", vintage: 2019,
                         region: "Burgundy", country: "France", appellation: "Chablis", grapes: ["Chardonnay"],

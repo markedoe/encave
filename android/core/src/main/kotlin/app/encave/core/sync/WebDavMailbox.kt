@@ -65,7 +65,7 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
 
     /**
      * Sends a request. Statuses that say the same thing on every server become errors:
-     * 401/403 refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
+     * 401 login refused, 403 folder refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
      */
     internal suspend fun send(
         method: String,
@@ -86,7 +86,8 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
             throw RemoteSyncException(RemoteSyncError.Unavailable(error.message ?: "no connection"))
         }
         when (status) {
-            401, 403 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)
+            401 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)
+            403 -> throw RemoteSyncException(RemoteSyncError.Forbidden)
             413 -> throw RemoteSyncException(RemoteSyncError.FileTooLarge)
             507 -> throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
             in 300..399 -> throw RemoteSyncException(RemoteSyncError.Unavailable("redirected ($status): use the final address"))
@@ -368,7 +369,10 @@ object LocalAddress {
     fun isLocal(host: String): Boolean {
         val name = host.lowercase().removePrefix("[").removeSuffix("]")
         if (name == "localhost" || name.endsWith(".local") || name.endsWith(".home.arpa")) return true
-        val octets = name.split(".").map { it.toIntOrNull()?.takeIf { value -> value in 0..255 && it.length <= 3 } }
+        // Decimal only, without leading zeros: "010" is 8 for some resolvers, a public address.
+        val octets = name.split(".").map { part ->
+            part.takeIf { it.length in 1..3 && it.all(Char::isDigit) && (it == "0" || it[0] != '0') }?.toInt()?.takeIf { it <= 255 }
+        }
         if (octets.size == 4 && octets.all { it != null }) {
             val (a, b) = octets[0]!! to octets[1]!!
             return a == 10 || a == 127 || (a == 172 && b in 16..31) || (a == 192 && b == 168) || (a == 169 && b == 254)

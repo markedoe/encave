@@ -80,6 +80,13 @@ internal suspend fun grantAll(devices: List<RemoteDevice>, store: MailboxStore, 
 
 class RemoteSyncTests {
     @Test
+    fun aRefusedWebDavLoginWaitsForTheUser() {
+        assertFalse(RemoteSync.mayRun(userAsked = false, webDavLoginRefused = true))
+        assertTrue(RemoteSync.mayRun(userAsked = true, webDavLoginRefused = true))
+        assertTrue(RemoteSync.mayRun(userAsked = false, webDavLoginRefused = false))
+    }
+
+    @Test
     fun aDocumentTooLargeForTheStorageDoesNotStopSync() = aRefusedDocumentDoesNotStopSync(RemoteSyncError.FileTooLarge)
 
     @Test

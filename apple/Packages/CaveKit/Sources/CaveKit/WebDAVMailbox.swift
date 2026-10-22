@@ -112,7 +112,7 @@ public struct WebDAVMailboxStore: MailboxStore {
         """.utf8)
 
     /// Sends a request. Statuses that say the same thing on every server become errors:
-    /// 401/403 refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
+    /// 401 login refused, 403 folder refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
     func send(_ method: String, _ url: URL, headers: [String: String] = [:], body: Data? = nil,
               timeout: TimeInterval = 60) async throws -> (Data, Int) {
         var request = URLRequest(url: url)
@@ -129,7 +129,8 @@ public struct WebDAVMailboxStore: MailboxStore {
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         switch status {
-        case 401, 403: throw RemoteSyncError.unauthorized
+        case 401: throw RemoteSyncError.unauthorized
+        case 403: throw RemoteSyncError.forbidden
         case 413: throw RemoteSyncError.fileTooLarge
         case 507: throw RemoteSyncError.quotaExceeded
         case 300..<400: throw RemoteSyncError.unavailable("redirected (\(status)): use the final address")
@@ -375,7 +376,12 @@ public enum LocalAddress {
         var host = host.lowercased()
         if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }
         if host == "localhost" || host.hasSuffix(".local") || host.hasSuffix(".home.arpa") { return true }
-        let octets = host.split(separator: ".", omittingEmptySubsequences: false).map { UInt8($0) }
+        // Decimal only, without leading zeros: "010" is 8 for some resolvers, a public address.
+        let octets = host.split(separator: ".", omittingEmptySubsequences: false).map { part -> UInt8? in
+            guard (1...3).contains(part.count), part.allSatisfy(\.isASCII), part.allSatisfy(\.isNumber),
+                  part == "0" || part.first != "0" else { return nil }
+            return UInt8(part)
+        }
         if octets.count == 4, !octets.contains(nil) {
             let a = octets[0]!, b = octets[1]!
             return a == 10 || a == 127 || (a == 172 && (16...31).contains(b)) || (a == 192 && b == 168) || (a == 169 && b == 254)
