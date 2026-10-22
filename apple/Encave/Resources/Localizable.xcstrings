@@ -2041,6 +2041,16 @@
         }
       }
     },
+    "After a scan, or while editing a wine that has a label photo, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete Again** and “Completed by AI” shows the day, there and in the details of the wine's page. Tap it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après un scan, ou en modifiant un vin qui a une photo d’étiquette, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Touchez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché."
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "fr": {
@@ -3791,6 +3801,16 @@
         }
       }
     },
+    "Complete Again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter à nouveau"
+          }
+        }
+      }
+    },
     "Complete a wine's details or find its price on the web, with the search service you choose.": {
       "localizations": {
         "fr": {
@@ -3802,6 +3822,26 @@
       }
     },
     "Complete with AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter avec l’IA"
+          }
+        }
+      }
+    },
+    "Completed by AI · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complétée par l’IA · %@"
+          }
+        }
+      }
+    },
+    "Completing with AI": {
       "localizations": {
         "fr": {
           "stringUnit": {

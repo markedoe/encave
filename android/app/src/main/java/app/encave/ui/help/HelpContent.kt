@@ -195,6 +195,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_ai_check, R.string.help_ai_check_title),
                     HelpSection(R.string.help_ai_local, R.string.help_ai_local_title),
                     HelpSection(R.string.help_ai_url, R.string.help_ai_url_title),
+                    HelpSection(R.string.help_ai_complete, R.string.help_ai_complete_title),
                     HelpSection(R.string.help_ai_sent, R.string.help_ai_sent_title),
                 ),
             ),

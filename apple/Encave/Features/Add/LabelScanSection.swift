@@ -110,11 +110,13 @@ final class LabelScan {
                     var completed = saved
                     var filled = autoFilled
                     analysis.apply(to: &completed, replacing: &filled)
+                    completed.aiCompletedAt = Date()
                     model.completeWine(saved.id, from: saved.makeWine(), to: completed.makeWine())
                     return
                 }
                 var value = draft.wrappedValue
                 analysis.apply(to: &value, replacing: &autoFilled)
+                value.aiCompletedAt = Date()
                 withAnimation { draft.wrappedValue = value }
             } catch {
                 aiError = error.localizedDescription
@@ -183,11 +185,15 @@ struct LabelScanSection: View {
                     .font(.headline)
                 }
                 if let photo = scan.photo {
-                    LabelPhotoRow(
-                        photo: photo, aiEnabled: scan.aiEnabled, isAnalyzing: scan.isAnalyzing,
-                        analyze: { scan.completeWithAI(draft: $draft) },
-                        remove: { withAnimation { scan.photo = nil } }
-                    )
+                    LabelPhotoRow(photo: photo, isAnalyzing: scan.isAnalyzing,
+                                  remove: { withAnimation { scan.photo = nil } })
+                    // A row of its own: next to the photo, the button was too narrow
+                    // and its title broke in the middle of words.
+                    if scan.aiEnabled {
+                        AICompletionButton(completedAt: draft.aiCompletedAt, isAnalyzing: scan.isAnalyzing) {
+                            scan.completeWithAI(draft: $draft)
+                        }
+                    }
                 }
                 if let aiError = scan.aiError {
                     Label(aiError, systemImage: "exclamationmark.triangle")
@@ -319,12 +325,10 @@ private struct SummaryDetail: Identifiable {
     var id: String { title }
 }
 
-/// The label photo just taken, with the AI action.
+/// The label photo just taken, with Remove.
 private struct LabelPhotoRow: View {
     let photo: Data
-    let aiEnabled: Bool
     let isAnalyzing: Bool
-    let analyze: @MainActor () -> Void
     let remove: @MainActor () -> Void
 
     var body: some View {
@@ -339,24 +343,78 @@ private struct LabelPhotoRow: View {
                     if isAnalyzing { Text("Reading the label…") } else { Text("Saved with the wine") }
                 }
                 .font(.caption)
-                    .foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)
             }
-            Spacer()
-            if isAnalyzing {
-                ProgressView()
-            } else if aiEnabled {
-                Button(action: analyze) {
-                    Label("Complete with AI", systemImage: "sparkles")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
             Button(action: remove) {
                 Image(systemName: "xmark.circle.fill")
+                    .imageScale(.large)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(Text("Remove Photo"))
         }
+    }
+}
+
+/// "Complete with AI" as a full-width form row. Once the AI has completed the wine, it
+/// reads "Complete Again" and says when, so it is not tapped again for nothing; while
+/// the AI reads the label, it shows progress and cannot be tapped.
+/// Shared by the label scan (Add Bottles, Remember a Wine) and Edit Wine.
+struct AICompletionButton: View {
+    let completedAt: Date?
+    let isAnalyzing: Bool
+    let action: @MainActor () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            if isAnalyzing {
+                Label {
+                    Text("Reading the label…")
+                } icon: {
+                    ProgressView()
+                }
+            } else {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if completedAt == nil {
+                            Text("Complete with AI")
+                        } else {
+                            Text("Complete Again")
+                        }
+                        if let completedAt {
+                            AICompletedText(date: completedAt)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } icon: {
+                    Image(systemName: "sparkles")
+                }
+            }
+        }
+        .disabled(isAnalyzing)
+        .accessibilityIdentifier("label.completeWithAI")
+    }
+}
+
+/// "Completed by AI · Oct 22": when the AI last completed the wine's details.
+struct AICompletedText: View {
+    let date: Date
+
+    var body: some View {
+        Text("Completed by AI · \(formattedDay)")
+    }
+
+    private var formattedDay: String { Self.day(date) }
+
+    /// The day, with the year when it is not this year.
+    static func day(_ date: Date) -> String {
+        let calendar = Calendar.current
+        let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: .now)
+        return sameYear
+            ? date.formatted(.dateTime.day().month(.abbreviated))
+            : date.formatted(.dateTime.day().month(.abbreviated).year())
     }
 }

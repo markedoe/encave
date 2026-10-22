@@ -309,6 +309,10 @@ object Formats {
         return DateTimeFormatter.ofPattern(pattern, locale()).format(instant.atZone(ZoneId.systemDefault()))
     }
 
+    /** "Oct 22" this year, the full date for an earlier year. */
+    fun recentDay(instant: Instant): String =
+        if (instant.atZone(ZoneId.systemDefault()).year == java.time.LocalDate.now().year) dayMonth(instant) else day(instant)
+
     fun money(amount: BigDecimal, code: String?): String {
         val format = NumberFormat.getCurrencyInstance(locale())
         runCatching { if (code != null) format.currency = Currency.getInstance(code) }

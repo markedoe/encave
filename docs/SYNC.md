@@ -72,7 +72,9 @@ implementations:
   (a number, like `bottle.purchasePrice`),
   `wine.currentPriceCurrency` (an ISO code) and `wine.currentPriceDate` (a date)
   are optional: the price of a bottle today, accepted by the user from a web
-  search or typed. `bottle.reservedFor` is an optional string (the occasion a bottle
+  search or typed. `wine.aiCompletedAt` is an optional date: when the details
+  were last completed by the AI label recognition, shown by the apps.
+  `bottle.reservedFor` is an optional string (the occasion a bottle
   is kept for). `settings.savedSearches` is an optional array of
   `{id, name, query, colors, maturities, rackID?, tag?, reservation?, grape?}`, with
   `colors` and `maturities` sorted by their string value.

@@ -418,6 +418,8 @@ S = [
  ("ai_show_key", "Show key", "Afficher la clé"),
  ("ai_hide_key", "Hide key", "Masquer la clé"),
  ("ai_complete", "Complete with AI", "Compléter avec l’IA"),
+ ("ai_complete_again", "Complete again", "Compléter à nouveau"),
+ ("ai_completed_on", "Completed by AI · %1$s", "Complétée par l’IA · %1$s"),
  ("ai_reading", "Reading the label…", "Lecture de l’étiquette…"),
  ("ai_filled", "Details filled from the label. Check them before adding.", "Informations remplies d’après l’étiquette. Vérifiez-les avant d’ajouter."),
  ("ai_err_not_configured", "Choose an AI provider in Settings.", "Choisissez un service d’IA dans les réglages."),
@@ -729,6 +731,8 @@ S = [
  ('help_ai_local', 'Choose **Ollama**, **vLLM** or **LM Studio** if one runs on your computer, or **Other server (OpenAI-compatible)** for any server with the same API, then tap **Connect and load models**. For Ollama, only the models that read images are listed: install one with `ollama pull gemma3`. On a phone or tablet, enter the computer’s IP address on your network (for example `http://192.0.2.10:11434`), and make the server listen on the network: `OLLAMA_HOST=0.0.0.0` for Ollama, `--host 0.0.0.0` for vLLM, “Serve on Local Network” in LM Studio.', 'Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple `http://192.0.2.10:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.'),
  ("help_ai_url_title", "Server URL", "Adresse du serveur"),
  ("help_ai_url", "Leave it empty to use the provider’s usual address. Change it only if the provider gives you another one, for example for its China region.", "Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine."),
+ ("help_ai_complete_title", "Completing with AI", "Compléter avec l’IA"),
+ ("help_ai_complete", "After adding a label photo, or while editing a wine that has one, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete again** and “Completed by AI” shows the day, there and in the details of the wine’s page. Use it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped.", "Après avoir ajouté une photo d’étiquette, ou en modifiant un vin qui en a une, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Utilisez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché."),
  ("help_ai_sent_title", "What is sent", "Ce qui est envoyé"),
  ("help_ai_sent", "Only the label photo, when you add a label photo or tap **Complete with AI**. Your cellar, notes and prices are never sent.", "Seulement la photo de l’étiquette, quand vous ajoutez une photo d’étiquette ou touchez **Compléter avec l’IA**. Votre cave, vos notes et vos prix ne sont jamais envoyés."),
 

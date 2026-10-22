@@ -67,6 +67,8 @@ data class Wine(
     @SerialName("coverPhotoID") val coverPhotoId: String? = null,
     /** Documents kept with the wine, so with all its bottles (an invoice, a technical sheet). Null rather than empty. */
     val attachments: List<Attachment>? = null,
+    /** When the details were last completed by the AI from the label photo; null when never. Synced. */
+    @Serializable(with = InstantSerializer::class) val aiCompletedAt: Instant? = null,
 ) {
     /** The label photo, then the others, then the cover. */
     val allPhotoIds: List<String> get() = listOfNotNull(photoId) + extraPhotoIds.orEmpty() + listOfNotNull(coverPhotoId)

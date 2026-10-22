@@ -719,3 +719,21 @@ import Testing
         #expect(!String(decoding: plain, as: UTF8.self).contains("shelfLayers"))
     }
 }
+
+@Suite struct AICompletedTests {
+    @Test func completionDateRoundTripsAndOldWinesHaveNone() throws {
+        var wine = Wine(name: "Completed")
+        wine.aiCompletedAt = Date(timeIntervalSinceReferenceDate: 814_000_000.5)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let data = try encoder.encode(wine)
+        #expect(String(decoding: data, as: UTF8.self).contains("aiCompletedAt"))
+        let decoded = try decoder.decode(Wine.self, from: data)
+        #expect(decoded.aiCompletedAt != nil)
+        let old = try JSONDecoder().decode(Wine.self, from: Data(#"{"id":"\#(UUID())","name":"Old"}"#.utf8))
+        #expect(old.aiCompletedAt == nil)
+        #expect(!String(decoding: try JSONEncoder().encode(old), as: UTF8.self).contains("aiCompletedAt"))
+    }
+}

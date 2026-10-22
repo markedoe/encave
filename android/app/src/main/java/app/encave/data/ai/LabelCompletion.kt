@@ -1,5 +1,6 @@
 package app.encave.data.ai
 
+import app.encave.core.ReferenceDates
 import app.encave.core.Wine
 import app.encave.core.WineColor
 import app.encave.core.WindowSource
@@ -19,6 +20,7 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
         region = fill(wine.region, region),
         country = fill(wine.country, country),
         grapes = wine.grapes.ifEmpty { grapes.map { it.trim() }.filter { it.isNotEmpty() } },
+        aiCompletedAt = ReferenceDates.now(),
     )
     val wasEstimate = wine.drinkFrom == null || wine.drinkUntil == null || wine.windowSource is WindowSource.Estimated
     if (wasEstimate) {
@@ -43,4 +45,5 @@ fun Wine.completed(from: Wine, to: Wine): Wine = copy(
     grapes = if (grapes == from.grapes) to.grapes else grapes,
     drinkFrom = if (drinkFrom == from.drinkFrom) to.drinkFrom else drinkFrom,
     drinkUntil = if (drinkUntil == from.drinkUntil) to.drinkUntil else drinkUntil,
+    aiCompletedAt = if (aiCompletedAt == from.aiCompletedAt) to.aiCompletedAt else aiCompletedAt,
 )
