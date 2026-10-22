@@ -3,9 +3,9 @@ name: Apple apps
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "fixtures/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "fixtures/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   workflow_dispatch:
     inputs:
       external_testers:
