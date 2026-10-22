@@ -1309,6 +1309,15 @@
     <string name="insights_year_made_with">Made with Encave</string>
     <string name="help_journal_opened_title">A bottle from your cellar</string>
     <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine\'s name to open it.</string>
+    <string name="rack_field_shelves">Counted from the top. Shelves are numbered 1, 2, 3…</string>
+    <string name="kind_fridge_layers">Wine fridge, shelves in layers</string>
+    <string name="kind_fridge_layers_reversed">Wine fridge, shelves in layers · two deep, head-to-tail</string>
+    <string name="cell_check_found">Found</string>
+    <string name="cell_check_not_found">Not found yet</string>
+    <plurals name="cell_bin_more">
+        <item quantity="one">%d more</item>
+        <item quantity="other">%d more</item>
+    </plurals>
     <plurals name="rack_delete_body">
         <item quantity="one">%d bottle stays in your cellar without a place.</item>
         <item quantity="other">%d bottles stay in your cellar without a place.</item>
@@ -1440,14 +1449,5 @@
     <plurals name="chart_item_bottles">
         <item quantity="one">%1$s: %2$d bottle</item>
         <item quantity="other">%1$s: %2$d bottles</item>
-    </plurals>
-    <string name="rack_field_shelves">Counted from the top. Shelves are numbered 1, 2, 3…</string>
-    <string name="kind_fridge_layers">Wine fridge, shelves in layers</string>
-    <string name="kind_fridge_layers_reversed">Wine fridge, shelves in layers · two deep, head-to-tail</string>
-    <string name="cell_check_found">Found</string>
-    <string name="cell_check_not_found">Not found yet</string>
-    <plurals name="cell_bin_more">
-        <item quantity="one">%d more</item>
-        <item quantity="other">%d more</item>
     </plurals>
 </resources>

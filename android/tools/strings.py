@@ -548,7 +548,7 @@ S = [
  ("preset_bins_2x3", "Diamond bins, 2 × 3 of 10", "Losanges, 2 × 3 de 10"),
  ("preset_crates_6", "Crates of 6, 3 × 4", "Caisses de 6, 3 × 4"),
  ("preset_crates_12", "Crates of 12, 2 × 4", "Caisses de 12, 2 × 4"),
- ("place_shelf", "Shelf %1$d, %2$d", "Étagère %1$d, %2$d"),
+ ("place_shelf", "Shelf %1$d, place %2$d", "Étagère %1$d, place %2$d"),
  ("place_bin", "Bin %1$s", "Casier %1$s"),
  ("place_shelf_layer_single", "Shelf %1$d, place %2$d", "Étagère %1$d, place %2$d"),
  ("place_shelf_layer_bottom", "Shelf %1$d, bottom layer, place %2$d", "Étagère %1$d, couche du bas, place %2$d"),
@@ -1408,9 +1408,15 @@ S = [
  ("help_journal_opened_title", "A bottle from your cellar", "Une bouteille de votre cave"),
  ("help_journal_opened", "Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine's name to open it.",
   "Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir."),
+ ("rack_field_shelves", "Counted from the top. Shelves are numbered 1, 2, 3…", "Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…"),
+ ("kind_fridge_layers", "Wine fridge, shelves in layers", "Cave à vin, étagères en couches"),
+ ("kind_fridge_layers_reversed", "Wine fridge, shelves in layers · two deep, head-to-tail", "Cave à vin, étagères en couches · deux rangs, tête-bêche"),
+ ("cell_check_found", "Found", "Trouvée"),
+ ("cell_check_not_found", "Not found yet", "Pas encore trouvée"),
 ]
 
 P = [
+ ("cell_bin_more", ("%d more", "%d more"), ("%d autre", "%d autres")),
  ("rack_delete_body", ("%d bottle stays in your cellar without a place.", "%d bottles stay in your cellar without a place."), ("%d bouteille reste dans votre cave sans emplacement.", "%d bouteilles restent dans votre cave sans emplacement.")),
  ("licences_modules", ("%d module", "%d modules"), ("%d module", "%d modules")),
  ("msg_backup_saved_without", ("Backup saved, without %d photo or document: not on this device yet, or beyond the 4 GB a ZIP file holds.", "Backup saved, without %d photos or documents: not on this device yet, or beyond the 4 GB a ZIP file holds."), ("Sauvegarde enregistrée, sans %d photo ou document : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.", "Sauvegarde enregistrée, sans %d photos ou documents : pas encore sur cet appareil, ou au-delà des 4 Go d’un fichier ZIP.")),
