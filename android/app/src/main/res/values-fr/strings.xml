@@ -336,9 +336,10 @@
     <string name="settings_erase_body">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
     <string name="settings_erase_body_devices">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil et des autres appareils synchronisés avec lui. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
     <string name="settings_privacy">Confidentialité</string>
-    <string name="settings_privacy_stored">Votre cave est enregistrée uniquement sur cet appareil.</string>
-    <string name="settings_privacy_body">Pas de compte, pas de pistage, pas de publicité. Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout ; aucun serveur ne voit votre cave.</string>
-    <string name="settings_privacy_stored_devices">Votre cave est enregistrée uniquement sur vos appareils.</string>
+    <string name="settings_privacy_stored">Votre cave est gardée sur cet appareil.</string>
+    <string name="settings_privacy_body">Pas de compte, pas de mesure d’audience, pas de publicité. La synchronisation est chiffrée de bout en bout : sur le même Wi-Fi, vos appareils se connectent directement, et à distance le stockage que vous choisissez ne contient que des fichiers chiffrés. Si vous les activez, la reconnaissance des étiquettes par IA n’envoie que la photo de l’étiquette à votre service d’IA, et la recherche web que les termes de recherche à votre service de recherche.</string>
+    <string name="settings_privacy_stored_devices">Votre cave est gardée sur vos appareils.</string>
+    <string name="settings_privacy_stored_remote">Votre cave est gardée sur vos appareils, avec une copie chiffrée dans le stockage choisi pour la synchronisation à distance.</string>
     <string name="settings_about">À propos</string>
     <string name="settings_beta">Bêta</string>
     <string name="settings_beta_note">Encave est en version bêta : les fonctionnalités peuvent encore changer et il reste des bugs. Faites une sauvegarde de temps en temps.</string>
@@ -347,6 +348,7 @@
     <string name="settings_version">Version</string>
     <string name="settings_source">Code source</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
+    <string name="settings_privacy_policy">Politique de confidentialité</string>
     <string name="msg_exported">Export enregistré</string>
     <string name="msg_export_failed">L’export a échoué.</string>
     <string name="msg_imported">Importé. Vins : %1$d, bouteilles : %2$d</string>
@@ -691,9 +693,9 @@
     <string name="help_data_csv">**Exporter un tableur (CSV)** s’ouvre dans n’importe quel tableur, une ligne par bouteille avec son emplacement. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app.</string>
     <string name="help_privacy_title">Confidentialité</string>
     <string name="help_privacy_summary">Votre cave reste la vôtre.</string>
-    <string name="help_privacy_1">Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité.</string>
-    <string name="help_privacy_2">La synchronisation entre vos appareils et avec les personnes qui partagent votre cave est chiffrée de bout en bout : un relais ou un dossier WebDAV qui stocke les modifications ne peut jamais les lire.</string>
-    <string name="help_privacy_3">En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher.</string>
+    <string name="help_privacy_1">Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage privé d’Encave, qu’Android chiffre. Ils sont exclus des sauvegardes Google dans le cloud et ne passent sur un nouveau téléphone que par un transfert direct depuis l’ancien. Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien.</string>
+    <string name="help_privacy_2">La synchronisation entre vos appareils et avec les personnes qui partagent votre cave est chiffrée de bout en bout. Sur le même Wi-Fi, les appareils communiquent directement. À distance, si vous l’activez, un relais ou un dossier WebDAV stocke les modifications sous forme de fichiers chiffrés qu’il ne peut jamais lire ; il voit quand les appareils se synchronisent, combien ils envoient et leurs adresses IP.</string>
+    <string name="help_privacy_3">En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou touchez Compléter avec l’IA ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande.</string>
     <string name="help_privacy_4">Encave est open source : chacun peut vérifier ce que fait l’app.</string>
     <string name="settings_devices">Appareils</string>
     <string name="settings_devices_summary">La même cave sur vos autres appareils</string>
@@ -713,7 +715,7 @@
     <string name="devices_remote_webdav">Dossier WebDAV</string>
     <string name="devices_webdav_sign_in">Se connecter à ce dossier WebDAV</string>
     <string name="devices_e2e">Chiffré de bout en bout</string>
-    <string name="devices_e2e_body">Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient.</string>
+    <string name="devices_e2e_body">Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré de bout en bout. À distance, si vous l’activez, ils se synchronisent par le stockage que vous choisissez, qui ne contient que des fichiers chiffrés.</string>
     <string name="devices_help">Aide sur les appareils</string>
     <string name="devices_leave">Arrêter la synchronisation sur cet appareil</string>
     <string name="devices_leave_footer">La cave reste telle quelle sur cet appareil. Les autres appareils continuent de se synchroniser entre eux.</string>

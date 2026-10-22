@@ -66,8 +66,8 @@ targets:
         # Encrypted, with CryptoKit only (the OS's encryption): Apple's value for
         # that case, no documents to upload. See docs/ENCRYPTION.md.
         ITSAppUsesNonExemptEncryption: false
-        NSCameraUsageDescription: Encave uses the camera to read wine labels and scan documents. Images stay on your devices.
-        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
+        NSCameraUsageDescription: Encave uses the camera to read wine labels and barcodes, scan documents and scan the pairing code of your other devices. Images stay on your devices unless you turn on AI label recognition, which sends only the label photo to the service you chose.
+        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.
         NSBonjourServices: [_encave._tcp]
         # iCloud container for syncing away from home; empty hides the option (docs/development.md).
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
@@ -127,7 +127,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
-        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
+        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.
         NSBonjourServices: [_encave._tcp]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

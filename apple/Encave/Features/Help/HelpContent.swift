@@ -156,9 +156,9 @@ struct HelpArticle: Identifiable {
             ]),
             HelpArticle(topic: .privacy, title: "Privacy",
                         summary: "Your cellar stays yours.", systemImage: "lock.shield", sections: [
-                HelpSection(body: "Your cellar is stored only on your devices. There is no account, no tracking and no advertising."),
-                HelpSection(body: "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud, a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them."),
-                HelpSection(body: "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request."),
+                HelpSection(body: "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing."),
+                HelpSection(body: "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud, your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses."),
+                HelpSection(body: "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or ask the AI to complete a wine; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request."),
                 HelpSection(body: "Encave is open source: anyone can check what the app does."),
             ]),
             HelpArticle(topic: .shortcuts, title: "Shortcuts and Siri",

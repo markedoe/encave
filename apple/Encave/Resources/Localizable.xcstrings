@@ -1741,12 +1741,12 @@
         }
       }
     },
-    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": {
+    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or ask the AI to complete a wine; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée à votre service d’IA, et les termes de recherche d’un vin, envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la requête."
+            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou demandez à l’IA de compléter un vin ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande."
           }
         }
       }
@@ -3581,16 +3581,6 @@
         }
       }
     },
-    "Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave."
-          }
-        }
-      }
-    },
     "Devices sync when they are on the same Wi-Fi and Encave is open. Changes made apart merge without losing anything.": {
       "localizations": {
         "fr": {
@@ -3601,12 +3591,12 @@
         }
       }
     },
-    "Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.": {
+    "Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted from end to end. Away from home, if you turn it on, they sync through the storage you choose, which holds only encrypted files.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient."
+            "value": "Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré de bout en bout. À distance, si vous l’activez, ils se synchronisent par le stockage que vous choisissez, qui ne contient que des fichiers chiffrés."
           }
         }
       }
@@ -6421,6 +6411,16 @@
         }
       }
     },
+    "No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de compte, pas de mesure d’audience, pas de publicité. La synchronisation est chiffrée de bout en bout : sur le même Wi-Fi, vos appareils se connectent directement, et à distance le stockage que vous choisissez ne contient que des fichiers chiffrés. Si vous les activez, la reconnaissance des étiquettes par IA n’envoie que la photo de l’étiquette à votre service d’IA, et la recherche web que les termes de recherche à votre service de recherche."
+          }
+        }
+      }
+    },
     "No answer this time. Try again.": {
       "localizations": {
         "fr": {
@@ -8087,6 +8087,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Confidentialité"
+          }
+        }
+      }
+    },
+    "Privacy Policy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Politique de confidentialité"
           }
         }
       }
@@ -10111,12 +10121,12 @@
         }
       }
     },
-    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly; through iCloud, a WebDAV folder or a relay, only encrypted files are stored, and nobody else can read them.": {
+    "Sync between your devices is encrypted from end to end. On the same Wi-Fi they talk directly. Away from home, if you turn it on, iCloud, your WebDAV folder or a relay stores only encrypted files that nobody else can read; it sees when your devices sync, how much they send and, for a WebDAV server or a relay, their IP addresses.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement ; via iCloud, un dossier WebDAV ou un relais, seuls des fichiers chiffrés sont stockés, et personne d’autre ne peut les lire."
+            "value": "La synchronisation entre vos appareils est chiffrée de bout en bout. Sur le même Wi-Fi, ils communiquent directement. À distance, si vous l’activez, iCloud, votre dossier WebDAV ou un relais ne stocke que des fichiers chiffrés que personne d’autre ne peut lire ; il voit quand vos appareils se synchronisent, combien ils envoient et, pour un serveur WebDAV ou un relais, leurs adresses IP."
           }
         }
       }
@@ -12711,42 +12721,42 @@
         }
       }
     },
+    "Your cellar is kept on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est gardée sur cet appareil."
+          }
+        }
+      }
+    },
+    "Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est gardée sur vos appareils, avec une copie chiffrée dans le stockage choisi pour la synchronisation à distance."
+          }
+        }
+      }
+    },
+    "Your cellar is kept on your devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est gardée sur vos appareils."
+          }
+        }
+      }
+    },
     "Your cellar is now on both devices and stays in sync when they are on the same Wi-Fi.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave est maintenant sur les deux appareils et reste synchronisée quand ils sont sur le même Wi-Fi."
-          }
-        }
-      }
-    },
-    "Your cellar is stored only on this device.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre cave est enregistrée uniquement sur cet appareil."
-          }
-        }
-      }
-    },
-    "Your cellar is stored only on your devices.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre cave est enregistrée uniquement sur vos appareils."
-          }
-        }
-      }
-    },
-    "Your cellar is stored only on your devices. There is no account, no tracking and no advertising.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre cave est stockée uniquement sur vos appareils. Pas de compte, pas de pistage, pas de publicité."
           }
         }
       }
@@ -12777,6 +12787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre cave ce mois-ci"
+          }
+        }
+      }
+    },
+    "Your cellar, its photos and documents are kept on your devices, in Encave’s own storage. The system encrypts it on iPhone and iPad, and on a Mac when FileVault is on; it is included in the backups of the device you make (iCloud Backup, a computer, Time Machine). There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave, ses photos et ses documents sont gardés sur vos appareils, dans le stockage propre à Encave. Le système le chiffre sur iPhone et iPad, et sur Mac quand FileVault est activé ; il fait partie des sauvegardes de l’appareil que vous faites (sauvegarde iCloud, un ordinateur, Time Machine). Pas de compte, pas de mesure d’audience, pas de pistage, pas de publicité : le développeur d’Encave ne reçoit rien."
           }
         }
       }

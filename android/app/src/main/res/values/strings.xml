@@ -337,9 +337,10 @@
     <string name="settings_erase_body">This erases every bottle, wine, rack and Journal entry on this device. Your settings (currency, saved searches) are kept.</string>
     <string name="settings_erase_body_devices">This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings (currency, saved searches) are kept.</string>
     <string name="settings_privacy">Privacy</string>
-    <string name="settings_privacy_stored">Your cellar is stored only on this device.</string>
-    <string name="settings_privacy_body">No account, no tracking, no advertising. Devices sync directly on your network, encrypted from end to end; no server ever sees your cellar.</string>
-    <string name="settings_privacy_stored_devices">Your cellar is stored only on your devices.</string>
+    <string name="settings_privacy_stored">Your cellar is kept on this device.</string>
+    <string name="settings_privacy_body">No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.</string>
+    <string name="settings_privacy_stored_devices">Your cellar is kept on your devices.</string>
+    <string name="settings_privacy_stored_remote">Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.</string>
     <string name="settings_about">About</string>
     <string name="settings_beta">Beta</string>
     <string name="settings_beta_note">Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.</string>
@@ -348,6 +349,7 @@
     <string name="settings_version">Version</string>
     <string name="settings_source">Source code</string>
     <string name="settings_source_body">github.com/markedoe/encave</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
     <string name="msg_exported">Export saved</string>
     <string name="msg_export_failed">The export failed.</string>
     <string name="msg_imported">Imported. Wines: %1$d, bottles: %2$d</string>
@@ -692,9 +694,9 @@
     <string name="help_data_csv">**Export a spreadsheet (CSV)** opens in any spreadsheet app, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.</string>
     <string name="help_privacy_title">Privacy</string>
     <string name="help_privacy_summary">Your cellar stays yours.</string>
-    <string name="help_privacy_1">Your cellar is stored only on your devices. There is no account, no tracking and no advertising.</string>
-    <string name="help_privacy_2">Sync between your devices and with the people you share a cellar with is encrypted from end to end: a relay or WebDAV folder that stores the changes can never read them.</string>
-    <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to your AI service, and the search terms of a wine, sent to your web search service when you tap Search.</string>
+    <string name="help_privacy_1">Your cellar, its photos and documents are kept on your devices, in Encave’s private storage, which Android encrypts. They are left out of Google cloud backups and move to a new phone only with a direct transfer from the old one. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.</string>
+    <string name="help_privacy_2">Sync between your devices and with the people you share a cellar with is encrypted from end to end. On the same Wi-Fi, devices talk directly. Away from home, if you turn it on, a relay or WebDAV folder stores the changes as encrypted files it can never read; it sees when devices sync, how much they send and their IP addresses.</string>
+    <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or tap Complete with AI; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.</string>
     <string name="help_privacy_4">Encave is open source: anyone can check what the app does.</string>
     <string name="settings_devices">Devices</string>
     <string name="settings_devices_summary">The same cellar on your other devices</string>
@@ -714,7 +716,7 @@
     <string name="devices_remote_webdav">WebDAV folder</string>
     <string name="devices_webdav_sign_in">Sign in to this WebDAV folder</string>
     <string name="devices_e2e">Encrypted from end to end</string>
-    <string name="devices_e2e_body">Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.</string>
+    <string name="devices_e2e_body">Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted from end to end. Away from home, if you turn it on, they sync through the storage you choose, which holds only encrypted files.</string>
     <string name="devices_help">Help with devices</string>
     <string name="devices_leave">Stop syncing on this device</string>
     <string name="devices_leave_footer">The cellar stays on this device as it is. Other devices keep syncing together.</string>

@@ -129,7 +129,7 @@ struct DevicesView: View {
 
             Section {
                 Label("Encrypted from end to end", systemImage: "lock.shield")
-                Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.")
+                Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted from end to end. Away from home, if you turn it on, they sync through the storage you choose, which holds only encrypted files.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 HelpLink(topic: .devices, title: "Help with devices")
