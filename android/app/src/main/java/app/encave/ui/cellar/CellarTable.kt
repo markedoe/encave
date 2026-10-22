@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.encave.ui.devices.SettingsIcon
 import app.encave.R
 import app.encave.core.Cellar
 import app.encave.core.CellarFilter
@@ -182,7 +182,7 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add_bottle))
                     }
                     IconButton(onClick = { navigator.open(SettingsRoute) }) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                        SettingsIcon()
                     }
                 },
             )

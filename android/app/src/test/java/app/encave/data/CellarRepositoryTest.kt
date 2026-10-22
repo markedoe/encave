@@ -44,6 +44,24 @@ class CellarRepositoryTest {
         assertTrue(repository.cellar.value.isEmpty)
     }
 
+    @Test
+    fun anUndoOfARestoreIsRefusedOnceTheCellarChanged() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = CellarRepository(InMemoryCellarStore(), TestScope(dispatcher), dispatcher)
+        advanceUntilIdle()
+        val before = repository.cellar.value
+        val restored = Cellar().also { it.addBottles(Wine(name = "Restored"), quantity = 1) }
+        repository.replace(restored)
+        // Something changed since (here, or synced): the Undo would take it back too.
+        repository.update { it.addBottles(Wine(name = "Since"), quantity = 1) }
+        assertFalse(repository.replaceIf(restored, before).getOrThrow())
+        assertEquals(2, repository.cellar.value.bottles.size)
+        // Nothing changed since: put back.
+        val now = repository.cellar.value
+        assertTrue(repository.replaceIf(now, before).getOrThrow())
+        assertTrue(repository.cellar.value.isEmpty)
+    }
+
     /** A stored cellar that cannot be read; [moved] is what setting it aside returns. */
     private class Unreadable(private val moved: String?) : CellarStore {
         var saves = 0

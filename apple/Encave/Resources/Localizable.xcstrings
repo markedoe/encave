@@ -31,6 +31,16 @@
         }
       }
     },
+    "%@ empty": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ vide"
+          }
+        }
+      }
+    },
     "%@ has no place in a rack.": {
       "localizations": {
         "fr": {
@@ -81,12 +91,42 @@
         }
       }
     },
+    "%@, %lld of %lld found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$lld sur %3$lld trouvées"
+          }
+        }
+      }
+    },
     "%@, empty": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "%@, vide"
+          }
+        }
+      }
+    },
+    "%@, other wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, autre vin"
+          }
+        }
+      }
+    },
+    "%@, shown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, mise en évidence"
           }
         }
       }
@@ -194,6 +234,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld bouteilles ajoutées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld bottles are in places you removed": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle is in a place you removed"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles are in places you removed"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille est dans un emplacement supprimé"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles sont dans des emplacements supprimés"
                 }
               }
             }
@@ -661,6 +741,86 @@
         }
       }
     },
+    "%lld photos or documents are not on this device yet: they are not in this backup. Back up from the device that has them, or after the next sync.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photo or document is not on this device yet: it is not in this backup. Back up from the device that has it, or after the next sync."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photos or documents are not on this device yet: they are not in this backup. Back up from the device that has them, or after the next sync."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photo ou document n’est pas encore sur cet appareil : il n’est pas dans cette sauvegarde. Sauvegardez depuis l’appareil qui l’a, ou après la prochaine synchronisation."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photos ou documents ne sont pas encore sur cet appareil : ils ne sont pas dans cette sauvegarde. Sauvegardez depuis l’appareil qui les a, ou après la prochaine synchronisation."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld photos or documents were left out: a ZIP file holds at most 4 GB. The cellar itself is complete.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photo or document was left out: a ZIP file holds at most 4 GB. The cellar itself is complete."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photos or documents were left out: a ZIP file holds at most 4 GB. The cellar itself is complete."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photo ou document n’y est pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld positions": {
       "localizations": {
         "en": {
@@ -821,7 +981,7 @@
         }
       }
     },
-    "%lld wines added": {
+    "%lld wines added to the shopping list": {
       "localizations": {
         "en": {
           "variations": {
@@ -829,13 +989,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld wine added"
+                  "value": "%lld wine added to the shopping list"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld wines added"
+                  "value": "%lld wines added to the shopping list"
                 }
               }
             }
@@ -847,13 +1007,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld vin ajouté"
+                  "value": "%lld vin ajouté à la liste d’achats"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld vins ajoutés"
+                  "value": "%lld vins ajoutés à la liste d’achats"
                 }
               }
             }
@@ -911,12 +1071,12 @@
         }
       }
     },
-    "**Back Up Now** makes a backup of your whole cellar, with its photos and documents, then shares it or saves it in Files, for example in iCloud Drive or on a computer. It is a standard ZIP file, not encrypted, named like “Encave Backup 2026-10-21.zip”: keep it somewhere safe.": {
+    "**Back Up Now** makes a backup of your whole cellar, with its photos and documents, then shares it or saves it in Files, for example in iCloud Drive or on a computer; it counts as your last backup once shared or saved. It is a standard ZIP file, not encrypted, named like “Encave Backup 2026-10-21.zip”: keep it somewhere safe. Photos not yet synced to this device are left out, and a ZIP file holds at most 4 GB: Encave says when files are missing, and the cellar itself is always complete.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr."
+            "value": "**Sauvegarder maintenant** fait une sauvegarde de toute votre cave, avec ses photos et ses documents, puis la partage ou l’enregistre dans Fichiers, par exemple dans iCloud Drive ou sur un ordinateur ; elle compte comme votre dernière sauvegarde une fois partagée ou enregistrée. C’est un fichier ZIP standard, non chiffré, nommé comme « Encave Backup 2026-10-21.zip » : gardez-le en lieu sûr. Les photos pas encore synchronisées sur cet appareil n’y sont pas, et un fichier ZIP contient au plus 4 Go : Encave indique quand des fichiers manquent, et la cave elle-même est toujours complète."
           }
         }
       }
@@ -1101,12 +1261,12 @@
         }
       }
     },
-    "A copy of your cellar is kept on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. They stay on this device; the photos and documents they need are kept with them.": {
+    "A copy of your cellar is kept on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before. They stay on this device; the photos and documents they need are kept with them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une copie de votre cave est gardée chaque jour où elle change : une par jour pour les 7 derniers jours, puis une par semaine pendant 4 semaines. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles."
+            "value": "Une copie de votre cave est gardée chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles."
           }
         }
       }
@@ -1431,12 +1591,12 @@
         }
       }
     },
-    "Add What Is Missing adds the wines, bottles, racks and Journal entries that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup. You can undo right after.": {
+    "Add What Is Missing adds the wines, bottles, racks, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, casiers et entrées du Journal absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde. Vous pouvez annuler juste après."
+            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde ; vos réglages restent tels quels. Vous pouvez annuler juste après."
           }
         }
       }
@@ -1651,12 +1811,12 @@
         }
       }
     },
-    "Add your iPad or Mac to have the same cellar on each, kept in sync.": {
+    "Add your other devices (iPhone, iPad, Mac or Android) to have the same cellar on each, kept in sync.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez votre iPad ou votre Mac pour avoir la même cave sur chacun, toujours à jour."
+            "value": "Ajoutez vos autres appareils (iPhone, iPad, Mac ou Android) pour avoir la même cave sur chacun, toujours à jour."
           }
         }
       }
@@ -1731,6 +1891,16 @@
         }
       }
     },
+    "Adds a bottle here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute une bouteille ici"
+          }
+        }
+      }
+    },
     "Adds bottles of this vintage.": {
       "localizations": {
         "fr": {
@@ -1757,6 +1927,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Toutes les bouteilles"
+          }
+        }
+      }
+    },
+    "All Here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes là"
           }
         }
       }
@@ -1817,6 +1997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
+          }
+        }
+      }
+    },
+    "Android devices can’t use iCloud. To sync with %@ away from home, choose a WebDAV folder or a relay.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils Android ne peuvent pas utiliser iCloud. Pour vous synchroniser à distance avec %@, choisissez un dossier WebDAV ou un relais."
           }
         }
       }
@@ -2201,6 +2391,16 @@
         }
       }
     },
+    "Backup saved": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde enregistrée"
+          }
+        }
+      }
+    },
     "Backup, export and import": {
       "localizations": {
         "fr": {
@@ -2331,6 +2531,16 @@
         }
       }
     },
+    "Bottle %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille %lld"
+          }
+        }
+      }
+    },
     "Bottle List": {
       "localizations": {
         "fr": {
@@ -2381,6 +2591,16 @@
         }
       }
     },
+    "Bottle taken out of the rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille sortie du casier"
+          }
+        }
+      }
+    },
     "Bottles": {
       "localizations": {
         "fr": {
@@ -2421,7 +2641,7 @@
         }
       }
     },
-    "Bottles in this rack stay in your cellar without a position.": {
+    "Bottles in this rack stay in your cellar without a place.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -2567,6 +2787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles empilées en quinconce : %lld en bas, %lld au-dessus."
+          }
+        }
+      }
+    },
+    "Bottles swapped": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles échangées"
           }
         }
       }
@@ -2901,12 +3131,32 @@
         }
       }
     },
+    "Changing a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier un casier"
+          }
+        }
+      }
+    },
     "Check Key and Load Models": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier la clé et charger les modèles"
+          }
+        }
+      }
+    },
+    "Check One by One…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier une par une…"
           }
         }
       }
@@ -3001,12 +3251,22 @@
         }
       }
     },
-    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
+    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. Tapping a bin or a place with two bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a place shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un casier ou un emplacement de deux bouteilles les marque toutes ; pour les cocher une par une, touchez-le longuement et choisissez **Vérifier une par une…** (un emplacement affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+          }
+        }
+      }
+    },
+    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, and those bottles stay in your cellar without a place. **Undo** puts everything back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des emplacements occupés, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, et ces bouteilles restent dans votre cave sans emplacement. **Annuler** remet tout en place."
           }
         }
       }
@@ -3061,12 +3321,12 @@
         }
       }
     },
-    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks and Journal entries you no longer have and changes nothing else. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. You can undo right after.": {
+    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers et entrées du Journal que vous n’avez plus, sans rien changer d’autre. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vous pouvez annuler juste après."
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après."
           }
         }
       }
@@ -3137,6 +3397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez-le pour ajouter des bouteilles sans ressaisir le vin."
+          }
+        }
+      }
+    },
+    "Choose where to put %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez où mettre %@"
           }
         }
       }
@@ -3811,12 +4081,12 @@
         }
       }
     },
-    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change. You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins.": {
+    "Devices sync by themselves when they are on the same Wi-Fi and Encave is open, a moment after each change; a sync that fails is tried again after 15 seconds, 1 minute and 5 minutes. To sync right away, pull down the list in the Cellar, or on a Mac or an iPad with a keyboard choose **Cellar › Sync Now** (⌘R). You can edit on each device while apart: changes merge when they meet again. If the same wine was edited on both, the later change wins. When sync needs you (a WebDAV sign-in, Local Network access turned off, failures for over an hour), the Settings button shows a badge and **Devices** says what to do.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification. Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte."
+            "value": "Les appareils se synchronisent d’eux-mêmes quand ils sont sur le même Wi-Fi et qu’Encave est ouvert, peu après chaque modification ; une synchronisation qui échoue est retentée après 15 secondes, 1 minute et 5 minutes. Pour synchroniser tout de suite, tirez la liste de la Cave vers le bas, ou sur un Mac ou un iPad avec clavier choisissez **Cave › Synchroniser** (⌘R). Vous pouvez modifier sur chaque appareil séparément : les modifications se réunissent quand ils se retrouvent. Si le même vin a été modifié sur les deux, la modification la plus récente l’emporte. Quand la synchronisation a besoin de vous (une connexion WebDAV, l’accès au réseau local désactivé, des échecs depuis plus d’une heure), le bouton Réglages affiche un badge et **Appareils** indique quoi faire."
           }
         }
       }
@@ -3827,6 +4097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les appareils se synchronisent directement sur votre réseau, chiffrés de bout en bout. Aucun serveur ne voit votre cave."
+          }
+        }
+      }
+    },
+    "Devices sync on the same Wi-Fi while Encave is open, and away from home through the storage you chose. Changes made apart merge without losing anything.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les appareils se synchronisent sur le même Wi-Fi quand Encave est ouvert, et loin de la maison par le stockage choisi. Les modifications faites séparément se réunissent sans rien perdre."
           }
         }
       }
@@ -4211,6 +4491,16 @@
         }
       }
     },
+    "Each device proves it belongs to the cellar with its own key, and everything is encrypted. On your network, devices talk directly. Away from home, the storage only holds encrypted files.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et tout est chiffré. Sur votre réseau, les appareils communiquent directement. Loin de la maison, le stockage ne contient que des fichiers chiffrés."
+          }
+        }
+      }
+    },
     "Each device signs in with its own username and password, kept in the Keychain on that device. An app password is recommended.": {
       "localizations": {
         "fr": {
@@ -4411,12 +4701,12 @@
         }
       }
     },
-    "Encave keeps a copy of your cellar on this device on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. Open **Settings › Your data › Previous Versions**, choose a date to see what it holds and how it differs from your cellar, then restore it. The photos and documents a version needs are kept with it.": {
+    "Encave keeps a copy of your cellar on this device on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before, even if you did not open Encave for a while. Open **Settings › Your data › Previous Versions**, choose a date to see what it holds and how it differs from your cellar, then restore it. The photos and documents a version needs are kept with it.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une par jour pour les 7 derniers jours, puis une par semaine pendant 4 semaines. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle."
+            "value": "Encave garde une copie de votre cave sur cet appareil chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant, même si vous n’avez pas ouvert Encave depuis longtemps. Ouvrez **Réglages › Vos données › Versions précédentes**, choisissez une date pour voir ce qu’elle contient et en quoi elle diffère de votre cave, puis restaurez-la. Les photos et documents dont une version a besoin sont gardés avec elle."
           }
         }
       }
@@ -4891,6 +5181,16 @@
         }
       }
     },
+    "For any devices, Android included. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour tous les appareils, Android compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
+          }
+        }
+      }
+    },
     "For bottles that are not in a rack.": {
       "localizations": {
         "fr": {
@@ -4907,16 +5207,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pour les appareils connectés au même compte Apple. Utilise un peu de votre stockage iCloud ; Apple ne reçoit que des fichiers chiffrés."
-          }
-        }
-      }
-    },
-    "For iPhone, iPad and Mac today, and Android later. A relay is a small open-source service: run your own on a home server or a free Cloudflare account, or use one run by someone you trust.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour iPhone, iPad et Mac aujourd’hui, et Android plus tard. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance."
           }
         }
       }
@@ -5374,6 +5664,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottle. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteille. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Contient %lld bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
                 }
               }
             }
@@ -5841,6 +6171,16 @@
         }
       }
     },
+    "Join another cellar?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoindre une autre cave ?"
+          }
+        }
+      }
+    },
     "Journal": {
       "localizations": {
         "fr": {
@@ -6221,6 +6561,16 @@
         }
       }
     },
+    "Leave and Join": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter et rejoindre"
+          }
+        }
+      }
+    },
     "Leave empty for the provider's usual address. For a local server, its address on your network.": {
       "localizations": {
         "fr": {
@@ -6327,6 +6677,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Charger la cave d’exemple ?"
+          }
+        }
+      }
+    },
+    "Local Network Access Is Off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accès au réseau local désactivé"
+          }
+        }
+      }
+    },
+    "Local Network access is off for Encave, so it can’t find your other devices. Turn it on in Settings › Encave.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès au réseau local est désactivé pour Encave, qui ne peut donc pas trouver vos autres appareils. Activez-le dans Réglages › Encave."
+          }
+        }
+      }
+    },
+    "Local Network access is off for Encave, so it can’t find your other devices. Turn it on in System Settings › Privacy & Security › Local Network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès au réseau local est désactivé pour Encave, qui ne peut donc pas trouver vos autres appareils. Activez-le dans Réglages Système › Confidentialité et sécurité › Réseau local."
           }
         }
       }
@@ -6471,6 +6851,16 @@
         }
       }
     },
+    "Marks as found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marque comme trouvée"
+          }
+        }
+      }
+    },
     "Maturity": {
       "localizations": {
         "fr": {
@@ -6611,12 +7001,32 @@
         }
       }
     },
-    "Move the bottles out of the removed rows or columns first.": {
+    "Move Down": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Déplacez d’abord les bouteilles des rangées ou colonnes supprimées."
+            "value": "Descendre"
+          }
+        }
+      }
+    },
+    "Move Up": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monter"
+          }
+        }
+      }
+    },
+    "Moved to %@ · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacée vers %@ · %@"
           }
         }
       }
@@ -7171,6 +7581,16 @@
         }
       }
     },
+    "Not syncing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne se synchronise plus"
+          }
+        }
+      }
+    },
     "Not valid": {
       "localizations": {
         "fr": {
@@ -7471,12 +7891,12 @@
         }
       }
     },
-    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).": {
+    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place). **Undo** puts them back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement)."
+            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement). **Annuler** les remet en place."
           }
         }
       }
@@ -7561,12 +7981,12 @@
         }
       }
     },
-    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, choose **Join Another Device’s Cellar**, then scan the QR code (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi.": {
+    "On the device that has your cellar, open **Settings › Devices › Add a Device**: it shows a QR code and a 6-digit code. On the new device, scan the QR code with the camera, or choose **Join Another Device’s Cellar** and scan it there (iPhone and iPad) or type the 6-digit code. Both devices must be on the same Wi-Fi, and Encave needs Local Network access: if it is off, Encave says so and opens the settings where you turn it on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, choisissez **Rejoindre la cave d’un autre appareil**, puis scannez le QR code (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi."
+            "value": "Sur l’appareil qui a votre cave, ouvrez **Réglages › Appareils › Ajouter un appareil** : il affiche un QR code et un code à 6 chiffres. Sur le nouvel appareil, scannez le QR code avec l’appareil photo, ou choisissez **Rejoindre la cave d’un autre appareil** et scannez-le là (iPhone et iPad) ou saisissez le code à 6 chiffres. Les deux appareils doivent être sur le même Wi-Fi, et Encave doit avoir accès au réseau local : si cet accès est désactivé, Encave le signale et ouvre les réglages où l’activer."
           }
         }
       }
@@ -7587,16 +8007,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le premier de chaque mois, si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée. Calculé sur cet appareil."
-          }
-        }
-      }
-    },
-    "On the other device, open Settings › Devices › Join Another Device’s Cellar, then scan this code or type the numbers.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur l’autre appareil, ouvrez Réglages › Appareils › Rejoindre la cave d’un autre appareil, puis scannez ce code ou saisissez les chiffres."
           }
         }
       }
@@ -7876,7 +8286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvrir les Réglages"
+            "value": "Ouvrir les réglages"
           }
         }
       }
@@ -7957,6 +8367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre Encave pour ajouter des bouteilles, en scannant l’étiquette ou en saisissant."
+          }
+        }
+      }
+    },
+    "Opens Settings, then choose Devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre les réglages ; choisissez ensuite Appareils."
           }
         }
       }
@@ -8077,6 +8497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Commande annulée"
+          }
+        }
+      }
+    },
+    "Order of racks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordre des casiers"
           }
         }
       }
@@ -8251,6 +8681,16 @@
         }
       }
     },
+    "Photos and documents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos et documents"
+          }
+        }
+      }
+    },
     "Photos and documents included": {
       "localizations": {
         "fr": {
@@ -8271,12 +8711,12 @@
         }
       }
     },
-    "Pinch to zoom in and out, or double-tap a spot. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.": {
+    "Pinch to zoom in and out. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pincez pour zoomer, ou touchez deux fois un endroit. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement."
+            "value": "Pincez pour zoomer. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement."
           }
         }
       }
@@ -8581,6 +9021,16 @@
         }
       }
     },
+    "Puts the bottle here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Met la bouteille ici"
+          }
+        }
+      }
+    },
     "QR code to scan with the other device": {
       "localizations": {
         "fr": {
@@ -8687,6 +9137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lu sur cet appareil. Choisissez le style, ou touchez Modifier les détails pour corriger le reste."
+          }
+        }
+      }
+    },
+    "Reading the Backup…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de la sauvegarde…"
           }
         }
       }
@@ -8891,6 +9351,46 @@
         }
       }
     },
+    "Remove %lld bottles from this device?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld bottle from this device?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld bottles from this device?"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Retirer %lld bouteille de cet appareil ?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Retirer %lld bouteilles de cet appareil ?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Remove Barcode": {
       "localizations": {
         "fr": {
@@ -9017,6 +9517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplacer cette cave"
+          }
+        }
+      }
+    },
+    "Replace and Join": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer et rejoindre"
           }
         }
       }
@@ -9191,12 +9701,12 @@
         }
       }
     },
-    "Rows are lettered from the top and cells numbered from the left: **B3** is the second row, third cell. When a cell holds several bottles, **B3-2** is the second one (behind, or in the pile).": {
+    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. The same name shows everywhere: in the rack, the bottle list, the wine page and Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les cases numérotées depuis la gauche : **B3** est la deuxième rangée, troisième case. Quand une case contient plusieurs bouteilles, **B3-2** est la deuxième (derrière, ou dans la pile)."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les emplacements numérotés depuis la gauche : **B3** est la deuxième rangée, troisième emplacement. Avec deux bouteilles par emplacement, **B3, derrière** est celle du fond. Le même nom s’affiche partout : dans le casier, la liste des bouteilles, la fiche du vin et Siri."
           }
         }
       }
@@ -9331,16 +9841,6 @@
         }
       }
     },
-    "Saved to Files": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrée dans Fichiers"
-          }
-        }
-      }
-    },
     "Saved to your journal": {
       "localizations": {
         "fr": {
@@ -9357,6 +9857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrée avec le vin"
+          }
+        }
+      }
+    },
+    "Save…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer…"
           }
         }
       }
@@ -9427,6 +9937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scanner le code QR"
+          }
+        }
+      }
+    },
+    "Scan this code with the other device’s camera, or type the numbers in Settings › Devices › Join Another Device’s Cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scannez ce code avec l’appareil photo de l’autre appareil, ou saisissez les chiffres dans Réglages › Appareils › Rejoindre la cave d’un autre appareil."
           }
         }
       }
@@ -10201,6 +10721,16 @@
         }
       }
     },
+    "Shows this bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche cette bouteille"
+          }
+        }
+      }
+    },
     "Shows where its bottles are in the rack.": {
       "localizations": {
         "fr": {
@@ -10231,6 +10761,16 @@
         }
       }
     },
+    "Sign-in needed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion requise"
+          }
+        }
+      }
+    },
     "Silky, red fruit, long finish.": {
       "localizations": {
         "fr": {
@@ -10257,6 +10797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format"
+          }
+        }
+      }
+    },
+    "Some bottles are in places you removed.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des bouteilles sont dans des emplacements supprimés."
           }
         }
       }
@@ -10431,12 +10981,32 @@
         }
       }
     },
+    "Stop syncing away from home on this device?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la synchronisation à distance sur cet appareil ?"
+          }
+        }
+      }
+    },
     "Stop syncing on this device?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter la synchronisation sur cet appareil ?"
+          }
+        }
+      }
+    },
+    "Stopping…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt…"
           }
         }
       }
@@ -10531,12 +11101,22 @@
         }
       }
     },
-    "Swipe a device in the list and choose **Remove**, or on the Mac, right-click it and choose **Remove Device**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device.": {
+    "Swaps the two bottles": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil."
+            "value": "Échange les deux bouteilles"
+          }
+        }
+      }
+    },
+    "Swipe a device in the list and choose **Remove**, or on the Mac, right-click it and choose **Remove Device**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device. **Stop Syncing on This Device** tells the other devices on the same Wi-Fi or away from home, so they stop listing it; if none can be reached, remove it on one of them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balayez un appareil dans la liste et choisissez **Retirer**, ou sur le Mac, faites un clic droit dessus et choisissez **Retirer l’appareil**. Il garde ce qu’il a déjà mais ne peut plus se synchroniser avec vos appareils : chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et celle de l’appareil retiré n’est plus acceptée. Pour le réutiliser plus tard avec votre cave, choisissez **Arrêter la synchronisation** sur cet appareil, puis ajoutez-le comme un nouvel appareil. **Arrêter la synchronisation sur cet appareil** prévient les autres appareils sur le même Wi-Fi ou à distance, pour qu’ils ne l’affichent plus ; si aucun n’est joignable, retirez-le depuis l’un d’eux."
           }
         }
       }
@@ -10631,12 +11211,32 @@
         }
       }
     },
-    "Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.": {
+    "Sync needs attention": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisez votre cave entre iPhone, iPad et Mac, chiffrée de bout en bout."
+            "value": "La synchronisation demande votre attention"
+          }
+        }
+      }
+    },
+    "Sync paused": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation en pause"
+          }
+        }
+      }
+    },
+    "Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisez votre cave avec vos autres appareils (iPhone, iPad, Mac ou Android), chiffrée de bout en bout."
           }
         }
       }
@@ -10657,6 +11257,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Synchronisation"
+          }
+        }
+      }
+    },
+    "Syncing stopped on this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation arrêtée sur cet appareil"
           }
         }
       }
@@ -10721,6 +11331,16 @@
         }
       }
     },
+    "Take Them Out and Save": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les retirer et enregistrer"
+          }
+        }
+      }
+    },
     "Take Them Out of the Rack": {
       "localizations": {
         "fr": {
@@ -10771,12 +11391,12 @@
         }
       }
     },
-    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.": {
+    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them. **Undo** in the banner puts them back. **Cancel** (or Esc) stops a move. To move a bottle to another rack, choose **Move…** on it in **Bottle List** or on the wine's page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange."
+            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange. **Annuler** dans le bandeau les remet en place. **Annuler** (ou Échap) arrête un déplacement. Pour mettre une bouteille dans un autre casier, choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
           }
         }
       }
@@ -10827,16 +11447,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez le nouvel emplacement"
-          }
-        }
-      }
-    },
-    "Tap where to put %@": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez où mettre %@"
           }
         }
       }
@@ -10971,7 +11581,7 @@
         }
       }
     },
-    "That position is already taken.": {
+    "That place is already taken.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -10981,7 +11591,7 @@
         }
       }
     },
-    "That position is outside the rack.": {
+    "That place is outside the rack.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -11131,6 +11741,16 @@
         }
       }
     },
+    "The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul."
+          }
+        }
+      }
+    },
     "The cellar it holds cannot be recovered afterwards.": {
       "localizations": {
         "fr": {
@@ -11161,12 +11781,12 @@
         }
       }
     },
-    "The cellar stays on this device as it is. Other devices keep syncing together.": {
+    "The cellar stays on this device as it is. Your other devices are told and keep syncing together.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cave reste telle quelle sur cet appareil. Les autres appareils continuent de se synchroniser entre eux."
+            "value": "La cave reste telle quelle sur cet appareil. Vos autres appareils en sont prévenus et continuent de se synchroniser entre eux."
           }
         }
       }
@@ -11471,12 +12091,12 @@
         }
       }
     },
-    "The same cellar on your iPhone, iPad and Mac.": {
+    "The same cellar on your iPhone, iPad, Mac and Android devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La même cave sur votre iPhone, iPad et Mac."
+            "value": "La même cave sur votre iPhone, votre iPad, votre Mac et vos appareils Android."
           }
         }
       }
@@ -11651,6 +12271,16 @@
         }
       }
     },
+    "They stay in your cellar without a place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elles restent dans votre cave, sans emplacement."
+          }
+        }
+      }
+    },
     "Thinking…": {
       "localizations": {
         "fr": {
@@ -11791,12 +12421,62 @@
         }
       }
     },
+    "This device stops using iCloud. Your other devices keep using it: turn it off on them too if you want.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’utilise plus iCloud. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+          }
+        }
+      }
+    },
+    "This device stops using the WebDAV folder and forgets its login. Your other devices keep using it: turn it off on them too if you want.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’utilise plus le dossier WebDAV et oublie son identifiant. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+          }
+        }
+      }
+    },
+    "This device stops using the relay. Your other devices keep using it: turn it off on them too if you want.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’utilise plus le relais. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez."
+          }
+        }
+      }
+    },
     "This device was removed from the cellar on another device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Cet appareil a été retiré de la cave depuis un autre appareil."
+          }
+        }
+      }
+    },
+    "This device will leave the cellar it shares with %@. Its bottles stay on it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil quittera la cave qu’il partage avec %@. Ses bouteilles y restent."
+          }
+        }
+      }
+    },
+    "This device will show only the other device’s cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’affichera que la cave de l’autre appareil."
           }
         }
       }
@@ -12001,12 +12681,12 @@
         }
       }
     },
-    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for devices on the same Apple Account), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only.": {
+    "To sync when your devices are not on the same Wi-Fi, open **Devices › Sync Away from Home**. Choose **Use iCloud** if it is offered (for Apple devices on the same Apple Account; Android devices cannot use it), a **WebDAV folder** you already have, or the address of a relay: a small open-source service that only stores encrypted files. You can run your own (instructions in the link on that page) or use one run by someone you trust. Devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi; turning it off or changing it applies to this device only, after you confirm.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils connectés au même compte Apple), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil."
+            "value": "Pour synchroniser quand vos appareils ne sont pas sur le même Wi-Fi, ouvrez **Appareils › Synchroniser loin de la maison**. Choisissez **Utiliser iCloud** si l’option est proposée (pour les appareils Apple connectés au même compte Apple ; les appareils Android ne peuvent pas l’utiliser), un **dossier WebDAV** que vous avez déjà, ou l’adresse d’un relais : un petit service open source qui ne stocke que des fichiers chiffrés. Vous pouvez héberger le vôtre (instructions dans le lien de cette page) ou utiliser celui d’une personne de confiance. Les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi ; le désactiver ou le changer ne concerne que cet appareil, après confirmation."
           }
         }
       }
@@ -12097,6 +12777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couche du haut"
+          }
+        }
+      }
+    },
+    "Touch and hold a rack and choose **Move Up** or **Move Down**; on the Mac, drag it in the sidebar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement un casier et choisissez **Monter** ou **Descendre** ; sur Mac, faites-le glisser dans la barre latérale."
           }
         }
       }
@@ -12761,12 +13451,12 @@
         }
       }
     },
-    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar (for example after trying the sample cellar).": {
+    "When joining, choose **Combine** to put both cellars together, or **Replace** to keep only the other device's cellar. With Replace, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil (par exemple après avoir essayé la cave d’exemple)."
+            "value": "En rejoignant, choisissez **Réunir** pour mettre les deux caves ensemble, ou **Remplacer** pour ne garder que la cave de l’autre appareil . Avec Remplacer, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave."
           }
         }
       }
@@ -13071,12 +13761,12 @@
         }
       }
     },
-    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week when you open it, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, choose **Show Weekly Backups in Finder**. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
+    "With **Weekly Backup on This Device** (on at first), Encave makes a backup once a week when you open it, and keeps the last two on this device. On iPhone and iPad they are in the Files app, in **On My iPhone › Encave** (or **On My iPad**); on a Mac, choose **Show Weekly Backups in Finder**. They are not in the iCloud backup of the device, which already holds your cellar, and they are removed with Encave. Settings show when the last backup was made, and suggest one when there was none for a month. A backup kept on the device is lost with it: copy one elsewhere from time to time.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine quand vous l’ouvrez, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
+            "value": "Avec **Sauvegarde hebdomadaire sur cet appareil** (activée au départ), Encave fait une sauvegarde une fois par semaine quand vous l’ouvrez, et garde les deux dernières sur cet appareil. Sur iPhone et iPad, elles sont dans l’app Fichiers, dans **Sur mon iPhone › Encave** (ou **Sur mon iPad**) ; sur un Mac, choisissez **Afficher les sauvegardes hebdomadaires dans le Finder**. Elles ne font pas partie de la sauvegarde iCloud de l’appareil, qui contient déjà votre cave, et elles sont supprimées avec Encave. Les réglages indiquent la date de la dernière sauvegarde, et en proposent une s’il n’y en a pas eu depuis un mois. Une sauvegarde gardée sur l’appareil disparaît avec lui : copiez-en une ailleurs de temps en temps."
           }
         }
       }
@@ -13221,6 +13911,16 @@
         }
       }
     },
+    "Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison."
+          }
+        }
+      }
+    },
     "Your cellar is stored only on this device.": {
       "localizations": {
         "fr": {
@@ -13327,6 +14027,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre note"
+          }
+        }
+      }
+    },
+    "Your other devices are Android devices, which can’t use iCloud. To sync with them away from home, choose a WebDAV folder or a relay instead, on every device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos autres appareils sont des appareils Android, qui ne peuvent pas utiliser iCloud. Pour vous synchroniser à distance avec eux, choisissez plutôt un dossier WebDAV ou un relais, sur chaque appareil."
+          }
+        }
+      }
+    },
+    "Your other devices could not be told. If this device still appears on them, remove it there.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos autres appareils n’ont pas pu être prévenus. Si cet appareil y apparaît encore, retirez-le depuis l’un d’eux."
           }
         }
       }

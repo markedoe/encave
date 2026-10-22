@@ -371,10 +371,17 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.waitForIdle()
         // The move is saved in the background: wait for it.
         val repository = ApplicationProvider.getApplicationContext<EncaveApplication>().repository
-        compose.waitUntil(10_000) {
+        // The save runs on another thread and publishes on the main one: let both run.
+        val deadline = System.currentTimeMillis() + 10_000
+        fun dropped(): Boolean {
             val cellar = repository.cellar.value
-            cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
+            return cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
         }
+        while (!dropped() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50)
+            compose.waitForIdle()
+        }
+        assertTrue("the dragged bottle is in its new place", dropped())
         capture("39-rack-dropped")
     }
 

@@ -295,3 +295,21 @@ object CellarMerge {
         return Cellar(wines.values.filter { it.id in used }, bottles.values, racks, settings, keptDiscoveries.values)
     }
 }
+
+/**
+ * What a device that joined a cellar with Replace sends until the other device's cellar has
+ * arrived: only the objects changed on it since it joined (those with a stamp, the stamps
+ * having been reset when it joined), with the wines and racks they use, and the settings. Its
+ * own bottles are never sent, and are replaced only once the other cellar is taken in
+ * (docs/SYNC.md §5). Mirrors CaveKit's `CellarMerge.onlyStamped`.
+ */
+fun CellarMerge.onlyStamped(cellar: Cellar, state: SyncState): Cellar {
+    fun stamped(kind: SyncKey.Kind, id: UUID) = state.stamps.containsKey(SyncKey.of(kind, id))
+    val bottles = cellar.bottles.values.filter { stamped(SyncKey.Kind.Bottle, it.id) }
+    val discoveries = cellar.discoveries.values.filter { stamped(SyncKey.Kind.Discovery, it.id) }
+    val usedWines = bottles.mapTo(HashSet()) { it.wineId } + discoveries.map { it.wineId }
+    val wines = cellar.wines.values.filter { stamped(SyncKey.Kind.Wine, it.id) || it.id in usedWines }
+    val usedRacks = bottles.mapNotNullTo(HashSet()) { it.slot?.rackId }
+    val racks = cellar.racks.filter { stamped(SyncKey.Kind.Rack, it.id) || it.id in usedRacks }
+    return Cellar(wines, bottles, racks, cellar.settings, discoveries).also { it.schemaVersion = cellar.schemaVersion }
+}

@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var deletingUnreadable: URL?
     @State private var exportDocument: ExportDocument?
     @State private var importing = false
+    /// A backup the user picked is being read (a large archive takes a while).
+    @State private var readingBackup = false
     @State private var importMessage: String?
     @State private var restoreSource: RestoreSource?
     @State private var remindersOn = Reminders.isEnabled
@@ -67,14 +69,20 @@ struct SettingsView: View {
                     DevicesView()
                 } label: {
                     LabeledContent {
-                        Text(devicesSummary)
+                        SyncHealthReader { health in
+                            if health.needsAttention {
+                                SyncHealthLabel(health: health)
+                            } else {
+                                Text(devicesSummary)
+                            }
+                        }
                     } label: {
                         Label("Devices", systemImage: "laptopcomputer.and.iphone")
                     }
                 }
                 .accessibilityIdentifier("settings.devices")
             } footer: {
-                Text("Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.")
+                Text("Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.")
             }
 
             Section {
@@ -139,8 +147,17 @@ struct SettingsView: View {
                 Button {
                     importing = true
                 } label: {
-                    Label("Import…", systemImage: "square.and.arrow.down")
+                    if readingBackup {
+                        Label {
+                            Text("Reading the Backup…")
+                        } icon: {
+                            ProgressView()
+                        }
+                    } else {
+                        Label("Import…", systemImage: "square.and.arrow.down")
+                    }
                 }
+                .disabled(readingBackup)
             } header: {
                 Text("Your data")
             } footer: {
@@ -309,9 +326,13 @@ struct SettingsView: View {
         guard case .success(let url) = result else { return }
         // A backup (archive or JSON) is shown first, to add what is missing or replace the cellar.
         if ["zip", "json"].contains(url.pathExtension.lowercased()) {
+            readingBackup = true
             Task {
                 let accessing = url.startAccessingSecurityScopedResource()
-                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                defer {
+                    if accessing { url.stopAccessingSecurityScopedResource() }
+                    readingBackup = false
+                }
                 do {
                     restoreSource = try await BackupCenter.source(forFileAt: url)
                 } catch let error as ImportError {

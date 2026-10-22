@@ -11,6 +11,8 @@ public struct CellarChangeSummary: Codable, Equatable, Sendable {
     public var bottlesAdded = 0
     /// Bottles that disappeared, or were given away, sold or broken.
     public var bottlesRemoved = 0
+    /// New wines put on the shopping list (a wine without bottles, with a discovery to buy).
+    /// A new wine with bottles is told by its bottles; any other new wine, by its discovery.
     public var winesAdded = 0
     /// Every other change: wines edited, racks, discoveries, saved searches, settings,
     /// and bottles changed otherwise (moved, received, edited). A deleted wine is not
@@ -73,9 +75,23 @@ public struct CellarChangeSummary: Codable, Equatable, Sendable {
             }
         }
 
+        let withBottles = Set(after.bottles.values.map(\.wineID))
+        let toBuy = Set(after.discoveries.values.filter(\.wantsToBuy).map(\.wineID))
+        // Wines counted as added to the shopping list: their discovery is not counted again.
+        var listed: Set<UUID> = []
         for (id, wine) in after.wines where before.wines[id] != wine {
-            guard credit(SyncKey(.wine, id).string) else { continue }
-            if before.wines[id] == nil { summary.winesAdded += 1 } else { summary.otherChanges += 1 }
+            if before.wines[id] == nil {
+                guard !withBottles.contains(id), toBuy.contains(id), credit(SyncKey(.wine, id).string) else { continue }
+                summary.winesAdded += 1
+                listed.insert(id)
+            } else if credit(SyncKey(.wine, id).string) {
+                summary.otherChanges += 1
+            }
+        }
+        for id in Set(before.discoveries.keys).union(after.discoveries.keys)
+        where before.discoveries[id] != after.discoveries[id] {
+            if before.discoveries[id] == nil, let new = after.discoveries[id], listed.contains(new.wineID) { continue }
+            if credit(SyncKey(.discovery, id).string) { summary.otherChanges += 1 }
         }
 
         func others<T: Equatable>(_ kind: SyncKey.Kind, _ a: [UUID: T], _ b: [UUID: T]) {
@@ -83,7 +99,6 @@ public struct CellarChangeSummary: Codable, Equatable, Sendable {
                 if credit(SyncKey(kind, id).string) { summary.otherChanges += 1 }
             }
         }
-        others(.discovery, before.discoveries, after.discoveries)
         others(.rack, CellarMerge.byID(before.racks), CellarMerge.byID(after.racks))
         others(.search, CellarMerge.byID(before.settings.savedSearches), CellarMerge.byID(after.settings.savedSearches))
         if before.settings.withoutSearches != after.settings.withoutSearches, credit(SyncKey.settings) {

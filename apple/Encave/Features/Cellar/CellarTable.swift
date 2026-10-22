@@ -174,7 +174,7 @@ struct CellarTable: View {
             Button {
                 model.sheet = .settings
             } label: {
-                Label("Settings", systemImage: "gearshape")
+                SettingsButtonLabel()
             }
         }
         #endif

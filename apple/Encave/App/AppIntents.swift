@@ -22,7 +22,11 @@ enum CellarAccess {
 
     /// "Main rack · B3", or the storage note.
     static func location(of bottle: Bottle, in cellar: Cellar) -> String? {
-        cellar.locationLabel(for: bottle)
+        // The place as the app shows it ("Main rack · B3, back").
+        if let slot = bottle.slot, let rack = cellar.rack(slot.rackID) {
+            return "\(rack.name) · \(rack.displayLabel(for: slot))"
+        }
+        return cellar.locationLabel(for: bottle)
     }
 }
 

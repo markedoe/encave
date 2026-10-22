@@ -146,15 +146,17 @@ val RackKind.columnsRes: Int
 fun Rack.displayLabel(slot: Slot, resources: Resources): String {
     val cell = displayLabel(slot.cell, resources)
     if (kind == RackKind.Bins || positionsPerCell <= 1) return cell
-    val depthName = resources.getString(
-        when (slot.depth) {
-            0 -> R.string.depth_front
-            positionsPerCell - 1 -> R.string.depth_back
-            else -> R.string.depth_middle
-        },
-    )
-    return resources.getString(R.string.place_with_depth, cell, depthName)
+    return resources.getString(R.string.place_with_depth, cell, depthName(slot.depth, resources))
 }
+
+/** Front, middle or back of a place. */
+fun Rack.depthName(depth: Int, resources: Resources): String = resources.getString(
+    when (depth) {
+        0 -> R.string.depth_front
+        positionsPerCell - 1 -> R.string.depth_back
+        else -> R.string.depth_middle
+    },
+)
 
 fun Rack.displayLabel(cell: RackCell, resources: Resources): String {
     // A fridge with bottles in layers: "Shelf 1, top layer, place 3".
@@ -242,6 +244,7 @@ fun Wine.origin(): String = listOfNotNull(producer, region ?: country).filter { 
 fun UiText.resolve(resources: Resources): String = when (this) {
     is UiText.Res -> resources.getString(id, *args.toTypedArray())
     is UiText.Plural -> resources.getQuantityString(id, count, count)
+    is UiText.Built -> build(resources)
 }
 
 @Composable

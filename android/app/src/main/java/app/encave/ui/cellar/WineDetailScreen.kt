@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.OpenWith
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.VolunteerActivism
@@ -151,6 +152,8 @@ fun WineDetailScreen(
     var menu by remember { mutableStateOf(false) }
     var drinking by remember { mutableStateOf<Bottle?>(null) }
     var reserving by remember { mutableStateOf<Bottle?>(null) }
+    /** A bottle being moved to a place, another rack, or out of the racks. */
+    var movingBottle by remember { mutableStateOf<UUID?>(null) }
     var findingPrice by remember { mutableStateOf(false) }
     var searchingOnline by remember { mutableStateOf(false) }
     var choosingPicture by remember { mutableStateOf(false) }
@@ -267,6 +270,7 @@ fun WineDetailScreen(
                     onShowInRack = bottle.slot?.let { slot ->
                         { navigator.open(RackDetailRoute(slot.rackId.toString(), bottle.id.toString())) }
                     },
+                    onMove = { movingBottle = bottle.id },
                     onGone = { viewModel.markGone(bottle.id) },
                     // With Undo; the wine goes with its last bottle, and the page closes.
                     onDelete = { viewModel.deleteBottle(bottle.id) },
@@ -400,6 +404,9 @@ fun WineDetailScreen(
     }
     bottleDocuments?.let { (bottleId, importing) ->
         BottleDocumentsSheet(viewModel, bottleId, startPicking = importing, onDismiss = { bottleDocuments = null })
+    }
+    movingBottle?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id == id } }?.let { bottle ->
+        app.encave.ui.racks.MoveBottleSheet(viewModel, cellar, bottle, onDismiss = { movingBottle = null })
     }
     reserving?.let { bottle ->
         ReserveDialog(
@@ -633,6 +640,7 @@ private fun BottleRow(
     bottle: Bottle,
     onDrink: () -> Unit,
     onShowInRack: (() -> Unit)?,
+    onMove: () -> Unit,
     onGone: () -> Unit,
     onDelete: () -> Unit,
     onReserve: () -> Unit,
@@ -686,6 +694,12 @@ private fun BottleRow(
                                 onClick = { menu = false; onShowInRack() },
                             )
                         }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_move_ellipsis)) },
+                            leadingIcon = { Icon(Icons.Outlined.OpenWith, contentDescription = null) },
+                            onClick = { menu = false; onMove() },
+                            modifier = Modifier.testTag("action.move_bottle"),
+                        )
                         if (bottle.reservedFor == null) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_keep_for_occasion)) },

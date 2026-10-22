@@ -231,6 +231,7 @@ struct CellarList: View {
             }
             // Rows slide into place when sorting or filtering, not at each letter typed.
             .animation(searching ? nil : .default, value: groups.map(\.id))
+            .modifier(SyncRefresh())
             }
         }
     }
@@ -289,7 +290,7 @@ struct CellarList: View {
             Button {
                 model.sheet = .settings
             } label: {
-                Label("Settings", systemImage: "gearshape")
+                SettingsButtonLabel()
             }
             .accessibilityIdentifier("cellar.settings")
         }
@@ -693,4 +694,17 @@ struct EmptyCellarView: View {
 
 #Preview {
     CellarView().environment(CellarModel.preview())
+}
+
+/// Pull down to sync with the other devices, when there are any.
+private struct SyncRefresh: ViewModifier {
+    @Environment(CellarModel.self) private var model
+
+    func body(content: Content) -> some View {
+        if model.sync.otherDevices.isEmpty || model.sync.isDemo {
+            content
+        } else {
+            content.refreshable { await model.sync.syncEverywhere() }
+        }
+    }
 }
