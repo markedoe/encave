@@ -73,19 +73,36 @@ class APIError(Exception):
         self.body = body
 
 
+# Seconds to wait before each new try when App Store Connect is busy (429), fails on
+# its side (5xx) or cannot be reached: it sometimes answers 500 to a plain GET.
+RETRY_DELAYS = (5, 15, 30, 60, 120)
+
+
 def call(method, path, body=None, query=None):
     url = f"{API}{path}"
     if query:
         url += "?" + urllib.parse.urlencode(query)
     data = json.dumps(body).encode() if body is not None else None
-    request = urllib.request.Request(url, data=data, method=method, headers={
-        "Authorization": f"Bearer {token()}", "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            text = response.read().decode()
-            return json.loads(text) if text else {}
-    except urllib.error.HTTPError as error:
-        raise APIError(error.code, error.read().decode(errors="replace")) from None
+    for attempt in range(len(RETRY_DELAYS) + 1):
+        # A new token for each try: a signed token is only valid for a few minutes.
+        request = urllib.request.Request(url, data=data, method=method, headers={
+            "Authorization": f"Bearer {token()}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                text = response.read().decode()
+                return json.loads(text) if text else {}
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode(errors="replace")
+            if (error.code != 429 and error.code < 500) or attempt == len(RETRY_DELAYS):
+                raise APIError(error.code, detail) from None
+            reason = f"HTTP {error.code}"
+        except (urllib.error.URLError, TimeoutError) as error:
+            if attempt == len(RETRY_DELAYS):
+                raise
+            reason = str(getattr(error, "reason", error))
+        delay = RETRY_DELAYS[attempt]
+        print(f"{method} {path}: {reason}, trying again in {delay} s", file=sys.stderr)
+        time.sleep(delay)
 
 
 def wait_for_build(app_id, number, platform, minutes):
