@@ -110,6 +110,9 @@ def main():
         except APIError as error:
             print(f"::warning::Age rating not set: {error}")
 
+    # Adding a language to the app information also adds it to the version.
+    version_locs = {l["attributes"]["locale"]: l for l in
+                    call("GET", f"/appStoreVersions/{version['id']}/appStoreVersionLocalizations")["data"]}
     for locale, fields in (wanted.get("version") or {}).items():
         attributes = {k: v for k, v in fields.items() if k in VERSION_FIELDS and v is not None}
         try:
