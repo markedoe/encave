@@ -69,6 +69,43 @@ final class ScreenTourTests: XCTestCase {
     }
     #endif
 
+    // MARK: Studio look
+
+    #if os(iOS)
+    func testStudioPicturesInLight() throws {
+        try studioPictures(dark: false)
+    }
+
+    func testStudioPicturesInDark() throws {
+        try studioPictures(dark: true)
+    }
+
+    /// The first wines of the sample cellar, whose label photos are drawn by the app
+    /// (a tilted bottle on a busy counter, a close-up of a label, a bottle lying in a
+    /// fridge, a bottle on a table): the list and each wine's page.
+    private func studioPictures(dark: Bool) throws {
+        language = dark ? "studio-dark" : "studio"
+        step = 0
+        continueAfterFailure = true
+        app = XCUIApplication()
+        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + (dark ? ["--dark"] : [])
+        app.launch()
+        openSection(0, "cellar")
+        // Time for the studio pictures to be made the first time.
+        sleep(8)
+        snapshot("cellar")
+        let rows = app.descendants(matching: .any).matching(identifier: "wine.row")
+        for index in 0..<4 {
+            let row = rows.element(boundBy: index)
+            guard row.waitForExistence(timeout: 5), row.isHittable else { break }
+            row.press()
+            sleep(3)
+            snapshot("wine-\(index + 1)")
+            goBack()
+        }
+    }
+    #endif
+
     // MARK: Tour
 
     private func tour(language: String) throws {
