@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- First run: Join a Cellar from Another Device on the empty Cellar; while the
+  sample cellar is there, a banner removes it alone (with Undo), and joining
+  another device replaces a sample-only cellar
+- Beta notices and the sample cellar come from a build flag (EncaveChannel on
+  Apple, BuildConfig.BETA on Android), so a store build turns them off
+- Mac and iPad: one sheet and section per window, a Wine menu (Edit ⌘E,
+  Drink ⌘D, Delete ⌘⌫), the Delete key, several wines selected in the table,
+  New Window (⌃⌘N); menu commands open the window when it is closed
+- iPhone and iPad: Settings from every section; Select in the Cellar toolbar
 - SwiftUI app for iPhone, iPad and Mac, and a Kotlin and Jetpack Compose app
   for Android phones, tablets and foldables: Cellar, Racks, Tonight and Journal
 - Local storage of the cellar, sample cellar, French and English

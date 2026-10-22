@@ -126,6 +126,7 @@ extension WineAttribute {
 /// other wine has it, to edit it). Touch and hold to copy, edit or search the web for it.
 struct ExploreDetailRow<Value: View>: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let title: LocalizedStringKey
     let attribute: WineAttribute
     let wineID: UUID
@@ -167,7 +168,7 @@ struct ExploreDetailRow<Value: View>: View {
             } else {
                 // No other wine shares it: a list of this wine alone would lead nowhere.
                 EditDetailRow(hint: Text("Edits this detail of the wine.")) {
-                    model.sheet = .editWine(wineID: wineID, field: attribute.field)
+                    router?.sheet = .editWine(wineID: wineID, field: attribute.field)
                 } content: {
                     LabeledContent {
                         content.multilineTextAlignment(.trailing)
@@ -180,7 +181,7 @@ struct ExploreDetailRow<Value: View>: View {
         }
         .contextMenu {
             DetailMenu(value: attribute.value,
-                       onEdit: { model.sheet = .editWine(wineID: wineID, field: attribute.field) },
+                       onEdit: { router?.sheet = .editWine(wineID: wineID, field: attribute.field) },
                        onSearchWeb: attribute.isSearchable ? onSearchWeb : nil)
         }
     }

@@ -10,6 +10,8 @@ object DesignTokens {
 
     val accent = ThemedColor(light = 0xFF8E1E3A, dark = 0xFFE0607A)
 
+    /** Launch window (window_background in the values and values-night colors.xml), checked by DesignTokensTest. */
+    val launchBackground = ThemedColor(light = 0xFFFEFCFC, dark = 0xFF120F10)
     /** Text and icons of a warning, always next to an icon or words. */
     val warning = ThemedColor(light = 0xFF8F5300, dark = 0xFFF2B04A)
 

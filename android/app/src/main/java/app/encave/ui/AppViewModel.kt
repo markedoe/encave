@@ -1,5 +1,6 @@
 package app.encave.ui
 
+import app.encave.BuildConfig
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -34,6 +35,8 @@ import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.ui.components.displayLabel
 import app.encave.core.SampleData
+import app.encave.core.containsSample
+import app.encave.core.removingSample
 import app.encave.core.Slot
 import app.encave.core.Tasting
 import app.encave.core.Wine
@@ -61,7 +64,9 @@ import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -104,6 +109,9 @@ sealed interface LabelReading {
     data class Failed(val error: Throwable) : LabelReading
 }
 
+/** A haptic confirmation played by the UI: an action done, or refused. */
+enum class Haptic { Confirm, Reject }
+
 /**
  * The cellar and every command the screens can run. Commands go through the
  * repository, which saves before publishing; errors become snackbar messages.
@@ -128,6 +136,15 @@ class AppViewModel(
 
     private val messageChannel = Channel<UiMessage>(Channel.BUFFERED)
     val messages: Flow<UiMessage> = messageChannel.receiveAsFlow()
+
+    // Not kept for later: a haptic only makes sense while the app is shown.
+    private val hapticFlow = MutableSharedFlow<Haptic>(extraBufferCapacity = 8)
+
+    /**
+     * Confirm when bottles are added, drunk, moved, placed or received, a discovery is saved,
+     * documents attached or a backup restored (as on Apple); Reject when a change is refused.
+     */
+    val haptics: SharedFlow<Haptic> = hapticFlow
 
     val year: Int get() = LocalDate.now().year
 
@@ -161,6 +178,16 @@ class AppViewModel(
         messageChannel.trySend(UiMessage(text, undo, long = long))
     }
 
+    private fun confirm() {
+        hapticFlow.tryEmit(Haptic.Confirm)
+    }
+
+    /** Reports a change that failed (a place taken, a full disk…). */
+    private fun fail(error: Throwable) {
+        hapticFlow.tryEmit(Haptic.Reject)
+        post(errorText(error))
+    }
+
     private fun errorText(error: Throwable): UiText = UiText.Res(
         when (error) {
             is CellarException -> when (error.error) {
@@ -187,7 +214,7 @@ class AppViewModel(
     /** Runs a change; reports failures and, on success, [onSuccess]. */
     private fun <T> change(onSuccess: (T) -> Unit = {}, block: (Cellar) -> T) {
         viewModelScope.launch {
-            repository.update(block).onSuccess(onSuccess).onFailure { post(errorText(it)) }
+            repository.update(block).onSuccess(onSuccess).onFailure { fail(it) }
         }
     }
 
@@ -230,6 +257,7 @@ class AppViewModel(
             }
                 .onSuccess { added ->
                     withContext(Dispatchers.IO) { pendingDocuments.forEach(documents::discard) }
+                    confirm()
                     // The AI was still reading the label: its answer completes the saved wine.
                     if (readingJobs[record.id] != null) savedWhileReading[record.id] = record
                     val ids = added.map { it.id }
@@ -240,7 +268,7 @@ class AppViewModel(
                     onDone(true)
                 }
                 .onFailure {
-                    post(errorText(it))
+                    fail(it)
                     onDone(false)
                 }
         }
@@ -263,7 +291,10 @@ class AppViewModel(
         if (!journalFilter.value.showsTastings) journalFilter.value = DiaryFilter.All
         // A tag only picks wines tasted elsewhere.
         journalTag.value = null
-        change<String>({ name -> post(UiText.Res(R.string.msg_drunk, listOf(name))) { undoDrink(bottleId, previous) } }) {
+        change<String>({ name ->
+            confirm()
+            post(UiText.Res(R.string.msg_drunk, listOf(name))) { undoDrink(bottleId, previous) }
+        }) {
             it.drink(bottleId, tasting)
             nameOf(it, bottleId)
         }
@@ -292,7 +323,10 @@ class AppViewModel(
     fun receive(bottleIds: List<UUID>) {
         val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
         if (before.isEmpty()) return
-        change<Unit>({ post(UiText.Res(R.string.msg_received, listOf(before.size))) { restore(before) } }) {
+        change<Unit>({
+            confirm()
+            post(UiText.Res(R.string.msg_received, listOf(before.size))) { restore(before) }
+        }) {
             it.receive(before.map(Bottle::id))
         }
     }
@@ -339,7 +373,10 @@ class AppViewModel(
         val before = bottlesOfWines(wineIds)
         change<Int>({ placed ->
             if (placed == 0) post(UiText.Res(R.string.msg_no_free_place))
-            else post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+            else {
+                confirm()
+                post(UiText.Res(R.string.msg_bottles_placed, listOf(placed))) { restore(before) }
+            }
         }) { it.place(wineIds, rackId) }
     }
 
@@ -403,6 +440,7 @@ class AppViewModel(
             } else {
                 UiText.Res(R.string.msg_taken_out_one)
             }
+            confirm()
             post(text) { moveBack(before) }
         }) { c ->
             c.move(bottleId, slot)
@@ -420,7 +458,7 @@ class AppViewModel(
     }
 
     /** Swaps the contents of two places; Undo swaps them again. */
-    fun swap(a: Slot, b: Slot) = change<Unit>({ post(UiText.Res(R.string.msg_swapped)) { change<Unit> { it.swap(a, b) } } }) { it.swap(a, b) }
+    fun swap(a: Slot, b: Slot) = change<Unit>({ confirm(); post(UiText.Res(R.string.msg_swapped)) { change<Unit> { it.swap(a, b) } } }) { it.swap(a, b) }
 
     fun updateTasting(bottleId: UUID, tasting: Tasting) =
         change<Unit>({ post(UiText.Res(R.string.msg_saved)) }) { it.updateTasting(bottleId, tasting) }
@@ -446,7 +484,7 @@ class AppViewModel(
                 return@launch
             }
             repository.update { c -> c.wines[wineId]?.let { c.updateWine(it.copy(coverPhotoId = newId)) } }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -463,7 +501,7 @@ class AppViewModel(
             // (added meanwhile on another device, for example).
             repository.update { c -> c.updateWine(record.copy(attachments = c.wines[record.id]?.attachments ?: record.attachments)) }
                 .onSuccess { if (!quiet) post(UiText.Res(R.string.msg_saved)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -480,7 +518,7 @@ class AppViewModel(
                 val wine = cellar.wines[wineId] ?: return@update
                 // The same picture twice has the same ID: it is already there.
                 if (id !in wine.extraPhotoIds.orEmpty()) cellar.updateWine(wine.copy(extraPhotoIds = wine.extraPhotoIds.orEmpty() + id))
-            }.onFailure { post(errorText(it)) }
+            }.onFailure { fail(it) }
             onDone()
         }
     }
@@ -529,9 +567,10 @@ class AppViewModel(
                     if (filter == DiaryFilter.Cellar || (filter == DiaryFilter.ToBuy && !discovery.wantsToBuy)) journalFilter.value = DiaryFilter.All
                     val tag = journalTag.value
                     if (tag != null && discovery.tags.none { it.equals(tag, ignoreCase = true) }) journalTag.value = null
+                    confirm()
                     post(UiText.Res(if (discovery.wantsToBuy) R.string.discovery_added_to_list else R.string.discovery_saved))
                 }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -547,7 +586,7 @@ class AppViewModel(
                 it.updateWine(record)
                 it.updateDiscovery(discovery)
             }.onSuccess { post(UiText.Res(R.string.msg_saved)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -643,7 +682,7 @@ class AppViewModel(
                 post(UiText.Res(R.string.msg_ai_completed, listOf(updated.displayName))) {
                     change<Unit> { c -> c.wines[live.id]?.let { c.updateWine(it.completed(from = updated, to = live)) } }
                 }
-            }.onFailure { post(errorText(it)) }
+            }.onFailure { fail(it) }
         }
     }
 
@@ -727,7 +766,7 @@ class AppViewModel(
             }
             if (attachments.size < staged.size) post(UiText.Res(R.string.err_document_unreadable))
             if (attachments.isNotEmpty()) {
-                repository.update { it.attach(attachments, target) }.onFailure { post(errorText(it)) }
+                repository.update { it.attach(attachments, target) }.onSuccess { confirm() }.onFailure { fail(it) }
             }
             onDone()
         }
@@ -830,16 +869,30 @@ class AppViewModel(
 
     fun setStudioLook(enabled: Boolean) = preferences.setStudioLook(enabled)
 
-    /** The sample is offered only on an empty cellar that no other device shares. */
-    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = cellar.isEmpty && !shared
+    /** The sample is offered only on an empty cellar that no other device shares, in beta builds. */
+    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = BuildConfig.BETA && cellar.isEmpty && !shared
 
-    /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices). */
+    /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices); Undo removes it. */
     fun loadSample(labels: SampleData.Labels) {
         if (!canLoadSample(cellar.value, sharedWithDevices.value)) return
-        change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) }) { c ->
+        change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) { removeSample(announce = false) } }) { c ->
             val empty = c.isEmpty
             if (empty) c.merge(SampleData.cellar(year, labels))
             empty
+        }
+    }
+
+    /**
+     * Removes the sample's racks, wines, bottles and Journal entries, and only them (the
+     * user's records stay), with Undo unless [announce] is false (the Undo of loading it).
+     */
+    fun removeSample(announce: Boolean = true) {
+        viewModelScope.launch {
+            val before = cellar.value.copy()
+            if (!before.containsSample) return@launch
+            repository.replace(before.removingSample())
+                .onSuccess { if (announce) post(UiText.Res(R.string.msg_sample_removed)) { change<Unit> { c -> c.merge(before) } } }
+                .onFailure { fail(it) }
         }
     }
 
@@ -852,7 +905,7 @@ class AppViewModel(
             val before = cellar.value.copy()
             repository.replace(Cellar(settings = before.settings))
                 .onSuccess { post(UiText.Res(R.string.msg_erased)) { change<Unit> { c -> c.merge(before) } } }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -966,13 +1019,14 @@ class AppViewModel(
                 .onSuccess {
                     source.workingFolder?.let { folder -> withContext(Dispatchers.IO) { folder.deleteRecursively() } }
                     restoreState.value = null
+                    confirm()
                     val text = if (mode == RestoreMode.Replace) UiText.Res(R.string.msg_restored) else importText(summary)
                     val undo: (() -> Unit)? = if (restored == before) null else ({ undoRestore(before, restored) })
                     messageChannel.trySend(UiMessage(text, undo))
                     onDone(true)
                 }
                 .onFailure {
-                    post(errorText(it))
+                    fail(it)
                     onDone(false)
                 }
         }
@@ -983,7 +1037,7 @@ class AppViewModel(
         viewModelScope.launch {
             repository.replaceIf(restored, before)
                 .onSuccess { undone -> if (!undone) post(UiText.Res(R.string.msg_undo_restore_too_late)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 
@@ -1054,7 +1108,7 @@ class AppViewModel(
             }
             repository.update { cellar -> cellar.importCsv(text) }
                 .onSuccess { post(importText(it)) }
-                .onFailure { post(errorText(it)) }
+                .onFailure { fail(it) }
         }
     }
 

@@ -1,5 +1,6 @@
 package app.encave.ui.devices
 
+import app.encave.core.isOnlySample
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -200,7 +201,9 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
     val begin = rememberLocalNetworkAccess {
         // Read when it runs, not when composed: a scanned code is set just before.
         val typed = PairingCode(digits)
-        if (typed.isValid) model.join(typed, commitment?.let { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }, replace)
+        // Only the sample cellar here: the other device's cellar replaces it, never joins it.
+        val replacing = replace || viewModel.cellar.value.isOnlySample
+        if (typed.isValid) model.join(typed, commitment?.let { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }, replacing)
     }
     // Replacing bottles of the user's own asks first; the sample is replaced without asking.
     val checkReplace: () -> Unit = {
@@ -307,7 +310,14 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l).testTag("devices.codeField"),
             )
-            if (hasBottles) {
+            if (cellar.isOnlySample) {
+                Text(
+                    stringResource(R.string.join_replaces_sample),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = Dimens.l, end = Dimens.l, top = Dimens.l),
+                )
+            } else if (hasBottles) {
                 Text(
                     stringResource(R.string.join_has_bottles),
                     style = MaterialTheme.typography.titleSmall,

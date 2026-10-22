@@ -818,6 +818,8 @@ struct JoinDeviceView: View {
 
     private var code: PairingCode { PairingCode(digits: digits) }
     private var hasOwnBottles: Bool { !model.cellar.bottles.isEmpty }
+    /// Only the sample cellar here: the other device's cellar replaces it, never joins it.
+    private var replacesSample: Bool { model.cellar.isOnlySample }
     private var sharedNames: String { model.sync.otherDevices.map(\.name).formatted(.list(type: .and)) }
 
     var body: some View {
@@ -927,7 +929,12 @@ struct JoinDeviceView: View {
             } footer: {
                 Text("On the device that already has your cellar: Settings › Devices › Add a Device.")
             }
-            if hasOwnBottles {
+            if replacesSample {
+                Section {
+                } footer: {
+                    Text("The sample cellar on this device will be replaced.")
+                }
+            } else if hasOwnBottles {
                 Section {
                     Picker("This device’s bottles", selection: $replace) {
                         Text("Combine with the other cellar").tag(false)
@@ -941,7 +948,7 @@ struct JoinDeviceView: View {
                     if replace {
                         Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
                     } else {
-                        Text("Both cellars are put together. Choose Replace with the other cellar if this device only has the sample cellar.")
+                        Text("Both cellars are put together.")
                     }
                 }
             }
@@ -984,8 +991,9 @@ struct JoinDeviceView: View {
     }
 
     private func join() {
-        session = PairingSession.join(code: code, commitment: commitment, replace: replace && hasOwnBottles,
-                                      using: model.sync)
+        // Only the sample here: replaced without asking (the picker is not shown).
+        session = PairingSession.join(code: code, commitment: commitment,
+                                      replace: (replace && hasOwnBottles) || replacesSample, using: model.sync)
     }
 
 }

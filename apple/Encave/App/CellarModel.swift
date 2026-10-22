@@ -14,8 +14,6 @@ import AppKit
 final class CellarModel {
     private(set) var cellar = Cellar()
     var errorMessage: String?
-    /// The sheet shown above everything (add, drink, edit...).
-    var sheet: AppSheet?
     /// Short confirmation with an optional Undo, shown at the bottom.
     var toast: Toast?
     /// Bumped on successful actions, drives haptic feedback.
@@ -24,8 +22,6 @@ final class CellarModel {
     var selectionCount = 0
     /// Slot to highlight when jumping to a rack ("Show in rack").
     var highlightedSlot: Slot?
-    /// Selected tab, so other screens can jump between sections.
-    var selectedTab: AppTab = .cellar
     /// What the Journal shows; back to everything when a new entry would be hidden.
     var journalFilter: DiaryFilter = .all
     /// The Journal's tag chip; cleared, like the filter, when a new entry would be hidden.
@@ -59,6 +55,8 @@ final class CellarModel {
 
     /// Previous versions, Back Up Now and the weekly archive.
     @ObservationIgnored let backups: BackupCenter
+    /// Spotlight's on-device index of the wines.
+    @ObservationIgnored private let spotlight = SpotlightIndex()
 
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     /// `versions`: earlier versions of the cellar when the store keeps none (previews).
@@ -111,6 +109,7 @@ final class CellarModel {
         guard !loadFailed else { return }
         // An Undo would apply to the cellar now loaded.
         toast = nil
+        indexInSpotlight()
         #if os(iOS)
         sync.scheduleBackgroundSync()
         #endif
@@ -181,19 +180,64 @@ final class CellarModel {
     /// The app's model, for Siri and Shortcuts (App Intents) while the app runs.
     private(set) static weak var current: CellarModel?
 
-    /// A wine to show, asked by Spotlight, Shortcuts or a notification.
-    var openWineRequest: UUID?
+    // MARK: Windows
 
+    /// The router of the window used last (each window has its own, see `SceneRouter`).
+    @ObservationIgnored private weak var activeRouter: SceneRouter?
+    /// Asked while no window was open (Mac), or before the first one appeared at launch:
+    /// done by the next window that becomes active.
+    @ObservationIgnored private var pendingAction: SceneAction?
+
+    /// Shows something in the window used last, or in the next one to open. For requests
+    /// from outside a window (Spotlight, Shortcuts, notifications, the menu bar); screens
+    /// use their own window's router.
+    func request(_ action: SceneAction) {
+        if let activeRouter {
+            activeRouter.perform(action)
+        } else {
+            pendingAction = action
+        }
+    }
+
+    /// A window came to the front: requests go to it from now on.
+    func sceneBecameActive(_ router: SceneRouter) {
+        activeRouter = router
+        if let action = pendingAction {
+            pendingAction = nil
+            router.perform(action)
+        }
+    }
+
+    /// A window closed.
+    func sceneClosed(_ router: SceneRouter) {
+        if activeRouter === router { activeRouter = nil }
+    }
+
+    /// The sheet of the window used last. Screens use their window's router instead.
+    var sheet: AppSheet? {
+        get { activeRouter?.sheet }
+        set {
+            if let newValue { request(.present(newValue)) } else { activeRouter?.sheet = nil }
+        }
+    }
+
+    /// The section of the window used last. Screens use their window's router instead.
+    var selectedTab: AppTab {
+        get { activeRouter?.selectedTab ?? .cellar }
+        set { request(.show(newValue)) }
+    }
+
+    /// Asked by Spotlight, Shortcuts, a notification or the menu bar: shown in the window
+    /// used last once its sheet, if any, is closed (a form is never closed for it).
     func open(wine id: UUID) {
         guard cellar.wines[id] != nil else { return }
-        sheet = nil
-        selectedTab = .cellar
-        openWineRequest = id
+        request(.openWine(id))
     }
 
     static func live() -> CellarModel {
         let model = makeLive()
         current = model
+        model.indexInSpotlight()
         #if os(iOS)
         let quitting = UIApplication.willTerminateNotification
         #elseif os(macOS)
@@ -212,7 +256,7 @@ final class CellarModel {
             let model = preview()
             if let index = arguments.firstIndex(of: "--tab"), arguments.indices.contains(index + 1),
                let tab = AppTab(rawValue: arguments[index + 1]) {
-                model.selectedTab = tab
+                model.request(.show(tab))
             }
             return model
         }
@@ -256,6 +300,7 @@ final class CellarModel {
             cellar = copy
             if !undoing { dropStaleUndo() }
             onLocalChange?(old, copy)
+            indexInSpotlight()
             return true
         } catch let error as CellarError {
             errorMessage = error.localizedMessage
@@ -271,6 +316,7 @@ final class CellarModel {
         save(synced)
         cellar = synced
         dropStaleUndo()
+        indexInSpotlight()
     }
 
     // MARK: Saving
@@ -685,17 +731,37 @@ final class CellarModel {
         #if os(iOS)
         sync.scheduleBackgroundSync()
         #endif
+        spotlight.flush()
     }
 
+    /// Spotlight follows the cellar, a while after the last change; never for the sample
+    /// cellar of the screen tour, nor for a cellar that could not be loaded.
+    private func indexInSpotlight() {
+        guard !sync.isDemo, !loadFailed else { return }
+        spotlight.schedule(cellar)
+    }
+
+    /// Racks in the window used last. Screens use their window's router instead.
     func showInRack(_ bottle: Bottle) {
-        guard let slot = bottle.slot else { return }
-        highlightedSlot = slot
-        selectedTab = .racks
+        activeRouter?.showInRack(bottle, model: self)
     }
 
     /// The sample cellar replaces everything, so it is offered only for an empty cellar
-    /// that no other device syncs with.
-    var canLoadSample: Bool { cellar.isEmpty && sync.otherDevices.isEmpty }
+    /// that no other device syncs with, and only in beta builds (AppChannel).
+    var canLoadSample: Bool { AppChannel.isBeta && cellar.isEmpty && sync.otherDevices.isEmpty }
+
+    /// Records of the sample cellar are still here: the Cellar offers to remove them
+    /// (not in the screen tour, whose cellar is the sample).
+    var showsSampleBanner: Bool { !sync.isDemo && cellar.containsSample }
+
+    /// Removes the sample's racks, wines, bottles and Journal entries, and only them, with Undo.
+    func removeSample() {
+        let snapshot = cellar
+        guard snapshot.containsSample, update({ $0 = $0.removingSample() }) else { return }
+        showToast(String(localized: "Sample cellar removed")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
 
     func loadSample() {
         guard canLoadSample else { return }
@@ -703,8 +769,9 @@ final class CellarModel {
         var sample = SampleData.cellar(labels: .localized)
         sample.settings = snapshot.settings
         guard update({ $0 = sample }) else { return }
+        // Undo takes only the sample away, whatever was added meanwhile.
         showToast(String(localized: "Sample cellar loaded")) { [weak self] in
-            self?.update { $0 = snapshot }
+            self?.update { $0 = $0.removingSample() }
         }
     }
 

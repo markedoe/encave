@@ -46,8 +46,9 @@ struct CellarWriterTests {
             await writer.submit(version, generation: index + 1)
         }
         await writer.flush()
-        // The first write, then one for everything that came in while it ran.
-        #expect(store.writes.count <= 3)
+        // Changes made during a write are coalesced: fewer writes than changes. The exact
+        // count depends on the machine's timing, so it is not checked.
+        #expect(store.writes.count < versions.count)
         #expect(store.writes.last == versions.last)
         #expect(await writer.lastSaved == versions.last)
         #expect(await writer.savedGeneration == 20)

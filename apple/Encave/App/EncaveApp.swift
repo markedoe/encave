@@ -1,3 +1,4 @@
+import CaveKit
 import SwiftUI
 import UserNotifications
 
@@ -6,7 +7,7 @@ struct EncaveApp: App {
     @State private var model = CellarModel.live()
     private let notifications = NotificationRouter()
     #if os(macOS)
-    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
+    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = MenuBarSetting.defaultValue
     #endif
 
     init() {
@@ -62,29 +63,61 @@ struct EncaveApp: App {
     }
 }
 
-/// Menu bar and keyboard shortcuts (Mac, and iPad with a keyboard).
+/// Menu bar and keyboard shortcuts (Mac, and iPad with a keyboard). They act on the
+/// window in front; on the Mac, with no window open, they open one first.
 struct CellarCommands: Commands {
     let model: CellarModel
+    @FocusedValue(\.sceneRouter) private var router
+    @FocusedValue(\.selectedWineID) private var selectedWineID
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
-            Button("New Bottle…") { model.sheet = .addBottle(AddBottleContext()) }
+            Button("New Bottle…") { act(.present(.addBottle(AddBottleContext()))) }
                 .keyboardShortcut("n")
-            Button("New Rack…") { model.sheet = .editRack(rackID: nil) }
+            Button("New Rack…") { act(.present(.editRack(rackID: nil))) }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
-            Button("Note a Wine Tasted Elsewhere…") { model.sheet = .discovery(discoveryID: nil) }
+            Button("Note a Wine Tasted Elsewhere…") { act(.present(.discovery(discoveryID: nil))) }
                 .keyboardShortcut("n", modifiers: [.command, .option])
+            Divider()
+            Button("New Window") { openWindow(id: "main") }
+                .keyboardShortcut("n", modifiers: [.command, .control])
         }
         #if os(macOS)
         CommandGroup(replacing: .help) {
             HelpMenuButton()
         }
         #endif
+        CommandMenu("Wine") {
+            Button("Edit Wine…") { withWine { act(.present(.editWine(wineID: $0.id))) } }
+                .keyboardShortcut("e")
+                .disabled(selectedWineID == nil)
+            Button("Drink a Bottle…") {
+                withWine { wine in
+                    if let bottle = bottleToOpen(of: wine.id) { act(.present(.drink(bottleID: bottle.id))) }
+                }
+            }
+            .keyboardShortcut("d")
+            .disabled(selectedWineID == nil)
+            Button("Show in Rack") {
+                withWine { wine in
+                    guard let bottle = model.cellar.bottlesInCellar.first(where: { $0.wineID == wine.id && $0.slot != nil }) else { return }
+                    if let router { router.showInRack(bottle, model: model) } else { model.showInRack(bottle) }
+                }
+            }
+            .disabled(selectedWineID == nil)
+            Button("Add Bottles…") { withWine { act(.present(.addBottle(AddBottleContext(wine: $0)))) } }
+                .disabled(selectedWineID == nil)
+            Divider()
+            Button("Delete Wine") { withWine { model.deleteWine($0.id) } }
+                .keyboardShortcut(.delete)
+                .disabled(selectedWineID == nil)
+        }
         CommandMenu("Cellar") {
-            Button("Cellar") { model.selectedTab = .cellar }.keyboardShortcut("1")
-            Button("Racks") { model.selectedTab = .racks }.keyboardShortcut("2")
-            Button("Tonight") { model.selectedTab = .tonight }.keyboardShortcut("3")
-            Button("Journal") { model.selectedTab = .journal }.keyboardShortcut("4")
+            Button("Cellar") { act(.show(.cellar)) }.keyboardShortcut("1")
+            Button("Racks") { act(.show(.racks)) }.keyboardShortcut("2")
+            Button("Tonight") { act(.show(.tonight)) }.keyboardShortcut("3")
+            Button("Journal") { act(.show(.journal)) }.keyboardShortcut("4")
             Divider()
             CellarTableToggle()
             Divider()
@@ -93,6 +126,28 @@ struct CellarCommands: Commands {
                 .keyboardShortcut("r")
                 .disabled(model.sync.otherDevices.isEmpty || model.sync.isDemo)
         }
+    }
+
+    /// In the window in front, or in the main window, brought forward or opened (Mac).
+    private func act(_ action: SceneAction) {
+        if let router {
+            router.perform(action)
+        } else {
+            model.request(action)
+            #if os(macOS)
+            MainWindow.show(openWindow)
+            #endif
+        }
+    }
+
+    private func withWine(_ body: (Wine) -> Void) {
+        guard let id = selectedWineID, let wine = model.cellar.wines[id] else { return }
+        body(wine)
+    }
+
+    private func bottleToOpen(of wineID: UUID) -> Bottle? {
+        let bottles = model.cellar.bottlesInCellar.filter { $0.wineID == wineID }
+        return bottles.first { $0.reservedFor == nil } ?? bottles.first
     }
 }
 
@@ -118,7 +173,9 @@ private struct CellarTableToggle: View {
     }
 }
 
-/// Mac: whether Encave shows "Tonight" in the menu bar.
+/// Mac: whether Encave shows "Tonight" in the menu bar. Off until turned on in Settings
+/// or in Tonight.
 enum MenuBarSetting {
     static let key = "menuBar.enabled"
+    static let defaultValue = false
 }

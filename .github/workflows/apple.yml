@@ -327,12 +327,14 @@ jobs:
           set -o pipefail
           auth=(-allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH"
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          # TestFlight builds are betas (ENCAVE_CHANNEL=store turns the beta notices and the
+          # sample cellar off for the App Store, docs/development.md).
           # Archive unsigned: signing with a development certificate would create a new
           # certificate on every fresh runner. The export below signs with cloud signing.
           xcodebuild archive -project Encave.xcodeproj -scheme Encave \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+            ENCAVE_CHANNEL=beta CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
           ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
@@ -350,7 +352,7 @@ jobs:
           # the export re-signs it with cloud signing (no new certificate).
           xcodebuild archive -project Encave.xcodeproj -scheme EncaveMac \
             -destination 'generic/platform=macOS' -archivePath "$RUNNER_TEMP/mac.xcarchive" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" ENCAVE_CHANNEL=beta \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
           ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \

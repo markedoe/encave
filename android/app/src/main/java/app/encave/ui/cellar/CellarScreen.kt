@@ -1,5 +1,10 @@
 package app.encave.ui.cellar
 
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.ui.semantics.heading
+import app.encave.core.containsSample
+import app.encave.ui.devices.rememberLocalNetworkAccess
+import app.encave.ui.navigation.JoinDeviceRoute
 import app.encave.ui.devices.SettingsIcon
 import app.encave.ui.devices.SyncRefreshBox
 import androidx.compose.foundation.BorderStroke
@@ -237,6 +242,8 @@ private fun CellarList(
     var namingSearch by remember { mutableStateOf(false) }
     var confirmSample by remember { mutableStateOf(false) }
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
+    val showsSampleBanner = remember(cellar) { cellar.containsSample }
+    val joinDevice = rememberLocalNetworkAccess { navigator.open(JoinDeviceRoute) }
     fun endSelection() {
         selecting = false
         picked = emptySet()
@@ -310,10 +317,22 @@ private fun CellarList(
                 Button(onClick = { navigator.open(AddBottleRoute()) }, modifier = Modifier.testTag("action.empty_add")) {
                     ActionContent(stringResource(R.string.action_add_bottle), Icons.Filled.Add)
                 }
+                // Already using Encave on another device: bring its cellar here.
+                if (!shared) {
+                    OutlinedButton(onClick = joinDevice, modifier = Modifier.testTag("action.empty_join")) {
+                        Text(stringResource(R.string.action_join_cellar))
+                    }
+                }
                 // Only when everything is empty (no racks or discoveries either) and no other device shares the cellar.
                 if (viewModel.canLoadSample(cellar, shared)) {
                     OutlinedButton(onClick = { confirmSample = true }) {
                         Text(stringResource(R.string.action_load_sample))
+                    }
+                }
+                // Every sample bottle was drunk: what remains of it can still go.
+                if (showsSampleBanner) {
+                    OutlinedButton(onClick = { viewModel.removeSample() }) {
+                        Text(stringResource(R.string.action_remove_sample))
                     }
                 }
                 TextButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
@@ -378,6 +397,9 @@ private fun CellarList(
                             contentPadding = PaddingValues(bottom = 88.dp),
                             modifier = Modifier.fillMaxSize().testTag("cellar.list"),
                         ) {
+                            if (showsSampleBanner && !selecting) {
+                                item(key = "sample") { SampleBanner(onRemove = { viewModel.removeSample() }) }
+                            }
                             if (showsSummary) {
                                 item(key = "summary") {
                                     CellarSummary(
@@ -426,16 +448,11 @@ private fun CellarList(
                                 CellarRow(
                                     group = group,
                                     cellar = cellar,
-                                    year = viewModel.year,
+                                    viewModel = viewModel,
+                                    navigator = navigator,
                                     selected = group.id.toString() == selectedId,
                                     onOpen = { onOpen(group.id.toString()) },
                                     onDrink = { drinking = group.bottles.bottleToOpen?.id?.toString() },
-                                    onShowInRack = group.bottles.firstOrNull { it.slot != null }?.let { bottle ->
-                                        { navigator.open(RackDetailRoute(bottle.slot!!.rackId.toString(), bottle.id.toString())) }
-                                    },
-                                    onEdit = { navigator.open(EditWineRoute(group.id.toString())) },
-                                    // With Undo, on screen longer than for other changes.
-                                    onDelete = { viewModel.deleteWine(group.id) },
                                     onSelect = {
                                         selecting = true
                                         picked = setOf(group.id)
@@ -826,28 +843,22 @@ private fun SaveSearchDialog(initial: String, onSave: (String) -> Unit, onDismis
 private fun CellarRow(
     group: WineGroup,
     cellar: Cellar,
-    year: Int,
+    viewModel: AppViewModel,
+    navigator: AppNavigator,
     selected: Boolean,
     onOpen: () -> Unit,
     onDrink: () -> Unit,
-    onShowInRack: (() -> Unit)?,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var menu by remember { mutableStateOf(false) }
     val drinkLabel = stringResource(R.string.action_drink)
-    val rackLabel = stringResource(R.string.action_show_in_rack)
-    val editLabel = stringResource(R.string.action_edit)
-    val deleteLabel = stringResource(R.string.action_delete)
     val swipe = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.StartToEnd) onDrink()
             false // The row snaps back; the drink sheet takes over.
         },
     )
-    Box(modifier) {
+    WineMenuBox(group, cellar, viewModel, navigator, onDrink = onDrink, modifier = modifier, onSelect = onSelect) { rowModifier, openMenu ->
         SwipeToDismissBox(
             state = swipe,
             enableDismissFromEndToStart = false,
@@ -863,40 +874,8 @@ private fun CellarRow(
             },
         ) {
             WineGroupRow(
-                group = group, cellar = cellar, year = year, selected = selected,
-                onClick = onOpen, onLongClick = { menu = true },
-                modifier = Modifier.semantics {
-                    customActions = listOfNotNull(
-                        CustomAccessibilityAction(drinkLabel) { onDrink(); true },
-                        onShowInRack?.let { CustomAccessibilityAction(rackLabel) { it(); true } },
-                        CustomAccessibilityAction(editLabel) { onEdit(); true },
-                        CustomAccessibilityAction(deleteLabel) { onDelete(); true },
-                    )
-                },
-            )
-        }
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(
-                text = { Text(drinkLabel) }, onClick = { menu = false; onDrink() },
-                leadingIcon = { Icon(Icons.Outlined.LocalBar, contentDescription = null) },
-            )
-            if (onShowInRack != null) {
-                DropdownMenuItem(
-                    text = { Text(rackLabel) }, onClick = { menu = false; onShowInRack() },
-                    leadingIcon = { Icon(Icons.Outlined.GridView, contentDescription = null) },
-                )
-            }
-            DropdownMenuItem(
-                text = { Text(editLabel) }, onClick = { menu = false; onEdit() },
-                leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.action_select)) }, onClick = { menu = false; onSelect() },
-                leadingIcon = { Icon(Icons.Outlined.Checklist, contentDescription = null) },
-            )
-            DropdownMenuItem(
-                text = { Text(deleteLabel, color = MaterialTheme.colorScheme.error) }, onClick = { menu = false; onDelete() },
-                leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                group = group, cellar = cellar, year = viewModel.year, selected = selected,
+                onClick = onOpen, onLongClick = openMenu, modifier = rowModifier,
             )
         }
     }
@@ -1136,6 +1115,33 @@ private fun StatTile(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = scheme.outline,
                     modifier = Modifier.align(Alignment.TopEnd).size(18.dp),
                 )
+            }
+        }
+    }
+}
+
+/** Shown while records of the sample cellar remain: removes them, and only them, with Undo. */
+@Composable
+private fun SampleBanner(onRemove: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.sample"),
+    ) {
+        Row(
+            Modifier.padding(start = Dimens.l, end = Dimens.s, top = Dimens.xs, bottom = Dimens.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.m),
+        ) {
+            Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text(
+                stringResource(R.string.cellar_sample_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            TextButton(onClick = onRemove, modifier = Modifier.testTag("action.remove_sample")) {
+                Text(stringResource(R.string.action_remove_sample))
             }
         }
     }
