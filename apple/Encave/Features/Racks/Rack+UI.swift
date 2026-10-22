@@ -49,7 +49,7 @@ extension RackKind {
 }
 
 extension Rack {
-    /// "B3", "B3, back", "Shelf B, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
+    /// "B3", "B3, back", "Shelf 2, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
     /// for people (not for files).
     func displayLabel(for slot: Slot) -> String {
         let cell = displayLabel(for: slot.cell)
@@ -70,7 +70,9 @@ extension Rack {
         case .grid, .staggered:
             return label(for: cell)
         case .shelves:
-            return String(localized: "Shelf \(Rack.letters(cell.row)), \(cell.column + 1)")
+            // Shelves are numbered from the top, as in layered fridges.
+            let shelf = cell.row + 1, number = cell.column + 1
+            return String(localized: "Shelf \(shelf), \(number)")
         case .bins:
             return String(localized: "Bin \(label(for: cell))")
         }
@@ -82,8 +84,6 @@ extension Rack {
         if depth == positionsPerCell - 1 { return String(localized: "back") }
         return String(localized: "middle")
     }
-
-    static func letters(_ row: Int) -> String { rowLetters(row) }
 
     /// "Upper zone" and "Lower zone" for a fridge with two zones, else "Zone 2".
     func zoneName(_ zone: Int) -> String {

@@ -515,7 +515,7 @@
     <string name="preset_bins_2x3">Losanges, 2 × 3 de 10</string>
     <string name="preset_crates_6">Caisses de 6, 3 × 4</string>
     <string name="preset_crates_12">Caisses de 12, 2 × 4</string>
-    <string name="place_shelf">Étagère %1$s, %2$d</string>
+    <string name="place_shelf">Étagère %1$d, %2$d</string>
     <string name="place_bin">Casier %1$s</string>
     <string name="place_shelf_layer_single">Étagère %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Étagère %1$d, couche du bas, place %2$d</string>
@@ -642,7 +642,7 @@
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière.</string>
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu.</string>
     <string name="help_racks_places_title">Places</string>
-    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les places se lisent comme **Étagère B, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
+    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
     <string name="help_racks_finding_title">Trouver une bouteille</string>
     <string name="help_racks_finding">Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles.</string>
     <string name="help_racks_zooming_title">Zoomer</string>

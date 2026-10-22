@@ -516,7 +516,7 @@
     <string name="preset_bins_2x3">Diamond bins, 2 × 3 of 10</string>
     <string name="preset_crates_6">Crates of 6, 3 × 4</string>
     <string name="preset_crates_12">Crates of 12, 2 × 4</string>
-    <string name="place_shelf">Shelf %1$s, %2$d</string>
+    <string name="place_shelf">Shelf %1$d, %2$d</string>
     <string name="place_bin">Bin %1$s</string>
     <string name="place_shelf_layer_single">Shelf %1$d, place %2$d</string>
     <string name="place_shelf_layer_bottom">Shelf %1$d, bottom layer, place %2$d</string>
@@ -643,7 +643,7 @@
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.</string>
     <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>
     <string name="help_racks_places_title">Places</string>
-    <string name="help_racks_places">Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, places read like **Shelf B, 3**; in bins, like **Bin B3**. The same name shows on the wine’s page, in the bottle list.</string>
+    <string name="help_racks_places">Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine’s page, in the bottle list.</string>
     <string name="help_racks_finding_title">Finding a bottle</string>
     <string name="help_racks_finding">Each bottle shows its vintage; in grid racks and wine fridges, its name too once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all. On a wine’s page, **Show in rack** opens the rack with its bottles lit up.</string>
     <string name="help_racks_zooming_title">Zooming</string>

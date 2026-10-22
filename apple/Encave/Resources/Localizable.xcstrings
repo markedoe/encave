@@ -10271,12 +10271,12 @@
         }
       }
     },
-    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, places read like **Shelf B, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
+    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places read like **Shelf 2, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les places se lisent comme **Étagère B, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
           }
         }
       }
@@ -10881,22 +10881,22 @@
         }
       }
     },
-    "Shelf %@, %lld": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Étagère %@, %lld"
-          }
-        }
-      }
-    },
     "Shelf %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Étagère %lld"
+          }
+        }
+      }
+    },
+    "Shelf %lld, %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étagère %lld, %lld"
           }
         }
       }

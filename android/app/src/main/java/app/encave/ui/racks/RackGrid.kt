@@ -346,8 +346,9 @@ fun RackGrid(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (showHeaders) {
                             Box(Modifier.width(headerWidth).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
-                                // Shelves are numbered beside their bottom layer; other racks letter their rows.
+                                // Shelves are numbered (layered ones beside their bottom layer); other racks letter their rows.
                                 val header = when {
+                                    place == null && rack.kind == RackKind.Shelves -> "${row + 1}"
                                     place == null -> Rack.rowLetters(row)
                                     place.layer == 0 -> "${place.shelf + 1}"
                                     else -> ""

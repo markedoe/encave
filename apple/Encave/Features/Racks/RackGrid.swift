@@ -175,8 +175,9 @@ struct RackGrid: View {
     static let zoneLabelHeight: CGFloat = 0.3
     static let zoneLabelMinHeight: CGFloat = 12
 
+    /// Shelves are numbered from the top; other racks letter their rows.
     private func rowHeader(_ row: Int) -> some View {
-        Text(verbatim: Rack.rowLetters(row))
+        Text(verbatim: rack.kind == .shelves ? "\(row + 1)" : Rack.rowLetters(row))
             .font(.system(size: max(10, cellSize * 0.24), weight: .semibold).monospacedDigit())
             .foregroundStyle(.secondary)
             .frame(width: headerWidth)
