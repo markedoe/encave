@@ -131,7 +131,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
         viewModel.messages.collect { message ->
             val slot = message.slot
             // Replaced while it waited: the message that took its place follows.
-            if (slot?.replaced?.value == true) {
+            if (slot != null && slot.replaced.value) {
                 slot.finished = true
                 return@collect
             }
@@ -148,7 +148,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 )
             }
             // Replaced while shown: it goes away at once.
-            val watch = slot?.let { launch { it.replaced.first { replaced -> replaced }; snackbar.currentSnackbarData?.dismiss() } }
+            val watch = slot?.let { shown -> launch { shown.replaced.first { it }; snackbar.currentSnackbarData?.dismiss() } }
             // A large change keeps its Undo longer than the standard long snackbar.
             val result = if (message.long && !message.persistent) {
                 kotlinx.coroutines.withTimeoutOrNull(LONG_UNDO_MILLIS) { show() } ?: SnackbarResult.Dismissed
