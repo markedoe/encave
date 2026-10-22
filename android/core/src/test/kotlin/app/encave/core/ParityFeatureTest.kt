@@ -433,3 +433,17 @@ class SavedSearchTest {
         assertEquals(cellar.settings, CellarJson.decode(json).settings)
     }
 }
+
+/** Same as AICompletedTests in CaveKit FeatureTests.swift. */
+class AiCompletedTest {
+    @Test
+    fun completionDateRoundTripsAndOldWinesHaveNone() {
+        val wine = Wine(name = "Completed", aiCompletedAt = reference(814_000_000))
+        val json = CellarJson.encode(Cellar(listOf(wine)))
+        assertTrue(json.contains("aiCompletedAt"), json)
+        assertEquals(wine.aiCompletedAt, CellarJson.decode(json).wines[wine.id]?.aiCompletedAt)
+        val old = CellarJson.json.decodeFromString(Wine.serializer(), """{"id":"3D759362-EEC4-4657-8014-4757C8FB5FF3","name":"Old"}""")
+        assertNull(old.aiCompletedAt)
+        assertFalse(CellarJson.encode(Cellar(listOf(old))).contains("aiCompletedAt"))
+    }
+}

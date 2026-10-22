@@ -389,6 +389,8 @@
     <string name="ai_show_key">Afficher la clé</string>
     <string name="ai_hide_key">Masquer la clé</string>
     <string name="ai_complete">Compléter avec l’IA</string>
+    <string name="ai_complete_again">Compléter à nouveau</string>
+    <string name="ai_completed_on">Complétée par l’IA · %1$s</string>
     <string name="ai_reading">Lecture de l’étiquette…</string>
     <string name="ai_filled">Informations remplies d’après l’étiquette. Vérifiez-les avant d’ajouter.</string>
     <string name="ai_err_not_configured">Choisissez un service d’IA dans les réglages.</string>
@@ -521,9 +523,20 @@
     <string name="place_shelf_layer_bottom">Étagère %1$d, couche du bas, place %2$d</string>
     <string name="place_shelf_layer_middle">Étagère %1$d, couche du milieu, place %2$d</string>
     <string name="place_shelf_layer_top">Étagère %1$d, couche du haut, place %2$d</string>
+    <string name="place_shelf_band_single">Étagère %1$d, %2$s, place %3$d</string>
+    <string name="place_shelf_band_bottom">Étagère %1$d, %2$s, couche du bas, place %3$d</string>
+    <string name="place_shelf_band_middle">Étagère %1$d, %2$s, couche du milieu, place %3$d</string>
+    <string name="place_shelf_band_top">Étagère %1$d, %2$s, couche du haut, place %3$d</string>
+    <string name="rack_band_front">Devant</string>
+    <string name="rack_band_back">Fond</string>
+    <string name="rack_band_bases">Culots vers vous</string>
+    <string name="rack_band_necks">Goulots vers vous</string>
+    <string name="rack_band_heading">Étagère %1$d, %2$s, %3$s</string>
+    <string name="rack_back_reversed">Bouteilles du fond tête-bêche</string>
+    <string name="help_field_back_reversed">Les bouteilles du fond sont couchées dans l’autre sens : leur goulot est vers vous, entre les culots de celles de devant.</string>
     <string name="place_with_depth">%1$s, %2$s</string>
     <string name="depth_front">devant</string>
-    <string name="depth_back">derrière</string>
+    <string name="depth_back">fond</string>
     <string name="depth_middle">milieu</string>
     <string name="cell_bin">%1$s, %2$d sur %3$d bouteilles</string>
     <string name="rack_cell_full">Cet emplacement est plein.</string>
@@ -539,6 +552,7 @@
     <string name="sample_honeycomb">Casier nid d’abeille</string>
     <string name="sample_stairs">Sous l’escalier</string>
     <string name="sample_large_fridge">Grande cave à vin</string>
+    <string name="sample_head_to_tail_fridge">Cave tête-bêche</string>
     <string name="help_field_search">Tapez quelques lettres du nom pour ajouter des bouteilles d’un vin que vous avez déjà.</string>
     <string name="help_field_existing">Choisissez-le pour ajouter des bouteilles sans ressaisir le vin.</string>
     <string name="help_field_quantity">Combien de bouteilles identiques vous ajoutez.</string>
@@ -577,7 +591,7 @@
     <string name="help_field_staggered_depth">Combien de bouteilles tiennent l’une derrière l’autre dans chaque case.</string>
     <string name="help_field_shelf_depth">Combien de bouteilles tiennent l’une derrière l’autre sur une étagère.</string>
     <string name="help_field_bin">Un losange d’environ 30 cm contient une dizaine de bouteilles standard.</string>
-    <string name="help_rack_holds">Contient %1$d bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle de derrière.</string>
+    <string name="help_rack_holds">Contient %1$d bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière.</string>
     <string name="help_field_discovery_place">Où vous l’avez bu, pour retrouver le vin plus tard.</string>
     <string name="help_where_footer">La recherche du Journal cherche aussi dans le lieu, les notes et les tags.</string>
     <string name="help_tags_footer">Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal.</string>
@@ -638,11 +652,13 @@
     <string name="help_racks_add">Touchez **Ajouter un casier**, choisissez le type, puis la taille, ou une taille toute prête dans **Démarrage rapide** (seulement en créant un casier). Les places libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond.</string>
     <string name="help_racks_staggered">Une rangée sur deux est décalée d’une demi-bouteille et en contient une de moins, comme les casiers en métal ou en terre cuite. Indiquez le nombre de bouteilles de la rangée la plus large, et dans **Rangées en profondeur** si une deuxième bouteille tient derrière chacune.</string>
     <string name="help_racks_layers_title">Cave à vin avec bouteilles en couches</string>
+    <string name="help_racks_bands_title">Deux rangs, tête-bêche</string>
+    <string name="help_racks_bands">Quand une cave à étagères a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur une tablette, touchez longuement une bouteille pour la faire glisser d’une bande à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**.</string>
     <string name="help_racks_layers">Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères**. Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin, 2 zones** est un point de départ tout prêt.</string>
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière.</string>
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu.</string>
     <string name="help_racks_places_title">Places</string>
-    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
+    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles.</string>
     <string name="help_racks_finding_title">Trouver une bouteille</string>
     <string name="help_racks_finding">Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles.</string>
     <string name="help_racks_zooming_title">Zoomer</string>
@@ -685,6 +701,8 @@
     <string name="help_ai_local">Choisissez **Ollama**, **vLLM** ou **LM Studio** s’il tourne sur votre ordinateur, ou **Autre serveur (compatible OpenAI)** pour tout serveur avec la même API, puis touchez **Se connecter et charger les modèles**. Pour Ollama, seuls les modèles qui lisent les images sont listés : installez-en un avec `ollama pull gemma3`. Sur un téléphone ou une tablette, saisissez l’adresse IP de l’ordinateur sur votre réseau (par exemple `http://192.0.2.10:11434`), et faites écouter le serveur sur le réseau : `OLLAMA_HOST=0.0.0.0` pour Ollama, `--host 0.0.0.0` pour vLLM, « Serve on Local Network » dans LM Studio.</string>
     <string name="help_ai_url_title">Adresse du serveur</string>
     <string name="help_ai_url">Laissez-la vide pour utiliser l’adresse habituelle du fournisseur. Ne la changez que s’il vous en donne une autre, par exemple pour sa région Chine.</string>
+    <string name="help_ai_complete_title">Compléter avec l’IA</string>
+    <string name="help_ai_complete">Après avoir ajouté une photo d’étiquette, ou en modifiant un vin qui en a une, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Utilisez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché.</string>
     <string name="help_ai_sent_title">Ce qui est envoyé</string>
     <string name="help_ai_sent">Seulement la photo de l’étiquette, quand vous ajoutez une photo d’étiquette ou touchez **Compléter avec l’IA**. Votre cave, vos notes et vos prix ne sont jamais envoyés.</string>
     <string name="help_data_title">Sauvegarde, export et import</string>

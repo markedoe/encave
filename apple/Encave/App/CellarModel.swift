@@ -846,6 +846,7 @@ final class CellarModel {
         }
         take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
         take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
+        take(\.aiCompletedAt)
         guard updated != live else { return }
         // The bottles' "Added" banner still shown: one banner, whose Undo takes both back.
         let shownAdd = lastAdd.flatMap { $0.wineID == id && toast?.id == $0.toastID && toast?.undo != nil ? $0 : nil }
@@ -862,6 +863,7 @@ final class CellarModel {
             }
             restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
             restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
+            restore(\.aiCompletedAt)
             cellar.wines[id] = wine
         }
         guard let add = shownAdd else {
@@ -1053,6 +1055,7 @@ extension SampleData.Labels {
         labels.honeycomb = String(localized: "Honeycomb rack")
         labels.stairs = String(localized: "Under the stairs")
         labels.largeFridge = String(localized: "Large wine fridge")
+        labels.headToTailFridge = String(localized: "Head-to-tail fridge")
         labels.tastingNote = String(localized: "Silky, red fruit, long finish.")
         labels.kitchen = String(localized: "Kitchen")
         labels.occasion = String(localized: "Dinner with friends")

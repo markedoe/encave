@@ -145,6 +145,18 @@ val RackKind.columnsRes: Int
  * for people (files use "B3-2").
  */
 fun Rack.displayLabel(slot: Slot, resources: Resources): String {
+    // A fridge drawn front and back names the band first, as drawn: "Shelf 3, front, bottom layer, place 2".
+    if (hasDepthBands) {
+        shelfPlace(slot.row)?.let { place ->
+            val res = when {
+                place.layers == 1 -> R.string.place_shelf_band_single
+                place.layer == 0 -> R.string.place_shelf_band_bottom
+                place.layer == place.layers - 1 -> R.string.place_shelf_band_top
+                else -> R.string.place_shelf_band_middle
+            }
+            return resources.getString(res, place.shelf + 1, depthName(slot.depth, resources), slot.column + 1)
+        }
+    }
     val cell = displayLabel(slot.cell, resources)
     if (kind == RackKind.Bins || positionsPerCell <= 1) return cell
     return resources.getString(R.string.place_with_depth, cell, depthName(slot.depth, resources))
@@ -266,6 +278,7 @@ fun sampleLabels(resources: Resources) = SampleData.Labels(
     honeycomb = resources.getString(R.string.sample_honeycomb),
     stairs = resources.getString(R.string.sample_stairs),
     largeFridge = resources.getString(R.string.sample_large_fridge),
+    headToTailFridge = resources.getString(R.string.sample_head_to_tail_fridge),
     friendsPlace = resources.getString(R.string.sample_friends_place),
     friendsNote = resources.getString(R.string.sample_friends_note),
     restaurantPlace = resources.getString(R.string.sample_restaurant_place),
@@ -308,6 +321,10 @@ object Formats {
         val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale(), "dMMM")
         return DateTimeFormatter.ofPattern(pattern, locale()).format(instant.atZone(ZoneId.systemDefault()))
     }
+
+    /** "Oct 22" this year, the full date for an earlier year. */
+    fun recentDay(instant: Instant): String =
+        if (instant.atZone(ZoneId.systemDefault()).year == java.time.LocalDate.now().year) dayMonth(instant) else day(instant)
 
     fun money(amount: BigDecimal, code: String?): String {
         val format = NumberFormat.getCurrencyInstance(locale())

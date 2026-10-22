@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -45,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,10 +60,12 @@ import app.encave.ui.LabelReading
 import app.encave.ui.components.rememberCameraCapture
 import app.encave.ui.components.rememberRetained
 import app.encave.ui.UiText
+import app.encave.ui.components.Formats
 import app.encave.ui.theme.Dimens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
 
 /** Loads a stored photo (or prepared JPEG bytes) off the main thread. */
 @Composable
@@ -166,25 +173,44 @@ fun PhotoSection(
                     app.encave.ui.components.ActionContent(stringResource(R.string.photo_remove), Icons.Outlined.Delete)
                 }
             }
+        }
+        // A full-width row of its own, so its title is never squeezed by the photo actions.
+        // Once the AI has completed the wine, it reads "Complete again" and says when;
+        // while it reads the label, it cannot be tapped twice.
+        if (ai.isEnabled && form.hasPhoto) {
             val jpeg = form.newPhoto
-            if (ai.isEnabled && form.hasPhoto && !isReading) {
-                FilledTonalButton(onClick = {
+            val completedAt = form.aiCompletedAt
+            FilledTonalButton(
+                onClick = {
                     scope.launch {
                         val bytes = jpeg ?: form.storedPhotoId?.let { id ->
                             withContext(Dispatchers.IO) { viewModel.photos.data(id) }
                         }
                         bytes?.let(::analyze)
                     }
-                }) {
-                    app.encave.ui.components.ActionContent(stringResource(R.string.ai_complete), Icons.Outlined.AutoAwesome)
+                },
+                enabled = !isReading,
+                modifier = Modifier.fillMaxWidth().testTag("action.ai_complete"),
+            ) {
+                if (isReading) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(Dimens.s))
+                    Text(stringResource(R.string.ai_reading), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                } else {
+                    Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(Dimens.s))
+                    Text(
+                        stringResource(if (completedAt == null) R.string.ai_complete else R.string.ai_complete_again),
+                        maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    )
                 }
+            }
+            if (completedAt != null && !isReading) {
+                AiCompletedCaption(completedAt)
             }
         }
         if (isReading) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
-                Text(stringResource(R.string.ai_reading), style = MaterialTheme.typography.bodyMedium)
-            }
-            LinearProgressIndicator(Modifier.fillMaxWidth())
+            LinearProgressIndicator(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
         } else if (filled) {
             Text(
                 stringResource(R.string.ai_filled), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
@@ -194,6 +220,22 @@ fun PhotoSection(
             // No reading of the label text on Android itself (no third-party OCR): say so, and what helps.
             Text(stringResource(R.string.photo_hint_ai), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+/** "Completed by AI · Oct 22": when the AI last completed the wine's details. */
+@Composable
+fun AiCompletedCaption(completedAt: Instant, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(Dimens.xs))
+        Text(
+            stringResource(R.string.ai_completed_on, Formats.recentDay(completedAt)),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

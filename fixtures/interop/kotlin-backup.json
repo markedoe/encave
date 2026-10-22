@@ -130,6 +130,7 @@
         "rows": 2
       },
       {
+        "backReversed": true,
         "binCapacity": 12,
         "columns": 6,
         "depth": 2,
@@ -179,6 +180,7 @@
     "wines": [
       "00000000-0000-4000-8000-000000000011",
       {
+        "aiCompletedAt": "2026-01-14T16:13:20Z",
         "appellation": "Gevrey-Chambertin",
         "attachments": [
           {

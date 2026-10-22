@@ -167,6 +167,16 @@ struct WineDetailView: View {
                         .accessibilityIdentifier("detail.edit.notes")
                         .contextMenu { editMenu(notes, field: .notes) }
                     }
+                    if let completedAt = wine.aiCompletedAt {
+                        Label {
+                            AICompletedText(date: completedAt)
+                        } icon: {
+                            Image(systemName: "sparkles")
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("detail.aiCompleted")
+                    }
                     if webSearchEnabled {
                         Button {
                             searchingOnline = true

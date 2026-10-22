@@ -47,6 +47,9 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     public var attachments: [Attachment]? {
         didSet { attachments = Attachment.unique(attachments) }
     }
+    /// When the details were last completed by the AI from the label photo, so the app
+    /// can say so. Nil when never.
+    public var aiCompletedAt: Date?
 
     public init(
         id: UUID = UUID(), name: String, producer: String? = nil, vintage: Int? = nil,
@@ -88,6 +91,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         currentPriceDate = try c.decodeIfPresent(Date.self, forKey: .currentPriceDate)
         coverPhotoID = try c.decodeIfPresent(String.self, forKey: .coverPhotoID)
         attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
+        aiCompletedAt = try c.decodeIfPresent(Date.self, forKey: .aiCompletedAt)
     }
 
     /// The label photo first, then the others, then the cover.
@@ -217,6 +221,10 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// Fridge with shelf layers and temperature zones: the shelves (0 is the top one) that
     /// start a new zone, below a divider. Nil for a single zone.
     public var zoneBreaks: [Int]?
+    /// Fridge with shelf layers, two deep: the back bottles lie the other way round
+    /// ("head-to-tail"), necks facing you between the front bottles' bases. Nil (false)
+    /// elsewhere.
+    public var backReversed: Bool?
     /// Bottles per bin (bins only).
     public var binCapacity: Int
     /// Cells in each row when rows differ (a triangle top, an irregular cellar).
@@ -235,17 +243,18 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     public init(
         id: UUID = UUID(), name: String, kind: RackKind = .grid, rows: Int, columns: Int,
         depth: Int = 1, binCapacity: Int = 12, rowColumns: [Int]? = nil, shelfLayers: [Int]? = nil,
-        zoneBreaks: [Int]? = nil
+        zoneBreaks: [Int]? = nil, backReversed: Bool? = nil
     ) {
         self.id = id; self.name = name; self.kind = kind
         self.rows = Rack.bounded(rows); self.columns = Rack.bounded(columns)
         self.depth = Rack.boundedDepth(depth, kind: kind); self.binCapacity = Rack.bounded(binCapacity)
         self.rowColumns = rowColumns.map { $0.prefix(Rack.maxSize).map(Rack.bounded) }
         applyShelfLayers(shelfLayers, zoneBreaks: zoneBreaks)
+        self.backReversed = backReversed == true && hasDepthBands ? true : nil
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks
+        case id, name, kind, rows, columns, depth, binCapacity, rowColumns, shelfLayers, zoneBreaks, backReversed
         /// Version 0.1 and 0.2 had "grid" and a decorative "diamond" layout, both one bottle per cell.
         case layout
     }
@@ -263,6 +272,8 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         rowColumns = try c.decodeIfPresent([Int].self, forKey: .rowColumns)?.prefix(Rack.maxSize).map(Rack.bounded)
         applyShelfLayers(try c.decodeIfPresent([Int].self, forKey: .shelfLayers),
                          zoneBreaks: try c.decodeIfPresent([Int].self, forKey: .zoneBreaks))
+        // Absent from older racks; kept only where it applies, true or left out.
+        backReversed = try c.decodeIfPresent(Bool.self, forKey: .backReversed) == true && hasDepthBands ? true : nil
     }
 
     /// 1 to `maxSize`.
@@ -308,6 +319,7 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(rowColumns, forKey: .rowColumns)
         try c.encodeIfPresent(shelfLayers, forKey: .shelfLayers)
         try c.encodeIfPresent(zoneBreaks, forKey: .zoneBreaks)
+        try c.encodeIfPresent(backReversed == true && hasDepthBands ? true : nil, forKey: .backReversed)
     }
 
     /// Cells in a row: custom widths first, then one fewer on offset honeycomb rows (on
@@ -319,6 +331,12 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
 
     /// A honeycomb on shelves, as a wine fridge with bottles laid in layers.
     public var hasShelfLayers: Bool { kind == .staggered && shelfLayers != nil }
+
+    /// A fridge with shelf layers two deep: drawn as a front band and a back band per shelf.
+    public var hasDepthBands: Bool { hasShelfLayers && depth == 2 }
+
+    /// The back bottles of a fridge drawn in bands lie head-to-tail (see `backReversed`).
+    public var isBackReversed: Bool { backReversed == true && hasDepthBands }
 
     /// The temperature zone of each shelf, 0 for the top one (only with shelf layers).
     public func zone(ofShelf shelf: Int) -> Int { (zoneBreaks ?? []).filter { $0 <= shelf }.count }
