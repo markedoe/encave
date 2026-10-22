@@ -138,15 +138,6 @@ jobs:
           # stop at once on the iPad's regular width).
           echo "Started at $(date -u +%T)"
           run iPhone & iphone=$!
-          # Started together, one of the two sometimes waits for the other to finish
-          # before running a single test: the iPad starts once the app runs on the iPhone.
-          udid=$(cat "$sims/iPhone")
-          for _ in $(seq 120); do
-            pgrep -f "$udid/.*/Encave.app/Encave" > /dev/null && break
-            kill -0 "$iphone" 2>/dev/null || break
-            sleep 5
-          done
-          echo "iPad started at $(date -u +%T)"
           run iPad "-skip-testing:$tour/testLargeText" "-skip-testing:$tour/testLargestText" & ipad=$!
           status=0
           wait "$iphone" || status=1
