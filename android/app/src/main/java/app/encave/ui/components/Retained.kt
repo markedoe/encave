@@ -33,6 +33,13 @@ fun <T : Any> rememberRetained(key: String, init: () -> T): T {
     return remember(holder, key) { holder.values.getOrPut(key, init) as T }
 }
 
+/** Forgets a value kept by [rememberRetained] on this screen, so the next one starts afresh. */
+@Composable
+fun rememberForgetRetained(): (String) -> Unit {
+    val holder: RetainedValues = viewModel()
+    return remember(holder) { { key -> holder.values.remove(key)?.let { (it as? AutoCloseable)?.close() } } }
+}
+
 /** Saves a set of IDs (chosen wines) as strings. */
 val UuidSetSaver: Saver<Set<java.util.UUID>, Any> = Saver(
     save = { set -> ArrayList(set.map { it.toString() }) },

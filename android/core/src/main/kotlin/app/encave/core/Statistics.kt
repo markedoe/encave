@@ -146,7 +146,8 @@ fun Cellar.yearInWine(year: Int, zone: ZoneId = ZoneId.systemDefault()): YearInW
         favorite = favorite,
         topRegion = top(openedWines.mapNotNull { it.region ?: it.country }),
         topColor = top(openedWines.mapNotNull { it.color }) { it.raw },
-        topOccasion = top(opened.mapNotNull { it.tasting?.occasion }.filter { it.isNotEmpty() }),
+        // A chip counts the same in any language: its English label, shown translated.
+        topOccasion = top(opened.mapNotNull { it.tasting?.occasion }.filter { it.isNotEmpty() }.map { Occasion.matching(it)?.english ?: it }),
         discoveries = discoveries.values.count { yearOf(it.date) == year },
         busiestMonth = top(months),
     )

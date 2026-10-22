@@ -70,18 +70,46 @@ private struct BottleToOpenPicker: View {
     }
 }
 
-/// Rating and notes for the bottle being opened.
+/// Rating and notes for the bottle being opened, and which bottle when the wine is in
+/// several places.
 private struct DrinkForm: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
     let bottleID: UUID
     var showsCancel: Bool
     /// Closes the whole sheet: in a pushed form, the dismiss action would only go back.
     let close: () -> Void
-    @State private var draft = TastingDraft()
+    @State private var draft: TastingDraft
+    /// The form as it opened, to know whether something was typed.
+    @State private var original: TastingDraft
+    /// The place chosen in "Which Bottle?"; the bottle the sheet opened with until then.
+    @State private var chosenID: UUID?
+    @State private var confirmingDiscard = false
+    /// Where Cancel or Back goes once the note is discarded.
+    @State private var discardCloses = true
+
+    init(bottleID: UUID, showsCancel: Bool, close: @escaping () -> Void) {
+        self.bottleID = bottleID
+        self.showsCancel = showsCancel
+        self.close = close
+        let start = TastingDraft()
+        _draft = State(initialValue: start)
+        _original = State(initialValue: start)
+    }
+
+    private var isDirty: Bool { draft != original }
+
+    /// One bottle per place, free ones first; the one the sheet opened with stands for its place.
+    private func choices(of bottle: Bottle) -> [Bottle] {
+        let others = model.cellar.bottles(of: bottle.wineID).filter { $0.id != bottle.id }
+        return ([bottle] + others).drinkChoices
+    }
 
     var body: some View {
             Group {
-                if let bottle = model.cellar.bottles[bottleID], let wine = model.cellar.wines[bottle.wineID] {
+                if let opened = model.cellar.bottles[bottleID], let wine = model.cellar.wines[opened.wineID] {
+                    let choices = choices(of: opened)
+                    let bottle = chosenID.flatMap { id in choices.first { $0.id == id } } ?? opened
                     Form {
                         Section {
                             HStack(spacing: 14) {
@@ -90,12 +118,21 @@ private struct DrinkForm: View {
                                     Text(wine.displayName)
                                         .font(.title3.weight(.semibold))
                                         .fontDesign(.serif)
-                                    if let location = model.locationLabel(for: bottle) {
+                                    if choices.count < 2, let location = model.locationLabel(for: bottle) {
                                         Text(location).font(.subheadline).foregroundStyle(.secondary)
                                     }
                                 }
                             }
                             .listRowBackground(Color.clear)
+                            if choices.count > 1 {
+                                Picker("Which Bottle?", selection: Binding(get: { bottle.id }, set: { chosenID = $0 })) {
+                                    ForEach(choices) { choice in
+                                        BottleChoiceLabel(bottle: choice).tag(choice.id)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .accessibilityIdentifier("drink.which")
+                            }
                         }
                         TastingFormSections(draft: $draft)
                         Section {
@@ -103,27 +140,61 @@ private struct DrinkForm: View {
                         }
                     }
                     .formStyle(.grouped)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Drink") {
+                                // On failure the sheet stays open with what was typed, under the error.
+                                if model.drink(bottle.id, tasting: draft.makeTasting()) { close() }
+                            }
+                            .keyboardShortcut(.defaultAction)
+                            .accessibilityIdentifier("drink.confirm")
+                        }
+                    }
                 } else {
                     ContentUnavailableView("Bottle not found", systemImage: "questionmark")
                 }
             }
             .navigationTitle("Open a Bottle")
             .inlineTitle()
+            // Pushed from "Which Bottle?": going back with a note asks first, too.
+            .navigationBarBackButtonHidden(!showsCancel && isDirty)
             .toolbar {
                 if showsCancel {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel", action: close)
+                        Button("Cancel") { leave(closing: true) }
                             .accessibilityIdentifier("sheet.cancel")
                     }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        // On failure the sheet stays open with what was typed, under the error.
-                        if model.drink(bottleID, tasting: draft.makeTasting()) { close() }
+                } else if isDirty {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Back") { leave(closing: false) }
                     }
-                    .keyboardShortcut(.defaultAction)
                 }
             }
+            .discardGuard(isDirty: isDirty, isAsking: $confirmingDiscard) {
+                if discardCloses { close() } else { dismiss() }
+            }
+    }
+
+    private func leave(closing: Bool) {
+        guard isDirty else { return closing ? close() : dismiss() }
+        discardCloses = closing
+        confirmingDiscard = true
+    }
+}
+
+/// A place in "Which Bottle?": the rack position or storage note, and the occasion a
+/// kept bottle is for, with a gift so it is not told by color alone.
+private struct BottleChoiceLabel: View {
+    @Environment(CellarModel.self) private var model
+    let bottle: Bottle
+
+    var body: some View {
+        let location = model.locationLabel(for: bottle) ?? String(localized: "Not placed in a rack")
+        if let occasionName = bottle.reservedFor {
+            Label("\(location) · Kept for \(occasionName)", systemImage: "gift")
+        } else {
+            Label(location, systemImage: "square.grid.3x3")
+        }
     }
 }
 
@@ -133,17 +204,34 @@ struct TastingEditor: View {
     @Environment(\.dismiss) private var dismiss
     let bottleID: UUID
     @State private var draft = TastingDraft()
+    @State private var original = TastingDraft()
     @State private var loaded = false
+    @State private var confirmingDiscard = false
+
+    private var isDirty: Bool { loaded && draft != original }
 
     var body: some View {
         NavigationStack {
             Form {
                 if let bottle = model.cellar.bottles[bottleID], let wine = model.cellar.wines[bottle.wineID] {
                     Section {
-                        HStack(spacing: 14) {
-                            BottleEnd(color: wine.color, size: 40)
-                            Text(wine.displayName).font(.headline).fontDesign(.serif)
+                        // Opens the wine, closing the note (after asking if it changed).
+                        Button {
+                            showWine(wine.id)
+                        } label: {
+                            HStack(spacing: 14) {
+                                BottleEnd(color: wine.color, size: 40)
+                                Text(wine.displayName).font(.headline).fontDesign(.serif)
+                                Spacer()
+                                Image(systemName: "chevron.forward")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityHint(Text("Show Wine"))
+                        .accessibilityIdentifier("tasting.wine")
                         .listRowBackground(Color.clear)
                     }
                 }
@@ -162,22 +250,43 @@ struct TastingEditor: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityIdentifier("sheet.cancel")
+                    Button("Cancel") {
+                        if isDirty { pendingWine = nil; confirmingDiscard = true } else { dismiss() }
+                    }
+                    .accessibilityIdentifier("sheet.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         if model.update({ try $0.updateTasting(bottleID, tasting: draft.makeTasting()) }) { dismiss() }
                     }
+                    .keyboardShortcut(.defaultAction)
                 }
+            }
+            .discardGuard(isDirty: isDirty, isAsking: $confirmingDiscard) {
+                dismiss()
+                if let pendingWine { model.open(wine: pendingWine) }
             }
             .onAppear {
                 guard !loaded else { return }
                 loaded = true
                 if let tasting = model.cellar.bottles[bottleID]?.tasting { draft = TastingDraft(tasting) }
+                original = draft
             }
         }
         .macSheetFrame(width: 480, height: 680)
+    }
+
+    /// The wine to open once the note is discarded.
+    @State private var pendingWine: UUID?
+
+    private func showWine(_ id: UUID) {
+        guard isDirty else {
+            dismiss()
+            model.open(wine: id)
+            return
+        }
+        pendingWine = id
+        confirmingDiscard = true
     }
 }
 
@@ -223,7 +332,6 @@ struct TastingFormSections: View {
     var startsExpanded = false
     @State private var showsDetails = false
 
-    private let occasions: [LocalizedStringResource] = ["Dinner at home", "With friends", "Celebration", "Restaurant", "Tasting"]
 
     var body: some View {
         Section {
@@ -239,10 +347,11 @@ struct TastingFormSections: View {
 
         Section("Occasion") {
             FlowLayout(spacing: 8) {
-                ForEach(occasions.indices, id: \.self) { index in
-                    let value = String(localized: occasions[index])
-                    ChoiceChip(title: LocalizedStringKey(value), isSelected: draft.occasion == value) {
-                        draft.occasion = draft.occasion == value ? "" : value
+                // A note written in another language still shows its chip as chosen.
+                let chosen = Occasion.matching(draft.occasion)
+                ForEach(Occasion.allCases, id: \.self) { occasion in
+                    ChoiceChip(verbatim: String(localized: occasion.resource), isSelected: chosen == occasion) {
+                        draft.occasion = chosen == occasion ? "" : String(localized: occasion.resource)
                     }
                 }
             }
@@ -267,5 +376,24 @@ struct TastingFormSections: View {
             Text("A structured note: appearance, nose, palate, finish and the food you had with it.")
         }
         .onAppear { if startsExpanded { showsDetails = true } }
+    }
+}
+
+extension Occasion {
+    /// The chip's label, in the app's language (the same table as in CaveKit).
+    var resource: LocalizedStringResource {
+        switch self {
+        case .dinnerAtHome: "Dinner at home"
+        case .withFriends: "With friends"
+        case .celebration: "Celebration"
+        case .restaurant: "Restaurant"
+        case .weeknight: "Weeknight"
+        case .tasting: "Tasting"
+        }
+    }
+
+    /// An occasion from statistics (a chip's English label, or text as typed), in the app's language.
+    static func displayName(_ text: String) -> String {
+        matching(text).map { String(localized: $0.resource) } ?? text
     }
 }

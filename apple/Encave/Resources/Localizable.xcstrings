@@ -61,6 +61,16 @@
         }
       }
     },
+    "%@ · Kept for %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Gardée pour %@"
+          }
+        }
+      }
+    },
     "%@, %@": {
       "localizations": {
         "fr": {
@@ -1251,6 +1261,16 @@
         }
       }
     },
+    "A bottle from your cellar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille de votre cave"
+          }
+        }
+      }
+    },
     "A bottle to bring to friends who love Burgundy": {
       "localizations": {
         "fr": {
@@ -1711,12 +1731,12 @@
         }
       }
     },
-    "Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal.": {
+    "Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal. If you close the sheet after typing, Encave asks before discarding the note.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez une note, quelques mots et l’occasion, ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal."
+            "value": "Ajoutez une note, quelques mots et l’occasion, ou ouvrez la fiche de dégustation complète (robe, nez, bouche, finale, plat). Tout est facultatif et modifiable plus tard depuis le Journal. Si vous fermez la feuille après avoir écrit, Encave demande avant de supprimer la note."
           }
         }
       }
@@ -1747,6 +1767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
+    "Add bottles to see insights.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des bouteilles pour voir les statistiques."
           }
         }
       }
@@ -1977,6 +2007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Toutes les données ont été effacées"
+          }
+        }
+      }
+    },
+    "All your bottles are kept for an occasion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes vos bouteilles sont réservées pour une occasion"
           }
         }
       }
@@ -2331,12 +2371,12 @@
         }
       }
     },
-    "At the top, **Tonight, open…** suggests one bottle that is ready: **Drink** it, or tap **Another idea**. Below, the bottles to drink soon come first. Choose a dish to see the wines from your cellar that go with it, and why.": {
+    "At the top, **Tonight, open…** suggests one bottle that is ready, a different one each day: **Drink** it, or tap **Another idea**. Bottles kept for an occasion are not suggested; when nothing is ready, Tonight says which wine will be ready first. Below, the bottles to drink soon come first. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En haut, **Ce soir, ouvrez…** propose une bouteille prête : **Buvez**-la, ou touchez **Autre idée**. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi."
+            "value": "En haut, **Ce soir, ouvrez…** propose une bouteille prête, une autre chaque jour : **Buvez**-la, ou touchez **Autre idée**. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**."
           }
         }
       }
@@ -2377,6 +2417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Loin de la maison"
+          }
+        }
+      }
+    },
+    "Back": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retour"
           }
         }
       }
@@ -2467,6 +2517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Codes-barres"
+          }
+        }
+      }
+    },
+    "Based on %lld of %lld wines: the closest matches and the most urgent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’après %lld de vos %lld vins : les plus proches de la question et les plus urgents."
           }
         }
       }
@@ -2687,6 +2747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les bouteilles de ce casier restent dans votre cave, sans emplacement."
+          }
+        }
+      }
+    },
+    "Bottles kept for an occasion are not suggested: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles réservées pour une occasion, non suggérées : %lld"
           }
         }
       }
@@ -2957,6 +3027,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par pays"
+          }
+        }
+      }
+    },
+    "By maturity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par maturité"
+          }
+        }
+      }
+    },
+    "By region": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par région"
           }
         }
       }
@@ -4271,6 +4361,16 @@
         }
       }
     },
+    "Discard": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
     "Discard Changes": {
       "localizations": {
         "fr": {
@@ -4287,6 +4387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Abandonner les modifications ?"
+          }
+        }
+      }
+    },
+    "Discard this note?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la note ?"
           }
         }
       }
@@ -4587,6 +4697,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier les détails"
+          }
+        }
+      }
+    },
+    "Edit Note": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier la note"
           }
         }
       }
@@ -5471,6 +5591,16 @@
         }
       }
     },
+    "Get a reminder on the 1st of each month of what to drink?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recevoir un rappel le 1er de chaque mois de ce qu’il faut boire ?"
+          }
+        }
+      }
+    },
     "Get an API key": {
       "localizations": {
         "fr": {
@@ -5557,6 +5687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cépages"
+          }
+        }
+      }
+    },
+    "Great match": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excellent accord"
           }
         }
       }
@@ -7381,6 +7521,16 @@
         }
       }
     },
+    "No figures yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore de chiffres"
+          }
+        }
+      }
+    },
     "No free place in this rack for bottles without a place.": {
       "localizations": {
         "fr": {
@@ -7581,6 +7731,16 @@
         }
       }
     },
+    "Not Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus tard"
+          }
+        }
+      }
+    },
     "Not added": {
       "localizations": {
         "fr": {
@@ -7647,6 +7807,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas encore sur cet appareil"
+          }
+        }
+      }
+    },
+    "Not placed in a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas rangée dans un casier"
           }
         }
       }
@@ -7757,6 +7927,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rien pour l’instant"
+          }
+        }
+      }
+    },
+    "Nothing is at its peak right now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien n’est à son apogée en ce moment"
           }
         }
       }
@@ -7941,12 +8121,12 @@
         }
       }
     },
-    "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere.": {
+    "On devices with Apple Intelligence, **Ask your cellar** in Tonight answers a question such as “something light for a ratatouille” with bottles you own. The answer is worked out on the device: neither the question nor your cellar is sent anywhere. In a large cellar, the model reads only part of it, the wines closest to the question and the most urgent, and the answer says so.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées."
+            "value": "Sur les appareils avec Apple Intelligence, **Demander à votre cave** dans Ce soir répond à une question comme « quelque chose de léger pour une ratatouille » avec des bouteilles que vous avez. La réponse est calculée sur l’appareil : ni la question ni votre cave ne sont envoyées. Dans une grande cave, le modèle n’en lit qu’une partie, les vins les plus proches de la question et les plus urgents, et la réponse le dit."
           }
         }
       }
@@ -8507,6 +8687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvre la page dans votre navigateur."
+          }
+        }
+      }
+    },
+    "Opens the system settings, to turn on notifications for Encave.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre les réglages du système, pour activer les notifications d’Encave."
           }
         }
       }
@@ -9341,6 +9531,16 @@
         }
       }
     },
+    "Ready from %@: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt à partir de %@ : %@"
+          }
+        }
+      }
+    },
     "Ready to Drink": {
       "localizations": {
         "fr": {
@@ -9447,6 +9647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rappels"
+          }
+        }
+      }
+    },
+    "Reminders on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappels activés"
           }
         }
       }
@@ -9567,6 +9777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retirer de la liste"
+          }
+        }
+      }
+    },
+    "Removed from your shopping list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiré de votre liste d’achats"
           }
         }
       }
@@ -11231,12 +11451,12 @@
         }
       }
     },
-    "Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
+    "Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. When the wine is in several places, choose the bottle under **Which Bottle?**: free bottles come first, and those kept for an occasion say so. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
+            "value": "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin est à plusieurs endroits, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
           }
         }
       }
@@ -12911,6 +13131,16 @@
         }
       }
     },
+    "Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). Swipe it right to add bottles, left to put it back. In the note, tap the wine's name to open it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Balayez-la vers la droite pour ajouter des bouteilles, vers la gauche pour la remettre en cave. Dans la note, touchez le nom du vin pour l’ouvrir."
+          }
+        }
+      }
+    },
     "Touch and hold a rack and choose **Move Up** or **Move Down**; on the Mac, drag it in the sidebar.": {
       "localizations": {
         "fr": {
@@ -12971,6 +13201,16 @@
         }
       }
     },
+    "Turn On": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer"
+          }
+        }
+      }
+    },
     "Turn on **Monthly Reminder** in Settings: on the first of each month, a notification tells you how many bottles to drink this year, which have just become ready and which are past their peak. It is worked out on this device.": {
       "localizations": {
         "fr": {
@@ -12981,12 +13221,12 @@
         }
       }
     },
-    "Turn on **Reminders** in Settings: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device.": {
+    "Turn on **Reminders** in Settings, or with **Turn On** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open Settings** takes you to the system settings to turn them on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Rappels** dans les réglages : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil."
+            "value": "Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer."
           }
         }
       }
@@ -13011,12 +13251,12 @@
         }
       }
     },
-    "Turn on **To buy** to add the wine to your shopping list, with the price you saw, or swipe it to the left. When you buy it, swipe it to the right (**Add to Cellar**): once the bottles are added, it leaves the list and stays in the Journal marked **Bought**.": {
+    "Turn on **To buy** to add the wine to your shopping list, with the price you saw, or swipe it to the left; **Undo** puts it back as it was. When you buy it, swipe it to the right (**Add to Cellar**): once the bottles are added, it leaves the list and stays in the Journal marked **Bought**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu, ou balayez-le vers la gauche. Quand vous l’achetez, balayez-le vers la droite (**Ajouter à la cave**) : une fois les bouteilles ajoutées, il quitte la liste et reste dans le Journal marqué **Acheté**."
+            "value": "Activez **À acheter** pour mettre le vin sur votre liste d’achats, avec le prix vu, ou balayez-le vers la gauche ; **Annuler** le remet comme avant. Quand vous l’achetez, balayez-le vers la droite (**Ajouter à la cave**) : une fois les bouteilles ajoutées, il quitte la liste et reste dans le Journal marqué **Acheté**."
           }
         }
       }
@@ -13457,6 +13697,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sauvegarde hebdomadaire sur cet appareil"
+          }
+        }
+      }
+    },
+    "Weeknight": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En semaine"
           }
         }
       }

@@ -22,6 +22,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   bottles in layers and two zones, bins, irregular rows; rack check
 - Tonight: maturity, why this window, food pairing, bottles kept for an
   occasion; Ask your cellar on Apple Intelligence devices
+- Tonight on every platform: a suggestion that changes each day, a note
+  when nothing is ready yet or every bottle is kept for an occasion, a
+  monthly reminder offered in context with a way to the notification
+  settings, and the same occasion chips, drink sheet and food pairing
+  wording on Apple and Android; the drink sheet picks a free bottle first
+  and asks before discarding a note
 - Journal: one diary of the bottles opened from the cellar and the wines
   tasted elsewhere (place, rating, notes and tags), with filters and a
   shopping list that adds bottles to the cellar once bought; one "+" asks

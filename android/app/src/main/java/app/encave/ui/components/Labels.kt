@@ -1,5 +1,6 @@
 package app.encave.ui.components
 
+import app.encave.core.Occasion
 import android.content.res.Resources
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -325,3 +326,14 @@ object Formats {
 
 /** Currencies offered in settings and the add form; the stored code can be any ISO 4217 code. */
 val commonCurrencies = listOf("EUR", "CHF", "USD", "GBP", "CAD", "AUD", "NZD", "JPY", "SEK", "NOK", "DKK", "ZAR")
+
+/** The occasion chips, the same on every device (labels from the shared table, translated here). */
+val Occasion.labelRes: Int
+    get() = when (this) {
+        Occasion.DinnerAtHome -> R.string.occasion_dinner
+        Occasion.WithFriends -> R.string.occasion_friends
+        Occasion.Celebration -> R.string.occasion_celebration
+        Occasion.Restaurant -> R.string.occasion_restaurant
+        Occasion.Weeknight -> R.string.occasion_weeknight
+        Occasion.Tasting -> R.string.occasion_tasting
+    }

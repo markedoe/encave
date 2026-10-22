@@ -137,7 +137,9 @@ import app.encave.ui.components.WineGroupRow
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
 import app.encave.ui.components.sampleLabels
+import app.encave.core.bottleToOpen
 import app.encave.ui.drink.DrinkSheet
+import app.encave.ui.drink.rememberDrinking
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
 import app.encave.ui.navigation.EditWineRoute
@@ -215,7 +217,7 @@ private fun CellarList(
     val resources = LocalResources.current
     val listState = rememberLazyListState()
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
-    var drinking by remember { mutableStateOf<WineGroup?>(null) }
+    var drinking by rememberDrinking()
     val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
     val isEmpty = cellar.bottlesInCellar.isEmpty() && cellar.bottlesOnOrder.isEmpty()
     val orders = remember(cellar) { cellar.orderGroups() }
@@ -427,7 +429,7 @@ private fun CellarList(
                                     year = viewModel.year,
                                     selected = group.id.toString() == selectedId,
                                     onOpen = { onOpen(group.id.toString()) },
-                                    onDrink = { drinking = group },
+                                    onDrink = { drinking = group.bottles.bottleToOpen?.id?.toString() },
                                     onShowInRack = group.bottles.firstOrNull { it.slot != null }?.let { bottle ->
                                         { navigator.open(RackDetailRoute(bottle.slot!!.rackId.toString(), bottle.id.toString())) }
                                     },
@@ -449,10 +451,10 @@ private fun CellarList(
         }
     }
 
-    drinking?.let { group ->
+    drinking?.let { id ->
         DrinkSheet(
             cellar = cellar,
-            bottles = group.bottles,
+            bottleId = id,
             onDismiss = { drinking = null },
             onDrink = { bottle, tasting -> viewModel.drink(bottle.id, tasting) },
         )
