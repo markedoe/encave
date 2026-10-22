@@ -161,7 +161,7 @@ class BackupManager(
     }
 
     /** Back up now: the archive of the cellar, written to [output] (a file the user chose). */
-    suspend fun writeArchive(output: OutputStream): Result<Int> = mutex.withLock {
+    suspend fun writeArchive(output: OutputStream): Result<CellarArchive.WriteResult> = mutex.withLock {
         busy.value = true
         try {
             val cellar = repository.read { it.copy() }
