@@ -31,6 +31,7 @@ import app.encave.core.ImportException
 import app.encave.core.ImportSummary
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
+import app.encave.ui.components.displayLabel
 import app.encave.core.SampleData
 import app.encave.core.Slot
 import app.encave.core.Tasting
@@ -75,10 +76,16 @@ import app.encave.core.DiaryFilter
 sealed interface UiText {
     data class Res(@StringRes val id: Int, val args: List<Any> = emptyList()) : UiText
     data class Plural(@PluralsRes val id: Int, val count: Int) : UiText
+
+    /** A text built from resources when shown (a place name, which depends on the language). */
+    class Built(val build: (android.content.res.Resources) -> String) : UiText
 }
 
-/** A snackbar message, with an optional undo; [persistent] ones stay until dismissed. */
-data class UiMessage(val text: UiText, val undo: (() -> Unit)? = null, val persistent: Boolean = false)
+/**
+ * A snackbar message, with an optional undo; [persistent] ones stay until dismissed, [long]
+ * ones (the undo of a large change) stay longer than the others.
+ */
+data class UiMessage(val text: UiText, val undo: (() -> Unit)? = null, val persistent: Boolean = false, val long: Boolean = false)
 
 /**
  * The cellar and every command the screens can run. Commands go through the
@@ -133,8 +140,8 @@ class AppViewModel(
         viewModelScope.launch { syncUpdates.collect { post(it) } }
     }
 
-    private fun post(text: UiText, undo: (() -> Unit)? = null) {
-        messageChannel.trySend(UiMessage(text, undo))
+    private fun post(text: UiText, long: Boolean = false, undo: (() -> Unit)? = null) {
+        messageChannel.trySend(UiMessage(text, undo, long = long))
     }
 
     private fun errorText(error: Throwable): UiText = UiText.Res(
@@ -339,12 +346,36 @@ class AppViewModel(
         }) { it.deleteBottle(bottleId) }
     }
 
-    fun move(bottleId: UUID, slot: Slot?) = change<String?>({ label -> label?.let { post(UiText.Res(R.string.msg_moved, listOf(it))) } }) {
-        it.move(bottleId, slot)
-        slot?.let { s -> it.rack(s.rackId)?.let { rack -> "${rack.name} · ${rack.label(s)}" } }
+    /**
+     * Moves a bottle to a place, or out of the racks with [storageNote] saying where it is.
+     * Undo puts it back where it was (the inverse move, so later changes are kept).
+     */
+    fun move(bottleId: UUID, slot: Slot?, storageNote: String? = null) {
+        val before = cellar.value.bottles[bottleId] ?: return
+        change<Rack?>({ rack ->
+            val text = if (slot != null && rack != null) {
+                UiText.Built { r -> r.getString(R.string.msg_moved, rack.name, rack.displayLabel(slot, r)) }
+            } else {
+                UiText.Res(R.string.msg_taken_out_one)
+            }
+            post(text) { moveBack(before) }
+        }) { c ->
+            c.move(bottleId, slot)
+            if (slot == null) c.bottles[bottleId]?.let { c.updateBottle(it.copy(storageNote = storageNote?.trim()?.ifEmpty { null })) }
+            slot?.let { c.rack(it.rackId) }
+        }
     }
 
-    fun swap(a: Slot, b: Slot) = change<Unit> { it.swap(a, b) }
+    /** Back to the place (and note) a bottle had before a move. */
+    private fun moveBack(before: Bottle) = change<Unit> { c ->
+        val now = c.bottles[before.id] ?: return@change
+        if (now.status != Bottle.Status.InCellar) return@change
+        c.move(before.id, before.slot)
+        c.bottles[before.id]?.let { c.updateBottle(it.copy(storageNote = before.storageNote)) }
+    }
+
+    /** Swaps the contents of two places; Undo swaps them again. */
+    fun swap(a: Slot, b: Slot) = change<Unit>({ post(UiText.Res(R.string.msg_swapped)) { change<Unit> { it.swap(a, b) } } }) { it.swap(a, b) }
 
     fun updateTasting(bottleId: UUID, tasting: Tasting) =
         change<Unit>({ post(UiText.Res(R.string.msg_saved)) }) { it.updateTasting(bottleId, tasting) }
@@ -606,10 +637,59 @@ class AppViewModel(
 
     fun addRack(rack: Rack) = change<Unit> { it.addRack(rack) }
 
-    /** Calls [onDone] only when the rack was saved (shrinking with bottles outside is refused). */
-    fun updateRack(rack: Rack, onDone: () -> Unit) = change<Unit>({ onDone() }) { it.updateRack(rack) }
+    /**
+     * Saves a rack, moving its bottles by [rowMap] (see Cellar.updateRack). With [takingOut]
+     * the bottles in removed places leave the rack, with a long Undo that puts the rack and
+     * the bottles back as they were. Calls [onDone] only when the rack was saved.
+     */
+    fun updateRack(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), takingOut: Boolean = false, onDone: () -> Unit) {
+        val before = cellar.value
+        val old = before.rack(rack.id)
+        val bottles = before.bottlesInCellar.filter { it.slot?.rackId == rack.id }
+        val displaced = before.displacedBottles(rack, rowMap).size
+        change<Unit>({
+            onDone()
+            if (takingOut && displaced > 0 && old != null) {
+                post(UiText.Res(R.string.msg_bottles_taken_out, listOf(displaced)), long = true) {
+                    change<Unit> { c ->
+                        // Out of their places first, so the rack can take its old shape, then back in.
+                        bottles.forEach { b -> if (c.bottles[b.id]?.status == Bottle.Status.InCellar) c.move(b.id, null) }
+                        c.updateRack(old, takingOut = true)
+                        bottles.forEach { b ->
+                            val slot = b.slot ?: return@forEach
+                            if (c.bottles[b.id]?.status == Bottle.Status.InCellar && c.bottleAt(slot) == null) c.move(b.id, slot)
+                        }
+                    }
+                }
+            }
+        }) { it.updateRack(rack, rowMap, takingOut) }
+    }
 
-    fun removeRack(rackId: UUID) = change<Unit> { it.removeRack(rackId) }
+    /**
+     * Deletes a rack; its bottles stay in the cellar without a place. The long Undo puts the
+     * rack back where it was in the list, and its bottles in the places still free.
+     */
+    fun removeRack(rackId: UUID) {
+        val before = cellar.value
+        val index = before.racks.indexOfFirst { it.id == rackId }
+        if (index < 0) return
+        val rack = before.racks[index]
+        val placed = before.bottlesInCellar.filter { it.slot?.rackId == rackId }.map { it.id to it.slot!! }
+        change<Unit>({
+            post(UiText.Res(R.string.msg_rack_deleted, listOf(rack.name)), long = true) {
+                change<Unit> { c ->
+                    if (c.rack(rack.id) != null) return@change
+                    c.addRack(rack)
+                    val at = c.racks.size - 1
+                    if (index < at) c.moveRacks(setOf(at), index)
+                    placed.forEach { (id, slot) ->
+                        val bottle = c.bottles[id] ?: return@forEach
+                        if (bottle.status == Bottle.Status.InCellar && bottle.slot == null && c.bottleAt(slot) == null) c.move(id, slot)
+                    }
+                }
+            }
+        }) { it.removeRack(rackId) }
+    }
 
     fun moveRack(from: Int, to: Int) = change<Unit> {
         // `to` is the final index; moveRacks takes SwiftUI's "insert before" offset.

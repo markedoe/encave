@@ -144,7 +144,7 @@
     <string name="add_fewer_details">Moins de détails</string>
     <string name="add_location_rack">Dans un casier</string>
     <string name="add_location_other">Ailleurs</string>
-    <string name="add_pick_slots">Touchez des emplacements libres pour ranger les bouteilles (%1$d sur %2$d choisis).</string>
+    <string name="add_pick_slots">Touchez des emplacements libres pour les bouteilles (%1$d sur %2$d choisies).</string>
     <string name="add_rack_full">Ce casier est plein.</string>
     <string name="add_no_racks">Aucun casier : les bouteilles seront listées sans emplacement.</string>
     <string name="add_window_auto">Estimée d’après le style et le millésime. Ajustez-la si vous en savez plus.</string>
@@ -177,7 +177,7 @@
     <string name="msg_gone">%1$s retirée de la cave</string>
     <string name="msg_bottle_deleted">Bouteille supprimée</string>
     <string name="msg_wine_deleted">%1$s supprimé</string>
-    <string name="msg_moved">Déplacée en %1$s</string>
+    <string name="msg_moved">Déplacée vers %1$s · %2$s</string>
     <string name="msg_saved">Enregistré</string>
     <string name="msg_put_back">%1$s est de retour en cave</string>
     <string name="msg_save_failed">La modification n’a pas pu être enregistrée.</string>
@@ -192,7 +192,7 @@
     <string name="msg_photo_removed">Photo retirée</string>
     <string name="err_slot_taken">Cet emplacement est déjà occupé.</string>
     <string name="err_slot_range">Cet emplacement est hors du casier.</string>
-    <string name="err_rack_not_empty">Retirez d’abord les bouteilles des rangées ou colonnes supprimées.</string>
+    <string name="err_rack_not_empty">Des bouteilles sont dans des emplacements supprimés.</string>
     <string name="err_already_consumed">Cette bouteille n’est plus en cave.</string>
     <string name="err_generic">Une erreur est survenue</string>
     <string name="err_not_backup">Ce fichier n’est pas une sauvegarde Encave.</string>
@@ -203,7 +203,7 @@
     <string name="err_missing_name">Le fichier CSV doit avoir une colonne « name ».</string>
     <string name="racks_empty_title">Aucun casier</string>
     <string name="racks_empty_body">Décrivez vos casiers pour voir exactement où se trouve chaque bouteille.</string>
-    <string name="rack_occupancy">%1$d emplacements occupés sur %2$d</string>
+    <string name="rack_occupancy">%1$d bouteilles sur %2$d</string>
     <string name="rack_not_found">Casier introuvable</string>
     <string name="rack_editor_new">Nouveau casier</string>
     <string name="rack_editor_edit">Modifier le casier</string>
@@ -215,7 +215,7 @@
     <string name="cell_empty">%1$s, vide</string>
     <string name="cell_filled">%1$s, %2$s</string>
     <string name="cell_highlighted">%1$s, mise en évidence</string>
-    <string name="rack_move_hint">Choisissez un nouvel emplacement pour %1$s</string>
+    <string name="rack_move_hint">Choisissez où mettre %1$s</string>
     <string name="rack_cell_add">Ajouter une bouteille ici</string>
     <string name="rack_cell_actions">Actions sur la bouteille</string>
     <string name="rack_cell_move_here">Déplacer ici</string>
@@ -568,7 +568,7 @@
     <string name="help_field_staggered_depth">Combien de bouteilles tiennent l’une derrière l’autre dans chaque case.</string>
     <string name="help_field_shelf_depth">Combien de bouteilles tiennent l’une derrière l’autre sur une étagère.</string>
     <string name="help_field_bin">Un losange d’environ 30 cm contient une dizaine de bouteilles standard.</string>
-    <string name="help_rack_holds">Contient %1$d bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case.</string>
+    <string name="help_rack_holds">Contient %1$d bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle de derrière.</string>
     <string name="help_field_discovery_place">Où vous l’avez bu, pour retrouver le vin plus tard.</string>
     <string name="help_where_footer">La recherche du Journal cherche aussi dans le lieu, les notes et les tags.</string>
     <string name="help_tags_footer">Vos propres groupes, comme idées cadeaux ou pour l’été. Touchez un tag pour le choisir, ou tapez-en un nouveau et validez. Filtrez par tag dans le Journal.</string>
@@ -627,13 +627,13 @@
     <string name="help_racks_shelves">Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière.</string>
     <string name="help_racks_bins">Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez un casier pour voir son contenu.</string>
     <string name="help_racks_places_title">Emplacements</string>
-    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les cases numérotées depuis la gauche : **B3** est la deuxième rangée, troisième case. Quand une case contient plusieurs bouteilles, **B3-2** est la deuxième (derrière, ou dans la pile).</string>
+    <string name="help_racks_places">Les rangées sont nommées par lettre depuis le haut et les cases numérotées depuis la gauche : **B3** est la deuxième rangée, troisième case. Avec deux bouteilles par emplacement, **B3, derrière** est celle de derrière. Les étagères d’une cave à vin sont numérotées depuis le haut, et sa liste de bouteilles va étagère par étagère.</string>
     <string name="help_racks_finding_title">Trouver une bouteille</string>
     <string name="help_racks_finding">Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher.</string>
     <string name="help_racks_zooming_title">Zoomer</string>
     <string name="help_racks_zooming">Pincez pour zoomer, ou touchez deux fois un endroit ; touchez de nouveau deux fois pour revoir tout le casier. Faites glisser pour vous déplacer une fois zoomé. **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement.</string>
     <string name="help_racks_moving_title">Déplacer des bouteilles</string>
-    <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement (ou appuyez longuement sur une bouteille). Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place.</string>
+    <string name="help_racks_moving">Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement (ou appuyez longuement sur une bouteille) ; Retour annule. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place. Pour la mettre dans un autre casier, ou hors des casiers avec une note sur l’endroit où elle est, choisissez **Déplacer vers un autre casier…** dans le menu de la bouteille, ou **Déplacer…** sur la fiche du vin. **Annuler** la remet en place.</string>
     <string name="help_racks_irregular_title">Casiers irréguliers</string>
     <string name="help_racks_irregular">Activez **Rangées de longueurs différentes** pour un casier sous pente ou sous un escalier, et réglez la longueur de chaque rangée.</string>
     <string name="help_tonight_title">Ce soir et fenêtres de dégustation</string>
@@ -962,7 +962,7 @@
     <string name="audit_all_found">Chaque bouteille est à sa place.</string>
     <string name="audit_found_state">Trouvée</string>
     <string name="help_racks_check_title">Vérifier un casier</string>
-    <string name="help_racks_check">Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.</string>
+    <string name="help_racks_check">Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour un emplacement de plusieurs bouteilles, appuyez longuement dessus et choisissez **Vérifier une par une…** quand seules certaines sont là. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.</string>
     <string name="settings_export_pdf">Inventaire à imprimer (PDF)</string>
     <string name="settings_export_pdf_body">Chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement</string>
     <string name="settings_import_other">Importer depuis une autre app</string>
@@ -997,6 +997,33 @@
     <string name="table_sort_hint">Trier par cette colonne</string>
     <string name="help_start_table_title">Liste ou tableau</string>
     <string name="help_start_table">Sur tablette et grand écran, le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.</string>
+    <string name="help_racks_editing_title">Modifier un casier</string>
+    <string name="help_racks_editing">Sur une cave à vin, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des emplacements qui ont des bouteilles, l’éditeur indique combien ; enregistrer les sort alors du casier (elles restent dans la cave sans emplacement), et **Annuler** remet tout en place. Supprimer un casier peut aussi être annulé.</string>
+    <string name="msg_taken_out_one">Bouteille sortie du casier</string>
+    <string name="msg_swapped">Bouteilles échangées</string>
+    <string name="msg_rack_deleted">%1$s supprimé</string>
+    <string name="rack_displaced_body">Elles restent dans votre cave, sans emplacement.</string>
+    <string name="rack_displaced_confirm">Les retirer et enregistrer</string>
+    <string name="discard_title">Abandonner les modifications ?</string>
+    <string name="discard_confirm">Abandonner</string>
+    <string name="discard_keep">Continuer</string>
+    <string name="move_title">Déplacer la bouteille</string>
+    <string name="move_rack">Casier</string>
+    <string name="move_no_rack">Aucun casier</string>
+    <string name="move_grid_hint">Touchez un emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place.</string>
+    <string name="action_move_other_rack">Déplacer vers un autre casier…</string>
+    <string name="action_move_ellipsis">Déplacer…</string>
+    <string name="action_take_out_of_rack">Sortir du casier</string>
+    <string name="rack_check_one_by_one">Vérifier une par une…</string>
+    <string name="rack_check_all_here">Toutes là</string>
+    <string name="rack_check_bottle">Bouteille %1$d</string>
+    <string name="cell_found_partial">%1$s, %2$d sur %3$d trouvées</string>
+    <string name="cell_depths">%1$s : %2$s</string>
+    <string name="cell_depth_filled">%1$s %2$s</string>
+    <string name="cell_depth_empty">%1$s vide</string>
+    <string name="cell_wine_style">%1$s, %2$s</string>
+    <string name="cell_dimmed">%1$s, autre vin</string>
+    <string name="rack_list_shelf_zone">%1$s · %2$s</string>
     <string name="help_racks_drag_title">Glisser-déposer</string>
     <string name="help_racks_drag">Sur tablette, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement).</string>
     <string name="help_start_shortcuts_title">Raccourcis</string>
@@ -1263,6 +1290,11 @@
         <item quantity="one">Prochaine synchronisation dans environ %d minute</item>
         <item quantity="many">Prochaine synchronisation dans environ %d minutes</item>
         <item quantity="other">Prochaine synchronisation dans environ %d minutes</item>
+    </plurals>
+    <plurals name="rack_displaced">
+        <item quantity="one">%d bouteille est dans un emplacement supprimé</item>
+        <item quantity="many">%d bouteilles sont dans des emplacements supprimés</item>
+        <item quantity="other">%d bouteilles sont dans des emplacements supprimés</item>
     </plurals>
     <plurals name="journal_rating_stars">
         <item quantity="one">%d étoile</item>
