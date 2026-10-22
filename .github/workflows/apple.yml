@@ -52,7 +52,7 @@ jobs:
     # fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    # Built once; the iPhone and the iPad run side by side.
+    # Built once; the iPhone and the iPad (in English and in French) run side by side.
     timeout-minutes: 90
     defaults:
       run:
@@ -71,30 +71,6 @@ jobs:
           brew install xcodegen xcbeautify
           xcodegen generate
 
-      - name: Mac screenshots
-        if: ${{ !cancelled() }}
-        # Each section with the sample cellar, English and French, light and dark, at the
-        # App Store size (2880x1800), on a HiDPI virtual display: see the script. Not a
-        # gate for the external testers: a failure shows as a warning.
-        continue-on-error: true
-        timeout-minutes: 20
-        run: |
-          set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -configuration Release \
-            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd-mac" \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
-            | xcbeautify --renderer github-actions
-          tools/mac-screenshots.sh "$RUNNER_TEMP/dd-mac/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
-
-      - name: Upload Mac screenshots
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: mac-screens
-          path: ${{ runner.temp }}/mac-screens
-          retention-days: 7
-          if-no-files-found: ignore
-
       - name: Build for testing
         run: |
           set -o pipefail
@@ -102,16 +78,21 @@ jobs:
             -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
 
-      - name: Model tests (macOS), while the simulators start
+      - name: Model tests (macOS)
+        run: swift test --package-path Packages/CaveKit
+
+      - name: Start the simulators
+        if: ${{ !cancelled() }}
         run: |
+          set -e
           sims="$RUNNER_TEMP/sims"
           mkdir -p "$sims"
-          # The newest iPhone (not mini) and iPad. Booted first: a cold simulator can
-          # time out launching the app under test.
-          (
-            set -e
-            xcrun simctl list devices available -j > "$sims/devices.json"
-            python3 - "$sims/devices.json" > "$sims/plan" <<'PY'
+          # The newest iPhone (not mini) and iPad, and a copy of the iPad: English and
+          # French run side by side there. Booted first: a cold simulator can time out
+          # launching the app under test. Nothing else runs meanwhile: a booting
+          # simulator slows everything else down.
+          xcrun simctl list devices available -j > "$sims/devices.json"
+          python3 - "$sims/devices.json" > "$sims/plan" <<'PY'
           import json, sys
           for prefix in ("iPhone", "iPad"):
               found = []
@@ -125,20 +106,17 @@ jobs:
               runtime, name, udid = found[-1]
               print(prefix, udid, name)
           PY
-            while read -r device udid name; do
-              echo "$device: $name ($udid)"
-              echo "$udid" > "$sims/$device"
-              xcrun simctl boot "$udid" || true
-            done < "$sims/plan"
-            for device in iPhone iPad; do xcrun simctl bootstatus "$(cat "$sims/$device")" > /dev/null; done
-          ) > "$sims/boot.log" 2>&1 &
-          boot=$!
-          status=0
-          swift test --package-path Packages/CaveKit || status=1
-          echo "Waiting for the simulators"
-          wait "$boot" || status=1
-          cat "$sims/boot.log"
-          exit $status
+          while read -r device udid name; do
+            echo "$device: $name ($udid)"
+            if [ "$device" = iPhone ]; then
+              echo "$udid" > "$sims/iPhone"
+            else
+              echo "$udid" > "$sims/iPad-en"
+              xcrun simctl clone "$udid" "$name fr" > "$sims/iPad-fr"
+            fi
+          done < "$sims/plan"
+          for label in iPhone iPad-en iPad-fr; do xcrun simctl boot "$(cat "$sims/$label")" || true; done
+          for label in iPhone iPad-en iPad-fr; do xcrun simctl bootstatus "$(cat "$sims/$label")" > /dev/null; echo "$label booted at $(date -u +%T)"; done
 
       - name: iPhone and iPad
         if: ${{ !cancelled() }}
@@ -147,22 +125,25 @@ jobs:
           sims="$RUNNER_TEMP/sims"
           xctestrun=$(find "$RUNNER_TEMP/dd/Build/Products" -name "*.xctestrun" | head -n 1)
           tour=EncaveUITests/ScreenTourTests
-          # The iPhone and the iPad side by side. The large text checks only run on
-          # iPhone (they stop at once on the iPad's regular width).
+          # Three side by side: the iPhone, and the iPad in English and in French. The
+          # large text checks only run on iPhone (they stop at once on the iPad's regular width).
           run() {
-            device=$1; shift
+            label=$1; shift
             # A one-off simulator timeout (a screenshot request) is retried once.
-            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$device")" \
-              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$device.xcresult" "$@" 2>&1 \
-              | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$device.log" | sed -u "s/^/[$device] /"
+            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$label")" \
+              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$label.xcresult" "$@" 2>&1 \
+              | tee "$RUNNER_TEMP/$label.raw" | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$label.log" \
+              | sed -u "s/^/[$label] /"
           }
-          run iPhone & iphone=$!
-          run iPad -skip-testing:$tour/testLargeText -skip-testing:$tour/testLargestText & ipad=$!
+          echo "Started at $(date -u +%T)"
+          run iPhone & pids=$!
+          run iPad-en -only-testing:$tour/testTourInEnglish & pids="$pids $!"
+          run iPad-fr -only-testing:$tour/testTourInFrench & pids="$pids $!"
           status=0
-          wait "$iphone" || status=1
-          wait "$ipad" || status=1
-          # The failures again, as annotations.
-          grep -h "^::" "$RUNNER_TEMP/iPhone.log" "$RUNNER_TEMP/iPad.log" || true
+          for pid in $pids; do wait "$pid" || status=1; done
+          # The failures again, as annotations, and when each part started its tests.
+          grep -h "^::" "$RUNNER_TEMP"/iP*.log || true
+          grep -h "Test Suite 'All tests' started\|elapsed --" "$RUNNER_TEMP"/iP*.raw | head -n 30 || true
           exit $status
 
       - name: Slowest steps of the tour
@@ -172,6 +153,7 @@ jobs:
           for result in "$RUNNER_TEMP"/iP*.xcresult; do
             [ -e "$result" ] || continue
             for test in testTourInEnglish testTourInFrench; do
+              case "$(basename "$result")-$test" in *-en.xcresult-testTourInFrench|*-fr.xcresult-testTourInEnglish) continue ;; esac
               echo "== $(basename "$result" .xcresult) $test"
               xcrun xcresulttool get test-results activities --path "$result" \
                 --test-id "ScreenTourTests/$test()" > "$RUNNER_TEMP/activities.json" || continue
@@ -200,7 +182,7 @@ jobs:
       - name: Mac
         if: ${{ !cancelled() }}
         # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
-        # failed); the Mac screenshots, taken first, show each section.
+        # failed); the Mac screenshots of the build job show each section.
         continue-on-error: true
         run: |
           set -o pipefail
@@ -421,6 +403,27 @@ jobs:
             status=1
           done
           exit $status
+
+      - name: Mac screenshots
+        # Main, pull requests and manual runs, like the tour.
+        if: ${{ !cancelled() && env.MAC_APP != '' && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
+        # Each section with the sample cellar, English and French, light and dark, at the
+        # App Store size (2880x1800), on a HiDPI virtual display: see the script. Not a
+        # gate for the external testers: a failure shows as a warning.
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          # The app of the launch test above: archived on main, a Release build elsewhere.
+          tools/mac-screenshots.sh "$MAC_APP" "$RUNNER_TEMP/mac-screens"
+
+      - name: Upload Mac screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mac-screens
+          path: ${{ runner.temp }}/mac-screens
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Build the iPhone and iPad app (simulator, no signing)
         if: ${{ !cancelled() && env.UPLOAD != 'true' }}

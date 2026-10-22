@@ -42,12 +42,14 @@ The workflow uses two macOS jobs per run (one on pushes to other branches):
   On other branches (manual runs included: they never upload) and pull
   requests, builds the Mac app in Release for the same launch test, and the
   iPhone and iPad app for the simulator while the Mac app runs. Every build
-  checks the privacy manifest.
+  checks the privacy manifest. On main, pull requests and manual runs, the same
+  Mac app then makes the Mac screenshots for the App Store
+  (`tools/mac-screenshots.sh`, artifact `mac-screens`).
 - **Screen tour** (main, pull requests and manual runs): builds the UI tests
-  once, runs the model tests on macOS while the iPhone and iPad simulators
-  start, then the tour on both at once (artifact `screens`, one folder per
-  device), the Mac screenshots for the App Store (artifact `mac-screens`) and the
-  Mac tour. Runs on main are never cancelled by a later push.
+  once, runs the model tests on macOS, starts three simulators, then runs the
+  tour on all three at once: the iPhone (with the large text checks), and the
+  iPad in English and in French (artifact `screens`, one folder per device).
+  Then the Mac tour. Runs on main are never cancelled by a later push.
 
 The same split runs locally, for example the French iPhone tour only:
 
