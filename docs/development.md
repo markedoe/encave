@@ -3,6 +3,8 @@
 ## Apple app (iPhone, iPad, Mac)
 
 Requirements: macOS with the latest Xcode, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+The app runs on iOS and iPadOS 18 and macOS 15 or later; **Ask your cellar**
+and **Suggest Details** need iOS, iPadOS or macOS 26 with Apple Intelligence.
 
 ```bash
 brew install xcodegen
@@ -48,15 +50,17 @@ views so both strings are extracted and translated.
 
 ### AI label recognition (optional)
 
-Off by default. In Settings, choose Claude (Anthropic API key) or an
-OpenAI-compatible server (OpenAI, or OpenWebUI/Ollama on your network) with a
-model that accepts images. The key is stored in the Keychain; only the label
+Off by default. In Settings, choose a cloud provider with your own API key
+(ChatGPT, Claude, Gemini, Grok, Mistral, DeepSeek, Qwen, Kimi, GLM, MiniMax,
+OpenRouter) or a server on your network (Ollama, vLLM, LM Studio or any
+OpenAI-compatible server, no key needed), with a model that reads images. The key is stored in the Keychain; only the label
 photo is sent. Never put a key in the code, the scheme or a test.
 
 ## Android app (phones, tablets, foldables)
 
 Requirements: JDK 17 or newer and the Android SDK (Android Studio, or the
-command-line tools with `platforms;android-37.0`). Point Gradle at the SDK
+command-line tools with `platforms;android-37.0`). The app runs on Android 15
+(API 35) or later. Point Gradle at the SDK
 with `ANDROID_HOME` or an untracked `android/local.properties`.
 
 ```bash
@@ -67,8 +71,11 @@ cd android
 ```
 
 - `android/core` is the Kotlin port of CaveKit. Keep both in step: the JSON
-  backup is shared, and `InteropTest` reads fixtures exported by CaveKit
-  (`android/core/src/test/resources`).
+  backup is shared, and the Kotlin tests read fixtures written by CaveKit:
+  `fixtures/interop` and `fixtures/search` (shared by both) and
+  `android/core/src/test/resources`. After a model change, regenerate them with
+  `ENCAVE_WRITE_FIXTURES=1 swift test --package-path apple/Packages/CaveKit`,
+  then run the Kotlin tests.
 - Colors: `ui/theme/DesignTokens.kt` mirrors `design/tokens.json`;
   `DesignTokensTest` fails if they differ. Never hardcode colors elsewhere.
 - Strings: edit the English/French table in `android/tools/strings.py`, then
@@ -76,18 +83,19 @@ cd android
 - AI label recognition works as on Apple; the key is encrypted with the
   Android Keystore and excluded from backups.
 - Sync (docs/SYNC.md) is ported in `android/core/.../core/sync` (merge, pairing,
-  sessions, remote rounds, relay client; Bouncy Castle for X25519 and
-  ChaCha20-Poly1305) and wired up in `android/app/.../sync` (NSD discovery, TCP
+  sessions, remote rounds, relay and WebDAV clients; the system's X25519
+  (XDH) and ChaCha20-Poly1305, Conscrypt on Android and the JDK in tests, see
+  [ENCRYPTION.md](ENCRYPTION.md)) and wired up in `android/app/.../sync` (NSD discovery, TCP
   framing, Keystore-encrypted identity, WorkManager relay rounds).
   `ProtocolVectorTests` must reproduce the published vectors. With a relay
   running (`PORT=8787 node relay/server.mjs`), `ENCAVE_RELAY_URL=http://localhost:8787
   ./gradlew :core:test` also syncs two devices through it, as CI does.
 - Home screen widgets (Jetpack Glance) are in `android/app/.../widget`. They
-  read `files/widget-snapshot.json`, a summary (`WidgetSnapshot` in core, as in
-  CaveKit) that the app rewrites after each saved or synced change; the cellar
+  read `files/widget-snapshot.json`, a summary (`WidgetSnapshot` in core; the Apple
+  app has no widgets yet) that the app rewrites after each saved or synced change; the cellar
   is loaded only when it is missing or from last year. `WidgetContentTest` renders them with `glance-appwidget-testing`.
 - `ScreenTourTest` opens every main screen with the sample cellar on a phone
-  and a tablet, in English and French, saves screenshots to
+  and a tablet, in English and French, and on a phone in dark mode, saves screenshots to
   `android/app/build/screens` (never commit them) and checks the layout:
   centered `action.*` buttons, equal side-by-side buttons, racks that fit.
 
@@ -95,7 +103,8 @@ cd android
 
 The protocol is specified in [SYNC.md](SYNC.md); the Swift implementation is in
 CaveKit (`SyncState.swift`, `SyncProtocol.swift`, `RemoteSync.swift`,
-`RelayMailbox.swift`) and the app layer in `apple/Encave/Services/Sync/`.
+`RelayMailbox.swift`, `WebDAVMailbox.swift`) and the app layer in
+`apple/Encave/Services/Sync/` (with `CloudKitMailboxStore.swift` for iCloud).
 
 - **Tests:** `swift test --package-path apple/Packages/CaveKit` covers merges,
   pairing, handshakes, remote sync and the published test vectors.
@@ -133,7 +142,7 @@ a container:
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
-| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone, iPad and Mac (artifact `screens`; on main, pull requests and manual runs only), builds both apps; on a push to main (or a manual run), uploads to TestFlight and gives the build to the external testers |
+| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone, iPad and Mac (artifact `screens`; on main, pull requests and manual runs only), builds both apps; on a push to main, uploads to TestFlight and gives the build to the external testers (a manual run on another branch uploads without giving it to them) |
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
 | `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`) |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
