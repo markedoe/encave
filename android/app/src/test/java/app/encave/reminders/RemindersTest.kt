@@ -57,6 +57,17 @@ class RemindersTest {
     }
 
     @Test
+    fun deliveriesOfOneWineOnSeveralDaysAreCountedPerDay() {
+        val wine = Wine(name = "Split", vintage = 2024, color = WineColor.Red)
+        val split = Cellar().apply {
+            addBottles(wine, quantity = 2, purchase = PurchaseInfo(isOrdered = true, expectedAt = today.atTime(9, 0).toInstant(ZoneOffset.UTC)))
+            addBottles(wine, quantity = 4, purchase = PurchaseInfo(isOrdered = true, expectedAt = today.plusDays(10).atTime(9, 0).toInstant(ZoneOffset.UTC)))
+        }
+        assertEquals(listOf(2), Reminders.due(split, today, zone, "2026-11", emptySet()).deliveries.map { it.count })
+        assertEquals(listOf(4), Reminders.due(split, today.plusDays(10), zone, "2026-11", emptySet()).deliveries.map { it.count })
+    }
+
+    @Test
     fun checkPostsOnePerKindAndRemembers() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         shadowOf(context).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
