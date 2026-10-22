@@ -15,6 +15,25 @@ class PercentagesTest {
     }
 
     @Test
+    fun decadeLabelsGiveTheirFirstYear() {
+        assertEquals(2010, CellarStatistics.decadeStart("2010s"))
+        assertEquals(1990, CellarStatistics.decadeStart("1990s"))
+        assertEquals(null, CellarStatistics.decadeStart(CellarStatistics.NON_VINTAGE))
+        assertEquals(null, CellarStatistics.decadeStart("2010"))
+        val cellar = Cellar()
+        cellar.addBottles(Wine(name = "A", vintage = 2015), 1)
+        cellar.addBottles(Wine(name = "B"), 1)
+        val labels = cellar.statistics(2026).byVintageDecade.map { it.label }
+        assertEquals(listOf(2010, null), labels.map { CellarStatistics.decadeStart(it) })
+    }
+
+    @Test
+    fun oneSliceIsAWhole() {
+        assertEquals(listOf(100), CellarStatistics.percentages(listOf(9)))
+        assertEquals(listOf(100, 0), CellarStatistics.percentages(listOf(9, 0)))
+    }
+
+    @Test
     fun nothingGivesZeros() {
         assertEquals(listOf(0, 0), CellarStatistics.percentages(listOf(0, 0)))
         assertEquals(emptyList<Int>(), CellarStatistics.percentages(emptyList()))

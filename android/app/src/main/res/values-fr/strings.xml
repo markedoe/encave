@@ -365,7 +365,7 @@
     <string name="msg_erased">Toutes les données ont été effacées</string>
     <string name="settings_ai">Reconnaissance des étiquettes par IA</string>
     <string name="settings_ai_off_body">Facultatif. Lit les étiquettes sur une photo avec le service d’IA de votre choix et votre propre clé d’API.</string>
-    <string name="settings_ai_on_body">Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil.</string>
+    <string name="settings_ai_on_body">Seule la photo de l’étiquette est envoyée, directement à ce service, quand vous ajoutez une photo d’étiquette ou touchez « Compléter avec l’IA ». Votre cave n’est jamais envoyée. La clé est chiffrée avec le Keystore Android de cet appareil.</string>
     <string name="ai_provider">Fournisseur</string>
     <string name="ai_local">Autre serveur (compatible OpenAI)</string>
     <string name="ai_connect">Se connecter et charger les modèles</string>

@@ -78,6 +78,30 @@ class TonightTest {
         )
     }
 
+    @Test
+    fun picksEdgeCases() {
+        val cellar = Cellar()
+        val day = LocalDate.of(2026, 1, 1)
+        assertTrue(cellar.tonightPicks(2026, day).isEmpty())
+        // A kept id that is not a candidate (young, unknown) changes nothing.
+        cellar.addBottles(Wine(name = "Ready", drinkFrom = 2020, drinkUntil = 2030), 1)
+        val young = cellar.addBottles(Wine(name = "Young", drinkFrom = 2030, drinkUntil = 2040), 1).first()
+        assertEquals(listOf("Ready"), cellar.tonightPicks(2026, day, kept = young.wineId).map { it.wine.name })
+        assertEquals(listOf("Ready"), cellar.tonightPicks(2026, day, kept = UUID.randomUUID()).map { it.wine.name })
+        // Kept for an occasion: never suggested.
+        val kept = cellar.addBottles(Wine(name = "Kept", drinkFrom = 2020, drinkUntil = 2030), 1)
+        cellar.reserve(kept.map { it.id }, "Birthday")
+        assertEquals(listOf("Ready"), cellar.tonightPicks(2026, day, kept = kept.first().wineId).map { it.wine.name })
+    }
+
+    /** The day key is ISO yyyy-MM-dd, as on Apple, also early in the year and on 29 February. */
+    @Test
+    fun dayKeyIsIsoDate() {
+        val id = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        assertEquals(tonightRank(id, LocalDate.of(2028, 2, 29)), tonightRank(id, LocalDate.parse("2028-02-29")))
+        assertTrue(tonightRank(id, LocalDate.of(2026, 1, 1)) != tonightRank(id, LocalDate.of(2026, 1, 2)))
+    }
+
     private fun JsonObject.string(key: String) = getValue(key).jsonPrimitive.content
 
     @Test

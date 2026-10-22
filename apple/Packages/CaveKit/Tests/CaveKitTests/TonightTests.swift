@@ -75,11 +75,35 @@ import Testing
         #expect(Set(tomorrow.map(\.wine.id)) == Set(cellar.tonightPicks(year: 2026, day: day).map(\.wine.id)))
     }
 
+    @Test func picksEdgeCases() throws {
+        var cellar = Cellar()
+        let day = "2026-01-01"
+        #expect(cellar.tonightPicks(year: 2026, day: day).isEmpty)
+        // A kept id that is not a candidate (young, unknown) changes nothing.
+        try cellar.addBottles(of: Wine(name: "Ready", drinkFrom: 2020, drinkUntil: 2030))
+        let young = try cellar.addBottles(of: Wine(name: "Young", drinkFrom: 2030, drinkUntil: 2040))
+        #expect(cellar.tonightPicks(year: 2026, day: day, keeping: young[0].wineID).map(\.wine.name) == ["Ready"])
+        #expect(cellar.tonightPicks(year: 2026, day: day, keeping: UUID()).map(\.wine.name) == ["Ready"])
+        // Kept for an occasion: never suggested.
+        let kept = try cellar.addBottles(of: Wine(name: "Kept", drinkFrom: 2020, drinkUntil: 2030))
+        try cellar.reserve(kept.map(\.id), for: "Birthday")
+        #expect(cellar.tonightPicks(year: 2026, day: day, keeping: kept[0].wineID).map(\.wine.name) == ["Ready"])
+    }
+
+    @Test func rankIgnoresTheCaseOfTheID() throws {
+        let id = try #require(UUID(uuidString: "F47AC10B-58CC-4372-A567-0E02B2C3D479"))
+        #expect(Cellar.tonightRank(wineID: id, day: "2026-10-22") == Cellar.tonightRank(wineID: UUID(uuidString: "f47ac10b-58cc-4372-a567-0e02b2c3d479")!, day: "2026-10-22"))
+        #expect(Cellar.tonightRank(wineID: id, day: "2026-10-22") != Cellar.tonightRank(wineID: id, day: "2026-10-23"))
+    }
+
     @Test func dayIsTheGregorianDateInTheUserTimeZone() {
         var parts = DateComponents()
         parts.year = 2026; parts.month = 3; parts.day = 7; parts.hour = 23; parts.minute = 59
         let date = CellarYear.calendar.date(from: parts)!
         #expect(Cellar.tonightDay(date) == "2026-03-07")
+        // Padded, and 29 February.
+        parts.year = 2028; parts.month = 2; parts.day = 29; parts.hour = 0; parts.minute = 0
+        #expect(Cellar.tonightDay(CellarYear.calendar.date(from: parts)!) == "2028-02-29")
     }
 
     @Test func nextToBeReadyIsTheYoungWineWhoseWindowOpensFirst() throws {

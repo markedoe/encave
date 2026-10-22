@@ -193,7 +193,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     Bars(
                         stats.byVintageDecade.map {
                             // "2010s" from the core: "the 2010s" in the user's language ("années 2010").
-                            val decade = it.label.removeSuffix("s").toIntOrNull()
+                            val decade = CellarStatistics.decadeStart(it.label)
                             val label = when {
                                 it.label == CellarStatistics.NON_VINTAGE -> nv
                                 decade != null -> resources.getString(R.string.insights_decade, decade)
