@@ -596,7 +596,7 @@
     <string name="help_adding_title">Adding bottles</string>
     <string name="help_adding_summary">A new wine, or more bottles of one you already have.</string>
     <string name="help_adding_existing_title">Already in your cellar?</string>
-    <string name="help_adding_existing">Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go. When the name you type is a wine you already have (same name, producer and vintage), **Already in your cellar** shows it: tap **Add to this wine** so its bottles and tastings stay together, or **It’s a different wine**.</string>
+    <string name="help_adding_existing">Type a few letters in **Already in your cellar? Search**: if the wine is already there, choose it and only enter how many bottles you add and where they go. When the name you type is a wine you already have (same name and vintage, and the same producer when both have one), **Already in your cellar** shows it: tap **Add to this wine** so its bottles and tastings stay together, or **It’s a different wine**.</string>
     <string name="help_adding_wine">Only the **name** is required. The producer and the vintage help tell wines apart; leave the vintage empty for champagnes and blends without a year.</string>
     <string name="help_adding_style_title">Style and origin</string>
     <string name="help_adding_style">The style (red, white, sparkling…) is used for colors, serving temperature and food pairing. The appellation, region, country and grapes make search and pairing better.</string>
@@ -608,13 +608,13 @@
     <string name="help_scanning_title">Label photos</string>
     <string name="help_scanning_summary">Fill in a wine from a photo of its label.</string>
     <string name="help_scanning_device_title">On this device</string>
-    <string name="help_scanning_device">Take a photo of the label or choose one in the add form; the first time, Encave asks for the camera. Encave for Android does not read the label text on the device itself (that would need a third-party library): type the name, or scan the barcode to find a wine you already have. The photo is kept with the wine.</string>
+    <string name="help_scanning_device">Take a photo of the label or choose one in the add form; the first time, Encave asks for the camera, and if it is off, **Open settings** turns it on. Encave for Android does not read the label text on the device itself (that would need a third-party library): type the name, or scan the barcode to find a wine you already have. The photo is kept with the wine.</string>
     <string name="help_scanning_ai_title">With AI (optional)</string>
-    <string name="help_scanning_ai">If an AI service is set up in Settings, the label photo is sent to it to fill in the name, producer, vintage, style, region, grapes and drinking window. Only that photo is sent, never your cellar.</string>
+    <string name="help_scanning_ai">If an AI service is set up in Settings, the label photo is sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, with **Undo**. Only that photo is sent, never your cellar.</string>
     <string name="help_scanning_typed_title">What you typed stays</string>
     <string name="help_scanning_typed">The AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept.</string>
     <string name="help_scanning_photo_title">The photo</string>
-    <string name="help_scanning_photo">The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine.</string>
+    <string name="help_scanning_photo">The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists it is shown in a studio look, light evened out on a clean background, made on this device; turn it off in **Settings › Appearance**.</string>
     <string name="help_racks_title">Racks</string>
     <string name="help_racks_summary">Describe your storage so every bottle has a place.</string>
     <string name="help_racks_grid">One bottle per cell, in rows and columns. Choose **two bottles per cell** for racks deep enough to hold one behind the other.</string>
@@ -646,7 +646,7 @@
     <string name="help_drinking_note_title">Your note</string>
     <string name="help_drinking_note">Add a rating, a few words and the occasion, or open the full tasting note (appearance, nose, palate, finish, food). Everything is optional and can be edited later from the Journal.</string>
     <string name="help_drinking_gone_title">No longer in the cellar</string>
-    <string name="help_drinking_gone">For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No longer in cellar** in its menu. For one entered by mistake, choose **Delete bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back.</string>
+    <string name="help_drinking_gone">For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No longer in cellar** in its menu. For one entered by mistake, choose **Delete bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back. A bottle opened by mistake: open its tasting in the Journal and choose **Put back in the cellar**.</string>
     <string name="help_journal_title">Journal and shopping list</string>
     <string name="help_journal_summary">Bottles opened from your cellar and wines tasted elsewhere, in one diary.</string>
     <string name="help_journal_diary">The Journal lists everything you tasted, newest first and by month. Each entry says where it comes from: **From my cellar** for a bottle you opened, **Tasted elsewhere** and the place for a wine you had in a restaurant, at friends’ or at a fair.</string>
@@ -890,7 +890,7 @@
     <string name="detail_orders_footer">Received bottles join the cellar without a place; move them to a rack from here.</string>
     <string name="err_not_received">This bottle is on order: mark it received first.</string>
     <string name="help_adding_orders_title">Bottles on order</string>
-    <string name="help_adding_orders">Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right (or touch and hold) and choose **Received**. They then join the cellar without a place, ready to be put in a rack.</string>
+    <string name="help_adding_orders">Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right, or touch and hold them and choose **Mark received**. They then join the cellar without a place, ready to be put in a rack. An order that will not come: **Cancel order** in the bottle’s menu, on the wine’s page.</string>
     <string name="field_tags">Tags</string>
     <string name="help_wine_tags_footer">Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.</string>
     <string name="tag_hint">Gift, birth year…</string>
@@ -1001,7 +1001,7 @@
     <string name="camera_unavailable">No camera app could take the photo.</string>
     <string name="action_open_app_settings">Open settings</string>
     <string name="help_scanning_barcodes_title">Barcodes</string>
-    <string name="help_scanning_barcodes">When adding bottles, tap **Scan the barcode**: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Barcodes are matched on this device only; Encave looks nothing up online.</string>
+    <string name="help_scanning_barcodes">When adding bottles, tap **Scan the barcode**: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Without the camera, type the digits under the barcode. Barcodes are matched on this device only; Encave looks nothing up online.</string>
     <string name="action_show_table">Show as a table</string>
     <string name="action_show_list">Show as a list</string>
     <string name="table_wine">Wine</string>
@@ -1014,7 +1014,7 @@
     <string name="help_racks_drag_title">Drag and drop</string>
     <string name="help_racks_drag">On tablets, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).</string>
     <string name="help_start_shortcuts_title">Shortcuts</string>
-    <string name="help_start_shortcuts">Touch and hold the Encave icon to **Scan a bottle** or see **What to open tonight** right away. A delivery reminder opens the wine on order.</string>
+    <string name="help_start_shortcuts">Touch and hold the Encave icon to **Scan a bottle** (its barcode) or see **What to open tonight** right away. A delivery reminder opens the wine on order.</string>
     <string name="action_keep_for_occasion">Keep for an occasion…</string>
     <string name="reserve_title">Keep for an occasion</string>
     <string name="reserve_body">The bottle stays in its place but is no longer suggested for tonight.</string>

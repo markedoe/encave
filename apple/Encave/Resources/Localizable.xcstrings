@@ -1566,7 +1566,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez plusieurs bouteilles d’un coup, ou une caisse de 6 ou 12 en une touche. Les bouteilles vont dans le casier utilisé la dernière fois sur cet appareil (ou le premier qui a de la place), aux premiers emplacements libres sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage). Juste après l’ajout, **Annuler** dans le bandeau retire les bouteilles."
+            "value": "Ajoutez plusieurs bouteilles d’un coup, ou une caisse de 6 ou 12 en une touche. Les bouteilles vont dans le casier utilisé la dernière fois sur cet appareil (ou le premier qui a de la place), aux premières places libres sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage). Juste après l’ajout, **Annuler** dans le bandeau retire les bouteilles."
           }
         }
       }
@@ -2611,12 +2611,12 @@
         }
       }
     },
-    "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them and choose **Received**. They then join the cellar without a place, ready to be put in a rack.": {
+    "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right (**Received**), or touch and hold them and choose **Mark Received**. They then join the cellar without a place, ready to be put in a rack. An order that will not come: **Cancel Order** on the bottle, on the wine's page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées pour choisir **Reçues**. Elles rejoignent alors la cave sans emplacement, prêtes à être rangées dans un casier."
+            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite (**Reçues**), ou touchées longuement pour choisir **Marquer comme reçu**. Elles rejoignent alors la cave sans place, prêtes à être rangées dans un casier. Une commande qui n’arrivera pas : **Annuler la commande** sur la bouteille, sur la fiche du vin."
           }
         }
       }
@@ -4546,7 +4546,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par type, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
+            "value": "Toutes vos bouteilles, regroupées par vin. Cherchez par nom, producteur, région, cépage ou millésime, avec plusieurs mots si vous voulez (« margaux 2015 »), et filtrez par style, cépage ou moment où les boire : les pastilles ne montrent que ce que vos bouteilles ont, et restent pendant la recherche."
           }
         }
       }
@@ -4811,12 +4811,12 @@
         }
       }
     },
-    "For a bottle that left the cellar without being drunk by you (given away, sold or broken), choose **No Longer in Cellar** on it. For one entered by mistake, choose **Delete Bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back; after deleting a wine, it stays a little longer.": {
+    "For a bottle that left the cellar without being drunk by you (given away, sold or broken), swipe it to the left on the wine's page, or touch and hold it, and choose **No Longer in Cellar**. For one entered by mistake, choose **Delete Bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back; after deleting a wine, it stays a little longer. A bottle opened by mistake: open its tasting in the Journal and choose **Put Back in the Cellar**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), choisissez **Plus en cave** sur elle. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps."
+            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), balayez-la vers la gauche sur la fiche du vin, ou touchez-la longuement, et choisissez **Plus en cave**. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps. Une bouteille ouverte par erreur : ouvrez sa dégustation dans le Journal et choisissez **Remettre en cave**."
           }
         }
       }
@@ -5201,12 +5201,12 @@
         }
       }
     },
-    "Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag under the styles: tap it to see only those wines. Search finds tags too.": {
+    "Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag among the filter chips, after the styles: tap it to see only those wines. Search finds tags too.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag sous les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."
+            "value": "Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag parmi les pastilles de filtre, après les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags."
           }
         }
       }
@@ -5491,12 +5491,12 @@
         }
       }
     },
-    "If an AI service is set up in Settings, the label photo is also sent to it to complete the style, region, grapes and drinking window. Only that photo is sent, never your cellar.": {
+    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, with **Undo**. Only that photo is sent, never your cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour compléter le type, la région, les cépages et la fenêtre de dégustation. Seule cette photo est envoyée, jamais votre cave."
+            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, avec **Annuler**. Seule cette photo est envoyée, jamais votre cave."
           }
         }
       }
@@ -5901,12 +5901,12 @@
         }
       }
     },
-    "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page or in a rack and choose **Attach a Document…**; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": {
+    "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page and choose **Attach a Document…**, or tap it in a rack and use the paperclip; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin ou dans un casier et choisissez **Joindre un document…** ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
+            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin et choisissez **Joindre un document…**, ou touchez-la dans un casier puis le trombone ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
           }
         }
       }
@@ -7431,12 +7431,12 @@
         }
       }
     },
-    "On iPhone and iPad, **+** in the Cellar opens the camera: point it at the label and tap **Use This Label**, or choose a photo (**Cancel** leaves the form to type the wine). The text is read on the device and fills in the name, producer, vintage and appellation; choose the style and check the vintage right below. Nothing is sent anywhere. The first time, Encave asks for the camera; if it is off, **Open Settings** turns it on.": {
+    "On iPhone and iPad, **+** in the Cellar opens the camera: point it at the label and tap **Use This Label**, or choose a photo (**Cancel** takes you to the form to type the wine). On the Mac, **Scan the Label** in the add form reads a photo you choose. The text is read on the device and fills in the name, producer, vintage and appellation; choose the style and check the vintage right below. Nothing is sent anywhere. The first time, Encave asks for the camera; if it is off, **Open Settings** turns it on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** laisse le formulaire pour saisir le vin). Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
+            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** ramène au formulaire pour saisir le vin). Sur Mac, **Scanner l’étiquette** dans le formulaire d’ajout lit une photo que vous choisissez. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
           }
         }
       }
@@ -10311,16 +10311,6 @@
         }
       }
     },
-    "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go. When a scan or the name you type is a wine you already have (same name, producer and vintage), **Already in your cellar** shows it: tap **Add to This Wine** so its bottles and tastings stay together, or **It’s a Different Wine**.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Commencez à taper le nom : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont. Quand un scan ou le nom saisi correspond à un vin que vous avez déjà (même nom, producteur et millésime), **Déjà dans votre cave** l’affiche : touchez **Ajouter à ce vin** pour garder ensemble ses bouteilles et ses dégustations, ou **C’est un autre vin**."
-          }
-        }
-      }
-    },
     "Start with %@.": {
       "localizations": {
         "fr": {
@@ -10426,7 +10416,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Type et origine"
+            "value": "Style et origine"
           }
         }
       }
@@ -11496,7 +11486,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le type (rouge, blanc, effervescent…) sert aux couleurs, à la température de service et aux accords. L’appellation, la région, le pays et les cépages améliorent la recherche et les accords."
+            "value": "Le style (rouge, blanc, effervescent…) sert aux couleurs, à la température de service et aux accords. L’appellation, la région, le pays et les cépages améliorent la recherche et les accords."
           }
         }
       }
@@ -11546,7 +11536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les années où le vin est à son meilleur. Avec **Estimer automatiquement**, elles sont déduites du type et du millésime ; désactivez-le pour saisir les années du producteur ou d’un guide."
+            "value": "Les années où le vin est à son meilleur. Avec **Estimer automatiquement**, elles sont déduites du style et du millésime ; désactivez-le pour saisir les années du producteur ou d’un guide."
           }
         }
       }
@@ -12177,6 +12167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deux, l’une derrière l’autre"
+          }
+        }
+      }
+    },
+    "Type a few letters in **Search your wines**: if the wine is already there, choose it and only enter how many bottles you add and where they go. When a scan or the name you type is a wine you already have (same name and vintage, and the same producer when both have one), **Already in your cellar** shows it: tap **Add to This Wine** so its bottles and tastings stay together, or **It’s a Different Wine**.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tapez quelques lettres dans **Rechercher dans vos vins** : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont. Quand un scan ou le nom saisi correspond à un vin que vous avez déjà (même nom et millésime, et même producteur quand les deux en ont un), **Déjà dans votre cave** l’affiche : touchez **Ajouter à ce vin** pour garder ensemble ses bouteilles et ses dégustations, ou **C’est un autre vin**."
           }
         }
       }
