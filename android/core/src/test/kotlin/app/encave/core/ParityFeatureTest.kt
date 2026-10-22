@@ -224,11 +224,65 @@ class BarcodeTest {
         assertEquals(1, cellar.groups("3760123456789").size)
     }
 
+    /** Same vectors as BarcodeTests in CaveKit FeatureTests.swift. */
+    @Test
+    fun oneBarcodeForSeveralVintagesListsTheNewestFirst() {
+        val cellar = Cellar()
+        val code = "3760123456789"
+        val old = Wine(name = "Chablis", vintage = 2015, barcodes = listOf(code))
+        val young = Wine(name = "Chablis", vintage = 2022, barcodes = listOf(code))
+        val plain = Wine(name = "Chablis", barcodes = listOf(code))
+        val gone = Wine(name = "Chablis", vintage = 2023, barcodes = listOf(code))
+        cellar.addBottles(old, 1)
+        cellar.addBottles(young, 1)
+        cellar.addBottles(plain, 1)
+        val drunk = cellar.addBottles(gone, 1)
+        cellar.markGone(drunk[0].id)
+        assertEquals(listOf(young.id, old.id, plain.id, gone.id), cellar.wines(code).map { it.id })
+        assertEquals(young.id, cellar.wine(code)?.id)
+        assertTrue(cellar.wines("").isEmpty())
+    }
+
+    @Test
+    fun addingToAnExistingWineKeepsTheNewBarcode() {
+        val cellar = Cellar()
+        val wine = Wine(name = "Chablis", vintage = 2022)
+        cellar.addBottles(wine, 1)
+        cellar.addBottles(wine.addingBarcode("3760123456789"), 1)
+        assertEquals(1, cellar.wines.size)
+        assertEquals(wine.id, cellar.wine("3760123456789")?.id)
+    }
+
     @Test
     fun wineFilesWithoutBarcodesAreUnchanged() {
         assertFalse(CellarJson.encode(Cellar(listOf(Wine(name = "Plain")))).contains("barcodes"))
         val decoded = CellarJson.json.decodeFromString(Wine.serializer(), """{"id":"3D759362-EEC4-4657-8014-4757C8FB5FF3","name":"X","barcodes":["123456"]}""")
         assertEquals(listOf("123456"), decoded.barcodes)
+    }
+}
+
+/** Same vectors as BarcodeTests in CaveKit FeatureTests.swift. */
+class WineMatchingTest {
+    @Test
+    fun aDraftMatchesTheSameWineIgnoringCaseAccentsAndSpaces() {
+        val cellar = Cellar()
+        val margaux = Wine(name = "Château Margaux", producer = "Château Margaux", vintage = 2015)
+        val other = Wine(name = "Château Margaux", producer = "Château Margaux", vintage = 2016)
+        val noProducer = Wine(name = "Clos des Tilleuls", vintage = 2019)
+        cellar.addBottles(margaux, 2)
+        cellar.addBottles(other, 1)
+        cellar.addBottles(noProducer, 1)
+        assertEquals(margaux.id, cellar.wine(matching = Wine(name = "  chateau  MARGAUX ", producer = "CHATEAU margaux", vintage = 2015))?.id)
+        assertEquals(margaux.id, cellar.wine(matching = Wine(name = "Chateau Margaux", vintage = 2015))?.id, "no producer on the draft")
+        assertEquals(
+            noProducer.id, cellar.wine(matching = Wine(name = "clos des tilleuls", producer = "Domaine Martin", vintage = 2019))?.id,
+            "no producer on the wine",
+        )
+        assertNull(cellar.wine(matching = Wine(name = "Château Margaux", producer = "Château Margaux", vintage = 2017)), "another vintage")
+        assertNull(cellar.wine(matching = Wine(name = "Château Margaux", producer = "Other Estate", vintage = 2015)), "another producer")
+        assertNull(cellar.wine(matching = Wine(name = "Château Margaux", producer = "Château Margaux")), "non-vintage")
+        assertNull(cellar.wine(matching = Wine(name = "  ")))
+        assertNull(cellar.wine(matching = margaux), "not the wine itself")
     }
 }
 
