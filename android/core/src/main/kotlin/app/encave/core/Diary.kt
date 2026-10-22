@@ -50,18 +50,18 @@ sealed class DiaryEntry {
 }
 
 /**
- * Opened bottles whose wine (name, producer, origin, grapes, tags) or tasting
- * (note, occasion, full note, food) contains [query], most recent first.
+ * Opened bottles whose wine (name, producer, origin, grapes, tags) and tasting
+ * (note, occasion, full note, food) contain every word of [query], most recent first.
  */
 fun Cellar.tastings(query: String): List<Bottle> {
     val needle = query.trim()
     if (needle.isEmpty()) return consumedBottles
-    val folded = Wine.fold(needle)
     return consumedBottles.filter { bottle ->
-        if (wines[bottle.wineId]?.matches(needle) == true) return@filter true
-        val tasting = bottle.tasting ?: return@filter false
-        listOfNotNull(tasting.note, tasting.occasion, tasting.appearance, tasting.nose, tasting.palate, tasting.finish, tasting.foodPairing)
-            .any { Wine.fold(it).contains(folded) }
+        val tasting = bottle.tasting
+        val fields = listOfNotNull(
+            tasting?.note, tasting?.occasion, tasting?.appearance, tasting?.nose, tasting?.palate, tasting?.finish, tasting?.foodPairing,
+        )
+        SearchText.matches(needle, wines[bottle.wineId]?.searchFields.orEmpty() + fields)
     }
 }
 

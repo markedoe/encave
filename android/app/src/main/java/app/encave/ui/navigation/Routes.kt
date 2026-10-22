@@ -27,7 +27,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class EditWineRoute(val wineId: String, val field: String? = null)
 
 /** The wines that share a detail: [kind] is a [app.encave.ui.cellar.ExploreKind] name, [value] its text. */
-@Serializable data class WineExploreRoute(val kind: String, val value: String)
+/** [currentWineId]: the wine whose page it was opened from, shown first without opening itself again. */
+@Serializable data class WineExploreRoute(val kind: String, val value: String, val currentWineId: String? = null)
 
 /** Add bottles, optionally of an existing wine or into a given rack slot. */
 @Serializable
