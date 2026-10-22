@@ -40,12 +40,14 @@ jobs:
           app = call("GET", "/apps", query={"filter[bundleId]": os.environ["BUNDLE_ID"], "limit": 1})["data"][0]
           app_id = app["id"]
 
-          print("## External groups\n")
+          print("## TestFlight groups\n")
           groups = safe("GET", "/betaGroups", query={"filter[app]": app_id, "limit": 50})["data"]
           in_group = {}
           for group in groups:
               a = group["attributes"]
               if a.get("isInternalGroup"):
+                  testers = safe("GET", f"/betaGroups/{group['id']}/betaTesters", query={"limit": 200})["data"]
+                  print(f"- internal **{a['name']}**: {len(testers)} testers")
                   continue
               builds = safe("GET", f"/betaGroups/{group['id']}/builds", query={"limit": 50})["data"]
               testers = safe("GET", f"/betaGroups/{group['id']}/betaTesters", query={"limit": 200})["data"]
