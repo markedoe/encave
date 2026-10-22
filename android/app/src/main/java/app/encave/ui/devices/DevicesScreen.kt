@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Laptop
 import androidx.compose.material.icons.outlined.Lock
@@ -118,32 +119,6 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun syncManager(): SyncManager = (LocalContext.current.applicationContext as EncaveApplication).sync
 
-/**
- * Android 17 asks the user before an app talks to the local network. Runs [then] once
- * the permission is granted (or not needed).
- */
-@Composable
-internal fun rememberLocalNetworkAccess(then: () -> Unit): () -> Unit {
-    val context = LocalContext.current
-    var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) pending?.invoke()
-        pending = null
-    }
-    return {
-        if (Build.VERSION.SDK_INT < LOCAL_NETWORK_SDK ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED
-        ) {
-            then()
-        } else {
-            pending = then
-            launcher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
-        }
-    }
-}
-
-private const val LOCAL_NETWORK_SDK = 37
-
 internal val SyncManager.Problem.text: Int
     get() = when (this) {
         SyncManager.Problem.Removed -> R.string.sync_problem_removed
@@ -152,6 +127,7 @@ internal val SyncManager.Problem.text: Int
         SyncManager.Problem.OtherVersion -> R.string.sync_problem_version
         SyncManager.Problem.Unfinished -> R.string.sync_problem_unfinished
         SyncManager.Problem.CannotListen -> R.string.sync_problem_cannot_listen
+        SyncManager.Problem.LocalNetworkUnavailable -> R.string.sync_problem_local_network
     }
 
 /** For a WebDAV folder, the problems that differ from a relay's. */
@@ -192,12 +168,15 @@ private val SyncFrequency.label: Int
 private val SyncManager.Problem.isRemoval: Boolean
     get() = this == SyncManager.Problem.Removed || this == SyncManager.Problem.SaysRemoved
 
+private val SyncManager.Problem.isShownOnTop: Boolean
+    get() = isRemoval || this == SyncManager.Problem.LocalNetworkUnavailable
+
 /** A line of a status row; [isError] lines are also shown in the error color (their words say it too). */
 private data class StatusLine(val text: String, val isError: Boolean = false)
 
 /** On the same Wi-Fi: running, the last success or failure, and whether a device is around. */
 private fun localStatus(resources: Resources, status: SyncManager.Status, others: List<Member>, now: Long): List<StatusLine> = buildList {
-    val problem = status.problem?.takeUnless { it.isRemoval }
+    val problem = status.problem?.takeUnless { it.isShownOnTop }
     val last = others.mapNotNull { status.lastSync[it.id] }.maxOrNull()
     when {
         status.syncing.isNotEmpty() -> add(StatusLine(resources.getString(R.string.devices_status_syncing)))
@@ -325,10 +304,20 @@ fun DevicesScreen(navigator: AppNavigator) {
     var removing by remember { mutableStateOf<Member?>(null) }
     var confirmingLeave by rememberSaveable { mutableStateOf(false) }
     val others = status.membership?.active.orEmpty().filter { it.id != sync.identity.id }
-    val withNetwork = rememberLocalNetworkAccess { }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var leaving by remember { mutableStateOf(false) }
+    var leftUntold by rememberSaveable { mutableStateOf(false) }
+    // Granted here: the network starts now, not at the next return to the app.
+    val withNetwork = rememberLocalNetworkAccess { sync.resume() }
     val invite = rememberLocalNetworkAccess { navigator.open(InviteDeviceRoute) }
-    val join = rememberLocalNetworkAccess { navigator.open(JoinDeviceRoute) }
-    val syncNow = rememberLocalNetworkAccess { sync.syncEverywhereNow() }
+    val join = rememberLocalNetworkAccess { navigator.open(JoinDeviceRoute()) }
+    val syncLocally = rememberLocalNetworkAccess { sync.syncNow() }
+    // Away from home does not need the local network: only the sessions on it wait for the permission.
+    val syncNow = {
+        if (status.remoteStorage != null) scope.launch { sync.remoteRound() }
+        syncLocally()
+    }
     LaunchedEffect(others.isEmpty()) { if (others.isNotEmpty()) withNetwork() }
 
     Scaffold(
@@ -336,14 +325,19 @@ fun DevicesScreen(navigator: AppNavigator) {
         snackbarHost = { androidx.compose.material3.SnackbarHost(app.encave.ui.components.LocalSnackbarHostState.current) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
-            status.problem?.takeIf { it.isRemoval || status.wasRemoved }?.let { problem ->
+            status.problem?.takeIf { it.isShownOnTop || status.wasRemoved }?.let { problem ->
                 ListItem(
+                    modifier = Modifier.testTag("devices.problem"),
                     leadingContent = { Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                     headlineContent = { Text(stringResource(problem.text)) },
-                    supportingContent = if (status.wasRemoved || problem == SyncManager.Problem.SaysRemoved) {
-                        { TextButton(onClick = { sync.leave() }) { Text(stringResource(R.string.devices_leave)) } }
-                    } else {
-                        null
+                    supportingContent = when {
+                        status.wasRemoved || problem == SyncManager.Problem.SaysRemoved -> {
+                            { TextButton(onClick = { scope.launch { sync.leave() } }) { Text(stringResource(R.string.devices_leave)) } }
+                        }
+                        problem == SyncManager.Problem.LocalNetworkUnavailable -> {
+                            { TextButton(onClick = { openAppSettings(context) }) { Text(stringResource(R.string.action_open_settings)) } }
+                        }
+                        else -> null
                     },
                 )
             }
@@ -353,13 +347,21 @@ fun DevicesScreen(navigator: AppNavigator) {
             others.forEach { member ->
                 val text = when {
                     member.id in status.syncing -> stringResource(R.string.devices_status_syncing)
-                    status.lastSync[member.id] != null -> stringResource(R.string.devices_status_synced, relative(status.lastSync.getValue(member.id)))
+                    status.lastSync[member.id] != null -> stringResource(R.string.devices_status_synced, relative(status.lastSync.getValue(member.id), now))
                     member.id in status.nearby -> stringResource(R.string.devices_status_nearby)
                     else -> stringResource(R.string.devices_status_never)
                 }
                 RemovableDeviceRow(member, text) { removing = member }
             }
-            Footer(stringResource(if (others.isEmpty()) R.string.devices_empty_footer else R.string.devices_footer))
+            Footer(
+                stringResource(
+                    when {
+                        others.isEmpty() -> R.string.devices_empty_footer
+                        status.remoteStorage != null -> R.string.devices_footer_remote
+                        else -> R.string.devices_footer
+                    },
+                ),
+            )
 
             ListItem(
                 modifier = Modifier.testTag("devices.add").clickable { invite() },
@@ -416,6 +418,7 @@ fun DevicesScreen(navigator: AppNavigator) {
                         Text(
                             stringResource(
                                 when {
+                                    storage == null && status.peerUsesICloud -> R.string.devices_remote_off_icloud
                                     storage == null -> R.string.devices_remote_off
                                     storage.startsWith(SyncManager.WEBDAV_PREFIX) -> R.string.devices_remote_webdav
                                     else -> R.string.devices_remote_relay
@@ -435,10 +438,6 @@ fun DevicesScreen(navigator: AppNavigator) {
                     )
                 }
                 Footer(stringResource(R.string.devices_remote_footer))
-                if (status.remoteStorage != null) {
-                    FrequencyRow(frequency) { sync.setFrequency(it) }
-                    Footer(stringResource(R.string.sync_frequency_footer))
-                }
 
                 SectionHeader(stringResource(R.string.sync_changes_channel))
                 NotificationSwitch(
@@ -454,14 +453,24 @@ fun DevicesScreen(navigator: AppNavigator) {
             SectionHeader(stringResource(R.string.devices_e2e))
             ListItem(
                 leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                headlineContent = { Text(stringResource(R.string.devices_e2e_body), style = MaterialTheme.typography.bodyMedium) },
+                headlineContent = {
+                    Text(
+                        stringResource(if (status.remoteStorage != null) R.string.devices_e2e_body_remote else R.string.devices_e2e_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                },
             )
             HelpLink(HelpTopic.Devices, R.string.devices_help)
 
             if (status.membership != null && others.isNotEmpty()) {
                 ListItem(
-                    modifier = Modifier.clickable { confirmingLeave = true },
+                    modifier = Modifier.testTag("devices.leave").clickable(enabled = !leaving) { confirmingLeave = true },
                     headlineContent = { Text(stringResource(R.string.devices_leave), color = MaterialTheme.colorScheme.error) },
+                    trailingContent = if (leaving) {
+                        { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) }
+                    } else {
+                        null
+                    },
                 )
                 Footer(stringResource(R.string.devices_leave_footer))
             }
@@ -483,8 +492,23 @@ fun DevicesScreen(navigator: AppNavigator) {
             title = stringResource(R.string.devices_leave_title),
             body = stringResource(R.string.devices_leave_footer),
             confirm = stringResource(R.string.devices_leave_confirm),
-            onConfirm = { sync.leave() },
+            onConfirm = {
+                leaving = true
+                scope.launch {
+                    val told = sync.leave()
+                    leaving = false
+                    leftUntold = !told
+                }
+            },
             onDismiss = { confirmingLeave = false },
+        )
+    }
+    if (leftUntold) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { leftUntold = false },
+            title = { Text(stringResource(R.string.devices_left_title)) },
+            text = { Text(stringResource(R.string.devices_left_body)) },
+            confirmButton = { TextButton(onClick = { leftUntold = false }) { Text(stringResource(R.string.action_ok)) } },
         )
     }
 }
@@ -551,11 +575,20 @@ private fun RemovableDeviceRow(member: Member, status: String, onRemove: () -> U
     }
 }
 
-/** What went wrong when checking a WebDAV folder or its login. */
+/** What went wrong when checking a WebDAV folder or its login, or when giving the key there. */
 private fun webDavError(error: Throwable): Int = when ((error as? RemoteSyncException)?.error) {
     RemoteSyncError.Unauthorized -> R.string.remote_webdav_refused
     RemoteSyncError.QuotaExceeded -> R.string.remote_webdav_full
-    else -> R.string.remote_webdav_not_webdav
+    else -> if (error is java.io.IOException) R.string.remote_problem_unreachable else R.string.remote_webdav_not_webdav
+}
+
+/** What went wrong when turning a relay on: the check (not a relay), or giving the key there. */
+private fun relayError(error: Throwable): Int = when {
+    error is SyncManager.NotARelayException -> R.string.remote_not_relay
+    (error as? RemoteSyncException)?.error == RemoteSyncError.Unauthorized -> R.string.remote_problem_refused
+    (error as? RemoteSyncException)?.error == RemoteSyncError.QuotaExceeded -> R.string.remote_problem_full
+    error is java.io.IOException || (error as? RemoteSyncException)?.error is RemoteSyncError.Unavailable -> R.string.remote_problem_unreachable
+    else -> R.string.remote_not_relay
 }
 
 /** Username and password for a WebDAV folder; the password can be shown, with a TalkBack label. */
@@ -608,6 +641,16 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
     var changingLogin by remember { mutableStateOf(false) }
     var webDavError by remember { mutableStateOf<Int?>(null) }
     val folderValid = WebDavMailboxStore.folderUrl(folder) != null
+    var confirmingOff by remember { mutableStateOf(false) }
+    val preferences = (context.applicationContext as EncaveApplication).preferences
+    val frequency by preferences.syncFrequency.collectAsStateWithLifecycle()
+    // "Synced 3 minutes ago" is kept current.
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            delay(15_000)
+            value = System.currentTimeMillis()
+        }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.remote_title)) }, navigationIcon = { Back(navigator) }) },
@@ -631,7 +674,7 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                         when {
                             status.syncingRemotely -> Text(stringResource(R.string.devices_status_syncing))
                             problem != null -> Text(stringResource(problem.text(isWebDav)), color = MaterialTheme.colorScheme.error)
-                            status.lastRemoteSync != null -> Text(stringResource(R.string.devices_status_synced, relative(status.lastRemoteSync!!)))
+                            status.lastRemoteSync != null -> Text(stringResource(R.string.devices_status_synced, relative(status.lastRemoteSync!!, now)))
                             else -> Text(stringResource(R.string.devices_status_never))
                         }
                     },
@@ -640,11 +683,22 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                     Button(onClick = { scope.launch { sync.remoteRound() } }, enabled = !status.syncingRemotely, modifier = Modifier.testTag("action.remote_sync")) {
                         ActionContent(stringResource(R.string.devices_sync_now), Icons.Outlined.Sync)
                     }
-                    OutlinedButton(onClick = { scope.launch { sync.setRemoteStorage(null) } }) {
+                    OutlinedButton(onClick = { confirmingOff = true }, modifier = Modifier.testTag("action.remote_off")) {
                         Text(stringResource(R.string.remote_turn_off), color = MaterialTheme.colorScheme.error)
                     }
                 }
                 Footer(stringResource(R.string.remote_on_footer))
+                FrequencyRow(frequency) { sync.setFrequency(it) }
+                Footer(stringResource(R.string.sync_frequency_footer))
+                if (confirmingOff) {
+                    ConfirmDialog(
+                        title = stringResource(R.string.remote_off_title),
+                        body = stringResource(if (isWebDav) R.string.remote_off_webdav else R.string.remote_off_relay),
+                        confirm = stringResource(R.string.remote_turn_off),
+                        onConfirm = { scope.launch { sync.setRemoteStorage(null) } },
+                        onDismiss = { confirmingOff = false },
+                    )
+                }
                 if (isWebDav) {
                     if (status.needsWebDavSignIn || changingLogin) {
                         SectionHeader(stringResource(R.string.devices_webdav_sign_in))
@@ -677,6 +731,13 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                     }
                 }
             } else {
+                if (status.peerUsesICloud) {
+                    ListItem(
+                        modifier = Modifier.testTag("remote.icloud_note"),
+                        leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.remote_icloud_note), style = MaterialTheme.typography.bodyMedium) },
+                    )
+                }
                 SectionHeader(stringResource(R.string.remote_webdav))
                 OutlinedTextField(
                     value = folder,
@@ -735,7 +796,7 @@ fun RemoteSyncScreen(navigator: AppNavigator) {
                         checking = true
                         error = null
                         scope.launch {
-                            runCatching { sync.setRemoteStorage(candidate) }.onFailure { error = R.string.remote_not_relay }
+                            runCatching { sync.setRemoteStorage(candidate) }.onFailure { error = relayError(it) }
                             checking = false
                         }
                     },

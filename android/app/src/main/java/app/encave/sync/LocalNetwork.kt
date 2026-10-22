@@ -1,6 +1,10 @@
 package app.encave.sync
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import app.encave.core.sync.SyncProtocol
@@ -14,14 +18,27 @@ import java.net.InetSocketAddress
  * values are advertised, never names.
  */
 class LocalNetwork(context: Context) {
+    companion object {
+        /** Android 17 asks the user before an app talks to the local network. */
+        const val PERMISSION_SDK = 37
+
+        /** Whether this app may use the local network (always before Android 17). */
+        fun isAllowed(context: Context): Boolean =
+            Build.VERSION.SDK_INT < PERMISSION_SDK ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED
+    }
+
     private val nsd: NsdManager? = context.getSystemService(NsdManager::class.java)
 
     /** A service another device advertises, resolved to an address. */
     data class Found(val name: String, val attributes: Map<String, String>, val address: InetSocketAddress)
 
-    /** Advertises [name] on [port] with TXT [attributes] until closed. Null if NSD is not available. */
+    /** Advertises [name] on [port] with TXT [attributes] until closed. Null (and [onFailure]) if NSD is not available. */
     fun advertise(name: String, port: Int, attributes: Map<String, String>, onFailure: () -> Unit = {}): Closeable? {
-        val manager = nsd ?: return null
+        val manager = nsd ?: run {
+            onFailure()
+            return null
+        }
         val info = NsdServiceInfo().apply {
             serviceName = name
             serviceType = SyncProtocol.SERVICE_TYPE
@@ -45,15 +62,24 @@ class LocalNetwork(context: Context) {
 
     /**
      * Looks for Encave services until closed. [onFound] gets each one once resolved;
-     * [onLost] gets the name of one that went away.
+     * [onLost] gets the name of one that went away. [onFailure] is told when looking cannot
+     * start (local network access refused, or no network service), [onStarted] when it does.
      */
-    fun browse(onFound: (Found) -> Unit, onLost: (String) -> Unit): Closeable? {
-        val manager = nsd ?: return null
+    fun browse(
+        onFound: (Found) -> Unit,
+        onLost: (String) -> Unit,
+        onFailure: () -> Unit = {},
+        onStarted: () -> Unit = {},
+    ): Closeable? {
+        val manager = nsd ?: run {
+            onFailure()
+            return null
+        }
         val resolver = Resolver(manager, onFound)
         val listener = object : NsdManager.DiscoveryListener {
-            override fun onDiscoveryStarted(serviceType: String) = Unit
+            override fun onDiscoveryStarted(serviceType: String) = onStarted()
             override fun onDiscoveryStopped(serviceType: String) = Unit
-            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) = Unit
+            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) = onFailure()
             override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) = Unit
             override fun onServiceFound(info: NsdServiceInfo) = resolver.enqueue(info)
             override fun onServiceLost(info: NsdServiceInfo) = onLost(info.serviceName)
@@ -64,7 +90,10 @@ class LocalNetwork(context: Context) {
                 resolver.stop()
                 runCatching { manager.stopServiceDiscovery(listener) }
             }
-        }.getOrNull()
+        }.getOrElse {
+            onFailure()
+            null
+        }
     }
 
     /** Resolves one service at a time: older Android versions refuse concurrent resolutions. */

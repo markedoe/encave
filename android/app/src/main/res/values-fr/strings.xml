@@ -700,7 +700,22 @@
     <string name="devices_title">Appareils</string>
     <string name="devices_this_device">Cet appareil</string>
     <string name="devices_section">Appareils partageant cette cave</string>
-    <string name="devices_empty_footer">Ajoutez votre tablette, un autre téléphone, un iPhone ou un Mac pour avoir la même cave sur chacun, toujours à jour.</string>
+    <string name="devices_empty_footer">Ajoutez vos autres appareils (iPhone, iPad, Mac ou Android) pour avoir la même cave sur chacun, toujours à jour.</string>
+    <string name="devices_footer_remote">Les appareils se synchronisent sur le même Wi-Fi quand Encave est ouvert, et loin de la maison par le stockage choisi. Les modifications faites séparément se réunissent sans rien perdre.</string>
+    <string name="devices_e2e_body_remote">Chaque appareil prouve qu’il fait partie de la cave avec sa propre clé, et tout est chiffré. Sur votre réseau, les appareils communiquent directement. Loin de la maison, le stockage ne contient que des fichiers chiffrés.</string>
+    <string name="devices_remote_off_icloud">Désactivée : vos appareils Apple utilisent iCloud, qu’Android ne peut pas utiliser</string>
+    <string name="remote_icloud_note">Vos appareils Apple se synchronisent à distance par iCloud, qu’Android ne peut pas utiliser. Pour synchroniser aussi cet appareil à distance, choisissez ici un dossier WebDAV ou un relais, puis le même sur vos appareils Apple.</string>
+    <string name="sync_health_sign_in">Connexion requise</string>
+    <string name="sync_health_paused">Synchronisation en pause</string>
+    <string name="sync_health_failing">Ne se synchronise plus</string>
+    <string name="settings_sync_attention">Réglages, la synchronisation demande votre attention</string>
+    <string name="local_network_needed">Encave a besoin d’accéder à votre réseau local pour trouver vos autres appareils.</string>
+    <string name="action_open_settings">Ouvrir les réglages</string>
+    <string name="local_network_rationale_title">Autoriser l’accès au réseau local ?</string>
+    <string name="local_network_rationale_body">Encave trouve vos autres appareils sur ce Wi-Fi et se synchronise directement avec eux, chiffré de bout en bout. Rien d’autre sur le réseau n’est utilisé.</string>
+    <string name="local_network_rationale_continue">Continuer</string>
+    <string name="local_network_rationale_later">Plus tard</string>
+    <string name="sync_problem_local_network">Encave ne peut pas utiliser le réseau local et ne trouve donc pas vos autres appareils. Autorisez-le dans les réglages de l’app.</string>
     <string name="devices_footer">Les appareils se synchronisent quand ils sont sur le même Wi-Fi et qu’Encave est ouvert. Les modifications faites séparément se réunissent sans rien perdre.</string>
     <string name="devices_add">Ajouter un appareil</string>
     <string name="devices_join">Rejoindre la cave d’un autre appareil</string>
@@ -716,7 +731,12 @@
     <string name="devices_e2e_body">Les appareils communiquent directement sur votre réseau. Chacun prouve qu’il fait partie de la cave avec sa propre clé, et tout ce qu’ils échangent est chiffré. Aucun serveur n’intervient.</string>
     <string name="devices_help">Aide sur les appareils</string>
     <string name="devices_leave">Arrêter la synchronisation sur cet appareil</string>
-    <string name="devices_leave_footer">La cave reste telle quelle sur cet appareil. Les autres appareils continuent de se synchroniser entre eux.</string>
+    <string name="devices_leave_footer">La cave reste telle quelle sur cet appareil. Vos autres appareils en sont prévenus et continuent de se synchroniser entre eux.</string>
+    <string name="devices_left_title">Synchronisation arrêtée sur cet appareil</string>
+    <string name="devices_left_body">Vos autres appareils n’ont pas pu être prévenus. Si cet appareil y apparaît encore, retirez-le depuis l’un d’eux.</string>
+    <string name="remote_off_title">Arrêter la synchronisation à distance sur cet appareil ?</string>
+    <string name="remote_off_webdav">Cet appareil n’utilise plus le dossier WebDAV et oublie son identifiant. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez.</string>
+    <string name="remote_off_relay">Cet appareil n’utilise plus le relais. Vos autres appareils continuent de l’utiliser : désactivez-le aussi sur eux si vous le souhaitez.</string>
     <string name="devices_leave_title">Arrêter la synchronisation sur cet appareil ?</string>
     <string name="devices_leave_confirm">Arrêter la synchronisation</string>
     <string name="devices_remove">Retirer</string>
@@ -791,7 +811,7 @@
     <string name="remote_problem_unreadable">Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.</string>
     <string name="remote_problem_removal">L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.</string>
     <string name="invite_title">Ajouter un appareil</string>
-    <string name="invite_instructions">Sur l’autre appareil, ouvrez Réglages › Appareils › Rejoindre la cave d’un autre appareil, puis scannez ce code ou saisissez les chiffres.</string>
+    <string name="invite_instructions">Scannez ce code avec l’appareil photo de l’autre appareil, ou saisissez les chiffres dans Réglages › Appareils › Rejoindre la cave d’un autre appareil.</string>
     <string name="invite_qr">Code QR à scanner avec l’autre appareil</string>
     <string name="invite_valid">Valable 2 minutes, pour un seul appareil.</string>
     <string name="invite_waiting">En attente de l’autre appareil…</string>
@@ -827,6 +847,16 @@
     <string name="pair_failed_version">L’autre appareil utilise une version différente d’Encave. Mettez les deux à jour.</string>
     <string name="pair_failed_connection">La connexion a été perdue. Réessayez avec un nouveau code.</string>
     <string name="pair_failed_listen">Cet appareil n’a pas pu attendre l’autre sur le réseau.</string>
+    <string name="pair_not_synced_body">La cave n’est pas encore arrivée. Gardez les deux appareils ouverts sur le même Wi-Fi ; cela se terminera tout seul.</string>
+    <string name="pair_done_body_remote">Votre cave est maintenant sur les deux appareils et reste synchronisée, sur le même Wi-Fi et loin de la maison.</string>
+    <string name="join_has_sample">Cet appareil a la cave d’exemple</string>
+    <string name="join_replace_sample">Remplacer la cave d’exemple</string>
+    <string name="join_replace_sample_footer">Les bouteilles d’exemple sont remplacées par la cave de l’autre appareil.</string>
+    <string name="join_replace_confirm_body">Cet appareil n’affichera que la cave de l’autre appareil.</string>
+    <string name="join_replace_confirm">Remplacer et rejoindre</string>
+    <string name="join_leave_title">Rejoindre une autre cave ?</string>
+    <string name="join_leave_body">Cet appareil quittera la cave qu’il partage avec %1$s. Ses bouteilles y restent.</string>
+    <string name="join_leave_confirm">Quitter et rejoindre</string>
     <string name="help_sync_title">Comment marche la synchronisation</string>
     <string name="help_sync_summary">Ce qui circule entre vos appareils, et comment les modifications se combinent.</string>
     <string name="help_sync_steps_title">Deux étapes</string>
@@ -1245,9 +1275,14 @@
         <item quantity="other">%d bouteilles retirées</item>
     </plurals>
     <plurals name="sync_changes_wines">
-        <item quantity="one">%d vin ajouté</item>
-        <item quantity="many">%d vins ajoutés</item>
-        <item quantity="other">%d vins ajoutés</item>
+        <item quantity="one">%d vin ajouté à la liste d’achats</item>
+        <item quantity="many">%d vins ajoutés à la liste d’achats</item>
+        <item quantity="other">%d vins ajoutés à la liste d’achats</item>
+    </plurals>
+    <plurals name="join_replace_confirm_title">
+        <item quantity="one">Retirer %d bouteille de cet appareil ?</item>
+        <item quantity="many">Retirer %d bouteilles de cet appareil ?</item>
+        <item quantity="other">Retirer %d bouteilles de cet appareil ?</item>
     </plurals>
     <plurals name="sync_changes_other">
         <item quantity="one">%d autre modification</item>

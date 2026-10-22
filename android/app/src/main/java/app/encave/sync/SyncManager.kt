@@ -21,9 +21,12 @@ import app.encave.core.sync.SyncError
 import app.encave.core.sync.SyncException
 import app.encave.core.sync.SyncExchange
 import app.encave.core.sync.SyncHandshake
+import app.encave.core.sync.SyncHealth
 import app.encave.core.sync.SyncProtocol
+import app.encave.core.sync.SyncRetry
 import app.encave.core.sync.SyncSnapshot
 import app.encave.core.sync.SyncState
+import app.encave.core.sync.onlyStamped
 import app.encave.core.sync.WebDavMailboxStore
 import app.encave.data.CellarRepository
 import app.encave.data.Preferences
@@ -39,7 +42,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -97,9 +105,30 @@ class SyncManager(
         val unsentChanges: Boolean = false,
         /** When the in-app loop runs its next round away from home; null when it does not run. */
         val nextRemoteSync: Instant? = null,
-    )
+        /** The first failed session on the network since the last one that went through. */
+        val localFailingSince: Instant? = null,
+        /** The first failed round away from home since the last one that went through. */
+        val remoteFailingSince: Instant? = null,
+        /** The other devices sync away from home through iCloud, which Android cannot use. */
+        val peerUsesICloud: Boolean = false,
+    ) {
+        /** Whether sync needs the user, for the sign on the Settings button and the Devices row. */
+        fun health(me: UUID, now: Instant = Instant.now()): SyncHealth = SyncHealth.evaluate(
+            isShared = membership?.active.orEmpty().any { it.id != me },
+            removed = wasRemoved,
+            keyUnavailable = false,
+            signInNeeded = needsWebDavSignIn,
+            localNetworkOff = problem == Problem.LocalNetworkUnavailable,
+            localFailingSince = localFailingSince,
+            remoteFailingSince = remoteFailingSince,
+            // Problems that are not a failed round: files refused, changes that cannot be read.
+            remoteProblem = remoteProblem in setOf(RemoteProblem.Full, RemoteProblem.FileTooLarge, RemoteProblem.Unreadable) &&
+                remoteFailingSince == null,
+            now = now,
+        )
+    }
 
-    enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen }
+    enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen, LocalNetworkUnavailable }
     enum class RemoteProblem { Refused, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
 
     val storage = SyncStorage(context)
@@ -143,6 +172,9 @@ class SyncManager(
 
     // Guarded by `this`.
     private var syncState: SyncState? = null
+
+    /** Joined with Replace, the other cellar not taken in yet ([SyncStorage.pendingReplace]). Guarded by `this`. */
+    private var replacing = false
     private var progress = RemoteProgress()
 
     private var listener: ServerSocket? = null
@@ -150,6 +182,10 @@ class SyncManager(
     private var browsing: Closeable? = null
     private val endpoints = HashMap<UUID, InetSocketAddress>()
     private val serviceDevices = HashMap<String, UUID>()
+
+    /** Failed sessions in a row with each device, and the retry waiting for it (guarded by [endpoints]). */
+    private val failures = HashMap<UUID, Int>()
+    private val retries = HashMap<UUID, Job>()
     private var pendingSync: Job? = null
     private var pendingRemote: Job? = null
     private var remoteLoop: Job? = null
@@ -186,6 +222,7 @@ class SyncManager(
             synchronized(this@SyncManager) {
                 syncState = if (membership != null) loaded else null
                 progress = storage.loadRemoteProgress()
+                replacing = membership != null && storage.pendingReplace
             }
             status.update {
                 it.copy(
@@ -197,6 +234,7 @@ class SyncManager(
                     wasRemoved = membership != null && !membership.members.containsKey(identity.id),
                     lastRemoteSync = storage.lastRemoteSync,
                     unsentChanges = storage.remoteStorage != null && storage.unsentChanges,
+                    peerUsesICloud = storage.peerUsesICloud,
                 )
             }
             repository.onLocalChange = { old, new -> record(old, new) }
@@ -226,9 +264,19 @@ class SyncManager(
         // The changes told in the notification are now in sight.
         ChangeNotifications.clear(context)
         if (!ready.value || !isSetUp || isDemo || otherDevices.isEmpty() || status.value.wasRemoved) return
+        startRemoteLoop()
+        if (!LocalNetwork.isAllowed(context)) {
+            // Android 17 without local network access: away from home still works.
+            localNetworkUnavailable()
+            return
+        }
         startListener()
         startBrowser()
-        startRemoteLoop()
+    }
+
+    /** Local network access is off (or NSD cannot start): shown in Devices with a way to settings. */
+    private fun localNetworkUnavailable() {
+        status.update { if (it.wasRemoved) it else it.copy(problem = Problem.LocalNetworkUnavailable, problemAt = Instant.now()) }
     }
 
     /** Stops the network (the app goes to the background). Relay rounds continue with WorkManager. */
@@ -251,20 +299,47 @@ class SyncManager(
         synchronized(endpoints) {
             endpoints.clear()
             serviceDevices.clear()
+            retries.values.forEach { it.cancel() }
+            retries.clear()
+            failures.clear()
         }
         status.update { it.copy(nearby = emptySet(), nextRemoteSync = null) }
     }
 
     /** Syncs now with every device of the cellar on the network. */
     fun syncNow() {
-        val targets = synchronized(endpoints) { endpoints.toMap() }
-        for ((device, address) in targets) sync(device, address)
+        startSessions()
+    }
+
+    /** Starts a session with every device on the network; returns them, to wait for. */
+    private fun startSessions(): List<Job> {
+        val targets = synchronized(endpoints) {
+            // Asked by the user or after a change: retries start again from the first wait.
+            failures.clear()
+            retries.values.forEach { it.cancel() }
+            retries.clear()
+            endpoints.toMap()
+        }
+        return targets.mapNotNull { (device, address) -> sync(device, address) }
     }
 
     /** Sync now (Devices): with the devices on the network, and away from home if it is set up. */
     fun syncEverywhereNow() {
         syncNow()
         if (storage.remoteStorage != null) scope.launch { remoteRound() }
+    }
+
+    /**
+     * Sync now from the Cellar (pull to refresh): sessions with the devices on the network
+     * (15 seconds at most; when [local] is false, local network access is off) and a round
+     * away from home, and returns once they are done.
+     */
+    suspend fun syncEverywhere(local: Boolean = true) {
+        coroutineScope {
+            val remote = if (storage.remoteStorage != null) async { remoteRound() } else null
+            if (local) withTimeoutOrNull(EVERYWHERE_TIMEOUT_MS) { startSessions().joinAll() }
+            remote?.await()
+        }
     }
 
     /**
@@ -341,14 +416,73 @@ class SyncManager(
     }
 
     /**
-     * Stops syncing on this device. The cellar stays here as it is. The device gets a new ID
-     * and key, so it can join a cellar again later.
+     * Stops syncing on this device. The cellar stays here as it is. First the other devices
+     * are told (SYNC.md §2, leaving): this device removes itself from the list of devices and
+     * sends it, for 10 seconds at most, to the devices on the network and through the storage
+     * away from home. Then it gets a new ID and key, so it can join a cellar again later.
+     * Returns whether another device or the storage was told.
      */
-    fun leave() {
+    suspend fun leave(): Boolean {
+        val told = if (!isDemo && !status.value.wasRemoved && otherDevices.isNotEmpty()) tellLeaving() else false
+        forget()
+        return told
+    }
+
+    /** Removes this device from the list of devices and sends that list; true if it got somewhere. */
+    private suspend fun tellLeaving(): Boolean {
+        val before = status.value.membership ?: return false
+        val left = synchronized(this) {
+            val state = syncState ?: return false
+            val (members, clock) = before.removing(identity.id, state.clock, identity.id)
+            syncState = state.copy(clock = clock)
+            members
+        }
+        status.update { it.copy(membership = left) }
+        save()
+        val targets = synchronized(endpoints) { endpoints.values.toList() }
+        stopNetwork()
+        val local = snapshot() ?: return false
+        val told = java.util.concurrent.atomic.AtomicBoolean(false)
+        // Launched apart, so the wait below ends on time whatever a connection does.
+        val pushes = targets.map { address ->
+            scope.launch(Dispatchers.IO) { if (runCatching { pushLeaving(address, before, local) }.isSuccess) told.set(true) }
+        }.toMutableList()
+        val url = storage.remoteStorage
+        val store = url?.let(::storeFor)
+        val key = storage.remoteKey
+        if (store != null && key != null && key.cellarId == local.membership.cellarId) {
+            val current = synchronized(this) { progress }
+            pushes += scope.launch(Dispatchers.IO) {
+                // The result is not taken in: this device is about to forget the cellar.
+                if (runCatching { RemoteSync.run(store, identity, key, local, current, files, currentStorage = url) }.isSuccess) told.set(true)
+            }
+        }
+        withTimeoutOrNull(LEAVE_TIMEOUT_MS) { pushes.joinAll() }
+        pushes.forEach { it.cancel() }
+        return told.get()
+    }
+
+    /** One session that sends [local] (without this device): the handshake still uses [before]. */
+    private suspend fun pushLeaving(address: InetSocketAddress, before: Membership, local: SyncSnapshot) {
+        val transport = SocketTransport.connect(address)
+        val deadline = transport.closing(scope, LEAVE_TIMEOUT_MS)
+        try {
+            val (channel, _) = SyncHandshake.initiate(transport, identity, before)
+            transport.allowLargeFrames()
+            SyncExchange.exchange(channel, true, local, files, null)
+        } finally {
+            deadline.cancel()
+            transport.close()
+        }
+    }
+
+    /** Forgets the devices, stamps and remote sync of the cellar, with a new ID and key; the cellar stays. */
+    private fun forget() {
         stopNetwork()
         generation++
         synchronized(this) {
             syncState = null
+            replacing = false
             progress = RemoteProgress()
             if (!isDemo) currentIdentity = storage.newIdentity()
         }
@@ -372,15 +506,18 @@ class SyncManager(
             status.update {
                 it.copy(
                     remoteStorage = null, needsWebDavSignIn = false, hasRemoteKey = false, remoteProblem = null, remoteProblemAt = null,
-                    lastRemoteSync = null, unsentChanges = false, nextRemoteSync = null,
+                    lastRemoteSync = null, unsentChanges = false, nextRemoteSync = null, remoteFailingSince = null,
+                    peerUsesICloud = false,
                 )
             }
+            runCatching { storage.peerUsesICloud = false }
         }
-        if (replace) {
-            repository.applySynced(merge = { Cellar(settings = it.settings) })
-        }
+        // Replace: this device's bottles stay until the other cellar has arrived (a first sync
+        // that fails loses nothing); meanwhile only what changes here is sent.
+        runCatching { storage.pendingReplace = replace }
         val starting = repository.read { SyncState.starting(it, identity.id) }
         val membership = synchronized(this) {
+            replacing = replace
             val state = if (replace) SyncState(device = identity.id) else syncState ?: starting
             val start = maxOf(state.clock, received.stamps.values.maxOfOrNull { it.counter } ?: 0)
             val (members, clock) = received.adding(me, start, identity.id)
@@ -437,14 +574,20 @@ class SyncManager(
         }
     }
 
-    /** This device's copy, read while no change is running. */
+    /**
+     * This device's copy, read while no change is running. Joined with Replace and the other
+     * cellar not taken in yet: only what changed here since (its own bottles are never sent).
+     */
     suspend fun snapshot(): SyncSnapshot? = repository.read { cellar ->
         synchronized(this) {
             val state = syncState ?: return@read null
             val membership = status.value.membership ?: return@read null
-            SyncSnapshot(cellar, state, membership)
+            SyncSnapshot(if (replacing) CellarMerge.onlyStamped(cellar, state) else cellar, state, membership)
         }
     }
+
+    /** Joined with Replace, and the other device's cellar not taken in yet. */
+    val isReplacePending: Boolean get() = synchronized(this) { replacing }
 
     /**
      * Takes in the result of a session. The cellar may have changed during it, so the
@@ -456,9 +599,12 @@ class SyncManager(
         var membership: Membership? = null
         val saved = repository.applySynced(
             merge = { current ->
-                val state = synchronized(this) { syncState } ?: return@applySynced current
-                before = current
-                CellarMerge.merge(current, state, result.cellar, result.state).also { merged = it }.cellar
+                val (state, replace) = synchronized(this) { syncState to replacing }
+                if (state == null) return@applySynced current
+                // Joined with Replace: the other cellar replaces this device's own bottles now.
+                val base = if (replace) CellarMerge.onlyStamped(current, state) else current
+                before = base
+                CellarMerge.merge(base, state, result.cellar, result.state).also { merged = it }.cellar
             },
             // The stamps follow the saved cellar: if saving fails, nothing is taken in.
             onSaved = {
@@ -468,6 +614,10 @@ class SyncManager(
                     if (merge != null && state != null) {
                         syncState = state.copy(stamps = merge.stamps, clock = maxOf(merge.clock, state.clock))
                         membership = status.value.membership?.merged(result.membership)
+                        if (replacing) {
+                            replacing = false
+                            runCatching { storage.pendingReplace = false }
+                        }
                     }
                 }
             },
@@ -480,8 +630,14 @@ class SyncManager(
                 membership = members,
                 lastSync = if (from != null) it.lastSync + (from to Instant.now()) else it.lastSync,
                 wasRemoved = removed,
-                problem = if (removed) Problem.Removed else null,
-                problemAt = if (removed) Instant.now() else null,
+                // A round away from home says nothing of the local network.
+                problem = when {
+                    removed -> Problem.Removed
+                    from == null && it.problem == Problem.LocalNetworkUnavailable -> it.problem
+                    else -> null
+                },
+                problemAt = if (removed) Instant.now() else if (from == null && it.problem == Problem.LocalNetworkUnavailable) it.problemAt else null,
+                localFailingSince = if (from != null) null else it.localFailingSince,
             )
         }
         save()
@@ -516,11 +672,11 @@ class SyncManager(
 
     // region Sessions on the local network
 
-    private fun sync(device: UUID, address: InetSocketAddress) {
-        val membership = status.value.membership ?: return
-        if (status.value.wasRemoved || isDemo) return
-        if (!markSyncing(device)) return
-        scope.launch {
+    private fun sync(device: UUID, address: InetSocketAddress): Job? {
+        val membership = status.value.membership ?: return null
+        if (status.value.wasRemoved || isDemo) return null
+        if (!markSyncing(device)) return null
+        return scope.launch {
             var transport: SocketTransport? = null
             var deadline: Job? = null
             try {
@@ -532,10 +688,12 @@ class SyncManager(
                 handshake.cancel()
                 transport.allowLargeFrames()
                 exchange(channel, true, peer.id)
+                synchronized(endpoints) { failures.remove(device) }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
                 report(error)
+                scheduleRetry(device, error)
             } finally {
                 deadline?.cancel()
                 transport?.close()
@@ -543,6 +701,36 @@ class SyncManager(
             }
         }
     }
+
+    /**
+     * After a failed session: tries the device again after 15 s, 1 min, then 5 min (core
+     * [SyncRetry]); not for a device that refuses this one or runs another version.
+     */
+    private fun scheduleRetry(device: UUID, error: Exception) {
+        val code = (error as? SyncException)?.error
+        if (code == SyncError.RemovedDevice || code == SyncError.AuthenticationFailed || code is SyncError.UnsupportedVersion) return
+        synchronized(endpoints) {
+            if (device !in endpoints) return
+            val count = (failures[device] ?: 0) + 1
+            failures[device] = count
+            val wait = SyncRetry.delayMs(count) ?: return
+            retries.remove(device)?.cancel()
+            retries[device] = scope.launch {
+                delay(wait)
+                val address = synchronized(endpoints) {
+                    retries.remove(device)
+                    endpoints[device]
+                } ?: return@launch
+                sync(device, address)
+            }
+        }
+    }
+
+    /** Failed sessions in a row with [device] (tests). */
+    internal fun failuresWith(device: UUID): Int = synchronized(endpoints) { failures[device] ?: 0 }
+
+    /** Whether a retry waits for [device] (tests). */
+    internal fun retryPending(device: UUID): Boolean = synchronized(endpoints) { retries[device]?.isActive == true }
 
     private fun markSyncing(device: UUID): Boolean {
         var marked = false
@@ -609,7 +797,10 @@ class SyncManager(
             is SyncError.UnsupportedVersion -> Problem.OtherVersion
             else -> Problem.Unfinished
         }
-        status.update { if (it.wasRemoved) it else it.copy(problem = problem, problemAt = Instant.now()) }
+        val now = Instant.now()
+        status.update {
+            if (it.wasRemoved) it else it.copy(problem = problem, problemAt = now, localFailingSince = it.localFailingSince ?: now)
+        }
     }
 
     private fun startListener() {
@@ -631,12 +822,20 @@ class SyncManager(
             "Encave-" + identity.id.toString().take(8),
             server.localPort,
             mapOf("d" to identity.id.toString().lowercase(Locale.ROOT), "c" to tag, "v" to SyncProtocol.VERSION.toString()),
+            onFailure = ::localNetworkUnavailable,
         )
     }
 
     private fun startBrowser() {
         if (browsing != null) return
-        browsing = network.browse(onFound = ::found, onLost = ::lost)
+        browsing = network.browse(
+            onFound = ::found,
+            onLost = ::lost,
+            onFailure = ::localNetworkUnavailable,
+            onStarted = {
+                status.update { if (it.problem == Problem.LocalNetworkUnavailable) it.copy(problem = null, problemAt = null) else it }
+            },
+        )
     }
 
     private fun found(service: LocalNetwork.Found) {
@@ -656,7 +855,12 @@ class SyncManager(
 
     private fun lost(name: String) {
         val id = synchronized(endpoints) {
-            serviceDevices.remove(name)?.also { endpoints.remove(it) }
+            serviceDevices.remove(name)?.also {
+                endpoints.remove(it)
+                // Gone from the network: when it comes back, it is tried at once.
+                failures.remove(it)
+                retries.remove(it)?.cancel()
+            }
         } ?: return
         status.update { it.copy(nearby = it.nearby - id) }
     }
@@ -687,15 +891,25 @@ class SyncManager(
             status.update {
                 it.copy(
                     remoteStorage = null, needsWebDavSignIn = false, remoteProblem = null, remoteProblemAt = null,
-                    unsentChanges = false, lastRemoteSync = null, nextRemoteSync = null,
+                    unsentChanges = false, lastRemoteSync = null, nextRemoteSync = null, remoteFailingSince = null,
                 )
             }
             return
         }
         val store = RelayMailboxStore(url)
-        store.check()
+        try {
+            store.check()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            // Whatever the reason, this address does not answer as a relay.
+            throw NotARelayException(error)
+        }
         turnOn(store, store.baseUrl)
     }
+
+    /** The address given does not answer as an Encave relay (the check failed). */
+    class NotARelayException(cause: Throwable) : Exception(cause)
 
     /**
      * Turns syncing away from home on with a WebDAV folder. Checks the folder and the login
@@ -705,8 +919,7 @@ class SyncManager(
         val url = WebDavMailboxStore.folderUrl(folder) ?: throw RemoteSyncException(RemoteSyncError.Unavailable("address"))
         val store = WebDavMailboxStore(url, username, password)
         store.check()
-        storage.webDavLogin = WebDavLogin(url, username, password)
-        turnOn(store, WEBDAV_PREFIX + url)
+        turnOn(store, WEBDAV_PREFIX + url, WebDavLogin(url, username, password))
     }
 
     /** Signs in to the WebDAV folder this device already syncs through (its address came from another device). */
@@ -720,21 +933,32 @@ class SyncManager(
         remoteRound()
     }
 
-    private suspend fun turnOn(store: MailboxStore, storageString: String) {
+    /**
+     * The key is settled first (received from another device, or made and given to the
+     * others); only then are the storage, the login and the key kept, so a failure leaves
+     * syncing away from home off.
+     */
+    private suspend fun turnOn(store: MailboxStore, storageString: String, login: WebDavLogin? = null) {
         setUpIfNeeded()
-        storage.remoteStorage = storageString
-        status.update { it.copy(remoteStorage = storageString, needsWebDavSignIn = needsSignIn(storageString)) }
         val membership = status.value.membership
+        var key: CellarKey? = null
         if (storage.remoteKey == null && membership != null) {
             // Maybe another device already turned it on and left a key for this one.
             val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, null) }.getOrNull()
-            if (grant != null) {
-                storeRemoteKey(grant.cellarKey)
-            } else {
-                val key = CellarKey.random(membership.cellarId)
-                storeRemoteKey(key)
-                RemoteSync.grant(key, membership.active, store, identity, storageString)
+            key = grant?.cellarKey ?: CellarKey.random(membership.cellarId).also {
+                RemoteSync.grant(it, membership.active, store, identity, storageString)
             }
+        }
+        if (login != null) storage.webDavLogin = login
+        storage.remoteStorage = storageString
+        storage.peerUsesICloud = false
+        // A key received meanwhile from a device on the network may supersede this one.
+        if (key != null && key.cellarId == status.value.membership?.cellarId && key.supersedes(storage.remoteKey)) storeRemoteKey(key)
+        status.update {
+            it.copy(
+                remoteStorage = storageString, needsWebDavSignIn = needsSignIn(storageString), remoteProblem = null,
+                remoteProblemAt = null, remoteFailingSince = null, peerUsesICloud = false,
+            )
         }
         scheduleBackground()
         startRemoteLoop()
@@ -746,6 +970,12 @@ class SyncManager(
         val membership = status.value.membership ?: return
         if (info == null || info.key.cellarId != membership.cellarId) return
         if (info.key.supersedes(storage.remoteKey)) storeRemoteKey(info.key)
+        // iCloud is Apple-only: Devices explains it rather than just saying "Off".
+        val iCloud = info.storage == "icloud"
+        if (iCloud != status.value.peerUsesICloud) {
+            runCatching { storage.peerUsesICloud = iCloud }
+            status.update { it.copy(peerUsesICloud = iCloud) }
+        }
         // Only a storage this device can use: an HTTPS relay or WebDAV folder. iCloud ("icloud")
         // is Apple-only. A WebDAV folder then asks for this device's own login.
         val offered = info.storage?.let(::acceptedFromPeer)
@@ -840,7 +1070,7 @@ class SyncManager(
             } catch (error: CancellationException) {
                 throw error
             } catch (_: Exception) {
-                status.update { it.copy(remoteProblem = RemoteProblem.RemovalPending, remoteProblemAt = Instant.now()) }
+                remoteFailed(RemoteProblem.RemovalPending)
                 return
             }
             val current = synchronized(this) { progress }
@@ -892,6 +1122,7 @@ class SyncManager(
                     lastRemoteSync = now,
                     remoteProblem = problem,
                     remoteProblemAt = if (problem != null) now else null,
+                    remoteFailingSince = null,
                     unsentChanges = it.unsentChanges && !sent,
                 )
             }
@@ -902,15 +1133,20 @@ class SyncManager(
                 RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
             }
-            status.update { it.copy(remoteProblem = problem, remoteProblemAt = Instant.now()) }
+            remoteFailed(problem)
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
-            status.update { it.copy(remoteProblem = RemoteProblem.Unreachable, remoteProblemAt = Instant.now()) }
+            remoteFailed(RemoteProblem.Unreachable)
         } finally {
             status.update { it.copy(syncingRemotely = false) }
             remoteMutex.unlock()
         }
+    }
+
+    private fun remoteFailed(problem: RemoteProblem) {
+        val now = Instant.now()
+        status.update { it.copy(remoteProblem = problem, remoteProblemAt = now, remoteFailingSince = it.remoteFailingSince ?: now) }
     }
 
     /** Rotates the remote key if a removal is waiting for it, and returns the key to use. */
@@ -961,6 +1197,8 @@ class SyncManager(
             }
 
         const val LOCAL_DELAY_MS = 2_000L
+        private const val LEAVE_TIMEOUT_MS = 10_000L
+        private const val EVERYWHERE_TIMEOUT_MS = 15_000L
         private const val HANDSHAKE_DEADLINE_MS = 10_000L
         private const val SESSION_DEADLINE_MS = 300_000L
         private const val MAX_INBOUND_SESSIONS = 4

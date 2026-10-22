@@ -1,6 +1,7 @@
 package app.encave.ui.tonight
 
 import androidx.compose.material3.OutlinedButton
+import app.encave.ui.devices.SettingsIcon
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
@@ -22,7 +23,6 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Casino
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -99,7 +99,7 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 title = { Text(stringResource(R.string.nav_tonight)) },
                 actions = {
                     IconButton(onClick = { navigator.open(SettingsRoute) }) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                        SettingsIcon()
                     }
                 },
                 scrollBehavior = scrollBehavior,

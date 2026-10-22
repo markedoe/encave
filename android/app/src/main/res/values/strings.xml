@@ -701,7 +701,22 @@
     <string name="devices_title">Devices</string>
     <string name="devices_this_device">This device</string>
     <string name="devices_section">Devices sharing this cellar</string>
-    <string name="devices_empty_footer">Add your tablet, another phone, an iPhone or a Mac to have the same cellar on each, kept in sync.</string>
+    <string name="devices_empty_footer">Add your other devices (iPhone, iPad, Mac or Android) to have the same cellar on each, kept in sync.</string>
+    <string name="devices_footer_remote">Devices sync on the same Wi-Fi while Encave is open, and away from home through the storage you chose. Changes made apart merge without losing anything.</string>
+    <string name="devices_e2e_body_remote">Each device proves it belongs to the cellar with its own key, and everything is encrypted. On your network, devices talk directly. Away from home, the storage only holds encrypted files.</string>
+    <string name="devices_remote_off_icloud">Off: your Apple devices use iCloud, which Android can’t use</string>
+    <string name="remote_icloud_note">Your Apple devices sync away from home through iCloud, which Android can’t use. To sync this device away from home too, choose a WebDAV folder or a relay here, then the same on your Apple devices.</string>
+    <string name="sync_health_sign_in">Sign-in needed</string>
+    <string name="sync_health_paused">Sync paused</string>
+    <string name="sync_health_failing">Not syncing</string>
+    <string name="settings_sync_attention">Settings, sync needs attention</string>
+    <string name="local_network_needed">Encave needs access to your local network to find your other devices.</string>
+    <string name="action_open_settings">Open settings</string>
+    <string name="local_network_rationale_title">Allow local network access?</string>
+    <string name="local_network_rationale_body">Encave finds your other devices on this Wi-Fi and syncs with them directly, encrypted from end to end. Nothing else on the network is used.</string>
+    <string name="local_network_rationale_continue">Continue</string>
+    <string name="local_network_rationale_later">Not now</string>
+    <string name="sync_problem_local_network">Encave can’t use the local network, so it can’t find your other devices. Allow it in the app’s settings.</string>
     <string name="devices_footer">Devices sync when they are on the same Wi-Fi and Encave is open. Changes made apart merge without losing anything.</string>
     <string name="devices_add">Add a device</string>
     <string name="devices_join">Join another device’s cellar</string>
@@ -717,7 +732,12 @@
     <string name="devices_e2e_body">Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.</string>
     <string name="devices_help">Help with devices</string>
     <string name="devices_leave">Stop syncing on this device</string>
-    <string name="devices_leave_footer">The cellar stays on this device as it is. Other devices keep syncing together.</string>
+    <string name="devices_leave_footer">The cellar stays on this device as it is. Your other devices are told and keep syncing together.</string>
+    <string name="devices_left_title">Syncing stopped on this device</string>
+    <string name="devices_left_body">Your other devices could not be told. If this device still appears on them, remove it there.</string>
+    <string name="remote_off_title">Stop syncing away from home on this device?</string>
+    <string name="remote_off_webdav">This device stops using the WebDAV folder and forgets its login. Your other devices keep using it: turn it off on them too if you want.</string>
+    <string name="remote_off_relay">This device stops using the relay. Your other devices keep using it: turn it off on them too if you want.</string>
     <string name="devices_leave_title">Stop syncing on this device?</string>
     <string name="devices_leave_confirm">Stop syncing</string>
     <string name="devices_remove">Remove</string>
@@ -792,7 +812,7 @@
     <string name="remote_problem_unreadable">Changes from another device could not be read. Update Encave on all your devices.</string>
     <string name="remote_problem_removal">The removed device could not be shut out of syncing away from home yet. It will be tried again.</string>
     <string name="invite_title">Add a device</string>
-    <string name="invite_instructions">On the other device, open Settings › Devices › Join another device’s cellar, then scan this code or type the numbers.</string>
+    <string name="invite_instructions">Scan this code with the other device’s camera, or type the numbers in Settings › Devices › Join another device’s cellar.</string>
     <string name="invite_qr">QR code to scan with the other device</string>
     <string name="invite_valid">Valid for 2 minutes, for one device.</string>
     <string name="invite_waiting">Waiting for the other device…</string>
@@ -828,6 +848,16 @@
     <string name="pair_failed_version">The other device runs a different version of Encave. Update both devices.</string>
     <string name="pair_failed_connection">The connection was lost. Try again with a new code.</string>
     <string name="pair_failed_listen">This device could not wait for the other one on the network.</string>
+    <string name="pair_not_synced_body">The cellar hasn’t arrived yet. Keep both devices open on the same Wi-Fi; it will finish on its own.</string>
+    <string name="pair_done_body_remote">Your cellar is now on both devices and stays in sync, on the same Wi-Fi and away from home.</string>
+    <string name="join_has_sample">This device has the sample cellar</string>
+    <string name="join_replace_sample">Replace the sample cellar</string>
+    <string name="join_replace_sample_footer">The sample bottles are replaced by the other device’s cellar.</string>
+    <string name="join_replace_confirm_body">This device will show only the other device’s cellar.</string>
+    <string name="join_replace_confirm">Replace and join</string>
+    <string name="join_leave_title">Join another cellar?</string>
+    <string name="join_leave_body">This device will leave the cellar it shares with %1$s. Its bottles stay on it.</string>
+    <string name="join_leave_confirm">Leave and join</string>
     <string name="help_sync_title">How sync works</string>
     <string name="help_sync_summary">What travels between your devices, and how changes come together.</string>
     <string name="help_sync_steps_title">Two steps</string>
@@ -1231,8 +1261,12 @@
         <item quantity="other">%d bottles removed</item>
     </plurals>
     <plurals name="sync_changes_wines">
-        <item quantity="one">%d wine added</item>
-        <item quantity="other">%d wines added</item>
+        <item quantity="one">%d wine added to the shopping list</item>
+        <item quantity="other">%d wines added to the shopping list</item>
+    </plurals>
+    <plurals name="join_replace_confirm_title">
+        <item quantity="one">Remove %d bottle from this device?</item>
+        <item quantity="other">Remove %d bottles from this device?</item>
     </plurals>
     <plurals name="sync_changes_other">
         <item quantity="one">%d other change</item>
