@@ -41,6 +41,21 @@ import Testing
         #expect(throws: CellarError.self) { try cellar.mergeWine(kept.id, into: kept.id) }
     }
 
+    @Test func aMergeTakesTheShoppingListAndThePhotoWhenMissing() throws {
+        var cellar = cellarWithRack()
+        let kept = Wine(name: "Clos Test", vintage: 2019)
+        let twin = Wine(name: "Clos Test", vintage: 2019, photoID: "twin")
+        try cellar.addBottles(of: kept, quantity: 1)
+        try cellar.addBottles(of: twin, quantity: 1)
+        let wish = Discovery(wineID: twin.id, wantsToBuy: true)
+        cellar.discoveries[wish.id] = wish
+        try cellar.mergeWine(twin.id, into: kept.id)
+        #expect(cellar.discoveries[wish.id]?.wineID == kept.id)
+        #expect(cellar.wines[kept.id]?.photoID == "twin")
+        #expect(cellar.bottles.values.allSatisfy { $0.wineID == kept.id })
+        #expect(throws: CellarError.self) { try cellar.mergeWine(twin.id, into: kept.id) } // gone already
+    }
+
     @Test func quickDrinkSkipsBottlesKeptForAnOccasion() throws {
         var cellar = cellarWithRack()
         let wine = Wine(name: "Test", vintage: 2015, color: .red)

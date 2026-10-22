@@ -63,6 +63,16 @@ struct LabelFramingTests {
         #expect(abs(leaningBottle(degrees: 0).shape.lean) < 0.5)
     }
 
+    @Test func anEmptyOrTinyShapeGivesNoNonsense() {
+        let empty = LabelFraming.Silhouette()
+        #expect(empty.count == 0)
+        #expect(empty.lean.isFinite && empty.elongation.isFinite && empty.orientedFill.isFinite)
+        var dot = LabelFraming.Silhouette()
+        dot.add(x: 5, y: 5)
+        #expect(dot.orientedFill <= 1)
+        #expect(dot.elongation.isFinite)
+    }
+
     @Test func textLines20DegreesUpAreTurnedLevel() throws {
         // A line rising 20° on a photo 3 wide for 4 tall: its ends in Vision's coordinates.
         let aspect = 0.75, run = 0.4
