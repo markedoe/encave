@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Tonight on every platform: a suggestion that changes each day, a note
+  when nothing is ready yet or every bottle is kept for an occasion, a
+  monthly reminder offered in context with a way to the notification
+  settings, and the same occasion chips, drink sheet and food pairing
+  wording on Apple and Android; the drink sheet picks a free bottle first
+  and asks before discarding a note
 - Backups on every platform: Back Up Now makes a readable ZIP archive (the
   cellar as JSON, photos and documents under their names) that restores on
   iPhone, iPad, Mac and Android; previous versions of the cellar kept on the

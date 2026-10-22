@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.Home
 
 /**
  * Topics of the in-app help, the same as on Apple. The keyboard-shortcuts topic is
@@ -144,6 +145,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_journal_diary, R.string.help_journal_diary_title),
                     HelpSection(R.string.help_journal_add, R.string.journal_add, Icons.Filled.Add),
                     HelpSection(R.string.help_journal_filters, R.string.help_journal_filters_title, Icons.Outlined.FilterList),
+                    HelpSection(R.string.help_journal_opened, R.string.help_journal_opened_title, Icons.Outlined.Home),
                     HelpSection(R.string.help_journal_tags, R.string.discovery_tags),
                     HelpSection(R.string.help_journal_list, R.string.discovery_shopping_list, Icons.Outlined.ShoppingCart),
                     HelpSection(R.string.help_journal_not_cellar, R.string.help_journal_not_cellar_title),
