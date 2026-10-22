@@ -302,8 +302,10 @@ class RackTest {
     fun sampleHasAHeadToTailFridgeWithBottlesFrontAndBack() {
         val cellar = SampleData.cellar(year = 2026)
         val fridge = cellar.racks.firstOrNull { it.isBackReversed }
-        assertTrue(fridge?.shelfLayers?.all { it == 2 } == true)
-        assertEquals(listOf(3, 4), fridge?.let { rack -> (0 until 2).map { rack.columnsInRow(it) } })
+        // Each shelf its own layout: 4 + 3, a single row of 7, 6 + 5.
+        assertEquals(listOf(2, 1, 2), fridge?.shelfLayers)
+        assertEquals(listOf(3, 4, 7, 5, 6), fridge?.let { rack -> (0 until rack.rows).map { rack.columnsInRow(it) } })
+        assertEquals(Rack.ShelfPlace(1, 0, 1), fridge?.shelfPlace(2))
         val depths = cellar.bottlesInCellar.filter { it.slot?.rackId == fridge?.id }.mapNotNull { it.slot?.depth }.toSet()
         assertEquals(setOf(0, 1), depths)
     }

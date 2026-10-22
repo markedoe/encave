@@ -150,22 +150,24 @@ public enum SampleData {
                                       wantsToBuy: true), wine: onTrip)
 
         // A fridge two deep whose back bottles lie head-to-tail, necks facing you between the
-        // bases of the front ones: each shelf holds 4 bottles and 3 resting on them, front
-        // and back. Shelf 1 is nearly full, shelf 2 has a few bottles, shelf 3 is empty.
-        let headToTail = Rack(id: ids.next(.rack), name: labels.headToTailFridge, kind: .staggered, rows: 6, columns: 4,
-                              depth: 2, shelfLayers: [2, 2, 2], backReversed: true)
+        // bases of the front ones. Each shelf has its own layout: 4 bottles with 3 resting on
+        // them, a single row of 7, then 6 with 5 on top. Shelf 1 is nearly full, shelf 2 has a
+        // few bottles, shelf 3 is empty.
+        let headToTail = Rack(id: ids.next(.rack), name: labels.headToTailFridge, kind: .staggered, rows: 5, columns: 7,
+                              depth: 2, rowColumns: [3, 4, 7, 5, 6], shelfLayers: [2, 1, 2], backReversed: true)
         cellar.addRack(headToTail)
         func places(_ row: Int, _ columns: Range<Int>, depth: Int) -> [Slot] {
             columns.map { Slot(rackID: headToTail.id, row: row, column: $0, depth: depth) }
         }
-        // (Entry of the wine above, places.) Row 0 is shelf 1's top layer, row 1 its bottom one.
+        // (Entry of the wine above, places.) Rows 0 and 1 are shelf 1's top and bottom layers,
+        // row 2 is shelf 2.
         let fridgeBottles: [(Int, [Slot])] = [
             (0, places(1, 0..<4, depth: 0)),
             (2, places(0, 0..<3, depth: 0)),
             (5, places(1, 0..<4, depth: 1)),
             (4, places(0, 1..<2, depth: 1)),
-            (9, places(3, 0..<2, depth: 0)),
-            (5, places(3, 1..<3, depth: 1)),
+            (9, places(2, 0..<2, depth: 0)),
+            (5, places(2, 1..<3, depth: 1)),
         ]
         for (index, (entry, slots)) in fridgeBottles.enumerated() {
             let date = Date.now - Double(20 * (index + 1)) * day

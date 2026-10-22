@@ -184,8 +184,10 @@ import Testing
     @Test func sampleHasAHeadToTailFridgeWithBottlesFrontAndBack() {
         let cellar = SampleData.cellar(year: 2026)
         let fridge = cellar.racks.first { $0.isBackReversed }
-        #expect(fridge?.shelfLayers?.allSatisfy { $0 == 2 } == true)
-        #expect(fridge.map { [$0.columns(inRow: 0), $0.columns(inRow: 1)] } == [3, 4])
+        // Each shelf its own layout: 4 + 3, a single row of 7, 6 + 5.
+        #expect(fridge?.shelfLayers == [2, 1, 2])
+        #expect(fridge.map { rack in (0..<rack.rows).map(rack.columns(inRow:)) } == [3, 4, 7, 5, 6])
+        #expect(fridge?.shelfPlace(ofRow: 2).map { [$0.shelf, $0.layer, $0.layers] } == [1, 0, 1])
         let depths = Set(cellar.bottlesInCellar.filter { $0.slot?.rackID == fridge?.id }.compactMap(\.slot?.depth))
         #expect(depths == [0, 1])
     }
