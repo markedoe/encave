@@ -143,8 +143,9 @@ jobs:
     # Mac launch test, so fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    # Two simulators and the Mac in one job: about 65 minutes now.
-    timeout-minutes: 100
+    # Two simulators and the Mac in one job: 65 to 100 minutes depending on the runner
+    # (the studio pictures of the sample cellar are made on the first launch).
+    timeout-minutes: 150
     defaults:
       run:
         working-directory: apple
