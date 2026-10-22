@@ -22,6 +22,8 @@ struct WineDraft: Equatable {
     /// Not edited in the form, but kept.
     var extraPhotoIDs: [String]?
     var coverPhotoID: String?
+    /// When the AI last completed the details: set by Complete with AI, kept on save.
+    var aiCompletedAt: Date?
     /// A tag being typed, kept on save.
     var pendingTag = ""
 
@@ -47,6 +49,7 @@ struct WineDraft: Equatable {
         tags = wine.tags ?? []
         extraPhotoIDs = wine.extraPhotoIDs
         coverPhotoID = wine.coverPhotoID
+        aiCompletedAt = wine.aiCompletedAt
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -82,6 +85,7 @@ struct WineDraft: Equatable {
         )
         wine.extraPhotoIDs = extraPhotoIDs
         wine.coverPhotoID = coverPhotoID
+        wine.aiCompletedAt = aiCompletedAt
         return wine
     }
 }
@@ -322,14 +326,7 @@ struct EditWineView: View {
                 PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
                 if aiEnabled, hasLabelPhoto {
                     Section {
-                        Button(action: completeWithAI) {
-                            if analyzing {
-                                HStack { ProgressView(); Text("Reading the label…") }
-                            } else {
-                                Label("Complete with AI", systemImage: "sparkles")
-                            }
-                        }
-                        .disabled(analyzing)
+                        AICompletionButton(completedAt: draft.aiCompletedAt, isAnalyzing: analyzing, action: completeWithAI)
                         if let aiProblem {
                             Label(aiProblem, systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.secondary)
@@ -382,6 +379,7 @@ struct EditWineView: View {
                 var value = draft
                 var filled = WineDraft()
                 analysis.apply(to: &value, replacing: &filled)
+                value.aiCompletedAt = Date()
                 withAnimation { draft = value }
             } catch {
                 aiProblem = error.localizedDescription

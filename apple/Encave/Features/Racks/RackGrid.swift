@@ -24,7 +24,8 @@ struct RackInteraction {
 /// Draws a rack as it looks in real life:
 /// - grid: square cells with row letters and column numbers,
 /// - honeycomb: touching round holes, every other row offset by half; on shelves (a wine
-///   fridge), each shelf's layers nest into each other in quincunx above a shelf,
+///   fridge), each shelf's layers nest into each other in quincunx above a shelf; two deep,
+///   each shelf shows its front bottles, then its back ones (necks first when head-to-tail),
 /// - shelves: rows of bottles on a shelf, with how many are behind,
 /// - bins: diamond bins showing a small pile of bottles and a count.
 struct RackGrid: View {
@@ -35,13 +36,13 @@ struct RackGrid: View {
     var selected: Set<Slot> = []
     var highlighted: Slot?
     /// The bottle shown in the card under the rack.
-    var selectedCell: RackCell?
+    var selectedPlace: RackPlace?
     /// A wine chosen in the key: its bottles stand out, the others fade.
     var focusWine: UUID?
     var showsHeaders = true
-    var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
+    var onTap: (RackPlace, [Bottle]) -> Void = { _, _ in }
     /// A bottle dragged onto a place (iPad, Mac): move it there.
-    var onDrop: ((UUID, RackCell) -> Bool)?
+    var onDrop: ((UUID, RackPlace) -> Bool)?
     var interaction = RackInteraction()
 
     private var size: CGFloat { rack.kind == .bins ? cellSize * 1.7 : cellSize }
@@ -105,14 +106,17 @@ struct RackGrid: View {
     private var headerWidth: CGFloat { max(18, cellSize * 0.42) }
 
     /// The places of one row, offset by half a place when the row nests into the one below.
-    private func cells(ofRow row: Int, _ bottlesByCell: [RackCell: [Bottle]], _ selectedByCell: [RackCell: [Slot]]) -> some View {
+    /// `depth` draws only the front or the back places of a fridge drawn in bands.
+    private func cells(ofRow row: Int, depth: Int? = nil, _ bottlesByCell: [RackCell: [Bottle]],
+                       _ selectedByCell: [RackCell: [Slot]]) -> some View {
         HStack(spacing: spacing) {
             ForEach(0..<rack.columns(inRow: row), id: \.self) { column in
-                let cell = RackCell(rackID: rack.id, row: row, column: column)
+                let place = RackPlace(cell: RackCell(rackID: rack.id, row: row, column: column), depth: depth)
+                let bottles = (bottlesByCell[place.cell] ?? []).filter { $0.slot.map(place.contains) ?? false }
                 RackCellView(
-                    rack: rack, cell: cell, bottles: bottlesByCell[cell] ?? [],
-                    size: size, selectedCount: selectedByCell[cell]?.count ?? 0,
-                    isHighlighted: highlighted?.cell == cell || selectedCell == cell,
+                    rack: rack, place: place, bottles: bottles,
+                    size: size, selectedCount: selectedByCell[place.cell]?.filter(place.contains).count ?? 0,
+                    isHighlighted: highlighted.map(place.contains) == true || selectedPlace == place,
                     focusWine: focusWine, onTap: onTap, onDrop: onDrop, interaction: interaction
                 )
             }
@@ -137,8 +141,14 @@ struct RackGrid: View {
                             .frame(width: headerWidth)
                             .accessibilityHidden(true)
                     }
-                    VStack(alignment: .leading, spacing: rowSpacing) {
-                        ForEach(rows, id: \.self) { row in cells(ofRow: row, bottlesByCell, selectedByCell) }
+                    Group {
+                        if rack.hasDepthBands {
+                            bands(shelf: shelf, rows: rows, bottlesByCell, selectedByCell)
+                        } else {
+                            VStack(alignment: .leading, spacing: rowSpacing) {
+                                ForEach(rows, id: \.self) { row in cells(ofRow: row, bottlesByCell, selectedByCell) }
+                            }
+                        }
                     }
                     .padding(.bottom, bar + cellSize * 0.04)
                     .background(alignment: .bottom) { ShelfBar(height: bar) }
@@ -149,6 +159,72 @@ struct RackGrid: View {
 
     /// Space between two shelves of layers, in places.
     static let shelfGap: CGFloat = 0.12
+
+    // MARK: Front and back bands
+
+    /// A shelf of a fridge two deep: its front bottles, then below them the same quincunx for
+    /// the bottles behind, smaller and on a tray, each band under its caption. Every place of
+    /// both bands is tapped directly.
+    private func bands(shelf: Int, rows: Range<Int>, _ bottlesByCell: [RackCell: [Bottle]],
+                       _ selectedByCell: [RackCell: [Slot]]) -> some View {
+        let backSpacing = -(size * Self.backHeight + spacing) * 0.134
+        return VStack(alignment: .leading, spacing: 0) {
+            bandCaption(0, shelf: shelf)
+            VStack(alignment: .leading, spacing: rowSpacing) {
+                ForEach(rows, id: \.self) { row in cells(ofRow: row, depth: 0, bottlesByCell, selectedByCell) }
+            }
+            bandCaption(1, shelf: shelf)
+                .padding(.top, cellSize * Self.bandGap)
+            VStack(alignment: .leading, spacing: backSpacing) {
+                ForEach(rows, id: \.self) { row in cells(ofRow: row, depth: 1, bottlesByCell, selectedByCell) }
+            }
+            .padding(.vertical, cellSize * Self.backPadding)
+            .background {
+                // The back band on a tray, so it reads apart from the front one.
+                RoundedRectangle(cornerRadius: cellSize * 0.14, style: .continuous)
+                    .fill(Color.secondary.opacity(0.07))
+                    .padding(.horizontal, -cellSize * 0.04)
+            }
+        }
+    }
+
+    /// "Front · Bases facing you" or "Back · Necks facing you" (bases when not head-to-tail),
+    /// a heading for VoiceOver that names the shelf.
+    private func bandCaption(_ depth: Int, shelf: Int) -> some View {
+        let caption: Text = if depth == 0 {
+            Text("**Front** · Bases facing you")
+        } else if rack.isBackReversed {
+            Text("**Back** · Necks facing you")
+        } else {
+            Text("**Back** · Bases facing you")
+        }
+        return caption
+            .font(.system(size: max(9, cellSize * 0.2)))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2,
+                   height: max(Self.bandCaptionMinHeight, cellSize * Self.bandCaptionHeight), alignment: .leading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Shelf \(shelf + 1)") + Text(verbatim: ", ") + caption)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// The back places, as a share of the front ones' height (their width stays, so each back
+    /// place sits right under the front one of its cell).
+    static let backHeight: CGFloat = 0.78
+    /// A band's caption, in places, and at least in points.
+    static let bandCaptionHeight: CGFloat = 0.3
+    static let bandCaptionMinHeight: CGFloat = 13
+    /// Space above the back band's caption, and around the back places on their tray, in places.
+    static let bandGap: CGFloat = 0.06
+    static let backPadding: CGFloat = 0.04
+
+    /// Height of a shelf's two bands beyond its front layers, in places (captions apart).
+    static func backBandHeight(layers: Int) -> CGFloat {
+        let n = CGFloat(layers)
+        return n * backHeight - (n - 1) * (backHeight + 0.04) * 0.134 + 2 * backPadding + bandGap
+    }
 
     /// The name of a temperature zone over a line; the zones below the first one start
     /// under a thicker divider.
@@ -221,11 +297,18 @@ extension RackGrid {
             width = (columns + 0.5) * 1.04
             height = rack.shelfRows.reduce(CGFloat(0)) { $0 + 1 + CGFloat($1.count - 1) * 0.87 + 0.15 }
                 + CGFloat(max(0, rack.shelfRows.count - 1)) * shelfGap
+            if rack.hasDepthBands {
+                // Each shelf also has its back band and two captions.
+                let shelves = CGFloat(rack.shelfRows.count)
+                height += rack.shelfRows.reduce(CGFloat(0)) { $0 + backBandHeight(layers: $1.count) }
+                    + shelves * 2 * bandCaptionHeight
+                reserved += shelves * 2 * bandCaptionMinHeight
+            }
             if rack.zoneCount > 1 {
                 // Each zone's name: a share of a place, but never below its smallest height.
                 let zones = CGFloat(rack.zoneCount)
                 height += zones * (zoneLabelHeight + shelfGap)
-                reserved = zones * zoneLabelMinHeight
+                reserved += zones * zoneLabelMinHeight
             }
         case .staggered:
             width = (columns + 0.5) * 1.04 + 0.4
@@ -257,10 +340,10 @@ struct FittedRackGrid: View {
     var zoom: CGFloat = 1
     var selected: Set<Slot> = []
     var highlighted: Slot?
-    var selectedCell: RackCell?
+    var selectedPlace: RackPlace?
     var focusWine: UUID?
-    var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
-    var onDrop: ((UUID, RackCell) -> Bool)?
+    var onTap: (RackPlace, [Bottle]) -> Void = { _, _ in }
+    var onDrop: ((UUID, RackPlace) -> Bool)?
     /// iPhone and iPad: a zoom step asked by a button.
     var zoomStep = RackZoomStep()
     var interaction = RackInteraction()
@@ -274,7 +357,7 @@ struct FittedRackGrid: View {
             let base = RackGrid.fittingCellSize(for: rack, in: space)
             #if os(iOS)
             ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
-                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                         selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
                          zoomStep: zoomStep, interaction: interaction)
             #else
             if zoom <= 1, base > 26 {
@@ -282,14 +365,14 @@ struct FittedRackGrid: View {
                 // view, whose bars (always shown without a trackpad) would take room and
                 // make the fitted rack scroll.
                 RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                         selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
                          interaction: interaction)
                     .padding(padding)
                     .frame(width: proxy.size.width, height: proxy.size.height)
             } else {
                 ScrollView([.horizontal, .vertical]) {
                     RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                             selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                             selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
                              interaction: interaction)
                         .padding(padding)
                         .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
@@ -321,19 +404,22 @@ private struct ShelfBar: View {
     }
 }
 
-/// One cell: a bottle end (with what is behind it) or a whole bin.
+/// One cell: a bottle end (with what is behind it) or a whole bin; on a fridge drawn front
+/// and back, one place of a cell, in front (a bottle's base) or behind (smaller: its neck when
+/// head-to-tail, else its base).
 struct RackCellView: View {
     @Environment(CellarModel.self) private var model
     let rack: Rack
-    let cell: RackCell
-    /// Bottles in the cell, front first.
+    let place: RackPlace
+    /// Bottles of the place, front first.
     let bottles: [Bottle]
+    /// The width (and the height in front) of the place.
     let size: CGFloat
     var selectedCount = 0
     var isHighlighted = false
     var focusWine: UUID?
-    var onTap: (RackCell, [Bottle]) -> Void
-    var onDrop: ((UUID, RackCell) -> Bool)?
+    var onTap: (RackPlace, [Bottle]) -> Void
+    var onDrop: ((UUID, RackPlace) -> Bool)?
     var interaction = RackInteraction()
     @State private var isTargeted = false
 
@@ -345,9 +431,18 @@ struct RackCellView: View {
 
     private func color(_ bottle: Bottle) -> WineColor? { model.cellar.wines[bottle.wineID]?.color }
 
+    private var cell: RackCell { place.cell }
+    /// A back place of a fridge drawn front and back.
+    private var isBack: Bool { (place.depth ?? 0) > 0 }
+    /// Bottles this place holds at most.
+    private var capacity: Int { place.depth == nil ? rack.positionsPerCell : 1 }
+
     private var showsName: Bool { size >= Self.nameSize && (rack.kind == .grid || rack.kind == .shelves) }
     private var showsVintage: Bool { size >= Self.vintageSize && rack.kind != .bins }
-    private var cellHeight: CGFloat { showsName ? size * Self.nameHeightRatio : size }
+    private var cellHeight: CGFloat {
+        if isBack { return size * RackGrid.backHeight }
+        return showsName ? size * Self.nameHeightRatio : size
+    }
 
     /// With a wine chosen in the key: does this cell hold it?
     private var isFocused: Bool { focusWine.map { id in bottles.contains { $0.wineID == id } } ?? false }
@@ -359,17 +454,17 @@ struct RackCellView: View {
 
     var body: some View {
         Button {
-            onTap(cell, bottles)
+            onTap(place, bottles)
         } label: {
             Group {
-                if rack.kind == .bins { bin } else { position }
+                if rack.kind == .bins { bin } else if place.depth != nil { bandPlace } else { position }
             }
             .frame(width: size, height: cellHeight)
             .contentShape(Rectangle())
             .opacity(isDimmed ? 0.25 : 1)
         }
         .buttonStyle(.plain)
-        .modifier(DragAndDrop(bottle: rack.positionsPerCell == 1 ? bottles.first : nil, cell: cell,
+        .modifier(DragAndDrop(bottle: capacity == 1 ? bottles.first : nil, place: place,
                               onDrop: onDrop, isTargeted: $isTargeted))
         .overlay {
             if isTargeted {
@@ -383,7 +478,8 @@ struct RackCellView: View {
         .accessibilityLabel(accessibilityText)
         .accessibilityHint(hintText ?? Text(verbatim: ""))
         .accessibilityActions { cellActions }
-        .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)")
+        // Back places: "rack.cell.1-0.back"; the others keep their identifier.
+        .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)" + (isBack ? ".back" : ""))
         .accessibilityAddTraits(selectedCount > 0 ? .isSelected : [])
     }
 
@@ -400,8 +496,8 @@ struct RackCellView: View {
         case .browsing:
             return bottles.isEmpty ? Text("Adds a bottle here") : Text("Shows this bottle")
         case .moving:
-            if bottles.count < rack.positionsPerCell { return Text("Puts the bottle here") }
-            return rack.positionsPerCell == 1 ? Text("Swaps the two bottles") : nil
+            if bottles.count < capacity { return Text("Puts the bottle here") }
+            return capacity == 1 ? Text("Swaps the two bottles") : nil
         case .auditing:
             return bottles.isEmpty ? nil : Text("Marks as found")
         }
@@ -410,7 +506,7 @@ struct RackCellView: View {
     /// VoiceOver actions: those of the bottle card, or checking bottle by bottle.
     @ViewBuilder
     private var cellActions: some View {
-        if interaction.mode == .browsing, rack.positionsPerCell == 1, let bottle = bottles.first,
+        if interaction.mode == .browsing, capacity == 1, let bottle = bottles.first,
            let perform = interaction.perform {
             Button("Move") { perform(.move, bottle) }
             Button("Drink") { perform(.drink, bottle) }
@@ -486,6 +582,40 @@ struct RackCellView: View {
         }
     }
 
+    // MARK: One place of a fridge drawn front and back
+
+    /// In front, a bottle's base as large as a honeycomb place; behind, smaller: the neck and
+    /// capsule of a bottle lying head-to-tail, or its base.
+    private var bandPlace: some View {
+        let bottle = bottles.first
+        let diameter = isBack ? size * RackGrid.backHeight * 0.74 : size * 0.72
+        return ZStack {
+            let backdrop = isBack ? size * RackGrid.backHeight * 0.96 : size
+            Circle().fill(Color.secondary.opacity(0.1))
+                .frame(width: backdrop, height: backdrop)
+            if let bottle {
+                if isBack, rack.isBackReversed {
+                    BottleNeck(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused)
+                } else {
+                    BottleEnd(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused)
+                    if showsVintage, !isBack { vintageLabel(bottle, diameter: diameter) }
+                }
+            } else {
+                BottleEnd(color: nil, size: diameter, isEmpty: true, isHighlighted: isHighlighted)
+                if selectedCount == 0, !isBack {
+                    Text(verbatim: rack.label(for: cell))
+                        .font(.system(size: max(9, size * 0.18), weight: .medium).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if selectedCount > 0 {
+                selectionBadge
+                    .scaleEffect(isBack ? RackGrid.backHeight : 1)
+            }
+        }
+        .frame(width: size, height: cellHeight)
+    }
+
     /// The vintage on the bottle end ("2017", or "NV"), in a color readable on that wine's tint.
     private func vintageLabel(_ bottle: Bottle, diameter: CGFloat) -> some View {
         let wine = model.cellar.wines[bottle.wineID]
@@ -556,7 +686,7 @@ struct RackCellView: View {
                 .fill(Color.accentColor.opacity(0.25))
                 .overlay(Circle().strokeBorder(Color.accentColor, lineWidth: 2))
                 .frame(width: size * 0.74, height: size * 0.74)
-            if rack.positionsPerCell > 1 && interaction.mode != .auditing {
+            if capacity > 1 && interaction.mode != .auditing {
                 Text(verbatim: "+\(selectedCount)")
                     .font(.system(size: size * 0.24, weight: .bold).monospacedDigit())
                     .foregroundStyle(Color.accentColor)
@@ -587,11 +717,11 @@ struct RackCellView: View {
 
     /// Place, wine, style, then state: "B3: front Château X, Red; back empty, shown".
     private var accessibilityText: Text {
-        let place = rack.displayLabel(for: cell)
+        let place = self.place.slot.map(rack.displayLabel(for:)) ?? rack.displayLabel(for: cell)
         var label: String
         if rack.kind == .bins {
             label = String(localized: "\(place), \(bottles.count) of \(rack.positionsPerCell) bottles")
-        } else if rack.positionsPerCell == 1 {
+        } else if capacity == 1 {
             if let words = bottles.first.flatMap(wineWords) {
                 label = "\(place), \(words)"
             } else {
@@ -646,8 +776,8 @@ private struct CheckMenu: ViewModifier {
 /// rack screen handles drops.
 private struct DragAndDrop: ViewModifier {
     let bottle: Bottle?
-    let cell: RackCell
-    let onDrop: ((UUID, RackCell) -> Bool)?
+    let place: RackPlace
+    let onDrop: ((UUID, RackPlace) -> Bool)?
     @Binding var isTargeted: Bool
 
     func body(content: Content) -> some View {
@@ -656,7 +786,7 @@ private struct DragAndDrop: ViewModifier {
                 .modifier(Draggable(bottle: bottle))
                 .dropDestination(for: BottleDrag.self) { items, _ in
                     guard let id = items.first?.bottleID else { return false }
-                    return onDrop(id, cell)
+                    return onDrop(id, place)
                 } isTargeted: { isTargeted = $0 }
         } else {
             content

@@ -221,7 +221,9 @@ class ScreenTourTest(private val device: String, private val language: String) {
         capture("20-cellar-drink-soon")
         tap("cellar.stat.soon")
         compose.onNodeWithTag("cellar.stat.soon").assertIsNotSelected()
-        assertEquals("$device-$language: the list is not back to its full length", all, wineRows())
+        // At least as many rows as before (the list may have composed one more ahead meanwhile).
+        val again = wineRows()
+        assertTrue("$device-$language: the list is not back to its full length ($all to $again)", again >= all)
         // Bottles opens the cellar in figures.
         tap("cellar.stat.bottles")
         val insights = RuntimeEnvironment.getApplication().getString(app.encave.R.string.action_insights)
@@ -483,7 +485,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
     fun racks() {
         tab("Racks")
         capture("05-racks")
-        for (index in 0 until 7) {
+        for (index in 0 until 8) {
             scrollTo("rack.row.$index")
             tap("rack.row.$index")
             capture("06-rack-$index")
@@ -501,6 +503,32 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("rack.row.3")
         tap("cell.0.0")
         capture("07-rack-cell-sheet")
+    }
+
+    @Test
+    fun headToTailFridge() {
+        // The sample's fridge two deep, head-to-tail: each shelf shows its front bottles, then the
+        // ones behind (necks facing you). A back place is tapped directly and shows its bottle.
+        tab("Racks")
+        scrollTo("rack.row.7")
+        tap("rack.row.7")
+        compose.onAllNodesWithTag("rack.band.back").onFirst().assertExists()
+        compose.onAllNodesWithTag("cell.1.0", useUnmergedTree = true).onFirst().assertExists()
+        capture("51-rack-head-to-tail")
+        checkRackFits("head-to-tail fridge")
+        tap("cell.1.0.back")
+        compose.onNodeWithTag("rack.selection").assertExists()
+        capture("52-rack-back-bottle")
+        tap("rack.selection.close")
+        // Pinch: the taller drawing still zooms.
+        val before = widthOf("cell.1.0.back")
+        compose.onNodeWithTag("rack.canvas").performTouchInput {
+            pinch(center - Offset(40f, 0f), center - Offset(320f, 0f), center + Offset(40f, 0f), center + Offset(320f, 0f))
+        }
+        compose.waitForIdle()
+        val after = widthOf("cell.1.0.back")
+        assertTrue("$device-$language: back places did not grow ($before to $after)", after > before * 1.5f)
+        capture("53-rack-head-to-tail-zoomed")
     }
 
     /** Laid-out width, even when the cell is scrolled out of view. */

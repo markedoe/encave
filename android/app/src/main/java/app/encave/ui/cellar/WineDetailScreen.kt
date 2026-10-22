@@ -884,6 +884,11 @@ private fun Details(
                 modifier = Modifier.testTag("detail.edit.notes"),
             )
         }
+        wine.aiCompletedAt?.let { completedAt ->
+            app.encave.ui.add.AiCompletedCaption(
+                completedAt, Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("detail.ai_completed"),
+            )
+        }
     }
 }
 

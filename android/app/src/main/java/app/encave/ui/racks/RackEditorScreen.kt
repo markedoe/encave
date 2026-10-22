@@ -102,6 +102,8 @@ private data class RackPreset(
     /** Bottles of each row from the top (default: the usual quincunx), and shelves starting a zone. */
     val shelfRows: List<Int>? = null,
     val zoneBreaks: List<Int>? = null,
+    /** Two deep: the back bottles lie head-to-tail. */
+    val backReversed: Boolean = false,
 ) {
     /** The shelves of this preset, as the editor shows them. */
     val shelves: List<ShelfDraft>?
@@ -119,10 +121,11 @@ private val presets = listOf(
     RackPreset(R.string.preset_grid_large, RackKind.Grid, 10, 12),
     RackPreset(R.string.preset_staggered_5x8, RackKind.Staggered, 5, 8),
     RackPreset(R.string.preset_staggered_8x10, RackKind.Staggered, 8, 10),
-    RackPreset(R.string.preset_fridge_layers, RackKind.Staggered, 10, 6, depth = 2, shelfLayers = List(5) { 2 }),
+    RackPreset(R.string.preset_fridge_layers, RackKind.Staggered, 10, 6, depth = 2, shelfLayers = List(5) { 2 }, backReversed = true),
     RackPreset(
         R.string.preset_fridge_zones, RackKind.Staggered, SampleData.TWO_ZONE_FRIDGE_ROWS.size, 6, depth = 2,
         shelfLayers = SampleData.TWO_ZONE_FRIDGE_LAYERS, shelfRows = SampleData.TWO_ZONE_FRIDGE_ROWS, zoneBreaks = listOf(4),
+        backReversed = true,
     ),
     RackPreset(R.string.preset_fridge_6x6, RackKind.Shelves, 6, 6),
     RackPreset(R.string.preset_fridge_2deep, RackKind.Shelves, 6, 7, depth = 2),
@@ -183,13 +186,14 @@ data class ShelfDraft(
         }
 
         /** The rack these shelves make (rows are the layers, from the top). */
-        fun rack(id: UUID, name: String, depth: Int, shelves: List<ShelfDraft>): Rack {
+        fun rack(id: UUID, name: String, depth: Int, shelves: List<ShelfDraft>, backReversed: Boolean = false): Rack {
             val widths = shelves.flatMap { it.widths }
             return Rack(
                 id = id, name = name, kind = RackKind.Staggered, rows = widths.size.coerceAtLeast(1),
                 columns = shelves.maxOfOrNull { it.counts[0] } ?: 1, depth = depth, rowColumns = widths,
                 shelfLayers = shelves.map { it.layers },
                 zoneBreaks = shelves.indices.filter { it > 0 && shelves[it].startsZone },
+                backReversed = backReversed,
             ).normalized()
         }
     }
@@ -225,6 +229,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     var rows by rememberSaveable { mutableIntStateOf(existing?.rows ?: 6) }
     var columns by rememberSaveable { mutableIntStateOf(existing?.columns ?: 8) }
     var depth by rememberSaveable { mutableIntStateOf(existing?.depth ?: 1) }
+    // A fridge on shelves two deep: the back bottles lie head-to-tail.
+    var backReversed by rememberSaveable { mutableStateOf(existing?.isBackReversed == true) }
     var binCapacity by rememberSaveable { mutableIntStateOf(existing?.binCapacity ?: 10) }
     var customRows by rememberSaveable { mutableStateOf(existing?.rowColumns != null) }
     val rowColumns = rememberRetained("rack.rowColumns") { mutableStateListOf<Int>().apply { existing?.rowColumns?.let { addAll(it) } } }
@@ -243,7 +249,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     }
 
     fun preview() = if (layered) {
-        ShelfDraft.rack(id, name.trim(), depth, shelves)
+        ShelfDraft.rack(id, name.trim(), depth, shelves, backReversed)
     } else {
         Rack(
             id = id, name = name.trim(), kind = kind, rows = rows,
@@ -261,6 +267,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         binCapacity = preset.binCapacity
         customRows = false
         onShelves = preset.shelfLayers != null
+        backReversed = preset.backReversed
         preset.shelves?.let {
             shelves.clear()
             shelves.addAll(it)
@@ -270,7 +277,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     fun matches(preset: RackPreset): Boolean {
         val presetShelves = preset.shelves
         if (presetShelves != null) {
-            return layered && depth == preset.depth &&
+            return layered && depth == preset.depth && backReversed == preset.backReversed &&
                 shelves.map { it.widths to it.startsZone } == presetShelves.map { it.widths to it.startsZone }
         }
         return !customRows && !layered && rows == preset.rows && columns == preset.columns && when (kind) {
@@ -286,7 +293,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
         if (existing != null && layered) Rack.shelfRowMap(existing, rack, shelves.map { it.originalShelf }) else emptyMap()
 
     // What a save would change: the name, the shape, and which shelf is which.
-    fun signature() = "${name.trim()}|${preview().shape}|${if (layered) shelves.map { it.originalShelf } else ""}"
+    fun signature() = "${name.trim()}|${preview().shape}|${preview().isBackReversed}|${if (layered) shelves.map { it.originalShelf } else ""}"
     val initialSignature = rememberSaveable { signature() }
     val isDirty = signature() != initialSignature
 
@@ -376,6 +383,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                                 if (value && shelves.isEmpty()) {
                                     repeat(5) { shelves.add(ShelfDraft()) }
                                     depth = 2
+                                    backReversed = true
                                 }
                             },
                             shape = SegmentedButtonDefaults.itemShape(index, 2),
@@ -433,6 +441,22 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                         }
                     }
                     Hint(stringResource(if (layered) R.string.help_field_layer_depth else R.string.help_field_staggered_depth))
+                    if (layered && depth == 2) {
+                        Row(
+                            Modifier.fillMaxWidth().toggleable(backReversed, role = Role.Switch) { backReversed = it }
+                                .testTag("rack.back_reversed"),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f).padding(end = Dimens.l)) {
+                                Text(stringResource(R.string.rack_back_reversed), style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    stringResource(R.string.help_field_back_reversed),
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Switch(checked = backReversed, onCheckedChange = null)
+                        }
+                    }
                 }
             }
 

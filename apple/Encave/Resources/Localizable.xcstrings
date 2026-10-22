@@ -1131,6 +1131,26 @@
         }
       }
     },
+    "**Back** · Bases facing you": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Fond** · Culots vers vous"
+          }
+        }
+      }
+    },
+    "**Back** · Necks facing you": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Fond** · Goulots vers vous"
+          }
+        }
+      }
+    },
     "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": {
       "localizations": {
         "fr": {
@@ -1177,6 +1197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec sa place. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation."
+          }
+        }
+      }
+    },
+    "**Front** · Bases facing you": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Devant** · Culots vers vous"
           }
         }
       }
@@ -2041,6 +2071,16 @@
         }
       }
     },
+    "After a scan, or while editing a wine that has a label photo, **Complete with AI** sends the photo and fills the empty details. Once it has, the button reads **Complete Again** and “Completed by AI” shows the day, there and in the details of the wine's page. Tap it again after a new photo, for example. While the AI reads the label, the button shows its progress and cannot be tapped.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après un scan, ou en modifiant un vin qui a une photo d’étiquette, **Compléter avec l’IA** envoie la photo et remplit les informations vides. Ensuite, le bouton devient **Compléter à nouveau** et « Complétée par l’IA » indique le jour, là et dans les détails de la fiche du vin. Touchez-le de nouveau après une nouvelle photo, par exemple. Pendant que l’IA lit l’étiquette, le bouton montre la progression et ne peut pas être touché."
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "fr": {
@@ -2517,6 +2557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sauvegarder maintenant"
+          }
+        }
+      }
+    },
+    "Back bottles head-to-tail": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles du fond tête-bêche"
           }
         }
       }
@@ -3791,6 +3841,16 @@
         }
       }
     },
+    "Complete Again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter à nouveau"
+          }
+        }
+      }
+    },
     "Complete a wine's details or find its price on the web, with the search service you choose.": {
       "localizations": {
         "fr": {
@@ -3802,6 +3862,26 @@
       }
     },
     "Complete with AI": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter avec l’IA"
+          }
+        }
+      }
+    },
+    "Completed by AI · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complétée par l’IA · %@"
+          }
+        }
+      }
+    },
+    "Completing with AI": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -5911,6 +5991,16 @@
         }
       }
     },
+    "Head-to-tail fridge": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cave tête-bêche"
+          }
+        }
+      }
+    },
     "Help": {
       "localizations": {
         "fr": {
@@ -6047,13 +6137,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle du fond."
+                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, derrière » est celle du fond."
+                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
                 }
               }
             }
@@ -6067,6 +6157,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche."
+          }
+        }
+      }
+    },
+    "Holds %lld bottles. Shelves are numbered from the top, places from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche. Chaque étagère montre ses bouteilles de devant, puis celles du fond ; tête-bêche, leur goulot est vers vous."
           }
         }
       }
@@ -10276,7 +10376,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places se lisent comme **Étagère 2, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
           }
         }
       }
@@ -10887,6 +10987,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Étagère %lld"
+          }
+        }
+      }
+    },
+    "Shelf %lld, %@, bottom layer, place %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étagère %lld, %@, couche du bas, place %lld"
+          }
+        }
+      }
+    },
+    "Shelf %lld, %@, middle layer, place %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étagère %lld, %@, couche du milieu, place %lld"
+          }
+        }
+      }
+    },
+    "Shelf %lld, %@, place %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étagère %lld, %@, place %lld"
+          }
+        }
+      }
+    },
+    "Shelf %lld, %@, top layer, place %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étagère %lld, %@, couche du haut, place %lld"
           }
         }
       }
@@ -12311,6 +12451,16 @@
         }
       }
     },
+    "The back bottles lie the other way round: their necks face you between the bases of the front ones.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les bouteilles du fond sont couchées dans l’autre sens : leur goulot est vers vous, entre les culots de celles de devant."
+          }
+        }
+      }
+    },
     "The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.": {
       "localizations": {
         "fr": {
@@ -13551,6 +13701,16 @@
         }
       }
     },
+    "Two deep, head-to-tail": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deux rangs, tête-bêche"
+          }
+        }
+      }
+    },
     "Two rows, often head to tail.": {
       "localizations": {
         "fr": {
@@ -14107,6 +14267,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce que vous avez saisi reste"
+          }
+        }
+      }
+    },
+    "When a fridge on shelves is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Tap any place of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand une cave à étagères a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**."
           }
         }
       }
@@ -14906,7 +15076,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "derrière"
+            "value": "fond"
           }
         }
       }

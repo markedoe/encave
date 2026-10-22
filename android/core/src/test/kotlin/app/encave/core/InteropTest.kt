@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
  * (`reservedFor`, `savedSearches`, `extraPhotoIDs`); only the `reserved_for` CSV column
  * was added by hand (empty, as Swift writes it), and so was the empty "Large wine fridge"
  * rack (a honeycomb with `shelfLayers`). Regenerate both from Swift on a Mac to cover the
- * new fields, then drop the on-order exclusion in [decodesTheAppleBackup].
+ * new fields, then drop the on-order and head-to-tail fridge exclusions in [decodesTheAppleBackup].
  */
 class InteropTest {
     private fun resource(name: String): String =
@@ -31,9 +31,11 @@ class InteropTest {
         assertEquals(Instant.ofEpochSecond(1_790_000_000), backup.exportedAt)
         val cellar = backup.cellar
         val sample = SampleData.cellar(year = 2026)
-        assertEquals(sample.racks.map { it.name to it.kind }, cellar.racks.map { it.name to it.kind })
-        // The backup was made before the sample had bottles on order.
-        val received = sample.bottles.values.filter { it.status != Bottle.Status.Ordered }
+        // The backup was made before the sample had its head-to-tail fridge.
+        val newer = sample.racks.filter { it.isBackReversed }.map { it.id }.toSet()
+        assertEquals(sample.racks.filter { it.id !in newer }.map { it.name to it.kind }, cellar.racks.map { it.name to it.kind })
+        // Nor bottles on order.
+        val received = sample.bottles.values.filter { it.status != Bottle.Status.Ordered && it.slot?.rackId !in newer }
         assertEquals(received.size, cellar.bottles.size)
         val onOrderOnly = sample.bottlesOnOrder.map { it.wineId }.toSet() - received.map { it.wineId }.toSet()
         assertEquals(

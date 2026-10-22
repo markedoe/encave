@@ -16,9 +16,9 @@ import Testing
         #expect(sample.isOnlySample)
         #expect(sample.containsSample)
         #expect(sample.racks.first?.id == SampleData.id(.rack, 0))
-        #expect(sample.racks.count == 7)
+        #expect(sample.racks.count == 8)
         #expect(sample.wines.count == 15)
-        #expect(sample.bottles.count == 47)
+        #expect(sample.bottles.count == 63)
         #expect(sample.discoveries.count == 2)
         // Built twice, the same records.
         let again = SampleData.cellar(year: 2026)

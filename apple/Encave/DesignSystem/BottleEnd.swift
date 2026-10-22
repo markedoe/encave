@@ -47,6 +47,53 @@ struct BottleEnd: View {
     private var fill: Color { color?.tint ?? Color.gray }
 }
 
+/// The neck of a bottle lying the other way round (head-to-tail behind another), seen end on:
+/// a ring of glass around the capsule, both in the wine's tint. Its shape tells it apart from
+/// a base (`BottleEnd`); sparkling wine shows its wire cage.
+struct BottleNeck: View {
+    var color: WineColor?
+    var size: CGFloat = 20
+    var isHighlighted = false
+
+    var body: some View {
+        ZStack {
+            // The glass around the neck.
+            Circle()
+                .strokeBorder(fill.opacity(0.75), lineWidth: max(2, size * 0.14))
+            Circle()
+                .strokeBorder(.black.opacity(0.18), lineWidth: max(0.75, size * 0.04))
+            // The capsule.
+            Circle()
+                .fill(fill.gradient)
+                .overlay(Circle().strokeBorder(.black.opacity(0.3), lineWidth: max(0.75, size * 0.05)))
+                .padding(size * 0.24)
+            Circle()
+                .fill(.white.opacity(0.45))
+                .frame(width: size * 0.14, height: size * 0.14)
+                .offset(x: -size * 0.08, y: -size * 0.08)
+            if color == .sparkling {
+                // The wire cage over the cork.
+                Path { path in
+                    path.move(to: CGPoint(x: size * 0.3, y: size * 0.5))
+                    path.addLine(to: CGPoint(x: size * 0.7, y: size * 0.5))
+                    path.move(to: CGPoint(x: size * 0.5, y: size * 0.3))
+                    path.addLine(to: CGPoint(x: size * 0.5, y: size * 0.7))
+                }
+                .stroke(.white.opacity(0.8), lineWidth: max(1, size * 0.05))
+            }
+            if isHighlighted {
+                Circle()
+                    .strokeBorder(Color.accentColor, lineWidth: 3)
+                    .padding(-4)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+
+    private var fill: Color { color?.tint ?? Color.gray }
+}
+
 /// Bubbles drawn on sparkling wine, so it differs from white by shape, not only color.
 private struct Bubbles: View {
     let size: CGFloat

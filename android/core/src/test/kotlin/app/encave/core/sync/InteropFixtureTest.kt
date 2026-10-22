@@ -68,6 +68,7 @@ object InteropFixture {
                 Attachment(invoice, "Facture n°12 – Cave du coin.pdf", "application/pdf", 245_760, date(782_000_000.75)),
                 Attachment(back, "Back label.jpg", "image/jpeg", 4, date(-12.5)),
             ),
+            aiCompletedAt = date(790_100_000.25),
         )
         val plain = Wine(id = plainWine, name = "Vin de table")
         val bottles = listOf(
@@ -97,7 +98,10 @@ object InteropFixture {
         val racks = listOf(
             Rack(grid, "Cave/left wall", RackKind.Grid, rows = 4, columns = 6, depth = 2, rowColumns = listOf(6, 6, 5, 4)),
             Rack(bins, "Bins", RackKind.Bins, rows = 2, columns = 3, binCapacity = 10),
-            Rack(fridge, "Fridge", RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1), zoneBreaks = listOf(1)),
+            Rack(
+                fridge, "Fridge", RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1),
+                zoneBreaks = listOf(1), backReversed = true,
+            ),
         )
         val searches = listOf(
             SavedSearch.of(

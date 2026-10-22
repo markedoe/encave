@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import app.encave.R
 import app.encave.core.Bottle
 import app.encave.core.Cellar
-import app.encave.core.Slot
 import app.encave.ui.AppViewModel
 import app.encave.ui.UiText
 import app.encave.ui.components.Hint
@@ -97,17 +96,17 @@ fun MoveBottleSheet(viewModel: AppViewModel, cellar: Cellar, bottle: Bottle, onD
                         cellSize = cellSize,
                         highlighted = bottle.slot?.takeIf { it.rackId == rack.id },
                         clickLabel = { moveHere },
-                        onCellClick = { cell, _ ->
+                        onCellClick = { place, _ ->
                             val from = bottle.slot
-                            val free = cellar.freeSlot(cell)
+                            val free = cellar.freeSlotAt(place)
                             when {
-                                from?.cell == cell -> onDismiss()
+                                from != null && from in place -> onDismiss()
                                 free != null -> {
                                     viewModel.move(bottle.id, free)
                                     onDismiss()
                                 }
-                                rack.positionsPerCell == 1 && from != null -> {
-                                    viewModel.swap(from, Slot(cell.rackId, cell.row, cell.column))
+                                place.holdsOne(rack) && from != null -> {
+                                    viewModel.swap(from, place.firstSlot)
                                     onDismiss()
                                 }
                                 else -> viewModel.showMessage(UiText.Res(R.string.rack_cell_full))

@@ -50,8 +50,16 @@ extension RackKind {
 
 extension Rack {
     /// "B3", "B3, back", "Shelf 2, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
-    /// for people (not for files).
+    /// for people (not for files). A fridge drawn front and back names the band first, as it
+    /// is drawn: "Shelf 3, front, bottom layer, place 2".
     func displayLabel(for slot: Slot) -> String {
+        if hasDepthBands, let place = shelfPlace(ofRow: slot.row) {
+            let shelf = place.shelf + 1, number = slot.column + 1, sideName = depthName(slot.depth)
+            if place.layers == 1 { return String(localized: "Shelf \(shelf), \(sideName), place \(number)") }
+            if place.layer == 0 { return String(localized: "Shelf \(shelf), \(sideName), bottom layer, place \(number)") }
+            if place.layer == place.layers - 1 { return String(localized: "Shelf \(shelf), \(sideName), top layer, place \(number)") }
+            return String(localized: "Shelf \(shelf), \(sideName), middle layer, place \(number)")
+        }
         let cell = displayLabel(for: slot.cell)
         guard kind != .bins, positionsPerCell > 1 else { return cell }
         return "\(cell), \(depthName(slot.depth))"
@@ -89,6 +97,52 @@ extension Rack {
     func zoneName(_ zone: Int) -> String {
         if zoneCount == 2 { return zone == 0 ? String(localized: "Upper zone") : String(localized: "Lower zone") }
         return String(localized: "Zone \(zone + 1)")
+    }
+}
+
+/// What a tap or a drop on a rack reaches: a whole cell, or, on a fridge drawn front and back
+/// (`Rack.hasDepthBands`), one place of it, in front or behind.
+struct RackPlace: Hashable {
+    let cell: RackCell
+    /// 0 in front, 1 behind, on a fridge drawn front and back; nil for the whole cell.
+    var depth: Int?
+
+    /// The place of a fridge drawn front and back; nil for a whole cell.
+    var slot: Slot? { depth.map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) } }
+
+    /// Holds one bottle at most: a place of a fridge drawn front and back, or a cell of one.
+    func holdsOne(in rack: Rack) -> Bool { depth != nil || rack.positionsPerCell == 1 }
+
+    /// The place's own slot, or the front of the cell.
+    var firstSlot: Slot { slot ?? Slot(rackID: cell.rackID, row: cell.row, column: cell.column) }
+
+    func contains(_ slot: Slot) -> Bool { slot.cell == cell && (depth == nil || slot.depth == depth) }
+
+    /// What a tap on this slot reaches in this rack: the slot itself on a fridge drawn front and
+    /// back, else its cell.
+    init(_ slot: Slot, in rack: Rack) {
+        cell = slot.cell
+        depth = rack.hasDepthBands ? slot.depth : nil
+    }
+
+    init(cell: RackCell, depth: Int? = nil) {
+        self.cell = cell
+        self.depth = depth
+    }
+}
+
+extension Cellar {
+    /// The bottles of a place, front first.
+    func bottles(at place: RackPlace) -> [Bottle] {
+        guard let slot = place.slot else { return bottles(in: place.cell) }
+        return bottle(at: slot).map { [$0] } ?? []
+    }
+
+    /// Where a bottle put on a place goes: that very place on a fridge drawn front and back,
+    /// else the first free one of the cell; nil when it is full.
+    func freeSlot(at place: RackPlace) -> Slot? {
+        guard let slot = place.slot else { return freeSlot(in: place.cell) }
+        return rack(slot.rackID)?.contains(slot) == true && bottle(at: slot) == nil ? slot : nil
     }
 }
 

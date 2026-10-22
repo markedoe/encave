@@ -53,3 +53,35 @@ fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp
         }
     }
 }
+
+/**
+ * The neck of a bottle lying the other way round (head-to-tail behind another), seen end on:
+ * a ring of glass around the capsule, both in the wine's tint. Its shape tells it apart from a
+ * base ([BottleEnd]); sparkling wine shows its wire cage.
+ */
+@Composable
+fun BottleNeck(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 20.dp) {
+    val fill = LocalWinePalette.current[color]
+    Canvas(modifier.size(size)) {
+        val width = this.size.minDimension
+        val radius = width / 2
+        // The glass around the neck.
+        val glass = maxOf(2.dp.toPx(), width * 0.14f)
+        drawCircle(fill.copy(alpha = 0.75f), radius - glass / 2, style = Stroke(glass))
+        val edge = maxOf(0.75.dp.toPx(), width * 0.04f)
+        drawCircle(Color.Black.copy(alpha = 0.18f), radius - edge / 2, style = Stroke(edge))
+        // The capsule.
+        val capsule = radius - width * 0.24f
+        drawCircle(fill, capsule)
+        val rim = maxOf(0.75.dp.toPx(), width * 0.05f)
+        drawCircle(Color.Black.copy(alpha = 0.3f), capsule - rim / 2, style = Stroke(rim))
+        drawCircle(Color.White.copy(alpha = 0.45f), width * 0.07f, Offset(width * 0.42f, width * 0.42f))
+        if (color == WineColor.Sparkling) {
+            // The wire cage over the cork.
+            val line = maxOf(1.dp.toPx(), width * 0.05f)
+            val wire = Color.White.copy(alpha = 0.8f)
+            drawLine(wire, Offset(width * 0.3f, width * 0.5f), Offset(width * 0.7f, width * 0.5f), line)
+            drawLine(wire, Offset(width * 0.5f, width * 0.3f), Offset(width * 0.5f, width * 0.7f), line)
+        }
+    }
+}

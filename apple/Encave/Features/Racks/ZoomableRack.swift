@@ -17,10 +17,10 @@ struct ZoomableRack: UIViewRepresentable {
     let baseCellSize: CGFloat
     var selected: Set<Slot> = []
     var highlighted: Slot?
-    var selectedCell: RackCell?
+    var selectedPlace: RackPlace?
     var focusWine: UUID?
-    var onTap: (RackCell, [Bottle]) -> Void
-    var onDrop: ((UUID, RackCell) -> Bool)?
+    var onTap: (RackPlace, [Bottle]) -> Void
+    var onDrop: ((UUID, RackPlace) -> Bool)?
     var zoomStep = RackZoomStep()
     var interaction = RackInteraction()
 
@@ -205,7 +205,7 @@ struct ZoomableRack: UIViewRepresentable {
             guard let parent, let model else { return AnyView(EmptyView()) }
             return AnyView(
                 RackGrid(rack: parent.rack, cellSize: base * level, selected: parent.selected,
-                         highlighted: parent.highlighted, selectedCell: parent.selectedCell,
+                         highlighted: parent.highlighted, selectedPlace: parent.selectedPlace,
                          focusWine: parent.focusWine, onTap: parent.onTap, onDrop: parent.onDrop,
                          interaction: parent.interaction)
                     .padding(FittedRackGrid.padding)
