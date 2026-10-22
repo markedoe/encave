@@ -176,7 +176,9 @@ public extension Cellar {
             favorite: favorite,
             topRegion: top(openedWines.compactMap { $0.region ?? $0.country }),
             topColor: top(openedWines.compactMap(\.color)),
-            topOccasion: top(opened.compactMap { $0.tasting?.occasion }.filter { !$0.isEmpty }),
+            // A chip counts the same in any language: its English label, shown translated.
+            topOccasion: top(opened.compactMap { $0.tasting?.occasion }.filter { !$0.isEmpty }
+                .map { Occasion.matching($0)?.labels.english ?? $0 }),
             discoveries: found.count,
             busiestMonth: top(months)
         )
