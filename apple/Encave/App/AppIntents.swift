@@ -228,7 +228,8 @@ struct AddBottleIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        CellarModel.current?.request(.present(.addBottle(AddBottleContext())))
+        // On the label scanner where there is one: the fastest way to add a bottle.
+        CellarModel.current?.request(.present(.addBottle(AddBottleContext(scan: true))))
         return .result()
     }
 }

@@ -229,6 +229,55 @@ import Testing
         #expect(cellar.groups(matching: "3760123456789").count == 1)
     }
 
+    /// Same vectors as BarcodeTest in android/core ParityFeatureTest.kt.
+    @Test func oneBarcodeForSeveralVintagesListsTheNewestFirst() throws {
+        var cellar = Cellar()
+        let code = "3760123456789"
+        let old = Wine(name: "Chablis", vintage: 2015, barcodes: [code])
+        let young = Wine(name: "Chablis", vintage: 2022, barcodes: [code])
+        let plain = Wine(name: "Chablis", barcodes: [code])
+        let gone = Wine(name: "Chablis", vintage: 2023, barcodes: [code])
+        try cellar.addBottles(of: old, quantity: 1)
+        try cellar.addBottles(of: young, quantity: 1)
+        try cellar.addBottles(of: plain, quantity: 1)
+        let drunk = try cellar.addBottles(of: gone, quantity: 1)
+        try cellar.markGone(drunk[0].id)
+        #expect(cellar.wines(barcode: code).map(\.id) == [young.id, old.id, plain.id, gone.id])
+        #expect(cellar.wine(barcode: code)?.id == young.id)
+        #expect(cellar.wines(barcode: "").isEmpty)
+    }
+
+    /// Same vectors as WineMatchingTest in android/core ParityFeatureTest.kt.
+    @Test func aDraftMatchesTheSameWineIgnoringCaseAccentsAndSpaces() throws {
+        var cellar = Cellar()
+        let margaux = Wine(name: "Château Margaux", producer: "Château Margaux", vintage: 2015)
+        let other = Wine(name: "Château Margaux", producer: "Château Margaux", vintage: 2016)
+        let noProducer = Wine(name: "Clos des Tilleuls", vintage: 2019)
+        try cellar.addBottles(of: margaux, quantity: 2)
+        try cellar.addBottles(of: other, quantity: 1)
+        try cellar.addBottles(of: noProducer, quantity: 1)
+        #expect(cellar.wine(matching: Wine(name: "  chateau  MARGAUX ", producer: "CHATEAU margaux", vintage: 2015))?.id == margaux.id)
+        #expect(cellar.wine(matching: Wine(name: "Chateau Margaux", vintage: 2015))?.id == margaux.id, "no producer on the draft")
+        #expect(cellar.wine(matching: Wine(name: "clos des tilleuls", producer: "Domaine Martin", vintage: 2019))?.id == noProducer.id,
+                "no producer on the wine")
+        #expect(cellar.wine(matching: Wine(name: "Château Margaux", producer: "Château Margaux", vintage: 2017)) == nil, "another vintage")
+        #expect(cellar.wine(matching: Wine(name: "Château Margaux", producer: "Other Estate", vintage: 2015)) == nil, "another producer")
+        #expect(cellar.wine(matching: Wine(name: "Château Margaux", producer: "Château Margaux")) == nil, "non-vintage")
+        #expect(cellar.wine(matching: Wine(name: "  ")) == nil)
+        #expect(cellar.wine(matching: margaux) == nil, "not the wine itself")
+    }
+
+    @Test func addingToAnExistingWineKeepsTheNewBarcode() throws {
+        var cellar = Cellar()
+        let wine = Wine(name: "Chablis", vintage: 2022)
+        try cellar.addBottles(of: wine, quantity: 1)
+        var updated = wine
+        updated.addBarcode("3760123456789")
+        try cellar.addBottles(of: updated, quantity: 1)
+        #expect(cellar.wines.count == 1)
+        #expect(cellar.wine(barcode: "3760123456789")?.id == wine.id)
+    }
+
     @Test func wineFilesWithoutBarcodesAreUnchanged() throws {
         let data = try JSONEncoder().encode(Wine(name: "Plain"))
         #expect(String(decoding: data, as: UTF8.self).contains("barcodes") == false)

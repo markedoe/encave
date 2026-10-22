@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.text.Collator
 import java.time.Instant
 import java.time.LocalDate
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -216,17 +217,47 @@ class Cellar(
         return null
     }
 
-    /** Existing wines matching a query, for "add another bottle of...". */
-    /** The wine a barcode was seen on, preferring one with bottles in the cellar. */
-    fun wine(barcode: String): Wine? {
+    /** The wine a barcode was seen on, preferring one with bottles in the cellar (see [wines]). */
+    fun wine(barcode: String): Wine? = wines(barcode).firstOrNull()
+
+    /**
+     * The wines a barcode was seen on: producers often keep one barcode for every vintage.
+     * Those with bottles in the cellar first, then the newest vintage (non-vintage last).
+     */
+    fun wines(barcode: String): List<Wine> {
         val code = Wine.normalizedBarcode(barcode)
-        if (code.isEmpty()) return null
+        if (code.isEmpty()) return emptyList()
         val inCellar = bottlesInCellar.map { it.wineId }.toSet()
         return wineMap.values.filter { code in it.barcodes.orEmpty() }
-            .sortedWith(compareBy<Wine>({ if (it.id in inCellar) 0 else 1 }, { it.displayName }))
-            .firstOrNull()
+            .sortedWith(
+                compareBy<Wine>({ if (it.id in inCellar) 0 else 1 }, { -(it.vintage?.toLong() ?: Long.MIN_VALUE / 2) })
+                    .thenBy { it.displayName }.thenBy { it.id.toString().uppercase(Locale.ROOT) },
+            )
     }
 
+    /**
+     * A wine of the cellar that [matching] would duplicate: the same name and vintage, ignoring
+     * case, accents and extra spaces, and the same producer or no producer on one side.
+     * The draft's own record (same id) is left out. The same producer is preferred, then
+     * a wine with bottles in the cellar.
+     */
+    fun wine(matching: Wine): Wine? {
+        val draft = matching
+        val name = Wine.matchKey(draft.name)
+        if (name.isEmpty()) return null
+        val producer = Wine.matchKey(draft.producer.orEmpty())
+        val inCellar = bottlesInCellar.map { it.wineId }.toSet()
+        return wineMap.values.filter { wine ->
+            if (wine.id == draft.id || wine.vintage != draft.vintage || Wine.matchKey(wine.name) != name) return@filter false
+            val other = Wine.matchKey(wine.producer.orEmpty())
+            other == producer || other.isEmpty() || producer.isEmpty()
+        }.minWithOrNull(
+            compareBy<Wine>({ if (Wine.matchKey(it.producer.orEmpty()) == producer) 0 else 1 }, { if (it.id in inCellar) 0 else 1 })
+                .thenBy { it.id.toString().uppercase(Locale.ROOT) },
+        )
+    }
+
+    /** Existing wines matching a query, for "add another bottle of...". */
     fun wineSuggestions(query: String, limit: Int = 8): List<Wine> {
         val needle = query.trim()
         if (needle.isEmpty()) return emptyList()

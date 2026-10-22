@@ -32,7 +32,7 @@ struct CellarTable: View {
         }
         // A wine chosen elsewhere (opened from Spotlight, the first one at launch).
         .onChange(of: selection, initial: true) { _, id in
-            if let id, picked != [id] { picked = [id] }
+            if let id, picked != Set([id]) { picked = Set([id]) }
         }
         #if os(macOS)
         // The Delete key, like in Finder; Undo puts them back.
@@ -154,7 +154,7 @@ struct CellarTable: View {
             }
         } primaryAction: { ids in
             if ids.count == 1, let id = ids.first {
-                picked = [id]
+                picked = Set([id])
                 showsInspector = true
             }
         }

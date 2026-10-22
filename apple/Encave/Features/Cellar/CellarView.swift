@@ -242,12 +242,16 @@ struct CellarList: View {
             }
             .accessibilityIdentifier("cellar.sort")
             Menu {
+                #if os(iOS)
+                Button("Scan a Label", systemImage: "camera.viewfinder") { router?.sheet = .addBottle(AddBottleContext(scan: true)) }
+                #endif
                 Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext()) }
                 Button("Note a Wine Tasted Elsewhere", systemImage: "mappin.and.ellipse") { router?.sheet = .discovery(discoveryID: nil) }
             } label: {
                 Label("Add Bottle", systemImage: "plus")
             } primaryAction: {
-                router?.sheet = .addBottle(AddBottleContext())
+                // On iPhone and iPad, the label scanner first (Cancel leaves the form to type).
+                router?.sheet = .addBottle(AddBottleContext(scan: true))
             }
             .accessibilityIdentifier("cellar.add")
         }

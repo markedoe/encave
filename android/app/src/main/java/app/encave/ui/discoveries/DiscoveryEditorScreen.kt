@@ -114,6 +114,10 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     var wantsToBuy by rememberSaveable { mutableStateOf(existing?.wantsToBuy ?: false) }
     var price by rememberSaveable { mutableStateOf(existing?.price?.toPlainString().orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
+    // Back, the back gesture and ✕ ask first when something was entered.
+    val snapshot = form.snapshot() + listOf(setting, place, date, rating, note, tags.toList(), pendingTag, wantsToBuy, price)
+    val start = rememberRetained("discovery.start") { snapshot }
+    val leave = app.encave.ui.components.rememberDiscardGuard(snapshot != start) { navigator.back() }
 
     fun addTags() {
         val all = Discovery.normalized(tags + pendingTag.split(","))
@@ -148,7 +152,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             TopAppBar(
                 title = { Text(wine?.displayName ?: stringResource(R.string.discovery_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = leave) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },

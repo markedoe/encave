@@ -157,6 +157,9 @@ data class Wine(
         /** Trimmed, without empty ones or case-insensitive duplicates (the first spelling is kept); null if none. */
         fun normalizedTags(tags: List<String>?): List<String>? = Discovery.normalized(tags.orEmpty()).ifEmpty { null }
 
+        /** A name or producer compared for [Cellar.wine] (matching): without case, accents or extra spaces. */
+        fun matchKey(text: String): String = fold(text.trim().split(Regex("\\s+")).joinToString(" "))
+
         private val marks = Regex("\\p{Mn}+")
         internal fun fold(text: String): String =
             marks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)

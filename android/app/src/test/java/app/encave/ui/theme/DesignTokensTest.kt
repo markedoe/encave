@@ -32,6 +32,11 @@ class DesignTokensTest {
     }
 
     @Test
+    fun warningMatches() {
+        assertEquals(themed("warning"), DesignTokens.warning)
+    }
+
+    @Test
     fun wineColorsMatch() {
         val names = tokens.getValue("color").jsonObject.keys.filter { it.startsWith("wine-") }
         assertEquals(names.toSet(), DesignTokens.wineColors.keys)

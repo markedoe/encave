@@ -12,6 +12,8 @@ object DesignTokens {
 
     /** Launch window (window_background in the values and values-night colors.xml), checked by DesignTokensTest. */
     val launchBackground = ThemedColor(light = 0xFFFEFCFC, dark = 0xFF120F10)
+    /** Text and icons of a warning, always next to an icon or words. */
+    val warning = ThemedColor(light = 0xFF8F5300, dark = 0xFFF2B04A)
 
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
