@@ -26,6 +26,66 @@ struct CellarTable: View {
         let rows = model.cellar.groups(filter: CellarFilter(query: query), sort: .name, year: model.currentYear)
             .map { CellarTableRow(group: $0, model: model) }
             .sorted(using: sortOrder)
+        table(rows)
+        .onChange(of: picked) { _, new in
+            selection = new.count == 1 ? new.first : nil
+        }
+        // A wine chosen elsewhere (opened from Spotlight, the first one at launch).
+        .onChange(of: selection, initial: true) { _, id in
+            if let id, picked != [id] { picked = [id] }
+        }
+        #if os(macOS)
+        // The Delete key, like in Finder; Undo puts them back.
+        .onDeleteCommand {
+            if picked.count == 1, let id = picked.first {
+                model.deleteWine(id)
+            } else if !picked.isEmpty {
+                model.deleteWines(picked)
+            }
+        }
+        #endif
+        .overlay {
+            if rows.isEmpty {
+                if query.isEmpty {
+                    ContentUnavailableView("No bottles", systemImage: "wineglass")
+                } else {
+                    ContentUnavailableView.search(text: query)
+                }
+            }
+        }
+        .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
+        .navigationTitle("Cellar")
+        .inspector(isPresented: $showsInspector) {
+            // Its own stack, new for each wine: what is opened from the wine's details
+            // stays in the inspector instead of covering the table.
+            NavigationStack { WinePane(wineID: selection) }
+                .id(selection)
+                .inspectorColumnWidth(min: 300, ideal: 360, max: 480)
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                CellarLayoutPicker()
+                Button {
+                    router?.sheet = .addBottle(AddBottleContext())
+                } label: {
+                    Label("Add Bottle", systemImage: "plus")
+                }
+                Button {
+                    showsInspector.toggle()
+                } label: {
+                    Label("Show Wine", systemImage: "sidebar.trailing")
+                }
+                .help(Text("Show or hide the selected wine"))
+            }
+            #if os(iOS)
+            SettingsToolbarItem(identifier: "cellar.settings")
+            #endif
+        }
+    }
+
+    /// The table and its row menus, apart from the rest: one expression would be too slow
+    /// to type-check.
+    private func table(_ rows: [CellarTableRow]) -> some View {
         Table(rows, selection: $picked, sortOrder: $sortOrder, columnCustomization: $columns) {
             TableColumn("Wine", value: \.name) { row in
                 HStack(spacing: 8) {
@@ -97,60 +157,6 @@ struct CellarTable: View {
                 picked = [id]
                 showsInspector = true
             }
-        }
-        .onChange(of: picked) { _, new in
-            selection = new.count == 1 ? new.first : nil
-        }
-        // A wine chosen elsewhere (opened from Spotlight, the first one at launch).
-        .onChange(of: selection, initial: true) { _, id in
-            if let id, picked != [id] { picked = [id] }
-        }
-        #if os(macOS)
-        // The Delete key, like in Finder; Undo puts them back.
-        .onDeleteCommand {
-            if picked.count == 1, let id = picked.first {
-                model.deleteWine(id)
-            } else if !picked.isEmpty {
-                model.deleteWines(picked)
-            }
-        }
-        #endif
-        .overlay {
-            if rows.isEmpty {
-                if query.isEmpty {
-                    ContentUnavailableView("No bottles", systemImage: "wineglass")
-                } else {
-                    ContentUnavailableView.search(text: query)
-                }
-            }
-        }
-        .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
-        .navigationTitle("Cellar")
-        .inspector(isPresented: $showsInspector) {
-            // Its own stack, new for each wine: what is opened from the wine's details
-            // stays in the inspector instead of covering the table.
-            NavigationStack { WinePane(wineID: selection) }
-                .id(selection)
-                .inspectorColumnWidth(min: 300, ideal: 360, max: 480)
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                CellarLayoutPicker()
-                Button {
-                    router?.sheet = .addBottle(AddBottleContext())
-                } label: {
-                    Label("Add Bottle", systemImage: "plus")
-                }
-                Button {
-                    showsInspector.toggle()
-                } label: {
-                    Label("Show Wine", systemImage: "sidebar.trailing")
-                }
-                .help(Text("Show or hide the selected wine"))
-            }
-            #if os(iOS)
-            SettingsToolbarItem(identifier: "cellar.settings")
-            #endif
         }
     }
 }
