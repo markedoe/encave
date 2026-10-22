@@ -19,18 +19,21 @@ enum SamplePhotos {
 
     private enum Shape { case bordeaux, burgundy, flute }
 
-    /// Gives one sample wine of each kind of shot a label photo, drawn from its name,
+    /// Gives a few sample wines of each kind of shot a label photo, drawn from its name,
     /// producer and vintage. Named after their content, as real photos, so their
     /// studio versions are cached once and reused by the next launches of the tour.
     static func attach(to cellar: inout Cellar) {
-        let wines = cellar.wines.values.sorted { $0.id.uuidString < $1.id.uuidString }
-        for color in [WineColor.red, .white, .rose, .sparkling, .fortified] {
-            guard var wine = wines.first(where: { $0.color == color && $0.photoID == nil }),
-                  let data = jpeg(draw(shot(for: color), wine: wine)) else { continue }
-            let id = PhotoID.make(for: data)
-            PhotoStore.keepInMemory(data, id: id)
-            wine.photoID = id
-            cellar.wines[wine.id] = wine
+        let wines = cellar.wines.values.sorted { ($0.name, $0.vintage ?? 0) < ($1.name, $1.vintage ?? 0) }
+        let counts: [(WineColor, Int)] = [(.red, 2), (.white, 2), (.rose, 1), (.sparkling, 1), (.fortified, 1)]
+        for (color, count) in counts {
+            for original in wines.filter({ $0.color == color && $0.photoID == nil }).prefix(count) {
+                var wine = original
+                guard let data = jpeg(draw(shot(for: color), wine: wine)) else { continue }
+                let id = PhotoID.make(for: data)
+                PhotoStore.keepInMemory(data, id: id)
+                wine.photoID = id
+                cellar.wines[wine.id] = wine
+            }
         }
     }
 

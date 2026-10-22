@@ -12551,12 +12551,12 @@
         }
       }
     },
-    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists and on the wine's page it is shown in a studio look, made on this device with nothing sent anywhere: the bottle is cut out and framed on its label, with a little of the shoulder above, on a backdrop in the wine's color with a vine drawing. A photo that is already a close-up of the label is straightened and shown whole. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": {
+    "The label photo is kept with the wine, resized and without location data. You can change or remove it when editing the wine. In the lists and on the wine's page it is shown in a studio look, made on this device with nothing sent anywhere: the bottle is cut out and framed on its label, with a little of the shoulder above, on a backdrop in the wine's color with a vine drawing. When the bottle cannot be cut out, the photo is framed on the text of its label, with soft edges. A photo that is already a close-up of the label is straightened and shown whole. Touch and hold it on the wine's page to see it as taken, or turn the look off in **Settings**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin. Dans les listes et sur la fiche du vin, elle s’affiche en aspect studio, fait sur cet appareil sans rien envoyer : la bouteille est détourée et cadrée sur son étiquette, avec un peu de l’épaule au-dessus, sur un fond de la couleur du vin orné d’une vigne. Une photo qui est déjà un gros plan de l’étiquette est redressée et montrée entière. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez l’aspect dans les **Réglages**."
+            "value": "La photo de l’étiquette est gardée avec le vin, redimensionnée et sans données de localisation. Vous pouvez la changer ou la supprimer en modifiant le vin. Dans les listes et sur la fiche du vin, elle s’affiche en aspect studio, fait sur cet appareil sans rien envoyer : la bouteille est détourée et cadrée sur son étiquette, avec un peu de l’épaule au-dessus, sur un fond de la couleur du vin orné d’une vigne. Quand la bouteille ne peut pas être détourée, la photo est cadrée sur le texte de son étiquette, avec des bords adoucis. Une photo qui est déjà un gros plan de l’étiquette est redressée et montrée entière. Touchez-la longuement sur la fiche du vin pour la voir telle que prise, ou désactivez l’aspect dans les **Réglages**."
           }
         }
       }

@@ -142,6 +142,9 @@ enum StudioPhoto {
             }
         }
 
+        // No cut-out (Vision could not lift the bottle here): frame the photo itself on its label.
+        if subject == nil { subject = LabelFrame.framePhoto(original, handler: handler) }
+
         guard var result = subject else { return nil }
         for filter in result.autoAdjustmentFilters(options: [.redEye: false]) {
             filter.setValue(result, forKey: kCIInputImageKey)
@@ -166,6 +169,7 @@ enum StudioPhoto {
 /// correction); without text, a rectangle on the bottle; without either, the part
 /// of a bottle where labels sit. A cut-out that is not a standing bottle (a
 /// close-up of a label, several bottles), or mostly covered with text, is left whole.
+/// When there is no cut-out, `framePhoto` frames the photo itself on its text.
 enum LabelFrame {
     static func crop(_ cut: CIImage, context: CIContext) -> CIImage {
         let extent = cut.extent
@@ -194,17 +198,64 @@ enum LabelFrame {
         return result
     }
 
+    /// A photo that could not be cut out, framed on the text read on it (the label),
+    /// with a little around it and soft edges, so it still fills the pictures. Nil
+    /// without text, or when text covers most of the photo (a close-up of the label).
+    static func framePhoto(_ photo: CIImage, handler: VNImageRequestHandler) -> CIImage? {
+        let boxes = textBoxes(handler)
+        let lines = boxes.map { LabelFraming.Line(minY: Double($0.minY), maxY: Double($0.maxY), width: Double($0.width)) }
+        guard let label = LabelFraming.label(lines: lines), label.coverage <= LabelFraming.closeUpTextCoverage else {
+            return nil
+        }
+        // Across: the text of the label (lines within its band), with a quarter more on each side.
+        var left: CGFloat = 1, right: CGFloat = 0
+        for box in boxes {
+            let top = Double(1 - box.maxY), bottom = Double(1 - box.minY)
+            guard bottom >= label.band.lowerBound, top <= label.band.upperBound else { continue }
+            left = min(left, box.minX)
+            right = max(right, box.maxX)
+        }
+        guard right > left else { return nil }
+        let extent = photo.extent
+        let textWidth = (right - left) * extent.width
+        var width = textWidth * 1.5
+        let center = (left + right) / 2 * extent.width
+        let frame = LabelFraming.frame(label: label.band, width: Double(width), height: Double(extent.height))
+            ?? label.band
+        var height = extent.height * CGFloat(frame.upperBound - frame.lowerBound)
+        // As wide as the pictures for a tall block of text.
+        width = max(width, height * CGFloat(LabelFraming.aspect))
+        width = min(width, extent.width)
+        height = min(height, extent.height)
+        var x = center - width / 2
+        x = min(max(0, x), extent.width - width)
+        let y = extent.height * CGFloat(1 - frame.upperBound)
+        let rect = CGRect(x: extent.minX + x, y: extent.minY + y, width: width, height: height)
+        guard rect.width * rect.height < extent.width * extent.height * 0.8 else { return nil }
+        var result = photo.cropped(to: rect)
+        let fadeY = rect.height * 0.08, fadeX = rect.width * 0.1
+        result = faded(result, from: CGPoint(x: 0, y: rect.maxY), to: CGPoint(x: 0, y: rect.maxY - fadeY))
+        result = faded(result, from: CGPoint(x: 0, y: rect.minY), to: CGPoint(x: 0, y: rect.minY + fadeY))
+        result = faded(result, from: CGPoint(x: rect.minX, y: 0), to: CGPoint(x: rect.minX + fadeX, y: 0))
+        result = faded(result, from: CGPoint(x: rect.maxX, y: 0), to: CGPoint(x: rect.maxX - fadeX, y: 0))
+        return result
+    }
+
     /// The lines of text on the bottle, read on the device (fast, no language correction).
     private static func textLines(_ handler: VNImageRequestHandler) -> [LabelFraming.Line] {
+        textBoxes(handler).map { box -> LabelFraming.Line in
+            LabelFraming.Line(minY: Double(box.minY), maxY: Double(box.maxY), width: Double(box.width))
+        }
+    }
+
+    /// Where text was read, in Vision's coordinates (0 to 1, from the bottom left).
+    private static func textBoxes(_ handler: VNImageRequestHandler) -> [CGRect] {
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .fast
         request.usesLanguageCorrection = false
         guard (try? handler.perform([request])) != nil else { return [] }
         let observations: [VNRecognizedTextObservation] = request.results ?? []
-        return observations.map { observation -> LabelFraming.Line in
-            let box = observation.boundingBox
-            return LabelFraming.Line(minY: Double(box.minY), maxY: Double(box.maxY), width: Double(box.width))
-        }
+        return observations.map { $0.boundingBox }
     }
 
     /// A rectangle across most of the bottle's width: a label without text.
@@ -229,10 +280,15 @@ enum LabelFrame {
 
     /// The image fading out towards `edge` (a y coordinate), fully shown from `inner`.
     private static func faded(_ image: CIImage, edge: CGFloat, inner: CGFloat) -> CIImage {
+        faded(image, from: CGPoint(x: 0, y: edge), to: CGPoint(x: 0, y: inner))
+    }
+
+    /// The image transparent at `start`, fully shown from `end`, along the line between them.
+    private static func faded(_ image: CIImage, from start: CGPoint, to end: CGPoint) -> CIImage {
         let gradient = CIFilter.linearGradient()
-        gradient.point0 = CGPoint(x: 0, y: edge)
+        gradient.point0 = start
         gradient.color0 = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
-        gradient.point1 = CGPoint(x: 0, y: inner)
+        gradient.point1 = end
         gradient.color1 = CIColor(red: 1, green: 1, blue: 1, alpha: 1)
         guard let mask = gradient.outputImage?.cropped(to: image.extent) else { return image }
         let blend = CIFilter.sourceInCompositing()
