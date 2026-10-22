@@ -312,7 +312,7 @@ final class CellarModel {
         guard update({ try $0.markGone(bottleID) }) else { return }
         showToast(bottle.status == .ordered
                   ? String(localized: "Order cancelled")
-                  : String(localized: "Bottle removed from the cellar")) { [weak self] in
+                  : String(localized: "Bottle removed from the cellar"), lasting: .afterChanges) { [weak self] in
             // Put the record back as it was (an order stays an order), in its
             // place if nothing took it meanwhile.
             self?.update { cellar in
