@@ -1051,6 +1051,16 @@
         }
       }
     },
+    "A case of": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une caisse de"
+          }
+        }
+      }
+    },
     "A copy of your cellar is kept on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. They stay on this device; the photos and documents they need are kept with them.": {
       "localizations": {
         "fr": {
@@ -1137,6 +1147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un nouveau scan ou l’IA ne remplacent que les champs vides ou remplis automatiquement. Tout ce que vous avez saisi vous-même est conservé."
+          }
+        }
+      }
+    },
+    "A new wine with the same details and the vintage on this label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un nouveau vin avec les mêmes informations et le millésime de cette étiquette."
           }
         }
       }
@@ -1531,12 +1551,12 @@
         }
       }
     },
-    "Add several bottles at once. Choose a rack to place them: the first free places are used unless you pick them. Without a rack, write where they are (kitchen, box in the garage).": {
+    "Add several bottles at once, or a case of 6 or 12 in one tap. The bottles go to the rack you used last on this device (or the first one with room), in its first free places unless you pick them. Without a rack, write where they are (kitchen, box in the garage). Right after adding, **Undo** in the banner takes the bottles back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez plusieurs bouteilles d’un coup. Choisissez un casier pour les ranger : les premiers emplacements libres sont utilisés, sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage)."
+            "value": "Ajoutez plusieurs bouteilles d’un coup, ou une caisse de 6 ou 12 en une touche. Les bouteilles vont dans le casier utilisé la dernière fois sur cet appareil (ou le premier qui a de la place), aux premiers emplacements libres sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage). Juste après l’ajout, **Annuler** dans le bandeau retire les bouteilles."
           }
         }
       }
@@ -1557,6 +1577,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter à la cave"
+          }
+        }
+      }
+    },
+    "Add to This Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter à ce vin"
           }
         }
       }
@@ -1631,12 +1661,32 @@
         }
       }
     },
+    "Adding to it keeps the bottles and tastings of this wine together.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter à ce vin garde ensemble ses bouteilles et ses dégustations."
+          }
+        }
+      }
+    },
     "Adding…": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajout…"
+          }
+        }
+      }
+    },
+    "Adds bottles of this vintage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute des bouteilles de ce millésime."
           }
         }
       }
@@ -1667,6 +1717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Toutes les données ont été effacées"
+          }
+        }
+      }
+    },
+    "Allow the camera for Encave in Settings to scan labels, or choose a photo of the label.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez l’appareil photo pour Encave dans Réglages pour scanner les étiquettes, ou choisissez une photo de l’étiquette."
           }
         }
       }
@@ -1707,6 +1767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une facture, un certificat, une fiche technique : gardés avec le vin, pour toutes ses bouteilles. Vous pourrez en ajouter plus tard sur la fiche du vin ou sur une bouteille."
+          }
+        }
+      }
+    },
+    "Another Vintage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre millésime"
           }
         }
       }
@@ -2087,6 +2157,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sauvegarde, export et import"
+          }
+        }
+      }
+    },
+    "Barcode %@, kept with the wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code-barres %@, gardé avec le vin"
           }
         }
       }
@@ -2577,6 +2657,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Armoire, 10 étagères de 8, 2 en profondeur"
+          }
+        }
+      }
+    },
+    "Camera Access Is Off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès à l’appareil photo est désactivé"
+          }
+        }
+      }
+    },
+    "Camera access is off. Allow it in Settings to scan the code, or type the code below.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès à l’appareil photo est désactivé. Autorisez-le dans Réglages pour scanner le code, ou saisissez le code ci-dessous."
           }
         }
       }
@@ -3747,6 +3847,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dîner entre amis"
+          }
+        }
+      }
+    },
+    "Discard Changes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner les modifications"
+          }
+        }
+      }
+    },
+    "Discard Changes?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner les modifications ?"
           }
         }
       }
@@ -5531,6 +5651,16 @@
         }
       }
     },
+    "It’s a Different Wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est un autre vin"
+          }
+        }
+      }
+    },
     "JSON": {
       "localizations": {
         "fr": {
@@ -5627,6 +5757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer la vérification"
+          }
+        }
+      }
+    },
+    "Keep Editing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer"
           }
         }
       }
@@ -6421,6 +6561,16 @@
         }
       }
     },
+    "New Vintage: %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau millésime : %lld"
+          }
+        }
+      }
+    },
     "New zone from this shelf": {
       "localizations": {
         "fr": {
@@ -7131,6 +7281,16 @@
         }
       }
     },
+    "On iPhone and iPad, **+** in the Cellar opens the camera: point it at the label and tap **Use This Label**, or choose a photo (**Cancel** leaves the form to type the wine). The text is read on the device and fills in the name, producer, vintage and appellation; choose the style and check the vintage right below. Nothing is sent anywhere. The first time, Encave asks for the camera; if it is off, **Open Settings** turns it on.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur iPhone et iPad, **+** dans la Cave ouvre l’appareil photo : visez l’étiquette et touchez **Utiliser cette étiquette**, ou choisissez une photo (**Annuler** laisse le formulaire pour saisir le vin). Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation ; choisissez le style et vérifiez le millésime juste en dessous. Rien n’est envoyé nulle part. La première fois, Encave demande l’accès à l’appareil photo ; s’il est désactivé, **Ouvrir les Réglages** permet de l’activer."
+          }
+        }
+      }
+    },
     "On iPhone and iPad, use your computer’s address on the network instead of localhost. Choose a model that reads images for label recognition.": {
       "localizations": {
         "fr": {
@@ -7507,6 +7667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir Encave"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les Réglages"
           }
         }
       }
@@ -7971,16 +8141,6 @@
         }
       }
     },
-    "Point the camera at the label and tap **Use This Label**, or choose a photo. The text is read on the device and fills in the name, producer, vintage and appellation. Nothing is sent anywhere.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Visez l’étiquette avec l’appareil photo et touchez **Utiliser cette étiquette**, ou choisissez une photo. Le texte est lu sur l’appareil et remplit le nom, le producteur, le millésime et l’appellation. Rien n’est envoyé."
-          }
-        }
-      }
-    },
     "Pork": {
       "localizations": {
         "fr": {
@@ -8321,6 +8481,16 @@
         }
       }
     },
+    "Read on this device. Choose the style, or tap Edit Details to correct the rest.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lu sur cet appareil. Choisissez le style, ou touchez Modifier les détails pour corriger le reste."
+          }
+        }
+      }
+    },
     "Reading the label…": {
       "localizations": {
         "fr": {
@@ -8517,6 +8687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retirer %@ ?"
+          }
+        }
+      }
+    },
+    "Remove Barcode": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer le code-barres"
           }
         }
       }
@@ -9017,6 +9197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Numériser un document"
+          }
+        }
+      }
+    },
+    "Scan a Label": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner une étiquette"
           }
         }
       }
@@ -9951,12 +10141,12 @@
         }
       }
     },
-    "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go.": {
+    "Start typing the name: if the wine is already there, choose it and only enter how many bottles you add and where they go. When a scan or the name you type is a wine you already have (same name, producer and vintage), **Already in your cellar** shows it: tap **Add to This Wine** so its bottles and tastings stay together, or **It’s a Different Wine**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Commencez à taper le nom : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont."
+            "value": "Commencez à taper le nom : si le vin est déjà là, choisissez-le et indiquez seulement combien de bouteilles vous ajoutez et où elles vont. Quand un scan ou le nom saisi correspond à un vin que vous avez déjà (même nom, producteur et millésime), **Déjà dans votre cave** l’affiche : touchez **Ajouter à ce vin** pour garder ensemble ses bouteilles et ses dégustations, ou **C’est un autre vin**."
           }
         }
       }
@@ -12291,6 +12481,16 @@
         }
       }
     },
+    "What you entered here is not saved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que vous avez saisi ici n’est pas enregistré."
+          }
+        }
+      }
+    },
     "What you liked, the dish, the moment…": {
       "localizations": {
         "fr": {
@@ -12391,12 +12591,12 @@
         }
       }
     },
-    "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Barcodes are matched on this device only; Encave looks nothing up online.": {
+    "While you scan, the camera also reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use This Wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is offered, and **Another Vintage** starts a new wine with the same details and the vintage on the label. Barcodes are matched on this device only; Encave looks nothing up online.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
+            "value": "Pendant le scan, l’appareil photo lit aussi le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les producteurs gardent souvent un code-barres pour tous les millésimes : chaque millésime que vous avez est proposé, et **Autre millésime** commence un nouveau vin avec les mêmes informations et le millésime de l’étiquette. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne."
           }
         }
       }

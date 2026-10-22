@@ -24,6 +24,7 @@ NAMES = {
     "maturity-ready": "MaturityReady",
     "maturity-past-peak": "MaturityPastPeak",
     "maturity-keep": "MaturityKeep",
+    "warning": "Warning",
 }
 
 

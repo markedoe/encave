@@ -10,6 +10,9 @@ object DesignTokens {
 
     val accent = ThemedColor(light = 0xFF8E1E3A, dark = 0xFFE0607A)
 
+    /** Text and icons of a warning, always next to an icon or words. */
+    val warning = ThemedColor(light = 0xFF8F5300, dark = 0xFFF2B04A)
+
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
         "wine-red" to ThemedColor(light = 0xFF8C1C2B, dark = 0xFFC8454F),
