@@ -32,6 +32,10 @@ struct RackDetailView: View {
     @State private var auditing = false
     @State private var checked: Set<Slot> = []
     @State private var confirmingAudit = false
+    /// Checking a place's bottles one by one.
+    @State private var checkingCell: OpenCell?
+    /// The wine page opened from VoiceOver's actions on a place.
+    @State private var wineRoute: WineRoute?
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
@@ -41,6 +45,7 @@ struct RackDetailView: View {
                 .inlineTitle()
                 .toolbar { toolbar }
                 .navigationDestination(for: WineRoute.self) { WineDetailView(wineID: $0.id) }
+                .navigationDestination(item: $wineRoute) { WineDetailView(wineID: $0.id) }
                 .confirmationDialog(
                     Text("Bottles not found: \(missing(rack).count)"),
                     isPresented: $confirmingAudit, titleVisibility: .visible
@@ -88,6 +93,11 @@ struct RackDetailView: View {
                     .presentationDetents([.medium, .large])
                     .solidSheetBackground()
                 }
+                .sheet(item: $checkingCell) { open in
+                    CheckPlaceSheet(rack: rack, cell: open.cell, checked: $checked)
+                        .presentationDetents([.medium, .large])
+                        .solidSheetBackground()
+                }
                 .onChange(of: listSelection) { _, id in
                     // Chosen in the list: close it and point to the bottle in the drawing.
                     if id != nil { showsList = false }
@@ -118,7 +128,8 @@ struct RackDetailView: View {
             selectedCell: selectedCell, focusWine: focusWine,
             onTap: { cell, bottles in tap(rack, cell, bottles) },
             onDrop: { bottleID, cell in drop(bottleID, on: cell, rack) },
-            zoomStep: zoomStep
+            zoomStep: zoomStep,
+            interaction: interaction
         )
         #if os(macOS)
         grid
@@ -145,11 +156,13 @@ struct RackDetailView: View {
             } else if let moving {
                 let displayName = model.cellar.wines[moving.wineID]?.displayName ?? ""
                 HStack {
-                    Label("Tap where to put \(displayName)", systemImage: "hand.tap")
+                    Label("Choose where to put \(displayName)", systemImage: "hand.tap")
                         .font(.subheadline.weight(.medium))
                         .lineLimit(2)
                     Spacer()
+                    // Esc cancels the move (not a check of the rack, which would lose what was found).
                     Button("Cancel") { self.moving = nil }
+                        .keyboardShortcut(.cancelAction)
                         .accessibilityIdentifier("sheet.cancel")
                 }
                 .padding()
@@ -218,9 +231,29 @@ struct RackDetailView: View {
         case .move(let bottle):
             selectedCell = nil
             moving = bottle
+            let displayName = model.cellar.wines[bottle.wineID]?.displayName ?? ""
+            AccessibilityNotification.Announcement(String(localized: "Choose where to put \(displayName)")).post()
         case .remove(let bottle): model.markGone(bottle.id)
         case .add(let slot): model.sheet = .addBottle(AddBottleContext(slot: slot))
         case .documents(let bottle, let importing): model.sheet = .bottleDocuments(bottleID: bottle.id, importing: importing)
+        }
+    }
+
+    /// What the places do beyond a tap: VoiceOver's hints and actions, checking one by one.
+    private var interaction: RackInteraction {
+        let mode: RackMode = auditing ? .auditing : (moving != nil ? .moving : .browsing)
+        return RackInteraction(
+            mode: mode,
+            perform: { action, bottle in quickAction(action, bottle) },
+            checkOneByOne: { cell in checkingCell = OpenCell(cell: cell) }
+        )
+    }
+
+    private func quickAction(_ action: RackCellQuickAction, _ bottle: Bottle) {
+        switch action {
+        case .move: perform(.move(bottle))
+        case .drink: perform(.drink(bottle))
+        case .winePage: wineRoute = WineRoute(id: bottle.wineID)
         }
     }
 
@@ -617,5 +650,71 @@ private struct AuditBar: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .padding()
         .accessibilityElement(children: .contain)
+    }
+}
+
+/// Checking a rack: the bottles of one place (a bin, or front and back), found one by one.
+private struct CheckPlaceSheet: View {
+    @Environment(CellarModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    let rack: Rack
+    let cell: RackCell
+    @Binding var checked: Set<Slot>
+
+    var body: some View {
+        let bottles = model.cellar.bottles(in: cell)
+        let slots = bottles.compactMap(\.slot)
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(bottles) { bottle in
+                        if let slot = bottle.slot {
+                            Toggle(isOn: found(slot)) { row(bottle, slot) }
+                        }
+                    }
+                }
+                Section {
+                    Button("All Here", systemImage: "checkmark.circle") {
+                        checked.formUnion(slots)
+                    }
+                    .disabled(slots.allSatisfy { checked.contains($0) })
+                }
+            }
+            .navigationTitle(rack.displayLabel(for: cell))
+            .inlineTitle()
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .accessibilityIdentifier("sheet.done")
+                }
+            }
+        }
+        .macSheetFrame(width: 440, height: 460)
+    }
+
+    private func found(_ slot: Slot) -> Binding<Bool> {
+        Binding(
+            get: { checked.contains(slot) },
+            set: { isFound in
+                if isFound { checked.insert(slot) } else { checked.remove(slot) }
+            }
+        )
+    }
+
+    /// The wine, and where it is in the place: front or back, or its number in a bin.
+    private func row(_ bottle: Bottle, _ slot: Slot) -> some View {
+        let wine = model.cellar.wines[bottle.wineID]
+        let number = slot.depth + 1
+        let position = rack.kind == .bins ? String(localized: "Bottle \(number)") : rack.depthName(slot.depth)
+        return HStack(spacing: 12) {
+            BottleEnd(color: wine?.color, size: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(wine?.displayName ?? String(localized: "Unknown wine"))
+                    .lineLimit(2)
+                Text(position)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }

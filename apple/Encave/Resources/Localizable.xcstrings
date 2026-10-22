@@ -31,6 +31,16 @@
         }
       }
     },
+    "%@ empty": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ vide"
+          }
+        }
+      }
+    },
     "%@ has no place in a rack.": {
       "localizations": {
         "fr": {
@@ -81,12 +91,42 @@
         }
       }
     },
+    "%@, %lld of %lld found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$lld sur %3$lld trouvées"
+          }
+        }
+      }
+    },
     "%@, empty": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "%@, vide"
+          }
+        }
+      }
+    },
+    "%@, other wine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, autre vin"
+          }
+        }
+      }
+    },
+    "%@, shown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, mise en évidence"
           }
         }
       }
@@ -194,6 +234,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld bouteilles ajoutées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld bottles are in places you removed": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle is in a place you removed"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles are in places you removed"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille est dans un emplacement supprimé"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles sont dans des emplacements supprimés"
                 }
               }
             }
@@ -1601,6 +1681,16 @@
         }
       }
     },
+    "Adds a bottle here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoute une bouteille ici"
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "fr": {
@@ -1617,6 +1707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Toutes les bouteilles"
+          }
+        }
+      }
+    },
+    "All Here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes là"
           }
         }
       }
@@ -2161,6 +2261,16 @@
         }
       }
     },
+    "Bottle %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille %lld"
+          }
+        }
+      }
+    },
     "Bottle List": {
       "localizations": {
         "fr": {
@@ -2197,6 +2307,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteille retirée de la cave"
+          }
+        }
+      }
+    },
+    "Bottle taken out of the rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille sortie du casier"
           }
         }
       }
@@ -2241,7 +2361,7 @@
         }
       }
     },
-    "Bottles in this rack stay in your cellar without a position.": {
+    "Bottles in this rack stay in your cellar without a place.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -2387,6 +2507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles empilées en quinconce : %lld en bas, %lld au-dessus."
+          }
+        }
+      }
+    },
+    "Bottles swapped": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles échangées"
           }
         }
       }
@@ -2701,12 +2831,32 @@
         }
       }
     },
+    "Changing a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier un casier"
+          }
+        }
+      }
+    },
     "Check Key and Load Models": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier la clé et charger les modèles"
+          }
+        }
+      }
+    },
+    "Check One by One…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier une par une…"
           }
         }
       }
@@ -2801,12 +2951,22 @@
         }
       }
     },
-    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
+    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. Tapping a bin or a place with two bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a place shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un casier ou un emplacement de deux bouteilles les marque toutes ; pour les cocher une par une, touchez-le longuement et choisissez **Vérifier une par une…** (un emplacement affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+          }
+        }
+      }
+    },
+    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, and those bottles stay in your cellar without a place. **Undo** puts everything back.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des emplacements occupés, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, et ces bouteilles restent dans votre cave sans emplacement. **Annuler** remet tout en place."
           }
         }
       }
@@ -2937,6 +3097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez-le pour ajouter des bouteilles sans ressaisir le vin."
+          }
+        }
+      }
+    },
+    "Choose where to put %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez où mettre %@"
           }
         }
       }
@@ -3707,6 +3877,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dîner entre amis"
+          }
+        }
+      }
+    },
+    "Discard Changes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner"
+          }
+        }
+      }
+    },
+    "Discard changes?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner les modifications ?"
           }
         }
       }
@@ -5041,7 +5231,7 @@
         }
       }
     },
-    "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.": {
+    "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.": {
       "localizations": {
         "en": {
           "variations": {
@@ -5049,13 +5239,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Holds %lld bottle. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."
+                  "value": "Holds %lld bottle. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."
+                  "value": "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."
                 }
               }
             }
@@ -5067,13 +5257,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                  "value": "Contient %lld bouteille. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                  "value": "Contient %lld bouteilles. Les emplacements sont nommés comme B3 ; avec deux bouteilles par emplacement, « B3, derrière » est celle du fond."
                 }
               }
             }
@@ -5587,6 +5777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer la vérification"
+          }
+        }
+      }
+    },
+    "Keep Editing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer"
           }
         }
       }
@@ -6141,6 +6341,16 @@
         }
       }
     },
+    "Marks as found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marque comme trouvée"
+          }
+        }
+      }
+    },
     "Maturity": {
       "localizations": {
         "fr": {
@@ -6281,12 +6491,32 @@
         }
       }
     },
-    "Move the bottles out of the removed rows or columns first.": {
+    "Move Down": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Déplacez d’abord les bouteilles des rangées ou colonnes supprimées."
+            "value": "Descendre"
+          }
+        }
+      }
+    },
+    "Move Up": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monter"
+          }
+        }
+      }
+    },
+    "Moved to %@ · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacée vers %@ · %@"
           }
         }
       }
@@ -7071,12 +7301,12 @@
         }
       }
     },
-    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place).": {
+    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place). **Undo** puts them back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement)."
+            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement). **Annuler** les remet en place."
           }
         }
       }
@@ -7661,6 +7891,16 @@
         }
       }
     },
+    "Order of racks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordre des casiers"
+          }
+        }
+      }
+    },
     "Origin": {
       "localizations": {
         "fr": {
@@ -8167,6 +8407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remettre en cave"
+          }
+        }
+      }
+    },
+    "Puts the bottle here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Met la bouteille ici"
           }
         }
       }
@@ -8751,12 +9001,12 @@
         }
       }
     },
-    "Rows are lettered from the top and cells numbered from the left: **B3** is the second row, third cell. When a cell holds several bottles, **B3-2** is the second one (behind, or in the pile).": {
+    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. The same name shows everywhere: in the rack, the bottle list, the wine page and Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les cases numérotées depuis la gauche : **B3** est la deuxième rangée, troisième case. Quand une case contient plusieurs bouteilles, **B3-2** est la deuxième (derrière, ou dans la pile)."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les emplacements numérotés depuis la gauche : **B3** est la deuxième rangée, troisième emplacement. Avec deux bouteilles par emplacement, **B3, derrière** est celle du fond. Le même nom s’affiche partout : dans le casier, la liste des bouteilles, la fiche du vin et Siri."
           }
         }
       }
@@ -9731,6 +9981,16 @@
         }
       }
     },
+    "Shows this bottle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche cette bouteille"
+          }
+        }
+      }
+    },
     "Shows where its bottles are in the rack.": {
       "localizations": {
         "fr": {
@@ -9787,6 +10047,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format"
+          }
+        }
+      }
+    },
+    "Some bottles are in places you removed.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des bouteilles sont dans des emplacements supprimés."
           }
         }
       }
@@ -10051,6 +10321,16 @@
         }
       }
     },
+    "Swaps the two bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échange les deux bouteilles"
+          }
+        }
+      }
+    },
     "Swipe a device in the list and choose **Remove**, or on the Mac, right-click it and choose **Remove Device**. It keeps what it already has but can no longer sync with your devices: each device proves it belongs to the cellar with its own key, and the removed one's key is no longer accepted. To use it with your cellar again later, choose **Stop Syncing** on it, then add it as a new device.": {
       "localizations": {
         "fr": {
@@ -10241,6 +10521,16 @@
         }
       }
     },
+    "Take Them Out and Save": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les retirer et enregistrer"
+          }
+        }
+      }
+    },
     "Take Them Out of the Rack": {
       "localizations": {
         "fr": {
@@ -10291,12 +10581,12 @@
         }
       }
     },
-    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.": {
+    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them. **Undo** in the banner puts them back. **Cancel** (or Esc) stops a move. To move a bottle to another rack, choose **Move…** on it in **Bottle List** or on the wine's page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange."
+            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange. **Annuler** dans le bandeau les remet en place. **Annuler** (ou Échap) arrête un déplacement. Pour mettre une bouteille dans un autre casier, choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
           }
         }
       }
@@ -10357,16 +10647,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez le nouvel emplacement"
-          }
-        }
-      }
-    },
-    "Tap where to put %@": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez où mettre %@"
           }
         }
       }
@@ -10501,7 +10781,7 @@
         }
       }
     },
-    "That position is already taken.": {
+    "That place is already taken.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -10511,7 +10791,7 @@
         }
       }
     },
-    "That position is outside the rack.": {
+    "That place is outside the rack.": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -11171,6 +11451,16 @@
         }
       }
     },
+    "They stay in your cellar without a place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elles restent dans votre cave, sans emplacement."
+          }
+        }
+      }
+    },
     "Thinking…": {
       "localizations": {
         "fr": {
@@ -11607,6 +11897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couche du haut"
+          }
+        }
+      }
+    },
+    "Touch and hold a rack and choose **Move Up** or **Move Down**; on the Mac, drag it in the sidebar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez longuement un casier et choisissez **Monter** ou **Descendre** ; sur Mac, faites-le glisser dans la barre latérale."
           }
         }
       }
