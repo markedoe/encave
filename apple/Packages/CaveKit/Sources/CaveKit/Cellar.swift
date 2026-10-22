@@ -536,15 +536,33 @@ public extension Cellar {
 
     mutating func addRack(_ rack: Rack) { racks.append(rack) }
 
-    /// Updates name, layout or size. Shrinking is refused if it would drop bottles.
-    mutating func updateRack(_ rack: Rack) throws {
+    /// Updates name, layout or size. `rowMap` moves the bottles of a row to another row
+    /// (nil: the row is gone), keeping their column and depth; rows it leaves out stay as
+    /// they are. A bottle whose new place is not in the rack is displaced: with `takingOut`
+    /// it stays in the cellar without a place, otherwise the update is refused.
+    mutating func updateRack(_ rack: Rack, rowMap: [Int: Int?] = [:], takingOut: Bool = false) throws {
         guard let index = racks.firstIndex(where: { $0.id == rack.id }) else { throw CellarError.unknownRack }
-        let outside = bottlesInCellar.contains {
-            guard let slot = $0.slot, slot.rackID == rack.id else { return false }
-            return !rack.contains(slot)
+        let displaced = Set(displacedBottles(by: rack, rowMap: rowMap).map(\.id))
+        if !displaced.isEmpty, !takingOut { throw CellarError.rackNotEmpty }
+        for bottle in bottlesInCellar {
+            guard let slot = bottle.slot, slot.rackID == rack.id else { continue }
+            bottles[bottle.id]?.slot = displaced.contains(bottle.id) ? nil : Rack.moved(slot, rowMap: rowMap)
         }
-        if outside { throw CellarError.rackNotEmpty }
         racks[index] = rack
+    }
+
+    /// Bottles of this rack that an update with `rowMap` would leave without a place,
+    /// in the order of their places.
+    func displacedBottles(by rack: Rack, rowMap: [Int: Int?] = [:]) -> [Bottle] {
+        bottlesInCellar.filter { bottle in
+            guard let slot = bottle.slot, slot.rackID == rack.id else { return false }
+            guard let moved = Rack.moved(slot, rowMap: rowMap) else { return true }
+            return !rack.contains(moved)
+        }
+        .sorted { a, b in
+            let x = a.slot!, y = b.slot!
+            return (x.row, x.column, x.depth) < (y.row, y.column, y.depth)
+        }
     }
 
     mutating func moveRacks(fromOffsets source: IndexSet, toOffset destination: Int) {

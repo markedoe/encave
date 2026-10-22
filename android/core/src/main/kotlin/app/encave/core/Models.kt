@@ -413,6 +413,34 @@ data class Rack(
          */
         const val MAX_SIZE = 100
 
+        /**
+         * Where each row of a fridge on shelves goes when its shelves are edited. [origins]
+         * gives, for each shelf of [new] from the top, the shelf of [old] it was (null for a
+         * new one). A layer keeps its place counted from the bottom of its shelf; the rows of
+         * a removed shelf or layer map to null. Empty unless both racks have shelf layers.
+         */
+        fun shelfRowMap(old: Rack, new: Rack, origins: List<Int?>): Map<Int, Int?> {
+            if (!old.hasShelfLayers || !new.hasShelfLayers) return emptyMap()
+            val oldShelves = old.shelfRows
+            val newShelves = new.shelfRows
+            val map = mutableMapOf<Int, Int?>()
+            for (row in 0 until old.rows) map[row] = null
+            origins.forEachIndexed { shelf, origin ->
+                if (shelf !in newShelves.indices || origin == null || origin !in oldShelves.indices) return@forEachIndexed
+                val from = oldShelves[origin]
+                val to = newShelves[shelf]
+                // Layer 0 is the bottom one, the shelf's last row.
+                for (layer in 0 until minOf(from.count(), to.count())) map[from.last - layer] = to.last - layer
+            }
+            return map
+        }
+
+        /** A slot moved by a row map (see [Cellar.updateRack]); null when its row is gone. */
+        internal fun moved(slot: Slot, rowMap: Map<Int, Int?>): Slot? {
+            if (!rowMap.containsKey(slot.row)) return slot
+            return rowMap[slot.row]?.let { slot.copy(row = it) }
+        }
+
         fun rowLetters(index: Int): String {
             var n = index
             val letters = StringBuilder()
