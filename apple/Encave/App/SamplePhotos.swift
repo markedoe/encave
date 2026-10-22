@@ -13,11 +13,16 @@ import UniformTypeIdentifiers
 /// and a label without text.
 enum SamplePhotos {
     private enum Shot {
-        case bottle(glass: UInt32, capsule: UInt32, paper: UInt32, ink: UInt32, shape: Shape, text: Bool)
-        case closeUp(paper: UInt32, ink: UInt32)
+        case bottle(glass: UInt32, capsule: UInt32, paper: UInt32, ink: UInt32, shape: Shape, text: Bool,
+                    scene: Scene = .table, tilt: CGFloat = 0)
+        case closeUp(paper: UInt32, ink: UInt32, tilt: CGFloat)
     }
 
     private enum Shape { case bordeaux, burgundy, flute }
+
+    /// Where the bottle stands: a plain table, a busy kitchen counter (with a box
+    /// that has text of its own), or lying on the shelf of a fridge.
+    private enum Scene { case table, kitchen, fridge }
 
     /// Gives a few sample wines of each kind of shot a label photo, drawn from its name,
     /// producer and vintage. Named after their content, as real photos, so their
@@ -26,9 +31,9 @@ enum SamplePhotos {
         let wines = cellar.wines.values.sorted { ($0.name, $0.vintage ?? 0) < ($1.name, $1.vintage ?? 0) }
         let counts: [(WineColor, Int)] = [(.red, 2), (.white, 2), (.rose, 1), (.sparkling, 1), (.fortified, 1)]
         for (color, count) in counts {
-            for original in wines.filter({ $0.color == color && $0.photoID == nil }).prefix(count) {
+            for (index, original) in wines.filter({ $0.color == color && $0.photoID == nil }).prefix(count).enumerated() {
                 var wine = original
-                guard let data = jpeg(draw(shot(for: color), wine: wine)) else { continue }
+                guard let data = jpeg(draw(shot(for: color, index), wine: wine)) else { continue }
                 let id = PhotoID.make(for: data)
                 PhotoStore.keepInMemory(data, id: id)
                 wine.photoID = id
@@ -37,15 +42,19 @@ enum SamplePhotos {
         }
     }
 
-    private static func shot(for color: WineColor?) -> Shot {
+    /// The first red stands tilted on a busy counter and the first white lies in a
+    /// fridge, as real photos often are; the others stand on a plain table.
+    private static func shot(for color: WineColor?, _ index: Int) -> Shot {
         switch color {
-        case .white: .bottle(glass: 0x5B6B2E, capsule: 0xC9A646, paper: 0xFBFAF6, ink: 0x1E2A3A, shape: .burgundy, text: true)
+        case .white: .bottle(glass: 0x5B6B2E, capsule: 0xC9A646, paper: 0xFBFAF6, ink: 0x1E2A3A, shape: .burgundy, text: true,
+                             scene: index == 0 ? .fridge : .table)
         case .rose: .bottle(glass: 0xE9C3BE, capsule: 0xD8A3A8, paper: 0xFFFFFF, ink: 0x6B3A44, shape: .flute, text: true)
-        case .sparkling: .closeUp(paper: 0x15233B, ink: 0xE8D8A8)
+        case .sparkling: .closeUp(paper: 0x15233B, ink: 0xE8D8A8, tilt: -5)
         case .dessert: .bottle(glass: 0xC8902E, capsule: 0x8A5A1C, paper: 0xF6EEDC, ink: 0x3A2A14, shape: .flute, text: true)
         case .fortified: .bottle(glass: 0x161212, capsule: 0x2C2C2C, paper: 0xE9DFC7, ink: 0x3B2A20, shape: .bordeaux, text: false)
         case .orange: .bottle(glass: 0x8A5320, capsule: 0x3F5A3A, paper: 0xF4EFE4, ink: 0x2E2A24, shape: .burgundy, text: true)
-        case .red, nil: .bottle(glass: 0x1F2B1C, capsule: 0x7A1626, paper: 0xF1E8D6, ink: 0x2A2320, shape: .bordeaux, text: true)
+        case .red, nil: .bottle(glass: 0x1F2B1C, capsule: 0x7A1626, paper: 0xF1E8D6, ink: 0x2A2320, shape: .bordeaux, text: true,
+                                scene: index == 0 ? .kitchen : .table, tilt: index == 0 ? 7 : 0)
         }
     }
 
@@ -61,13 +70,34 @@ enum SamplePhotos {
                                       bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
         context.scaleBy(x: scale, y: scale)
         context.textMatrix = .identity
+        context.saveGState()
         switch shot {
-        case let .bottle(glass, capsule, paper, ink, shape, text):
-            room(context, tableTop: 430)
-            bottle(context, glass: glass, capsule: capsule, paper: paper, ink: ink, shape: shape,
-                   lines: text ? lines(for: wine) : [])
-        case let .closeUp(paper, ink):
+        case let .bottle(glass, capsule, paper, ink, shape, text, scene, tilt):
+            let printed = text ? lines(for: wine) : []
+            switch scene {
+            case .table:
+                room(context, tableTop: 430)
+            case .kitchen:
+                room(context, tableTop: 430)
+                kitchen(context, tableTop: 430)
+            case .fridge:
+                fridge(context)
+                // Lying on its side across a shelf, a little smaller.
+                context.translateBy(x: size.width / 2, y: size.height / 2)
+                context.rotate(by: .pi / 2)
+                context.scaleBy(x: 0.8, y: 0.8)
+                context.translateBy(x: -size.width / 2, y: -size.height / 2 - 120)
+            }
+            // Tilted around its base, as when held or photographed at an angle.
+            context.translateBy(x: size.width / 2, y: 250)
+            context.rotate(by: -tilt * .pi / 180)
+            context.translateBy(x: -size.width / 2, y: -250)
+            bottle(context, glass: glass, capsule: capsule, paper: paper, ink: ink, shape: shape, lines: printed)
+        case let .closeUp(paper, ink, tilt):
             fill(context, CGRect(origin: .zero, size: size), 0x6E523B)
+            context.translateBy(x: size.width / 2, y: size.height / 2)
+            context.rotate(by: -tilt * .pi / 180)
+            context.translateBy(x: -size.width / 2, y: -size.height / 2)
             let label = CGRect(x: 110, y: 170, width: 980, height: 1260)
             context.saveGState()
             context.setShadow(offset: CGSize(width: 0, height: -12), blur: 30, color: color(0x000000, 0.45))
@@ -81,7 +111,15 @@ enum SamplePhotos {
                 write(context, text, size: size * 2.6, bold: bold, ink: ink, centerX: label.midX, y: y)
                 y -= size * 2.6 * 1.9
             }
+            // The bottle's curve: darker towards the sides.
+            context.saveGState()
+            context.clip(to: label)
+            gradient(context, from: CGPoint(x: label.minX, y: 0), to: CGPoint(x: label.maxX, y: 0),
+                     colors: [color(0x000000, 0.35), color(0x000000, 0), color(0x000000, 0), color(0x000000, 0.35)])
+            context.restoreGState()
         }
+        context.restoreGState()
+        grain(context)
         return context.makeImage()
     }
 
@@ -102,6 +140,73 @@ enum SamplePhotos {
         context.clip(to: CGRect(x: 0, y: 0, width: size.width, height: tableTop))
         gradient(context, from: CGPoint(x: 0, y: tableTop), to: .zero, colors: [color(0x9A7656), color(0x5E4431)])
         context.restoreGState()
+    }
+
+    /// A busy kitchen: tiles, a window, jars, a plant, books and a cereal box with
+    /// big letters of its own, behind and beside the bottle.
+    private static func kitchen(_ context: CGContext, tableTop: CGFloat) {
+        context.setStrokeColor(color(0xBDB5AA))
+        context.setLineWidth(3)
+        var y = tableTop
+        while y < size.height { context.stroke(CGRect(x: -2, y: y, width: size.width + 4, height: 110)); y += 110 }
+        var x: CGFloat = 0
+        while x < size.width { context.strokeLineSegments(between: [CGPoint(x: x, y: tableTop), CGPoint(x: x, y: size.height)]); x += 110 }
+        fill(context, CGRect(x: 760, y: 1080, width: 380, height: 420), 0xF7F4EC)
+        context.setStrokeColor(color(0x8C8173))
+        context.setLineWidth(14)
+        context.stroke(CGRect(x: 760, y: 1080, width: 380, height: 420))
+        context.strokeLineSegments(between: [CGPoint(x: 950, y: 1080), CGPoint(x: 950, y: 1500)])
+        // A cereal box with its own text, on the left.
+        fill(context, CGRect(x: 40, y: tableTop - 20, width: 250, height: 520), 0xD9822B)
+        write(context, "MUESLI", size: 54, bold: true, ink: 0xFFFFFF, centerX: 165, y: 760)
+        write(context, "BIO · 500 g", size: 30, bold: false, ink: 0x3A2414, centerX: 165, y: 690)
+        // Jars, a mug, books and a plant.
+        fill(context, CGRect(x: 310, y: tableTop - 10, width: 130, height: 210), 0x8FA7B3)
+        fill(context, CGRect(x: 305, y: tableTop + 200, width: 140, height: 30), 0x3E3E3E)
+        fill(context, CGRect(x: 790, y: tableTop - 10, width: 90, height: 120), 0xE7E1D6)
+        for (index, rgb) in [UInt32(0x2F4B7C), 0x9C2F2F, 0x4E6B3A, 0xC7A23A].enumerated() {
+            fill(context, CGRect(x: 900, y: tableTop - 10 + CGFloat(index) * 46, width: 260 - CGFloat(index) * 18, height: 44), rgb)
+        }
+        fill(context, CGRect(x: 960, y: tableTop + 175, width: 150, height: 150), 0xB5653A)
+        context.setFillColor(color(0x4F7A3A))
+        let leaves: [(CGFloat, CGFloat)] = [(-60, 120), (0, 170), (60, 120), (-30, 220), (40, 230)]
+        for (dx, dy) in leaves {
+            context.fillEllipse(in: CGRect(x: 1035 + dx - 45, y: tableTop + 175 + dy, width: 90, height: 130))
+        }
+    }
+
+    /// The inside of a fridge: white walls, a glass shelf and wire racks.
+    private static func fridge(_ context: CGContext) {
+        gradient(context, from: CGPoint(x: 0, y: size.height), to: .zero, colors: [color(0xF2F4F5), color(0xD5DADD)])
+        context.setStrokeColor(color(0xAEB6BB))
+        context.setLineWidth(8)
+        for y in stride(from: CGFloat(200), to: size.height, by: 420) {
+            context.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: size.width, y: y)])
+        }
+        context.setLineWidth(3)
+        for x in stride(from: CGFloat(30), to: size.width, by: 60) {
+            context.strokeLineSegments(between: [CGPoint(x: x, y: 520), CGPoint(x: x + 40, y: 620)])
+        }
+        fill(context, CGRect(x: 60, y: 1180, width: 300, height: 260), 0xE8D9B0) // a box of eggs
+        fill(context, CGRect(x: 880, y: 1150, width: 220, height: 320), 0xF0F0F0) // a carton of milk
+    }
+
+    /// The grain of a phone photo, the same each time.
+    private static func grain(_ context: CGContext) {
+        var seed: UInt64 = 0x9E3779B97F4A7C15
+        func next() -> UInt64 {
+            seed &+= 0x9E3779B97F4A7C15
+            var z = seed
+            z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+            z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+            return z ^ (z >> 31)
+        }
+        for _ in 0..<12_000 {
+            let value = next()
+            let x = CGFloat(value % 1200), y = CGFloat((value >> 16) % 1600)
+            context.setFillColor(gray: (value >> 40) % 2 == 0 ? 0 : 1, alpha: 0.07)
+            context.fill(CGRect(x: x, y: y, width: 3, height: 3))
+        }
     }
 
     private static func bottle(_ context: CGContext, glass: UInt32, capsule: UInt32, paper: UInt32, ink: UInt32,

@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Studio look framed on the label: Apple cuts the bottle out and frames it on
   its label (found from its text, else a rectangle, else where labels sit) with
   a little of the shoulder, or frames the photo on its text when it cannot be
-  cut out; Android frames the photo where its print is
+  cut out cleanly, else shows it whole; Android frames the photo where its print is
   densest, with soft edges (no cut-out). Both on a backdrop in the wine's color
   with a vine drawing, on the device only; Apple pictures are made again once
   (photos that gave nothing before are tried again)

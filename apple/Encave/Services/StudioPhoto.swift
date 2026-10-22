@@ -104,53 +104,66 @@ enum StudioPhoto {
     }
 
     /// The bottle cut out (Vision's subject lifting, as in Photos) and framed on its
-    /// label, or else the label straightened from its four corners, with automatic
-    /// light correction.
+    /// label; without a clear cut-out, the label straightened or the photo framed on
+    /// its label; and when nothing is sure, the whole photo. Always with its light
+    /// evened out, lightly.
     private static func render(_ image: CGImage) -> CGImage? {
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         let original = CIImage(cgImage: image)
-        let area = original.extent.width * original.extent.height
-        var subject: CIImage?
+        let picture = liftedBottle(handler, original) ?? LabelFrame.withoutCutout(original, handler: handler)
+        let result = evenedOut(picture)
+        return context.createCGImage(result, from: result.extent)
+    }
 
+    /// The subject cut out, framed on its label, or nil when the cut-out is not
+    /// clear: low confidence, the whole photo, a tiny part of it, or a ragged shape.
+    private static func liftedBottle(_ handler: VNImageRequestHandler, _ original: CIImage) -> CIImage? {
         let lift = VNGenerateForegroundInstanceMaskRequest()
-        if (try? handler.perform([lift])) != nil, let observation = lift.results?.first,
-           let buffer = try? observation.generateMaskedImage(ofInstances: observation.allInstances, from: handler,
-                                                             croppedToInstancesExtent: true) {
+        guard (try? handler.perform([lift])) != nil, let observation = lift.results?.first,
+              observation.confidence >= 0.5 else { return nil }
+        // Several things stand out (a bottle among jars): keep the largest.
+        var best: CIImage?
+        var bestArea: CGFloat = 0
+        for instance in observation.allInstances.prefix(4) {
+            guard let buffer = try? observation.generateMaskedImage(ofInstances: IndexSet(integer: instance), from: handler,
+                                                                    croppedToInstancesExtent: true) else { continue }
             let cut = CIImage(cvPixelBuffer: buffer)
-            let share = cut.extent.width * cut.extent.height / max(area, 1)
-            // A "subject" filling almost the whole photo is the background itself.
-            if share > 0.04, share < 0.9 { subject = LabelFrame.crop(cut, context: context) }
+            let area = cut.extent.width * cut.extent.height
+            if area > bestArea { best = cut; bestArea = area }
         }
+        let photoArea = max(1, original.extent.width * original.extent.height)
+        guard let cut = best, bestArea / photoArea > 0.04, bestArea / photoArea < 0.9,
+              filled(cut) >= 0.4 else { return nil }
+        return LabelFrame.crop(cut, context: context)
+    }
 
-        if subject == nil {
-            let rectangles = VNDetectRectanglesRequest()
-            rectangles.maximumObservations = 1
-            rectangles.minimumSize = 0.3
-            rectangles.minimumAspectRatio = 0.3
-            rectangles.maximumAspectRatio = 1
-            rectangles.quadratureTolerance = 25
-            if (try? handler.perform([rectangles])) != nil, let quad = rectangles.results?.first {
-                let size = original.extent.size
-                func point(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * size.width, y: p.y * size.height) }
-                let correction = CIFilter.perspectiveCorrection()
-                correction.inputImage = original
-                correction.topLeft = point(quad.topLeft)
-                correction.topRight = point(quad.topRight)
-                correction.bottomLeft = point(quad.bottomLeft)
-                correction.bottomRight = point(quad.bottomRight)
-                subject = correction.outputImage
-            }
+    /// How much of its frame the cut-out fills (a bottle about 0.6 to 0.8, a label
+    /// nearly 1); a ragged or broken cut-out fills little.
+    private static func filled(_ cut: CIImage) -> CGFloat {
+        let average = CIFilter.areaAverage()
+        average.inputImage = cut
+        average.extent = cut.extent
+        guard let output = average.outputImage else { return 0 }
+        var pixel = [Float](repeating: 0, count: 4)
+        pixel.withUnsafeMutableBytes { bytes in
+            guard let base = bytes.baseAddress else { return }
+            context.render(output, toBitmap: base, rowBytes: 16, bounds: CGRect(origin: output.extent.origin,
+                                                                                size: CGSize(width: 1, height: 1)),
+                           format: .RGBAf, colorSpace: nil)
         }
+        return CGFloat(pixel[3])
+    }
 
-        // No cut-out (Vision could not lift the bottle here): frame the photo itself on its label.
-        if subject == nil { subject = LabelFrame.framePhoto(original, handler: handler) }
-
-        guard var result = subject else { return nil }
-        for filter in result.autoAdjustmentFilters(options: [.redEye: false]) {
+    /// The light evened out, lightly: only the tone curve and the shadows and
+    /// highlights of Core Image's automatic adjustment, no color boost.
+    private static func evenedOut(_ image: CIImage) -> CIImage {
+        var result = image
+        let kept: Set<String> = ["CIToneCurve", "CIHighlightShadowAdjust"]
+        for filter in image.autoAdjustmentFilters(options: [.redEye: false, .features: []]) where kept.contains(filter.name) {
             filter.setValue(result, forKey: kCIInputImageKey)
             result = filter.outputImage ?? result
         }
-        return context.createCGImage(result, from: result.extent)
+        return result
     }
 
     private static func pngData(_ image: CGImage) -> Data? {
@@ -169,7 +182,7 @@ enum StudioPhoto {
 /// correction); without text, a rectangle on the bottle; without either, the part
 /// of a bottle where labels sit. A cut-out that is not a standing bottle (a
 /// close-up of a label, several bottles), or mostly covered with text, is left whole.
-/// When there is no cut-out, `framePhoto` frames the photo itself on its text.
+/// Without a clear cut-out, `withoutCutout` straightens the label or frames the photo itself.
 enum LabelFrame {
     static func crop(_ cut: CIImage, context: CIContext) -> CIImage {
         let extent = cut.extent
@@ -198,24 +211,62 @@ enum LabelFrame {
         return result
     }
 
-    /// A photo that could not be cut out, framed on the text read on it (the label),
-    /// with a little around it and soft edges, so it still fills the pictures. Nil
-    /// without text, or when text covers most of the photo (a close-up of the label).
-    static func framePhoto(_ photo: CIImage, handler: VNImageRequestHandler) -> CIImage? {
-        let boxes = textBoxes(handler)
+    /// A photo without a clear cut-out: the label straightened when a rectangle
+    /// holds its text, else the photo framed on its text, else the whole photo.
+    static func withoutCutout(_ photo: CIImage, handler: VNImageRequestHandler) -> CIImage {
+        // Text near the middle, where the bottle stands, not on things around it.
+        let boxes = textBoxes(handler).filter { $0.midX > 0.2 && $0.midX < 0.8 }
+        return straightenedLabel(photo, handler: handler, text: boxes) ?? framePhoto(photo, boxes: boxes) ?? photo
+    }
+
+    /// The largest rectangle holding at least two lines of text (a label, not a
+    /// window or a tile), straightened from its four corners.
+    private static func straightenedLabel(_ photo: CIImage, handler: VNImageRequestHandler, text: [CGRect]) -> CIImage? {
+        let request = VNDetectRectanglesRequest()
+        request.maximumObservations = 4
+        request.minimumSize = 0.3
+        request.minimumAspectRatio = 0.3
+        request.maximumAspectRatio = 1
+        request.quadratureTolerance = 25
+        guard (try? handler.perform([request])) != nil else { return nil }
+        var best: VNRectangleObservation?
+        for quad in request.results ?? [] {
+            let box = quad.boundingBox
+            let inside = text.filter { box.contains(CGPoint(x: $0.midX, y: $0.midY)) }.count
+            guard inside >= 2 else { continue }
+            if let current = best, current.boundingBox.width * current.boundingBox.height >= box.width * box.height { continue }
+            best = quad
+        }
+        guard let quad = best else { return nil }
+        let size = photo.extent.size
+        func point(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * size.width, y: p.y * size.height) }
+        let correction = CIFilter.perspectiveCorrection()
+        correction.inputImage = photo
+        correction.topLeft = point(quad.topLeft)
+        correction.topRight = point(quad.topRight)
+        correction.bottomLeft = point(quad.bottomLeft)
+        correction.bottomRight = point(quad.bottomRight)
+        return correction.outputImage
+    }
+
+    /// The photo framed on the text read on it (the label), with a little around it
+    /// and soft edges, so it still fills the pictures. Nil with fewer than two lines
+    /// of label text, or when text covers most of the photo (a close-up of the label).
+    static func framePhoto(_ photo: CIImage, boxes: [CGRect]) -> CIImage? {
         let lines = boxes.map { LabelFraming.Line(minY: Double($0.minY), maxY: Double($0.maxY), width: Double($0.width)) }
         guard let label = LabelFraming.label(lines: lines), label.coverage <= LabelFraming.closeUpTextCoverage else {
             return nil
         }
         // Across: the text of the label (lines within its band), with a quarter more on each side.
-        var left: CGFloat = 1, right: CGFloat = 0
-        for box in boxes {
+        var left: CGFloat = 1, right: CGFloat = 0, count = 0
+        for box in boxes where box.height >= 0.015 && box.width >= 0.08 {
             let top = Double(1 - box.maxY), bottom = Double(1 - box.minY)
             guard bottom >= label.band.lowerBound, top <= label.band.upperBound else { continue }
             left = min(left, box.minX)
             right = max(right, box.maxX)
+            count += 1
         }
-        guard right > left else { return nil }
+        guard count >= 2, right > left else { return nil }
         let extent = photo.extent
         let textWidth = (right - left) * extent.width
         var width = textWidth * 1.5
