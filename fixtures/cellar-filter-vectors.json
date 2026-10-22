@@ -1,0 +1,115 @@
+{
+  "about": "The cellar list: filters, sorts, tag and grape chips, and saved searches, shared by CaveKit (CellarFilterVectorTests.swift) and the Kotlin core (CellarFilterVectorTest.kt). Bottles are added on the given days (UTC); 'drunk' bottles are opened and leave the list. Groups are written 'name ×bottles'. Names avoid letters whose place depends on the language, so any locale sorts them alike.",
+  "year": 2026,
+  "wines": [
+    {
+      "name": "Château Palmer", "producer": "Château Palmer", "vintage": 2015, "color": "red",
+      "region": "Bordeaux", "country": "France", "grapes": ["Merlot", "Cabernet Sauvignon"], "tags": ["Gift"],
+      "from": 2025, "until": 2045,
+      "bottles": [{ "added": "2026-01-10" }, { "added": "2026-02-01", "reservedFor": "Anniversaire" }]
+    },
+    {
+      "name": "abbaye de Lérins", "vintage": 2019, "color": "white", "region": "Provence", "country": "France",
+      "grapes": ["Clairette"], "from": 2020, "until": 2026,
+      "bottles": [{ "added": "2026-03-01" }]
+    },
+    {
+      "name": "Église-Clinet", "vintage": 2010, "color": "red", "region": "Bordeaux", "country": "France",
+      "grapes": ["merlot"], "tags": ["gift", "Cellar door"], "from": 2015, "until": 2024,
+      "bottles": [{ "added": "2025-12-01", "reservedFor": "Anniversaire" }]
+    },
+    {
+      "name": "Domaine de Trévallon", "vintage": 2021, "color": "red", "region": "Provence", "country": "France",
+      "grapes": ["Syrah", "Cabernet Sauvignon"], "from": 2028, "until": 2040,
+      "bottles": [{ "added": "2026-04-01" }, { "added": "2026-04-02" }, { "added": "2026-09-01", "drunk": true }]
+    },
+    {
+      "name": "Bourgogne Aligoté", "vintage": 2022, "color": "white", "region": "Bourgogne", "country": "France",
+      "grapes": ["Aligoté"],
+      "bottles": [{ "added": "2026-05-01" }]
+    },
+    {
+      "name": "Riesling Smaragd", "producer": "F.X. Pichler", "vintage": 2019, "color": "white",
+      "region": "Wachau", "country": "Austria", "grapes": ["Riesling"], "tags": ["Summer"], "barcodes": ["9001234567890"],
+      "from": 2022, "until": 2032,
+      "bottles": [{ "added": "2026-06-01" }]
+    },
+    {
+      "name": "Rosé d'Été", "vintage": 2024, "color": "rose", "region": "Provence", "country": "France",
+      "tags": ["Été"], "from": 2025, "until": 2026,
+      "bottles": [{ "added": "2026-06-15" }]
+    },
+    {
+      "name": "Tout bu", "vintage": 2018, "color": "red", "region": "Bordeaux", "country": "France",
+      "grapes": ["Malbec"], "tags": ["Gone"], "from": 2020, "until": 2030,
+      "bottles": [{ "added": "2026-07-01", "drunk": true }]
+    }
+  ],
+  "lists": [
+    { "about": "Everything, by name: case and accents do not change the order.", "sort": "name",
+      "groups": ["abbaye de Lérins ×1", "Bourgogne Aligoté ×1", "Château Palmer ×2", "Domaine de Trévallon ×2", "Église-Clinet ×1", "Riesling Smaragd ×1", "Rosé d'Été ×1"] },
+    { "query": "eglise", "groups": ["Église-Clinet ×1"] },
+    { "query": "ÉGLISE", "groups": ["Église-Clinet ×1"] },
+    { "query": "LERINS", "groups": ["abbaye de Lérins ×1"] },
+    { "query": "  provence   2021 ", "groups": ["Domaine de Trévallon ×2"] },
+    { "query": "gift", "groups": ["Château Palmer ×2", "Église-Clinet ×1"] },
+    { "query": "cabernet", "groups": ["Château Palmer ×2", "Domaine de Trévallon ×2"] },
+    { "query": "ete", "groups": ["Rosé d'Été ×1"] },
+    { "query": "pichler 9001234567890", "groups": ["Riesling Smaragd ×1"] },
+    { "query": "malbec", "groups": [] },
+    { "query": "bordeaux 2016", "groups": [] },
+    { "colors": ["white"], "groups": ["abbaye de Lérins ×1", "Bourgogne Aligoté ×1", "Riesling Smaragd ×1"] },
+    { "colors": ["red", "rose"], "groups": ["Château Palmer ×2", "Domaine de Trévallon ×2", "Église-Clinet ×1", "Rosé d'Été ×1"] },
+    { "maturities": ["drinkSoon"], "groups": ["abbaye de Lérins ×1", "Rosé d'Été ×1"] },
+    { "maturities": ["unknown"], "groups": ["Bourgogne Aligoté ×1"] },
+    { "maturities": ["pastPeak", "young"], "groups": ["Domaine de Trévallon ×2", "Église-Clinet ×1"] },
+    { "tag": "GIFT", "groups": ["Château Palmer ×2", "Église-Clinet ×1"] },
+    { "tag": "ÉTÉ", "groups": ["Rosé d'Été ×1"] },
+    { "tag": "Gone", "groups": [] },
+    { "grape": " merlot ", "groups": ["Château Palmer ×2", "Église-Clinet ×1"] },
+    { "about": "A grape is compared without case, not without accents.", "grape": "aligote", "groups": [] },
+    { "about": "Only the bottles kept for the occasion.", "reservation": "ANNIVERSAIRE", "groups": ["Château Palmer ×1", "Église-Clinet ×1"] },
+    { "query": "bordeaux", "colors": ["red"], "maturities": ["ready"], "groups": ["Château Palmer ×2"] },
+    { "about": "Oldest first, no vintage last; the name breaks ties.", "sort": "vintage",
+      "groups": ["Église-Clinet ×1", "Château Palmer ×2", "abbaye de Lérins ×1", "Riesling Smaragd ×1", "Domaine de Trévallon ×2", "Bourgogne Aligoté ×1", "Rosé d'Été ×1"] },
+    { "about": "The latest bottle added first; bottles drunk do not count.", "sort": "recentlyAdded",
+      "groups": ["Rosé d'Été ×1", "Riesling Smaragd ×1", "Bourgogne Aligoté ×1", "Domaine de Trévallon ×2", "abbaye de Lérins ×1", "Château Palmer ×2", "Église-Clinet ×1"] },
+    { "about": "Most urgent first, then the window that ends first, then the name.", "sort": "readiness",
+      "groups": ["abbaye de Lérins ×1", "Rosé d'Été ×1", "Riesling Smaragd ×1", "Château Palmer ×2", "Église-Clinet ×1", "Domaine de Trévallon ×2", "Bourgogne Aligoté ×1"] },
+    { "about": "Country, then region, then the name.", "sort": "region",
+      "groups": ["Riesling Smaragd ×1", "Château Palmer ×2", "Église-Clinet ×1", "Bourgogne Aligoté ×1", "abbaye de Lérins ×1", "Domaine de Trévallon ×2", "Rosé d'Été ×1"] },
+    { "sort": "readiness", "colors": ["white"],
+      "groups": ["abbaye de Lérins ×1", "Riesling Smaragd ×1", "Bourgogne Aligoté ×1"] }
+  ],
+  "about chips": "Tags and grapes of wines in the cellar, the most used first, each with its most used spelling (ties: the first in UTF-16 order); wines whose bottles are all drunk are left out.",
+  "tags": ["Gift", "Cellar door", "Été", "Summer"],
+  "grapes": ["Cabernet Sauvignon", "Merlot", "Aligoté", "Clairette", "Riesling", "Syrah"],
+  "reservations": ["Anniversaire"],
+  "savedSearches": [
+    { "about": "Names are trimmed; saving under a name already used (ignoring case) replaces it.",
+      "steps": [
+        { "save": "Bordeaux prêts", "query": " bordeaux ", "colors": ["red"], "maturities": ["ready", "drinkSoon"] },
+        { "save": " bordeaux PRÊTS ", "query": "bordeaux", "colors": ["red"] },
+        { "save": "Zinfandel", "grape": "Zinfandel" },
+        { "save": "apéro", "tag": "Summer" },
+        { "save": "   " },
+        { "save": "Été", "tag": "Été", "reservation": "Anniversaire" }
+      ],
+      "names": ["apéro", "bordeaux PRÊTS", "Zinfandel", "Été"],
+      "lists": {
+        "bordeaux PRÊTS": ["Château Palmer ×2", "Église-Clinet ×1"],
+        "apéro": ["Riesling Smaragd ×1"],
+        "Zinfandel": [],
+        "Été": []
+      }
+    },
+    { "about": "Deleting the last saved search leaves none.",
+      "steps": [
+        { "save": "Rouges", "colors": ["red"] },
+        { "delete": "Rouges" }
+      ],
+      "names": null,
+      "lists": {}
+    }
+  ]
+}

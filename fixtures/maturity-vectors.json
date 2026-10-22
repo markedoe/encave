@@ -1,0 +1,130 @@
+{
+  "about": "Drinking windows, shared by CaveKit (MaturityVectorTests.swift) and the Kotlin core (MaturityVectorTest.kt): maturity at the window's edges, the estimated window per style, where a window comes from, moving its end, the monthly reminder's counts and the drink-down pace. Years and months are fixed; nothing depends on today.",
+  "maturity": [
+    { "from": 2020, "until": 2030, "year": 2019, "maturity": "young" },
+    { "from": 2020, "until": 2030, "year": 2020, "maturity": "ready" },
+    { "from": 2020, "until": 2030, "year": 2029, "maturity": "ready" },
+    { "from": 2020, "until": 2030, "year": 2030, "maturity": "drinkSoon" },
+    { "from": 2020, "until": 2030, "year": 2031, "maturity": "pastPeak" },
+    { "from": 2026, "until": 2026, "year": 2025, "maturity": "young" },
+    { "from": 2026, "until": 2026, "year": 2026, "maturity": "drinkSoon" },
+    { "from": 2026, "until": 2026, "year": 2027, "maturity": "pastPeak" },
+    { "from": 2030, "until": 2020, "year": 2025, "maturity": "unknown" },
+    { "from": null, "until": 2030, "year": 2025, "maturity": "unknown" },
+    { "from": 2020, "until": null, "year": 2025, "maturity": "unknown" },
+    { "from": null, "until": null, "year": 2025, "maturity": "unknown" }
+  ],
+  "urgencyOrder": ["drinkSoon", "ready", "pastPeak", "young", "unknown"],
+  "estimatedWindow": [
+    { "vintage": 2020, "color": "red", "from": 2023, "until": 2035 },
+    { "vintage": 2020, "color": "white", "from": 2021, "until": 2027 },
+    { "vintage": 2020, "color": "rose", "from": 2020, "until": 2023 },
+    { "vintage": 2020, "color": "sparkling", "from": 2021, "until": 2029 },
+    { "vintage": 2020, "color": "dessert", "from": 2023, "until": 2048 },
+    { "vintage": 2020, "color": "fortified", "from": 2025, "until": 2055 },
+    { "vintage": 2020, "color": "orange", "from": 2021, "until": 2029 },
+    { "vintage": 2020, "color": null, "from": 2022, "until": 2030 },
+    { "vintage": null, "color": "red", "from": null, "until": null }
+  ],
+  "windowSource": [
+    { "vintage": 2020, "color": "red", "from": 2023, "until": 2035, "source": "estimated 3 12" },
+    { "vintage": 2020, "color": "rose", "from": 2020, "until": 2023, "source": "estimated 0 3" },
+    { "vintage": 2020, "color": null, "from": 2022, "until": 2030, "source": "estimated 2 8" },
+    { "vintage": 2020, "color": "red", "from": 2023, "until": 2036, "source": "entered" },
+    { "vintage": 2020, "color": "white", "from": 2023, "until": 2035, "source": "entered" },
+    { "vintage": null, "color": "red", "from": 2023, "until": 2035, "source": "entered" },
+    { "vintage": 2020, "color": "red", "from": null, "until": 2035, "source": "missing" },
+    { "vintage": 2020, "color": "red", "from": 2023, "until": null, "source": "missing" }
+  ],
+  "movingWindowEnd": [
+    { "from": 2020, "until": 2030, "by": 2, "until after": 2032 },
+    { "from": 2020, "until": 2030, "by": -3, "until after": 2027 },
+    { "from": 2020, "until": 2030, "by": -20, "until after": 2020 },
+    { "from": null, "until": 2030, "by": -5, "until after": 2025 },
+    { "from": 2020, "until": null, "by": 3, "until after": null }
+  ],
+  "digests": [
+    {
+      "about": "Last-year, newly open and past-peak bottles are counted; young ones and bottles drunk are not. The most urgent wine is named.",
+      "year": 2026,
+      "wines": [
+        { "name": "Soon", "vintage": 2018, "from": 2020, "until": 2026, "inCellar": 2 },
+        { "name": "Fresh", "vintage": 2022, "from": 2026, "until": 2030, "inCellar": 1 },
+        { "name": "Open", "vintage": 2019, "from": 2024, "until": 2030, "inCellar": 3 },
+        { "name": "Old", "vintage": 2010, "from": 2015, "until": 2024, "inCellar": 1 },
+        { "name": "Young", "vintage": 2024, "from": 2028, "until": 2035, "inCellar": 1 },
+        { "name": "Ancient", "vintage": 2000, "from": 2005, "until": 2015, "inCellar": 0, "drunk": 2 },
+        { "name": "Unknown", "vintage": null, "from": null, "until": null, "inCellar": 1 }
+      ],
+      "drinkSoon": 2, "newlyReady": 1, "pastPeak": 1, "firstWine": "Soon 2018", "isEmpty": false
+    },
+    {
+      "about": "With only past-peak wines, the first by name.",
+      "year": 2026,
+      "wines": [
+        { "name": "Zeta", "vintage": null, "from": 2010, "until": 2020, "inCellar": 1 },
+        { "name": "Alpha", "vintage": 2010, "from": 2012, "until": 2022, "inCellar": 1 }
+      ],
+      "drinkSoon": 0, "newlyReady": 0, "pastPeak": 2, "firstWine": "Alpha 2010", "isEmpty": false
+    },
+    {
+      "about": "Nothing to say: only ready and young wines.",
+      "year": 2026,
+      "wines": [
+        { "name": "Open", "vintage": 2019, "from": 2024, "until": 2030, "inCellar": 3 },
+        { "name": "Young", "vintage": 2024, "from": 2028, "until": 2035, "inCellar": 1 }
+      ],
+      "drinkSoon": 0, "newlyReady": 0, "pastPeak": 0, "firstWine": null, "isEmpty": true
+    }
+  ],
+  "drinkDownPlans": [
+    {
+      "about": "October: 3 months left this year. Past-peak bottles count now; bottles drunk and without a window do not.",
+      "year": 2026, "month": 10,
+      "wines": [
+        { "name": "A", "from": 2020, "until": 2026, "inCellar": 2 },
+        { "name": "B", "from": 2024, "until": 2028, "inCellar": 1, "drunk": 1 },
+        { "name": "C", "from": 2010, "until": 2020, "inCellar": 1 },
+        { "name": "D", "from": null, "until": null, "inCellar": 1 }
+      ],
+      "years": [[2026, 2], [2027, 0], [2028, 1]],
+      "pastPeak": 1, "withoutWindow": 1, "bottlesPerMonth": 1.0, "isEmpty": false
+    },
+    {
+      "about": "December: the current month counts, so 13 months to the end of next year.",
+      "year": 2026, "month": 12,
+      "wines": [
+        { "name": "A", "from": 2020, "until": 2026, "inCellar": 1 },
+        { "name": "B", "from": 2020, "until": 2027, "inCellar": 24 }
+      ],
+      "years": [[2026, 1], [2027, 24]],
+      "pastPeak": 0, "withoutWindow": 0, "bottlesPerMonth": 1.9230769230769231, "isEmpty": false
+    },
+    {
+      "about": "January, a later year sets the pace: 12 months for 6 bottles, 24 months for 30.",
+      "year": 2026, "month": 1,
+      "wines": [
+        { "name": "A", "from": 2020, "until": 2026, "inCellar": 6 },
+        { "name": "B", "from": 2020, "until": 2027, "inCellar": 24 }
+      ],
+      "years": [[2026, 6], [2027, 24]],
+      "pastPeak": 0, "withoutWindow": 0, "bottlesPerMonth": 1.25, "isEmpty": false
+    },
+    {
+      "about": "Windows ending after the horizon are not in the years, and set no pace.",
+      "year": 2026, "month": 6, "horizon": 3,
+      "wines": [
+        { "name": "A", "from": 2030, "until": 2050, "inCellar": 12 }
+      ],
+      "years": [[2026, 0], [2027, 0], [2028, 0]],
+      "pastPeak": 0, "withoutWindow": 0, "bottlesPerMonth": 0.0, "isEmpty": true
+    },
+    {
+      "about": "An empty cellar: the current year only.",
+      "year": 2026, "month": 1,
+      "wines": [],
+      "years": [[2026, 0]],
+      "pastPeak": 0, "withoutWindow": 0, "bottlesPerMonth": 0.0, "isEmpty": true
+    }
+  ]
+}

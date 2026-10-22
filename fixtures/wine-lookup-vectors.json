@@ -1,0 +1,38 @@
+{
+  "about": "Finding a wine already in the cellar when adding a bottle, shared by CaveKit (WineLookupVectorTests.swift) and the Kotlin core (WineLookupVectorTest.kt): by barcode (producers often keep one barcode for every vintage) and by name, producer and vintage (to offer the existing wine instead of a duplicate). IDs are fixed so ties always break the same way. 'inCellar' bottles are in the cellar; 'drunk' ones were opened.",
+  "wines": [
+    { "id": "00000000-0000-4000-8000-000000000001", "name": "Château Musar", "producer": "Château Musar", "vintage": 2017, "barcodes": ["3760000000017"], "inCellar": 1 },
+    { "id": "00000000-0000-4000-8000-000000000002", "name": "Château Musar", "producer": "Château Musar", "vintage": 2016, "barcodes": ["3760000000017"], "inCellar": 0, "drunk": 1 },
+    { "id": "00000000-0000-4000-8000-000000000003", "name": "Château Musar", "producer": "Château Musar", "vintage": 2015, "barcodes": ["3760000000017"], "inCellar": 2 },
+    { "id": "00000000-0000-4000-8000-000000000004", "name": "Hochar", "producer": "Château Musar", "barcodes": ["3760000000017"], "inCellar": 0, "drunk": 1 },
+    { "id": "00000000-0000-4000-8000-000000000005", "name": "Hochar", "producer": "Château Musar", "vintage": 2018, "barcodes": ["3760000000017"], "inCellar": 0, "drunk": 1 },
+    { "id": "00000000-0000-4000-8000-000000000006", "name": "Blanc de Musar", "producer": "Château Musar", "vintage": 2016, "barcodes": ["3760000000017", "3760000000024"], "inCellar": 0, "drunk": 1 },
+    { "id": "00000000-0000-4000-8000-000000000011", "name": "Clos Rougeard  Le Bourg", "producer": "Clos Rougeard", "vintage": 2014, "inCellar": 0, "drunk": 1 },
+    { "id": "00000000-0000-4000-8000-000000000012", "name": "clos rougeard le bourg", "vintage": 2014, "inCellar": 1 },
+    { "id": "00000000-0000-4000-8000-000000000013", "name": "Clos Rougeard Le Bourg", "producer": "Foucault", "vintage": 2014, "inCellar": 1 },
+    { "id": "00000000-0000-4000-8000-000000000014", "name": "Le Bourg", "producer": "Clos Rougeard", "vintage": 2015, "inCellar": 1 }
+  ],
+  "barcodes": [
+    { "about": "In the cellar first, then the newest vintage, non-vintage last; the name breaks ties.", "code": "3760000000017",
+      "wines": ["Château Musar 2017", "Château Musar 2015", "Hochar 2018", "Blanc de Musar 2016", "Château Musar 2016", "Hochar"] },
+    { "about": "Spaces and dashes in a typed code do not matter.", "code": " 3 760000-000024 ", "wines": ["Blanc de Musar 2016"] },
+    { "code": "376000000001", "wines": [] },
+    { "code": "", "wines": [] },
+    { "code": "no digits", "wines": [] }
+  ],
+  "duplicates": [
+    { "about": "Case, accents and extra spaces do not matter; the same producer is preferred to a wine in the cellar.",
+      "name": "CLOS ROUGEARD LE BOURG", "producer": "clos rougéard", "vintage": 2014, "match": "00000000-0000-4000-8000-000000000011" },
+    { "about": "Without a producer, the one without a producer.",
+      "name": "Clos Rougeard Le Bourg", "vintage": 2014, "match": "00000000-0000-4000-8000-000000000012" },
+    { "name": "Clos Rougeard Le Bourg", "producer": "Foucault", "vintage": 2014, "match": "00000000-0000-4000-8000-000000000013" },
+    { "about": "Another producer only matches a wine without one.",
+      "name": "Clos Rougeard Le Bourg", "producer": "Someone Else", "vintage": 2014, "match": "00000000-0000-4000-8000-000000000012" },
+    { "about": "A wine is not its own duplicate: then the one in the cellar.",
+      "id": "00000000-0000-4000-8000-000000000012", "name": "Clos Rougeard Le Bourg", "vintage": 2014, "match": "00000000-0000-4000-8000-000000000013" },
+    { "about": "Another vintage is another wine.", "name": "Clos Rougeard Le Bourg", "producer": "Clos Rougeard", "vintage": 2015, "match": null },
+    { "name": "Le Bourg", "producer": "Clos Rougeard", "match": null },
+    { "name": "Le Bourg", "producer": "Clos Rougeard", "vintage": 2015, "match": "00000000-0000-4000-8000-000000000014" },
+    { "name": "   ", "vintage": 2014, "match": null }
+  ]
+}
