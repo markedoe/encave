@@ -1,6 +1,11 @@
 import CaveKit
 import Foundation
 import Observation
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 /// Holds the cellar for the UI, persists every change and drives app-wide
 /// presentation (sheets, undo banner).
@@ -25,6 +30,10 @@ final class CellarModel {
     var journalTag: String?
 
     @ObservationIgnored private var store: any CellarStore = InMemoryCellarStore()
+    /// Saves off the main thread, coalescing changes made during a write.
+    @ObservationIgnored private var writer: CellarWriter?
+    /// Number of the newest change given to `writer`.
+    @ObservationIgnored private var generation = 0
     /// Sync with the user's other devices. Replaced when the cellar loads late (`reloadIfLoadFailed`).
     var sync: SyncService {
         _ = syncVersion
@@ -72,6 +81,7 @@ final class CellarModel {
             self.store = InMemoryCellarStore()
             storeToRetry = store as? JSONFileCellarStore
             errorMessage = String(localized: "Your cellar could not be loaded. Nothing is saved until Encave is opened again.")
+            startWriter()
             syncService = SyncService(model: self, demo: true)
             syncVersion += 1
             return
@@ -79,6 +89,7 @@ final class CellarModel {
         self.store = store
         storeToRetry = nil
         errorMessage = nil
+        startWriter()
         if let fileName = unreadableFile?.lastPathComponent {
             errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
         }
@@ -178,6 +189,14 @@ final class CellarModel {
     static func live() -> CellarModel {
         let model = makeLive()
         current = model
+        #if os(iOS)
+        let quitting = UIApplication.willTerminateNotification
+        #elseif os(macOS)
+        let quitting = NSApplication.willTerminateNotification
+        #endif
+        _ = NotificationCenter.default.addObserver(forName: quitting, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.flushBeforeExit() }
+        }
         return model
     }
 
@@ -219,14 +238,15 @@ final class CellarModel {
 
     var currentYear: Int { CellarYear.current }
 
-    /// Applies a change and saves it. On failure nothing changes and the error is shown.
+    /// Applies a change and saves it. The change is checked here; an invalid one changes
+    /// nothing and the error is shown. The file is written in the background (`save`).
     @discardableResult
     func update(_ change: (inout Cellar) throws -> Void) -> Bool {
         var copy = cellar
         do {
             try change(&copy)
             guard copy != cellar else { return true }
-            try store.save(copy)
+            save(copy)
             let old = cellar
             cellar = copy
             if !undoing { dropStaleUndo() }
@@ -243,13 +263,71 @@ final class CellarModel {
     /// Replaces the cellar with the result of a sync. Not recorded as a local change.
     func applySynced(_ synced: Cellar) {
         guard synced != cellar else { return }
-        do {
-            try store.save(synced)
-            cellar = synced
-            dropStaleUndo()
-        } catch {
-            errorMessage = String(localized: "The change could not be saved.")
+        save(synced)
+        cellar = synced
+        dropStaleUndo()
+    }
+
+    // MARK: Saving
+
+    /// A writer for the store, starting from the cellar just loaded.
+    private func startWriter() {
+        generation += 1
+        writer = CellarWriter(store: store, saved: cellar, generation: generation) { [weak self] lastSaved, _ in
+            await self?.saveFailed(lastSaved: lastSaved) ?? .max
         }
+    }
+
+    /// Queues the cellar to be written; the newest one wins if several wait.
+    private func save(_ cellar: Cellar) {
+        generation += 1
+        let number = generation
+        guard let writer else { return }
+        Task { await writer.submit(cellar, generation: number) }
+    }
+
+    /// A write failed: the cellar goes back to what the file holds, and the error is shown.
+    /// Returns the newest change number, so changes sent before this are not written.
+    private func saveFailed(lastSaved: Cellar) -> Int {
+        errorMessage = String(localized: "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.")
+        if cellar != lastSaved {
+            cellar = lastSaved
+            dropStaleUndo()
+        }
+        return generation
+    }
+
+    /// Writes what is still waiting, when the app goes to the background
+    /// (on iPhone and iPad, iOS is asked for the time it takes).
+    func flushSaves() {
+        guard let writer else { return }
+        let latest = cellar, number = generation
+        #if os(iOS)
+        let task = BackgroundTask(name: "Save cellar")
+        Task {
+            await writer.submit(latest, generation: number)
+            await writer.flush()
+            task.end()
+        }
+        #else
+        Task {
+            await writer.submit(latest, generation: number)
+            await writer.flush()
+        }
+        #endif
+    }
+
+    /// The app quits: waits a moment for the last write, as nothing runs afterwards.
+    func flushBeforeExit() {
+        guard let writer else { return }
+        let latest = cellar, number = generation
+        let done = DispatchSemaphore(value: 0)
+        Task.detached {
+            await writer.submit(latest, generation: number)
+            await writer.flush()
+            done.signal()
+        }
+        _ = done.wait(timeout: .now() + 3)
     }
 
     // MARK: - Actions with feedback
@@ -446,6 +524,7 @@ final class CellarModel {
     func sceneDidEnterBackground() {
         activeScenes = max(0, activeScenes - 1)
         guard activeScenes == 0 else { return }
+        flushSaves()
         sync.pause()
         #if os(iOS)
         sync.scheduleBackgroundSync()
@@ -610,6 +689,26 @@ final class ToastUndo: NSObject {
         action = nil
     }
 }
+
+#if os(iOS)
+/// Time iOS gives the app to finish a task after it goes to the background.
+@MainActor
+private final class BackgroundTask {
+    private var id = UIBackgroundTaskIdentifier.invalid
+
+    init(name: String) {
+        id = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self] in
+            MainActor.assumeIsolated { self?.end() }
+        }
+    }
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
+    }
+}
+#endif
 
 extension CellarError {
     var localizedMessage: String {

@@ -12821,6 +12821,16 @@
         }
       }
     },
+    "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos dernières modifications n’ont pas pu être enregistrées : votre cave est affichée telle qu’elle a été enregistrée la dernière fois. Vérifiez l’espace libre de cet appareil."
+          }
+        }
+      }
+    },
     "Your note": {
       "localizations": {
         "fr": {

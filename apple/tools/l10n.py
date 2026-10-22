@@ -780,6 +780,7 @@ FR = {
     "That position is already taken.": "Cet emplacement est déjà occupé.",
     "That position is outside the rack.": "Cet emplacement est hors du casier.",
     "The change could not be saved.": "La modification n’a pas pu être enregistrée.",
+    "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.": "Vos dernières modifications n’ont pas pu être enregistrées : votre cave est affichée telle qu’elle a été enregistrée la dernière fois. Vérifiez l’espace libre de cet appareil.",
     "The file could not be read.": "Le fichier n’a pas pu être lu.",
     "The first free positions are used unless you choose them.":
         "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez.",
