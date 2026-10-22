@@ -108,12 +108,12 @@ struct WineDetailView: View {
                             router?.sheet = .editWine(wineID: wineID, field: .style)
                         } content: {
                             LabeledContent {
-                                Text(verbatim: temperatureRange(advice)).monospacedDigit()
+                                Text(verbatim: advice.temperatureRange()).monospacedDigit()
                             } label: {
                                 Label("Temperature", systemImage: "thermometer.medium")
                             }
                         }
-                        .contextMenu { editMenu(temperatureRange(advice), field: .style) }
+                        .contextMenu { editMenu(advice.temperatureRange(), field: .style) }
                         EditDetailRow(hint: Text("Edits the style, which sets the serving advice.")) {
                             router?.sheet = .editWine(wineID: wineID, field: .style)
                         } content: {
@@ -268,16 +268,6 @@ struct WineDetailView: View {
                 // stack, the list beside it selects another wine (`replacingDeletedWine`).
                 .onAppear { if isPresented { dismiss() } }
         }
-    }
-
-    /// "16 – 18 °C", or Fahrenheit where the locale uses it.
-    private func temperatureRange(_ advice: ServingAdvice) -> String {
-        let style = Measurement<UnitTemperature>.FormatStyle(
-            width: .narrow, usage: .weather, numberFormatStyle: .number.precision(.fractionLength(0))
-        )
-        let low = Measurement(value: Double(advice.minTemperature), unit: UnitTemperature.celsius)
-        let high = Measurement(value: Double(advice.maxTemperature), unit: UnitTemperature.celsius)
-        return "\(low.formatted(style)) – \(high.formatted(style))"
     }
 
     private func apply(_ details: WineDetails, fields: Set<WineDetailField>) {

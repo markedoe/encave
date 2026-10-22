@@ -26,6 +26,18 @@ import Testing
         #expect(Cellar.tonightStartIndex(dayOfYear: 200, count: 0) == 0)
     }
 
+    @Test func suggestionIsTheDaysFirstCandidateAndNilWhenNoneIsReady() throws {
+        var cellar = Cellar()
+        #expect(cellar.tonightSuggestion(year: 2026, dayOfYear: 1) == nil)
+        try cellar.addBottles(of: Wine(name: "Young", drinkFrom: 2030, drinkUntil: 2040))
+        #expect(cellar.tonightSuggestion(year: 2026, dayOfYear: 1) == nil)
+        try cellar.addBottles(of: Wine(name: "Soon", drinkFrom: 2020, drinkUntil: 2026))
+        try cellar.addBottles(of: Wine(name: "Ready", drinkFrom: 2020, drinkUntil: 2030))
+        #expect(cellar.tonightSuggestion(year: 2026, dayOfYear: 1)?.wine.name == "Soon")
+        #expect(cellar.tonightSuggestion(year: 2026, dayOfYear: 2)?.wine.name == "Ready")
+        #expect(cellar.tonightSuggestion(year: 2026, dayOfYear: 3)?.wine.name == "Soon")
+    }
+
     @Test func nextToBeReadyIsTheYoungWineWhoseWindowOpensFirst() throws {
         var cellar = Cellar()
         try cellar.addBottles(of: Wine(name: "Later", drinkFrom: 2032, drinkUntil: 2040))

@@ -440,7 +440,7 @@ FR = {
     'Drag and drop': 'Glisser-déposer',
     'Several wines at once': 'Plusieurs vins à la fois',
     'In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.': 'Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place.',
-    'Selected: %lld': 'Sélection : %lld',
+    'Show as Table': 'Afficher en tableau',
     'Select Wines': 'Sélectionner des vins',
     'Delete these wines?': 'Supprimer ces vins ?',
     'Their bottles and tastings are deleted too. You can undo right after.': 'Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après.',
@@ -1476,6 +1476,7 @@ FR = {
 
 # Keys with plural forms: English one/other and French one/other.
 PLURALS = {
+    "%lld selected": (("%lld selected", "%lld selected"), ("%lld sélectionné", "%lld sélectionnés")),
     "%lld bottles stay in your cellar without a place.": (
         ("%lld bottle stays in your cellar without a place.", "%lld bottles stay in your cellar without a place."),
         ("%lld bouteille reste dans votre cave sans emplacement.", "%lld bouteilles restent dans votre cave sans emplacement.")),
