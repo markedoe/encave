@@ -23,6 +23,27 @@ class CellarTest {
     private fun cellarWithRack() = Cellar().apply { addRack(rack) }
 
     @Test
+    fun aWineEnteredTwiceIsMergedIntoTheOther() {
+        val cellar = cellarWithRack()
+        val kept = Wine(name = "Clos Test", vintage = 2019, photoId = "kept")
+        val twin = Wine(name = "clos test", vintage = 2019, photoId = "twin", barcodes = listOf("3760000000017"))
+        cellar.addBottles(kept, quantity = 1)
+        val moved = cellar.addBottles(twin, quantity = 2)
+        assertEquals(kept.id, cellar.wine(matching = twin)?.id)
+        cellar.mergeWine(twin.id, kept.id)
+        assertNull(cellar.wines[twin.id])
+        assertTrue(moved.all { cellar.bottles[it.id]?.wineId == kept.id })
+        assertEquals("kept", cellar.wines[kept.id]?.photoId)
+        assertEquals(listOf("3760000000017"), cellar.wines[kept.id]?.barcodes)
+        expectError(CellarError.UnknownWine) { cellar.mergeWine(kept.id, kept.id) }
+        // Undo: both wines as they were, the bottles back.
+        cellar.unmergeWine(twin, kept, moved.map { it.id }.toSet(), emptySet())
+        assertEquals(twin.photoId, cellar.wines[twin.id]?.photoId)
+        assertNull(cellar.wines[kept.id]?.barcodes)
+        assertTrue(moved.all { cellar.bottles[it.id]?.wineId == twin.id })
+    }
+
+    @Test
     fun addBottlesGroupsByWine() {
         val cellar = cellarWithRack()
         cellar.addBottles(Wine(name = "Test", vintage = 2015, color = WineColor.Red), quantity = 3)

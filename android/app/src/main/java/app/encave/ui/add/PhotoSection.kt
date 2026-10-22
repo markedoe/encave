@@ -113,8 +113,11 @@ fun PhotoSection(
     LaunchedEffect(reading) {
         when (reading) {
             is LabelReading.Done -> {
-                form.apply(reading.analysis)
-                filled = true
+                if (form.apply(reading.analysis)) {
+                    filled = true
+                } else {
+                    viewModel.showMessage(UiText.Res(R.string.msg_ai_nothing))
+                }
                 viewModel.consumeLabelReading(form.id)
             }
             is LabelReading.Failed -> {

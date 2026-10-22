@@ -7371,6 +7371,26 @@
         }
       }
     },
+    "Merge": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fusionner"
+          }
+        }
+      }
+    },
+    "Merged into %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fusionné avec %@"
+          }
+        }
+      }
+    },
     "Middle layer": {
       "localizations": {
         "fr": {
@@ -10431,6 +10451,16 @@
         }
       }
     },
+    "Same wine as %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Même vin que %@"
+          }
+        }
+      }
+    },
     "Sample cellar loaded": {
       "localizations": {
         "fr": {
@@ -12357,6 +12387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cet emplacement est hors du casier."
+          }
+        }
+      }
+    },
+    "The AI found nothing to add": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’IA n’a rien trouvé à ajouter"
           }
         }
       }

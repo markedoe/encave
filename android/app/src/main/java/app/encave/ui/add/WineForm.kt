@@ -124,8 +124,12 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
             return low..maxOf(low + 40, window?.last ?: 0)
         }
 
-    /** Fills a field only if it is empty or still holds the value filled automatically before. */
-    fun apply(analysis: LabelAnalysis) {
+    /**
+     * Fills a field only if it is empty or still holds the value filled automatically before.
+     * False when the AI had nothing to add.
+     */
+    fun apply(analysis: LabelAnalysis): Boolean {
+        val before = snapshot()
         fun fill(key: String, current: String, value: String, set: (String) -> Unit) {
             val clean = value.trim()
             if (clean.isNotEmpty() && (current.trim().isEmpty() || current.trim() == autoFilled[key])) {
@@ -155,7 +159,9 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
             manualWindow = analysis.drinkFrom..analysis.drinkUntil
             windowEnabled = true
         }
+        if (snapshot() == before) return false
         aiCompletedAt = app.encave.core.ReferenceDates.now()
+        return true
     }
 
     /** Another vintage of [wine] (one barcode for several vintages): its details, the vintage left to fill. */

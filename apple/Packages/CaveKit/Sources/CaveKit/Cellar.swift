@@ -560,6 +560,20 @@ public extension Cellar {
         wines[wine.id] = wine
     }
 
+    /// The same wine entered twice: the bottles and shopping-list entries of `source`
+    /// go to `target`, with its barcodes and documents, and its label photo when
+    /// `target` has none; then `source` is removed.
+    mutating func mergeWine(_ source: UUID, into target: UUID) throws {
+        guard source != target, let from = wines[source], var into = wines[target] else { throw CellarError.unknownWine }
+        for (id, bottle) in bottles where bottle.wineID == source { bottles[id]?.wineID = target }
+        for (id, discovery) in discoveries where discovery.wineID == source { discoveries[id]?.wineID = target }
+        from.barcodes?.forEach { into.addBarcode($0) }
+        if let documents = from.attachments { into.attachments = (into.attachments ?? []) + documents }
+        if into.photoID == nil { into.photoID = from.photoID }
+        wines[target] = into
+        wines[source] = nil
+    }
+
     /// Deletes a wine with every bottle and discovery of it.
     mutating func deleteWine(_ wineID: UUID) {
         wines[wineID] = nil

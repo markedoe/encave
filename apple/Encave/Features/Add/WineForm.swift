@@ -378,7 +378,10 @@ struct EditWineView: View {
                 let analysis = try await AIService.analyzeLabel(jpeg: photo)
                 var value = draft
                 var filled = WineDraft()
-                analysis.apply(to: &value, replacing: &filled)
+                guard analysis.apply(to: &value, replacing: &filled) else {
+                    aiProblem = String(localized: "The AI found nothing to add")
+                    return
+                }
                 value.aiCompletedAt = Date()
                 withAnimation { draft = value }
             } catch {

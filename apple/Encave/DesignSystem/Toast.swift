@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Bottom banner confirming an action, with Undo. Disappears after a few seconds.
+/// Bottom banner confirming an action, with Undo (and another button, such as Merge). Disappears after a few seconds.
 /// While it shows, its Undo is also the window's undo action.
 struct ToastOverlay: View {
     @Environment(CellarModel.self) private var model
@@ -21,6 +21,15 @@ struct ToastOverlay: View {
                         .font(.subheadline.weight(.medium))
                         .lineLimit(2)
                     Spacer(minLength: 8)
+                    if let action = toast.action {
+                        Button(action.title) {
+                            action.handler.run()
+                            // The action shows its own banner (Merged, with Undo).
+                            if model.toast?.id == toast.id { model.toast = nil }
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .buttonStyle(.borderless)
+                    }
                     if let undo = toast.undo {
                         Button("Undo") {
                             undo.run()

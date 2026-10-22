@@ -34,6 +34,15 @@ class AddFormLogicTest {
     }
 
     @Test
+    fun anAnswerWithNothingNewIsNotACompletion() {
+        val saved = Wine(name = "Clos des Tilleuls", producer = "Domaine Martin", color = WineColor.Red)
+        // Only what is filled already, or nothing at all: the wine stays as it was, without the AI's date.
+        assertEquals(saved, LabelAnalysis(name = "Other name", producer = "Martin", color = "white").completing(saved))
+        assertEquals(saved, LabelAnalysis().completing(saved))
+        assertNull(LabelAnalysis().completing(saved).aiCompletedAt)
+    }
+
+    @Test
     fun theAiCompletesOnlyWhatIsEmptyAndWhatWasNotChangedSince() {
         val saved = Wine(name = "Clos des Tilleuls", producer = "Domaine Martin", vintage = 2019)
         val analysis = LabelAnalysis(

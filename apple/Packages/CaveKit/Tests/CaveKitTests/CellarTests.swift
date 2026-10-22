@@ -26,6 +26,21 @@ import Testing
         #expect(cellar.tastings(matching: "Bordeaux").isEmpty)
     }
 
+    @Test func aWineEnteredTwiceIsMergedIntoTheOther() throws {
+        var cellar = cellarWithRack()
+        let kept = Wine(name: "Clos Test", vintage: 2019, photoID: "kept")
+        let twin = Wine(name: "clos test", vintage: 2019, photoID: "twin", barcodes: ["3760000000017"])
+        try cellar.addBottles(of: kept, quantity: 1)
+        let moved = try cellar.addBottles(of: twin, quantity: 2)
+        #expect(cellar.wine(matching: twin)?.id == kept.id)
+        try cellar.mergeWine(twin.id, into: kept.id)
+        #expect(cellar.wines[twin.id] == nil)
+        #expect(moved.allSatisfy { cellar.bottles[$0.id]?.wineID == kept.id })
+        #expect(cellar.wines[kept.id]?.photoID == "kept")
+        #expect(cellar.wines[kept.id]?.barcodes == ["3760000000017"])
+        #expect(throws: CellarError.self) { try cellar.mergeWine(kept.id, into: kept.id) }
+    }
+
     @Test func quickDrinkSkipsBottlesKeptForAnOccasion() throws {
         var cellar = cellarWithRack()
         let wine = Wine(name: "Test", vintage: 2015, color: .red)
