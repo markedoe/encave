@@ -146,7 +146,7 @@ off without code changes:
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
-| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone and iPad (artifact `screens`), builds both apps; on a push to main (or a manual run), uploads to TestFlight and gives the build to the external testers |
+| `apple.yml` | CaveKit tests on Linux, French strings check, Mac launch test with screenshots, screen tour on iPhone, iPad and Mac (artifact `screens`; on main, pull requests and manual runs only), builds both apps; on a push to main (or a manual run), uploads to TestFlight and gives the build to the external testers |
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
 | `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`) |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |

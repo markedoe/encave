@@ -130,6 +130,10 @@ jobs:
   screens:
     name: Screen tour (iPhone, iPad, Mac)
     needs: [cavekit, l10n]
+    # The full tour (over an hour) runs on main before each TestFlight build, on pull
+    # requests and on manual runs. Pushes to other branches only build and run the
+    # Mac launch test, so fixes reach main faster.
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
     # Two simulators and the Mac in one job: about 65 minutes now.
     timeout-minutes: 100
