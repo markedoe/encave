@@ -125,11 +125,17 @@ def wait_for_build(app_id, number, platform, minutes):
 def set_whats_new(build_id, text):
     existing = call("GET", f"/builds/{build_id}/betaBuildLocalizations")["data"]
     if not existing:
-        call("POST", "/betaBuildLocalizations", {"data": {
-            "type": "betaBuildLocalizations",
-            "attributes": {"locale": "en-US", "whatsNew": text},
-            "relationships": {"build": {"data": {"type": "builds", "id": build_id}}}}})
-        return
+        try:
+            call("POST", "/betaBuildLocalizations", {"data": {
+                "type": "betaBuildLocalizations",
+                "attributes": {"locale": "en-US", "whatsNew": text},
+                "relationships": {"build": {"data": {"type": "builds", "id": build_id}}}}})
+            return
+        except APIError as error:
+            # Made by a try that timed out but went through: updated below instead.
+            if error.status != 409:
+                raise
+            existing = call("GET", f"/builds/{build_id}/betaBuildLocalizations")["data"]
     for localization in existing:
         call("PATCH", f"/betaBuildLocalizations/{localization['id']}", {"data": {
             "type": "betaBuildLocalizations", "id": localization["id"], "attributes": {"whatsNew": text}}})
@@ -159,8 +165,14 @@ def main():
         if whats_new:
             set_whats_new(build_id, whats_new)
         for group in groups:
-            call("POST", f"/betaGroups/{group['id']}/relationships/builds",
-                 {"data": [{"type": "builds", "id": build_id}]})
+            try:
+                call("POST", f"/betaGroups/{group['id']}/relationships/builds",
+                     {"data": [{"type": "builds", "id": build_id}]})
+            except APIError as error:
+                # Already in the group (also when a try that timed out went through): done.
+                if error.status != 409 and "already" not in error.body.lower():
+                    raise
+                print(f"{platform} build {number} was already in {group['attributes']['name']}.")
         try:
             call("POST", "/betaAppReviewSubmissions", {"data": {
                 "type": "betaAppReviewSubmissions",
