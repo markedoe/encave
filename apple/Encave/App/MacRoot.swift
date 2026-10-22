@@ -20,6 +20,7 @@ struct MacRoot: View {
     @AppStorage(CellarLayout.key) private var showsTable = false
 
     var body: some View {
+        let _ = UserDefaults.standard.bool(forKey: "EncaveDebugChanges") ? Self._printChanges() : ()
         Group {
             if destination == .cellar && showsTable {
                 // The table needs the width: sidebar, then the table with the wine

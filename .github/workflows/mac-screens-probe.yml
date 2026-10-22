@@ -33,21 +33,20 @@ jobs:
       - name: Which launches spin (debug)
         run: |
           app="$RUNNER_TEMP/dd/Build/Products/Release/Encave.app/Contents/MacOS/Encave"
+          system_profiler SPDisplaysDataType | sed -n '/Displays:/,$p'
           try() {
             label=$1; shift
-            "$app" "$@" > "$RUNNER_TEMP/try.log" 2>&1 &
+            NSUnbufferedIO=YES "$app" -EncaveDebugChanges YES "$@" > "$RUNNER_TEMP/try.log" 2>&1 &
             pid=$!
-            sleep 20
-            echo "== $label: cpu $(ps -o %cpu= -p $pid), windows: $(osascript -e 'tell application "System Events" to count windows of (first process whose unix id is '"$pid"')' 2>&1)"
-            grep encave-screenshots "$RUNNER_TEMP/try.log" | head -5
-            sample "$pid" 2 -file "$RUNNER_TEMP/s.txt" >/dev/null 2>&1
-            grep -cE 'MacRoot.body.getter' "$RUNNER_TEMP/s.txt" || true
-            kill $pid; wait $pid 2>/dev/null; sleep 2
+            sleep 15
+            echo "== $label: cpu $(ps -o %cpu= -p $pid), log lines $(wc -l < "$RUNNER_TEMP/try.log")"
+            head -c 3000 "$RUNNER_TEMP/try.log"; echo; echo "-- last --"
+            tail -n 15 "$RUNNER_TEMP/try.log" | cut -c1-300
+            sort "$RUNNER_TEMP/try.log" | uniq -c | sort -rn | head -n 15 | cut -c1-300
+            kill $pid || true; wait $pid 2>/dev/null || true; sleep 2
           }
-          try "empty"
+          try "empty" -ApplePersistenceIgnoreState YES
           try "sample" -ApplePersistenceIgnoreState YES --sample-data
-          try "sample racks" --tab racks -ApplePersistenceIgnoreState YES --sample-data
-          try "sample screenshots" -EncaveScreenshots YES -ApplePersistenceIgnoreState YES --sample-data
       - name: Screenshots
         run: tools/mac-screenshots.sh "$RUNNER_TEMP/dd/Build/Products/Release/Encave.app" "$RUNNER_TEMP/mac-screens"
       - name: Desktop (debug)
