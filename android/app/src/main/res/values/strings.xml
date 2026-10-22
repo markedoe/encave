@@ -524,6 +524,17 @@
     <string name="place_shelf_layer_bottom">Shelf %1$d, bottom layer, place %2$d</string>
     <string name="place_shelf_layer_middle">Shelf %1$d, middle layer, place %2$d</string>
     <string name="place_shelf_layer_top">Shelf %1$d, top layer, place %2$d</string>
+    <string name="place_shelf_band_single">Shelf %1$d, %2$s, place %3$d</string>
+    <string name="place_shelf_band_bottom">Shelf %1$d, %2$s, bottom layer, place %3$d</string>
+    <string name="place_shelf_band_middle">Shelf %1$d, %2$s, middle layer, place %3$d</string>
+    <string name="place_shelf_band_top">Shelf %1$d, %2$s, top layer, place %3$d</string>
+    <string name="rack_band_front">Front</string>
+    <string name="rack_band_back">Back</string>
+    <string name="rack_band_bases">Bases facing you</string>
+    <string name="rack_band_necks">Necks facing you</string>
+    <string name="rack_band_heading">Shelf %1$d, %2$s, %3$s</string>
+    <string name="rack_back_reversed">Back bottles head-to-tail</string>
+    <string name="help_field_back_reversed">The back bottles lie the other way round: their necks face you between the bases of the front ones.</string>
     <string name="place_with_depth">%1$s, %2$s</string>
     <string name="depth_front">front</string>
     <string name="depth_back">back</string>
@@ -542,6 +553,7 @@
     <string name="sample_honeycomb">Honeycomb rack</string>
     <string name="sample_stairs">Under the stairs</string>
     <string name="sample_large_fridge">Large wine fridge</string>
+    <string name="sample_head_to_tail_fridge">Head-to-tail fridge</string>
     <string name="help_field_search">Type a few letters of the name to add bottles of a wine you already have.</string>
     <string name="help_field_existing">Choose it to add bottles without typing the wine again.</string>
     <string name="help_field_quantity">How many identical bottles you add.</string>
@@ -641,6 +653,8 @@
     <string name="help_racks_add">Tap **Add rack**, choose the kind, then its size, or a ready-made size under **Quick start** (only when creating a rack). Free places fill row by row from the top, the front places before the back ones.</string>
     <string name="help_racks_staggered">Every other row is offset by half a bottle and holds one fewer, like metal or terracotta racks. Enter the number of bottles in the widest row, and in **Rows deep** whether a second bottle fits behind each one.</string>
     <string name="help_racks_layers_title">Fridge with bottles in layers</string>
+    <string name="help_racks_bands_title">Two deep, head-to-tail</string>
+    <string name="help_racks_bands">When a fridge on shelves is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Tap any place of either band to see, add or move its bottle; on a tablet, touch and hold a bottle to drag it from one band to the other. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**.</string>
     <string name="help_racks_layers">For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to all shelves**. Places are named by shelf, layer and number, like **Shelf 1, top layer, place 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone; **Wine fridge, 2 zones** is a ready-made start.</string>
     <string name="help_racks_shelves">Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.</string>
     <string name="help_racks_bins">Diamond bins or crates hold several bottles in a pile. Set how many bottles fit in each; tap a bin to see what is inside.</string>

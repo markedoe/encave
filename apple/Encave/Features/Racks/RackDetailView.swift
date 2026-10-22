@@ -22,7 +22,7 @@ struct RackDetailView: View {
     @GestureState private var pinch: CGFloat = 1
     @State private var openCell: OpenCell?
     @State private var moving: Bottle?
-    @State private var selectedCell: RackCell?
+    @State private var selectedPlace: RackPlace?
     @State private var focusWine: UUID?
     @State private var showsList = false
     @State private var listSelection: UUID?
@@ -105,10 +105,10 @@ struct RackDetailView: View {
                 }
                 .onChange(of: model.highlightedSlot, initial: true) { _, slot in
                     guard let slot, slot.rackID == rackID else { return }
-                    withAnimation(.snappy) { select(slot.cell, in: rack) }
+                    withAnimation(.snappy) { select(slot, in: rack) }
                 }
-                .onChange(of: selectedCell.map { model.cellar.bottles(in: $0) } ?? []) { _, bottles in
-                    if bottles.isEmpty { selectedCell = nil }
+                .onChange(of: selectedPlace.map { model.cellar.bottles(at: $0) } ?? []) { _, bottles in
+                    if bottles.isEmpty { selectedPlace = nil }
                 }
                 .task(id: model.highlightedSlot) {
                     guard model.highlightedSlot?.rackID == rackID else { return }
@@ -126,9 +126,9 @@ struct RackDetailView: View {
             rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
             selected: auditing ? checked : (moving?.slot.map { [$0] } ?? []),
             highlighted: model.highlightedSlot,
-            selectedCell: selectedCell, focusWine: focusWine,
-            onTap: { cell, bottles in tap(rack, cell, bottles) },
-            onDrop: { bottleID, cell in drop(bottleID, on: cell, rack) },
+            selectedPlace: selectedPlace, focusWine: focusWine,
+            onTap: { place, bottles in tap(rack, place, bottles) },
+            onDrop: { bottleID, place in drop(bottleID, on: place, rack) },
             zoomStep: zoomStep,
             interaction: interaction
         )
@@ -170,11 +170,11 @@ struct RackDetailView: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .padding()
             } else {
-                if let cell = selectedCell, let bottle = model.cellar.bottles(in: cell).first {
+                if let place = selectedPlace, let bottle = model.cellar.bottles(at: place).first {
                     SelectedBottleCard(rack: rack, bottle: bottle) { action in
                         perform(action)
                     } onClose: {
-                        withAnimation(.snappy) { selectedCell = nil }
+                        withAnimation(.snappy) { selectedPlace = nil }
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 8)
@@ -213,7 +213,7 @@ struct RackDetailView: View {
                 .accessibilityIdentifier("rack.list")
             #endif
             Button {
-                selectedCell = nil
+                selectedPlace = nil
                 moving = nil
                 checked = []
                 withAnimation { auditing = true }
@@ -230,7 +230,7 @@ struct RackDetailView: View {
         switch action {
         case .drink(let bottle): router?.sheet = .drink(bottleID: bottle.id)
         case .move(let bottle):
-            selectedCell = nil
+            selectedPlace = nil
             moving = bottle
             let displayName = model.cellar.wines[bottle.wineID]?.displayName ?? ""
             AccessibilityNotification.Announcement(String(localized: "Choose where to put \(displayName)")).post()
@@ -258,13 +258,11 @@ struct RackDetailView: View {
         }
     }
 
-    /// One bottle per place: show it in the card. Several: open the list of the place.
-    private func select(_ cell: RackCell, in rack: Rack) {
-        if rack.positionsPerCell == 1 {
-            selectedCell = cell
-        } else {
-            selectedCell = nil
-        }
+    /// One bottle per place (or a place of a fridge drawn front and back): show it in the
+    /// card. Several: no card.
+    private func select(_ slot: Slot, in rack: Rack) {
+        let place = RackPlace(slot, in: rack)
+        selectedPlace = place.holdsOne(in: rack) ? place : nil
     }
 
     private func auditTotal(_ rack: Rack) -> Int {
@@ -285,22 +283,22 @@ struct RackDetailView: View {
     }
 
     /// A bottle dragged onto a place: moves it there, or swaps it with the bottle there.
-    private func drop(_ bottleID: UUID, on cell: RackCell, _ rack: Rack) -> Bool {
+    private func drop(_ bottleID: UUID, on place: RackPlace, _ rack: Rack) -> Bool {
         guard let bottle = model.cellar.bottles[bottleID], bottle.status == .inCellar else { return false }
-        guard bottle.slot?.cell != cell else { return false }
-        if let free = model.cellar.freeSlot(in: cell) {
+        guard !(bottle.slot.map(place.contains) ?? false) else { return false }
+        if let free = model.cellar.freeSlot(at: place) {
             model.move(bottle.id, to: free)
-        } else if rack.positionsPerCell == 1, let from = bottle.slot, from.rackID == rack.id {
-            model.swap(from, Slot(rackID: cell.rackID, row: cell.row, column: cell.column))
+        } else if place.holdsOne(in: rack), let from = bottle.slot, from.rackID == rack.id {
+            model.swap(from, place.firstSlot)
         } else {
             model.showToast(String(localized: "This place is full."))
             return false
         }
-        withAnimation(.snappy) { selectedCell = rack.positionsPerCell == 1 ? cell : nil }
+        withAnimation(.snappy) { selectedPlace = place.holdsOne(in: rack) ? place : nil }
         return true
     }
 
-    private func tap(_ rack: Rack, _ cell: RackCell, _ bottles: [Bottle]) {
+    private func tap(_ rack: Rack, _ place: RackPlace, _ bottles: [Bottle]) {
         if auditing {
             // A tap says "the bottles of this place are here" (or undoes it).
             let slots = Set(bottles.compactMap(\.slot))
@@ -310,24 +308,24 @@ struct RackDetailView: View {
         }
         if let bottle = moving {
             moving = nil
-            guard let from = bottle.slot, from.cell != cell else { return }
-            if let free = model.cellar.freeSlot(in: cell) {
+            guard let from = bottle.slot, !place.contains(from) else { return }
+            if let free = model.cellar.freeSlot(at: place) {
                 model.move(bottle.id, to: free)
-            } else if rack.positionsPerCell == 1 {
-                model.swap(from, Slot(rackID: cell.rackID, row: cell.row, column: cell.column))
+            } else if place.holdsOne(in: rack) {
+                model.swap(from, place.firstSlot)
             } else {
                 model.showToast(String(localized: "This place is full."))
             }
             return
         }
-        if bottles.isEmpty, let free = model.cellar.freeSlot(in: cell) {
-            selectedCell = nil
+        if bottles.isEmpty, let free = model.cellar.freeSlot(at: place) {
+            selectedPlace = nil
             router?.sheet = .addBottle(AddBottleContext(slot: free))
-        } else if rack.positionsPerCell == 1, !bottles.isEmpty {
-            withAnimation(.snappy) { selectedCell = cell }
+        } else if place.holdsOne(in: rack), !bottles.isEmpty {
+            withAnimation(.snappy) { selectedPlace = place }
         } else {
-            selectedCell = nil
-            openCell = OpenCell(cell: cell)
+            selectedPlace = nil
+            openCell = OpenCell(cell: place.cell)
         }
     }
 }

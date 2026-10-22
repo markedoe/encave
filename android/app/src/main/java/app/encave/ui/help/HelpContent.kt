@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Diamond
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Hive
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
@@ -114,6 +115,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_grid, R.string.kind_grid, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_racks_staggered, R.string.kind_staggered, Icons.Outlined.Hive),
                     HelpSection(R.string.help_racks_layers, R.string.help_racks_layers_title, Icons.Outlined.Hive),
+                    HelpSection(R.string.help_racks_bands, R.string.help_racks_bands_title, Icons.Outlined.SwapHoriz),
                     HelpSection(R.string.help_racks_shelves, R.string.kind_shelves, Icons.Outlined.Kitchen),
                     HelpSection(R.string.help_racks_bins, R.string.kind_bins, Icons.Outlined.Diamond),
                     HelpSection(R.string.help_racks_places, R.string.help_racks_places_title),

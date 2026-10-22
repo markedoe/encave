@@ -129,6 +129,11 @@ implementations:
     a fridge: each value is a shelf (0 is the top one) that starts a new zone.
     Only values from 1 to the number of kept shelves − 1 are kept, sorted, each
     once; it is left out when none remain and whenever `shelfLayers` is;
+  - `rack.backReversed` (optional boolean) says that on such a fridge, two deep
+    (`depth` 2), the back bottles (`slot.depth` 1) lie head-to-tail: necks facing
+    you, between the bases of the front bottles. Only `true` is written; it is
+    left out (and dropped when read) when false, when `shelfLayers` is left out
+    and when `depth` is not 2. Older apps ignore it;
   - a document's `name` is normalized the same way on every device, when read
     and when set: each control character (Unicode category Cc) becomes a
     space, `/` and `\` become `-`, white space (Unicode `White_Space`) is

@@ -137,7 +137,7 @@ final class ScreenTourTests: XCTestCase {
         openSection(1, "racks")
         snapshot("racks")
         // The sample cellar has one rack of every kind: open each one.
-        for index in 0..<7 {
+        for index in 0..<8 {
             let card = element("rack.card.\(index)")
             scrollIntoView(card)
             guard card.exists else {
@@ -148,6 +148,7 @@ final class ScreenTourTests: XCTestCase {
             snapshot("rack-\(index + 1)")
             checkRackFits(screen: "rack \(index + 1)")
             if index == 0 { exploreMainRack() }
+            if index == 7 { exploreHeadToTailFridge() }
             if index == 1 {
                 // The wine fridge holds two bottles per place: tapping one lists both.
                 let cell = element("rack.cell.0-0")
@@ -511,6 +512,37 @@ final class ScreenTourTests: XCTestCase {
             sleep(2)
             XCTAssertGreaterThan(cell.frame.width, out * 1.2, "main rack: Zoom In did not enlarge places (\(out) → \(cell.frame.width) pt)")
         }
+        #endif
+    }
+
+    /// The head-to-tail fridge, two deep: each shelf shows its front bottles, then the ones
+    /// behind (necks facing you). A back place is tapped directly; pinching still zooms.
+    private func exploreHeadToTailFridge() {
+        // Shelf 1, bottom layer, place 1, behind: one bottle, shown in the card.
+        let back = element("rack.cell.1-0.back")
+        guard back.waitForExistence(timeout: 5) else {
+            XCTFail("head-to-tail fridge: no back place")
+            return
+        }
+        XCTAssertTrue(element("rack.cell.1-0").exists, "head-to-tail fridge: no front place")
+        back.press()
+        XCTAssertTrue(element("rack.selection").waitForExistence(timeout: 3), "head-to-tail fridge: no card for the back bottle")
+        snapshot("rack-fridge-back-bottle")
+        let close = element("rack.selection.close")
+        if close.exists { close.press() }
+
+        #if os(iOS)
+        let canvas = element("rack.canvas")
+        guard canvas.waitForExistence(timeout: 3) else {
+            XCTFail("head-to-tail fridge: no zoomable canvas")
+            return
+        }
+        let before = back.frame.width
+        canvas.pinch(withScale: 2.2, velocity: 1.5)
+        sleep(2)
+        let after = back.frame.width
+        XCTAssertGreaterThan(after, before * 1.3, "head-to-tail fridge: pinching did not enlarge places (\(before) → \(after) pt)")
+        snapshot("rack-fridge-zoomed")
         #endif
     }
 

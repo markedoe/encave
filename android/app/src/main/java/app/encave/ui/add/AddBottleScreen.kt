@@ -339,18 +339,19 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                     slots = slots,
                     quantity = quantity,
                     automatic = !slotsTouched,
-                    onToggleCell = { cell ->
+                    onToggleCell = { place ->
                         if (!slotsTouched) {
                             pickedSlots.clear()
                             slotsTouched = true
                         }
-                        // A tap takes the next free place in the cell; once the cell is full of picks, it clears them.
-                        val next = freeSlots.firstOrNull { it.cell == cell && it !in pickedSlots }
+                        // A tap takes the next free place in the cell (on a fridge drawn front and back, the place
+                        // tapped); once it is full of picks, it clears them.
+                        val next = freeSlots.firstOrNull { it in place && it !in pickedSlots }
                         if (next != null) {
                             pickedSlots.add(next)
                             if (pickedSlots.size > quantity) quantity = pickedSlots.size
                         } else {
-                            pickedSlots.removeAll { it.cell == cell }
+                            pickedSlots.removeAll { it in place }
                         }
                     },
                     storage = storage,
@@ -696,7 +697,7 @@ private fun LocationSection(
     quantity: Int,
     /** The first free places, until the user taps some. */
     automatic: Boolean,
-    onToggleCell: (app.encave.core.RackCell) -> Unit,
+    onToggleCell: (app.encave.ui.racks.RackPlace) -> Unit,
     storage: String,
     onStorage: (String) -> Unit,
 ) {
@@ -738,7 +739,7 @@ private fun LocationSection(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 cellSize = 48.dp,
                 clickLabel = { chooseLabel },
-                onCellClick = { cell, _ -> onToggleCell(cell) },
+                onCellClick = { place, _ -> onToggleCell(place) },
             )
         }
     } else {

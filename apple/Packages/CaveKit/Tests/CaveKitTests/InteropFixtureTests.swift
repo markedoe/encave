@@ -65,7 +65,8 @@ enum InteropFixture {
         let racks = [
             Rack(id: grid, name: "Cave/left wall", kind: .grid, rows: 4, columns: 6, depth: 2, rowColumns: [6, 6, 5, 4]),
             Rack(id: bins, name: "Bins", kind: .bins, rows: 2, columns: 3, binCapacity: 10),
-            Rack(id: fridge, name: "Fridge", kind: .staggered, rows: 3, columns: 6, depth: 2, shelfLayers: [2, 1], zoneBreaks: [1]),
+            Rack(id: fridge, name: "Fridge", kind: .staggered, rows: 3, columns: 6, depth: 2, shelfLayers: [2, 1], zoneBreaks: [1],
+                 backReversed: true),
         ]
         let searches = [
             SavedSearch(id: id("000000000051"), name: "Burgundy, ready",

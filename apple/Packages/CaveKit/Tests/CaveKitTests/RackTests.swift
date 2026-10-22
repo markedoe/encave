@@ -154,4 +154,41 @@ import Testing
         try target.importCSV(CellarExport.csv(original))
         #expect(Set(target.bottlesInCellar.compactMap(\.slot)) == Set(original.bottlesInCellar.compactMap(\.slot)))
     }
+
+    @Test func headToTailBacksOnlyOnTwoDeepFridgesWithLayers() throws {
+        let fridge = Rack(name: "F", kind: .staggered, rows: 2, columns: 4, depth: 2, shelfLayers: [2, 2], backReversed: true)
+        #expect(fridge.hasDepthBands && fridge.isBackReversed && fridge.backReversed == true)
+        // Nowhere else: one deep, a continuous honeycomb, a grid; false is left out.
+        #expect(Rack(name: "1", kind: .staggered, rows: 2, columns: 4, shelfLayers: [2], backReversed: true).backReversed == nil)
+        #expect(Rack(name: "H", kind: .staggered, rows: 2, columns: 4, depth: 2, backReversed: true).backReversed == nil)
+        #expect(Rack(name: "G", rows: 2, columns: 4, depth: 2, backReversed: true).backReversed == nil)
+        #expect(Rack(name: "F", kind: .staggered, rows: 2, columns: 4, depth: 2, shelfLayers: [2], backReversed: false)
+            .backReversed == nil)
+
+        let data = try JSONEncoder().encode(fridge)
+        #expect(String(decoding: data, as: UTF8.self).contains("\"backReversed\":true"))
+        #expect(try JSONDecoder().decode(Rack.self, from: data) == fridge)
+        var plain = fridge
+        plain.backReversed = nil
+        #expect(!String(decoding: try JSONEncoder().encode(plain), as: UTF8.self).contains("backReversed"))
+
+        // Older racks have no flag; a flag where it does not apply is dropped when read.
+        let id = UUID()
+        let old = #"{"id":"\#(id)","name":"Old","kind":"staggered","rows":2,"columns":4,"depth":2,"shelfLayers":[2]}"#
+        #expect(try JSONDecoder().decode(Rack.self, from: Data(old.utf8)).backReversed == nil)
+        let grid = #"{"id":"\#(id)","name":"G","kind":"grid","rows":2,"columns":4,"depth":2,"backReversed":true}"#
+        let decoded = try JSONDecoder().decode(Rack.self, from: Data(grid.utf8))
+        #expect(decoded.backReversed == nil && !decoded.isBackReversed)
+    }
+
+    @Test func sampleHasAHeadToTailFridgeWithBottlesFrontAndBack() {
+        let cellar = SampleData.cellar(year: 2026)
+        let fridge = cellar.racks.first { $0.isBackReversed }
+        // Each shelf its own layout: 4 + 3, a single row of 7, 6 + 5.
+        #expect(fridge?.shelfLayers == [2, 1, 2])
+        #expect(fridge.map { rack in (0..<rack.rows).map(rack.columns(inRow:)) } == [3, 4, 7, 5, 6])
+        #expect(fridge?.shelfPlace(ofRow: 2).map { [$0.shelf, $0.layer, $0.layers] } == [1, 0, 1])
+        let depths = Set(cellar.bottlesInCellar.filter { $0.slot?.rackID == fridge?.id }.compactMap(\.slot?.depth))
+        #expect(depths == [0, 1])
+    }
 }

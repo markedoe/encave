@@ -200,7 +200,7 @@ class StoreTest {
     @Test
     fun sampleDataIsConsistent() {
         val cellar = SampleData.cellar(year = 2026)
-        assertEquals(7, cellar.racks.size)
+        assertEquals(8, cellar.racks.size)
         assertEquals(2, cellar.consumedBottles.size)
         val slots = cellar.bottlesInCellar.mapNotNull { it.slot }
         assertEquals(slots.size, slots.toSet().size, "no two bottles share a slot")
