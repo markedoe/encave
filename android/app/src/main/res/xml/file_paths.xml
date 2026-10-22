@@ -3,4 +3,6 @@
     <cache-path name="camera" path="camera/" />
     <!-- Copies of documents, with their names, handed to the app that opens or receives them. -->
     <cache-path name="documents" path="documents/" />
+    <!-- "Your year in wine" as an image, handed to the app the user shares it with. -->
+    <cache-path name="share" path="share/" />
 </paths>

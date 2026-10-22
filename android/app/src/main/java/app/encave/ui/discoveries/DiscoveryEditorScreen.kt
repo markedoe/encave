@@ -78,7 +78,9 @@ import app.encave.ui.components.rememberRetained
 import app.encave.ui.components.RatingInput
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
+import androidx.activity.compose.BackHandler
 import app.encave.ui.drink.DateDialog
+import app.encave.ui.drink.DiscardNoteDialog
 import app.encave.ui.theme.Dimens
 import java.time.Instant
 
@@ -114,6 +116,17 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     var wantsToBuy by rememberSaveable { mutableStateOf(existing?.wantsToBuy ?: false) }
     var price by rememberSaveable { mutableStateOf(existing?.price?.toPlainString().orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
+
+    /** What the form holds, compared with how it opened to know whether something changed. */
+    fun fields(): List<Any?> = listOf(
+        runCatching { form.build() }.getOrNull(), form.newPhoto != null, form.photoRemoved,
+        setting, place, date, rating, note, tags.toList(), pendingTag, wantsToBuy, price,
+    )
+    val original = rememberRetained("discovery.original") { fields() }
+    val isDirty = fields() != original
+    val leave = { if (isDirty) confirmingDiscard = true else navigator.back() }
+    BackHandler(enabled = isDirty) { confirmingDiscard = true }
 
     fun addTags() {
         val all = Discovery.normalized(tags + pendingTag.split(","))
@@ -148,7 +161,7 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             TopAppBar(
                 title = { Text(wine?.displayName ?: stringResource(R.string.discovery_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = leave) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
@@ -266,6 +279,9 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
             }
             HelpLink(HelpTopic.Journal, R.string.help_link_journal)
         }
+    }
+    if (confirmingDiscard) {
+        DiscardNoteDialog(onDiscard = { confirmingDiscard = false; navigator.back() }, onKeepEditing = { confirmingDiscard = false })
     }
     if (pickingDate) {
         DateDialog(initial = date, onPick = { picked -> picked?.let { date = it } }, onDismiss = { pickingDate = false }, allowClear = false)
