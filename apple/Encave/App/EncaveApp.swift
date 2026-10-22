@@ -165,10 +165,10 @@ private struct HelpMenuButton: View {
 
 /// Cellar › Show as Table (⌥⌘T): the same switch as in the Cellar toolbar.
 private struct CellarTableToggle: View {
-    @AppStorage(CellarLayout.key) private var showsTable = false
+    @Bindable private var layout = CellarLayout.shared
 
     var body: some View {
-        Toggle("Show as Table", isOn: CellarLayout.changes($showsTable))
+        Toggle("Show as Table", isOn: $layout.showsTable)
             .keyboardShortcut("t", modifiers: [.command, .option])
     }
 }

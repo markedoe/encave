@@ -1,15 +1,29 @@
 import CaveKit
 import SwiftUI
 
-/// Mac and iPad: show the cellar as a list or as a sortable table. Remembered.
-enum CellarLayout {
+/// Mac and iPad: show the cellar as a list or as a sortable table. Remembered in the
+/// defaults, read from here rather than with @AppStorage: an @AppStorage at the root of
+/// the Mac window redrew it on every write to the defaults, including those AppKit makes
+/// while laying the window out, so the window redrew itself without end.
+@MainActor
+@Observable
+final class CellarLayout {
     static let key = "cellar.table"
+    static let shared = CellarLayout()
 
-    /// Writes only a real change. A toolbar picker or a menu toggle can set its value again
-    /// on each update, and each write to the defaults redraws the windows that read it:
-    /// on the Mac that loop kept the main thread busy and the window could stay hidden.
-    static func changes(_ value: Binding<Bool>) -> Binding<Bool> {
-        Binding(get: { value.wrappedValue }, set: { if $0 != value.wrappedValue { value.wrappedValue = $0 } })
+    private var stored: Bool
+
+    var showsTable: Bool {
+        get { stored }
+        set {
+            guard newValue != stored else { return }
+            stored = newValue
+            UserDefaults.standard.set(newValue, forKey: Self.key)
+        }
+    }
+
+    private init() {
+        stored = UserDefaults.standard.bool(forKey: Self.key)
     }
 }
 
@@ -355,10 +369,10 @@ struct CellarTableRow: Identifiable, Sendable {
 
 /// List or table, in the Cellar toolbar on the Mac and the iPad.
 struct CellarLayoutPicker: View {
-    @AppStorage(CellarLayout.key) private var showsTable = false
+    @Bindable private var layout = CellarLayout.shared
 
     var body: some View {
-        Picker("View", selection: CellarLayout.changes($showsTable)) {
+        Picker("View", selection: $layout.showsTable) {
             Label("List", systemImage: "list.bullet").tag(false)
             Label("Table", systemImage: "tablecells").tag(true)
         }
