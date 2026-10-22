@@ -3,9 +3,9 @@ name: Apple apps
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apple/**", "design/**", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "fixtures/**", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apple/**", "design/**", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "fixtures/**", ".github/workflows/apple.yml"]
   workflow_dispatch:
 
 permissions:
