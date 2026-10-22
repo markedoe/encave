@@ -123,16 +123,24 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { message ->
-            val result = snackbar.showSnackbar(
-                message = message.text.resolve(resources),
-                actionLabel = message.undo?.let { resources.getString(R.string.action_undo) },
-                withDismissAction = message.undo == null || message.persistent,
-                duration = when {
-                    message.persistent -> SnackbarDuration.Indefinite
-                    message.undo != null -> SnackbarDuration.Long
-                    else -> SnackbarDuration.Short
-                },
-            )
+            val show = suspend {
+                snackbar.showSnackbar(
+                    message = message.text.resolve(resources),
+                    actionLabel = message.undo?.let { resources.getString(R.string.action_undo) },
+                    withDismissAction = message.undo == null || message.persistent || message.long,
+                    duration = when {
+                        message.persistent || message.long -> SnackbarDuration.Indefinite
+                        message.undo != null -> SnackbarDuration.Long
+                        else -> SnackbarDuration.Short
+                    },
+                )
+            }
+            // A large change keeps its Undo longer than the standard long snackbar.
+            val result = if (message.long && !message.persistent) {
+                kotlinx.coroutines.withTimeoutOrNull(LONG_UNDO_MILLIS) { show() } ?: SnackbarResult.Dismissed
+            } else {
+                show()
+            }
             if (result == SnackbarResult.ActionPerformed) message.undo?.invoke()
         }
     }
@@ -215,3 +223,6 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
         }
     }
 }
+
+/** How long the Undo of a large change (a deleted rack, bottles taken out) stays. */
+private const val LONG_UNDO_MILLIS = 20_000L
