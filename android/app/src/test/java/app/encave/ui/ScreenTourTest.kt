@@ -246,6 +246,20 @@ class ScreenTourTest(private val device: String, private val language: String) {
         assertTrue("$device-$language: the cellar tiles are not stacked at 200 %", wines.top >= bottles.bottom - 1f)
     }
 
+    /** Tonight and the wine page at 200 % font scale on a phone: paired buttons stack, one above the other. */
+    @Test
+    fun pairedButtonsStackAtLargestFontScale() {
+        if (device != "phone") return
+        RuntimeEnvironment.setFontScale(2f)
+        scenario?.recreate()
+        compose.waitForIdle()
+        tab("Tonight")
+        capture("06-tonight-font-200")
+        val drink = bounds("action.surprise_drink")!!
+        val next = bounds("action.surprise_next")!!
+        assertTrue("$device-$language: Tonight's buttons are not stacked at 200 %", next.top >= drink.bottom - 1f)
+    }
+
     @Test
     fun bottlesOnOrder() {
         scrollIn("cellar.list", "order.row")

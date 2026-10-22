@@ -33,6 +33,23 @@ data class CellarStatistics(
 
     companion object {
         const val NON_VINTAGE = "NV"
+
+        /** The first year of a decade label ("2010s" gives 2010), for the apps to name it in words; else null. */
+        fun decadeStart(label: String): Int? = label.takeIf { it.endsWith("s") }?.dropLast(1)?.toIntOrNull()
+
+        /**
+         * Whole percentages of [counts] that add up to 100 (largest remainder): each share
+         * rounded down, then the points left over go to the largest remainders, the first
+         * one on a tie. All zeros (or none) give zeros.
+         */
+        fun percentages(counts: List<Int>): List<Int> {
+            val total = counts.sum()
+            if (total <= 0) return counts.map { 0 }
+            val floors = counts.map { it * 100 / total }
+            val left = 100 - floors.sum()
+            val bonus = counts.indices.sortedByDescending { (counts[it] * 100) % total }.take(left).toSet()
+            return floors.mapIndexed { index, floor -> if (index in bonus) floor + 1 else floor }
+        }
     }
 }
 

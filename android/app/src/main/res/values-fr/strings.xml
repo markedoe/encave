@@ -270,6 +270,7 @@
     <string name="insights_grapes">Cépages principaux</string>
     <string name="insights_empty">Ajoutez des bouteilles pour voir les statistiques.</string>
     <string name="insights_nv">NM</string>
+    <string name="insights_decade">années %1$d</string>
     <string name="settings_cellar">Cave</string>
     <string name="settings_currency">Devise par défaut</string>
     <string name="settings_appearance">Affichage</string>
@@ -672,7 +673,7 @@
     <string name="help_tonight_maturity_title">Maturité</string>
     <string name="help_tonight_maturity">Chaque vin est **À garder**, **Prêt à boire**, **À boire bientôt** (dernière année de sa fenêtre) ou **Après l’apogée**. Le libellé et le symbole l’indiquent toujours, pas seulement la couleur. Un vin sans fenêtre de dégustation affiche **Pas de fenêtre de dégustation** et passe en dernier dans Ce soir : fixez sa fenêtre sur sa fiche.</string>
     <string name="help_tonight_suggestions_title">Suggestions</string>
-    <string name="help_tonight_suggestions">En haut, **Ce soir, ouvrez…** propose une bouteille à boire maintenant (d’abord celles en dernière année), une autre chaque jour. Elle indique où est la bouteille (touchez pour la voir dans son casier) ; **Boire** l’ouvre, **Autre idée** en propose une autre. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt ni à boire bientôt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier ; maintenez-en une appuyée pour la boire, la voir dans son casier ou la garder pour une occasion. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**.</string>
+    <string name="help_tonight_suggestions">En haut, **Ce soir, ouvrez…** propose un vin à boire maintenant, choisi pour la journée parmi ceux prêts ou à boire bientôt : il reste le même toute la journée, même quand vous ajoutez des bouteilles. Touchez la carte pour ouvrir le vin. Elle indique où est la bouteille (touchez pour la voir dans son casier) ; **Boire** l’ouvre et, quand au moins deux vins peuvent être proposés, **Autre idée** en propose un autre. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt ni à boire bientôt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier ; maintenez-en une appuyée pour la boire, la voir dans son casier ou la garder pour une occasion. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**.</string>
     <string name="help_tonight_serving">La fiche de chaque vin propose une température de service et, pour les rouges jeunes et corsés, une durée de carafage.</string>
     <string name="help_drinking_title">Boire une bouteille</string>
     <string name="help_drinking_summary">Gardez la trace de ce que vous avez ouvert et de ce que vous en avez pensé.</string>
@@ -1293,8 +1294,8 @@
     <string name="state_collapsed">Masquée</string>
     <string name="action_expand">Afficher</string>
     <string name="action_collapse">Masquer</string>
-    <string name="discard_note_title">Supprimer la note ?</string>
-    <string name="action_discard">Supprimer</string>
+    <string name="discard_note_title">Abandonner les modifications ?</string>
+    <string name="action_discard">Abandonner</string>
     <string name="action_keep_editing">Continuer</string>
     <string name="drink_choice_kept">%1$s · Gardée pour %2$s</string>
     <string name="action_turn_on">Activer</string>

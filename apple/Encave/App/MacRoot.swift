@@ -167,8 +167,12 @@ struct MacRoot: View {
 
     /// The wine Tonight suggests first today.
     private var todaysSuggestion: UUID? {
-        let day = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 1
-        return model.cellar.tonightSuggestion(year: model.currentYear, dayOfYear: day)?.wine.id
+        // The same wine as Tonight's card, including the one it keeps for the day.
+        let day = Cellar.tonightDay(.now)
+        // Read, not @AppStorage: at the root of the window that redraws it without end (DefaultsFlag).
+        let firstPick = UserDefaults.standard.string(forKey: TonightView.firstPickKey) ?? ""
+        let kept = firstPick.hasPrefix(day + "|") ? UUID(uuidString: String(firstPick.dropFirst(day.count + 1))) : nil
+        return model.cellar.tonightSuggestion(year: model.currentYear, day: day, keeping: kept)?.wine.id
     }
 
     private func follow(_ tab: AppTab) {

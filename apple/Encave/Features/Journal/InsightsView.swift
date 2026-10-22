@@ -118,11 +118,14 @@ struct InsightsView: View {
                                 .foregroundStyle(Color.accentColor.gradient)
                                 .cornerRadius(4)
                                 .annotation(position: .trailing) {
-                                    Text(verbatim: "\(slice.count)").font(.caption).foregroundStyle(.secondary)
+                                    Text(verbatim: slice.count.formatted()).font(.caption).foregroundStyle(.secondary)
                                 }
+                                .accessibilityLabel(Text(verbatim: slice.label))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
                         }
                         .chartXAxis(.hidden)
-                        .frame(height: CGFloat(min(8, stats.byRegion.count)) * 34 + 10)
+                        // Rows grow with the text size, as by country.
+                        .frame(height: CGFloat(min(8, stats.byRegion.count)) * countryRowHeight + 10)
                     }
                 }
 
@@ -352,11 +355,16 @@ private struct YearInWineCard: View {
 
 /// The figures and facts of a year in wine, on screen and in the shared image.
 private struct YearInWineFacts: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let recap: YearInWine
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 18) {
+            // Side by side, or one above the other at the accessibility text sizes.
+            let figures = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 18))
+            figures {
                 figure(recap.bottlesOpened, caption: .count("bottles opened", recap.bottlesOpened))
                 figure(recap.differentWines, caption: .count("different wines", recap.differentWines))
                 if recap.discoveries > 0 {
