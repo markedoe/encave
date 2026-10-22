@@ -244,7 +244,8 @@ public extension Cellar {
             case .readiness:
                 let ma = Maturity.of(a.wine, year: year), mb = Maturity.of(b.wine, year: year)
                 if ma != mb { return ma < mb }
-                return (a.wine.drinkUntil ?? .max) < (b.wine.drinkUntil ?? .max)
+                let ua = a.wine.drinkUntil ?? .max, ub = b.wine.drinkUntil ?? .max
+                return ua != ub ? ua < ub : Cellar.nameOrder(a.wine, b.wine)
             case .region:
                 let ra = [a.wine.country ?? "", a.wine.region ?? ""].joined(separator: "/")
                 let rb = [b.wine.country ?? "", b.wine.region ?? ""].joined(separator: "/")
@@ -271,19 +272,16 @@ public extension Cellar {
         bottlesInCellar.filter { $0.wineID == wineID }.sorted { $0.addedAt < $1.addedAt }
     }
 
-    /// Opened bottles whose wine (name, producer, origin, grapes, tags) or tasting
-    /// (note, occasion, full note, food) contains `query`, most recent first.
+    /// Opened bottles whose wine (name, producer, origin, grapes, tags) and tasting
+    /// (note, occasion, full note, food) contain every word of `query`, most recent first.
     func tastings(matching query: String) -> [Bottle] {
         let needle = query.trimmingCharacters(in: .whitespaces)
         guard !needle.isEmpty else { return consumedBottles }
         return consumedBottles.filter { bottle in
-            if wines[bottle.wineID]?.matches(needle) == true { return true }
             let tasting = bottle.tasting
             let fields = [tasting?.note, tasting?.occasion, tasting?.appearance, tasting?.nose, tasting?.palate,
-                          tasting?.finish, tasting?.foodPairing]
-            return fields.compactMap { $0 }.contains {
-                $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
-            }
+                          tasting?.finish, tasting?.foodPairing].compactMap { $0 }
+            return SearchText.matches(needle, in: (wines[bottle.wineID]?.searchFields ?? []) + fields)
         }
     }
 
@@ -364,10 +362,15 @@ public extension Cellar {
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
+    /// Name, then vintage, then producer, then id: a total order, so wines alike keep
+    /// their place whatever order the records are stored in (the Kotlin core does the same).
     static func nameOrder(_ a: Wine, _ b: Wine) -> Bool {
         let order = a.name.localizedCaseInsensitiveCompare(b.name)
         if order != .orderedSame { return order == .orderedAscending }
-        return (a.vintage ?? 0) < (b.vintage ?? 0)
+        if a.vintage != b.vintage { return (a.vintage ?? 0) < (b.vintage ?? 0) }
+        let producers = (a.producer ?? "").localizedCaseInsensitiveCompare(b.producer ?? "")
+        if producers != .orderedSame { return producers == .orderedAscending }
+        return a.id.uuidString < b.id.uuidString
     }
 }
 
@@ -611,11 +614,29 @@ public extension Cellar {
 }
 
 extension Wine {
+    /// What a search looks in: the label fields, grapes, barcodes and tags.
+    var searchFields: [String] {
+        ([name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
+            + (barcodes ?? []).map(Optional.some) + (tags ?? []).map(Optional.some)).compactMap { $0 }
+    }
+
+    /// Every word of `needle` is in one of the fields ("Margaux 2015", "syrah guigal").
     func matches(_ needle: String) -> Bool {
-        let fields = [name, producer, region, country, appellation, vintage.map(String.init)] + grapes.map(Optional.some)
-            + (barcodes ?? []).map(Optional.some) + (tags ?? []).map(Optional.some)
-        return fields.compactMap { $0 }.contains {
-            $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        SearchText.matches(needle, in: searchFields)
+    }
+}
+
+/// Searches by words: each word of the query must appear, ignoring case and accents, in
+/// one of the fields (not necessarily the same one). The Kotlin core does the same.
+public enum SearchText {
+    public static func words(_ query: String) -> [Substring] {
+        query.split(whereSeparator: \.isWhitespace)
+    }
+
+    /// True for a blank query.
+    public static func matches(_ query: String, in fields: [String]) -> Bool {
+        words(query).allSatisfy { word in
+            fields.contains { $0.range(of: word, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
         }
     }
 }
