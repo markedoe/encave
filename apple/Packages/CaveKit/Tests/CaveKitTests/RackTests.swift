@@ -59,6 +59,35 @@ import Testing
         #expect(single.placeName(for: Slot(rackID: single.id, row: 1, column: 5)) == "Shelf 2, place 6")
     }
 
+    @Test func placeNamesEdgeCases() {
+        // Three deep: front, middle, back.
+        let deep = Rack(name: "D", kind: .shelves, rows: 2, columns: 4, depth: 3)
+        #expect(deep.placeName(for: Slot(rackID: deep.id, row: 1, column: 0, depth: 1)) == "Shelf 2, place 1, middle")
+        // Three layers: the middle one; one deep, so no side.
+        let layers = Rack(name: "L", kind: .staggered, rows: 3, columns: 6, shelfLayers: [3])
+        #expect(layers.placeName(for: Slot(rackID: layers.id, row: 1, column: 0)) == "Shelf 1, middle layer, place 1")
+        #expect(layers.placeName(for: Slot(rackID: layers.id, row: 0, column: 0)) == "Shelf 1, top layer, place 1")
+        // Beyond Z, grids keep two-letter codes; shelves of different lengths still number.
+        let tall = Rack(name: "T", rows: 30, columns: 2)
+        #expect(tall.emptyCaption(for: RackCell(rackID: tall.id, row: 27, column: 1)) == "AB2")
+        let custom = Rack(name: "C", kind: .shelves, rows: 2, columns: 4, rowColumns: [2, 4])
+        #expect(custom.emptyCaption(for: RackCell(rackID: custom.id, row: 1, column: 3)) == "4")
+        #expect(custom.numbersPlacesOnShelves)
+        #expect(!Rack(name: "B", kind: .bins, rows: 1, columns: 1).numbersPlacesOnShelves)
+    }
+
+    @Test func locationFallsBackToTheStorageNote() throws {
+        var cellar = Cellar()
+        let added = try cellar.addBottles(of: Wine(name: "W"), quantity: 1)
+        var bottle = try #require(added.first)
+        #expect(cellar.locationLabel(for: bottle) == nil)
+        bottle.storageNote = "Kitchen"
+        #expect(cellar.locationLabel(for: bottle) == "Kitchen")
+        // A report's own namer returning nil falls back to the same words.
+        cellar.bottles[bottle.id] = bottle
+        #expect(cellar.report(scope: .all, year: 2026, location: { _ in nil }).rows.first?.places == ["Kitchen"])
+    }
+
     @Test func reportsNameFridgePlacesInWords() throws {
         var cellar = Cellar()
         let fridge = Rack(name: "Fridge", kind: .shelves, rows: 4, columns: 6, depth: 2)

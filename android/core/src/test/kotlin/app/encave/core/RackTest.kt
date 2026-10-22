@@ -32,6 +32,12 @@ class RackTest {
         val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1))
         assertEquals("4", fridge.emptyCaption(RackCell(fridge.id, 2, 3)))
         assertFalse(Rack(name = "B", kind = RackKind.Bins, rows = 2, columns = 2).numbersPlacesOnShelves)
+        // Rows beyond Z: grids keep their two-letter codes.
+        val tall = Rack(name = "T", rows = 30, columns = 2)
+        assertEquals("AB2", tall.emptyCaption(RackCell(tall.id, 27, 1)))
+        // Shelves of different lengths still number from the left.
+        val custom = Rack(name = "C", kind = RackKind.Shelves, rows = 2, columns = 4, rowColumns = listOf(2, 4))
+        assertEquals("4", custom.emptyCaption(RackCell(custom.id, 1, 3)))
     }
 
     @Test
