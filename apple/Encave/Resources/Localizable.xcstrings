@@ -1871,6 +1871,16 @@
         }
       }
     },
+    "Adding a rack": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un casier"
+          }
+        }
+      }
+    },
     "Adding bottles": {
       "localizations": {
         "fr": {
@@ -3271,22 +3281,22 @@
         }
       }
     },
-    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. Tapping a bin or a place with two bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a place shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
+    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. Tapping a bin or a place with several bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a place shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un casier ou un emplacement de deux bouteilles les marque toutes ; pour les cocher une par une, touchez-le longuement et choisissez **Vérifier une par une…** (un emplacement affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans emplacement) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un losange ou une place de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement et choisissez **Vérifier une par une…** (une place affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans place) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
           }
         }
       }
     },
-    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, and those bottles stay in your cellar without a place. **Undo** puts everything back.": {
+    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** keeps its bottles in your cellar without a place; **Undo** brings the rack back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des emplacements occupés, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, et ces bouteilles restent dans votre cave sans emplacement. **Annuler** remet tout en place."
+            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** garde ses bouteilles dans votre cave sans place ; **Annuler** rétablit le casier."
           }
         }
       }
@@ -4186,7 +4196,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez un casier pour voir son contenu."
+            "value": "Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu."
           }
         }
       }
@@ -4501,12 +4511,12 @@
         }
       }
     },
-    "Each bottle shows its vintage, and its name once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all.": {
+    "Each bottle shows its vintage; in grid racks and wine fridges, its name too once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all. On a wine's page, **Show in Rack** opens the rack with its bottles lit up.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille affiche son millésime, et son nom dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher."
+            "value": "Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles."
           }
         }
       }
@@ -5991,12 +6001,12 @@
         }
       }
     },
-    "In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack, take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them. **Undo** puts everything back.": {
+    "In the Cellar list, choose **Select Wines** in the **Sort and Filter** menu and tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier, sortez-les de leur emplacement ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit. **Annuler** remet tout en place."
+            "value": "Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu **Trier et filtrer** et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
           }
         }
       }
@@ -7941,12 +7951,12 @@
         }
       }
     },
-    "On iPad and Mac, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them (in racks with one bottle per place). **Undo** puts them back.": {
+    "On iPad and Mac, in racks with one bottle per place, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them. **Undo** puts them back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPad et Mac, faites glisser une bouteille vers un autre emplacement pour la déplacer, ou sur une autre bouteille du même casier pour les échanger (dans les casiers à une bouteille par emplacement). **Annuler** les remet en place."
+            "value": "Sur iPad et Mac, dans les casiers à une bouteille par place, faites glisser une bouteille vers une autre place pour la déplacer, ou sur une autre bouteille du même casier pour les échanger. **Annuler** les remet en place."
           }
         }
       }
@@ -8791,12 +8801,12 @@
         }
       }
     },
-    "Pinch to zoom in and out. On the iPad and the Mac, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place.": {
+    "Pinch to zoom in and out. On the Mac, and on the iPad in a wide window, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place; on the Mac, the list is beside the rack.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pincez pour zoomer. Sur iPad et Mac, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier emplacement par emplacement."
+            "value": "Pincez pour zoomer. Sur Mac, et sur iPad dans une fenêtre large, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier place par place ; sur Mac, la liste est à côté du casier."
           }
         }
       }
@@ -9791,12 +9801,12 @@
         }
       }
     },
-    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. The same name shows everywhere: in the rack, the bottle list, the wine page and Siri.": {
+    "Rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, places read like **Shelf B, 3**; in bins, like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les rangées sont nommées par lettre depuis le haut et les emplacements numérotés depuis la gauche : **B3** est la deuxième rangée, troisième emplacement. Avec deux bouteilles par emplacement, **B3, derrière** est celle du fond. Le même nom s’affiche partout : dans le casier, la liste des bouteilles, la fiche du vin et Siri."
+            "value": "Les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, derrière** est celle du fond. Dans une cave à vin, les places se lisent comme **Étagère B, 3** ; dans des losanges, comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
           }
         }
       }
@@ -11481,6 +11491,16 @@
         }
       }
     },
+    "Tap **Add Rack**, choose the kind, then its size, or a ready-made size under **Quick start** (only when creating a rack). Free places fill row by row from the top, the front places before the back ones.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez **Ajouter un casier**, choisissez le type, puis la taille, ou une taille toute prête dans **Démarrage rapide** (seulement en créant un casier). Les places libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond."
+          }
+        }
+      }
+    },
     "Tap **Check Key and Load Models**: the app asks the provider which models your key can use and fills the model menu. Choose a model that reads images.": {
       "localizations": {
         "fr": {
@@ -11491,12 +11511,12 @@
         }
       }
     },
-    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them. **Undo** in the banner puts them back. **Cancel** (or Esc) stops a move. To move a bottle to another rack, choose **Move…** on it in **Bottle List** or on the wine's page.": {
+    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them. **Cancel** (or Esc) stops a move; right after, **Undo** in the banner puts the bottles back. To move a bottle to another rack, or out of the racks with a note on where it is (**No rack**), choose **Move…** on it in **Bottle List** or on the wine's page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une bouteille, puis **Déplacer**, puis le nouvel emplacement. Un emplacement qui a de la place prend la bouteille ; dans les casiers à une bouteille par emplacement, toucher une autre bouteille les échange. **Annuler** dans le bandeau les remet en place. **Annuler** (ou Échap) arrête un déplacement. Pour mettre une bouteille dans un autre casier, choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
+            "value": "Touchez une bouteille, puis **Déplacer**, puis la nouvelle place. Une place libre prend la bouteille ; dans les casiers à une bouteille par place, toucher une autre bouteille les échange. Pour arrêter un déplacement, touchez **Annuler** (ou Échap) ; juste après, **Annuler** dans le bandeau remet les bouteilles en place. Pour mettre une bouteille dans un autre casier, ou hors des casiers avec une note sur l’endroit où elle est (**Aucun casier**), choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
           }
         }
       }
@@ -11511,12 +11531,12 @@
         }
       }
     },
-    "Tap a place. Tapping another bottle swaps them; a bin takes the bottle if it has room.": {
+    "Tap a place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez un emplacement. Toucher une autre bouteille les échange ; un casier prend la bouteille s’il a de la place."
+            "value": "Touchez une place. Une place libre prend la bouteille ; dans les casiers à une bouteille par place, toucher une autre bouteille les échange."
           }
         }
       }
@@ -12951,12 +12971,12 @@
         }
       }
     },
-    "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row.": {
+    "Turn on **Rows of different lengths** for a rack under a sloped ceiling or a staircase, and set the length of each row (not for honeycomb racks).": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Rangées de longueurs différentes** pour un casier sous pente ou sous un escalier, et réglez la longueur de chaque rangée."
+            "value": "Activez **Rangées de longueurs différentes** pour un casier sous pente ou sous un escalier, et réglez la longueur de chaque rangée (sauf pour les casiers nid d’abeille)."
           }
         }
       }
