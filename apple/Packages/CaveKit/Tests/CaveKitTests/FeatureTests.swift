@@ -229,6 +229,23 @@ import Testing
         #expect(cellar.groups(matching: "3760123456789").count == 1)
     }
 
+    /// Adding bottles to a wine already in the cellar, as the add form does: the wine as
+    /// it is now, with the barcode scanned for these bottles, keeps both codes.
+    @Test func addingToAnExistingWineKeepsTheScannedBarcode() throws {
+        var cellar = Cellar()
+        let wine = Wine(name: "Chablis", vintage: 2022, barcodes: ["3760123456789"])
+        let first = try cellar.addBottles(of: wine, quantity: 1)
+        var current = try #require(cellar.wines[wine.id])
+        let added = current.addBarcode("4006381333931")
+        #expect(added)
+        try cellar.addBottles(of: current, quantity: 2)
+        #expect(cellar.wines[wine.id]?.barcodes == ["3760123456789", "4006381333931"])
+        #expect(cellar.wine(barcode: "4006381333931")?.id == wine.id)
+        #expect(cellar.wine(barcode: "3760123456789")?.id == wine.id)
+        #expect(cellar.bottles[first[0].id] != nil)
+        #expect(cellar.bottlesInCellar.count == 3)
+    }
+
     /// Same vectors as BarcodeTest in android/core ParityFeatureTest.kt.
     @Test func oneBarcodeForSeveralVintagesListsTheNewestFirst() throws {
         var cellar = Cellar()
