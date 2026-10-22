@@ -1,6 +1,7 @@
 package app.encave.ui.settings
 
 import android.text.format.DateUtils
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -205,6 +206,9 @@ fun RestorePreviewScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     var working by remember { mutableStateOf(false) }
     val source = pending
     LaunchedEffect(source == null, working) { if (source == null && !working) navigator.back() }
+    // Leaving without restoring: the files read from the backup go (then the effect above goes
+    // back). Not while restoring: the files are being copied.
+    BackHandler { if (!working) viewModel.discardRestore() }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -212,7 +216,7 @@ fun RestorePreviewScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     Text(stringResource(if (source?.kind == RestoreSource.Kind.Version) R.string.restore_title_version else R.string.restore_title_backup))
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = { viewModel.discardRestore() }, enabled = !working) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
@@ -258,7 +262,7 @@ fun RestorePreviewScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 OutlinedButton(
                     onClick = {
                         working = true
-                        viewModel.restore(RestoreMode.AddMissing) { navigator.back(to = SettingsRoute) }
+                        viewModel.restore(RestoreMode.AddMissing) { done -> if (done) navigator.back(to = SettingsRoute) else working = false }
                     },
                     enabled = !working,
                     modifier = Modifier.fillMaxWidth().testTag("restore.add"),
@@ -289,7 +293,7 @@ fun RestorePreviewScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             confirm = stringResource(R.string.restore_replace),
             onConfirm = {
                 working = true
-                viewModel.restore(RestoreMode.Replace) { navigator.back(to = SettingsRoute) }
+                viewModel.restore(RestoreMode.Replace) { done -> if (done) navigator.back(to = SettingsRoute) else working = false }
             },
             onDismiss = { confirmReplace = false },
         )

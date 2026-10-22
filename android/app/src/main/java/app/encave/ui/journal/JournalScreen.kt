@@ -1,5 +1,16 @@
 package app.encave.ui.journal
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.WineBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import app.encave.ui.drink.DiscardNoteDialog
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import app.encave.ui.devices.SettingsIcon
 import app.encave.ui.discoveries.DiscoveryActions
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
@@ -29,7 +41,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Insights
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -106,7 +117,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.pluralStringResource
+import app.encave.core.bottleToOpen
 import app.encave.ui.drink.DrinkSheet
+import app.encave.ui.drink.rememberDrinking
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.ListItemDefaults
@@ -134,7 +147,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var choosing by rememberSaveable { mutableStateOf(false) }
     var picking by rememberSaveable { mutableStateOf(false) }
-    var drinking by remember { mutableStateOf<WineGroup?>(null) }
+    var drinking by rememberDrinking()
     val actions = remember(viewModel, navigator) {
         DiscoveryActions(
             open = { navigator.open(DiscoveryEditorRoute(it.id.toString())) },
@@ -162,7 +175,7 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         Icon(Icons.Outlined.Insights, contentDescription = stringResource(R.string.action_insights))
                     }
                     IconButton(onClick = { navigator.open(SettingsRoute) }) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                        SettingsIcon()
                     }
                 },
                 scrollBehavior = scrollBehavior,
@@ -215,8 +228,12 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     items(entries, key = { it.id.toString() }) { entry ->
                         when (entry) {
                             is DiaryEntry.Opened -> TastingRow(
-                                cellar, entry.bottle, Modifier.animateItem().testTag("journal.row.cellar"),
-                            ) { navigator.open(TastingRoute(entry.bottle.id.toString())) }
+                                cellar, entry.bottle, Modifier.animateItem(),
+                                onClick = { navigator.open(TastingRoute(entry.bottle.id.toString())) },
+                                onShowWine = { navigator.open(WineDetailRoute(entry.bottle.wineId.toString())) },
+                                onAddBottles = { navigator.open(AddBottleRoute(wineId = entry.bottle.wineId.toString())) },
+                                onPutBack = { viewModel.putBack(entry.bottle.id) },
+                            )
                             is DiaryEntry.Elsewhere -> ElsewhereRow(
                                 cellar, viewModel.photos, entry.discovery, actions, Modifier.animateItem().testTag("journal.row.elsewhere"),
                             )
@@ -239,11 +256,11 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     if (picking) {
         BottlePickerSheet(cellar, viewModel.year, onDismiss = { picking = false }) { group ->
             picking = false
-            drinking = group
+            drinking = group.bottles.bottleToOpen?.id?.toString()
         }
     }
-    drinking?.let { group ->
-        DrinkSheet(cellar, group.bottles, onDismiss = { drinking = null }, onDrink = { b, t -> viewModel.drink(b.id, t) })
+    drinking?.let { id ->
+        DrinkSheet(cellar, id, onDismiss = { drinking = null }, onDrink = { b, t -> viewModel.drink(b.id, t) })
     }
 }
 
@@ -367,9 +384,26 @@ private fun BottlePickerSheet(cellar: Cellar, year: Int, onDismiss: () -> Unit, 
     }
 }
 
-/** A bottle opened from the cellar, saying so; TalkBack reads it as one sentence. */
+/**
+ * A bottle opened from the cellar, saying so; TalkBack reads it as one sentence. Long press
+ * (or TalkBack's actions): show the wine, edit the note, add bottles, put it back in the cellar.
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun TastingRow(cellar: Cellar, bottle: Bottle, modifier: Modifier, onClick: () -> Unit) {
+private fun TastingRow(
+    cellar: Cellar,
+    bottle: Bottle,
+    modifier: Modifier,
+    onClick: () -> Unit,
+    onShowWine: () -> Unit,
+    onAddBottles: () -> Unit,
+    onPutBack: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val showLabel = stringResource(R.string.action_show_wine)
+    val editLabel = stringResource(R.string.action_edit_note)
+    val addLabel = stringResource(R.string.action_add_bottles)
+    val putBackLabel = stringResource(R.string.action_put_back)
     val tasting = bottle.tasting
     val wine = cellar.wines[bottle.wineId]
     val source = stringResource(R.string.journal_from_cellar)
@@ -385,27 +419,50 @@ private fun TastingRow(cellar: Cellar, bottle: Bottle, modifier: Modifier, onCli
         tasting?.occasion?.takeIf { it.isNotBlank() },
         tasting?.note?.takeIf { it.isNotBlank() },
     ).joinToString(", ")
-    ListItem(
-        // The click before clearAndSetSemantics, so TalkBack still finds the row's action.
-        modifier = modifier.clickable(onClick = onClick).clearAndSetSemantics { contentDescription = description },
-        leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
-        overlineContent = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
-                Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))
-                Text(listOfNotNull(source, style, Formats.day(date)).joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        },
-        headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                tasting?.rating?.let { RatingStars(it) }
-                tasting?.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-                tasting?.occasion?.takeIf { it.isNotBlank() }?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+    Box(modifier) {
+        ListItem(
+            // The click before clearAndSetSemantics, so TalkBack still finds the row's actions.
+            modifier = Modifier
+                .testTag("journal.row.cellar")
+                .combinedClickable(onClick = onClick, onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.action_more))
+                .clearAndSetSemantics {
+                    contentDescription = description
+                    customActions = listOf(
+                        CustomAccessibilityAction(showLabel) { onShowWine(); true },
+                        CustomAccessibilityAction(addLabel) { onAddBottles(); true },
+                        CustomAccessibilityAction(putBackLabel) { onPutBack(); true },
+                    )
+                },
+            leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
+            overlineContent = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                    Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Text(listOfNotNull(source, style, Formats.day(date)).joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-            }
-        },
-    )
+            },
+            headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+            supportingContent = {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    tasting?.rating?.let { RatingStars(it) }
+                    tasting?.note?.takeIf { it.isNotBlank() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                    tasting?.occasion?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            },
+        )
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(text = { Text(showLabel) }, leadingIcon = { Icon(Icons.Outlined.WineBar, null) }, onClick = { menu = false; onShowWine() })
+            DropdownMenuItem(text = { Text(editLabel) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menu = false; onClick() })
+            DropdownMenuItem(text = { Text(addLabel) }, leadingIcon = { Icon(Icons.Filled.Add, null) }, onClick = { menu = false; onAddBottles() })
+            DropdownMenuItem(
+                text = { Text(putBackLabel) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Undo, null) },
+                onClick = { menu = false; onPutBack() },
+                modifier = Modifier.testTag("journal.menu.put_back"),
+            )
+        }
+    }
 }
 
 /** View and edit a full tasting note; a bottle can also be put back if it was marked by mistake. */
@@ -425,12 +482,19 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
         rememberRetained("tasting.form") { TastingFormState(opened.tasting ?: Tasting(date = opened.addedAt)) }
     }
 
+    var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
+    val leave = { if (form?.isDirty == true) confirmingDiscard = true else navigator.back() }
+    BackHandler(enabled = form?.isDirty == true) { confirmingDiscard = true }
+    if (confirmingDiscard) {
+        DiscardNoteDialog(onDiscard = { confirmingDiscard = false; navigator.back() }, onKeepEditing = { confirmingDiscard = false })
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.tasting_title)) },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = leave) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
@@ -458,7 +522,9 @@ private fun TastingForm(viewModel: AppViewModel, navigator: AppNavigator, bottle
                 StyleLabel(wine.color)
                 Text(
                     wine.displayName, style = SerifDisplay,
-                    modifier = Modifier.clickable { navigator.open(WineDetailRoute(wine.id.toString())) },
+                    modifier = Modifier.clickable(onClickLabel = stringResource(R.string.action_show_wine)) {
+                        navigator.open(WineDetailRoute(wine.id.toString()))
+                    },
                 )
                 wine.producer?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }

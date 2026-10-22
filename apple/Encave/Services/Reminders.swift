@@ -1,6 +1,9 @@
 import CaveKit
 import Foundation
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 import UserNotifications
 
 /// A monthly reminder, on the first of the month, of the bottles to drink this year,
@@ -21,8 +24,26 @@ enum Reminders {
 
     nonisolated static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
 
+    /// Set once reminders were turned on or off, or the offer in Tonight was answered:
+    /// Tonight then no longer offers them.
+    nonisolated static let offeredKey = "reminders.offered"
+
+    nonisolated static var wasOffered: Bool { UserDefaults.standard.bool(forKey: offeredKey) }
+
+    static func markOffered() { UserDefaults.standard.set(true, forKey: offeredKey) }
+
+    /// The system settings page of Encave's notifications, to turn them on after a refusal.
+    nonisolated static var settingsURL: URL? {
+        #if os(iOS)
+        URL(string: UIApplication.openNotificationSettingsURLString)
+        #else
+        URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")
+        #endif
+    }
+
     /// Asks for permission, then schedules. Returns false if the user refused.
     static func enable(for cellar: Cellar) async -> Bool {
+        markOffered()
         let granted = await requestPermission()
         UserDefaults.standard.set(granted, forKey: enabledKey)
         if granted { await schedule(for: cellar) }
@@ -51,40 +72,51 @@ enum Reminders {
     }
 
     static func disable() {
+        markOffered()
         UserDefaults.standard.set(false, forKey: enabledKey)
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        Task { await removeDeliveries(center) }
+        Task { await removePending(center) }
     }
 
-    private static func removeDeliveries(_ center: UNUserNotificationCenter) async {
+    /// Months scheduled ahead: the system keeps at most 64 pending notifications.
+    nonisolated static let monthsAhead = 12
+
+    /// The pending monthly and delivery reminders ("encave.monthly", "encave.monthly.2026-11"…).
+    private static func removePending(_ center: UNUserNotificationCenter) async {
         let pending = await center.pendingNotificationRequests().map(\.identifier)
-        center.removePendingNotificationRequests(withIdentifiers: pending.filter { $0.hasPrefix(deliveryPrefix) })
+        center.removePendingNotificationRequests(withIdentifiers: pending.filter {
+            $0.hasPrefix(identifier) || $0.hasPrefix(deliveryPrefix)
+        })
     }
 
-    /// Replaces the pending reminder with one for the first of next month, from the
-    /// cellar as it is now. Called when the app opens and after changes.
+    /// Replaces the pending reminders with one on the first of each of the next 12 months,
+    /// each with what the cellar as it is now holds for that month's year (none when there
+    /// is nothing to say). Called when the app opens and after changes, so they follow the
+    /// cellar.
     static func schedule(for cellar: Cellar) async {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        await removeDeliveries(center)
+        await removePending(center)
         guard isEnabled else { return }
         await scheduleDeliveries(for: cellar, center: center)
         let calendar = Calendar.current
-        guard let next = calendar.nextDate(after: .now, matching: DateComponents(day: 1, hour: 10, minute: 0),
-                                           matchingPolicy: .nextTime) else { return }
-        let digest = cellar.drinkingDigest(year: CellarYear.of(next))
-        guard !digest.isEmpty else { return }
-
-        let content = UNMutableNotificationContent()
-        content.title = String(localized: "Your cellar this month")
-        content.body = body(for: digest)
-        content.sound = .default
-        content.userInfo = [tabKey: AppTab.tonight.rawValue]
-        content.threadIdentifier = identifier
-        let trigger = UNCalendarNotificationTrigger(
-            dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: next), repeats: false)
-        try? await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+        var after = Date.now
+        for _ in 0..<monthsAhead {
+            guard let next = calendar.nextDate(after: after, matching: DateComponents(day: 1, hour: 10, minute: 0),
+                                               matchingPolicy: .nextTime) else { return }
+            after = next
+            let digest = cellar.drinkingDigest(year: CellarYear.of(next))
+            guard !digest.isEmpty else { continue }
+            let content = UNMutableNotificationContent()
+            content.title = String(localized: "Your cellar this month")
+            content.body = body(for: digest)
+            content.sound = .default
+            content.userInfo = [tabKey: AppTab.tonight.rawValue]
+            content.threadIdentifier = identifier
+            let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: next)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
+            let id = identifier + "." + String(format: "%04d-%02d", parts.year ?? 0, parts.month ?? 0)
+            try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+        }
     }
 
     /// One reminder per wine and expected day, at 10:00 on that day, counting the
@@ -126,6 +158,22 @@ enum Reminders {
     }
 }
 
+/// "Open Settings", under the message that notifications are off for Encave.
+struct NotificationSettingsButton: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        if let url = Reminders.settingsURL {
+            Button {
+                openURL(url)
+            } label: {
+                Label("Open Settings", systemImage: "gear")
+            }
+            .accessibilityHint(Text("Opens the system settings, to turn on notifications for Encave."))
+        }
+    }
+}
+
 /// Opens the right section when a reminder is tapped, and shows reminders while the app is open.
 final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     weak var model: CellarModel?
@@ -140,7 +188,7 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unc
             if let wineID, model?.cellar.wines[wineID] != nil {
                 model?.open(wine: wineID)
             } else if let tab, let section = AppTab(rawValue: tab) {
-                model?.selectedTab = section
+                model?.request(.show(section))
             }
         }
     }

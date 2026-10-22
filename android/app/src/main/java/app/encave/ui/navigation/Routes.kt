@@ -27,7 +27,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class EditWineRoute(val wineId: String, val field: String? = null)
 
 /** The wines that share a detail: [kind] is a [app.encave.ui.cellar.ExploreKind] name, [value] its text. */
-@Serializable data class WineExploreRoute(val kind: String, val value: String)
+/** [currentWineId]: the wine whose page it was opened from, shown first without opening itself again. */
+@Serializable data class WineExploreRoute(val kind: String, val value: String, val currentWineId: String? = null)
 
 /** Add bottles, optionally of an existing wine or into a given rack slot. */
 @Serializable
@@ -46,7 +47,8 @@ data class AddBottleRoute(
 /** Remember a wine tasted elsewhere (new), or edit a discovery. */
 @Serializable data class DiscoveryEditorRoute(val discoveryId: String? = null)
 
-@Serializable data class RackDetailRoute(val rackId: String, val highlightBottleId: String? = null)
+/** [moveBottleId]: opens the rack to choose the bottle's new place (Move in a wine's menu). */
+@Serializable data class RackDetailRoute(val rackId: String, val highlightBottleId: String? = null, val moveBottleId: String? = null)
 @Serializable data class RackEditorRoute(val rackId: String? = null)
 @Serializable data class TastingRoute(val bottleId: String)
 @Serializable data object PairingRoute
@@ -55,6 +57,9 @@ data class AddBottleRoute(
 @Serializable data class HelpRoute(val topic: String? = null)
 @Serializable data object DevicesRoute
 
+/** Settings › About › Licences. */
+@Serializable data object LicencesRoute
+
 /** Settings › Your data › Previous versions. */
 @Serializable data object PreviousVersionsRoute
 
@@ -62,7 +67,8 @@ data class AddBottleRoute(
 @Serializable data object RestoreRoute
 @Serializable data object RemoteSyncRoute
 @Serializable data object InviteDeviceRoute
-@Serializable data object JoinDeviceRoute
+/** Join another device's cellar; a pairing link (encave://pair) fills the code in, the user taps Join. */
+@Serializable data class JoinDeviceRoute(val code: String? = null, val commitment: String? = null)
 
 /** The four sections, in navigation order. */
 enum class TopLevel(

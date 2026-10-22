@@ -85,6 +85,14 @@ class PhotoStore(context: Context) {
         return if (store(id, jpeg)) id else null
     }
 
+    /** True when [jpeg] is already stored (the same photo, saved before). */
+    fun contains(jpeg: ByteArray): Boolean = exists(PhotoId.make(jpeg))
+
+    /** Removes a photo file at once (one written for a save that failed). */
+    fun delete(id: String) {
+        file(id)?.delete()
+    }
+
     /** Writes a photo under an ID (a received one). False if the ID is not a safe file name. */
     fun store(id: String, jpeg: ByteArray): Boolean = runCatching {
         val target = file(id) ?: return false

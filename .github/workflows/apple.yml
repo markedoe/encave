@@ -3,10 +3,15 @@ name: Apple apps
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apple/**", "design/**", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apple/**", "design/**", ".github/workflows/apple.yml"]
+    paths: ["apple/**", "design/**", "licences/**", "LICENSE", "scripts/check-privacy-manifest.sh", ".github/workflows/apple.yml"]
   workflow_dispatch:
+    inputs:
+      external_testers:
+        description: "Also give this build to the external TestFlight testers (and submit it to Beta App Review)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -33,6 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: python3 apple/tools/l10n.py --check
+      # The licences shown in Settings › About › Licences match Package.resolved.
+      - run: python3 apple/tools/licences.py --check
 
   mac-launch:
     name: Mac launch test
@@ -60,6 +67,7 @@ jobs:
             -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
             | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Release/Encave.app"
 
       - name: Launch twice and report crashes
         run: |
@@ -130,6 +138,10 @@ jobs:
   screens:
     name: Screen tour (iPhone, iPad, Mac)
     needs: [cavekit, l10n]
+    # The full tour (over an hour) runs on main before each TestFlight build, on pull
+    # requests and on manual runs. Pushes to other branches only build and run the
+    # Mac launch test, so fixes reach main faster.
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
     # Two simulators and the Mac in one job: about 65 minutes now.
     timeout-minutes: 100
@@ -284,10 +296,12 @@ jobs:
         if: env.UPLOAD != 'true'
         run: |
           set -o pipefail
-          xcodebuild build -project Encave.xcodeproj -scheme Encave \
+          xcodebuild build -project Encave.xcodeproj -scheme Encave -derivedDataPath "$RUNNER_TEMP/dd" \
             -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
-          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac \
+          xcodebuild build -project Encave.xcodeproj -scheme EncaveMac -derivedDataPath "$RUNNER_TEMP/dd" \
             -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Encave.app" \
+            "$RUNNER_TEMP/dd/Build/Products/Debug/Encave.app"
 
       - name: App Store Connect key
         id: key
@@ -313,12 +327,15 @@ jobs:
           set -o pipefail
           auth=(-allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH"
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          # TestFlight builds are betas (ENCAVE_CHANNEL=store turns the beta notices and the
+          # sample cellar off for the App Store, docs/development.md).
           # Archive unsigned: signing with a development certificate would create a new
           # certificate on every fresh runner. The export below signs with cloud signing.
           xcodebuild archive -project Encave.xcodeproj -scheme Encave \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+            ENCAVE_CHANNEL=beta CODE_SIGNING_ALLOWED=NO | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/ios.xcarchive/Products/Applications/Encave.app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ios.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-ios" \
             "${auth[@]}" | xcbeautify --renderer github-actions
@@ -335,8 +352,9 @@ jobs:
           # the export re-signs it with cloud signing (no new certificate).
           xcodebuild archive -project Encave.xcodeproj -scheme EncaveMac \
             -destination 'generic/platform=macOS' -archivePath "$RUNNER_TEMP/mac.xcarchive" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" ENCAVE_CHANNEL=beta \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER= | xcbeautify --renderer github-actions
+          ../scripts/check-privacy-manifest.sh "$RUNNER_TEMP/mac.xcarchive/Products/Applications/Encave.app"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/mac.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
@@ -349,10 +367,11 @@ jobs:
   testers:
     name: TestFlight external testers
     needs: apps
-    # Builds from main only. Also when one upload failed (the Mac one runs after the
-    # iPhone one): the uploaded build still reaches the testers, and the apps job and
-    # the run stay failed, with a warning below.
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
+    # Only when asked: a manual run from main with "external testers" ticked. Every push
+    # to main still uploads a build for the internal testers. Also when one upload failed
+    # (the Mac one runs after the iPhone one): the uploaded build still reaches the
+    # testers, and the apps job and the run stay failed, with a warning below.
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.external_testers && github.ref == 'refs/heads/main' && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
     runs-on: ubuntu-latest
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60

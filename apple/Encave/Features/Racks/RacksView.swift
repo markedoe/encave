@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RacksView: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -15,7 +16,7 @@ struct RacksView: View {
                         Text("Describe your racks to see exactly where each bottle is.")
                     } actions: {
                         Button {
-                            model.sheet = .editRack(rackID: nil)
+                            router?.sheet = .editRack(rackID: nil)
                         } label: {
                             Text("Add a Rack").frame(minWidth: 200)
                         }
@@ -32,9 +33,22 @@ struct RacksView: View {
                                 .accessibilityIdentifier("rack.card.\(index)")
                                 .buttonStyle(.plain)
                                 .contextMenu {
-                                    Button("Edit Rack", systemImage: "pencil") { model.sheet = .editRack(rackID: rack.id) }
+                                    Button("Edit Rack", systemImage: "pencil") { router?.sheet = .editRack(rackID: rack.id) }
+                                    Button("Move Up", systemImage: "arrow.up") { moveRack(at: index, by: -1) }
+                                        .disabled(index == 0)
+                                    Button("Move Down", systemImage: "arrow.down") { moveRack(at: index, by: 1) }
+                                        .disabled(index == model.cellar.racks.count - 1)
+                                    Divider()
                                     Button("Delete Rack", systemImage: "trash", role: .destructive) {
                                         model.deleteRack(rack.id)
+                                    }
+                                }
+                                .accessibilityActions {
+                                    if index > 0 {
+                                        Button("Move Up") { moveRack(at: index, by: -1) }
+                                    }
+                                    if index < model.cellar.racks.count - 1 {
+                                        Button("Move Down") { moveRack(at: index, by: 1) }
                                     }
                                 }
                             }
@@ -48,18 +62,32 @@ struct RacksView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        model.sheet = .editRack(rackID: nil)
+                        router?.sheet = .editRack(rackID: nil)
                     } label: {
                         Label("Add Rack", systemImage: "plus")
                     }
                     .accessibilityIdentifier("racks.add")
                 }
+                #if os(iOS)
+                SettingsToolbarItem()
+                #endif
             }
             .onChange(of: model.highlightedSlot, initial: true) { _, slot in
                 guard let slot else { return }
                 let rack = NavigationPath([slot.rackID])
                 if path != rack { path = rack }
             }
+        }
+    }
+
+    /// One place up (-1) or down (1) in the list of racks.
+    private func moveRack(at index: Int, by step: Int) {
+        let target = index + step
+        guard model.cellar.racks.indices.contains(index), model.cellar.racks.indices.contains(target) else { return }
+        // "Insert before" offsets, as List.onMove gives them.
+        let offset = step > 0 ? target + 1 : target
+        withAnimation(.snappy) {
+            _ = model.update { $0.moveRacks(fromOffsets: IndexSet(integer: index), toOffset: offset) }
         }
     }
 }

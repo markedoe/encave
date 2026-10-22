@@ -25,6 +25,9 @@ settings:
     # iCloud container for syncing away from home, for example iCloud.app.encave.
     # Empty: the iCloud option is hidden. Enabling it is described in docs/development.md.
     ENCAVE_CLOUDKIT_CONTAINER: ""
+    # "beta": TestFlight builds, with the beta notices and the sample cellar.
+    # "store": an App Store build, without them (read through EncaveChannel, AppChannel.swift).
+    ENCAVE_CHANNEL: beta
 
 packages:
   CaveKit:
@@ -35,6 +38,10 @@ targetTemplates:
     type: application
     sources:
       - path: Encave
+        excludes: [Resources/PrivacyInfo.xcprivacy]
+      # The privacy manifest, copied into both apps (checked in CI).
+      - path: Encave/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
     dependencies:
       - package: CaveKit
     settings:
@@ -62,11 +69,16 @@ targets:
         # Encrypted, with CryptoKit only (the OS's encryption): Apple's value for
         # that case, no documents to upload. See docs/ENCRYPTION.md.
         ITSAppUsesNonExemptEncryption: false
-        NSCameraUsageDescription: Encave uses the camera to read wine labels and scan documents. Images stay on your devices.
-        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
+        NSCameraUsageDescription: Encave uses the camera to read wine labels and barcodes, scan documents and scan the pairing code of your other devices. Images stay on your devices unless you turn on AI label recognition, which sends only the label photo to the service you chose.
+        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.
         NSBonjourServices: [_encave._tcp]
+        # encave://pair?code=…: the pairing QR code, scanned with the system camera, opens Join.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.encave.pair
+            CFBundleURLSchemes: [encave]
         # iCloud container for syncing away from home; empty hides the option (docs/development.md).
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
+        EncaveChannel: $(ENCAVE_CHANNEL)
         # Lets the optional AI recognition reach a server on the local network (OpenWebUI, Ollama).
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
@@ -84,6 +96,12 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         # Sync away from home in the background (an app refresh task), when iOS allows.
         UIBackgroundModes: [fetch]
+        # A bottle dragged between places of a rack (BottleDrag); its description is
+        # translated in InfoPlist.xcstrings (apple/tools/l10n.py).
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: app.encave.bottle
+            UTTypeDescription: Encave bottle
+            UTTypeConformsTo: [public.data]
         BGTaskSchedulerPermittedIdentifiers: [app.encave.sync.refresh]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -123,8 +141,13 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.lifestyle
         EncaveCloudKitContainer: $(ENCAVE_CLOUDKIT_CONTAINER)
-        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar, encrypted from end to end. It also reaches the AI server you may set in Settings.
+        EncaveChannel: $(ENCAVE_CHANNEL)
+        NSLocalNetworkUsageDescription: Encave finds your other devices on this network to sync your cellar with them, encrypted from end to end. It also connects to the servers on this network you set up in Settings, such as an AI or web search server or a WebDAV folder.
         NSBonjourServices: [_encave._tcp]
+        # encave://pair?code=…: the pairing QR code, scanned with the system camera, opens Join.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.encave.pair
+            CFBundleURLSchemes: [encave]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           # Home-network names (RFC 8375), which local networking alone does not cover:
@@ -134,6 +157,12 @@ targets:
               NSIncludesSubdomains: true
               NSExceptionAllowsInsecureHTTPLoads: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        # A bottle dragged between places of a rack (BottleDrag); its description is
+        # translated in InfoPlist.xcstrings (apple/tools/l10n.py).
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: app.encave.bottle
+            UTTypeDescription: Encave bottle
+            UTTypeConformsTo: [public.data]
 
   # Screen tour with screenshots and layout checks (see EncaveUITests).
   EncaveUITests:

@@ -4,7 +4,7 @@ import CaveKit
 import SwiftUI
 
 /// The Mac menu bar: what to open tonight at a glance, without opening the window.
-/// Shown unless turned off in Settings.
+/// Shown once turned on in Settings or in Tonight.
 struct CellarMenuBarContent: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.openWindow) private var openWindow
@@ -20,6 +20,14 @@ struct CellarMenuBarContent: View {
             if candidates.isEmpty {
                 Text("Nothing to suggest yet")
                     .foregroundStyle(.secondary)
+                // A new cellar: the way in is to add bottles.
+                if model.cellar.bottlesInCellar.isEmpty {
+                    Button("Add a Bottle…") {
+                        model.request(.present(.addBottle(AddBottleContext())))
+                        MainWindow.show(openWindow)
+                    }
+                    .buttonStyle(.borderless)
+                }
             } else {
                 ForEach(Array(candidates)) { group in
                     Button {
@@ -33,8 +41,7 @@ struct CellarMenuBarContent: View {
                                     .lineLimit(1)
                                 HStack(spacing: 6) {
                                     let maturity = Maturity.of(group.wine, year: model.currentYear)
-                                    Label(maturity.shortTitle, systemImage: maturity.systemImage)
-                                        .foregroundStyle(maturity.tint)
+                                    MaturityLabel(maturity: maturity, short: true)
                                     if let place = group.bottles.first.flatMap({ model.locationLabel(for: $0) }) {
                                         Text(verbatim: place).foregroundStyle(.secondary).lineLimit(1)
                                     }
@@ -53,7 +60,7 @@ struct CellarMenuBarContent: View {
                 }
             }
             Divider()
-            Button("Open Encave") { activate() }
+            Button("Open Encave") { MainWindow.show(openWindow) }
                 .buttonStyle(.borderless)
         }
         .padding(14)
@@ -62,11 +69,16 @@ struct CellarMenuBarContent: View {
 
     private func open(_ wineID: UUID) {
         model.open(wine: wineID)
-        activate()
+        MainWindow.show(openWindow)
     }
+}
 
-    /// Brings the cellar window forward, or opens one if it was closed.
-    private func activate() {
+/// The cellar window, for the menu bar and the menu commands.
+enum MainWindow {
+    /// Brings the cellar window forward, or opens one if it was closed. A request made just
+    /// before (`CellarModel.request`) is shown in it.
+    @MainActor
+    static func show(_ openWindow: OpenWindowAction) {
         NSApplication.shared.activate()
         if let window = NSApplication.shared.windows.first(where: {
             $0.isVisible && $0.canBecomeMain && ($0.identifier?.rawValue.hasPrefix("main") ?? false)

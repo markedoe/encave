@@ -24,6 +24,32 @@ struct DiscoveryEditor: View {
     @State private var wantsToBuy = false
     @State private var loaded = false
     @State private var confirmingDelete = false
+    /// The form as it opened, to ask before discarding changes.
+    @State private var initial: FormState?
+
+    /// What the user can change, to tell whether something was entered.
+    private struct FormState: Equatable {
+        var draft: WineDraft
+        var date: Date
+        var setting: Discovery.Setting?
+        var place: String
+        var rating: Int?
+        var note: String
+        var tags: [String]
+        var pendingTag: String
+        var price: Decimal?
+        var wantsToBuy: Bool
+    }
+
+    private var formState: FormState {
+        FormState(draft: draft, date: date, setting: setting, place: place, rating: rating, note: note,
+                  tags: tags, pendingTag: pendingTag, price: price, wantsToBuy: wantsToBuy)
+    }
+
+    private var isDirty: Bool {
+        guard let initial else { return false }
+        return formState != initial || scan.photo != nil || newPhoto != nil || photoRemoved
+    }
 
     private var existing: Discovery? { discoveryID.flatMap { model.cellar.discoveries[$0] } }
 
@@ -113,8 +139,7 @@ struct DiscoveryEditor: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityIdentifier("sheet.cancel")
+                    DiscardChangesCancelButton(isDirty: isDirty) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
@@ -138,12 +163,16 @@ struct DiscoveryEditor: View {
                 scan.matchedWine = nil
             }
         }
+        // A swipe down would lose what was entered: Cancel asks first.
+        .interactiveDismissDisabled(isDirty)
         .macSheetFrame(width: 520, height: 720)
     }
 
     private func load() {
         guard !loaded else { return }
         loaded = true
+        // After loading: only what the user changes counts.
+        defer { initial = formState }
         guard let discovery = existing, let wine = model.cellar.wines[discovery.wineID] else { return }
         draft = WineDraft(wine)
         date = discovery.date

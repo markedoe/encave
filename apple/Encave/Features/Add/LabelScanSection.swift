@@ -12,6 +12,8 @@ final class LabelScan {
     var autoFilled = WineDraft()
     let aiEnabled = AISettings.load().isEnabled
     var isAnalyzing = false
+    /// The photo just taken is being resized: Add waits for it, so it is saved with the wine.
+    var preparingPhoto = false
     /// Set when the bottles were added before the AI answered: the answer then
     /// completes the saved wine (see `completeLater`).
     private var savedDraft: WineDraft?
@@ -32,10 +34,35 @@ final class LabelScan {
         apply(result, to: draft)
         withAnimation { scanned = true }
         guard let image else { return }
+        preparingPhoto = true
         Task {
             photo = await PhotoStore.resized(image)
+            preparingPhoto = false
             if aiEnabled, photo != nil { completeWithAI(draft: draft) }
         }
+    }
+
+    /// "Another Vintage" in the scanner: a new wine like `wine` (a barcode shared by its
+    /// vintages), with the vintage read on this label, if any, to check in the summary.
+    func handleAnotherVintage(of wine: Wine, result: LabelScanResult, image: Data?, draft: Binding<WineDraft>) {
+        var value = draft.wrappedValue
+        value.name = wine.name
+        value.producer = wine.producer ?? ""
+        value.color = wine.color
+        value.appellation = wine.appellation ?? ""
+        value.region = wine.region ?? ""
+        value.country = wine.country ?? ""
+        value.grapes = wine.grapes.joined(separator: ", ")
+        value.vintage = nil
+        draft.wrappedValue = value
+        // The known wine's details count as typed: only the vintage is read from the label (or the AI).
+        autoFilled = WineDraft()
+        var read = result
+        read.name = nil
+        read.producer = nil
+        read.appellation = nil
+        editingDetails = false
+        handle(read, image: image, draft: draft)
     }
 
     /// The form was saved while the AI was still reading the label: keep going, and
@@ -113,10 +140,13 @@ private struct LabelScannerSheet: ViewModifier {
         let cellar = model.cellar
         content.sheet(isPresented: $scan.showsScanner) {
             LabelScanner(acceptsPhotoWithoutText: scan.aiEnabled,
-                         knownWine: { cellar.wine(barcode: $0) },
+                         knownWines: { cellar.wines(barcode: $0) },
                          onKnownWine: { wine in
                              scan.showsScanner = false
                              scan.matchedWine = wine
+                         },
+                         onAnotherVintage: { wine, result, image in
+                             scan.handleAnotherVintage(of: wine, result: result, image: image, draft: $draft)
                          }) { result, image in
                 scan.handle(result, image: image, draft: $draft)
             }
@@ -162,13 +192,13 @@ struct LabelScanSection: View {
                 if let aiError = scan.aiError {
                     Label(aiError, systemImage: "exclamationmark.triangle")
                         .font(.footnote)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.warning)
                 }
             } footer: {
                 if scan.aiEnabled {
                     Text("Reads the label on this device, then completes the details with the AI service set in Settings.")
                 } else {
-                    Text("Reads the label on this device to fill in the name and vintage.")
+                    Text("Reads the label on this device to fill in the name, producer, vintage and appellation.")
                 }
             }
             .animation(.default, value: scan.photo)
@@ -229,25 +259,40 @@ struct WineSummarySections: View {
             Text("Wine")
         }
 
+        // Style and vintage in one tap: on-device reading never finds the style, and a
+        // vintage may be missing or misread. The estimated window follows them.
         Section {
-            row("Appellation", draft.appellation)
-            row("Region", draft.region)
-            row("Country", draft.country)
-            row("Grapes", draft.grapes)
-            LabeledContent("Drinking window") {
-                if let window {
-                    Text(verbatim: "\(window.0) – \(window.1)").monospacedDigit()
-                } else {
-                    Text("Not found").foregroundStyle(.tertiary)
-                }
-            }
-        } header: {
-            Text("Details")
+            VintagePicker(vintage: $draft.vintage)
+            StyleChips(color: $draft.color)
         } footer: {
             if scan.isAnalyzing {
                 Label("Reading the label…", systemImage: "sparkles")
-            } else {
+            } else if scan.aiEnabled {
                 Text("Check what was read on the label. Tap Edit Details to correct or complete it.")
+            } else {
+                Text("Read on this device. Choose the style, or tap Edit Details to correct the rest.")
+            }
+        }
+
+        // Only what was found: a row per empty field would look like a failed scan.
+        let details = [
+            SummaryDetail(title: "Appellation", value: draft.appellation), SummaryDetail(title: "Region", value: draft.region),
+            SummaryDetail(title: "Country", value: draft.country), SummaryDetail(title: "Grapes", value: draft.grapes),
+        ].filter { !$0.value.trimmingCharacters(in: .whitespaces).isEmpty }
+        if !details.isEmpty || window != nil {
+            Section {
+                ForEach(details) { detail in
+                    LabeledContent(LocalizedStringKey(detail.title)) {
+                        Text(detail.value).multilineTextAlignment(.trailing)
+                    }
+                }
+                if let window {
+                    LabeledContent("Drinking window") {
+                        Text(verbatim: "\(window.0) – \(window.1)").monospacedDigit()
+                    }
+                }
+            } header: {
+                Text("Details")
             }
         }
 
@@ -265,15 +310,13 @@ struct WineSummarySections: View {
         draft.window.map { ($0.from, $0.until) }
     }
 
-    private func row(_ title: LocalizedStringKey, _ value: String) -> some View {
-        LabeledContent(title) {
-            if value.trimmingCharacters(in: .whitespaces).isEmpty {
-                Text("Not found").foregroundStyle(.tertiary)
-            } else {
-                Text(value).multilineTextAlignment(.trailing)
-            }
-        }
-    }
+}
+
+/// A detail of the scan summary: its title (a localized key) and what was found.
+private struct SummaryDetail: Identifiable {
+    let title: String
+    let value: String
+    var id: String { title }
 }
 
 /// The label photo just taken, with the AI action.

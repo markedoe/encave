@@ -82,13 +82,13 @@ data class Wine(
         get() = listOf(name, producer ?: "", vintage?.toString() ?: "")
             .joinToString("|") { it.trim().lowercase(Locale.ROOT) }
 
-    /** Case- and accent-insensitive search over the label fields and grapes. */
-    fun matches(needle: String): Boolean {
-        val folded = fold(needle)
-        val fields = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
+    /** What a search looks in: the label fields, grapes, barcodes and tags. */
+    val searchFields: List<String>
+        get() = listOfNotNull(name, producer, region, country, appellation, vintage?.toString()) + grapes +
             barcodes.orEmpty() + tags.orEmpty()
-        return fields.any { fold(it).contains(folded) }
-    }
+
+    /** Every word of [needle] is in one of the fields ("Margaux 2015", "syrah guigal"). */
+    fun matches(needle: String): Boolean = SearchText.matches(needle, searchFields)
 
     /** True if the wine has this tag, ignoring case. */
     fun hasTag(tag: String): Boolean = tags.orEmpty().any { it.equals(tag, ignoreCase = true) }
@@ -156,6 +156,9 @@ data class Wine(
 
         /** Trimmed, without empty ones or case-insensitive duplicates (the first spelling is kept); null if none. */
         fun normalizedTags(tags: List<String>?): List<String>? = Discovery.normalized(tags.orEmpty()).ifEmpty { null }
+
+        /** A name or producer compared for [Cellar.wine] (matching): without case, accents or extra spaces. */
+        fun matchKey(text: String): String = fold(text.trim().split(Regex("\\s+")).joinToString(" "))
 
         private val marks = Regex("\\p{Mn}+")
         internal fun fold(text: String): String =
@@ -413,6 +416,34 @@ data class Rack(
          */
         const val MAX_SIZE = 100
 
+        /**
+         * Where each row of a fridge on shelves goes when its shelves are edited. [origins]
+         * gives, for each shelf of [new] from the top, the shelf of [old] it was (null for a
+         * new one). A layer keeps its place counted from the bottom of its shelf; the rows of
+         * a removed shelf or layer map to null. Empty unless both racks have shelf layers.
+         */
+        fun shelfRowMap(old: Rack, new: Rack, origins: List<Int?>): Map<Int, Int?> {
+            if (!old.hasShelfLayers || !new.hasShelfLayers) return emptyMap()
+            val oldShelves = old.shelfRows
+            val newShelves = new.shelfRows
+            val map = mutableMapOf<Int, Int?>()
+            for (row in 0 until old.rows) map[row] = null
+            origins.forEachIndexed { shelf, origin ->
+                if (shelf !in newShelves.indices || origin == null || origin !in oldShelves.indices) return@forEachIndexed
+                val from = oldShelves[origin]
+                val to = newShelves[shelf]
+                // Layer 0 is the bottom one, the shelf's last row.
+                for (layer in 0 until minOf(from.count(), to.count())) map[from.last - layer] = to.last - layer
+            }
+            return map
+        }
+
+        /** A slot moved by a row map (see [Cellar.updateRack]); null when its row is gone. */
+        internal fun moved(slot: Slot, rowMap: Map<Int, Int?>): Slot? {
+            if (!rowMap.containsKey(slot.row)) return slot
+            return rowMap[slot.row]?.let { slot.copy(row = it) }
+        }
+
         fun rowLetters(index: Int): String {
             var n = index
             val letters = StringBuilder()
@@ -536,5 +567,23 @@ data class SavedSearch(
             colors = filter.colors.sortedBy { it.raw }, maturities = filter.maturities.sortedBy { it.raw },
             rackId = filter.rackId, tag = filter.tag, reservation = filter.reservation, grape = filter.grape,
         )
+    }
+}
+
+/**
+ * Searches by words: each word of the query must appear, ignoring case and accents, in
+ * one of the fields (not necessarily the same one). CaveKit does the same.
+ */
+object SearchText {
+    private val spaces = Regex("\\s+")
+
+    fun words(query: String): List<String> = query.split(spaces).filter { it.isNotEmpty() }
+
+    /** True for a blank query. */
+    fun matches(query: String, fields: List<String>): Boolean {
+        val words = words(query).map { Wine.fold(it) }
+        if (words.isEmpty()) return true
+        val folded = fields.map { Wine.fold(it) }
+        return words.all { word -> folded.any { it.contains(word) } }
     }
 }

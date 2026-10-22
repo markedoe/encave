@@ -120,15 +120,8 @@ struct WineFormSections: View {
             LabeledField("Producer", text: $draft.producer)
                 .fieldHelp("The estate, domaine or house that made the wine.")
                 .id(WineFormField.producer)
-            Picker("Vintage", selection: $draft.vintage) {
-                Text("Non-vintage").tag(Int?.none)
-                // From 1900: old vintages of port, Madeira or Bordeaux are still in cellars.
-                ForEach((1900...(currentYear + 1)).reversed(), id: \.self) { year in
-                    Text(verbatim: "\(year)").tag(Int?.some(year))
-                }
-            }
-            .fieldHelp("The harvest year on the label. Non-vintage for wines without a year.")
-            .id(WineFormField.vintage)
+            VintagePicker(vintage: $draft.vintage)
+                .id(WineFormField.vintage)
         } header: {
             Text("Wine")
         } footer: {
@@ -149,17 +142,8 @@ struct WineFormSections: View {
         }
 
         Section {
-            FlowLayout(spacing: 8) {
-                ForEach(WineColor.allCases, id: \.self) { color in
-                    ChoiceChip(title: color.title, isSelected: draft.color == color) {
-                        draft.color = draft.color == color ? nil : color
-                    } leading: {
-                        BottleEnd(color: color, size: 16)
-                    }
-                }
-            }
-            .padding(.vertical, 4)
-            .id(WineFormField.style)
+            StyleChips(color: $draft.color)
+                .id(WineFormField.style)
         } header: {
             Text("Style")
         } footer: {
@@ -267,6 +251,41 @@ struct WineFormSections: View {
     }
 }
 
+/// The vintage of a wine, or Non-vintage. Used by the wine form and the scan summary.
+struct VintagePicker: View {
+    @Binding var vintage: Int?
+    private let currentYear = CellarYear.current
+
+    var body: some View {
+        Picker("Vintage", selection: $vintage) {
+            Text("Non-vintage").tag(Int?.none)
+            // From 1900: old vintages of port, Madeira or Bordeaux are still in cellars.
+            ForEach((1900...(currentYear + 1)).reversed(), id: \.self) { year in
+                Text(verbatim: "\(year)").tag(Int?.some(year))
+            }
+        }
+        .fieldHelp("The harvest year on the label. Non-vintage for wines without a year.")
+    }
+}
+
+/// The style of a wine as chips, each with its color and its name. Tap again to clear it.
+struct StyleChips: View {
+    @Binding var color: WineColor?
+
+    var body: some View {
+        FlowLayout(spacing: 8) {
+            ForEach(WineColor.allCases, id: \.self) { option in
+                ChoiceChip(title: option.title, isSelected: color == option) {
+                    color = color == option ? nil : option
+                } leading: {
+                    BottleEnd(color: option, size: 16)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 /// Edit an existing wine.
 struct EditWineView: View {
     @Environment(CellarModel.self) private var model
@@ -275,6 +294,8 @@ struct EditWineView: View {
     /// The field to scroll to when the form opens.
     var field: WineFormField?
     @State private var draft = WineDraft()
+    /// The wine as it opened, to ask before discarding changes.
+    @State private var loadedDraft: WineDraft?
     @State private var searchingOnline = false
     @State private var loaded = false
     @State private var newPhoto: Data?
@@ -282,6 +303,11 @@ struct EditWineView: View {
     @State private var analyzing = false
     @State private var aiProblem: String?
     private let aiEnabled = AISettings.load().isEnabled
+
+    private var isDirty: Bool {
+        guard let loadedDraft else { return false }
+        return draft != loadedDraft || newPhoto != nil || photoRemoved
+    }
 
     /// A label photo for the AI: a new one, or the one kept with the wine.
     private var hasLabelPhoto: Bool {
@@ -326,8 +352,7 @@ struct EditWineView: View {
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .accessibilityIdentifier("sheet.cancel")
+                    DiscardChangesCancelButton(isDirty: isDirty) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
@@ -337,9 +362,12 @@ struct EditWineView: View {
             .onAppear {
                 guard !loaded, let wine = model.cellar.wines[wineID] else { return }
                 draft = WineDraft(wine)
+                loadedDraft = draft
                 loaded = true
             }
         }
+        // A swipe down would lose the changes: Cancel asks first.
+        .interactiveDismissDisabled(isDirty)
         .macSheetFrame()
     }
 

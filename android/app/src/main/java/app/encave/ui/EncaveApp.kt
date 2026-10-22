@@ -18,6 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalView
+import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -33,6 +35,8 @@ import androidx.navigation.toRoute
 import app.encave.MainActivity
 import app.encave.R
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.ui.add.AddBottleScreen
 import app.encave.ui.add.EditWineScreen
@@ -114,6 +118,10 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
             target == MainActivity.LINK_JOURNAL -> navigator.openTopLevel(TopLevel.Journal)
             target == MainActivity.LINK_SCAN -> navigator.open(AddBottleRoute(scan = true))
             target == MainActivity.LINK_ADD -> navigator.open(AddBottleRoute())
+            // A pairing QR code scanned with the camera app: Join, filled in.
+            MainActivity.pairing(target) != null -> MainActivity.pairing(target)?.let { (code, commitment) ->
+                navigator.open(JoinDeviceRoute(code, commitment))
+            }
             wineId != null && viewModel.cellar.value.wines.keys.any { it.toString().equals(wineId, ignoreCase = true) } ->
                 navigator.open(WineDetailRoute(wineId.lowercase()))
         }
@@ -123,17 +131,48 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { message ->
-            val result = snackbar.showSnackbar(
-                message = message.text.resolve(resources),
-                actionLabel = message.undo?.let { resources.getString(R.string.action_undo) },
-                withDismissAction = message.undo == null || message.persistent,
-                duration = when {
-                    message.persistent -> SnackbarDuration.Indefinite
-                    message.undo != null -> SnackbarDuration.Long
-                    else -> SnackbarDuration.Short
+            val slot = message.slot
+            // Replaced while it waited: the message that took its place follows.
+            if (slot != null && slot.replaced.value) {
+                slot.finished = true
+                return@collect
+            }
+            val show = suspend {
+                snackbar.showSnackbar(
+                    message = message.text.resolve(resources),
+                    actionLabel = message.actionLabel?.resolve(resources) ?: message.undo?.let { resources.getString(R.string.action_undo) },
+                    withDismissAction = message.undo == null || message.persistent || message.long,
+                    duration = when {
+                        message.persistent || message.long -> SnackbarDuration.Indefinite
+                        message.undo != null -> SnackbarDuration.Long
+                        else -> SnackbarDuration.Short
+                    },
+                )
+            }
+            // Replaced while shown: it goes away at once.
+            val watch = slot?.let { shown -> launch { shown.replaced.first { it }; snackbar.currentSnackbarData?.dismiss() } }
+            // A large change keeps its Undo longer than the standard long snackbar.
+            val result = if (message.long && !message.persistent) {
+                kotlinx.coroutines.withTimeoutOrNull(LONG_UNDO_MILLIS) { show() } ?: SnackbarResult.Dismissed
+            } else {
+                show()
+            }
+            watch?.cancel()
+            slot?.finished = true
+            if (result == SnackbarResult.ActionPerformed && slot?.replaced?.value != true) message.undo?.invoke()
+        }
+    }
+
+    // Drink, add, move, receive…: a confirmation felt as well as read (sensoryFeedback on Apple).
+    val view = LocalView.current
+    LaunchedEffect(viewModel, view) {
+        viewModel.haptics.collect { haptic ->
+            view.performHapticFeedback(
+                when (haptic) {
+                    Haptic.Confirm -> HapticFeedbackConstants.CONFIRM
+                    Haptic.Reject -> HapticFeedbackConstants.REJECT
                 },
             )
-            if (result == SnackbarResult.ActionPerformed) message.undo?.invoke()
         }
     }
 
@@ -198,13 +237,17 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 composable<SettingsRoute> { SettingsScreen(viewModel, navigator) }
                 composable<HelpRoute> { HelpScreen(navigator, it.toRoute<HelpRoute>().topic) }
                 composable<DevicesRoute> { DevicesScreen(navigator) }
+                composable<app.encave.ui.navigation.LicencesRoute> { app.encave.ui.settings.LicencesScreen(navigator) }
                 composable<app.encave.ui.navigation.PreviousVersionsRoute> {
                     app.encave.ui.settings.PreviousVersionsScreen(viewModel, navigator)
                 }
                 composable<app.encave.ui.navigation.RestoreRoute> { app.encave.ui.settings.RestorePreviewScreen(viewModel, navigator) }
                 composable<RemoteSyncRoute> { RemoteSyncScreen(navigator) }
                 composable<InviteDeviceRoute> { InviteDeviceScreen(navigator) }
-                composable<JoinDeviceRoute> { JoinDeviceScreen(viewModel, navigator) }
+                composable<JoinDeviceRoute> {
+                    val route = it.toRoute<JoinDeviceRoute>()
+                    JoinDeviceScreen(viewModel, navigator, route.code, route.commitment)
+                }
                 composable<DiscoveryEditorRoute> {
                     DiscoveryEditorScreen(viewModel, navigator, it.toRoute<DiscoveryEditorRoute>().discoveryId)
                 }
@@ -215,3 +258,6 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
         }
     }
 }
+
+/** How long the Undo of a large change (a deleted rack, bottles taken out) stays. */
+private const val LONG_UNDO_MILLIS = 20_000L

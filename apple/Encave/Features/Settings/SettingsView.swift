@@ -11,11 +11,13 @@ struct SettingsView: View {
     @State private var deletingUnreadable: URL?
     @State private var exportDocument: ExportDocument?
     @State private var importing = false
+    /// A backup the user picked is being read (a large archive takes a while).
+    @State private var readingBackup = false
     @State private var importMessage: String?
     @State private var restoreSource: RestoreSource?
     @State private var remindersOn = Reminders.isEnabled
     #if os(macOS)
-    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = true
+    @AppStorage(MenuBarSetting.key) private var showsMenuBarExtra = MenuBarSetting.defaultValue
     #endif
     @AppStorage(StudioPhoto.settingKey) private var studioPhotos = true
     @State private var remindersRefused = false
@@ -26,7 +28,8 @@ struct SettingsView: View {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "–"
         let build = info?["CFBundleVersion"] as? String ?? "–"
-        return "\(short) (\(build)) · " + String(localized: "Beta")
+        let number = "\(short) (\(build))"
+        return AppChannel.isBeta ? number + " · " + String(localized: "Beta") : number
     }
 
     private var remindersBinding: Binding<Bool> {
@@ -67,14 +70,20 @@ struct SettingsView: View {
                     DevicesView()
                 } label: {
                     LabeledContent {
-                        Text(devicesSummary)
+                        SyncHealthReader { health in
+                            if health.needsAttention {
+                                SyncHealthLabel(health: health)
+                            } else {
+                                Text(devicesSummary)
+                            }
+                        }
                     } label: {
                         Label("Devices", systemImage: "laptopcomputer.and.iphone")
                     }
                 }
                 .accessibilityIdentifier("settings.devices")
             } footer: {
-                Text("Sync your cellar with your iPhone, iPad and Mac, encrypted from end to end.")
+                Text("Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.")
             }
 
             Section {
@@ -82,6 +91,9 @@ struct SettingsView: View {
                     Label("Reminders", systemImage: "bell.badge")
                 }
                 .accessibilityIdentifier("settings.reminders")
+                if remindersRefused {
+                    NotificationSettingsButton()
+                }
             } footer: {
                 if remindersRefused {
                     Text("Notifications are off for Encave. Turn them on in the system settings.")
@@ -101,14 +113,6 @@ struct SettingsView: View {
             #endif
 
             Section {
-                Toggle(isOn: $studioPhotos) {
-                    Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
-                }
-            } footer: {
-                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
-            }
-
-            Section {
                 Picker("Currency", selection: currencyBinding) {
                     // The cellar's currency is always listed, even if set elsewhere (import, another device).
                     let current = model.cellar.settings.currency
@@ -118,9 +122,38 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Preferences")
+                Text("Cellar")
             } footer: {
                 Text("Used for new purchases. Prices already entered keep their currency.")
+            }
+
+            Section {
+                Toggle(isOn: $studioPhotos) {
+                    Label("Studio Look for Label Photos", systemImage: "wand.and.stars")
+                }
+            } header: {
+                Text("Display")
+            } footer: {
+                Text("Label photos are shown cut out and straightened on a clean background, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+            }
+
+            AISettingsSection()
+
+            WebSearchSettingsSection()
+
+            Section {
+                if model.sync.remoteStorage != nil {
+                    Label("Your cellar is kept on your devices, with an encrypted copy in the storage you chose for syncing away from home.",
+                          systemImage: "lock.shield")
+                } else if model.sync.otherDevices.isEmpty {
+                    Label("Your cellar is kept on this device.", systemImage: "lock.shield")
+                } else {
+                    Label("Your cellar is kept on your devices.", systemImage: "lock.shield")
+                }
+            } header: {
+                Text("Privacy")
+            } footer: {
+                Text("No account, no analytics, no advertising. Sync is encrypted from end to end: on the same Wi-Fi your devices connect directly, and away from home the storage you choose holds only encrypted files. If you turn them on, AI label recognition sends only the label photo to your AI service, and web search only the search terms to your search service.")
             }
 
             Section {
@@ -135,19 +168,28 @@ struct SettingsView: View {
                 } label: {
                     Label("Inventory for Printing (PDF)", systemImage: "doc.richtext")
                 }
-                .disabled(model.cellar.bottlesInCellar.isEmpty)
+                .disabled(model.bottlesInCellar.isEmpty)
                 Button {
                     importing = true
                 } label: {
-                    Label("Import…", systemImage: "square.and.arrow.down")
+                    if readingBackup {
+                        Label {
+                            Text("Reading the Backup…")
+                        } icon: {
+                            ProgressView()
+                        }
+                    } else {
+                        Label("Import…", systemImage: "square.and.arrow.down")
+                    }
                 }
+                .disabled(readingBackup)
             } header: {
                 Text("Your data")
             } footer: {
                 #if os(iOS)
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, iPhone or Android. The weekly one stays in Files › On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: iPhone, iPad, Mac or Android. The last two weekly backups stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.")
                 #else
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, Mac, iPhone or Android. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: Mac, iPhone, iPad or Android. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.")
                 #endif
             }
 
@@ -181,45 +223,42 @@ struct SettingsView: View {
                 }
             }
 
-            AISettingsSection()
-
-            WebSearchSettingsSection()
-
-            Section {
-                if model.sync.otherDevices.isEmpty {
-                    Label("Your cellar is stored only on this device.", systemImage: "lock.shield")
-                } else {
-                    Label("Your cellar is stored only on your devices.", systemImage: "lock.shield")
-                }
-            } header: {
-                Text("Privacy")
-            } footer: {
-                Text("Devices sync directly on your network, encrypted from end to end. No server ever sees your cellar.")
-            }
-
-            Section {
-                if model.canLoadSample {
+            if model.canLoadSample {
+                Section {
                     Button("Load sample cellar") { confirmingSample = true }
-                }
-                Button("Erase all data", role: .destructive) { confirmingErase = true }
-                    .disabled(model.cellar.isEmpty)
-            } header: {
-                Text("Test data")
-            } footer: {
-                if model.canLoadSample {
+                } header: {
+                    Text("Try Encave")
+                } footer: {
                     Text("The sample cellar is offered while your cellar is empty and no other device syncs with this one.")
                 }
             }
 
             Section {
+                Button("Erase all data", role: .destructive) { confirmingErase = true }
+                    .disabled(model.cellar.isEmpty)
+            } header: {
+                Text("Reset")
+            }
+
+            Section {
                 LabeledContent("Version", value: version)
-                Link(destination: URL(string: "https://github.com/markedoe/encave")!) {
+                Link(destination: ProjectLinks.privacyPolicy) {
+                    Label("Privacy Policy", systemImage: "hand.raised")
+                }
+                Link(destination: ProjectLinks.source) {
                     Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                NavigationLink {
+                    LicencesView()
+                } label: {
+                    Label("Licences", systemImage: "doc.text")
                 }
             } header: {
                 Text("About")
             } footer: {
-                Text("Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.")
+                if AppChannel.isBeta {
+                    Text("Encave is in beta: features can still change and some bugs remain. Make a backup from time to time.")
+                }
             }
         }
         .formStyle(.grouped)
@@ -249,7 +288,7 @@ struct SettingsView: View {
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Erase them later with Erase all data.")
+            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
         .confirmationDialog(
             "Delete this file?",
@@ -309,9 +348,13 @@ struct SettingsView: View {
         guard case .success(let url) = result else { return }
         // A backup (archive or JSON) is shown first, to add what is missing or replace the cellar.
         if ["zip", "json"].contains(url.pathExtension.lowercased()) {
+            readingBackup = true
             Task {
                 let accessing = url.startAccessingSecurityScopedResource()
-                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                defer {
+                    if accessing { url.stopAccessingSecurityScopedResource() }
+                    readingBackup = false
+                }
                 do {
                     restoreSource = try await BackupCenter.source(forFileAt: url)
                 } catch let error as ImportError {

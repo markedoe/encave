@@ -1,30 +1,45 @@
 import CaveKit
 import Foundation
 import Observation
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 /// Holds the cellar for the UI, persists every change and drives app-wide
 /// presentation (sheets, undo banner).
 @MainActor
 @Observable
 final class CellarModel {
-    private(set) var cellar = Cellar()
+    private(set) var cellar = Cellar() {
+        didSet {
+            cachedBottlesInCellar = nil
+            cachedOverview = nil
+        }
+    }
     var errorMessage: String?
-    /// The sheet shown above everything (add, drink, edit...).
-    var sheet: AppSheet?
     /// Short confirmation with an optional Undo, shown at the bottom.
     var toast: Toast?
     /// Bumped on successful actions, drives haptic feedback.
     var successCount = 0
+    /// Bumped when something is switched on or off (the shopping list), for a lighter haptic.
+    var selectionCount = 0
     /// Slot to highlight when jumping to a rack ("Show in rack").
     var highlightedSlot: Slot?
-    /// Selected tab, so other screens can jump between sections.
-    var selectedTab: AppTab = .cellar
     /// What the Journal shows; back to everything when a new entry would be hidden.
     var journalFilter: DiaryFilter = .all
     /// The Journal's tag chip; cleared, like the filter, when a new entry would be hidden.
     var journalTag: String?
+    /// The Cellar's search, filters and sort, shared by its list and its table.
+    var cellarFilter = CellarFilter()
+    var cellarSort: CellarSort = .name
 
     @ObservationIgnored private var store: any CellarStore = InMemoryCellarStore()
+    /// Saves off the main thread, coalescing changes made during a write.
+    @ObservationIgnored private var writer: CellarWriter?
+    /// Number of the newest change given to `writer`.
+    @ObservationIgnored private var generation = 0
     /// Sync with the user's other devices. Replaced when the cellar loads late (`reloadIfLoadFailed`).
     var sync: SyncService {
         _ = syncVersion
@@ -45,6 +60,8 @@ final class CellarModel {
 
     /// Previous versions, Back Up Now and the weekly archive.
     @ObservationIgnored let backups: BackupCenter
+    /// Spotlight's on-device index of the wines.
+    @ObservationIgnored private let spotlight = SpotlightIndex()
 
     /// `demo`: screen tour and previews, where sync never touches the network or files.
     /// `versions`: earlier versions of the cellar when the store keeps none (previews).
@@ -72,6 +89,7 @@ final class CellarModel {
             self.store = InMemoryCellarStore()
             storeToRetry = store as? JSONFileCellarStore
             errorMessage = String(localized: "Your cellar could not be loaded. Nothing is saved until Encave is opened again.")
+            startWriter()
             syncService = SyncService(model: self, demo: true)
             syncVersion += 1
             return
@@ -79,8 +97,9 @@ final class CellarModel {
         self.store = store
         storeToRetry = nil
         errorMessage = nil
+        startWriter()
         if let fileName = unreadableFile?.lastPathComponent {
-            errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.")
+            errorMessage = String(localized: "Your cellar file could not be read. It was kept as “\(fileName)” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Cellar files that could not be read.")
         }
         syncService = SyncService(model: self, demo: demo)
         syncVersion += 1
@@ -95,6 +114,7 @@ final class CellarModel {
         guard !loadFailed else { return }
         // An Undo would apply to the cellar now loaded.
         toast = nil
+        indexInSpotlight()
         #if os(iOS)
         sync.scheduleBackgroundSync()
         #endif
@@ -165,19 +185,72 @@ final class CellarModel {
     /// The app's model, for Siri and Shortcuts (App Intents) while the app runs.
     private(set) static weak var current: CellarModel?
 
-    /// A wine to show, asked by Spotlight, Shortcuts or a notification.
-    var openWineRequest: UUID?
+    // MARK: Windows
 
+    /// The router of the window used last (each window has its own, see `SceneRouter`).
+    @ObservationIgnored private weak var activeRouter: SceneRouter?
+    /// Asked while no window was open (Mac), or before the first one appeared at launch:
+    /// done by the next window that becomes active.
+    @ObservationIgnored private var pendingAction: SceneAction?
+
+    /// Shows something in the window used last, or in the next one to open. For requests
+    /// from outside a window (Spotlight, Shortcuts, notifications, the menu bar); screens
+    /// use their own window's router.
+    func request(_ action: SceneAction) {
+        if let activeRouter {
+            activeRouter.perform(action)
+        } else {
+            pendingAction = action
+        }
+    }
+
+    /// A window came to the front: requests go to it from now on.
+    func sceneBecameActive(_ router: SceneRouter) {
+        activeRouter = router
+        if let action = pendingAction {
+            pendingAction = nil
+            router.perform(action)
+        }
+    }
+
+    /// A window closed.
+    func sceneClosed(_ router: SceneRouter) {
+        if activeRouter === router { activeRouter = nil }
+    }
+
+    /// The sheet of the window used last. Screens use their window's router instead.
+    var sheet: AppSheet? {
+        get { activeRouter?.sheet }
+        set {
+            if let newValue { request(.present(newValue)) } else { activeRouter?.sheet = nil }
+        }
+    }
+
+    /// The section of the window used last. Screens use their window's router instead.
+    var selectedTab: AppTab {
+        get { activeRouter?.selectedTab ?? .cellar }
+        set { request(.show(newValue)) }
+    }
+
+    /// Asked by Spotlight, Shortcuts, a notification or the menu bar: shown in the window
+    /// used last once its sheet, if any, is closed (a form is never closed for it).
     func open(wine id: UUID) {
         guard cellar.wines[id] != nil else { return }
-        sheet = nil
-        selectedTab = .cellar
-        openWineRequest = id
+        request(.openWine(id))
     }
 
     static func live() -> CellarModel {
         let model = makeLive()
         current = model
+        model.indexInSpotlight()
+        #if os(iOS)
+        let quitting = UIApplication.willTerminateNotification
+        #elseif os(macOS)
+        let quitting = NSApplication.willTerminateNotification
+        #endif
+        _ = NotificationCenter.default.addObserver(forName: quitting, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.flushBeforeExit() }
+        }
         return model
     }
 
@@ -188,7 +261,7 @@ final class CellarModel {
             let model = preview()
             if let index = arguments.firstIndex(of: "--tab"), arguments.indices.contains(index + 1),
                let tab = AppTab(rawValue: arguments[index + 1]) {
-                model.selectedTab = tab
+                model.request(.show(tab))
             }
             return model
         }
@@ -219,18 +292,44 @@ final class CellarModel {
 
     var currentYear: Int { CellarYear.current }
 
-    /// Applies a change and saves it. On failure nothing changes and the error is shown.
+    @ObservationIgnored private var cachedBottlesInCellar: [Bottle]?
+    @ObservationIgnored private var cachedOverview: CellarOverview?
+
+    /// The cellar's bottles in the cellar, kept until the cellar changes (views read it often).
+    var bottlesInCellar: [Bottle] {
+        let cellar = self.cellar
+        if let cachedBottlesInCellar { return cachedBottlesInCellar }
+        let bottles = cellar.bottlesInCellar
+        cachedBottlesInCellar = bottles
+        return bottles
+    }
+
+    /// Figures and filter chip values of the Cellar screen, kept until the cellar or the
+    /// year changes. Its month by month figures are those of when it was worked out: the
+    /// Insights screen computes its own.
+    var overview: CellarOverview {
+        let cellar = self.cellar
+        let year = currentYear
+        if let cachedOverview, cachedOverview.year == year { return cachedOverview }
+        let overview = CellarOverview(cellar, year: year)
+        cachedOverview = overview
+        return overview
+    }
+
+    /// Applies a change and saves it. The change is checked here; an invalid one changes
+    /// nothing and the error is shown. The file is written in the background (`save`).
     @discardableResult
     func update(_ change: (inout Cellar) throws -> Void) -> Bool {
         var copy = cellar
         do {
             try change(&copy)
             guard copy != cellar else { return true }
-            try store.save(copy)
+            save(copy)
             let old = cellar
             cellar = copy
             if !undoing { dropStaleUndo() }
             onLocalChange?(old, copy)
+            indexInSpotlight()
             return true
         } catch let error as CellarError {
             errorMessage = error.localizedMessage
@@ -243,27 +342,121 @@ final class CellarModel {
     /// Replaces the cellar with the result of a sync. Not recorded as a local change.
     func applySynced(_ synced: Cellar) {
         guard synced != cellar else { return }
-        do {
-            try store.save(synced)
-            cellar = synced
-            dropStaleUndo()
-        } catch {
-            errorMessage = String(localized: "The change could not be saved.")
+        save(synced)
+        cellar = synced
+        dropStaleUndo()
+        indexInSpotlight()
+    }
+
+    // MARK: Saving
+
+    /// A writer for the store, starting from the cellar just loaded.
+    private func startWriter() {
+        generation += 1
+        writer = CellarWriter(store: store, saved: cellar, generation: generation) { [weak self] lastSaved, _ in
+            await self?.saveFailed(lastSaved: lastSaved) ?? .max
         }
+    }
+
+    /// Queues the cellar to be written; the newest one wins if several wait.
+    private func save(_ cellar: Cellar) {
+        generation += 1
+        let number = generation
+        guard let writer else { return }
+        Task { await writer.submit(cellar, generation: number) }
+    }
+
+    /// A write failed: the cellar goes back to what the file holds, and the error is shown.
+    /// Returns the newest change number, so changes sent before this are not written.
+    private func saveFailed(lastSaved: Cellar) -> Int {
+        errorMessage = String(localized: "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.")
+        if cellar != lastSaved {
+            cellar = lastSaved
+            // Every banner's Undo was about changes now gone.
+            toast?.undo?.cancel()
+            toast = nil
+        }
+        return generation
+    }
+
+    /// Writes what is still waiting, when the app goes to the background
+    /// (on iPhone and iPad, iOS is asked for the time it takes).
+    func flushSaves() {
+        guard let writer else { return }
+        let latest = cellar, number = generation
+        #if os(iOS)
+        let task = BackgroundTask(name: "Save cellar")
+        Task {
+            await writer.submit(latest, generation: number)
+            await writer.flush()
+            task.end()
+        }
+        #else
+        Task {
+            await writer.submit(latest, generation: number)
+            await writer.flush()
+        }
+        #endif
+    }
+
+    /// The app quits: waits a moment for the last write, as nothing runs afterwards.
+    func flushBeforeExit() {
+        guard let writer else { return }
+        let latest = cellar, number = generation
+        let done = DispatchSemaphore(value: 0)
+        Task.detached {
+            await writer.submit(latest, generation: number)
+            await writer.flush()
+            done.signal()
+        }
+        _ = done.wait(timeout: .now() + 3)
     }
 
     // MARK: - Actions with feedback
 
+    /// Adds bottles, with Undo. `discoveryID`: a wine of the shopping list, marked bought
+    /// in the same change (so the Undo takes both back).
     @discardableResult
-    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo) -> Bool {
-        let ok = update { try $0.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase) }
+    func addBottles(of wine: Wine, quantity: Int, slots: [Slot], purchase: PurchaseInfo, discoveryID: UUID? = nil) -> Bool {
+        let previousWine = cellar.wines[wine.id]
+        let previousDiscovery = discoveryID.flatMap { cellar.discoveries[$0] }
+        var added: [Bottle] = []
+        let ok = update { cellar in
+            added = try cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase)
+            if let discoveryID, cellar.discoveries[discoveryID] != nil { try cellar.markBought(discoveryID) }
+        }
         guard ok else { return false }
         successCount += 1
+        let bottleIDs = added.map(\.id)
+        let revert: (inout Cellar) -> Void = { cellar in
+            // A new wine left without bottles goes with them; a wine that was there
+            // gets back its record as it was (barcodes, photo, documents added here).
+            bottleIDs.forEach { cellar.deleteBottle($0) }
+            if let previousWine { cellar.wines[previousWine.id] = previousWine }
+            if let previousDiscovery { cellar.discoveries[previousDiscovery.id] = previousDiscovery }
+        }
         showToast(purchase.isOrdered
                   ? String(localized: "On order: \(quantity) × \(wine.displayName)")
-                  : String(localized: "Added \(quantity) × \(wine.displayName)"))
+                  : String(localized: "Added \(quantity) × \(wine.displayName)")) { [weak self] in
+            self?.update(revert)
+        }
+        if let toast {
+            lastAdd = AddBanner(toastID: toast.id, wineID: wine.id, quantity: quantity, isOrdered: purchase.isOrdered, revert: revert)
+        }
         return true
     }
+
+    /// The banner of the last add, so the AI completing that wine while it is still shown
+    /// takes its place with one Undo for both, instead of taking the add's Undo away.
+    private struct AddBanner {
+        var toastID: UUID
+        var wineID: UUID
+        var quantity: Int
+        var isOrdered: Bool
+        var revert: (inout Cellar) -> Void
+    }
+
+    @ObservationIgnored private var lastAdd: AddBanner?
 
     /// Keeps bottles for an occasion (or frees them with nil), with Undo.
     func reserve(_ bottleIDs: [UUID], for occasion: String?) {
@@ -309,7 +502,7 @@ final class CellarModel {
         guard update({ try $0.markGone(bottleID) }) else { return }
         showToast(bottle.status == .ordered
                   ? String(localized: "Order cancelled")
-                  : String(localized: "Bottle removed from the cellar")) { [weak self] in
+                  : String(localized: "Bottle removed from the cellar"), lasting: .afterChanges) { [weak self] in
             // Put the record back as it was (an order stays an order), in its
             // place if nothing took it meanwhile.
             self?.update { cellar in
@@ -320,13 +513,36 @@ final class CellarModel {
         }
     }
 
+    /// Deletes a wine with its bottles, tastings and wines tasted elsewhere. The Undo stays
+    /// longer, and after changes from sync: it puts back only these records.
     func deleteWine(_ wineID: UUID) {
-        let snapshot = cellar
         guard let wine = cellar.wines[wineID] else { return }
-        update { $0.deleteWine(wineID) }
-        showToast(String(localized: "Deleted \(wine.displayName)")) { [weak self] in
-            self?.update { $0 = snapshot }
+        let removed = records(ofWines: [wineID])
+        guard update({ $0.deleteWine(wineID) }) else { return }
+        showToast(String(localized: "Deleted \(wine.displayName)"), lasting: .long) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
         }
+    }
+
+    /// A bottle entered by mistake: its record goes (and the wine with its last one), with Undo.
+    func deleteBottle(_ bottleID: UUID) {
+        guard let bottle = cellar.bottles[bottleID] else { return }
+        var removed = Cellar()
+        removed.wines[bottle.wineID] = cellar.wines[bottle.wineID]
+        removed.bottles[bottleID] = bottle
+        guard update({ $0.deleteBottle(bottleID) }) else { return }
+        showToast(String(localized: "Bottle deleted"), lasting: .afterChanges) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
+        }
+    }
+
+    /// The records deleted with these wines, to put back with `merge`.
+    private func records(ofWines wineIDs: Set<UUID>) -> Cellar {
+        var removed = Cellar()
+        removed.wines = cellar.wines.filter { wineIDs.contains($0.key) }
+        removed.bottles = cellar.bottles.filter { wineIDs.contains($0.value.wineID) }
+        removed.discoveries = cellar.discoveries.filter { wineIDs.contains($0.value.wineID) }
+        return removed
     }
 
     // MARK: Several wines at once (one Undo for all)
@@ -361,28 +577,58 @@ final class CellarModel {
         }
     }
 
-    /// Bottles no longer in the cellar (given away, drunk elsewhere, broken).
+    /// Bottles no longer in the cellar (given away, sold, broken).
     func markGone(_ bottleIDs: Set<UUID>) {
-        let snapshot = cellar
+        let previous = bottleIDs.compactMap { cellar.bottles[$0] }
         guard update({ cellar in try bottleIDs.forEach { try cellar.markGone($0) } }) else { return }
-        showToast(String(localized: "Bottles removed from the cellar: \(bottleIDs.count)")) { [weak self] in
-            self?.update { $0 = snapshot }
+        showToast(String(localized: "Bottles removed from the cellar: \(bottleIDs.count)"),
+                  lasting: bottleIDs.count > 1 ? .long : .afterChanges) { [weak self] in
+            // The records as they were, in their places if nothing took them meanwhile.
+            self?.update { cellar in
+                for bottle in previous.sorted(by: { ($0.slot == nil ? 0 : 1) < ($1.slot == nil ? 0 : 1) }) {
+                    var restored = bottle
+                    if let slot = bottle.slot, let occupant = cellar.bottle(at: slot), occupant.id != bottle.id { restored.slot = nil }
+                    cellar.bottles[bottle.id] = restored
+                }
+            }
         }
     }
 
     func deleteWines(_ wineIDs: Set<UUID>) {
-        let snapshot = cellar
+        let removed = records(ofWines: wineIDs)
         guard update({ cellar in wineIDs.forEach { cellar.deleteWine($0) } }) else { return }
-        showToast(String(localized: "Wines deleted: \(wineIDs.count)")) { [weak self] in self?.update { $0 = snapshot } }
+        showToast(String(localized: "Wines deleted: \(wineIDs.count)"), lasting: .long) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
+        }
     }
 
     /// Deletes a rack, with Undo. Its bottles stay in the cellar without a place.
     func deleteRack(_ rackID: UUID) {
-        let snapshot = cellar
-        guard let rack = cellar.rack(rackID), update({ $0.removeRack(rackID) }) else { return }
+        guard let index = cellar.racks.firstIndex(where: { $0.id == rackID }) else { return }
+        let rack = cellar.racks[index]
+        let placed = bottlesInCellar.filter { $0.slot?.rackID == rackID }
+        guard update({ $0.removeRack(rackID) }) else { return }
         let rackName = rack.name
-        showToast(String(localized: "Deleted \(rackName)")) { [weak self] in
-            self?.update { $0 = snapshot }
+        // Only its own records come back, so the Undo can stay after other changes.
+        showToast(String(localized: "Deleted \(rackName)"), lasting: .long) { [weak self] in
+            self?.update { cellar in
+                guard cellar.rack(rackID) == nil else { return }
+                cellar.addRack(rack)
+                let last = cellar.racks.count - 1
+                if index < last { cellar.moveRacks(fromOffsets: IndexSet(integer: last), toOffset: index) }
+                CellarModel.putBack(placed, in: &cellar)
+            }
+        }
+    }
+
+    /// Bottles back in the places they had, when they are in the cellar without a place
+    /// and the place is free (the Undo of a change to a rack).
+    private static func putBack(_ bottles: [Bottle], in cellar: inout Cellar) {
+        for bottle in bottles {
+            guard let slot = bottle.slot, let now = cellar.bottles[bottle.id], now.status == .inCellar,
+                  now.slot == nil, cellar.bottle(at: slot) == nil, cellar.rack(slot.rackID)?.contains(slot) == true
+            else { continue }
+            cellar.bottles[bottle.id]?.slot = slot
         }
     }
 
@@ -411,6 +657,25 @@ final class CellarModel {
                   : String(localized: "Saved to your journal"))
     }
 
+    /// Puts a wine tasted elsewhere on the shopping list or takes it off, with Undo.
+    func toggleToBuy(_ id: UUID) {
+        guard let before = cellar.discoveries[id] else { return }
+        guard update({ cellar in
+            cellar.discoveries[id]?.wantsToBuy.toggle()
+            if cellar.discoveries[id]?.wantsToBuy == true { cellar.discoveries[id]?.boughtAt = nil }
+        }) else { return }
+        selectionCount += 1
+        showToast(before.wantsToBuy
+                  ? String(localized: "Removed from your shopping list")
+                  : String(localized: "Added to your shopping list")) { [weak self] in
+            self?.update { cellar in
+                guard cellar.discoveries[id] != nil else { return }
+                cellar.discoveries[id]?.wantsToBuy = before.wantsToBuy
+                cellar.discoveries[id]?.boughtAt = before.boughtAt
+            }
+        }
+    }
+
     func deleteDiscovery(_ id: UUID) {
         let snapshot = cellar
         guard update({ $0.deleteDiscovery(id) }) else { return }
@@ -425,12 +690,72 @@ final class CellarModel {
         sheet = .addBottle(AddBottleContext(wine: wine, discoveryID: discovery.id))
     }
 
-    func move(_ bottleID: UUID, to slot: Slot?) {
-        if update({ try $0.move(bottleID, to: slot) }) { successCount += 1 }
+    /// Moves a bottle to a place, with Undo back to where it was.
+    func move(_ bottleID: UUID, to slot: Slot) {
+        guard let before = cellar.bottles[bottleID], update({ try $0.move(bottleID, to: slot) }) else { return }
+        successCount += 1
+        guard let rack = cellar.rack(slot.rackID) else { return }
+        let rackName = rack.name
+        let place = rack.displayLabel(for: slot)
+        showToast(String(localized: "Moved to \(rackName) · \(place)"), lasting: .afterChanges) { [weak self] in self?.moveBack(before) }
     }
 
+    /// Takes a bottle out of the racks, noting where it is now, with Undo back to its place.
+    func takeOutOfRack(_ bottleID: UUID, note: String?) {
+        guard let before = cellar.bottles[bottleID] else { return }
+        let ok = update { cellar in
+            try cellar.move(bottleID, to: nil)
+            if var updated = cellar.bottles[bottleID] {
+                updated.storageNote = note
+                try cellar.updateBottle(updated)
+            }
+        }
+        guard ok, before.slot != nil else { return }
+        successCount += 1
+        showToast(String(localized: "Bottle taken out of the rack"), lasting: .afterChanges) { [weak self] in self?.moveBack(before) }
+    }
+
+    /// Puts a bottle back in the place and with the note it had (the Undo of a move).
+    private func moveBack(_ before: Bottle) {
+        update { cellar in
+            guard var bottle = cellar.bottles[before.id], bottle.status == .inCellar else { return }
+            bottle.slot = before.slot
+            bottle.storageNote = before.storageNote
+            try cellar.updateBottle(bottle)
+        }
+    }
+
+    /// Swaps the bottles of two places, with Undo (swapping them again).
     func swap(_ a: Slot, _ b: Slot) {
-        if update({ try $0.swap(a, b) }) { successCount += 1 }
+        guard update({ try $0.swap(a, b) }) else { return }
+        successCount += 1
+        showToast(String(localized: "Bottles swapped"), lasting: .afterChanges) { [weak self] in
+            self?.update { try $0.swap(a, b) }
+        }
+    }
+
+    /// Saves an edited rack, moving its bottles by `rowMap`. Bottles whose place is gone
+    /// are taken out (the person agreed first), with a longer Undo.
+    @discardableResult
+    func updateRack(_ rack: Rack, rowMap: [Int: Int?], takingOut count: Int) -> Bool {
+        let old = cellar.rack(rack.id)
+        let inRack = bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
+        if count > 0, let old {
+            // Only this rack and its bottles come back, so the Undo can stay after other changes.
+            showToast(String(localized: "Bottles taken out of their places: \(count)"), lasting: .long) { [weak self] in
+                self?.update { cellar in
+                    guard cellar.rack(old.id) != nil else { return }
+                    // Out of their places first, so the rack can take its old shape, then back in.
+                    for bottle in inRack where cellar.bottles[bottle.id]?.status == .inCellar {
+                        cellar.bottles[bottle.id]?.slot = nil
+                    }
+                    try cellar.updateRack(old, takingOut: true)
+                    CellarModel.putBack(inRack, in: &cellar)
+                }
+            }
+        }
+        return true
     }
 
     /// Windows in the foreground: sync pauses only when the last one goes to the background.
@@ -446,21 +771,42 @@ final class CellarModel {
     func sceneDidEnterBackground() {
         activeScenes = max(0, activeScenes - 1)
         guard activeScenes == 0 else { return }
+        flushSaves()
         sync.pause()
         #if os(iOS)
         sync.scheduleBackgroundSync()
         #endif
+        spotlight.flush()
     }
 
+    /// Spotlight follows the cellar, a while after the last change; never for the sample
+    /// cellar of the screen tour, nor for a cellar that could not be loaded.
+    private func indexInSpotlight() {
+        guard !sync.isDemo, !loadFailed else { return }
+        spotlight.schedule(cellar)
+    }
+
+    /// Racks in the window used last. Screens use their window's router instead.
     func showInRack(_ bottle: Bottle) {
-        guard let slot = bottle.slot else { return }
-        highlightedSlot = slot
-        selectedTab = .racks
+        activeRouter?.showInRack(bottle, model: self)
     }
 
     /// The sample cellar replaces everything, so it is offered only for an empty cellar
-    /// that no other device syncs with.
-    var canLoadSample: Bool { cellar.isEmpty && sync.otherDevices.isEmpty }
+    /// that no other device syncs with, and only in beta builds (AppChannel).
+    var canLoadSample: Bool { AppChannel.isBeta && cellar.isEmpty && sync.otherDevices.isEmpty }
+
+    /// Records of the sample cellar are still here: the Cellar offers to remove them
+    /// (not in the screen tour, whose cellar is the sample).
+    var showsSampleBanner: Bool { !sync.isDemo && cellar.containsSample }
+
+    /// Removes the sample's racks, wines, bottles and Journal entries, and only them, with Undo.
+    func removeSample() {
+        let snapshot = cellar
+        guard snapshot.containsSample, update({ $0 = $0.removingSample() }) else { return }
+        showToast(String(localized: "Sample cellar removed")) { [weak self] in
+            self?.update { $0 = snapshot }
+        }
+    }
 
     func loadSample() {
         guard canLoadSample else { return }
@@ -468,8 +814,9 @@ final class CellarModel {
         var sample = SampleData.cellar(labels: .localized)
         sample.settings = snapshot.settings
         guard update({ $0 = sample }) else { return }
+        // Undo takes only the sample away, whatever was added meanwhile.
         showToast(String(localized: "Sample cellar loaded")) { [weak self] in
-            self?.update { $0 = snapshot }
+            self?.update { $0 = $0.removingSample() }
         }
     }
 
@@ -493,23 +840,45 @@ final class CellarModel {
         }
         take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
         take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
-        guard updated != live, update({ try $0.updateWine(updated) }) else { return }
+        guard updated != live else { return }
+        // The bottles' "Added" banner still shown: one banner, whose Undo takes both back.
+        let shownAdd = lastAdd.flatMap { $0.wineID == id && toast?.id == $0.toastID && toast?.undo != nil ? $0 : nil }
+        // Its own change keeps that banner, which the new one replaces just below.
+        if shownAdd != nil { undoing = true }
+        let saved = update { try $0.updateWine(updated) }
+        undoing = false
+        guard saved else { return }
         let completed = updated
-        showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
+        let revert: (inout Cellar) -> Void = { cellar in
+            guard var wine = cellar.wines[id] else { return }
+            func restore<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
+                if wine[keyPath: field] == completed[keyPath: field] { wine[keyPath: field] = live[keyPath: field] }
+            }
+            restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
+            restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
+            cellar.wines[id] = wine
+        }
+        guard let add = shownAdd else {
+            showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
+                self?.update(revert)
+            }
+            return
+        }
+        lastAdd = nil
+        toast?.undo?.cancel()
+        let name = completed.displayName
+        showToast(add.isOrdered
+                  ? String(localized: "On order: \(add.quantity) × \(name), details completed by AI")
+                  : String(localized: "Added \(add.quantity) × \(name), details completed by AI")) { [weak self] in
             self?.update { cellar in
-                guard var wine = cellar.wines[id] else { return }
-                func restore<Value: Equatable>(_ field: WritableKeyPath<Wine, Value>) {
-                    if wine[keyPath: field] == completed[keyPath: field] { wine[keyPath: field] = live[keyPath: field] }
-                }
-                restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
-                restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
-                try cellar.updateWine(wine)
+                revert(&cellar)
+                add.revert(&cellar)
             }
         }
     }
 
-    func showToast(_ message: String, undo: (@MainActor () -> Void)? = nil) {
-        var toast = Toast(message: message)
+    func showToast(_ message: String, lasting: Toast.Lasting = .standard, undo: (@MainActor () -> Void)? = nil) {
+        var toast = Toast(message: message, lasting: lasting)
         if let undo {
             let id = toast.id
             toast.undo = ToastUndo { [weak self] in
@@ -527,8 +896,9 @@ final class CellarModel {
 
     /// Some undos put back a whole earlier cellar: once anything else has changed
     /// (here or by sync), the banner and its Undo go away so nothing newer is lost.
+    /// Undos that put back only their own records (`.long`, `.afterChanges`) stay.
     private func dropStaleUndo() {
-        guard let undo = toast?.undo else { return }
+        guard let current = toast, let undo = current.undo, current.lasting == .standard else { return }
         undo.cancel()
         toast = nil
     }
@@ -557,6 +927,8 @@ enum AppSheet: Identifiable {
     /// A backup or an earlier version, previewed before restoring it.
     case restore(RestoreSource)
     case settings
+    /// Join a cellar with a pairing code from a link (the QR code scanned with the camera).
+    case joinDevice(code: String, commitment: Data?)
 
     var id: String {
         switch self {
@@ -571,6 +943,7 @@ enum AppSheet: Identifiable {
         case .bottleDocuments(let id, _): "documents-\(id)"
         case .restore(let source): "restore-\(source.id)"
         case .settings: "settings"
+        case .joinDevice(let code, _): "join-\(code)"
         }
     }
 }
@@ -582,12 +955,32 @@ struct AddBottleContext: Identifiable {
     var slot: Slot?
     /// Set when buying a wine from the shopping list: it leaves the list once added.
     var discoveryID: UUID?
+    /// Opens on the label scanner when the device has one (Cancel leaves the form).
+    var scan = false
 }
 
 struct Toast: Identifiable {
     let id = UUID()
     var message: String
+    var lasting: Lasting = .standard
     var undo: ToastUndo?
+
+    enum Lasting {
+        /// A few seconds; gone as soon as anything else changes (its Undo may restore a whole cellar).
+        case standard
+        /// Stays after other changes, here or from sync: its Undo puts back only its own records.
+        case afterChanges
+        /// Like `afterChanges`, and on screen longer: a large deletion.
+        case long
+    }
+
+    /// Seconds on screen, longer with VoiceOver to leave time to reach Undo.
+    func seconds(voiceOver: Bool) -> Int {
+        switch lasting {
+        case .standard, .afterChanges: voiceOver ? 12 : 5
+        case .long: voiceOver ? 20 : 10
+        }
+    }
 }
 
 /// The Undo of a banner. It runs at most once, whether from the banner's button
@@ -611,12 +1004,32 @@ final class ToastUndo: NSObject {
     }
 }
 
+#if os(iOS)
+/// Time iOS gives the app to finish a task after it goes to the background.
+@MainActor
+private final class BackgroundTask {
+    private var id = UIBackgroundTaskIdentifier.invalid
+
+    init(name: String) {
+        id = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self] in
+            MainActor.assumeIsolated { self?.end() }
+        }
+    }
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
+    }
+}
+#endif
+
 extension CellarError {
     var localizedMessage: String {
         switch self {
-        case .slotTaken: String(localized: "That position is already taken.")
-        case .slotOutOfRange: String(localized: "That position is outside the rack.")
-        case .rackNotEmpty: String(localized: "Move the bottles out of the removed rows or columns first.")
+        case .slotTaken: String(localized: "That place is already taken.")
+        case .slotOutOfRange: String(localized: "That place is outside the rack.")
+        case .rackNotEmpty: String(localized: "Some bottles are in places you removed.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
         case .notReceived: String(localized: "This bottle is on order: mark it received first.")
         case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")

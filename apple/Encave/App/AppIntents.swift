@@ -22,7 +22,11 @@ enum CellarAccess {
 
     /// "Main rack · B3", or the storage note.
     static func location(of bottle: Bottle, in cellar: Cellar) -> String? {
-        cellar.locationLabel(for: bottle)
+        // The place as the app shows it ("Main rack · B3, back").
+        if let slot = bottle.slot, let rack = cellar.rack(slot.rackID) {
+            return "\(rack.name) · \(rack.displayLabel(for: slot))"
+        }
+        return cellar.locationLabel(for: bottle)
     }
 }
 
@@ -228,8 +232,8 @@ struct AddBottleIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        CellarModel.current?.selectedTab = .cellar
-        CellarModel.current?.sheet = .addBottle(AddBottleContext())
+        // On the label scanner where there is one: the fastest way to add a bottle.
+        CellarModel.current?.request(.present(.addBottle(AddBottleContext(scan: true))))
         return .result()
     }
 }
@@ -268,18 +272,72 @@ struct EncaveShortcuts: AppShortcutsProvider {
     }
 }
 
-/// Keeps Spotlight's on-device index of wines in step with the cellar.
-enum SpotlightIndex {
-    @MainActor
-    static func update(_ cellar: Cellar) async {
-        let entities = cellar.groups().map { WineEntity($0, cellar: cellar) }
-        let index = CSSearchableIndex.default()
-        try? await index.deleteAppEntities(ofType: WineEntity.self)
-        try? await index.indexAppEntities(entities)
-        EncaveShortcuts.updateAppShortcutParameters()
+/// Keeps Spotlight's on-device index of wines in step with the cellar. A while after the
+/// last change (or when the app goes to the background), only the wines whose indexed
+/// content changed are indexed again, and removed wines are deleted from the index. The
+/// first time after launch the index is rebuilt from scratch.
+@MainActor
+final class SpotlightIndex {
+    private static let delay: Duration = .seconds(10)
+
+    /// What the index holds, as far as this launch knows.
+    private var snapshot = SearchIndexSnapshot()
+    /// The cellar to index once the changes pause.
+    private var pending: Cellar?
+    private var debounce: Task<Void, Never>?
+    /// The indexing in progress: the next one waits for it.
+    private var running: Task<Void, Never>?
+
+    nonisolated init() {}
+
+    /// The cellar changed: it is indexed after a pause in the changes.
+    func schedule(_ cellar: Cellar) {
+        pending = cellar
+        debounce?.cancel()
+        debounce = Task { [weak self] in
+            try? await Task.sleep(for: Self.delay)
+            guard !Task.isCancelled else { return }
+            self?.flush()
+        }
     }
 
-    static func clear() async {
-        try? await CSSearchableIndex.default().deleteAppEntities(ofType: WineEntity.self)
+    /// Indexes the pending change now.
+    func flush() {
+        debounce?.cancel()
+        debounce = nil
+        guard let cellar = pending else { return }
+        pending = nil
+        let previous = running
+        running = Task { [weak self] in
+            await previous?.value
+            await self?.index(cellar)
+        }
+    }
+
+    private func index(_ cellar: Cellar) async {
+        let entities = cellar.groups().map { WineEntity($0, cellar: cellar) }
+        var content: [UUID: SearchIndexSnapshot.Entry] = [:]
+        for entity in entities {
+            content[entity.id] = SearchIndexSnapshot.Entry(name: entity.name, detail: entity.detail)
+        }
+        let changes = snapshot.changes(to: content)
+        guard !changes.isEmpty else { return }
+        let index = CSSearchableIndex.default()
+        do {
+            if changes.isFullReindex {
+                try await index.deleteAppEntities(ofType: WineEntity.self)
+            } else if !changes.toRemove.isEmpty {
+                try await index.deleteAppEntities(identifiedBy: changes.toRemove, ofType: WineEntity.self)
+            }
+            let wanted = Set(changes.toIndex)
+            let changed = entities.filter { wanted.contains($0.id) }
+            if !changed.isEmpty { try await index.indexAppEntities(changed) }
+            snapshot.record(content)
+        } catch {
+            // Rebuilt from scratch the next time.
+            snapshot.invalidate()
+        }
+        // Siri phrases with a wine ("Where is Chablis in Encave?").
+        if changes.namesChanged { EncaveShortcuts.updateAppShortcutParameters() }
     }
 }

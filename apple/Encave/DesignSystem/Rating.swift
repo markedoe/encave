@@ -19,6 +19,7 @@ struct RatingView: View {
 }
 
 /// Large tappable stars. Tapping the current value clears it.
+/// For VoiceOver, one adjustable "Rating": swipe up or down to change it.
 struct RatingPicker: View {
     @Binding var rating: Int?
 
@@ -35,10 +36,18 @@ struct RatingPicker: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("\(index) stars"))
-                .accessibilityAddTraits(index == rating ? .isSelected : [])
             }
         }
         .sensoryFeedback(.selection, trigger: rating)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Rating"))
+        .accessibilityValue(rating.map { Text("\($0) stars") } ?? Text("No rating"))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: rating = min(5, (rating ?? 0) + 1)
+            case .decrement: rating = (rating ?? 0) <= 1 ? nil : (rating ?? 1) - 1
+            @unknown default: break
+            }
+        }
     }
 }

@@ -5,16 +5,28 @@ import SwiftUI
 /// The cellar in figures and charts.
 struct InsightsView: View {
     @Environment(CellarModel.self) private var model
+    /// One country bar, taller with larger text so its label is not clipped.
+    @ScaledMetric(relativeTo: .body) private var countryRowHeight: CGFloat = 34
 
     var body: some View {
         let stats = model.cellar.statistics(year: model.currentYear)
+        if stats.bottleCount == 0, stats.consumedCount == 0, model.cellar.discoveries.isEmpty {
+            ContentUnavailableView("No figures yet", systemImage: "chart.pie",
+                                   description: Text("Add bottles to see insights."))
+                .navigationTitle("Insights")
+        } else {
+            figures(stats)
+        }
+    }
+
+    private func figures(_ stats: CellarStatistics) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 YearInWineCard()
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
-                    StatTile(value: "\(stats.bottleCount)", caption: "bottles in the cellar", systemImage: "wineglass")
-                    StatTile(value: "\(stats.wineCount)", caption: "different wines", systemImage: "list.bullet")
-                    StatTile(value: "\(stats.consumedCount)", caption: "bottles opened", systemImage: "book.closed")
+                    StatTile(count: stats.bottleCount, caption: .count("bottles in the cellar", stats.bottleCount), systemImage: "wineglass")
+                    StatTile(count: stats.wineCount, caption: .count("different wines", stats.wineCount), systemImage: "list.bullet")
+                    StatTile(count: stats.consumedCount, caption: .count("bottles opened", stats.consumedCount), systemImage: "book.closed")
                     StatTile(value: stats.averageRating.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "–",
                              caption: "average rating", systemImage: "star")
                     ForEach(stats.valueByCurrency.keys.sorted(), id: \.self) { currency in
@@ -35,7 +47,9 @@ struct InsightsView: View {
                         Chart(stats.byColor) { slice in
                             SectorMark(angle: .value("Bottles", slice.count), innerRadius: .ratio(0.6), angularInset: 1.5)
                                 .cornerRadius(4)
-                                .foregroundStyle(slice.color?.tint ?? .gray)
+                                .foregroundStyle(slice.color?.tint ?? Color.secondary.opacity(0.3))
+                                .accessibilityLabel(slice.color.map { Text($0.title) } ?? Text("Unknown"))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
                         }
                         .frame(height: 200)
                         FlowLayout(spacing: 12) {
@@ -43,9 +57,38 @@ struct InsightsView: View {
                                 HStack(spacing: 5) {
                                     BottleEnd(color: slice.color, size: 12)
                                     if let color = slice.color { Text(color.title) } else { Text("Unknown") }
-                                    Text(verbatim: "\(slice.count)").foregroundStyle(.secondary).monospacedDigit()
+                                    Text(verbatim: slice.count.formatted()).foregroundStyle(.secondary).monospacedDigit()
                                 }
                                 .font(.footnote)
+                                // The chart above already reads each style to VoiceOver.
+                                .accessibilityHidden(true)
+                            }
+                        }
+                    }
+                }
+
+                let maturities: [(maturity: Maturity, count: Int)] = Maturity.allCases.sorted().compactMap { maturity in
+                    guard let count = stats.byMaturity[maturity], count > 0 else { return nil }
+                    return (maturity, count)
+                }
+                if !maturities.isEmpty {
+                    ChartCard(title: "By maturity") {
+                        let largest = Double(maturities.map(\.count).max() ?? 1)
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(maturities, id: \.maturity) { item in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        // The icon and the words, not only the color.
+                                        MaturityLabel(maturity: item.maturity)
+                                        Spacer()
+                                        Text(verbatim: "\(item.count)").monospacedDigit().foregroundStyle(.secondary)
+                                    }
+                                    .font(.subheadline)
+                                    ProgressView(value: Double(item.count), total: largest)
+                                        .tint(item.maturity.tint)
+                                        .accessibilityHidden(true)
+                                }
+                                .accessibilityElement(children: .combine)
                             }
                         }
                     }
@@ -58,11 +101,28 @@ struct InsightsView: View {
                                 .foregroundStyle(Color.accentColor.gradient)
                                 .cornerRadius(4)
                                 .annotation(position: .trailing) {
+                                    Text(verbatim: slice.count.formatted()).font(.caption).foregroundStyle(.secondary)
+                                }
+                                .accessibilityLabel(Text(verbatim: slice.label))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
+                        }
+                        .chartXAxis(.hidden)
+                        .frame(height: CGFloat(min(8, stats.byCountry.count)) * countryRowHeight + 10)
+                    }
+                }
+
+                if !stats.byRegion.isEmpty {
+                    ChartCard(title: "By region") {
+                        Chart(stats.byRegion.prefix(8)) { slice in
+                            BarMark(x: .value("Bottles", slice.count), y: .value("Region", slice.label))
+                                .foregroundStyle(Color.accentColor.gradient)
+                                .cornerRadius(4)
+                                .annotation(position: .trailing) {
                                     Text(verbatim: "\(slice.count)").font(.caption).foregroundStyle(.secondary)
                                 }
                         }
                         .chartXAxis(.hidden)
-                        .frame(height: CGFloat(min(8, stats.byCountry.count)) * 34 + 10)
+                        .frame(height: CGFloat(min(8, stats.byRegion.count)) * 34 + 10)
                     }
                 }
 
@@ -72,6 +132,8 @@ struct InsightsView: View {
                             BarMark(x: .value("Decade", Self.decadeName(slice.label)), y: .value("Bottles", slice.count))
                                 .foregroundStyle(Color.accentColor.gradient)
                                 .cornerRadius(4)
+                                .accessibilityLabel(Text(verbatim: Self.decadeName(slice.label)))
+                                .accessibilityValue(Text("\(slice.count) bottles"))
                         }
                         .frame(height: 180)
                     }
@@ -82,6 +144,8 @@ struct InsightsView: View {
                         BarMark(x: .value("Month", month.month, unit: .month), y: .value("Bottles", month.count))
                             .foregroundStyle(Color.accentColor.gradient)
                             .cornerRadius(3)
+                            .accessibilityLabel(Text(month.month, format: .dateTime.month(.wide).year()))
+                            .accessibilityValue(Text("\(month.count) bottles"))
                     }
                     .chartXAxis {
                         AxisMarks(values: .stride(by: .month, count: 2)) { _ in
@@ -166,9 +230,12 @@ private struct DrinkDownCard: View {
                 }
                 .accessibilityElement(children: .combine)
                 if plan.pastPeak > 0 {
-                    Label("Past their peak: \(plan.pastPeak)", systemImage: Maturity.pastPeak.systemImage)
-                        .font(.subheadline)
-                        .foregroundStyle(Maturity.pastPeak.tint)
+                    Label {
+                        Text("Past their peak: \(plan.pastPeak)")
+                    } icon: {
+                        Image(systemName: Maturity.pastPeak.systemImage).foregroundStyle(Maturity.pastPeak.tint)
+                    }
+                    .font(.subheadline)
                 }
                 if plan.years.count > 1 || plan.years.first?.leaving ?? 0 > 0 {
                     Text("Windows ending each year")
@@ -177,6 +244,8 @@ private struct DrinkDownCard: View {
                         BarMark(x: .value("Year", String(item.year)), y: .value("Bottles", item.leaving))
                             .foregroundStyle(Color.accentColor.gradient)
                             .cornerRadius(3)
+                            .accessibilityLabel(Text(verbatim: String(item.year)))
+                            .accessibilityValue(Text("\(item.leaving) bottles"))
                     }
                     .frame(height: 160)
                     .accessibilityIdentifier("insights.drinkdown")
@@ -288,10 +357,10 @@ private struct YearInWineFacts: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 18) {
-                figure("\(recap.bottlesOpened)", caption: "bottles opened")
-                figure("\(recap.differentWines)", caption: "different wines")
+                figure(recap.bottlesOpened, caption: .count("bottles opened", recap.bottlesOpened))
+                figure(recap.differentWines, caption: .count("different wines", recap.differentWines))
                 if recap.discoveries > 0 {
-                    figure("\(recap.discoveries)", caption: "tasted elsewhere")
+                    figure(recap.discoveries, caption: .count("tasted elsewhere", recap.discoveries))
                 }
             }
             VStack(alignment: .leading, spacing: 8) {
@@ -305,7 +374,8 @@ private struct YearInWineFacts: View {
                 if let styleName = recap.topColor?.name {
                     fact("wineglass", Text("Most opened style: \(styleName)"))
                 }
-                if let occasionName = recap.topOccasion {
+                if let occasion = recap.topOccasion {
+                    let occasionName = Occasion.displayName(occasion)
                     fact("person.2", Text("Favorite occasion: \(occasionName)"))
                 }
                 if let month = recap.busiestMonth {
@@ -317,10 +387,10 @@ private struct YearInWineFacts: View {
         }
     }
 
-    private func figure(_ value: String, caption: LocalizedStringKey) -> some View {
+    private func figure(_ value: Int, caption: CountCaption) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: value).font(.title.weight(.semibold).monospacedDigit())
-            Text(caption).font(.footnote).foregroundStyle(.secondary)
+            Text(verbatim: value.formatted()).font(.title.weight(.semibold).monospacedDigit())
+            Text(caption.key).font(.footnote).foregroundStyle(.secondary)
         }
     }
 

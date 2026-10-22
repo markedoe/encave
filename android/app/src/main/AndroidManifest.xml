@@ -38,7 +38,8 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- encave://wine/<id>, encave://tonight, encave://scan and encave://add: reminders, shortcuts, widgets, links. -->
+            <!-- encave://wine/<id>, encave://tonight, encave://scan and encave://add: reminders, shortcuts, widgets, links;
+                 encave://pair?code=…: the pairing QR code, scanned with the camera app. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

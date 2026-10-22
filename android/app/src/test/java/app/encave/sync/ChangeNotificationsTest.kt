@@ -42,7 +42,7 @@ class ChangeNotificationsTest {
         assertEquals("Updated from Marc’s phone", ChangeNotifications.updated(resources, summary, membership))
         val several = CellarChangeSummary(removed = 1, winesAdded = 1, other = 2, devices = setOf(marc, UUID.randomUUID()))
         assertEquals("From your other devices", ChangeNotifications.title(resources, several, membership))
-        assertEquals("1 bottle removed, 1 wine added, 2 other changes.", ChangeNotifications.body(resources, several))
+        assertEquals("1 bottle removed, 1 wine added to the shopping list, 2 other changes.", ChangeNotifications.body(resources, several))
         assertEquals(MainActivity.LINK_CELLAR, ChangeNotifications.link(several))
         assertEquals(MainActivity.LINK_JOURNAL, ChangeNotifications.link(CellarChangeSummary(opened = 1)))
     }

@@ -302,3 +302,24 @@ public struct SyncStateFile: Sendable {
         try? FileManager.default.removeItem(at: fileURL)
     }
 }
+
+extension CellarMerge {
+    /// What a device that joined a cellar with Replace sends until the other device's
+    /// cellar has arrived: only the objects changed on it since it joined (those with a
+    /// stamp, the stamps having been reset when it joined), with the wines and racks they
+    /// use, and the settings. Its own bottles are never sent, and are replaced only once
+    /// the other cellar is taken in (docs/SYNC.md §5).
+    public static func onlyStamped(_ cellar: Cellar, by state: SyncState) -> Cellar {
+        func stamped(_ kind: SyncKey.Kind, _ id: UUID) -> Bool { state.stamps[SyncKey(kind, id).string] != nil }
+        let bottles = cellar.bottles.values.filter { stamped(.bottle, $0.id) }
+        let discoveries = cellar.discoveries.values.filter { stamped(.discovery, $0.id) }
+        let usedWines = Set(bottles.map(\.wineID)).union(discoveries.map(\.wineID))
+        let wines = cellar.wines.values.filter { stamped(.wine, $0.id) || usedWines.contains($0.id) }
+        let usedRacks = Set(bottles.compactMap(\.slot?.rackID))
+        let racks = cellar.racks.filter { stamped(.rack, $0.id) || usedRacks.contains($0.id) }
+        var result = Cellar(wines: Array(wines), bottles: Array(bottles), racks: racks, settings: cellar.settings,
+                            discoveries: Array(discoveries))
+        result.schemaVersion = cellar.schemaVersion
+        return result
+    }
+}

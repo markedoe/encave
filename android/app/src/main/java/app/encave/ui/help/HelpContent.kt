@@ -1,5 +1,6 @@
 package app.encave.ui.help
 
+import app.encave.BuildConfig
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircleOutline
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.EventRepeat
 import androidx.compose.material.icons.outlined.Restore
@@ -42,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import app.encave.R
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.Home
 
 /**
  * Topics of the in-app help, the same as on Apple. The keyboard-shortcuts topic is
@@ -63,8 +66,9 @@ data class HelpArticle(
         val all: List<HelpArticle> = listOf(
             HelpArticle(
                 HelpTopic.Start, R.string.help_start_title, R.string.help_start_summary, Icons.Outlined.AutoAwesome,
-                listOf(
-                    HelpSection(R.string.help_start_beta, R.string.help_start_beta_title, Icons.Outlined.Science),
+                listOfNotNull(
+                    // Beta builds only, like the sample cellar below.
+                    HelpSection(R.string.help_start_beta, R.string.help_start_beta_title, Icons.Outlined.Science).takeIf { BuildConfig.BETA },
                     HelpSection(R.string.help_start_cellar, R.string.nav_cellar, Icons.Outlined.WineBar),
                     HelpSection(R.string.help_start_racks, R.string.nav_racks, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_start_tonight, R.string.nav_tonight, Icons.Outlined.Bedtime),
@@ -74,7 +78,9 @@ data class HelpArticle(
                     HelpSection(R.string.help_start_saved, R.string.help_start_saved_title, Icons.Outlined.BookmarkBorder),
                     HelpSection(R.string.help_start_shortcuts, R.string.help_start_shortcuts_title),
                     HelpSection(R.string.help_start_widgets, R.string.help_start_widgets_title, Icons.Outlined.Widgets),
-                    HelpSection(R.string.help_start_try, R.string.help_start_try_title),
+                    HelpSection(R.string.help_start_join, R.string.help_start_join_title, Icons.Outlined.Devices),
+                    HelpSection(R.string.help_start_reset, R.string.help_start_reset_title),
+                    HelpSection(R.string.help_start_try, R.string.help_start_try_title).takeIf { BuildConfig.BETA },
                 ),
             ),
             HelpArticle(
@@ -104,6 +110,7 @@ data class HelpArticle(
             HelpArticle(
                 HelpTopic.Racks, R.string.help_racks_title, R.string.help_racks_summary, Icons.Outlined.GridOn,
                 listOf(
+                    HelpSection(R.string.help_racks_add, R.string.action_add_rack, Icons.Filled.Add),
                     HelpSection(R.string.help_racks_grid, R.string.kind_grid, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_racks_staggered, R.string.kind_staggered, Icons.Outlined.Hive),
                     HelpSection(R.string.help_racks_layers, R.string.help_racks_layers_title, Icons.Outlined.Hive),
@@ -114,6 +121,7 @@ data class HelpArticle(
                     HelpSection(R.string.help_racks_zooming, R.string.help_racks_zooming_title, Icons.Outlined.ZoomIn),
                     HelpSection(R.string.help_racks_moving, R.string.help_racks_moving_title),
                     HelpSection(R.string.help_racks_drag, R.string.help_racks_drag_title),
+                    HelpSection(R.string.help_racks_editing, R.string.help_racks_editing_title),
                     HelpSection(R.string.help_racks_several, R.string.help_racks_several_title),
                     HelpSection(R.string.help_racks_check, R.string.help_racks_check_title, Icons.Outlined.Checklist),
                     HelpSection(R.string.help_racks_irregular, R.string.help_racks_irregular_title),
@@ -144,8 +152,10 @@ data class HelpArticle(
                     HelpSection(R.string.help_journal_diary, R.string.help_journal_diary_title),
                     HelpSection(R.string.help_journal_add, R.string.journal_add, Icons.Filled.Add),
                     HelpSection(R.string.help_journal_filters, R.string.help_journal_filters_title, Icons.Outlined.FilterList),
+                    HelpSection(R.string.help_journal_opened, R.string.help_journal_opened_title, Icons.Outlined.Home),
                     HelpSection(R.string.help_journal_tags, R.string.discovery_tags),
                     HelpSection(R.string.help_journal_list, R.string.discovery_shopping_list, Icons.Outlined.ShoppingCart),
+                    HelpSection(R.string.help_journal_insights, R.string.action_insights, Icons.Outlined.Insights),
                     HelpSection(R.string.help_journal_not_cellar, R.string.help_journal_not_cellar_title),
                 ),
             ),

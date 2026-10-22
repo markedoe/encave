@@ -1,5 +1,11 @@
 package app.encave.ui.devices
 
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import app.encave.ui.components.openAppSettings
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -105,9 +111,22 @@ fun CameraCodeReader(
         asked = true
     }
     LaunchedEffect(Unit) { if (!granted) launcher.launch(Manifest.permission.CAMERA) }
+    // Allowed in the system settings meanwhile: the camera starts on return.
+    LifecycleResumeEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) granted = true
+        onPauseOrDispose {}
+    }
     if (!granted) {
         Box(modifier.padding(Dimens.xl), contentAlignment = Alignment.Center) {
-            if (asked || deniedWhileAsking) denied()
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                if (asked || deniedWhileAsking) denied()
+                // Refused: Android does not ask again, the camera is allowed in the app's settings.
+                if (asked) {
+                    OutlinedButton(onClick = { openAppSettings(context) }, modifier = Modifier.testTag("camera.settings")) {
+                        Text(stringResource(R.string.action_open_app_settings))
+                    }
+                }
+            }
         }
         return
     }

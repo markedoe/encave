@@ -47,6 +47,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import app.encave.R
+import app.encave.ui.ProjectLinks
 import app.encave.ui.components.readableWidth
 import app.encave.data.ai.AiProvider
 import app.encave.ui.AppNavigator
@@ -98,6 +99,9 @@ fun HelpArticleContent(article: HelpArticle, modifier: Modifier = Modifier) {
                 }
                 Text(helpText(stringResource(section.body)), style = MaterialTheme.typography.bodyMedium)
             }
+        }
+        if (article.topic == HelpTopic.Privacy) {
+            LinkRow(stringResource(R.string.settings_privacy_policy)) { openLink(context, ProjectLinks.PRIVACY_POLICY) }
         }
         if (article.topic == HelpTopic.Ai) {
             Text(stringResource(R.string.help_create_key), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
@@ -161,7 +165,7 @@ fun HelpScreen(navigator: AppNavigator, initialTopic: String? = null) {
                     stringResource(R.string.help_open_source),
                     Modifier.padding(Dimens.l), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                LinkRow(stringResource(R.string.help_project_page)) { openLink(context, "https://github.com/markedoe/encave") }
+                LinkRow(stringResource(R.string.help_project_page)) { openLink(context, ProjectLinks.SOURCE) }
             }
         }
     }

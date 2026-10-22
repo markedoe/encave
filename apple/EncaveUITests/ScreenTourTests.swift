@@ -49,6 +49,24 @@ final class ScreenTourTests: XCTestCase {
         openSection(3, "journal")
         snapshot("journal")
     }
+
+    /// The cellar at the largest text size (AX5): the summary tiles stack, one above the other.
+    func testLargestText() throws {
+        language = "ax5"
+        step = 0
+        continueAfterFailure = true
+        app = XCUIApplication()
+        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        guard app.horizontalSizeClassIsCompact else { return }
+        openSection(0, "cellar")
+        snapshot("cellar")
+        let bottles = element("cellar.stat.bottles"), wines = element("cellar.stat.wines")
+        if bottles.waitForExistence(timeout: 10), wines.exists {
+            XCTAssertGreaterThanOrEqual(wines.frame.minY, bottles.frame.maxY - 1, "The cellar tiles stack at AX5")
+        }
+    }
     #endif
 
     // MARK: Tour
@@ -281,16 +299,9 @@ final class ScreenTourTests: XCTestCase {
     // MARK: Selecting several wines
 
     private func checkSelection() {
-        let sort = element("cellar.sort")
-        guard sort.waitForExistence(timeout: 3), sort.isHittable else {
-            XCTFail("cellar: no sort menu")
-            return
-        }
-        sort.press()
         let select = element("cellar.select")
-        guard select.waitForExistence(timeout: 3) else {
-            XCTFail("cellar: no Select Wines")
-            app.typeKeyEscapeIfMac()
+        guard select.waitForExistence(timeout: 3), select.isHittable else {
+            XCTFail("cellar: no Select button")
             return
         }
         select.press()
@@ -511,7 +522,7 @@ final class ScreenTourTests: XCTestCase {
             "en": ["cellar": "Cellar", "racks": "Racks", "tonight": "Tonight", "journal": "Journal"],
             "fr": ["cellar": "Cave", "racks": "Casiers", "tonight": "Ce soir", "journal": "Journal"],
         ]
-        // The large-text tour ("xl") runs in English.
+        // The large-text tours ("xl", "ax5") run in English.
         return titles[language == "fr" ? "fr" : "en"]?[section] ?? section
     }
 
@@ -571,13 +582,15 @@ final class ScreenTourTests: XCTestCase {
         sleep(1)
     }
 
-    /// The wine's producer lists the wines of the cellar from that producer.
+    /// The wine's country (or producer) lists the other wines of the cellar that share it.
+    /// A detail no other wine shares edits the wine instead.
     private func checkExplore() {
-        let producer = element("detail.explore.producer")
+        let country = element("detail.explore.country")
         // Below the fold on iPhone: the list makes the row only once it is scrolled to.
-        scrollIntoView(producer)
+        scrollIntoView(country)
+        let producer = country.exists ? country : element("detail.explore.producer")
         guard producer.waitForExistence(timeout: 5) else {
-            XCTFail("wine: no producer row")
+            XCTFail("wine: no detail shared with other wines")
             return
         }
         // The detail column can be out of reach of the scroll on some layouts: the step is skipped there.

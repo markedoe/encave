@@ -10,6 +10,11 @@ object DesignTokens {
 
     val accent = ThemedColor(light = 0xFF8E1E3A, dark = 0xFFE0607A)
 
+    /** Launch window (window_background in the values and values-night colors.xml), checked by DesignTokensTest. */
+    val launchBackground = ThemedColor(light = 0xFFFEFCFC, dark = 0xFF120F10)
+    /** Text and icons of a warning, always next to an icon or words. */
+    val warning = ThemedColor(light = 0xFF8F5300, dark = 0xFFF2B04A)
+
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
         "wine-red" to ThemedColor(light = 0xFF8C1C2B, dark = 0xFFC8454F),
@@ -19,6 +24,14 @@ object DesignTokens {
         "wine-dessert" to ThemedColor(light = 0xFFC8902E, dark = 0xFFD9A441),
         "wine-fortified" to ThemedColor(light = 0xFF6B2D2D, dark = 0xFFA2524A),
         "wine-orange" to ThemedColor(light = 0xFFE39B4C, dark = 0xFFEBA35A),
+    )
+
+    /** Maturity symbols, keyed by token name ("maturity-ready"...). Always shown with words. */
+    val maturityColors: Map<String, ThemedColor> = linkedMapOf(
+        "maturity-drink-soon" to ThemedColor(light = 0xFFA65A00, dark = 0xFFF5A54A),
+        "maturity-ready" to ThemedColor(light = 0xFF2E7D32, dark = 0xFF81C784),
+        "maturity-past-peak" to ThemedColor(light = 0xFFB3261E, dark = 0xFFF2B8B5),
+        "maturity-keep" to ThemedColor(light = 0xFF00695C, dark = 0xFF4DB6AC),
     )
 
     /** Spacing in dp. */

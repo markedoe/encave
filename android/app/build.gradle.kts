@@ -6,6 +6,31 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Version name: one source for both apps, MARKETING_VERSION in apple/project.yml
+// (read at configuration time; the fallback is for a checkout without apple/).
+val marketingVersion: String = providers.fileContents(rootProject.layout.projectDirectory.file("../apple/project.yml"))
+    .asText.orNull
+    ?.let { Regex("""MARKETING_VERSION:\s*"([0-9]+(?:\.[0-9]+)*)"""").find(it)?.groupValues?.get(1) }
+    ?: "0.1.0"
+
+// Version code: BUILD_NUMBER, set by CI with the formula of apple.yml
+// (1000 + run number * 10 + attempt), so it always increases. 1 when absent.
+val buildNumber: Int = providers.environmentVariable("BUILD_NUMBER").orNull?.takeIf { it.isNotBlank() }?.let { raw ->
+    raw.trim().toIntOrNull()?.takeIf { it in 1..2_100_000_000 }
+        ?: throw GradleException("BUILD_NUMBER must be a positive integer up to 2100000000, got \"$raw\"")
+} ?: 1
+
+// Release signing, from the environment only (CI decodes the upload keystore into a
+// temporary file). Without all four variables the release build is left unsigned:
+// it never falls back to the debug key.
+val signingVars: Map<String, String> = listOf(
+    "ENCAVE_KEYSTORE_PATH", "ENCAVE_KEYSTORE_PASSWORD", "ENCAVE_KEY_ALIAS", "ENCAVE_KEY_PASSWORD",
+).associateWith { providers.environmentVariable(it).orNull.orEmpty() }
+val releaseKeystore: Map<String, String>? = signingVars.takeIf { vars -> vars.values.all { it.isNotEmpty() } }
+if (releaseKeystore == null && signingVars.values.any { it.isNotEmpty() }) {
+    logger.warn("Release signing needs all of ${signingVars.keys.joinToString()}: the release build is unsigned.")
+}
+
 android {
     namespace = "app.encave"
     compileSdk = 37
@@ -14,12 +39,31 @@ android {
         applicationId = "app.encave"
         minSdk = 35
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = buildNumber
+        versionName = marketingVersion
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore.getValue("ENCAVE_KEYSTORE_PATH"))
+                storePassword = releaseKeystore.getValue("ENCAVE_KEYSTORE_PASSWORD")
+                keyAlias = releaseKeystore.getValue("ENCAVE_KEY_ALIAS")
+                keyPassword = releaseKeystore.getValue("ENCAVE_KEY_PASSWORD")
+            }
+        }
+    }
+
+    // Beta notices and the sample cellar (BuildConfig.BETA): on in debug builds and, for now,
+    // in release builds; a store build sets ENCAVE_BETA=false.
+    val beta = providers.environmentVariable("ENCAVE_BETA").map { it.trim().lowercase() != "false" }.getOrElse(true)
     buildTypes {
+        debug {
+            buildConfigField("boolean", "BETA", "true")
+        }
         release {
+            buildConfigField("boolean", "BETA", beta.toString())
+            signingConfig = if (releaseKeystore != null) signingConfigs.getByName("release") else null
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -42,7 +86,6 @@ android {
 
     lint {
         abortOnError = true
-        checkReleaseBuilds = false
         disable += listOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
     }
 

@@ -21,7 +21,7 @@ struct HelpView: View {
                 Text("Encave is open source. Questions and ideas are welcome on the project page.")
             }
             Section {
-                Link(destination: URL(string: "https://github.com/markedoe/encave")!) {
+                Link(destination: ProjectLinks.source) {
                     Label("Project page", systemImage: "chevron.left.forwardslash.chevron.right")
                 }
             }
@@ -64,6 +64,13 @@ struct HelpArticleView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(.vertical, 4)
+                    }
+                }
+                if topic == .privacy {
+                    Section {
+                        Link(destination: ProjectLinks.privacyPolicy) {
+                            Label("Privacy Policy", systemImage: "hand.raised")
+                        }
                     }
                 }
                 if topic == .ai {

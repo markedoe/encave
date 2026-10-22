@@ -83,7 +83,8 @@ struct JournalView: View {
                             DiaryEntryRow(entry: entry)
                         }
                     } header: {
-                        Text(month, format: .dateTime.month(.wide).year())
+                        // A heading on its own: "Octobre 2026" in French, not "octobre 2026".
+                        Text(month, format: Date.FormatStyle(capitalizationContext: .beginningOfSentence).month(.wide).year())
                     }
                 }
             }
@@ -98,6 +99,9 @@ struct JournalView: View {
                 .accessibilityIdentifier("journal.add")
                 .help(Text("Note a bottle opened from your cellar or a wine tasted elsewhere"))
             }
+            #if os(iOS)
+            SettingsToolbarItem()
+            #endif
         }
     }
 }
@@ -106,25 +110,26 @@ struct JournalView: View {
 /// cellar leaves it.
 struct AddTastingMenu<MenuLabel: View>: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @ViewBuilder var label: () -> MenuLabel
 
     var body: some View {
         Menu {
             Button {
-                model.sheet = .drink(bottleID: nil)
+                router?.sheet = .drink(bottleID: nil)
             } label: {
                 Label("A Bottle from My Cellar", systemImage: "house")
                 // Says why it is off, rather than only dimming it.
-                if model.cellar.bottlesInCellar.isEmpty {
+                if model.bottlesInCellar.isEmpty {
                     Text("Your cellar has no bottle to open.")
                 } else {
                     Text("It leaves your cellar.")
                 }
             }
-            .disabled(model.cellar.bottlesInCellar.isEmpty)
+            .disabled(model.bottlesInCellar.isEmpty)
             .accessibilityIdentifier("journal.add.cellar")
             Button {
-                model.sheet = .discovery(discoveryID: nil)
+                router?.sheet = .discovery(discoveryID: nil)
             } label: {
                 Label("Somewhere Else", systemImage: "mappin.and.ellipse")
                 Text("Restaurant, friends, a fair… Your cellar does not change.")
@@ -221,21 +226,23 @@ private struct FilterEmptyState: View {
 /// One entry of the diary, from the cellar or tasted elsewhere, opening its note.
 private struct DiaryEntryRow: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let entry: DiaryEntry
 
     var body: some View {
         switch entry {
         case .tasting(let bottle):
             Button {
-                model.sheet = .editTasting(bottleID: bottle.id)
+                router?.sheet = .editTasting(bottleID: bottle.id)
             } label: {
                 TastingRow(bottle: bottle, showsWine: true, showsSource: true)
             }
             .buttonStyle(.plain)
+            .modifier(OpenedBottleActions(bottle: bottle))
             .accessibilityIdentifier("journal.row.cellar")
         case .elsewhere(let discovery):
             Button {
-                model.sheet = .discovery(discoveryID: discovery.id)
+                router?.sheet = .discovery(discoveryID: discovery.id)
             } label: {
                 DiscoveryRow(discovery: discovery, showsSource: true)
             }
@@ -243,6 +250,49 @@ private struct DiaryEntryRow: View {
             .modifier(ElsewhereActions(discovery: discovery))
             .accessibilityIdentifier("journal.row.elsewhere")
         }
+    }
+}
+
+/// Swipe actions and context menu of a bottle opened from the cellar: its wine, the
+/// note, more bottles of it, or back in the cellar if it was logged by mistake (with Undo).
+struct OpenedBottleActions: ViewModifier {
+    @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
+    let bottle: Bottle
+
+    func body(content: Content) -> some View {
+        let wine = model.cellar.wines[bottle.wineID]
+        content
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                if let wine {
+                    Button {
+                        router?.sheet = .addBottle(AddBottleContext(wine: wine))
+                    } label: {
+                        Label("Add Bottles", systemImage: "plus")
+                    }
+                    .tint(.accentColor)
+                }
+            }
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    model.putBack(bottle.id)
+                } label: {
+                    Label("Put Back in the Cellar", systemImage: "arrow.uturn.backward")
+                }
+            }
+            .contextMenu {
+                if let wine {
+                    Button("Show Wine", systemImage: "wineglass") { model.open(wine: wine.id) }
+                }
+                Button("Edit Note", systemImage: "pencil") { router?.sheet = .editTasting(bottleID: bottle.id) }
+                if let wine {
+                    Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: wine)) }
+                }
+                Divider()
+                Button("Put Back in the Cellar", systemImage: "arrow.uturn.backward", role: .destructive) {
+                    model.putBack(bottle.id)
+                }
+            }
     }
 }
 

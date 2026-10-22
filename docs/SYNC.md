@@ -3,8 +3,14 @@
 How Encave devices pair and keep one cellar in step. This document is the
 specification: the Swift implementation is in
 `apple/Packages/CaveKit/Sources/CaveKit/SyncState.swift` and `SyncProtocol.swift`,
-and any other implementation (the Android app) must produce the same bytes. The
-test vectors at the end are checked by `ProtocolVectorTests`.
+the Kotlin one in `android/core/src/main/kotlin/app/encave/core/sync/`. Every
+implementation must produce the same keys, values and cryptographic bytes (keys,
+transcripts, envelopes). The JSON text itself may differ in escaping (Swift
+writes `/` as `\/`, Kotlin does not): readers accept both, and no JSON text is
+hashed or authenticated as such. The test vectors at the end are checked by
+`ProtocolVectorTests` on both platforms, and the JSON and ZIP files in
+`fixtures/interop` are written by each platform and read by the other
+(`InteropFixtureTests.swift`, `InteropFixtureTest.kt`).
 
 - **Local network (this document, sections 1–7):** devices on the same network
   find each other with Bonjour/mDNS and talk directly over TCP. No server.
@@ -17,12 +23,15 @@ test vectors at the end are checked by `ProtocolVectorTests`.
 The cellar file (`cellar.json`) is unchanged by sync. Backups hold the same
 cellar inside a small envelope, with dates as ISO 8601 strings.
 Sync metadata lives next to it in `sync.json` (`SyncState`) and the list of
-devices in `devices.json` (`Membership`).
+devices in `devices.json` (`Membership`). Each device also keeps, for itself
+only, `last-sync.json` (when each other device last synced on the network) and
+`remote.json` (the progress of remote sync, section 8).
 
 ### Objects and stamps
 
 Each object has a key: `wine:<uuid>`, `bottle:<uuid>`, `rack:<uuid>`,
-`discovery:<uuid>`, `search:<uuid>` (a saved search), plus `settings` (the
+`discovery:<uuid>` (a wine tasted elsewhere, in the Journal),
+`search:<uuid>` (a saved search), plus `settings` (the
 cellar settings without the saved searches) and `rack-order` (the order of the
 racks). UUIDs in keys are lowercase.
 
@@ -53,9 +62,14 @@ implementations:
 - `bottle.status` is one of `inCellar`, `consumed`, `gone` or `ordered`
   (bought, not delivered yet; such a bottle has no place and may carry
   `expectedAt`, a date).
+- `bottle.tasting` is the optional tasting note of an opened bottle (its
+  `date` is required); with discoveries, these make the Journal.
 - `wine.barcodes` and `wine.tags` are optional arrays of strings, left out
   when empty, and so is `wine.extraPhotoIDs` (more photos; they are synced like
-  `photoID`). `wine.currentPrice` (a number, like `bottle.purchasePrice`),
+  `photoID`). `wine.coverPhotoID` is an optional file ID (section 7): the
+  picture the user chose from a web search, shown instead of the label photo,
+  which it never replaces; it is synced like `photoID`. `wine.currentPrice`
+  (a number, like `bottle.purchasePrice`),
   `wine.currentPriceCurrency` (an ISO code) and `wine.currentPriceDate` (a date)
   are optional: the price of a bottle today, accepted by the user from a web
   search or typed. `bottle.reservedFor` is an optional string (the occasion a bottle
@@ -79,6 +93,8 @@ implementations:
   would spread the loss to every device. (A rack without `kind`, from version
   0.1 or 0.2, is a grid.) In the same way:
   - required fields are never filled in by the reader: every `id`, `wineID`,
+    `wine.name`, `rack.name`, `rack.rows`, `rack.columns`, the `rackID`, `row`
+    and `column` of a bottle's `slot`,
     `bottle.addedAt`, `discovery.date`, `tasting.date`, `member.addedAt`,
     `settings.currency`, `cellarID`, `members` and `stamps` of a membership, the
     three fields of a stamp, the four of a `SyncState` and the five of a
@@ -86,6 +102,11 @@ implementations:
     left out are read with their stated default
     (`bottle.status` `inCellar`, `sizeML` 750, `depth` 0 or 1, `binCapacity` 12,
     `grapes` and `discovery.tags` empty, `wantsToBuy` false);
+  - some values are normalized when read, the same way on every device:
+    `wine.tags` and `discovery.tags` are trimmed and each tag is kept once
+    (ignoring case), `wine.extraPhotoIDs` keeps each ID once, and
+    `wine.tags`, `wine.extraPhotoIDs` and `wine.barcodes` are left out when
+    nothing remains; `discovery.rating` is brought into 1…5;
   - a UUID is its 36-character form (either case), binary values are standard
     Base64 with padding and nothing else, prices are JSON numbers, and dates are
     numbers in the cellar file and the sync payloads, ISO 8601 strings without
@@ -166,6 +187,33 @@ compute the same result.
 A device that applies a merge result while the user edited during the session
 merges again with its current state, so no local change is lost.
 
+### What syncs and what stays on each device
+
+Synced: wines, bottles (with their tasting notes), racks and their order,
+discoveries, saved searches, the cellar settings (the currency), the list of
+devices, and the files the cellar refers to: label photos, extra photos, cover
+pictures and documents.
+
+Stays on each device:
+
+- the device's identity key, the remote sync key (it travels only inside the
+  encrypted `sync-keys` step and in key grants, section 8) and the WebDAV login;
+- the AI and web search settings and keys;
+- display settings, among them the studio look of label photos (a cache each
+  device makes from the label photo, never synced);
+- how often to sync away from home, and the notifications of changes;
+- the choice of storage away from home: a device that has none takes it up from
+  another device (section 8), but turning it off or choosing another storage
+  applies to that device only;
+- backups and the previous versions of the cellar file;
+- `last-sync.json` and `remote.json`.
+
+After a sync, each device can tell the user what came in from other devices
+(bottles opened, added or removed, wines added, other changes, and the devices
+that made them, read from the stamps of the changed objects). This is a
+device-only setting, off by default: a short message when the app is in front,
+a notification otherwise.
+
 ## 2. Devices and keys
 
 Each device has a long-term **identity key** (X25519). The private key never
@@ -177,10 +225,25 @@ leaves the device (Keychain on Apple platforms). Its device ID is a random UUID.
 (section 8); each device sets it in its own record, with a new stamp, when it
 is missing. Adding a member stamps it; removing it leaves a deletion stamp.
 
+**Leaving.** A device that stops syncing removes itself from its membership
+(a deletion stamp of its own), then, for about 10 seconds at most, tells the
+others: a sync session with each device of the cellar on the network (the
+handshake with the membership from before the removal, the exchange with the one
+after it, whose result it ignores) and one remote round. It then forgets the
+cellar's devices, stamps and keys, and takes a new ID and key. No key rotation
+follows: the devices that learn of it simply stop syncing with it. If neither
+reaches another device, the user removes it there.
+
 Two memberships merge per member with the stamp rule, except that **a removal
 is final**: a deletion stamp wins over any non-deletion stamp, whatever the
 counters. A removed device cannot add itself back by sending a newer record;
 to join again it pairs as a new device, with a new ID and key.
+
+A device that leaves a cellar keeps its cellar as it is, forgets the devices,
+stamps and remote sync settings, and makes a new ID and identity key. A device
+whose own record is missing from its stored membership without a deletion stamp
+(its key changed, for example after a backup was restored on another device)
+forgets the cellar's sync data the same way and must join again.
 
 `networkTag(cellarID)` = first 6 bytes, as lowercase hex, of
 `H("encave-cellar-tag-v1", [cellarID lowercase string])`.
@@ -193,7 +256,8 @@ to join again it pairs as a new device, with a new ID and key.
   `salt`, `info` (UTF-8), `n` bytes (32 unless stated).
 - `DH(private, public)` = X25519. A result of all zero bytes (low-order point)
   is rejected.
-- Random nonces are 32 bytes.
+- Pairing and handshake nonces are 32 random bytes. ChaCha20-Poly1305 nonces
+  are 12 bytes: a counter for frames (section 4), random for files (section 8).
 - **Confirmation code**: the first 4 bytes of `KDF(..., "encave pair code", 4)`
   read as a big-endian UInt32, modulo 1,000,000, written with 6 digits as
   `"ddd ddd"`. Here and in every code and file name, digits are ASCII digits,
@@ -228,6 +292,12 @@ this device"), never a reason to stop syncing or to leave the cellar. A device
 learns that it was removed only from an authenticated membership: one merged
 during a sync session, or read from the cellar's mailbox.
 
+**Timeouts.** Connecting gets 15 seconds and the sync handshake 10 seconds; a
+whole sync session is closed after 300 seconds (Android also closes a
+connection that sends nothing for 60 seconds). A device serves at most 4
+incoming sync sessions at once and closes further connections. Pairing has its
+own limits (section 5).
+
 **Discovery (Bonjour).** Service type `_encave._tcp`.
 
 - A device that syncs advertises the name `Encave-<first 8 characters of its
@@ -240,6 +310,11 @@ during a sync session, or read from the cellar's mailbox.
   joiner looks for `p` only.
 
 Device names are never advertised.
+
+**Retries.** After a session it started fails, a device tries that device again
+after 15 seconds, then 1 minute, then 5 minutes, and then waits until the device
+leaves the network and comes back, a session with it succeeds, or the user asks
+to sync. A success or the device going away resets the count.
 
 ## 5. Pairing
 
@@ -284,7 +359,21 @@ padding>`. A joiner that scanned it refuses a host whose commitment differs.
    the host as initiator: the pairing keys stay, and the frame counters go on.
 
 When joining, the user chooses to **combine** the joiner's own cellar with the
-host's, or to **replace** it (start from an empty cellar).
+host's, or to **replace** it. With replace, the joiner resets its stamps (an
+empty `stamps`, its clock kept) but keeps its own objects on the device and a
+local "replace pending" flag until a snapshot from another device of the cellar
+has been taken in. While the flag is set, every snapshot it sends (sessions on
+the network and remote rounds) holds only the objects stamped since it joined,
+with the wines and racks they use and its settings (`onlyStamped` in both
+cores), and merging a received snapshot starts from that same cellar. The first
+merge that goes through replaces its cellar with the result and clears the
+flag. Its old objects never reach the other devices, and a first sync that
+fails leaves them in place: the next one completes the join.
+
+A code works for 2 minutes. The joiner looks for the host for 30 seconds; the
+key exchange (steps 1 to 3) gets 20 seconds. Once its user has answered, a
+device waits up to 2 minutes for the other device's answer and the rest of the
+pairing.
 
 ## 6. Sync session handshake
 
@@ -378,13 +467,17 @@ details that matter for exact round trips:
 
 Devices that are apart exchange encrypted files through a **storage**: a
 WebDAV folder the user already has (a NAS, Nextcloud, pCloud…), a relay
-(`relay/`, an HTTP service anyone can host) or, between Apple devices, the
-user's iCloud (CloudKit private database, offered when the app is built with an
-iCloud container). Google Drive, Dropbox and Proton Drive may follow (see
-[REMOTE_SYNC.md](REMOTE_SYNC.md) for the analysis). Any storage that
-can list, read, create (never replace) and delete files works, because every
-file is written once by one device. Implementation: `RemoteSync.swift`,
-`RelayMailbox.swift`, `WebDAVMailbox.swift` (and their Kotlin ports).
+(`relay/`, an HTTP service anyone can host) or, between Apple devices signed
+in to the same Apple Account, the user's iCloud (CloudKit private database,
+offered when the app is built with an iCloud container). Google Drive, Dropbox
+and Proton Drive may follow (see [REMOTE_SYNC.md](REMOTE_SYNC.md) for the
+analysis). Any storage that can list, read, create (never replace) and delete
+files works, because every name is created at most once: each snapshot has a
+single writer, and a photo or document file may be created by any device, always
+with the same content (a second create is refused and changes nothing).
+Implementation: `RemoteSync.swift`,
+`RelayMailbox.swift`, `WebDAVMailbox.swift` (and their Kotlin ports), and
+`CloudKitMailboxStore.swift` in the Apple app.
 
 ### Keys
 
@@ -445,9 +538,10 @@ exists treats it as a failure (the grant was not left) and tries again later.
 
 The recipient accepts a grant only from a current member of its cellar and
 only for its cellar; both identity keys enter the key, so only a member can
-have written it. Grants are at most 4 KiB: a larger file is deleted unopened.
-A file whose name does not have the form above is deleted, and so is a grant
-that cannot be opened, except one from a device of this cellar not known yet:
+have written it. Only files under `grant/` are looked at; anything else in an
+inbox is left alone. Grants are at most 4 KiB: a larger file is deleted unopened.
+A file under `grant/` whose name does not have the form above is deleted, and
+so is a grant that cannot be opened, except one from a device of this cellar not known yet:
 up to 8 of those are kept for a later round (in name order), the others are
 deleted. Grants from removed devices are deleted. The recipient also checks
 that the grant's name gives the same cellar, epoch and sender as its content.
@@ -458,9 +552,19 @@ grants of its cellar with an older epoch than the key it keeps.
 
 Each storage keeps the files of a mailbox or inbox under its ID:
 
-- **Relay:** `/v1/m/<mailbox ID>/<path>`; requests carry the mailbox's token,
-  which the relay checks against the ID (`relay/README.md`).
-- **iCloud:** one CloudKit zone per mailbox in the user's private database.
+- **Relay:** `/v1/m/<mailbox ID>/<path>`; requests carry the mailbox's token
+  (`Authorization: Bearer`), which the relay checks against the ID
+  (`relay/README.md`). One exception: anyone may create a `grant/…` file in an
+  inbox without a token (that is how a device receives a key); listing,
+  reading and deleting need the inbox's token. Every file created in an inbox
+  is at most 4 KiB. A device leaving a grant sends no token.
+- **iCloud:** one CloudKit zone per mailbox and per inbox in the user's private
+  database, named after its ID, so only devices on the same Apple Account meet
+  there. Each file is a record of type `EncaveFile` whose record name is the
+  path, with the bytes in a `CKAsset` field named `data`, created with the save
+  policy `ifServerRecordUnchanged` (an existing record means the file exists).
+  Listing reads the zone's changes since a change token kept in memory, so the
+  first listing after launch reads the whole zone. Tokens are not sent.
 - **WebDAV:** `<folder>/<mailbox ID>/<path>` under the folder the user chose,
   with the server's own login (HTTP Basic, ideally an app password); tokens are
   not sent.
@@ -499,18 +603,26 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    references and this device lacks (valid file IDs only).
 4. If anything changed since this device's last upload (its clock, or any
    stamp: a merge on the local network can change the cellar without moving
-   the clock): upload the files it has not uploaded yet in this epoch (once
-   each, even if a file is both a photo and a document), then a snapshot of the merged state,
-   then delete its older snapshots. If the clock did not move since the last
-   upload, it is raised by one first, so readers see a newer snapshot. A file
-   the storage refuses (too large, 413, or full, 507) is left out and the
-   snapshot is still written; the device says so and tries the file again with
-   its next snapshot.
+   the clock), or the key is new: upload the files it has not uploaded yet in
+   this epoch (once each, even if a file is both a photo and a document; files
+   fetched in step 3 count as uploaded), then a snapshot of the merged state,
+   then delete its older snapshots. If the clock is not above both the last
+   uploaded clock and the newest of this device's own snapshots listed in step
+   2, it is first set to one more than the greater of them, so readers see a
+   newer snapshot. A file the storage refuses as too large (413) is left out;
+   when the storage is full (507), the remaining files are left out for this
+   round too. The snapshot is still written; the device says so and tries the
+   files again with its next snapshot.
 
-Rounds run a few seconds after a change, every minute while the app is open,
-and when it comes back to the foreground. Each device can choose a longer
-interval, or to sync only when the user asks (a device-only setting, which
-also stops the rounds after a change and on returning to the foreground). In
+After a local change, a device waits 2 seconds without further changes, syncs
+with the devices on the network, then runs a round 3 seconds later. Rounds also
+run every minute while the app is open (counted from the end of the previous
+round) and when it comes back to the foreground. Each device can choose every
+5 or 15 minutes instead, or to sync only when the user asks (a device-only
+setting, which also stops the rounds after a change and on returning to the
+foreground; changes still go to devices on the same network). A new interval
+counts from the last round: the next round comes one interval after it, at once
+if that is past. In
 the background, where the system allows it: on Android a periodic worker at
 the chosen interval, at least 15 minutes apart; on iPhone and iPad an app
 refresh task, no sooner than 15 minutes, when iOS decides.
@@ -544,11 +656,18 @@ so devices pick up the setting when they meet.
   `"webdav:https://nas.example.com/encave/"`;
 - the relay's URL.
 
-A device uses a storage told by another device only if it has none yet, and
-only an `https://` relay, a WebDAV folder over `https://` (or `http://` for a
+A device uses a storage told by another device only if it has none yet and its
+user has not turned remote sync off on it (Android: the turned-off choice is not
+kept, so a storage told by another device is taken up again). It accepts only an
+`https://` relay, a WebDAV folder over `https://` (or `http://` for a
 local-network address: `localhost`, a `.local` or `.home.arpa` name, a private
-or link-local IP address), or iCloud on Apple devices that support it. A device
-that receives a new key in a grant also moves to the grant's storage.
+or link-local IP address), or iCloud on Apple devices that support it and are
+signed in to iCloud. A device that receives a new key in a grant also moves to
+the grant's storage.
+
+Turning remote sync on settles the key (from a grant, or a new one with its
+grants left) before anything is kept, so a failure leaves remote sync off
+(Android: the storage and the new key are kept even if leaving a grant fails).
 
 The WebDAV login never travels: not in grants, `sync-keys` or snapshots. Each
 device keeps its own username and password (Keychain, Android Keystore) for one
@@ -576,6 +695,9 @@ sign in to it, and syncs through it once they have.
   IDs are the same before and after a key rotation, so the relay can link the
   old and new mailboxes. A mailbox opens only with the token its ID is derived
   from, so someone who learns a mailbox ID cannot read it or lock its owner out.
+  The one exception is an inbox: anyone who knows its ID can create small
+  `grant/…` files in it (at most 4 KiB each, within the inbox's limits), which
+  the owner deletes if they cannot be opened.
 - **A WebDAV server** sees the same as a relay, and its account holders can
   read the encrypted files and delete or replace them: a damaged or replaced
   file fails to open and is skipped. Anyone who can open the folder can do the
@@ -601,7 +723,8 @@ sign in to it, and syncs through it once they have.
 
 ## 10. Test vectors
 
-Inputs (all keys are X25519 private keys given as 32 raw bytes):
+Both `ProtocolVectorTests.swift` and `ProtocolVectorTests.kt` check these
+values. Inputs (all keys are X25519 private keys given as 32 raw bytes):
 
 - host ephemeral private key: bytes `01 02 03 … 20`; joiner ephemeral: `41 42 … 60`
 - host nonce: 32 × `a0`; joiner nonce: 32 × `b0`

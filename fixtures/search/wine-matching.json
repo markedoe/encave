@@ -1,0 +1,40 @@
+{
+  "about": "Search by words, shared by CaveKit (SearchTests.swift) and the Kotlin core (SearchTest.kt): each word of the query must be in one of the wine's fields, ignoring case and accents.",
+  "wines": [
+    {
+      "name": "Château Palmer", "producer": "Château Palmer", "vintage": 2015,
+      "appellation": "Margaux", "region": "Bordeaux", "country": "France",
+      "grapes": ["Merlot", "Cabernet Sauvignon"]
+    },
+    {
+      "name": "La Landonne", "producer": "E. Guigal", "vintage": 2012,
+      "appellation": "Côte-Rôtie", "region": "Rhône", "country": "France",
+      "grapes": ["Syrah"], "barcodes": ["3760123456789"]
+    },
+    {
+      "name": "Château Figeac", "producer": "Château Figeac", "vintage": 2015,
+      "appellation": "Saint-Émilion Grand Cru", "region": "Bordeaux", "country": "France",
+      "grapes": ["Cabernet Franc", "Merlot"], "tags": ["Gift idea"]
+    },
+    {
+      "name": "Rully", "producer": "Domaine Jacqueson", "vintage": 2020,
+      "region": "Bourgogne", "country": "France", "grapes": ["Chardonnay"]
+    }
+  ],
+  "searches": [
+    { "query": "margaux 2015", "matches": ["Château Palmer"] },
+    { "query": "2015", "matches": ["Château Figeac", "Château Palmer"] },
+    { "query": "syrah guigal", "matches": ["La Landonne"] },
+    { "query": "  Guigal   SYRAH ", "matches": ["La Landonne"] },
+    { "query": "cote rotie", "matches": ["La Landonne"] },
+    { "query": "Côte-Rôtie", "matches": ["La Landonne"] },
+    { "query": "saint emilion", "matches": ["Château Figeac"] },
+    { "query": "bordeaux merlot", "matches": ["Château Figeac", "Château Palmer"] },
+    { "query": "bordeaux syrah", "matches": [] },
+    { "query": "chateau", "matches": ["Château Figeac", "Château Palmer"] },
+    { "query": "gift figeac", "matches": ["Château Figeac"] },
+    { "query": "3760123456789", "matches": ["La Landonne"] },
+    { "query": "bourgogne chardonnay 2020 jacqueson", "matches": ["Rully"] },
+    { "query": "   ", "matches": ["Château Figeac", "Château Palmer", "La Landonne", "Rully"] }
+  ]
+}

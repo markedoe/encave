@@ -1,5 +1,14 @@
 package app.encave.ui.add
 
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.contentDescription
+import app.encave.ui.components.rememberDiscardGuard
+import kotlinx.coroutines.launch
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.selection.toggleable
@@ -128,20 +137,24 @@ fun AddBottleScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Add
 private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, route: AddBottleRoute) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val year = viewModel.year
+    val scope = rememberCoroutineScope()
     val known = remember(cellar) { cellar.knownValues() }
     val routeWine = remember(route.wineId) { route.wineId?.let { runCatching { UUID.fromString(it) }.getOrNull() } }
     var existingId by rememberSaveable { mutableStateOf(routeWine?.toString()) }
     val existing = existingId?.let { id -> cellar.wines[UUID.fromString(id)] }
     // Kept while the activity is recreated (rotation, folding), with the photo being added.
     val form = rememberRetained("add.form") { WineFormState(null, year) }
+    val formStart = rememberRetained("add.formStart") { form.snapshot() }
     var search by rememberSaveable { mutableStateOf("") }
     var moreDetails by rememberSaveable { mutableStateOf(false) }
     var quantity by rememberSaveable { mutableStateOf(1) }
     var sizeML by rememberSaveable { mutableStateOf(750) }
 
     val routeRack = route.rackId?.let { id -> cellar.racks.firstOrNull { it.id.toString() == id } }
-    var inRack by rememberSaveable { mutableStateOf(cellar.racks.isNotEmpty()) }
-    var rackId by rememberSaveable { mutableStateOf((routeRack ?: cellar.racks.firstOrNull())?.id?.toString()) }
+    // The rack used last on this device, or the first one with room; positions stay automatic.
+    val start = remember { initialLocation(cellar, routeRack, viewModel.preferences.lastAddLocation) }
+    var inRack by rememberSaveable { mutableStateOf(start.rackId != null) }
+    var rackId by rememberSaveable { mutableStateOf(start.rackId?.toString()) }
     val rack = rackId?.let { id -> cellar.racks.firstOrNull { it.id.toString() == id } }
     // Slots chosen by hand; until then the first free slots are suggested.
     val pickedSlots = rememberRetained("add.slots") {
@@ -149,8 +162,9 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             if (routeRack != null && route.row >= 0 && route.column >= 0) add(Slot(routeRack.id, route.row, route.column, route.depth))
         }
     }
+    val startSlots = rememberRetained("add.startSlots") { pickedSlots.toList() }
     var slotsTouched by rememberSaveable { mutableStateOf(pickedSlots.isNotEmpty()) }
-    var storage by rememberSaveable { mutableStateOf("") }
+    var storage by rememberSaveable { mutableStateOf(start.storage) }
     var price by rememberSaveable { mutableStateOf("") }
     var currency by rememberSaveable { mutableStateOf(cellar.settings.currency) }
     var purchaseDate by rememberSaveable { mutableStateOf<Instant?>(null) }
@@ -162,14 +176,22 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
     var hasExpectedDate by rememberSaveable { mutableStateOf(false) }
     var expectedAt by rememberSaveable { mutableStateOf<Instant?>(null) }
     var pickingExpected by remember { mutableStateOf(false) }
-    // Barcode read on the bottle: recognizes a wine already in the cellar, or is kept with the new one.
+    // Barcode read on the bottle: recognizes wines already in the cellar, or is kept with the new one.
     var scanning by rememberSaveable { mutableStateOf(route.scan) }
     var barcode by rememberSaveable { mutableStateOf<String?>(null) }
-    val barcodeMatch = barcode?.let { cellar.wine(it) }
+    var barcodeDismissed by rememberSaveable { mutableStateOf(false) }
+    // Producers often keep one barcode for every vintage: all are offered, newest first.
+    val barcodeMatches = barcode?.let { cellar.wines(it) }.orEmpty()
+    // "It's a different wine": the wine of the cellar the form matched, not offered again.
+    var dismissedMatchId by rememberSaveable { mutableStateOf<String?>(null) }
     // Documents picked here: attached to the wine when the bottles are added. Kept while the
     // activity is recreated; their temporary copies go if the screen is left without adding.
     val picked = rememberRetained("add.documents") { PickedDocuments(viewModel::discardDocuments) }
     var pendingDocuments by picked::documents
+    var saving by remember { mutableStateOf(false) }
+    val essentials = remember { BringIntoViewRequester() }
+    val nameFocus = remember { FocusRequester() }
+    val vintageFocus = remember { FocusRequester() }
 
     val freeSlots = rack?.let { cellar.freeSlots(it) } ?: emptyList()
     val slots: List<Slot> = when {
@@ -178,10 +200,30 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
         else -> freeSlots.take(quantity)
     }
 
+    // A wine of the cellar the new one would duplicate (same name, producer and vintage).
+    val sameWine = if (existing != null) null else remember(form.name, form.producer, form.vintage, cellar) {
+        cellar.wine(matching = Wine(id = form.id, name = form.name, producer = form.producer.trim().ifEmpty { null }, vintage = form.vintage))
+    }?.takeIf { match -> match.id.toString() != dismissedMatchId && barcodeMatches.none { it.id == match.id } }
+
+    val isDirty = existingId != routeWine?.toString() || form.snapshot() != formStart || quantity != 1 || sizeML != 750 ||
+        price.isNotBlank() || purchaseDate != null || place.isNotBlank() || receivedFrom.isNotBlank() || ordered ||
+        pickedSlots.toList() != startSlots || barcode != null || pendingDocuments.isNotEmpty() ||
+        storage != start.storage || rackId != start.rackId?.toString() || inRack != (start.rackId != null)
+    // Back, the back gesture and ✕ ask first when something was entered.
+    val leave = rememberDiscardGuard(isDirty && !saving) { navigator.back() }
+
     fun save() {
+        if (saving) return
         val chosen = existing ?: run {
             form.showErrors = true
-            if (form.nameMissing || form.vintageInvalid) return
+            if (form.nameMissing || form.vintageInvalid) {
+                // The field in error may be off screen: go to it.
+                scope.launch {
+                    essentials.bringIntoView()
+                    runCatching { if (form.nameMissing) nameFocus.requestFocus() else vintageFocus.requestFocus() }
+                }
+                return
+            }
             form.build()
         }
         val wine = barcode?.let { chosen.addingBarcode(it) } ?: chosen
@@ -196,14 +238,26 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             isOrdered = ordered,
             expectedAt = if (ordered && hasExpectedDate) expectedAt else null,
         )
+        val location = if (inRack && rack != null) "rack:${rack.id}" else "other:${storage.trim()}"
+        saving = true
         viewModel.addBottles(
             wine, quantity, slots, purchase,
-            photo = if (existing == null) form.newPhoto else null,
+            // The label photo, for a new wine or one that has none yet.
+            photo = form.newPhoto?.takeIf { existing == null || existing.photoId == null },
             boughtDiscoveryId = route.discoveryId?.let { runCatching { UUID.fromString(it) }.getOrNull() },
             pendingDocuments = pendingDocuments,
-        )
-        picked.added = true
-        navigator.back()
+        ) { ok ->
+            saving = false
+            if (ok) {
+                if (!ordered) viewModel.preferences.lastAddLocation = location
+                picked.added = true
+                navigator.back()
+            } else {
+                // A place may have been taken meanwhile (a sync): free places are suggested again.
+                slotsTouched = false
+                pickedSlots.clear()
+            }
+        }
     }
 
     Scaffold(
@@ -217,7 +271,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = leave) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
@@ -227,7 +281,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                     IconButton(onClick = { scanning = true }, modifier = Modifier.testTag("action.scan_barcode")) {
                         Icon(Icons.Outlined.QrCodeScanner, contentDescription = stringResource(R.string.action_scan_barcode))
                     }
-                    TextButton(onClick = ::save) { Text(stringResource(R.string.action_add)) }
+                    TextButton(onClick = ::save, enabled = !saving) { Text(stringResource(R.string.action_add)) }
                 },
             )
         },
@@ -244,17 +298,29 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             verticalArrangement = Arrangement.spacedBy(Dimens.m),
         ) {
             barcode?.let { code ->
-                if (barcodeMatch != null && existing?.id != barcodeMatch.id) {
-                    BarcodeMatchCard(barcodeMatch, onUse = { existingId = barcodeMatch.id.toString() })
-                } else {
+                if (barcodeMatches.isNotEmpty() && barcodeMatches.none { it.id == existing?.id } && !barcodeDismissed) {
+                    BarcodeMatchCard(
+                        cellar, barcodeMatches,
+                        onUse = { existingId = it.id.toString() },
+                        onAnotherVintage = if (existing == null) ({ wine ->
+                            form.fillFrom(wine)
+                            barcodeDismissed = true
+                            scope.launch {
+                                essentials.bringIntoView()
+                                runCatching { vintageFocus.requestFocus() }
+                            }
+                        }) else null,
+                        onDismiss = { barcodeDismissed = true },
+                    )
+                } else if (existing == null || code !in existing.barcodes.orEmpty()) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                         Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Text(
                             stringResource(R.string.barcode_kept, code), style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f).testTag("barcode.kept"),
                         )
-                        IconButton(onClick = { barcode = null }) {
-                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_search))
+                        IconButton(onClick = { barcode = null; barcodeDismissed = false }) {
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.barcode_remove))
                         }
                     }
                 }
@@ -263,12 +329,16 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             val location: @Composable () -> Unit = {
                 if (!ordered) LocationSection(
                     cellar = cellar,
-                    inRack = inRack && cellar.racks.isNotEmpty(),
-                    onInRack = { inRack = it },
+                    inRack = inRack && cellar.racks.isNotEmpty() && rack != null,
+                    onInRack = { on ->
+                        inRack = on
+                        if (on && rack == null) rackId = (cellar.racks.firstOrNull { cellar.freeSlots(it).isNotEmpty() } ?: cellar.racks.firstOrNull())?.id?.toString()
+                    },
                     rack = rack,
                     onRack = { rackId = it.id.toString(); slotsTouched = false; pickedSlots.clear() },
                     slots = slots,
                     quantity = quantity,
+                    automatic = !slotsTouched,
                     onToggleCell = { cell ->
                         if (!slotsTouched) {
                             pickedSlots.clear()
@@ -322,12 +392,20 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                     }
                 }
                 Header(R.string.photo_section)
-                PhotoSection(viewModel, form)
+                PhotoSection(viewModel, form, onScanBarcode = { scanning = true })
+                // The name (the only required field) right after the photo, before the rack.
+                Header(R.string.add_section_wine)
+                WineEssentials(form, known, Modifier.bringIntoViewRequester(essentials), nameFocus = nameFocus, vintageFocus = vintageFocus)
+                sameWine?.let { match ->
+                    SameWineCard(
+                        match, cellar.bottlesOf(match.id).size,
+                        onUse = { existingId = match.id.toString() },
+                        onDifferent = { dismissedMatchId = match.id.toString() },
+                    )
+                }
                 QuantityRow(quantity) { quantity = it }
                 location()
                 PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
-                Header(R.string.add_section_wine)
-                WineEssentials(form, known)
             }
 
             Header(R.string.add_section_bottles)
@@ -400,7 +478,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                     )
                 }
             }
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l).testTag("action.add_confirm")) {
+            Button(onClick = ::save, enabled = !saving, modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l).testTag("action.add_confirm")) {
                 ActionContent(pluralStringResource(R.plurals.bottles_added_action, quantity, quantity))
             }
             HelpLink(HelpTopic.Adding, R.string.help_link_adding)
@@ -414,6 +492,7 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             onScan = { code ->
                 scanning = false
                 barcode = code
+                barcodeDismissed = false
             },
             onDismiss = { scanning = false },
         )
@@ -423,6 +502,28 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
             initial = expectedAt ?: Instant.now(), onPick = { if (it != null) expectedAt = it },
             onDismiss = { pickingExpected = false }, allowClear = false,
         )
+    }
+}
+
+/** Where the form puts the bottles first: a rack (null: elsewhere) and the note for elsewhere. */
+internal data class InitialLocation(val rackId: UUID?, val storage: String)
+
+/**
+ * The place of the rack opened from, else where the last bottles went on this device
+ * ([last]: "rack:<id>" or "other:<where>") if that rack still has room, else the first
+ * rack with room.
+ */
+internal fun initialLocation(cellar: Cellar, routeRack: Rack?, last: String?): InitialLocation {
+    if (routeRack != null) return InitialLocation(routeRack.id, "")
+    fun hasRoom(rack: Rack) = cellar.freeSlots(rack).isNotEmpty()
+    val firstWithRoom = cellar.racks.firstOrNull(::hasRoom)?.id
+    return when {
+        last != null && last.startsWith("rack:") -> {
+            val id = last.removePrefix("rack:")
+            InitialLocation(cellar.racks.firstOrNull { it.id.toString() == id && hasRoom(it) }?.id ?: firstWithRoom, "")
+        }
+        last != null && last.startsWith("other:") -> InitialLocation(null, last.removePrefix("other:"))
+        else -> InitialLocation(firstWithRoom, "")
     }
 }
 
@@ -478,24 +579,94 @@ private fun Header(id: Int, modifier: Modifier = Modifier) {
     )
 }
 
-/** A scanned barcode belongs to a wine of the cellar: offer to add bottles of it. */
+/**
+ * A scanned barcode belongs to wines of the cellar: offer to add bottles of one. Producers
+ * often keep one barcode for every vintage: each is listed, newest first, and Another
+ * vintage starts a new wine with the same details.
+ */
 @Composable
-private fun BarcodeMatchCard(wine: Wine, onUse: () -> Unit) {
+private fun BarcodeMatchCard(
+    cellar: Cellar,
+    wines: List<Wine>,
+    onUse: (Wine) -> Unit,
+    onAnotherVintage: ((Wine) -> Unit)?,
+    onDismiss: () -> Unit,
+) {
+    val first = wines.first()
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
         modifier = Modifier.testTag("barcode.match"),
     ) {
         Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.barcode_match_title), style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f).semantics { heading() },
+                )
+                IconButton(onClick = onDismiss, modifier = Modifier.testTag("barcode.match.dismiss")) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_dismiss))
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                WineColorDot(first.color, size = 20.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(if (wines.size == 1) first.displayName else first.name, style = MaterialTheme.typography.titleMedium)
+                    Text(first.origin(), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            if (wines.size == 1) {
+                Button(onClick = { onUse(first) }, modifier = Modifier.testTag("action.use_wine")) {
+                    ActionContent(stringResource(R.string.action_use_this_wine), Icons.Filled.Check)
+                }
+            } else {
+                wines.take(4).forEach { wine ->
+                    val count = cellar.bottlesOf(wine.id).size
+                    ListItem(
+                        colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                        headlineContent = { Text(wine.vintage?.toString() ?: stringResource(R.string.non_vintage)) },
+                        supportingContent = { Text(pluralStringResource(R.plurals.bottle_count, count, count)) },
+                        trailingContent = { Icon(Icons.Filled.Add, contentDescription = null) },
+                        modifier = Modifier.clickable(onClickLabel = stringResource(R.string.action_use_this_wine)) { onUse(wine) }
+                            .testTag("action.use_wine.${wine.vintage ?: "nv"}"),
+                    )
+                }
+            }
+            if (onAnotherVintage != null) {
+                OutlinedButton(onClick = { onAnotherVintage(first) }, modifier = Modifier.testTag("action.another_vintage")) {
+                    ActionContent(stringResource(R.string.action_another_vintage), Icons.Filled.Add)
+                }
+            }
+        }
+    }
+}
+
+/** The name typed is a wine already in the cellar: add to it, so its bottles and tastings stay together. */
+@Composable
+private fun SameWineCard(wine: Wine, bottles: Int, onUse: () -> Unit, onDifferent: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        modifier = Modifier.testTag("add.same_wine"),
+    ) {
+        Column(
+            Modifier.padding(Dimens.l).semantics { liveRegion = LiveRegionMode.Polite },
+            verticalArrangement = Arrangement.spacedBy(Dimens.s),
+        ) {
             Text(stringResource(R.string.barcode_match_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                 WineColorDot(wine.color, size = 20.dp)
                 Column(Modifier.weight(1f)) {
                     Text(wine.displayName, style = MaterialTheme.typography.titleMedium)
-                    Text(wine.origin(), style = MaterialTheme.typography.bodySmall)
+                    Text(pluralStringResource(R.plurals.widget_bottles_in_cellar, bottles, bottles), style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Button(onClick = onUse, modifier = Modifier.testTag("action.use_wine")) {
-                ActionContent(stringResource(R.string.action_use_this_wine), Icons.Filled.Check)
+            Hint(stringResource(R.string.same_wine_footer))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                Button(onClick = onUse, modifier = Modifier.testTag("add.same_wine.use")) {
+                    ActionContent(stringResource(R.string.action_add_to_this_wine), Icons.Filled.Add)
+                }
+                TextButton(onClick = onDifferent, modifier = Modifier.testTag("add.same_wine.different")) {
+                    Text(stringResource(R.string.action_different_wine))
+                }
             }
         }
     }
@@ -523,6 +694,8 @@ private fun LocationSection(
     onRack: (Rack) -> Unit,
     slots: List<Slot>,
     quantity: Int,
+    /** The first free places, until the user taps some. */
+    automatic: Boolean,
     onToggleCell: (app.encave.core.RackCell) -> Unit,
     storage: String,
     onStorage: (String) -> Unit,
@@ -554,7 +727,7 @@ private fun LocationSection(
             Text(stringResource(R.string.add_rack_full), color = MaterialTheme.colorScheme.error)
         } else {
             Text(
-                stringResource(R.string.add_pick_slots, slots.size, quantity),
+                if (automatic) stringResource(R.string.add_auto_slots) else stringResource(R.string.add_pick_slots, slots.size, quantity),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             val chooseLabel = stringResource(R.string.slot_choose)
@@ -624,6 +797,9 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val wine = remember(wineId) { runCatching { UUID.fromString(wineId) }.getOrNull()?.let { cellar.wines[it] } }
     val form = rememberRetained("editWine.form") { WineFormState(wine, viewModel.year) }
+    val formStart = rememberRetained("editWine.formStart") { form.snapshot() }
+    // Back, the back gesture and ✕ ask first when something was changed.
+    val leave = rememberDiscardGuard(form.snapshot() != formStart) { navigator.back() }
     val known = remember(cellar) { cellar.knownValues() }
     fun save() {
         form.showErrors = true
@@ -636,7 +812,7 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
             TopAppBar(
                 title = { Text(stringResource(R.string.edit_wine_title)) },
                 navigationIcon = {
-                    IconButton(onClick = { navigator.back() }) {
+                    IconButton(onClick = leave) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
@@ -680,7 +856,10 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
     }
 }
 
-/** How many bottles: near the top of the form, right after the label photo or the chosen wine. */
+/**
+ * How many bottles: near the top of the form, right after the label photo or the chosen wine.
+ * A case of 6 or 12 is one tap; the stepper also repeats while held.
+ */
 @Composable
 private fun QuantityRow(quantity: Int, onChange: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
@@ -692,6 +871,17 @@ private fun QuantityRow(quantity: Int, onChange: (Int) -> Unit) {
                 increaseLabel = stringResource(R.string.quantity_increase),
                 valueText = quantity.toString(),
             )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Text(stringResource(R.string.quantity_case), style = MaterialTheme.typography.bodyMedium)
+            listOf(6, 12).forEach { size ->
+                val label = pluralStringResource(R.plurals.bottle_count, size, size)
+                FilterChip(
+                    selected = quantity == size, onClick = { onChange(size) },
+                    label = { Text(size.toString()) },
+                    modifier = Modifier.semantics { contentDescription = label }.testTag("add.case.$size"),
+                )
+            }
         }
         Hint("${pluralStringResource(R.plurals.bottle_count, quantity, quantity)} · ${stringResource(R.string.help_field_quantity)}")
     }

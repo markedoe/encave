@@ -65,6 +65,8 @@ fun WineGroupRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
+    /** What a long press does, read by TalkBack ("double tap and hold to …"). */
+    onLongClickLabel: String? = null,
     selected: Boolean = false,
     showMaturity: Boolean = true,
     extra: (@Composable () -> Unit)? = null,
@@ -81,7 +83,7 @@ fun WineGroupRow(
         modifier = if (checked != null) {
             modifier.toggleable(checked, role = Role.Checkbox, onValueChange = { onClick() })
         } else {
-            modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel)
         },
         colors = if (selected || checked == true) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
         leadingContent = {
@@ -103,6 +105,13 @@ fun WineGroupRow(
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(listOf(style, origin).filter { it.isNotEmpty() }.joinToString(" · "), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (showMaturity && !isOrder && maturity != Maturity.Unknown) {
+                    // The symbol in the maturity color, the words in the text color.
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(maturity.icon, contentDescription = null, tint = maturity.tint, modifier = Modifier.size(16.dp))
+                        Text(stringResource(maturity.shortLabelRes), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
                 if (isOrder) {
                     ArrivalLabel(group.bottles.first().expectedAt)
                 } else {
@@ -116,19 +125,11 @@ fun WineGroupRow(
         },
         trailingContent = {
             val countDescription = pluralStringResource(R.plurals.bottle_count, group.count, group.count)
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(R.string.count_times, group.count),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { contentDescription = countDescription },
-                )
-                if (showMaturity && !isOrder && maturity != Maturity.Unknown) {
-                    Icon(
-                        maturity.icon, contentDescription = stringResource(maturity.labelRes),
-                        tint = maturity.tint, modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
+            Text(
+                stringResource(R.string.count_times, group.count),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { contentDescription = countDescription },
+            )
         },
     )
 }

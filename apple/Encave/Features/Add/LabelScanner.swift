@@ -11,10 +11,12 @@ import VisionKit
 struct LabelScanner: View {
     /// When true, a photo is useful even if no text is found (AI can still read it).
     var acceptsPhotoWithoutText = false
-    /// A wine of the cellar the camera's barcode belongs to, if any.
-    var knownWine: (String) -> Wine? = { _ in nil }
+    /// The wines of the cellar the camera's barcode belongs to, newest vintage first.
+    var knownWines: (String) -> [Wine] = { _ in [] }
     /// "Already in your cellar": use that wine instead of reading the label.
     var onKnownWine: ((Wine) -> Void)?
+    /// "Another Vintage": a new wine like the known one, with the vintage read on the label.
+    var onAnotherVintage: ((Wine, LabelScanResult, Data?) -> Void)?
     let onResult: (LabelScanResult, Data?) -> Void
 
     static var isAvailable: Bool { true }
@@ -30,6 +32,8 @@ struct LabelScanner: View {
     @State private var isCapturing = false
     #if os(iOS)
     @State private var handle = LiveTextScanner.Handle()
+    /// The live scanner needs the camera: asked when the sheet opens.
+    @State private var cameraStatus = CameraAccess.status
     #endif
 
     var body: some View {
@@ -43,6 +47,16 @@ struct LabelScanner: View {
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .overlay(alignment: .bottom) { liveOverlay }
                         .ignoresSafeArea(edges: .bottom)
+                } else if LiveTextScanner.deviceCanScan, CameraAccess.isOff(cameraStatus) {
+                    CameraAccessOffView(message: "Allow the camera for Encave in Settings to scan labels, or choose a photo of the label.") {
+                        PhotosPicker(selection: $photo, matching: .images) {
+                            Text("Choose a Photo")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                } else if LiveTextScanner.deviceCanScan, cameraStatus == .notDetermined {
+                    // The system asks for the camera; the scanner shows once it is allowed.
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     photoPrompt
                 }
@@ -68,6 +82,13 @@ struct LabelScanner: View {
                 guard let item else { return }
                 Task { await read(item) }
             }
+            #if os(iOS)
+            .task {
+                guard LiveTextScanner.deviceCanScan, cameraStatus == .notDetermined else { return }
+                _ = await CameraAccess.request()
+                cameraStatus = CameraAccess.status
+            }
+            #endif
         }
         .macSheetFrame(width: 520, height: 560)
     }
@@ -76,10 +97,18 @@ struct LabelScanner: View {
     private var liveOverlay: some View {
         var result = LabelTextParser.parse(liveText.map(\.line))
         result.barcode = liveBarcode
-        let known = liveBarcode.flatMap(knownWine)
+        // Producers often keep one barcode for every vintage: the one read on the label comes first.
+        let known: [Wine] = {
+            let wines = liveBarcode.map(knownWines) ?? []
+            guard let vintage = result.vintage else { return wines }
+            return wines.filter { $0.vintage == vintage } + wines.filter { $0.vintage != vintage }
+        }()
         return VStack(spacing: 12) {
-            if let known, let onKnownWine {
-                KnownWineCard(wine: known) { onKnownWine(known) }
+            if !known.isEmpty, let onKnownWine {
+                KnownWineCard(
+                    wines: known, readVintage: result.vintage, use: onKnownWine,
+                    anotherVintage: onAnotherVintage == nil ? nil : { wine in anotherVintage(of: wine, result) }
+                )
             } else if result.isEmpty {
                 Text("Point the camera at the label")
                     .font(.subheadline.weight(.medium))
@@ -93,6 +122,7 @@ struct LabelScanner: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
             }
+            // Also with a known wine: the label may be a new wine that shares its barcode.
             Button {
                 capture(result)
             } label: {
@@ -102,9 +132,9 @@ struct LabelScanner: View {
                     Text("Use This Label").frame(maxWidth: .infinity)
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .prominent(known.isEmpty)
             .controlSize(.large)
-            .disabled((result.isEmpty && !acceptsPhotoWithoutText) || isCapturing)
+            .disabled((result.isEmpty && !acceptsPhotoWithoutText && known.isEmpty) || isCapturing)
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -126,6 +156,15 @@ struct LabelScanner: View {
             onResult(result, image?.jpegData(compressionQuality: 0.9))
         }
     }
+
+    private func anotherVintage(of wine: Wine, _ result: LabelScanResult) {
+        isCapturing = true
+        Task {
+            let image = try? await handle.scanner?.capturePhoto()
+            isCapturing = false
+            onAnotherVintage?(wine, result, image?.jpegData(compressionQuality: 0.9))
+        }
+    }
     #endif
 
     private var photoPrompt: some View {
@@ -136,7 +175,7 @@ struct LabelScanner: View {
                 .foregroundStyle(Color.accentColor)
             Text("Choose a photo of the label")
                 .font(.headline)
-            Text("The text is read on this device to fill in the name, producer and vintage.")
+            Text("The text is read on this device to fill in the name, producer, vintage and appellation.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -149,7 +188,7 @@ struct LabelScanner: View {
             if let lastResult, lastResult.isEmpty, !acceptsPhotoWithoutText {
                 Text("No text found. Try a sharper photo.")
                     .font(.footnote)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.warning)
             }
             Spacer()
         }
@@ -202,9 +241,16 @@ struct LiveTextScanner: UIViewControllerRepresentable {
     @Binding var barcode: String?
     let handle: Handle
 
+    /// The device can scan and the camera is allowed.
     static var isSupported: Bool {
         DataScannerViewController.isSupported && DataScannerViewController.isAvailable
     }
+
+    /// The device can scan (iPhone, iPad with a camera), whether or not the camera is allowed yet.
+    static var deviceCanScan: Bool { DataScannerViewController.isSupported }
+
+    /// Opening Add Bottles on the scanner: a device that can scan, with the camera not refused.
+    static var opensFirst: Bool { deviceCanScan && !CameraAccess.isOff(CameraAccess.status) }
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
         let scanner = DataScannerViewController(
@@ -308,32 +354,86 @@ private struct TitleHighlights: View {
 }
 #endif
 
-/// "Already in your cellar": shown when the camera sees the barcode of a known wine.
+/// "Already in your cellar": shown when the camera sees the barcode of known wines.
+/// Several vintages may share one barcode: each is offered, and Another Vintage starts
+/// a new wine like them with the vintage on this label.
 private struct KnownWineCard: View {
     @Environment(CellarModel.self) private var model
-    let wine: Wine
-    let use: () -> Void
+    let wines: [Wine]
+    /// The vintage read on the label, if any.
+    let readVintage: Int?
+    let use: (Wine) -> Void
+    var anotherVintage: ((Wine) -> Void)?
 
     var body: some View {
-        let count = model.cellar.bottles(of: wine.id).count
+        let first = wines[0]
+        // The label shows a vintage the cellar does not have: Another Vintage is the likely choice.
+        let newVintage = readVintage.map { vintage in !wines.contains { $0.vintage == vintage } } ?? false
         VStack(spacing: 10) {
             HStack(spacing: 12) {
-                BottleEnd(color: wine.color, size: 34)
+                BottleEnd(color: first.color, size: 34)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Already in your cellar").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    Text(verbatim: wine.displayName).font(.headline).lineLimit(2)
-                    Text("\(count) bottles").font(.subheadline).foregroundStyle(.secondary)
+                    if wines.count == 1 {
+                        Text(verbatim: first.displayName).font(.headline).lineLimit(2)
+                        Text("\(model.cellar.bottles(of: first.id).count) bottles").font(.subheadline).foregroundStyle(.secondary)
+                    } else {
+                        Text(verbatim: first.name).font(.headline).lineLimit(2)
+                    }
                 }
                 Spacer(minLength: 0)
             }
-            Button(action: use) {
-                ActionLabel("Use This Wine", systemImage: "checkmark.circle")
-                    .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .combine)
+            if wines.count == 1 {
+                Button { use(first) } label: {
+                    ActionLabel("Use This Wine", systemImage: "checkmark.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .prominent(!newVintage)
+                .accessibilityIdentifier("action.scan.known")
+            } else {
+                ForEach(wines.prefix(4)) { wine in
+                    Button { use(wine) } label: {
+                        HStack {
+                            if let vintage = wine.vintage {
+                                Text(verbatim: "\(vintage)").monospacedDigit().fontWeight(.semibold)
+                            } else {
+                                Text("Non-vintage").fontWeight(.semibold)
+                            }
+                            Spacer()
+                            Text("\(model.cellar.bottles(of: wine.id).count) bottles").foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityHint(Text("Adds bottles of this vintage."))
+                    .accessibilityIdentifier("action.scan.known.\(wine.vintage.map(String.init) ?? "nv")")
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .accessibilityIdentifier("action.scan.known")
+            if let anotherVintage {
+                Button { anotherVintage(first) } label: {
+                    if newVintage, let readVintage {
+                        ActionLabel("New Vintage: \(readVintage)", systemImage: "plus.circle")
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        ActionLabel("Another Vintage", systemImage: "plus.circle")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .prominent(newVintage)
+                .accessibilityHint(Text("A new wine with the same details and the vintage on this label."))
+                .accessibilityIdentifier("action.scan.anotherVintage")
+            }
         }
         .accessibilityElement(children: .contain)
-        .sensoryFeedback(.success, trigger: wine.id)
+        .sensoryFeedback(.success, trigger: first.id)
+    }
+}
+
+private extension View {
+    /// The main action of a group is filled; the others are bordered.
+    @ViewBuilder
+    func prominent(_ isProminent: Bool) -> some View {
+        if isProminent { buttonStyle(.borderedProminent) } else { buttonStyle(.bordered) }
     }
 }

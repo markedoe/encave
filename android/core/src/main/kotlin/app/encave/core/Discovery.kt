@@ -65,14 +65,12 @@ data class DiscoveryFilter(val query: String = "", val tag: String? = null, val 
 /** Most recent first. */
 fun Cellar.discoveries(filter: DiscoveryFilter = DiscoveryFilter()): List<Discovery> {
     val needle = filter.query.trim()
-    val folded = Wine.fold(needle)
     return discoveries.values.filter { discovery ->
         if (filter.toBuyOnly && !discovery.wantsToBuy) return@filter false
         val tag = filter.tag
         if (tag != null && discovery.tags.none { it.equals(tag, ignoreCase = true) }) return@filter false
         if (needle.isEmpty()) return@filter true
-        if (wines[discovery.wineId]?.matches(needle) == true) return@filter true
-        (listOfNotNull(discovery.place, discovery.note) + discovery.tags).any { Wine.fold(it).contains(folded) }
+        SearchText.matches(needle, wines[discovery.wineId]?.searchFields.orEmpty() + listOfNotNull(discovery.place, discovery.note) + discovery.tags)
     }.sortedWith(compareByDescending<Discovery> { it.date }.thenBy { it.id.toString().uppercase(Locale.ROOT) })
 }
 

@@ -12,6 +12,7 @@ enum MacDestination: Hashable {
 /// the chosen item in the middle, and its detail on the right. One split view, no nesting.
 struct MacRoot: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router
     @State private var destination: MacDestination? = .cellar
     @State private var wine: UUID?
     @State private var bottle: UUID?
@@ -50,22 +51,26 @@ struct MacRoot: View {
             }
         }
         // Menu commands and "Show in Rack" set the selected tab: follow them.
-        .onChange(of: model.selectedTab, initial: true) { _, tab in follow(tab) }
-        .onChange(of: model.openWineRequest, initial: true) { _, id in
+        .onChange(of: router.selectedTab, initial: true) { _, tab in follow(tab) }
+        .onChange(of: router.openWineRequest, initial: true) { _, id in
             guard let id else { return }
             destination = .cellar
             wine = id
-            model.openWineRequest = nil
+            router.openWineRequest = nil
         }
+        // The Wine menu acts on the wine selected in this window.
+        .focusedSceneValue(\.selectedWineID, destination == .cellar || destination == .tonight ? wine : nil)
+        // The selected wine was deleted: the first of the Cellar takes its place.
+        .replacingDeletedWine($wine, selectsFirst: destination == .cellar)
         .onChange(of: model.highlightedSlot) { _, slot in
             if let slot { destination = .rack(slot.rackID) }
         }
         .onChange(of: destination) { _, new in
             switch new {
-            case .cellar: if model.selectedTab != .cellar { model.selectedTab = .cellar }
-            case .tonight: if model.selectedTab != .tonight { model.selectedTab = .tonight }
-            case .journal: if model.selectedTab != .journal { model.selectedTab = .journal }
-            case .rack: if model.selectedTab != .racks { model.selectedTab = .racks }
+            case .cellar: if router.selectedTab != .cellar { router.selectedTab = .cellar }
+            case .tonight: if router.selectedTab != .tonight { router.selectedTab = .tonight }
+            case .journal: if router.selectedTab != .journal { router.selectedTab = .journal }
+            case .rack: if router.selectedTab != .racks { router.selectedTab = .racks }
             case nil: break
             }
         }
@@ -77,11 +82,11 @@ struct MacRoot: View {
         List(selection: $destination) {
             Section("Library") {
                 Label("Cellar", systemImage: "wineglass")
-                    .badge(model.cellar.bottlesInCellar.count)
+                    .badge(model.bottlesInCellar.count)
                     .tag(MacDestination.cellar)
                     .accessibilityIdentifier("section.cellar")
                 Label("Tonight", systemImage: "moon.stars")
-                    .badge(model.cellar.statistics(year: model.currentYear).byMaturity[.drinkSoon, default: 0])
+                    .badge(model.overview.statistics.byMaturity[.drinkSoon, default: 0])
                     .tag(MacDestination.tonight)
                     .accessibilityIdentifier("section.tonight")
                 Label("Journal", systemImage: "book.closed")
@@ -96,7 +101,7 @@ struct MacRoot: View {
                         .tag(MacDestination.rack(rack.id))
                         .accessibilityIdentifier("rack.card.\(index)")
                         .contextMenu {
-                            Button("Edit Rack", systemImage: "pencil") { model.sheet = .editRack(rackID: rack.id) }
+                            Button("Edit Rack", systemImage: "pencil") { router.sheet = .editRack(rackID: rack.id) }
                             Divider()
                             Button("Delete Rack", systemImage: "trash", role: .destructive) {
                                 model.deleteRack(rack.id)
@@ -105,7 +110,7 @@ struct MacRoot: View {
                 }
                 .onMove { source, target in model.update { $0.moveRacks(fromOffsets: source, toOffset: target) } }
                 Button {
-                    model.sheet = .editRack(rackID: nil)
+                    router.sheet = .editRack(rackID: nil)
                 } label: {
                     Label("Add a Rack", systemImage: "plus")
                 }
@@ -115,6 +120,7 @@ struct MacRoot: View {
             }
         }
         .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom) { SyncAttentionFooter() }
     }
 
     // MARK: Middle column
@@ -161,7 +167,7 @@ struct MacRoot: View {
             if let first = model.highlightedSlot?.rackID ?? model.cellar.racks.first?.id {
                 destination = .rack(first)
             } else {
-                model.sheet = .editRack(rackID: nil)
+                router.sheet = .editRack(rackID: nil)
             }
         }
     }

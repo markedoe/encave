@@ -53,7 +53,7 @@ it with.
     implementations proved simpler than UniFFI bindings for a model of this
     size; the decision can be revisited if the model grows.
 - **Merge without a CRDT library.**
-  - Wines, bottles, racks and discoveries are objects keyed by UUID, each with a
+  - Wines, bottles, racks and wines tasted elsewhere are objects keyed by UUID, each with a
     Lamport stamp: the latest change wins, deletions included.
   - A deterministic repair step fixes what a merge can leave inconsistent: two
     bottles in one place, a bottle in a removed rack.
@@ -107,7 +107,9 @@ The full protocol is in [SYNC.md](SYNC.md).
   relay rendezvous, so someone watching the relay cannot guess it offline and
   gets one try before the code is burned.
 - **Losing a phone:** with a second paired device nothing is lost. Single-device
-  users export an encrypted backup (Files, iCloud Drive, Google Drive).
+  users keep backups (done): **Back Up Now** and a weekly backup make a ZIP
+  file (not encrypted) to copy to Files, iCloud Drive or Google Drive, and the
+  device keeps previous versions (7 daily, 4 weekly).
 
 ## User experience
 
@@ -129,10 +131,10 @@ grouping ("Château X 2015 ×3").
 
 1. **Add a bottle by scanning the label:** live camera, automatic capture,
    on-device text recognition, optional AI refinement with your own key,
-   then one confirmation sheet (quantity, suggested rack slot). Extra details
+   then one confirmation sheet (quantity, suggested place in a rack). Extra details
    are collapsed. Undo is always available.
 2. **Find a bottle:** search shows the rack position in each row; "Show in
-   rack" highlights the slot. Drag and drop on iPad and Mac.
+   rack" highlights its place. Drag and drop on iPad and Mac.
 3. **Drink a bottle:** swipe or context menu, then a short sheet (rating,
    one-line note, occasion). A full tasting note can be added later.
 4. **What to drink tonight:** bottles grouped by maturity (at peak, drink
@@ -142,8 +144,9 @@ grouping ("Château X 2015 ×3").
    only the optional AI recognition and web search need the network.
 
 Also in v1: onboarding (create a rack or scan a first bottle, or join a
-shared cellar), import and export as JSON/CSV, App Intents /
-Siri Shortcuts ("What should I drink tonight?"), Spotlight.
+shared cellar), backups (a ZIP with the cellar as JSON), CSV export, import
+from a backup, CellarTracker, Vivino or a spreadsheet, App Intents /
+Siri Shortcuts ("What should I open tonight in Encave?"), Spotlight.
 
 ### Visual language
 
@@ -163,7 +166,7 @@ Siri Shortcuts ("What should I drink tonight?"), Spotlight.
 | 0. Public release | Clean repository, CI, TestFlight pipeline | Done |
 | 1. Design in the app | The six journeys built in SwiftUI and Compose, reviewed on device through TestFlight; design tokens | Done, refined continuously |
 | 2. Sync | Pairing, local network sync, relay, protocol spec and test vectors | Apple and Android done; first test between an iPhone and an Android phone next |
-| 3. Apple apps MVP | iPhone, iPad, Mac with sync | Internal TestFlight; external beta next |
+| 3. Apple apps MVP | iPhone, iPad, Mac with sync | External TestFlight beta |
 | 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple, sync included (not yet tried on a phone); Play internal testing next |
 | 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | CloudKit built (needs the iCloud container); Google Drive planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
 | 6. Household sharing | Roles, signed files, remote pairing | Planned |
@@ -230,10 +233,13 @@ on-device model.
   incompatible with the AGPL for third-party contributions. Before accepting
   outside contributions, add an AGPL section 7 additional permission for app
   store distribution, or a contributor license agreement.
-- **Encryption export rules.** An end-to-end encrypted app must answer the
-  export compliance questions in App Store Connect, and France requires a
-  declaration for encryption products. To verify before the first store
-  submission.
+- **Encryption export rules.** Settled for Apple and Android in
+  [ENCRYPTION.md](ENCRYPTION.md): both apps use only the system's encryption
+  (CryptoKit, the Android platform), so nothing is uploaded to App Store Connect
+  and no French declaration is needed on Apple's store. Remaining before the
+  public release: check whether the U.S. year-end self-classification report
+  (BIS) applies, and confirm the Android case against ANSSI's rules before
+  distributing the Android app in France.
 - **Shared core.** The model and the sync protocol are implemented twice
   (Swift, Kotlin), checked with shared test vectors. If the model grows much, revisit a shared Rust core
   (UniFFI) or a CRDT engine such as Automerge.

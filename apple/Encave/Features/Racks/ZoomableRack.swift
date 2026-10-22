@@ -4,7 +4,8 @@ import SwiftUI
 import UIKit
 
 /// A rack in a native zooming scroll view, as in Photos or Maps: pinch to zoom up to 4×,
-/// double-tap to zoom in on a spot (or back out), pan when zoomed in.
+/// pan when zoomed in. No double-tap zoom: the second tap would also reach the place
+/// under the finger (adding or showing a bottle, or moving one there).
 /// When a pinch ends the rack is drawn again at the new size, so labels stay sharp
 /// and names appear once cells are large enough.
 ///
@@ -21,6 +22,7 @@ struct ZoomableRack: UIViewRepresentable {
     var onTap: (RackCell, [Bottle]) -> Void
     var onDrop: ((UUID, RackCell) -> Bool)?
     var zoomStep = RackZoomStep()
+    var interaction = RackInteraction()
 
     static let maxZoom: CGFloat = 4
 
@@ -47,11 +49,6 @@ struct ZoomableRack: UIViewRepresentable {
         let pinch = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pinched(_:)))
         scroll.addGestureRecognizer(pinch)
         context.coordinator.pinch = pinch
-
-        let doubleTap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.doubleTapped(_:)))
-        doubleTap.numberOfTapsRequired = 2
-        doubleTap.cancelsTouchesInView = false
-        scroll.addGestureRecognizer(doubleTap)
         return scroll
     }
 
@@ -198,20 +195,6 @@ struct ZoomableRack: UIViewRepresentable {
             Task { @MainActor [weak self] in self?.updateIfPending() }
         }
 
-        @objc func doubleTapped(_ gesture: UITapGestureRecognizer) {
-            guard let scroll, let content = host?.view else { return }
-            if level > 1.01 || scroll.zoomScale > 1.01 {
-                // Back to the whole rack.
-                scroll.setZoomScale(scroll.minimumZoomScale, animated: true)
-            } else {
-                let point = gesture.location(in: content)
-                let scale = min(2.5, scroll.maximumZoomScale)
-                let size = CGSize(width: scroll.bounds.width / scale, height: scroll.bounds.height / scale)
-                scroll.zoom(to: CGRect(x: point.x - size.width / 2, y: point.y - size.height / 2,
-                                       width: size.width, height: size.height), animated: true)
-            }
-        }
-
         /// Same size, new content: only the drawing changes.
         func refresh() {
             guard let host, host.view.frame.size != .zero else { return render(keepingCenter: false) }
@@ -223,7 +206,8 @@ struct ZoomableRack: UIViewRepresentable {
             return AnyView(
                 RackGrid(rack: parent.rack, cellSize: base * level, selected: parent.selected,
                          highlighted: parent.highlighted, selectedCell: parent.selectedCell,
-                         focusWine: parent.focusWine, onTap: parent.onTap, onDrop: parent.onDrop)
+                         focusWine: parent.focusWine, onTap: parent.onTap, onDrop: parent.onDrop,
+                         interaction: parent.interaction)
                     .padding(FittedRackGrid.padding)
                     .environment(model)
             )

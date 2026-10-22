@@ -1,5 +1,28 @@
 package app.encave.ui.journal
 
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.net.Uri
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.core.content.FileProvider
+import androidx.core.graphics.createBitmap
+import app.encave.core.Occasion
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +74,8 @@ import app.encave.ui.components.readableWidth
 import app.encave.core.CellarStatistics
 import app.encave.core.Maturity
 import app.encave.core.statistics
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.EmptyState
@@ -103,8 +128,8 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             )
         },
     ) { padding ->
-        if (stats.bottleCount == 0 && stats.consumedCount == 0) {
-            EmptyState(Icons.Outlined.Insights, stringResource(R.string.action_insights), stringResource(R.string.insights_empty), Modifier.padding(padding))
+        if (stats.bottleCount == 0 && stats.consumedCount == 0 && cellar.discoveries.isEmpty()) {
+            EmptyState(Icons.Outlined.Insights, stringResource(R.string.insights_empty_title), stringResource(R.string.insights_empty), Modifier.padding(padding))
             return@Scaffold
         }
         Column(
@@ -118,12 +143,12 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(Dimens.m),
                 maxItemsInEachRow = if (wide) 4 else 2,
             ) {
-                StatTile(stringResource(R.string.insights_bottles), stats.bottleCount.toString())
-                StatTile(stringResource(R.string.insights_wines), stats.wineCount.toString())
-                StatTile(stringResource(R.string.insights_opened), stats.consumedCount.toString())
+                StatTile(Formats.integer(stats.bottleCount), pluralStringResource(R.plurals.stat_bottles_in_cellar, stats.bottleCount))
+                StatTile(Formats.integer(stats.wineCount), pluralStringResource(R.plurals.stat_different_wines, stats.wineCount))
+                StatTile(Formats.integer(stats.consumedCount), pluralStringResource(R.plurals.stat_bottles_opened, stats.consumedCount))
                 StatTile(
-                    stringResource(R.string.insights_avg_rating),
                     stats.averageRating?.let { stringResource(R.string.insights_rating_value, Formats.decimal(it)) } ?: "–",
+                    stringResource(R.string.insights_avg_rating),
                 )
             }
             ChartCard(stringResource(R.string.insights_value)) {
@@ -174,15 +199,16 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 }
 
 @Composable
-private fun androidx.compose.foundation.layout.FlowRowScope.StatTile(label: String, value: String) {
+/** A figure above its caption, as in the cellar summary. */
+private fun androidx.compose.foundation.layout.FlowRowScope.StatTile(value: String, caption: String) {
     Card(
         Modifier.weight(1f).semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(Dimens.radiusCard),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(Dimens.l)) {
-            Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, style = MaterialTheme.typography.headlineMedium)
+            Text(caption, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -208,7 +234,10 @@ private fun StyleDonut(stats: CellarStatistics) {
     val gap = MaterialTheme.colorScheme.surfaceContainerLow
     val total = stats.byColor.sumOf { it.count }.coerceAtLeast(1)
     val labels = stats.byColor.map { stringResource(it.color.labelRes) }
-    val description = stats.byColor.zip(labels).joinToString(", ") { (slice, label) -> "$label ${slice.count}" }
+    val resources = LocalResources.current
+    val description = stats.byColor.zip(labels).joinToString(", ") { (slice, label) ->
+        resources.getQuantityString(R.plurals.chart_item_bottles, slice.count, label, slice.count)
+    }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
         Canvas(Modifier.size(140.dp).clearAndSetSemantics { contentDescription = description }) {
             val stroke = size.minDimension * 0.18f
@@ -236,7 +265,7 @@ private fun StyleDonut(stats: CellarStatistics) {
             stats.byColor.zip(labels).forEach { (slice, label) ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
                     WineColorDot(slice.color)
-                    Text("$label · ${slice.count} (${100 * slice.count / total} %)", style = MaterialTheme.typography.bodyMedium)
+                    Text("$label · ${Formats.integer(slice.count)} (${100 * slice.count / total} %)", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -253,12 +282,12 @@ private fun Bars(items: List<BarItem>) {
     val track = MaterialTheme.colorScheme.surfaceVariant
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         items.forEach { item ->
-            val description = stringResource(R.string.chart_item, item.label, item.value)
+            val description = pluralStringResource(R.plurals.chart_item_bottles, item.value, item.label, item.value)
             Column(Modifier.clearAndSetSemantics { contentDescription = description }) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                     item.icon?.invoke()
                     Text(item.label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(item.value.toString(), style = MaterialTheme.typography.labelLarge)
+                    Text(Formats.integer(item.value), style = MaterialTheme.typography.labelLarge)
                 }
                 Canvas(Modifier.fillMaxWidth().height(8.dp)) {
                     val radius = CornerRadius(4.dp.toPx())
@@ -406,6 +435,14 @@ private fun YearInWineCard(cellar: Cellar) {
     val recap = remember(cellar, shown) { cellar.yearInWine(shown, zone) }
     val locale = LocalConfiguration.current.locales[0]
     var menu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // The figures and facts, recorded to share them as an image.
+    val layer = rememberGraphicsLayer()
+    val shareTitle = stringResource(R.string.insights_year_share_title, shown.toString())
+    val madeWith = stringResource(R.string.insights_year_made_with)
+    val colors = MaterialTheme.colorScheme
+    val density = LocalDensity.current.density
     Card(
         Modifier.fillMaxWidth().testTag("insights.year"),
         shape = RoundedCornerShape(Dimens.radiusCard),
@@ -434,30 +471,109 @@ private fun YearInWineCard(cellar: Cellar) {
                 } else {
                     Text(shown.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            val facts = layer.toImageBitmap().asAndroidBitmap()
+                            val uri = withContext(Dispatchers.IO) {
+                                YearShareImage.write(
+                                    context, facts, shareTitle, madeWith, density,
+                                    background = colors.primaryContainer.toArgb(), text = colors.onPrimaryContainer.toArgb(),
+                                    file = "year-in-wine-$shown.png",
+                                )
+                            }
+                            uri?.let { YearShareImage.share(context, it, shareTitle) }
+                        }
+                    },
+                    modifier = Modifier.testTag("insights.year.share"),
+                ) {
+                    Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.insights_year_share))
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
-                YearFigure(recap.bottlesOpened, stringResource(R.string.insights_year_opened))
-                YearFigure(recap.differentWines, stringResource(R.string.insights_year_wines))
-                if (recap.discoveries > 0) YearFigure(recap.discoveries, stringResource(R.string.insights_year_elsewhere))
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
-                recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, androidx.compose.ui.res.pluralStringResource(R.plurals.insights_year_favorite, rating, name, rating)) }
-                recap.topRegion?.let { YearFact(Icons.Outlined.Map, stringResource(R.string.insights_year_region, it)) }
-                recap.topColor?.let { YearFact(Icons.Outlined.WineBar, stringResource(R.string.insights_year_style, stringResource(it.labelRes))) }
-                recap.topOccasion?.let { YearFact(Icons.Outlined.Group, stringResource(R.string.insights_year_occasion, it)) }
-                recap.busiestMonth?.let { month ->
-                    val name = java.time.Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale)
-                    YearFact(Icons.Outlined.CalendarMonth, stringResource(R.string.insights_year_month, name))
+            Column(
+                Modifier.drawWithContent {
+                    layer.record { this@drawWithContent.drawContent() }
+                    drawLayer(layer)
+                },
+                verticalArrangement = Arrangement.spacedBy(Dimens.m),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
+                    YearFigure(recap.bottlesOpened, pluralStringResource(R.plurals.stat_bottles_opened, recap.bottlesOpened))
+                    YearFigure(recap.differentWines, pluralStringResource(R.plurals.stat_different_wines, recap.differentWines))
+                    if (recap.discoveries > 0) YearFigure(recap.discoveries, pluralStringResource(R.plurals.stat_tasted_elsewhere, recap.discoveries))
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                    recap.favorite?.let { (name, rating) -> YearFact(Icons.Outlined.Star, androidx.compose.ui.res.pluralStringResource(R.plurals.insights_year_favorite, rating, name, rating)) }
+                    recap.topRegion?.let { YearFact(Icons.Outlined.Map, stringResource(R.string.insights_year_region, it)) }
+                    recap.topColor?.let { YearFact(Icons.Outlined.WineBar, stringResource(R.string.insights_year_style, stringResource(it.labelRes))) }
+                    recap.topOccasion?.let { occasion ->
+                        // A chip, counted the same in every language, shown in this one.
+                        val name = Occasion.matching(occasion)?.let { stringResource(it.labelRes) } ?: occasion
+                        YearFact(Icons.Outlined.Group, stringResource(R.string.insights_year_occasion, name))
+                    }
+                    recap.busiestMonth?.let { month ->
+                        val name = java.time.Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale)
+                        YearFact(Icons.Outlined.CalendarMonth, stringResource(R.string.insights_year_month, name))
+                    }
                 }
             }
         }
     }
 }
 
+/** "Your year in wine" as a PNG to share: a title, the figures and facts as shown, and where it comes from. */
+private object YearShareImage {
+    fun write(
+        context: Context,
+        facts: Bitmap,
+        title: String,
+        footer: String,
+        density: Float,
+        background: Int,
+        text: Int,
+        file: String,
+    ): Uri? = runCatching {
+        val margin = (20 * density).toInt()
+        val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = text
+            textSize = 20 * density
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = text
+            alpha = 170
+            textSize = 12 * density
+        }
+        val titleHeight = (titlePaint.fontSpacing + 8 * density).toInt()
+        val footerHeight = (footerPaint.fontSpacing + 8 * density).toInt()
+        val width = facts.width + 2 * margin
+        val height = margin + titleHeight + facts.height + footerHeight + margin
+        val image = createBitmap(width, height)
+        Canvas(image).apply {
+            drawColor(background)
+            drawText(title, margin.toFloat(), margin - titlePaint.ascent(), titlePaint)
+            drawBitmap(facts.copy(Bitmap.Config.ARGB_8888, false), margin.toFloat(), (margin + titleHeight).toFloat(), null)
+            drawText(footer, margin.toFloat(), (margin + titleHeight + facts.height + 8 * density) - footerPaint.ascent(), footerPaint)
+        }
+        val folder = File(context.cacheDir, "share").apply { mkdirs() }
+        val target = File(folder, file)
+        target.outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        FileProvider.getUriForFile(context, "${context.packageName}.files", target)
+    }.getOrNull()
+
+    fun share(context: Context, uri: Uri, title: String) {
+        val send = Intent(Intent.ACTION_SEND)
+            .setType("image/png")
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        runCatching { context.startActivity(Intent.createChooser(send, title)) }
+    }
+}
+
 @Composable
 private fun YearFigure(value: Int, caption: String) {
     Column(Modifier.semantics(mergeDescendants = true) {}) {
-        Text(value.toString(), style = MaterialTheme.typography.headlineMedium)
+        Text(Formats.integer(value), style = MaterialTheme.typography.headlineMedium)
         Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

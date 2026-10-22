@@ -31,6 +31,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -57,12 +58,29 @@ val Rack.shape: String
  */
 @Stable
 class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
+    /** The zoom the rack is drawn at; changes once a gesture ends, so the rack is drawn again once. */
     var level by mutableFloatStateOf(level)
+
+    /**
+     * While pinching or animating: how much the drawing is scaled on top of [level], applied
+     * when drawing only (no new composition or measure on each frame).
+     */
+    var live by mutableFloatStateOf(1f)
     var center by mutableStateOf(center)
+
+    /** The zoom as seen. */
+    val effective: Float get() = level * live
+
+    /** Draws the rack again at the zoom as seen. */
+    fun settle() {
+        if (live == 1f) return
+        level = effective
+        live = 1f
+    }
 
     /** Brings a cell to the middle of the view when zoomed in. */
     fun show(rack: Rack, cell: RackCell) {
-        if (level <= 1.01f) return
+        if (effective <= 1.01f) return
         center = Offset((cell.column + 0.5f) / rack.maxColumns.coerceAtLeast(1), (cell.row + 0.5f) / rack.rows.coerceAtLeast(1))
     }
 
@@ -71,7 +89,7 @@ class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
         const val DOUBLE_TAP = 2.5f
 
         val Saver = listSaver<RackZoomState, Float>(
-            save = { listOf(it.level, it.center.x, it.center.y) },
+            save = { listOf(it.effective, it.center.x, it.center.y) },
             restore = { RackZoomState(it[0], Offset(it[1], it[2])) },
         )
     }
@@ -119,25 +137,29 @@ fun ZoomableRack(
     // editing the rack) brings a new state, which a pinch must zoom.
     val current by rememberUpdatedState(state)
 
+    /** The drawing's size as seen, with the live scale of a gesture. */
+    fun shown(): Size = Size(measured.content.width * current.live, measured.content.height * current.live)
+
     fun topLeft(): Offset {
-        val (view, content) = measured.view to measured.content
-        return Offset(place(view.width, content.width.toFloat(), current.center.x), place(view.height, content.height.toFloat(), current.center.y))
+        val view = measured.view
+        val content = shown()
+        return Offset(place(view.width, content.width, current.center.x), place(view.height, content.height, current.center.y))
     }
 
     fun clamped(center: Offset, content: Size): Offset =
         Offset(clampCenter(measured.view.width, content.width, center.x), clampCenter(measured.view.height, content.height, center.y))
 
     fun zoomBy(factor: Float, centroid: Offset) {
-        val old = current.level
+        val old = current.effective
         val new = (old * factor).coerceIn(1f, RackZoomState.MAX)
-        val size = measured.content
-        if (new == old || size.width == 0 || size.height == 0) return
+        val size = shown()
+        if (new == old || size.width == 0f || size.height == 0f) return
         val origin = topLeft()
         // The spot under the fingers stays under them.
         val spot = Offset((centroid.x - origin.x) / size.width, (centroid.y - origin.y) / size.height)
         val grown = Size(size.width * new / old, size.height * new / old)
         val view = measured.view
-        current.level = new
+        current.live = new / current.level
         current.center = clamped(
             Offset((view.width / 2 - centroid.x) / grown.width + spot.x, (view.height / 2 - centroid.y) / grown.height + spot.y),
             grown,
@@ -145,15 +167,13 @@ fun ZoomableRack(
     }
 
     fun panBy(delta: Offset) {
-        val size = measured.content
-        if (size.width == 0 || size.height == 0) return
-        current.center = clamped(
-            Offset(current.center.x - delta.x / size.width, current.center.y - delta.y / size.height),
-            Size(size.width.toFloat(), size.height.toFloat()),
-        )
+        val size = shown()
+        if (size.width == 0f || size.height == 0f) return
+        current.center = clamped(Offset(current.center.x - delta.x / size.width, current.center.y - delta.y / size.height), size)
     }
 
     fun doubleTap(point: Offset) {
+        current.settle()
         val fromLevel = current.level
         val fromCenter = current.center
         val toLevel: Float
@@ -162,8 +182,8 @@ fun ZoomableRack(
             toLevel = 1f
             toCenter = Offset(0.5f, 0.5f)
         } else {
-            val size = measured.content
-            if (size.width == 0 || size.height == 0) return
+            val size = shown()
+            if (size.width == 0f || size.height == 0f) return
             val origin = topLeft()
             val at = if (point.isSpecified()) point else Offset(measured.view.width / 2, measured.view.height / 2)
             toLevel = RackZoomState.DOUBLE_TAP
@@ -172,13 +192,15 @@ fun ZoomableRack(
                 ((at.y - origin.y) / size.height).coerceIn(0f, 1f),
             )
         }
+        val target = current
         scope.launch {
+            // Scaled while it moves, drawn again at the new size once.
             animate(0f, 1f, animationSpec = tween(250)) { t, _ ->
-                current.level = fromLevel + (toLevel - fromLevel) * t
-                current.center = fromCenter + (toCenter - fromCenter) * t
+                target.live = (fromLevel + (toLevel - fromLevel) * t) / fromLevel
+                target.center = fromCenter + (toCenter - fromCenter) * t
             }
-            val grown = measured.content.let { Size(it.width * toLevel / fromLevel, it.height * toLevel / fromLevel) }
-            current.center = clamped(toCenter, grown)
+            target.center = clamped(toCenter, shown())
+            target.settle()
         }
     }
 
@@ -193,7 +215,7 @@ fun ZoomableRack(
                 }
             }
             .pointerInput(Unit) { detectTapGestures(onDoubleTap = { doubleTap(it) }) }
-            .pointerInput(Unit) { detectZoomAndPan(onZoom = ::zoomBy, onPan = ::panBy) },
+            .pointerInput(Unit) { detectZoomAndPan(onZoom = ::zoomBy, onPan = ::panBy, onEnd = { current.settle() }) },
     ) {
         val density = LocalDensity.current
         val labelHeight = with(density) { (MaterialTheme.typography.labelSmall.lineHeight * 1.25f).toDp() }
@@ -205,8 +227,15 @@ fun ZoomableRack(
                 val placeable = measurable.measure(Constraints())
                 measured.content = IntSize(placeable.width, placeable.height)
                 layout(constraints.maxWidth, constraints.maxHeight) {
+                    // Read when placing and drawing only: a gesture moves and scales the drawing
+                    // without composing or measuring it again.
                     val origin = topLeft()
-                    placeable.place(IntOffset(origin.x.roundToInt(), origin.y.roundToInt()))
+                    placeable.placeWithLayer(IntOffset(origin.x.roundToInt(), origin.y.roundToInt())) {
+                        val scale = current.live
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0f, 0f)
+                    }
                 }
             },
         ) {
@@ -224,7 +253,7 @@ private fun Offset.isSpecified() = this != Offset.Unspecified && !x.isNaN() && !
  * nothing is consumed before the fingers move past the touch slop (so taps reach the
  * cells), and a finger landing on a cell does not cancel the pinch.
  */
-private suspend fun PointerInputScope.detectZoomAndPan(onZoom: (Float, Offset) -> Unit, onPan: (Offset) -> Unit) {
+private suspend fun PointerInputScope.detectZoomAndPan(onZoom: (Float, Offset) -> Unit, onPan: (Offset) -> Unit, onEnd: () -> Unit) {
     awaitEachGesture {
         var zoom = 1f
         var pan = Offset.Zero
@@ -251,5 +280,6 @@ private suspend fun PointerInputScope.detectZoomAndPan(onZoom: (Float, Offset) -
             }
             if (event.changes.none { it.pressed }) break
         }
+        onEnd()
     }
 }

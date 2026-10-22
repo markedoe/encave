@@ -1,10 +1,13 @@
 import CaveKit
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 /// Settings › Your data: Back Up Now, Previous Versions and the weekly backup.
 struct BackupRows: View {
     @Environment(CellarModel.self) private var model
-    @State private var archive: URL?
+    @State private var archive: MadeArchive?
     @State private var failed = false
 
     var body: some View {
@@ -30,8 +33,9 @@ struct BackupRows: View {
         }
         .disabled(model.backups.isWorking || model.cellar.isEmpty)
         .accessibilityIdentifier("settings.backup")
-        .sheet(item: Binding(get: { archive.map(ArchiveFile.init) }, set: { if $0 == nil { archive = nil } })) { file in
-            BackupReadyView(url: file.url)
+        .sheet(item: $archive) { made in
+            BackupReadyView(archive: made)
+                .environment(model)
         }
         .alert("The backup could not be made.", isPresented: $failed) {
             Button("OK", role: .cancel) {}
@@ -83,34 +87,42 @@ struct BackupRows: View {
     }
 }
 
-private struct ArchiveFile: Identifiable {
-    let url: URL
-    var id: URL { url }
-}
-
-/// After Back Up Now: share the archive or save it in Files.
+/// After Back Up Now: share the archive or save it in Files. It counts as the last backup
+/// once shared or saved; its temporary copy is removed when this sheet closes.
 struct BackupReadyView: View {
-    let url: URL
+    let archive: MadeArchive
+    @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @State private var size = ""
     @State private var saving = false
     @State private var saved = false
-
-    private var size: String {
-        let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-        return Int64(bytes).formatted(.byteCount(style: .file))
-    }
+    #if os(iOS)
+    @State private var sharing = false
+    #endif
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent("File", value: url.lastPathComponent)
+                    LabeledContent("File", value: archive.url.lastPathComponent)
                     LabeledContent("Size", value: size)
+                    LabeledContent("Photos and documents") { Text(archive.result.included, format: .number) }
                 } footer: {
-                    Text("A ZIP file with your whole cellar, its photos and documents. It is not encrypted: keep it somewhere safe, such as iCloud Drive or a computer.")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("A ZIP file with your whole cellar, its photos and documents. It is not encrypted: keep it somewhere safe, such as iCloud Drive or a computer.")
+                        if archive.result.missing > 0 {
+                            Text("\(archive.result.missing) photos or documents are not on this device yet: they are not in this backup. Back up from the device that has them, or after the next sync.")
+                        }
+                        if archive.result.leftOut > 0 {
+                            Text("\(archive.result.leftOut) photos or documents were left out: a ZIP file holds at most 4 GB. The cellar itself is complete.")
+                        }
+                    }
                 }
                 Section {
-                    ShareLink(item: url) {
+                    #if os(iOS)
+                    Button {
+                        sharing = true
+                    } label: {
                         Label("Share…", systemImage: "square.and.arrow.up")
                     }
                     Button {
@@ -118,9 +130,21 @@ struct BackupReadyView: View {
                     } label: {
                         Label("Save to Files…", systemImage: "folder")
                     }
+                    #else
+                    ShareLink(item: archive.url) {
+                        Label("Share…", systemImage: "square.and.arrow.up")
+                    }
+                    Button {
+                        saving = true
+                    } label: {
+                        Label("Save…", systemImage: "folder")
+                    }
+                    #endif
                 }
+                // Saved: the file was moved there, so it can no longer be shared from here.
+                .disabled(saved)
                 if saved {
-                    Label("Saved to Files", systemImage: "checkmark.circle")
+                    Label("Backup saved", systemImage: "checkmark.circle")
                 }
             }
             .formStyle(.grouped)
@@ -133,16 +157,49 @@ struct BackupReadyView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .fileMover(isPresented: $saving, file: url) { result in
+            #if os(iOS)
+            .sheet(isPresented: $sharing) {
+                let backups = model.backups, archive = archive
+                ActivityView(items: [archive.url]) { completed in
+                    if completed { backups.noteKept(archive) }
+                }
+                .ignoresSafeArea()
+            }
+            #endif
+            .fileMover(isPresented: $saving, file: archive.url) { result in
                 if case .success = result {
                     saved = true
-                    dismiss()
+                    model.backups.noteKept(archive)
                 }
             }
         }
-        .macSheetFrame(width: 460, height: 360)
+        .task {
+            let bytes = (try? archive.url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            size = Int64(bytes).formatted(.byteCount(style: .file))
+        }
+        .onDisappear { BackupCenter.discard(archive) }
+        .macSheetFrame(width: 460, height: 420)
     }
 }
+
+#if os(iOS)
+/// The share sheet, which tells whether the file was shared or saved (ShareLink does not).
+private struct ActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+    let onComplete: @MainActor @Sendable (Bool) -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let onComplete = onComplete
+        controller.completionWithItemsHandler = { _, completed, _, _ in
+            MainActor.assumeIsolated { onComplete(completed) }
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+#endif
 
 /// The earlier versions of the cellar kept on this device, newest first.
 struct PreviousVersionsView: View {
@@ -183,7 +240,7 @@ struct PreviousVersionsView: View {
                             .accessibilityIdentifier("versions.row")
                         }
                     } footer: {
-                        Text("A copy of your cellar is kept on each day it changes: one a day for the last 7 days, then one a week for 4 weeks. They stay on this device; the photos and documents they need are kept with them.")
+                        Text("A copy of your cellar is kept on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before. They stay on this device; the photos and documents they need are kept with them.")
                     }
                 }
                 .overlay {
@@ -236,6 +293,7 @@ struct RestorePreviewView: View {
     /// Shown in a sheet of its own (not pushed in a list), with a Cancel button.
     var inSheet = false
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingReplace = false
     @State private var working = false
@@ -307,17 +365,24 @@ struct RestorePreviewView: View {
                 }
                 .accessibilityIdentifier("restore.replace")
             } footer: {
-                Text("Add What Is Missing adds the wines, bottles, racks and Journal entries that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup. You can undo right after.")
+                Text("Add What Is Missing adds the wines, bottles, racks, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.")
             }
             .disabled(working)
         }
         .formStyle(.grouped)
         .accessibilityIdentifier("restore.preview")
         .navigationTitle(title)
+        // Not closed while the photos are copied: they would be removed under the restore.
+        .interactiveDismissDisabled(working)
+        .onDisappear {
+            // A backup read from a file and not restored: its photos and documents go.
+            if inSheet, !working { BackupCenter.discard(source) }
+        }
         .toolbar {
             if inSheet {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .disabled(working)
                 }
             }
         }
@@ -344,7 +409,7 @@ struct RestorePreviewView: View {
             guard done else { return }
             // The banner with Undo is under the sheets on iPhone and iPad: close them.
             #if os(iOS)
-            model.sheet = nil
+            router?.sheet = nil
             #endif
             dismiss()
         }

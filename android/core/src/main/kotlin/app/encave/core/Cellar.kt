@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.text.Collator
 import java.time.Instant
 import java.time.LocalDate
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -216,22 +217,53 @@ class Cellar(
         return null
     }
 
-    /** Existing wines matching a query, for "add another bottle of...". */
-    /** The wine a barcode was seen on, preferring one with bottles in the cellar. */
-    fun wine(barcode: String): Wine? {
+    /** The wine a barcode was seen on, preferring one with bottles in the cellar (see [wines]). */
+    fun wine(barcode: String): Wine? = wines(barcode).firstOrNull()
+
+    /**
+     * The wines a barcode was seen on: producers often keep one barcode for every vintage.
+     * Those with bottles in the cellar first, then the newest vintage (non-vintage last).
+     */
+    fun wines(barcode: String): List<Wine> {
         val code = Wine.normalizedBarcode(barcode)
-        if (code.isEmpty()) return null
+        if (code.isEmpty()) return emptyList()
         val inCellar = bottlesInCellar.map { it.wineId }.toSet()
         return wineMap.values.filter { code in it.barcodes.orEmpty() }
-            .sortedWith(compareBy<Wine>({ if (it.id in inCellar) 0 else 1 }, { it.displayName }))
-            .firstOrNull()
+            .sortedWith(
+                compareBy<Wine>({ if (it.id in inCellar) 0 else 1 }, { -(it.vintage?.toLong() ?: Long.MIN_VALUE / 2) })
+                    .thenBy { it.displayName }.thenBy { it.id.toString().uppercase(Locale.ROOT) },
+            )
     }
 
-    fun wineSuggestions(query: String, limit: Int = 8): List<Wine> {
+    /**
+     * A wine of the cellar that [matching] would duplicate: the same name and vintage, ignoring
+     * case, accents and extra spaces, and the same producer or no producer on one side.
+     * The draft's own record (same id) is left out. The same producer is preferred, then
+     * a wine with bottles in the cellar.
+     */
+    fun wine(matching: Wine): Wine? {
+        val draft = matching
+        val name = Wine.matchKey(draft.name)
+        if (name.isEmpty()) return null
+        val producer = Wine.matchKey(draft.producer.orEmpty())
+        val inCellar = bottlesInCellar.map { it.wineId }.toSet()
+        return wineMap.values.filter { wine ->
+            if (wine.id == draft.id || wine.vintage != draft.vintage || Wine.matchKey(wine.name) != name) return@filter false
+            val other = Wine.matchKey(wine.producer.orEmpty())
+            other == producer || other.isEmpty() || producer.isEmpty()
+        }.minWithOrNull(
+            compareBy<Wine>({ if (Wine.matchKey(it.producer.orEmpty()) == producer) 0 else 1 }, { if (it.id in inCellar) 0 else 1 })
+                .thenBy { it.id.toString().uppercase(Locale.ROOT) },
+        )
+    }
+
+    /** Existing wines matching a query, for "add another bottle of..."; [inCellarOnly]: with bottles in the cellar. */
+    fun wineSuggestions(query: String, limit: Int = 8, inCellarOnly: Boolean = false): List<Wine> {
         val needle = query.trim()
         if (needle.isEmpty()) return emptyList()
         val collator = collator()
-        return wineMap.values.filter { it.matches(needle) }
+        val inCellar = if (inCellarOnly) bottlesInCellar.mapTo(HashSet()) { it.wineId } else null
+        return wineMap.values.filter { (inCellar == null || it.id in inCellar) && it.matches(needle) }
             .sortedWith { a, b -> nameOrder(a, b, collator) }
             .take(limit)
     }
@@ -422,17 +454,35 @@ class Cellar(
         rackList += rack.normalized()
     }
 
-    /** Updates name, layout or size. Shrinking is refused if it would drop bottles. */
-    fun updateRack(rack: Rack) {
+    /**
+     * Updates name, layout or size. [rowMap] moves the bottles of a row to another row (null:
+     * the row is gone), keeping their column and depth; rows it leaves out stay as they are.
+     * A bottle whose new place is not in the rack is displaced: with [takingOut] it stays in
+     * the cellar without a place, otherwise the update is refused.
+     */
+    fun updateRack(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), takingOut: Boolean = false) {
         val updated = rack.normalized()
         val index = rackList.indexOfFirst { it.id == updated.id }
         if (index < 0) throw CellarException(CellarError.UnknownRack)
-        val outside = bottlesInCellar.any {
-            val slot = it.slot
-            slot != null && slot.rackId == updated.id && !updated.contains(slot)
+        val displaced = displacedBottles(updated, rowMap).map { it.id }.toSet()
+        if (displaced.isNotEmpty() && !takingOut) throw CellarException(CellarError.RackNotEmpty)
+        bottlesInCellar.forEach { bottle ->
+            val slot = bottle.slot ?: return@forEach
+            if (slot.rackId != updated.id) return@forEach
+            bottleMap[bottle.id] = bottle.copy(slot = if (bottle.id in displaced) null else Rack.moved(slot, rowMap))
         }
-        if (outside) throw CellarException(CellarError.RackNotEmpty)
         rackList[index] = updated
+    }
+
+    /** Bottles of this rack that an update with [rowMap] would leave without a place, in the order of their places. */
+    fun displacedBottles(rack: Rack, rowMap: Map<Int, Int?> = emptyMap()): List<Bottle> {
+        val updated = rack.normalized()
+        return bottlesInCellar.filter { bottle ->
+            val slot = bottle.slot
+            if (slot == null || slot.rackId != updated.id) return@filter false
+            val moved = Rack.moved(slot, rowMap)
+            moved == null || !updated.contains(moved)
+        }.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
     }
 
     /** Same semantics as SwiftUI's `onMove(fromOffsets:toOffset:)`. */
@@ -521,6 +571,12 @@ class Cellar(
         bottleMap[bottle.id] = bottle.normalized()
     }
 
+    /** Gives a bottle a new ID (the sample's fixed IDs). */
+    internal fun rekeyBottle(oldId: UUID, bottle: Bottle) {
+        bottleMap.remove(oldId)
+        bottleMap[bottle.id] = bottle.normalized()
+    }
+
     internal fun putDiscovery(discovery: Discovery) {
         discoveryMap[discovery.id] = discovery.normalized()
     }
@@ -558,10 +614,18 @@ class Cellar(
         /** Case-insensitive, accent-sensitive, like `localizedCaseInsensitiveCompare`. */
         fun collator(): Collator = Collator.getInstance().apply { strength = Collator.SECONDARY }
 
+        /**
+         * Name, then vintage, then producer, then id: a total order, so wines alike keep
+         * their place whatever order the records are stored in (CaveKit does the same).
+         */
         fun nameOrder(a: Wine, b: Wine, collator: Collator = collator()): Int {
             val order = collator.compare(a.name, b.name)
             if (order != 0) return order
-            return (a.vintage ?: 0).compareTo(b.vintage ?: 0)
+            val vintages = (a.vintage ?: 0).compareTo(b.vintage ?: 0)
+            if (vintages != 0) return vintages
+            val producers = collator.compare(a.producer.orEmpty(), b.producer.orEmpty())
+            if (producers != 0) return producers
+            return a.id.toString().uppercase(Locale.ROOT).compareTo(b.id.toString().uppercase(Locale.ROOT))
         }
 
         private fun regionKey(wine: Wine) = listOf(wine.country ?: "", wine.region ?: "").joinToString("/")
