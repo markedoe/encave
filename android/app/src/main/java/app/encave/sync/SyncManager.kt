@@ -895,6 +895,7 @@ class SyncManager(
                 }
                 it.copy(
                     lastRemoteSync = now,
+                    needsWebDavSignIn = needsSignIn(storage.remoteStorage),
                     remoteProblem = problem,
                     remoteProblemAt = if (problem != null) now else null,
                     unsentChanges = it.unsentChanges && !sent,
@@ -907,7 +908,11 @@ class SyncManager(
                 RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
                 else -> RemoteProblem.Unreachable
             }
-            status.update { it.copy(remoteProblem = problem, remoteProblemAt = Instant.now()) }
+            // A WebDAV server that refuses the login (a changed password): ask to sign in again at once.
+            val refusedLogin = problem == RemoteProblem.Refused && storage.remoteStorage?.startsWith(WEBDAV_PREFIX) == true
+            status.update {
+                it.copy(remoteProblem = problem, remoteProblemAt = Instant.now(), needsWebDavSignIn = it.needsWebDavSignIn || refusedLogin)
+            }
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {

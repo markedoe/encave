@@ -100,7 +100,8 @@ struct DevicesView: View {
                     }
                     .accessibilityIdentifier("devices.remote")
                     if sync.needsWebDAVSignIn {
-                        // The folder came from another device: this one needs its own login.
+                        // The folder came from another device (this one needs its own login), or
+                        // the server refused the login.
                         NavigationLink {
                             RemoteSyncView()
                         } label: {

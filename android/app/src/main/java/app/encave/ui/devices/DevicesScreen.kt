@@ -426,7 +426,7 @@ fun DevicesScreen(navigator: AppNavigator) {
                     trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 )
                 if (status.needsWebDavSignIn) {
-                    // The folder came from another device: this one needs its own login.
+                    // The folder came from another device (this one needs its own login), or the server refused the login.
                     ListItem(
                         modifier = Modifier.testTag("devices.webdav_sign_in").clickable { navigator.open(RemoteSyncRoute) },
                         leadingContent = { Icon(Icons.Outlined.Key, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
