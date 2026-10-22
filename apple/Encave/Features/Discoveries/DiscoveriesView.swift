@@ -16,6 +16,7 @@ extension Discovery {
 /// put it on the shopping list or take it off, delete it.
 struct ElsewhereActions: ViewModifier {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let discovery: Discovery
 
     func body(content: Content) -> some View {
@@ -42,7 +43,7 @@ struct ElsewhereActions: ViewModifier {
                 .tint(.indigo)
             }
             .contextMenu {
-                Button("Edit", systemImage: "pencil") { model.sheet = .discovery(discoveryID: discovery.id) }
+                Button("Edit", systemImage: "pencil") { router?.sheet = .discovery(discoveryID: discovery.id) }
                 Button("Add to Cellar", systemImage: "plus") { model.buy(discovery) }
                 Button {
                     toggleToBuy()

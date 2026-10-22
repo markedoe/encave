@@ -47,7 +47,8 @@ data class AddBottleRoute(
 /** Remember a wine tasted elsewhere (new), or edit a discovery. */
 @Serializable data class DiscoveryEditorRoute(val discoveryId: String? = null)
 
-@Serializable data class RackDetailRoute(val rackId: String, val highlightBottleId: String? = null)
+/** [moveBottleId]: opens the rack to choose the bottle's new place (Move in a wine's menu). */
+@Serializable data class RackDetailRoute(val rackId: String, val highlightBottleId: String? = null, val moveBottleId: String? = null)
 @Serializable data class RackEditorRoute(val rackId: String? = null)
 @Serializable data class TastingRoute(val bottleId: String)
 @Serializable data object PairingRoute

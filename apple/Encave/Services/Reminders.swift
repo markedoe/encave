@@ -188,7 +188,7 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate, @unc
             if let wineID, model?.cellar.wines[wineID] != nil {
                 model?.open(wine: wineID)
             } else if let tab, let section = AppTab(rawValue: tab) {
-                model?.selectedTab = section
+                model?.request(.show(section))
             }
         }
     }

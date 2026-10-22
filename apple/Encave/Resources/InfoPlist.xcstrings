@@ -32,6 +32,22 @@
           }
         }
       }
+    },
+    "Encave bottle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave bottle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille Encave"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -10,6 +10,7 @@ enum CellarLayout {
 /// inspector. For large cellars on the Mac and the iPad, like a spreadsheet.
 struct CellarTable: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     /// The wine in the inspector: the selected row when only one is selected.
     @Binding var selection: UUID?
     /// The selected rows (⌘-click and ⇧-click select several).
@@ -157,7 +158,7 @@ struct CellarTable: View {
             CellarLayoutPicker()
             CellarFilterMenu(filter: filter)
             Button {
-                model.sheet = .addBottle(AddBottleContext())
+                router?.sheet = .addBottle(AddBottleContext())
             } label: {
                 Label("Add Bottle", systemImage: "plus")
             }
@@ -169,14 +170,7 @@ struct CellarTable: View {
             .help(Text("Show or hide the selected wine"))
         }
         #if os(iOS)
-        // iPad: Settings is reached from the Cellar, list or table.
-        ToolbarItem(placement: .topBarLeading) {
-            Button {
-                model.sheet = .settings
-            } label: {
-                SettingsButtonLabel()
-            }
-        }
+        SettingsToolbarItem(identifier: "cellar.settings")
         #endif
     }
 }

@@ -18,6 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalView
+import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -158,6 +160,19 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
             watch?.cancel()
             slot?.finished = true
             if (result == SnackbarResult.ActionPerformed && slot?.replaced?.value != true) message.undo?.invoke()
+        }
+    }
+
+    // Drink, add, move, receive…: a confirmation felt as well as read (sensoryFeedback on Apple).
+    val view = LocalView.current
+    LaunchedEffect(viewModel, view) {
+        viewModel.haptics.collect { haptic ->
+            view.performHapticFeedback(
+                when (haptic) {
+                    Haptic.Confirm -> HapticFeedbackConstants.CONFIRM
+                    Haptic.Reject -> HapticFeedbackConstants.REJECT
+                },
+            )
         }
     }
 

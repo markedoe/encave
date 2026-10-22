@@ -99,6 +99,9 @@ struct JournalView: View {
                 .accessibilityIdentifier("journal.add")
                 .help(Text("Note a bottle opened from your cellar or a wine tasted elsewhere"))
             }
+            #if os(iOS)
+            SettingsToolbarItem()
+            #endif
         }
     }
 }
@@ -107,12 +110,13 @@ struct JournalView: View {
 /// cellar leaves it.
 struct AddTastingMenu<MenuLabel: View>: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     @ViewBuilder var label: () -> MenuLabel
 
     var body: some View {
         Menu {
             Button {
-                model.sheet = .drink(bottleID: nil)
+                router?.sheet = .drink(bottleID: nil)
             } label: {
                 Label("A Bottle from My Cellar", systemImage: "house")
                 // Says why it is off, rather than only dimming it.
@@ -125,7 +129,7 @@ struct AddTastingMenu<MenuLabel: View>: View {
             .disabled(model.bottlesInCellar.isEmpty)
             .accessibilityIdentifier("journal.add.cellar")
             Button {
-                model.sheet = .discovery(discoveryID: nil)
+                router?.sheet = .discovery(discoveryID: nil)
             } label: {
                 Label("Somewhere Else", systemImage: "mappin.and.ellipse")
                 Text("Restaurant, friends, a fair… Your cellar does not change.")
@@ -222,13 +226,14 @@ private struct FilterEmptyState: View {
 /// One entry of the diary, from the cellar or tasted elsewhere, opening its note.
 private struct DiaryEntryRow: View {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let entry: DiaryEntry
 
     var body: some View {
         switch entry {
         case .tasting(let bottle):
             Button {
-                model.sheet = .editTasting(bottleID: bottle.id)
+                router?.sheet = .editTasting(bottleID: bottle.id)
             } label: {
                 TastingRow(bottle: bottle, showsWine: true, showsSource: true)
             }
@@ -237,7 +242,7 @@ private struct DiaryEntryRow: View {
             .accessibilityIdentifier("journal.row.cellar")
         case .elsewhere(let discovery):
             Button {
-                model.sheet = .discovery(discoveryID: discovery.id)
+                router?.sheet = .discovery(discoveryID: discovery.id)
             } label: {
                 DiscoveryRow(discovery: discovery, showsSource: true)
             }
@@ -252,6 +257,7 @@ private struct DiaryEntryRow: View {
 /// note, more bottles of it, or back in the cellar if it was logged by mistake (with Undo).
 struct OpenedBottleActions: ViewModifier {
     @Environment(CellarModel.self) private var model
+    @Environment(SceneRouter.self) private var router: SceneRouter?
     let bottle: Bottle
 
     func body(content: Content) -> some View {
@@ -260,7 +266,7 @@ struct OpenedBottleActions: ViewModifier {
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 if let wine {
                     Button {
-                        model.sheet = .addBottle(AddBottleContext(wine: wine))
+                        router?.sheet = .addBottle(AddBottleContext(wine: wine))
                     } label: {
                         Label("Add Bottles", systemImage: "plus")
                     }
@@ -278,9 +284,9 @@ struct OpenedBottleActions: ViewModifier {
                 if let wine {
                     Button("Show Wine", systemImage: "wineglass") { model.open(wine: wine.id) }
                 }
-                Button("Edit Note", systemImage: "pencil") { model.sheet = .editTasting(bottleID: bottle.id) }
+                Button("Edit Note", systemImage: "pencil") { router?.sheet = .editTasting(bottleID: bottle.id) }
                 if let wine {
-                    Button("Add Bottles", systemImage: "plus") { model.sheet = .addBottle(AddBottleContext(wine: wine)) }
+                    Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: wine)) }
                 }
                 Divider()
                 Button("Put Back in the Cellar", systemImage: "arrow.uturn.backward", role: .destructive) {

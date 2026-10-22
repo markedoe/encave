@@ -1,5 +1,8 @@
 package app.encave.ui.settings
 
+import app.encave.ui.ProjectLinks
+import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.ui.platform.testTag
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -17,13 +20,11 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.TableChart
@@ -60,7 +61,6 @@ import app.encave.BuildConfig
 import app.encave.R
 import app.encave.ui.components.readableWidth
 import app.encave.ui.AppNavigator
-import app.encave.ui.ProjectLinks
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
 import app.encave.ui.components.LocalSnackbarHostState
@@ -74,7 +74,6 @@ import app.encave.ui.components.sampleLabels
 import java.time.LocalDate
 import androidx.compose.material.icons.outlined.AutoAwesome
 import app.encave.ui.theme.Dimens
-
 
 @Composable
 fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
@@ -123,23 +122,11 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
-            SectionHeader(stringResource(R.string.settings_privacy))
             ListItem(
-                leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                headlineContent = {
-                    val sync by (context.applicationContext as app.encave.EncaveApplication).sync.state.collectAsStateWithLifecycle()
-                    val shared = (sync.membership?.members?.size ?: 0) > 1
-                    Text(
-                        stringResource(
-                            when {
-                                sync.remoteStorage != null -> R.string.settings_privacy_stored_remote
-                                shared -> R.string.settings_privacy_stored_devices
-                                else -> R.string.settings_privacy_stored
-                            },
-                        ),
-                    )
-                },
-                supportingContent = { Text(stringResource(R.string.settings_privacy_body)) },
+                modifier = Modifier.testTag("settings.help").clickable { navigator.open(HelpRoute()) },
+                leadingContent = { Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.help_title)) },
+                supportingContent = { Text(stringResource(R.string.help_encave)) },
             )
 
             SectionHeader(stringResource(R.string.settings_devices))
@@ -158,22 +145,22 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 },
             )
 
+            RemindersSection()
+
             SectionHeader(stringResource(R.string.settings_cellar))
             ListItem(
                 modifier = Modifier.clickable { currencyMenu = true },
                 leadingContent = { Icon(Icons.Outlined.Payments, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_currency)) },
-                supportingContent = { Text(cellar.settings.currency) },
+                supportingContent = { Text(currencyName(cellar.settings.currency)) },
                 trailingContent = {
                     DropdownMenu(expanded = currencyMenu, onDismissRequest = { currencyMenu = false }) {
                         (listOf(cellar.settings.currency) + commonCurrencies).distinct().forEach { code ->
-                            DropdownMenuItem(text = { Text(code) }, onClick = { viewModel.setCurrency(code); currencyMenu = false })
+                            DropdownMenuItem(text = { Text(currencyName(code)) }, onClick = { viewModel.setCurrency(code); currencyMenu = false })
                         }
                     }
                 },
             )
-
-            RemindersSection()
 
             SectionHeader(stringResource(R.string.settings_appearance))
             ListItem(
@@ -194,6 +181,25 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             AiSettingsSection(viewModel)
 
             WebSearchSettingsSection()
+
+            SectionHeader(stringResource(R.string.settings_privacy))
+            ListItem(
+                leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                headlineContent = {
+                    val sync by (context.applicationContext as app.encave.EncaveApplication).sync.state.collectAsStateWithLifecycle()
+                    val shared = (sync.membership?.members?.size ?: 0) > 1
+                    Text(
+                        stringResource(
+                            when {
+                                sync.remoteStorage != null -> R.string.settings_privacy_stored_remote
+                                shared -> R.string.settings_privacy_stored_devices
+                                else -> R.string.settings_privacy_stored
+                            },
+                        ),
+                    )
+                },
+                supportingContent = { Text(stringResource(R.string.settings_privacy_body)) },
+            )
 
             SectionHeader(stringResource(R.string.settings_data))
             BackupSettingsItems(viewModel, navigator)
@@ -253,9 +259,9 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 )
             }
 
-            SectionHeader(stringResource(R.string.settings_test_data))
-            // Only on an empty cellar that no other device shares: the sample never replaces bottles.
+            // Only on an empty cellar that no other device shares, in beta builds: the sample never replaces bottles.
             if (viewModel.canLoadSample(cellar, shared)) {
+                SectionHeader(stringResource(R.string.settings_try))
                 ListItem(
                     modifier = Modifier.clickable { confirmSample = true },
                     leadingContent = { Icon(Icons.Outlined.Science, contentDescription = null) },
@@ -263,24 +269,32 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     supportingContent = { Text(stringResource(R.string.settings_sample_body)) },
                 )
             }
+
+            SectionHeader(stringResource(R.string.settings_reset))
+            val canErase = !cellar.isEmpty
             ListItem(
-                modifier = Modifier.clickable { confirmErase = true },
-                leadingContent = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                headlineContent = { Text(stringResource(R.string.settings_erase), color = MaterialTheme.colorScheme.error) },
+                modifier = Modifier.clickable(enabled = canErase) { confirmErase = true }.testTag("settings.erase"),
+                leadingContent = {
+                    Icon(
+                        Icons.Outlined.DeleteForever, contentDescription = null,
+                        tint = if (canErase) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    )
+                },
+                headlineContent = {
+                    Text(
+                        stringResource(R.string.settings_erase),
+                        color = if (canErase) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    )
+                },
             )
 
             SectionHeader(stringResource(R.string.settings_about))
             ListItem(
-                modifier = Modifier.testTag("settings.help").clickable { navigator.open(HelpRoute()) },
-                leadingContent = { Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = null) },
-                headlineContent = { Text(stringResource(R.string.help_title)) },
-                supportingContent = { Text(stringResource(R.string.help_encave)) },
-            )
-            ListItem(
                 leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_version)) },
                 supportingContent = {
-                    Text("${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · " + stringResource(R.string.settings_beta))
+                    val number = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+                    Text(if (BuildConfig.BETA) number + " · " + stringResource(R.string.settings_beta) else number)
                 },
             )
             ListItem(
@@ -305,12 +319,14 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 leadingContent = { Icon(Icons.Outlined.Description, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_licences)) },
             )
-            Text(
-                stringResource(R.string.settings_beta_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
-            )
+            if (BuildConfig.BETA) {
+                Text(
+                    stringResource(R.string.settings_beta_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = Dimens.l, vertical = Dimens.s),
+                )
+            }
             HorizontalDivider()
         }
     }
@@ -359,3 +375,8 @@ private fun RemindersSection() {
         onChange = { Reminders.setEnabled(context, it) },
     )
 }
+
+/** "Euro (EUR)", in the language of the device. */
+private fun currencyName(code: String): String =
+    runCatching { java.util.Currency.getInstance(code).getDisplayName(java.util.Locale.getDefault()) }
+        .getOrNull()?.takeIf { it.isNotBlank() && it != code }?.let { "$it ($code)" } ?: code

@@ -48,6 +48,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -136,6 +138,8 @@ fun RatingStars(rating: Int?, modifier: Modifier = Modifier, size: Dp = 16.dp) {
  */
 @Composable
 fun RatingInput(rating: Int?, onChange: (Int?) -> Unit, modifier: Modifier = Modifier) {
+    // Each change ticks, as on Apple.
+    val haptics = LocalHapticFeedback.current
     val label = stringResource(R.string.rating_label)
     val value = if (rating != null) pluralStringResource(R.plurals.journal_rating_stars, rating, rating) else stringResource(R.string.rating_input_none)
     Row(
@@ -145,6 +149,7 @@ fun RatingInput(rating: Int?, onChange: (Int?) -> Unit, modifier: Modifier = Mod
             progressBarRangeInfo = ProgressBarRangeInfo((rating ?: 0).toFloat(), 0f..5f, steps = 4)
             setProgress { target ->
                 val stars = target.roundToInt().coerceIn(0, 5)
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
                 onChange(stars.takeIf { it > 0 })
                 true
             }
@@ -152,7 +157,10 @@ fun RatingInput(rating: Int?, onChange: (Int?) -> Unit, modifier: Modifier = Mod
     ) {
         for (index in 1..5) {
             val selected = rating != null && index <= rating
-            IconButton(onClick = { onChange(if (rating == index) null else index) }) {
+            IconButton(onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onChange(if (rating == index) null else index)
+            }) {
                 Icon(
                     if (selected) Icons.Filled.Star else Icons.Outlined.StarOutline,
                     contentDescription = null,
