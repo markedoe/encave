@@ -82,6 +82,11 @@ class SyncStorage(private val context: Context) {
         get() = prefs.getString(KEY_STORAGE, null)
         set(value) = prefs.edit { if (value == null) remove(KEY_STORAGE) else putString(KEY_STORAGE, value) }
 
+    /** The user turned syncing away from home off on this device: a storage another device tells is not taken. */
+    var remoteTurnedOff: Boolean
+        get() = prefs.getBoolean(KEY_REMOTE_OFF, false)
+        set(value) = prefs.edit { if (value) putBoolean(KEY_REMOTE_OFF, true) else remove(KEY_REMOTE_OFF) }
+
     /**
      * The next cellar key, made when a device is removed and kept until the rotation is
      * done, so a retry after a failure uses the same key (grants already left stay valid).
@@ -153,13 +158,16 @@ class SyncStorage(private val context: Context) {
         resetRemote()
     }
 
-    /** Forgets the remote key, the pending one, the WebDAV login, the progress and its status (leaving, or joining another cellar). */
+    /**
+     * Forgets the remote key, the pending one, the WebDAV login, the progress, its status and
+     * that it was turned off (leaving, or joining another cellar).
+     */
     fun resetRemote() {
         remoteKey = null
         pendingKey = null
         webDavLogin = null
         file(REMOTE).delete()
-        prefs.edit { remove(KEY_ROTATION).remove(KEY_LAST_REMOTE).remove(KEY_UNSENT) }
+        prefs.edit { remove(KEY_ROTATION).remove(KEY_LAST_REMOTE).remove(KEY_UNSENT).remove(KEY_REMOTE_OFF) }
     }
 
     /** The last round away from home that went through, for the status. */
@@ -189,6 +197,7 @@ class SyncStorage(private val context: Context) {
         private const val KEY_ROTATION = "rotationPending"
         private const val KEY_LAST_REMOTE = "lastRemoteSync"
         private const val KEY_UNSENT = "unsentChanges"
+        private const val KEY_REMOTE_OFF = "remoteTurnedOff"
         private const val KEY_IDENTITY = "sync.identity"
         private const val KEY_CELLAR_KEY = "sync.cellarKey"
         private const val KEY_WEBDAV_LOGIN = "sync.webDavLogin"
