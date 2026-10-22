@@ -46,6 +46,16 @@ python3 apple/tools/l10n.py --check   # fails if a string has no French (run in 
 Avoid building strings with `? "a" : "b"` inside `Text`: write two `Text`
 views so both strings are extracted and translated.
 
+### Licences and privacy manifest
+
+Settings › About › Licences lists the libraries in each app with their licence
+(see `licences/README.md`). After changing a dependency, run
+`python3 apple/tools/licences.py` or `python3 android/tools/licences.py`; CI
+fails with `--check` while the list is out of date. The Apple privacy manifest
+is `apple/Encave/Resources/PrivacyInfo.xcprivacy`: declare there any new
+required-reason API the code starts using (UserDefaults, file timestamps, disk
+space, system boot time, active keyboards).
+
 ### AI label recognition (optional)
 
 Off by default. In Settings, choose Claude (Anthropic API key) or an
