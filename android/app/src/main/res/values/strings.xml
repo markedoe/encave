@@ -1169,7 +1169,7 @@
     <string name="widget_tonight_description">The bottles to open now, the most urgent first.</string>
     <string name="widget_cellar_description">How many bottles you have, and how many to drink soon.</string>
     <string name="widget_empty_title">Add bottles in Encave</string>
-    <string name="widget_empty_body">Scan a label or type a name.</string>
+    <string name="widget_empty_body">Scan the barcode or type a name.</string>
     <string name="widget_tonight_none">No bottle is at its best right now.</string>
     <string name="widget_drink_soon">Drink soon: %1$d</string>
     <string name="widget_ready">Ready: %1$d</string>
@@ -1213,7 +1213,7 @@
     <string name="help_adding_documents_title">Documents</string>
     <string name="help_adding_documents">Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a document…** (a PDF, an image, a text or an office file, up to 8 MB), or **Photograph a paper**. Add them while adding bottles, or later under **Documents** on the wine’s page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), open the menu of the bottle on the wine’s page or in a rack and choose **Attach a document…**; a paperclip shows how many it has. Touch a document to open it in another app; its menu shares, renames or deletes it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.</string>
     <string name="help_start_widgets_title">Widgets</string>
-    <string name="help_start_widgets">On the home screen, touch and hold an empty spot, then choose **Widgets** and Encave. **Tonight** lists the bottles to open now and where they are (touch one to open it); **Cellar** shows how many bottles you have, and how many to drink soon or ready. Widgets show a summary kept on this device.</string>
+    <string name="help_start_widgets">On the home screen, touch and hold an empty spot, then choose **Widgets** and Encave. **Tonight** lists the bottles to open now and where they are (touch one to open it); **Cellar** shows how many bottles you have, and how many to drink soon, ready or on order. Widgets show a summary kept on this device.</string>
     <string name="journal_add">Add a tasting</string>
     <string name="journal_add_where">Where did you drink it?</string>
     <string name="journal_add_cellar">A bottle from my cellar</string>

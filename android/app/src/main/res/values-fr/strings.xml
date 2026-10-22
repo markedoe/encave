@@ -1168,7 +1168,7 @@
     <string name="widget_tonight_description">Les bouteilles à ouvrir maintenant, les plus urgentes d’abord.</string>
     <string name="widget_cellar_description">Combien de bouteilles vous avez, et combien boire bientôt.</string>
     <string name="widget_empty_title">Ajoutez des bouteilles dans Encave</string>
-    <string name="widget_empty_body">Scannez une étiquette ou tapez un nom.</string>
+    <string name="widget_empty_body">Scannez le code-barres ou tapez un nom.</string>
     <string name="widget_tonight_none">Aucune bouteille n’est à son apogée en ce moment.</string>
     <string name="widget_drink_soon">À boire bientôt : %1$d</string>
     <string name="widget_ready">Prêtes à boire : %1$d</string>
@@ -1212,7 +1212,7 @@
     <string name="help_adding_documents_title">Documents</string>
     <string name="help_adding_documents">Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo), ou **Photographier un papier**. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), ouvrez le menu de la bouteille sur la fiche du vin ou dans un casier et choisissez **Joindre un document…** ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir dans une autre app ; son menu permet de le partager, de le renommer ou de le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web.</string>
     <string name="help_start_widgets_title">Widgets</string>
-    <string name="help_start_widgets">Sur l’écran d’accueil, maintenez un espace vide appuyé, puis choisissez **Widgets** et Encave. **Ce soir** liste les bouteilles à ouvrir maintenant et où elles sont (touchez-en une pour l’ouvrir) ; **Cave** indique combien de bouteilles vous avez, et combien sont à boire bientôt ou prêtes. Les widgets affichent un résumé gardé sur cet appareil.</string>
+    <string name="help_start_widgets">Sur l’écran d’accueil, maintenez un espace vide appuyé, puis choisissez **Widgets** et Encave. **Ce soir** liste les bouteilles à ouvrir maintenant et où elles sont (touchez-en une pour l’ouvrir) ; **Cave** indique combien de bouteilles vous avez, et combien sont à boire bientôt, prêtes ou en commande. Les widgets affichent un résumé gardé sur cet appareil.</string>
     <string name="journal_add">Noter une dégustation</string>
     <string name="journal_add_where">Où l’avez-vous bu ?</string>
     <string name="journal_add_cellar">Une bouteille de ma cave</string>
