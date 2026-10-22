@@ -1,136 +1,130 @@
 package app.encave.ui.components
 
+import android.app.UiModeManager
+import android.graphics.Bitmap
+import android.graphics.Paint
+import android.graphics.RadialGradient
+import android.graphics.Shader
+import android.util.LruCache
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import app.encave.core.StudioRandom
 import app.encave.core.WineColor
 import app.encave.ui.theme.LocalStudioPalette
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.exp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.sin
 
 /**
- * The backdrop behind studio pictures and covers: a gradient in the wine style's
- * studio shade (design tokens, deep and rich in dark theme), a soft light behind
- * the picture so it stands out, and a bunch of grapes and vine leaves in the
- * corners when there is room. The same drawing as on Apple (StudioPhoto.swift,
- * VineArt). Decorative.
+ * The backdrop behind studio pictures and covers: a cellar in soft focus, its
+ * lights blurred into discs of candle light and of the wine's color over a warm
+ * base, with a soft wash of the wine's color and a vignette ([StudioBokeh]). The
+ * same for a wine at every launch, and as on Apple. With high contrast on, only
+ * the base and the wash. Decorative.
  */
 @Composable
-fun StudioBackdrop(color: WineColor?, tint: Color, modifier: Modifier = Modifier) {
+fun StudioBackdrop(color: WineColor?, seed: String, modifier: Modifier = Modifier) {
     val palette = LocalStudioPalette.current
-    Canvas(modifier) {
-        val dark = palette.dark
-        val base = palette.backdrop
-        val shade = palette.shade(color)
-        drawRect(base)
-        drawRect(Brush.verticalGradient(listOf(shade, lerp(shade, base, if (dark) 0.45f else 0.55f))))
-        val light = if (dark) lerp(shade, Color.White, 0.35f) else Color.White
-        val ink = if (dark) lerp(shade, Color.White, 0.55f).copy(alpha = 0.32f) else tint.copy(alpha = 0.3f)
-        if (min(size.width, size.height) >= VineArt.MINIMUM_SIDE.dp.toPx()) {
-            VineArt.draw(this, ink, light.copy(alpha = 0.6f), shade.copy(alpha = 0.6f))
+    val tint = palette.tint(color)
+    val context = LocalContext.current
+    val plain = (context.getSystemService(UiModeManager::class.java)?.contrast ?: 0f) > 0f
+    BoxWithConstraints(modifier) {
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val bitmap by produceState<Bitmap?>(null, seed, tint, palette, width, height, plain) {
+            value = if (plain || width <= 0 || height <= 0 || width == Int.MAX_VALUE || height == Int.MAX_VALUE) {
+                null
+            } else {
+                withContext(Dispatchers.Default) {
+                    StudioBokeh.bitmap(seed, palette.base, palette.candle, tint, palette.dark, width, height)
+                }
+            }
         }
-        drawRect(
-            Brush.radialGradient(
-                listOf(light.copy(alpha = if (dark) 0.4f else 0.7f), light.copy(alpha = 0f)),
-                center = Offset(size.width / 2, size.height * 0.46f),
-                radius = max(size.width, size.height) * 0.48f,
-            ),
-        )
+        Canvas(Modifier.fillMaxSize()) {
+            drawRect(palette.base)
+            drawRect(
+                Brush.radialGradient(
+                    listOf(tint.copy(alpha = if (palette.dark) 0.35f else 0.25f), tint.copy(alpha = 0f)),
+                    center = Offset(size.width * 0.3f, size.height * 0.25f),
+                    radius = max(size.width, size.height) * 1.1f,
+                ),
+            )
+        }
+        bitmap?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds) }
     }
 }
 
 /**
- * A bunch of grapes on its cane with a vine leaf and a tendril (bottom right), and
- * a lone leaf (top left), drawn in a 100 × 100 box; the numbers are the same as on Apple.
+ * Draws the bokeh backdrop and keeps it for each wine, theme and size. The numbers
+ * and the order of the random draws are the same as on Apple (StudioPhoto.swift,
+ * StudioBokeh), so a wine looks the same on both.
  */
-internal object VineArt {
-    /** No art in small pictures (list rows), where it would only be noise. In dp. */
-    const val MINIMUM_SIDE = 90
-
-    /** Grapes in rows of 4, 5, 4, 4, 3, 2 and 1, each row a little to the left. */
-    val grapes: List<Offset> = buildList {
-        listOf(4, 5, 4, 4, 3, 2, 1).forEachIndexed { row, count ->
-            val y = 28f + row * 10.4f
-            val start = 52f - row * 0.6f - (count - 1) * 6f
-            repeat(count) { add(Offset(start + it * 12f, y)) }
-        }
+internal object StudioBokeh {
+    private val cache = object : LruCache<String, Bitmap>((Runtime.getRuntime().maxMemory() / 1024 / 16).toInt()) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / 1024
     }
 
-    /** A spiral of 1.5 turns, starting at the cane. */
-    private val tendril: List<Offset> = (0..40).map { step ->
-        val t = step / 40f * 3f * PI.toFloat()
-        val r = 7f * (1f - t / (3.6f * PI.toFloat()))
-        Offset(34f + r * cos(t), 14f + r * sin(t))
+    fun bitmap(seed: String, base: Color, candle: Color, tint: Color, dark: Boolean, width: Int, height: Int): Bitmap {
+        val key = "$seed|${base.toArgb()}|${candle.toArgb()}|${tint.toArgb()}|$dark|${width}x$height"
+        cache.get(key)?.let { return it }
+        val result = draw(seed, base, candle, tint, dark, width, height)
+        cache.put(key, result)
+        return result
     }
 
-    fun draw(scope: DrawScope, ink: Color, light: Color, vein: Color) = with(scope) {
-        val side = min(size.height * 0.78f, size.width * 0.5f)
-        val scale = side / 100f
-        translate(size.width - side * 0.82f, size.height - side * 0.92f) {
-            withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
-                val cane = Path().apply {
-                    moveTo(40f, 8f)
-                    quadraticTo(60f, 2f, 98f, 12f)
-                    moveTo(56f, 6f)
-                    lineTo(52f, 24f)
-                }
-                drawPath(cane, ink, style = Stroke(width = 2.2f, cap = StrokeCap.Round))
-                drawPath(polyline(tendril, close = false), ink, style = Stroke(width = 1.4f, cap = StrokeCap.Round))
-                grapes.forEach {
-                    drawCircle(ink, radius = 6f, center = it)
-                    drawCircle(light, radius = 1.8f, center = it + Offset(-2f, -2f))
-                }
-                leaf(Offset(74f, 30f), 19f, -25f, ink, vein)
-            }
+    fun draw(seed: String, base: Color, candle: Color, tint: Color, dark: Boolean, width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        fun argb(color: Color, alpha: Float) = color.copy(alpha = alpha).toArgb()
+        fun radial(x: Float, y: Float, radius: Float, colors: IntArray, stops: FloatArray, fill: Boolean) {
+            paint.shader = RadialGradient(x, y, radius, colors, stops, Shader.TileMode.CLAMP)
+            if (fill) canvas.drawPaint(paint) else canvas.drawCircle(x, y, radius, paint)
         }
-        withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
-            leaf(Offset(10f, 12f), 17f, 155f, ink, vein)
-        }
-    }
 
-    /** A point at angle [theta] from the tip of a leaf turned by [rotation] degrees, clockwise. */
-    private fun point(center: Offset, r: Float, theta: Float, rotation: Float): Offset {
-        val angle = theta + rotation * PI.toFloat() / 180f
-        return Offset(center.x + r * sin(angle), center.y - r * cos(angle))
-    }
-
-    /** A five-lobed leaf with a notch where the stem joins, and its veins. */
-    private fun DrawScope.leaf(center: Offset, radius: Float, rotation: Float, ink: Color, vein: Color) {
-        val pi = PI.toFloat()
-        val outline = (0 until 90).map { step ->
-            val theta = step / 90f * 2f * pi
-            val notch = 1f - 0.45f * exp(-((theta - pi) / 0.25f).pow(2))
-            point(center, radius * (0.78f + 0.22f * cos(5f * theta)) * notch, theta, rotation)
+        canvas.drawColor(base.toArgb())
+        // A very soft wash of the wine's color.
+        val wash = if (dark) 0.35f else 0.25f
+        radial(0.3f * w, 0.25f * h, 1.1f * max(w, h), intArrayOf(argb(tint, wash), argb(tint, 0f)), floatArrayOf(0f, 1f), fill = true)
+        // Out-of-focus lights: 60% candle light, 40% the wine's color brightened.
+        val bright = Color(min(1f, tint.red * 1.6f), min(1f, tint.green * 1.6f), min(1f, tint.blue * 1.6f))
+        val random = StudioRandom(seed)
+        val blur = 0.02f * w
+        val strength = if (dark) 1f else 0.55f
+        paint.blendMode = if (dark) android.graphics.BlendMode.SCREEN else android.graphics.BlendMode.SRC_OVER
+        repeat(24) {
+            val radius = w * (0.04f + 0.08f * random.next().toFloat())
+            val x = w * random.next().toFloat()
+            val y = h * 0.8f * random.next().toFloat()
+            val light = if (random.next() < 0.6) candle else bright
+            val alpha = (0.25f + 0.45f * random.next().toFloat()) * strength
+            val outer = radius + blur
+            val edge = max(0f, (radius - blur) / outer)
+            radial(x, y, outer, intArrayOf(argb(light, alpha), argb(light, alpha * 0.9f), argb(light, 0f)), floatArrayOf(0f, edge, 1f), fill = false)
         }
-        drawPath(polyline(outline, close = true), ink)
-        val veins = Path()
-        listOf(0, 1, -1, 2, -2).forEach { lobe ->
-            val start = point(center, radius * 0.45f, pi, rotation)
-            val end = point(center, radius * 0.85f, lobe * 2f * pi / 5f, rotation)
-            veins.moveTo(start.x, start.y)
-            veins.lineTo(end.x, end.y)
-        }
-        drawPath(veins, vein, style = Stroke(width = 0.9f, cap = StrokeCap.Round))
-    }
-
-    private fun polyline(points: List<Offset>, close: Boolean) = Path().apply {
-        points.forEachIndexed { index, it -> if (index == 0) moveTo(it.x, it.y) else lineTo(it.x, it.y) }
-        if (close) close()
+        paint.blendMode = android.graphics.BlendMode.SRC_OVER
+        // A soft vignette.
+        radial(
+            w / 2, h / 2, 0.75f * max(w, h),
+            intArrayOf(argb(Color.Black, 0f), argb(Color.Black, 0f), argb(Color.Black, if (dark) 0.5f else 0.18f)),
+            floatArrayOf(0f, 0.55f, 1f), fill = true,
+        )
+        return bitmap
     }
 }

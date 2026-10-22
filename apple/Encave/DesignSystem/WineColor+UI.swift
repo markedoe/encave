@@ -50,9 +50,9 @@ extension WineColor {
 }
 
 extension WineColor {
-    /// The studio backdrop's shade for this style (design/tokens.json): pale in
-    /// light mode, deep and rich in dark mode, behind a cream label.
-    var studioShade: Color {
+    /// The wine's color on the studio backdrop (design/tokens.json): the wash and
+    /// the colored lights; white wine as straw gold.
+    var studioTint: Color {
         switch self {
         case .red: Color("StudioRed")
         case .white: Color("StudioWhite")

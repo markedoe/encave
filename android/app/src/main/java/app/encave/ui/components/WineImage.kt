@@ -28,7 +28,6 @@ import app.encave.core.AutoLevels
 import app.encave.core.LabelCrop
 import app.encave.core.Wine
 import app.encave.data.PhotoStore
-import app.encave.ui.theme.LocalWinePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -78,7 +77,7 @@ fun WineImage(
         return
     }
     Box(modifier.clip(shape), contentAlignment = Alignment.Center) {
-        StudioBackdrop(wine.color, LocalWinePalette.current[wine.color], Modifier.matchParentSize())
+        StudioBackdrop(wine.color, wine.id.toString(), Modifier.matchParentSize())
         picture?.let {
             val bitmap = it.bitmap
             if (enhance) {

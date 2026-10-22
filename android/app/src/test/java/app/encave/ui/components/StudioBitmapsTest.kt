@@ -75,4 +75,20 @@ class StudioBitmapsTest {
         assertTrue(result.framed)
         assertTrue(result.bitmap.height < source.height)
     }
+
+    @Test
+    fun theBokehBackdropIsTheSameForAWineAndDiffersBetweenWines() {
+        val base = androidx.compose.ui.graphics.Color(0xFF141010)
+        val candle = androidx.compose.ui.graphics.Color(0xFFFFC478)
+        val tint = androidx.compose.ui.graphics.Color(0xFFDEB45A)
+        fun pixels(seed: String): IntArray {
+            val bitmap = StudioBokeh.draw(seed, base, candle, tint, dark = true, width = 120, height = 160)
+            return IntArray(120 * 160).also { bitmap.getPixels(it, 0, 120, 0, 0, 120, 160) }
+        }
+        val first = pixels("8f0e3c1a-0000-4000-8000-000000000001")
+        assertTrue(first.contentEquals(pixels("8F0E3C1A-0000-4000-8000-000000000001")))
+        assertFalse(first.contentEquals(pixels("8f0e3c1a-0000-4000-8000-000000000002")))
+        // Lights over the dark base: not one flat color.
+        assertTrue(first.toSet().size > 50)
+    }
 }

@@ -400,6 +400,8 @@ enum LabelFrame {
 struct LabelPhoto: View {
     let photoID: String
     var color: WineColor?
+    /// The wine's identifier, for its backdrop.
+    var seed: String
     var maxPixelSize = 900
     /// Inner margin around a cut-out shown whole.
     var inset: CGFloat = 12
@@ -411,7 +413,7 @@ struct LabelPhoto: View {
         Group {
             if studio, let picture {
                 ZStack {
-                    StudioBackdrop(color: color)
+                    StudioBackdrop(color: color, seed: seed)
                     switch picture.kind {
                     case .cutout:
                         Image(decorative: picture.image, scale: 1)
@@ -454,116 +456,136 @@ struct LabelPhoto: View {
     }
 }
 
-/// The backdrop behind studio pictures and covers: a gradient in the wine style's
-/// studio shade (design tokens, deep and rich in dark mode), a soft light behind
-/// the picture so it stands out, and a bunch of grapes and vine leaves in the
-/// corners when there is room. Drawn here; the same drawing as on Android
-/// (StudioBackdrop.kt).
+/// The backdrop behind studio pictures and covers: a cellar in soft focus, its
+/// lights blurred into discs of candle light and of the wine's color over a warm
+/// base, with a soft wash of the wine's color and a vignette (`StudioBokeh`). The
+/// same for a wine at every launch. With Reduce Transparency or Increase Contrast,
+/// only the base and the wash. Decorative.
 struct StudioBackdrop: View {
     var color: WineColor?
+    /// The wine's identifier: places the lights, so each wine keeps its own backdrop.
+    var seed: String
+
+    @Environment(\.self) private var environment
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.displayScale) private var displayScale
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+    @State private var image: CGImage?
+
+    private var tint: Color { color?.studioTint ?? Color("StudioRed") }
+    private var plain: Bool { reduceTransparency || contrast == .increased }
 
     var body: some View {
-        Canvas { context, size in
-            let rect = CGRect(origin: .zero, size: size)
-            let dark = scheme == .dark
-            let base = Color("StudioBackdrop")
-            let shade = color?.studioShade ?? base
-            context.fill(Path(rect), with: .color(base))
-            context.fill(Path(rect), with: .linearGradient(
-                Gradient(colors: [shade, shade.mix(with: base, by: dark ? 0.45 : 0.55)]),
-                startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
-            let light = dark ? shade.mix(with: .white, by: 0.35) : .white
-            let ink = dark ? shade.mix(with: .white, by: 0.55).opacity(0.32) : (color?.tint ?? .accentColor).opacity(0.3)
-            VineArt.draw(in: context, size: size, ink: ink, light: light.opacity(0.6), vein: shade.opacity(0.6))
-            context.fill(Path(rect), with: .radialGradient(
-                Gradient(colors: [light.opacity(dark ? 0.4 : 0.7), light.opacity(0)]),
-                center: CGPoint(x: size.width / 2, y: size.height * 0.46),
-                startRadius: 0, endRadius: max(size.width, size.height) * 0.48))
+        GeometryReader { proxy in
+            let size = proxy.size
+            ZStack {
+                Rectangle().fill(Color("StudioBase"))
+                RadialGradient(colors: [tint.opacity(scheme == .dark ? 0.35 : 0.25), tint.opacity(0)],
+                               center: UnitPoint(x: 0.3, y: 0.25), startRadius: 0,
+                               endRadius: max(size.width, size.height) * 1.1)
+                if !plain, let image {
+                    Image(decorative: image, scale: displayScale).resizable()
+                }
+            }
+            .task(id: "\(seed)-\(color?.rawValue ?? "")-\(scheme == .dark)-\(Int(size.width))x\(Int(size.height))-\(plain)") {
+                guard !plain, size.width >= 1, size.height >= 1 else { image = nil; return }
+                let colors = StudioBokeh.Colors(base: rgb(Color("StudioBase")), candle: rgb(Color("StudioCandle")),
+                                                tint: rgb(tint))
+                image = await StudioBokeh.image(seed: seed, colors: colors, dark: scheme == .dark,
+                                                width: Int(size.width * displayScale), height: Int(size.height * displayScale))
+            }
         }
         .accessibilityHidden(true)
     }
+
+    private func rgb(_ color: Color) -> StudioBokeh.RGB {
+        let resolved = color.resolve(in: environment).cgColor
+        let srgb = CGColorSpace(name: CGColorSpace.sRGB).flatMap {
+            resolved.converted(to: $0, intent: .defaultIntent, options: nil)
+        }
+        let parts: [CGFloat] = (srgb ?? resolved).components ?? [0, 0, 0]
+        guard parts.count >= 3 else { return StudioBokeh.RGB(r: parts[0], g: parts[0], b: parts[0]) }
+        return StudioBokeh.RGB(r: parts[0], g: parts[1], b: parts[2])
+    }
 }
 
-/// A bunch of grapes on its cane with a vine leaf and a tendril (bottom right), and
-/// a lone leaf (top left), drawn in a 100 × 100 box. The numbers are the same in
-/// StudioBackdrop.kt on Android.
-enum VineArt {
-    /// No art in small pictures (list rows), where it would only be noise.
-    static let minimumSide: CGFloat = 90
-
-    static func draw(in context: GraphicsContext, size: CGSize, ink: Color, light: Color, vein: Color) {
-        guard min(size.width, size.height) >= minimumSide else { return }
-        let side = min(size.height * 0.78, size.width * 0.5)
-        var corner = context
-        corner.translateBy(x: size.width - side * 0.82, y: size.height - side * 0.92)
-        corner.scaleBy(x: side / 100, y: side / 100)
-        let stroke = StrokeStyle(lineWidth: 2.2, lineCap: .round)
-        // The cane, the bunch's stem and a tendril.
-        var cane = Path()
-        cane.move(to: CGPoint(x: 40, y: 8))
-        cane.addQuadCurve(to: CGPoint(x: 98, y: 12), control: CGPoint(x: 60, y: 2))
-        cane.move(to: CGPoint(x: 56, y: 6))
-        cane.addLine(to: CGPoint(x: 52, y: 24))
-        corner.stroke(cane, with: .color(ink), style: stroke)
-        corner.stroke(Path { $0.addLines(tendril) }, with: .color(ink), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
-        for grape in grapes {
-            corner.fill(Path(ellipseIn: CGRect(x: grape.x - 6, y: grape.y - 6, width: 12, height: 12)), with: .color(ink))
-            corner.fill(Path(ellipseIn: CGRect(x: grape.x - 3.8, y: grape.y - 3.8, width: 3.6, height: 3.6)), with: .color(light))
-        }
-        leaf(in: corner, center: CGPoint(x: 74, y: 30), radius: 19, rotation: -25, ink: ink, vein: vein)
-
-        var top = context
-        top.scaleBy(x: side / 100, y: side / 100)
-        leaf(in: top, center: CGPoint(x: 10, y: 12), radius: 17, rotation: 155, ink: ink, vein: vein)
+/// Draws the bokeh backdrop off the main thread and keeps it for each wine, color
+/// scheme and size. The numbers and the order of the random draws are the same in
+/// StudioBackdrop.kt on Android, so a wine looks the same on both.
+enum StudioBokeh {
+    struct RGB: Hashable, Sendable {
+        var r: CGFloat
+        var g: CGFloat
+        var b: CGFloat
     }
 
-    /// Grapes in rows of 4, 5, 4, 4, 3, 2 and 1, each row a little to the left.
-    static let grapes: [CGPoint] = {
-        var points: [CGPoint] = []
-        for (row, count) in [4, 5, 4, 4, 3, 2, 1].enumerated() {
-            let y: CGFloat = 28 + CGFloat(row) * 10.4
-            let start: CGFloat = 52 - CGFloat(row) * 0.6 - CGFloat(count - 1) * 6
-            for index in 0..<count { points.append(CGPoint(x: start + CGFloat(index) * 12, y: y)) }
-        }
-        return points
-    }()
-
-    /// A spiral of 1.5 turns, starting at the cane.
-    static let tendril: [CGPoint] = (0...40).map { step in
-        let t: CGFloat = CGFloat(step) * 3 * CGFloat.pi / 40
-        let r: CGFloat = 7 - 7 * t / (3.6 * CGFloat.pi)
-        return CGPoint(x: 34 + r * cos(t), y: 14 + r * sin(t))
+    struct Colors: Hashable, Sendable {
+        var base: RGB
+        var candle: RGB
+        var tint: RGB
     }
 
-    /// The outline of a five-lobed leaf, with a notch where the stem joins; angles
-    /// are measured from the tip, clockwise.
-    static func leafOutline(center: CGPoint, radius: CGFloat, rotation: CGFloat) -> [CGPoint] {
-        (0..<90).map { step in
-            let theta: CGFloat = CGFloat(step) * 2 * CGFloat.pi / 90
-            let distance: CGFloat = (theta - CGFloat.pi) / 0.25
-            let notch: CGFloat = 1 - 0.45 * exp(-distance * distance)
-            let lobes: CGFloat = 0.78 + 0.22 * cos(5 * theta)
-            let r: CGFloat = radius * lobes * notch
-            return point(center, r, theta, rotation)
-        }
+    private final class Cache: @unchecked Sendable {
+        let images = NSCache<NSString, CGImage>()
+        init() { images.countLimit = 120 }
     }
 
-    static func point(_ center: CGPoint, _ r: CGFloat, _ theta: CGFloat, _ rotation: CGFloat) -> CGPoint {
-        let angle: CGFloat = theta + rotation * CGFloat.pi / 180
-        return CGPoint(x: center.x + r * sin(angle), y: center.y - r * cos(angle))
+    private static let cache = Cache()
+
+    static func image(seed: String, colors: Colors, dark: Bool, width: Int, height: Int) async -> CGImage? {
+        let key = "\(seed)|\(colors.hashValue)|\(dark)|\(width)x\(height)" as NSString
+        if let cached = cache.images.object(forKey: key) { return cached }
+        let image = await Task.detached(priority: .utility) {
+            draw(seed: seed, colors: colors, dark: dark, width: width, height: height)
+        }.value
+        if let image { cache.images.setObject(image, forKey: key) }
+        return image
     }
 
-    private static func leaf(in context: GraphicsContext, center: CGPoint, radius: CGFloat, rotation: CGFloat,
-                             ink: Color, vein: Color) {
-        context.fill(Path { $0.addLines(leafOutline(center: center, radius: radius, rotation: rotation)); $0.closeSubpath() },
-                     with: .color(ink))
-        var veins = Path()
-        for lobe in [0, 1, -1, 2, -2] {
-            veins.move(to: point(center, radius * 0.45, .pi, rotation))
-            veins.addLine(to: point(center, radius * 0.85, CGFloat(lobe) * 2 * .pi / 5, rotation))
+    static func draw(seed: String, colors: Colors, dark: Bool, width: Int, height: Int) -> CGImage? {
+        guard width > 0, height > 0, let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                      space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        let w = CGFloat(width), h = CGFloat(height)
+        func color(_ c: RGB, _ alpha: CGFloat) -> CGColor { CGColor(srgbRed: c.r, green: c.g, blue: c.b, alpha: alpha) }
+        func radial(_ center: CGPoint, _ radius: CGFloat, _ locations: [CGFloat], _ stops: [CGColor]) {
+            guard let gradient = CGGradient(colorsSpace: space, colors: stops as CFArray, locations: locations) else { return }
+            context.drawRadialGradient(gradient, startCenter: center, startRadius: 0, endCenter: center, endRadius: radius,
+                                       options: [])
         }
-        context.stroke(veins, with: .color(vein), style: StrokeStyle(lineWidth: 0.9, lineCap: .round))
+        // Positions from the top, as on screen.
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x, y: h - y) }
+
+        context.setFillColor(color(colors.base, 1))
+        context.fill(CGRect(x: 0, y: 0, width: w, height: h))
+        // A very soft wash of the wine's color.
+        let wash: CGFloat = dark ? 0.35 : 0.25
+        radial(point(0.3 * w, 0.25 * h), 1.1 * max(w, h), [0, 1], [color(colors.tint, wash), color(colors.tint, 0)])
+        // Out-of-focus lights: 60% candle light, 40% the wine's color brightened.
+        let tint = colors.tint
+        let bright = RGB(r: min(1, tint.r * 1.6), g: min(1, tint.g * 1.6), b: min(1, tint.b * 1.6))
+        var random = StudioRandom(seed: seed)
+        let blur: CGFloat = 0.02 * w
+        let strength: CGFloat = dark ? 1 : 0.55
+        context.setBlendMode(dark ? .screen : .normal)
+        for _ in 0..<24 {
+            let radius: CGFloat = w * (0.04 + 0.08 * CGFloat(random.next()))
+            let x: CGFloat = w * CGFloat(random.next())
+            let y: CGFloat = h * 0.8 * CGFloat(random.next())
+            let light = random.next() < 0.6 ? colors.candle : bright
+            let alpha: CGFloat = (0.25 + 0.45 * CGFloat(random.next())) * strength
+            let outer = radius + blur
+            let edge: CGFloat = max(0, (radius - blur) / outer)
+            radial(point(x, y), outer, [0, edge, 1], [color(light, alpha), color(light, alpha * 0.9), color(light, 0)])
+        }
+        context.setBlendMode(.normal)
+        // A soft vignette.
+        let black = RGB(r: 0, g: 0, b: 0)
+        radial(point(w / 2, h / 2), 0.75 * max(w, h), [0, 0.55, 1],
+               [color(black, 0), color(black, 0), color(black, dark ? 0.5 : 0.18)])
+        return context.makeImage()
     }
 }
 
@@ -578,12 +600,12 @@ struct WineImage: View {
     var body: some View {
         if let cover = wine.coverPhotoID, PhotoStore.exists(cover) {
             ZStack {
-                StudioBackdrop(color: wine.color)
+                StudioBackdrop(color: wine.color, seed: wine.id.uuidString)
                 WinePhoto(photoID: cover, maxPixelSize: maxPixelSize, fits: true)
                     .padding(inset / 2)
             }
         } else if let photoID = wine.photoID {
-            LabelPhoto(photoID: photoID, color: wine.color, maxPixelSize: maxPixelSize, inset: inset)
+            LabelPhoto(photoID: photoID, color: wine.color, seed: wine.id.uuidString, maxPixelSize: maxPixelSize, inset: inset)
         }
     }
 }
