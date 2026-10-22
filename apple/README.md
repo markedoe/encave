@@ -34,7 +34,7 @@ again. It needs these repository secrets:
 `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` (App
 Store Connect API key with the Admin role).
 
-The workflow uses three macOS jobs per run on main, pull requests and manual
+The workflow uses two macOS jobs per run on main, pull requests and manual
 runs, and one on pushes to other branches:
 
 - **Build, Mac launch test, TestFlight upload**: on main (pushes and manual
@@ -46,15 +46,15 @@ runs, and one on pushes to other branches:
   checks the privacy manifest. On main, pull requests and manual runs, the same
   Mac app then makes the Mac screenshots for the App Store
   (`tools/mac-screenshots.sh`, artifact `mac-screens`).
-- **Screen tour (English, Mac)** and **Screen tour (French)** (main, pull
-  requests and manual runs): each builds the UI tests once, starts the newest
-  iPhone and iPad simulators and runs the tour in its language on both side by
-  side (an iPhone and an iPad run together as fast as one on GitHub's runners;
-  two iPads or three simulators do not). The French job also runs the large
-  text checks on the iPhone and the model tests on macOS; the English job, the
-  Mac tour. A third job merges their screenshots into the `screens` artifact
-  (one folder per device). The external testers get a build of main once both
-  tour jobs have passed. Runs on main are never cancelled by a later push.
+- **Screen tour (iPhone, iPad, Mac)** (main, pull requests and manual runs):
+  builds the UI tests once, runs the model tests on macOS, starts the newest
+  iPhone and iPad simulators and runs the tour on both side by side, English
+  then French (with the large text checks on the iPhone), then the Mac tour
+  (artifact `screens`, one folder per device). On GitHub's runners an iPhone
+  and an iPad run together as fast as one; two iPads, two iPhones or three
+  simulators time out, and each extra job would spend about 20 minutes starting
+  its simulators. The external testers get a build of main once the tour has
+  passed. Runs on main are never cancelled by a later push.
 
 The same split runs locally, for example the French iPhone tour only:
 

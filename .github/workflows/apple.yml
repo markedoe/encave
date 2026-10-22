@@ -45,25 +45,18 @@ jobs:
       - run: python3 apple/tools/licences.py --check
 
   screens:
-    name: Screen tour (${{ matrix.name }})
+    name: Screen tour (iPhone, iPad, Mac)
     needs: [cavekit, l10n]
     # The full tour runs on main before each TestFlight build, on pull requests and on
     # manual runs. Pushes to other branches only build and run the Mac launch test, so
     # fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
-    # One job per language, each with the iPhone and the iPad side by side: a runner
-    # runs an iPhone and an iPad simulator together as fast as one, but not two iPads
-    # or three simulators (measured). The screenshots job merges both.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: en
-            name: English, Mac
-          - language: fr
-            name: French
     runs-on: macos-latest
-    timeout-minutes: 60
+    # Built once; the iPhone and the iPad run side by side: about an hour (measured:
+    # a runner runs an iPhone and an iPad together as fast as one, but not two iPads,
+    # two iPhones or three simulators, and each new job pays about 20 minutes to start
+    # its simulators).
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: apple
@@ -89,13 +82,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
 
       - name: Model tests (macOS)
-        if: matrix.language == 'fr'
         run: swift test --package-path Packages/CaveKit
 
       - name: Start the simulators
         if: ${{ !cancelled() }}
-        env:
-          LANGUAGE: ${{ matrix.language }}
         run: |
           set -e
           sims="$RUNNER_TEMP/sims"
@@ -120,46 +110,37 @@ jobs:
           PY
           while read -r device udid name; do
             echo "$device: $name ($udid)"
-            echo "$udid" > "$sims/$device-$LANGUAGE"
+            echo "$udid" > "$sims/$device"
             xcrun simctl boot "$udid" || true
           done < "$sims/plan"
           for device in iPhone iPad; do
-            xcrun simctl bootstatus "$(cat "$sims/$device-$LANGUAGE")" > /dev/null
+            xcrun simctl bootstatus "$(cat "$sims/$device")" > /dev/null
             echo "$device booted at $(date -u +%T)"
           done
 
       - name: iPhone and iPad
         if: ${{ !cancelled() }}
-        env:
-          LANGUAGE: ${{ matrix.language }}
         run: |
           set -o pipefail
           sims="$RUNNER_TEMP/sims"
           xctestrun=$(find "$RUNNER_TEMP/dd/Build/Products" -name "*.xctestrun" | head -n 1)
           tour=EncaveUITests/ScreenTourTests
           run() {
-            label=$1; shift
+            device=$1; shift
             # A one-off simulator timeout (a screenshot request) is retried once.
-            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$label")" \
-              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$label.xcresult" "$@" 2>&1 \
-              | tee "$RUNNER_TEMP/$label.raw" | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$label.log" \
-              | sed -u "s/^/[$label] /"
+            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$device")" \
+              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$device.xcresult" "$@" 2>&1 \
+              | tee "$RUNNER_TEMP/$device.raw" | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$device.log" \
+              | sed -u "s/^/[$device] /"
           }
-          if [ "$LANGUAGE" = en ]; then
-            iphone=("-only-testing:$tour/testTourInEnglish")
-          else
-            # The large text checks run on iPhone only (they stop at once on the iPad's
-            # regular width), with the French tour, the shorter one.
-            iphone=("-only-testing:$tour/testTourInFrench" "-only-testing:$tour/testLargeText"
-                    "-only-testing:$tour/testLargestText")
-          fi
-          ipad=("${iphone[0]}")
+          # English then French on each. The large text checks run on iPhone only (they
+          # stop at once on the iPad's regular width).
           echo "Started at $(date -u +%T)"
-          run "iPhone-$LANGUAGE" "${iphone[@]}" & first=$!
-          run "iPad-$LANGUAGE" "${ipad[@]}" & second=$!
+          run iPhone & iphone=$!
+          run iPad "-skip-testing:$tour/testLargeText" "-skip-testing:$tour/testLargestText" & ipad=$!
           status=0
-          wait "$first" || status=1
-          wait "$second" || status=1
+          wait "$iphone" || status=1
+          wait "$ipad" || status=1
           # The failures again, as annotations, and when each part started its tests.
           grep -h "^::" "$RUNNER_TEMP"/iP*.log || true
           grep -h "Test Suite 'All tests' started\|elapsed --" "$RUNNER_TEMP"/iP*.raw | head -n 30 || true
@@ -172,7 +153,6 @@ jobs:
           for result in "$RUNNER_TEMP"/iP*.xcresult; do
             [ -e "$result" ] || continue
             for test in testTourInEnglish testTourInFrench; do
-              case "$(basename "$result")-$test" in *-en.xcresult-testTourInFrench|*-fr.xcresult-testTourInEnglish) continue ;; esac
               echo "== $(basename "$result" .xcresult) $test"
               xcrun xcresulttool get test-results activities --path "$result" \
                 --test-id "ScreenTourTests/$test()" > "$RUNNER_TEMP/activities.json" || continue
@@ -199,7 +179,7 @@ jobs:
           done
 
       - name: Mac
-        if: ${{ !cancelled() && matrix.language == 'en' }}
+        if: ${{ !cancelled() }}
         # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
         # failed); the Mac screenshots of the build job show each section.
         continue-on-error: true
@@ -250,24 +230,9 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: screens-${{ matrix.language }}
-          path: ${{ runner.temp }}/screens
-          retention-days: 1
-
-  screenshots:
-    name: Screen tour screenshots
-    needs: [screens]
-    if: ${{ !cancelled() && needs.screens.result != 'skipped' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      # One artifact, "screens", with a folder per device (iPhone, iPad, Mac).
-      - uses: actions/upload-artifact/merge@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
           name: screens
-          pattern: screens-*
+          path: ${{ runner.temp }}/screens
           retention-days: 7
-          delete-merged: true
 
   apps:
     name: Build, Mac launch test${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && ', TestFlight upload' || '' }}
