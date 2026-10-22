@@ -1,11 +1,14 @@
 package app.encave.ui.components
 
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.encave.core.AutoLevels
 import app.encave.core.LabelCrop
+import app.encave.core.LabelTilt
 import app.encave.core.Wine
 import app.encave.data.PhotoStore
 import kotlinx.coroutines.Dispatchers
@@ -42,11 +46,12 @@ fun PhotoStore.hasPicture(wine: Wine?): Boolean = wine != null && (exists(wine.c
 
 /**
  * The picture shown for a wine: its cover (a picture from the internet) if any,
- * else its label photo. In the studio look the label photo is cut to the band of
- * its label (where its edges are densest, see [LabelCrop]) with its light evened
- * out, on the device, and shown filling the picture, centred on the label, with a
- * light vignette; a cover is shown whole on a backdrop in the wine's color. The
- * stored photo is never changed.
+ * else its label photo. In the studio look the label photo is turned so its text
+ * lines are level (see [LabelTilt]), cut to the band of its label (where its
+ * edges are densest, see [LabelCrop]) with its light evened out, on the device,
+ * and shown with a light vignette: filling the picture, centred on the label, or
+ * as tall as the picture on the backdrop when it is narrower; a cover is shown
+ * whole on a backdrop in the wine's color. The stored photo is never changed.
  */
 @Composable
 fun WineImage(
@@ -76,11 +81,16 @@ fun WineImage(
         }
         return
     }
-    Box(modifier.clip(shape), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier.clip(shape), contentAlignment = Alignment.Center) {
         StudioBackdrop(wine.color, wine.id.toString(), Modifier.matchParentSize())
         picture?.let {
             val bitmap = it.bitmap
-            if (enhance) {
+            val aspect = bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1)
+            val card = if (maxHeight.value > 0f && maxHeight.value.isFinite()) maxWidth.value / maxHeight.value else aspect
+            if (enhance && aspect < card) {
+                // Narrower than the picture: as tall as it, centred, with the backdrop on its sides.
+                Image(bitmap.asImageBitmap(), contentDescription, Modifier.fillMaxHeight().aspectRatio(aspect).vignette(), contentScale = ContentScale.Fit)
+            } else if (enhance) {
                 // The label photo fills the picture, centred on its label, with a light vignette.
                 Image(bitmap.asImageBitmap(), contentDescription, Modifier.fillMaxSize().vignette(), contentScale = ContentScale.Crop)
             } else {
@@ -123,10 +133,18 @@ internal object StudioBitmaps {
         return result
     }
 
-    /** The photo framed on its label (or whole), light evened out, at most [maxPixelSize] on its longest side. */
-    fun studio(source: Bitmap, maxPixelSize: Int): StudioPicture {
-        val pixels = IntArray(source.width * source.height)
-        source.getPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
+    /**
+     * The photo turned so its text lines are level, framed on its label (or
+     * whole), light evened out, at most [maxPixelSize] on its longest side.
+     */
+    fun studio(photo: Bitmap, maxPixelSize: Int): StudioPicture {
+        var pixels = IntArray(photo.width * photo.height)
+        photo.getPixels(pixels, 0, photo.width, 0, 0, photo.width, photo.height)
+        val source = upright(photo, pixels)
+        if (source !== photo) {
+            pixels = IntArray(source.width * source.height)
+            source.getPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
+        }
         val box = LabelCrop.find(pixels, source.width, source.height)
         val (left, top, width, height) = box?.let { listOf(it.left, it.top, it.width, it.height) }
             ?: listOf(0, 0, source.width, source.height)
@@ -139,5 +157,17 @@ internal object StudioBitmaps {
             bitmap = Bitmap.createScaledBitmap(bitmap, (width * scale).toInt().coerceAtLeast(1), (height * scale).toInt().coerceAtLeast(1), true)
         }
         return StudioPicture(bitmap, framed = box != null)
+    }
+
+    /** The photo turned so its text lines are level, without the empty corners; the photo itself when level. */
+    private fun upright(photo: Bitmap, pixels: IntArray): Bitmap {
+        val degrees = LabelTilt.straightening(pixels, photo.width, photo.height) ?: return photo
+        val (width, height) = LabelTilt.upright(photo.width, photo.height, degrees)
+        if (width < 8 || height < 8) return photo
+        // Android turns clockwise as seen, the angle is counterclockwise.
+        val turned = Bitmap.createBitmap(photo, 0, 0, photo.width, photo.height, Matrix().apply { setRotate(-degrees.toFloat()) }, true)
+        val left = ((turned.width - width) / 2).coerceAtLeast(0)
+        val top = ((turned.height - height) / 2).coerceAtLeast(0)
+        return Bitmap.createBitmap(turned, left, top, minOf(width, turned.width - left), minOf(height, turned.height - top))
     }
 }

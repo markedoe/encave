@@ -209,7 +209,10 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
 
     /// Fills a draft. A field is replaced only if it is empty or still holds the value filled
     /// automatically before (recorded in `filled`), so what the user typed is kept.
-    func apply(to draft: inout WineDraft, replacing filled: inout WineDraft) {
+    /// True when a field changed: otherwise the AI found nothing to add.
+    @discardableResult
+    func apply(to draft: inout WineDraft, replacing filled: inout WineDraft) -> Bool {
+        let before = draft
         func fill(_ field: WritableKeyPath<WineDraft, String>, _ value: String) {
             let value = value.trimmingCharacters(in: .whitespaces)
             let current = draft[keyPath: field].trimmingCharacters(in: .whitespaces)
@@ -237,6 +240,7 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
             draft.drinkFrom = drinkFrom
             draft.drinkUntil = drinkUntil
         }
+        return draft != before
     }
 
     static var schema: JSONObject {

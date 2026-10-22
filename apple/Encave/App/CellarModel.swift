@@ -846,8 +846,14 @@ final class CellarModel {
         }
         take(\.name); take(\.producer); take(\.vintage); take(\.color); take(\.appellation)
         take(\.region); take(\.country); take(\.grapes); take(\.drinkFrom); take(\.drinkUntil)
+        // Nothing left to fill (changed here or on another device since): not "completed".
+        guard updated != live else {
+            aiFoundNothing(for: id)
+            return
+        }
         take(\.aiCompletedAt)
-        guard updated != live else { return }
+        // A wine that already matched was kept apart on purpose in the form.
+        let matchedBefore = cellar.wine(matching: live)?.id
         // The bottles' "Added" banner still shown: one banner, whose Undo takes both back.
         let shownAdd = lastAdd.flatMap { $0.wineID == id && toast?.id == $0.toastID && toast?.undo != nil ? $0 : nil }
         // Its own change keeps that banner, which the new one replaces just below.
@@ -865,6 +871,23 @@ final class CellarModel {
             restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
             restore(\.aiCompletedAt)
             cellar.wines[id] = wine
+        }
+        // The AI renamed the new wine into one already in the cellar: offered to merge them.
+        if let twin = cellar.wine(matching: completed), twin.id != matchedBefore {
+            if shownAdd != nil {
+                lastAdd = nil
+                toast?.undo?.cancel()
+            }
+            showToast(String(localized: "Same wine as \(twin.displayName)"), lasting: .long,
+                      action: ToastAction(title: String(localized: "Merge")) { [weak self] in
+                          self?.mergeWine(id, into: twin.id)
+                      }) { [weak self] in
+                self?.update { cellar in
+                    revert(&cellar)
+                    shownAdd?.revert(&cellar)
+                }
+            }
+            return
         }
         guard let add = shownAdd else {
             showToast(String(localized: "Details completed by AI: \(completed.displayName)")) { [weak self] in
@@ -885,8 +908,52 @@ final class CellarModel {
         }
     }
 
-    func showToast(_ message: String, lasting: Toast.Lasting = .standard, undo: (@MainActor () -> Void)? = nil) {
+    /// The AI answered after the wine was saved with nothing to add. The bottles'
+    /// "Added" banner still shown stays: nothing changed.
+    func aiFoundNothing(for wineID: UUID) {
+        guard !isAddBannerShown(for: wineID) else { return }
+        showToast(String(localized: "The AI found nothing to add"))
+    }
+
+    /// The AI failed after the wine was saved: said in a banner, which keeps the Undo
+    /// of the bottles' "Added" banner if it is still shown.
+    func aiFailed(for wineID: UUID, message: String) {
+        guard let add = lastAdd, isAddBannerShown(for: wineID) else {
+            showToast(message)
+            return
+        }
+        lastAdd = nil
+        toast?.undo?.cancel()
+        showToast(message) { [weak self] in
+            self?.update(add.revert)
+        }
+    }
+
+    private func isAddBannerShown(for wineID: UUID) -> Bool {
+        guard let add = lastAdd else { return false }
+        return add.wineID == wineID && toast?.id == add.toastID && toast?.undo != nil
+    }
+
+    /// The same wine entered twice: its bottles go to the other one, with Undo.
+    func mergeWine(_ source: UUID, into target: UUID) {
+        guard let from = cellar.wines[source], let into = cellar.wines[target] else { return }
+        let bottleIDs = cellar.bottles.values.filter { $0.wineID == source }.map(\.id)
+        let discoveryIDs = cellar.discoveries.values.filter { $0.wineID == source }.map(\.id)
+        guard update({ try $0.mergeWine(source, into: target) }) else { return }
+        showToast(String(localized: "Merged into \(into.displayName)")) { [weak self] in
+            self?.update { cellar in
+                cellar.wines[source] = from
+                cellar.wines[target] = into
+                bottleIDs.forEach { cellar.bottles[$0]?.wineID = source }
+                discoveryIDs.forEach { cellar.discoveries[$0]?.wineID = source }
+            }
+        }
+    }
+
+    func showToast(_ message: String, lasting: Toast.Lasting = .standard, action: ToastAction? = nil,
+                   undo: (@MainActor () -> Void)? = nil) {
         var toast = Toast(message: message, lasting: lasting)
+        toast.action = action
         if let undo {
             let id = toast.id
             toast.undo = ToastUndo { [weak self] in
@@ -972,6 +1039,8 @@ struct Toast: Identifiable {
     var message: String
     var lasting: Lasting = .standard
     var undo: ToastUndo?
+    /// A button other than Undo, before it (Merge).
+    var action: ToastAction?
 
     enum Lasting {
         /// A few seconds; gone as soon as anything else changes (its Undo may restore a whole cellar).
@@ -988,6 +1057,18 @@ struct Toast: Identifiable {
         case .standard, .afterChanges: voiceOver ? 12 : 5
         case .long: voiceOver ? 20 : 10
         }
+    }
+}
+
+/// A banner's button other than Undo. It runs at most once.
+@MainActor
+struct ToastAction {
+    var title: String
+    var handler: ToastUndo
+
+    init(title: String, _ action: @escaping @MainActor () -> Void) {
+        self.title = title
+        handler = ToastUndo(action)
     }
 }
 

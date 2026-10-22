@@ -444,7 +444,8 @@ private struct WineHeader: View {
                         .font(.subheadline.weight(.medium))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(color.tint.opacity(0.18), in: Capsule())
+                        // The backdrop's tint (white wine as straw gold, not khaki); text stays primary.
+                        .background(color.studioTint.opacity(0.18), in: Capsule())
                 }
             }
             if let producer = wine.producer {
@@ -465,7 +466,7 @@ private struct WineHeader: View {
         .padding(.horizontal)
         .background(
             LinearGradient(
-                colors: [(wine.color?.tint ?? .gray).opacity(0.22), .clear],
+                colors: [(wine.color?.studioTint ?? .gray).opacity(0.22), .clear],
                 startPoint: .top, endPoint: .bottom
             ),
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)

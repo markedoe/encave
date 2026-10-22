@@ -11,7 +11,8 @@ import Vision
 /// The "studio" look of a label photo, made on this device from the label photo
 /// (kept exactly as taken) with Vision and Core Image only; nothing is sent
 /// anywhere. In order:
-/// - a bottle leaning (up to 25°) is turned upright from the axis of its cut-out;
+/// - a bottle leaning (up to 25°) is turned upright from the axis of its cut-out,
+///   else from the slant of its text lines;
 /// - a clear cut-out of a standing bottle is framed on its label, the label about
 ///   80% of the picture, the glass running off its top and bottom edges;
 /// - a clear cut-out of anything else is shown whole, a label seen at an angle
@@ -46,8 +47,8 @@ enum StudioPhoto {
 
     /// A new folder when the look changes, so every device makes its pictures again
     /// (photos that gave nothing before are tried again too). Older folders are removed.
-    private static let folderName = "Encave/Studio3"
-    private static let oldFolderNames = ["Encave/Studio", "Encave/Studio2"]
+    private static let folderName = "Encave/Studio4"
+    private static let oldFolderNames = ["Encave/Studio", "Encave/Studio2", "Encave/Studio3"]
 
     private static let folder: URL? = {
         guard let base = try? FileManager.default.url(for: .cachesDirectory, in: .userDomainMask,
@@ -80,14 +81,16 @@ enum StudioPhoto {
         }.value
     }
 
-    /// A PNG and how to show it; the kind is in the file name.
+    /// The picture's file and how to show it; the kind is in the file name.
     struct Stored: Sendable {
         var data: Data
         var kind: Kind
     }
 
+    /// A photo filling the picture has no transparent parts: a JPEG, much smaller
+    /// than a PNG. Cut-outs keep their transparency in a PNG.
     private static func file(_ photoID: String, _ kind: Kind) -> URL? {
-        folder?.appendingPathComponent("\(photoID).\(kind.rawValue).png")
+        folder?.appendingPathComponent("\(photoID).\(kind.rawValue).\(kind == .photo ? "jpg" : "png")")
     }
 
     /// The cached picture (`.some(nil)` when the photo gave nothing before), or nil when not made yet.
@@ -107,7 +110,7 @@ enum StudioPhoto {
         guard let folder, PhotoStore.exists(photoID) else { return nil }
         if let source = PhotoStore.data(for: photoID),
            let image = PhotoStore.cgImage(from: source, maxPixelSize: PhotoStore.maxPixelSize),
-           let rendered = render(image), let data = pngData(rendered.image) {
+           let rendered = render(image), let data = fileData(rendered) {
             if let url = file(photoID, rendered.kind) { try? data.write(to: url, options: [.atomic]) }
             return Stored(data: data, kind: rendered.kind)
         }
@@ -158,14 +161,14 @@ enum StudioPhoto {
             made = LabelFrame.withoutCutout(photo, handler: handler, context: context)
         }
         // Only a photo shown as it is gets its light evened out: a cut-out keeps the label's own colors.
-        let result = made.kind == .photo ? evenedOut(made.picture) : made.picture
+        let result = downscaled(made.kind == .photo ? evenedOut(made.picture) : made.picture)
         guard let output = context.createCGImage(result, from: result.extent) else { return nil }
         return Picture(image: output, kind: made.kind)
     }
 
     /// The photo turned by `degrees` (counterclockwise) around its centre, without
     /// the empty corners the turn leaves.
-    private static func upright(_ photo: CIImage, degrees: Double) -> CIImage? {
+    static func upright(_ photo: CIImage, degrees: Double) -> CIImage? {
         let center = CGPoint(x: photo.extent.midX, y: photo.extent.midY)
         let turn = CGAffineTransform(translationX: center.x, y: center.y)
             .rotated(by: CGFloat(degrees * .pi / 180))
@@ -179,16 +182,21 @@ enum StudioPhoto {
     /// The largest thing that stands out, cut out with a softened edge (about a
     /// pixel), and how much it leans when it is long like a bottle (degrees to turn
     /// the photo by, counterclockwise; nil when upright or leaning too much to be
-    /// sure). Nil when the cut-out is not clear: low confidence, nearly the whole
-    /// photo or a tiny part of it, or a ragged shape that fills little of its frame.
-    private static func liftedSubject(_ handler: VNImageRequestHandler, _ photo: CIImage) -> (cut: CIImage, lean: Double?)? {
+    /// sure). The cut-out is nil when it is not clear: low confidence, nearly the
+    /// whole photo or a tiny part of it, or a ragged shape that fills little of its
+    /// frame (turned with it, so a leaning bottle counts); the lean is still given,
+    /// and the photo turned upright is tried again.
+    private static func liftedSubject(_ handler: VNImageRequestHandler, _ photo: CIImage) -> (cut: CIImage?, lean: Double?)? {
         let lift = VNGenerateForegroundInstanceMaskRequest()
         guard (try? handler.perform([lift])) != nil, let observation = lift.results?.first,
               observation.confidence >= 0.5,
-              let shape = largestInstance(observation.instanceMask, among: observation.allInstances),
-              shape.share > 0.04, shape.share < 0.9, shape.fill >= 0.4,
+              let shape = largestInstance(observation.instanceMask, among: observation.allInstances) else { return nil }
+        let leans = shape.elongation >= 3 && abs(shape.lean) >= LabelFraming.minimumTilt
+            && abs(shape.lean) <= LabelFraming.maximumTilt
+        let lean = leans ? shape.lean : nil
+        guard shape.share > 0.04, shape.share < 0.9, shape.fill >= 0.4,
               let buffer = try? observation.generateScaledMaskForImage(forInstances: IndexSet(integer: shape.instance),
-                                                                       from: handler) else { return nil }
+                                                                       from: handler) else { return (nil, lean) }
         let extent = photo.extent
         let mask = CIImage(cvPixelBuffer: buffer).applyingGaussianBlur(sigma: 1).cropped(to: extent)
         let blend = CIFilter.blendWithRedMask()
@@ -199,16 +207,14 @@ enum StudioPhoto {
         let box = shape.box
         let rect = CGRect(x: extent.minX + box.minX * extent.width, y: extent.minY + (1 - box.maxY) * extent.height,
                           width: box.width * extent.width, height: box.height * extent.height).integral
-        let leans = shape.elongation >= 3 && abs(shape.lean) >= LabelFraming.minimumTilt
-            && abs(shape.lean) <= LabelFraming.maximumTilt
-        return (cut.cropped(to: rect.intersection(extent)), leans ? shape.lean : nil)
+        return (cut.cropped(to: rect.intersection(extent)), lean)
     }
 
     /// The instance covering the most pixels in Vision's low-resolution instance
     /// mask: its frame (0 to 1, from the top left), its share of the photo, how much
-    /// of its frame it fills, how long it is (its main axis over its width) and how
-    /// far its main axis leans from upright (degrees, positive when the top leans
-    /// right, which a counterclockwise turn by as much puts upright).
+    /// of its own frame turned with it it fills, how long it is (its main axis over
+    /// its width) and how far its main axis leans from upright (CaveKit's
+    /// `LabelFraming.Silhouette`).
     private static func largestInstance(_ mask: CVPixelBuffer, among instances: IndexSet)
         -> (instance: Int, box: CGRect, share: CGFloat, fill: CGFloat, elongation: Double, lean: Double)? {
         CVPixelBufferLockBaseAddress(mask, .readOnly)
@@ -216,51 +222,29 @@ enum StudioPhoto {
         guard let base = CVPixelBufferGetBaseAddress(mask) else { return nil }
         let width = CVPixelBufferGetWidth(mask), height = CVPixelBufferGetHeight(mask)
         let rowBytes = CVPixelBufferGetBytesPerRow(mask)
-        var counts = [Int](repeating: 0, count: 256)
+        var shapes = [LabelFraming.Silhouette](repeating: LabelFraming.Silhouette(), count: 256)
         var minX = [Int](repeating: Int.max, count: 256), maxX = [Int](repeating: -1, count: 256)
         var minY = [Int](repeating: Int.max, count: 256), maxY = [Int](repeating: -1, count: 256)
-        var sumX = [Double](repeating: 0, count: 256), sumY = [Double](repeating: 0, count: 256)
-        var sumXX = [Double](repeating: 0, count: 256), sumYY = [Double](repeating: 0, count: 256)
-        var sumXY = [Double](repeating: 0, count: 256)
         for y in 0..<height {
             let row = base.advanced(by: y * rowBytes).assumingMemoryBound(to: UInt8.self)
             for x in 0..<width {
                 let label = Int(row[x])
                 guard label > 0 else { continue }
-                counts[label] += 1
+                shapes[label].add(x: x, y: y)
                 minX[label] = min(minX[label], x)
                 maxX[label] = max(maxX[label], x)
                 minY[label] = min(minY[label], y)
                 maxY[label] = max(maxY[label], y)
-                let fx = Double(x), fy = Double(y)
-                sumX[label] += fx
-                sumY[label] += fy
-                sumXX[label] += fx * fx
-                sumYY[label] += fy * fy
-                sumXY[label] += fx * fy
             }
         }
-        guard let best = instances.filter({ $0 < 256 }).max(by: { counts[$0] < counts[$1] }), counts[best] > 0 else {
-            return nil
-        }
+        guard let best = instances.filter({ $0 < 256 }).max(by: { shapes[$0].count < shapes[$1].count }),
+              shapes[best].count > 0 else { return nil }
         let boxWidth = maxX[best] - minX[best] + 1, boxHeight = maxY[best] - minY[best] + 1
         let box = CGRect(x: CGFloat(minX[best]) / CGFloat(width), y: CGFloat(minY[best]) / CGFloat(height),
                          width: CGFloat(boxWidth) / CGFloat(width), height: CGFloat(boxHeight) / CGFloat(height))
         let share = CGFloat(boxWidth * boxHeight) / CGFloat(width * height)
-        let fill = CGFloat(counts[best]) / CGFloat(boxWidth * boxHeight)
-        // The main axis from the second moments of the shape (y going down).
-        let n = Double(counts[best])
-        let meanX = sumX[best] / n, meanY = sumY[best] / n
-        let xx: Double = sumXX[best] / n - meanX * meanX
-        let yy: Double = sumYY[best] / n - meanY * meanY
-        let xy: Double = sumXY[best] / n - meanX * meanY
-        let theta: Double = 0.5 * atan2(2 * xy, xx - yy) * 180 / Double.pi
-        let lean: Double = theta > 0 ? theta - 90 : theta + 90
-        let half: Double = (xx - yy) / 2
-        let spread: Double = (half * half + xy * xy).squareRoot()
-        let major: Double = (xx + yy) / 2 + spread
-        let minor: Double = max((xx + yy) / 2 - spread, 1e-9)
-        return (best, box, share, fill, (major / minor).squareRoot(), lean)
+        let shape = shapes[best]
+        return (best, box, share, CGFloat(shape.orientedFill), shape.elongation, shape.lean)
     }
 
     /// The light evened out, lightly: only the tone curve and the shadows and
@@ -275,11 +259,26 @@ enum StudioPhoto {
         return result
     }
 
-    private static func pngData(_ image: CGImage) -> Data? {
+    /// Studio pictures are shown at most 900 pixels across: kept at most this size.
+    private static let maxStoredPixelSize: CGFloat = 1000
+
+    private static func downscaled(_ image: CIImage) -> CIImage {
+        let longest = max(image.extent.width, image.extent.height)
+        guard longest > maxStoredPixelSize else { return image }
+        let scale = CIFilter.lanczosScaleTransform()
+        scale.inputImage = image
+        scale.scale = Float(maxStoredPixelSize / longest)
+        scale.aspectRatio = 1
+        return scale.outputImage ?? image
+    }
+
+    private static func fileData(_ picture: Picture) -> Data? {
         let output = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(output, UTType.png.identifier as CFString, 1, nil)
+        let type = picture.kind == .photo ? UTType.jpeg : UTType.png
+        guard let destination = CGImageDestinationCreateWithData(output, type.identifier as CFString, 1, nil)
         else { return nil }
-        CGImageDestinationAddImage(destination, image, nil)
+        let options = picture.kind == .photo ? [kCGImageDestinationLossyCompressionQuality: 0.85] as CFDictionary : nil
+        CGImageDestinationAddImage(destination, picture.image, options)
         return CGImageDestinationFinalize(destination) ? output as Data : nil
     }
 }
@@ -345,10 +344,27 @@ enum LabelFrame {
     /// A photo without a clear cut-out: the label straightened when a rectangle
     /// holds its text, else the photo cut to the band of its label (shown filling
     /// the picture, centred on the label), else the whole photo.
+    /// A photo leaning (its text lines tilted) is first turned level.
     static func withoutCutout(_ photo: CIImage, handler: VNImageRequestHandler,
                               context: CIContext) -> (CIImage, StudioPhoto.Kind) {
+        var photo = photo, handler = handler
         // Text near the middle, where the bottle stands, not on things around it.
-        let boxes = textBoxes(handler).filter { $0.midX > 0.2 && $0.midX < 0.8 }
+        func central(_ box: CGRect) -> Bool { box.midX > 0.2 && box.midX < 0.8 }
+        // Read accurately, the lines keep their slant (a fast reading gives level boxes).
+        let aspect = Double(photo.extent.width / max(1, photo.extent.height))
+        let lines = textLines(handler, accurate: true).filter { central($0.boundingBox) }
+        var boxes = lines.map(\.boundingBox)
+        let angles = lines.map { line in
+            LabelFraming.angle(fromX: Double(line.topLeft.x), y1: Double(line.topLeft.y),
+                               toX: Double(line.topRight.x), y2: Double(line.topRight.y), aspect: aspect)
+        }
+        if let turn = LabelFraming.straightening(lineAngles: angles),
+           let level = StudioPhoto.upright(photo, degrees: turn),
+           let turned = context.createCGImage(level, from: level.extent) {
+            photo = CIImage(cgImage: turned)
+            handler = VNImageRequestHandler(cgImage: turned, options: [:])
+            boxes = textBoxes(handler).filter(central)
+        }
         if let label = straightenedLabel(photo, handler: handler, text: boxes) { return (label, .cutout) }
         return (labelBand(photo, boxes: boxes) ?? densestBand(photo, context: context) ?? photo, .photo)
     }
@@ -441,12 +457,16 @@ enum LabelFrame {
 
     /// Where text was read, in Vision's coordinates (0 to 1, from the bottom left).
     private static func textBoxes(_ handler: VNImageRequestHandler) -> [CGRect] {
+        textLines(handler, accurate: false).map { $0.boundingBox }
+    }
+
+    /// The lines of text read, with their corners (slanted with the text when read accurately).
+    private static func textLines(_ handler: VNImageRequestHandler, accurate: Bool) -> [VNRecognizedTextObservation] {
         let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .fast
+        request.recognitionLevel = accurate ? .accurate : .fast
         request.usesLanguageCorrection = false
         guard (try? handler.perform([request])) != nil else { return [] }
-        let observations: [VNRecognizedTextObservation] = request.results ?? []
-        return observations.map { $0.boundingBox }
+        return request.results ?? []
     }
 
     /// A rectangle across most of the bottle's width: a label without text.
@@ -554,6 +574,9 @@ struct StudioBackdrop: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
+            // Drawn for the size rounded up to a step, and stretched to fit: a window
+            // being resized draws it again only every few steps, not at every frame.
+            let drawn = StudioBokeh.quantized(size)
             ZStack {
                 Rectangle().fill(Color("StudioBase"))
                 RadialGradient(colors: [tint.opacity(scheme == .dark ? 0.35 : 0.25), tint.opacity(0)],
@@ -563,12 +586,22 @@ struct StudioBackdrop: View {
                     Image(decorative: image, scale: displayScale).resizable()
                 }
             }
-            .task(id: "\(seed)-\(color?.rawValue ?? "")-\(scheme == .dark)-\(Int(size.width))x\(Int(size.height))-\(plain)") {
+            .task(id: "\(seed)-\(color?.rawValue ?? "")-\(scheme == .dark)-\(drawn.width)x\(drawn.height)-\(plain)") {
                 guard !plain, size.width >= 1, size.height >= 1 else { image = nil; return }
                 let colors = StudioBokeh.Colors(base: rgb(Color("StudioBase")), candle: rgb(Color("StudioCandle")),
                                                 tint: rgb(tint))
-                image = await StudioBokeh.image(seed: seed, colors: colors, dark: scheme == .dark,
-                                                width: Int(size.width * displayScale), height: Int(size.height * displayScale))
+                let width = Int(CGFloat(drawn.width) * displayScale), height = Int(CGFloat(drawn.height) * displayScale)
+                if let cached = StudioBokeh.cached(seed: seed, colors: colors, dark: scheme == .dark, width: width, height: height) {
+                    image = cached
+                    return
+                }
+                // Already drawn for another size: being resized, so wait until the size
+                // settles (this task is cancelled meanwhile). A new backdrop is drawn at once.
+                if image != nil {
+                    try? await Task.sleep(for: .milliseconds(120))
+                    guard !Task.isCancelled else { return }
+                }
+                image = await StudioBokeh.image(seed: seed, colors: colors, dark: scheme == .dark, width: width, height: height)
             }
         }
         .accessibilityHidden(true)
@@ -603,18 +636,41 @@ enum StudioBokeh {
 
     private final class Cache: @unchecked Sendable {
         let images = NSCache<NSString, CGImage>()
-        init() { images.countLimit = 120 }
+        init() {
+            images.countLimit = 120
+            // Bytes: about a dozen full-screen backdrops on a large display.
+            images.totalCostLimit = 96 * 1024 * 1024
+        }
     }
 
     private static let cache = Cache()
 
+    /// Sizes go up in steps of this many points.
+    private static let step: CGFloat = 48
+
+    /// `size` rounded up to the next step.
+    static func quantized(_ size: CGSize) -> (width: Int, height: Int) {
+        func up(_ value: CGFloat) -> Int { Int((max(1, value) / step).rounded(.up) * step) }
+        return (up(size.width), up(size.height))
+    }
+
+    private static func key(seed: String, colors: Colors, dark: Bool, width: Int, height: Int) -> NSString {
+        "\(seed)|\(colors.hashValue)|\(dark)|\(width)x\(height)" as NSString
+    }
+
+    static func cached(seed: String, colors: Colors, dark: Bool, width: Int, height: Int) -> CGImage? {
+        cache.images.object(forKey: key(seed: seed, colors: colors, dark: dark, width: width, height: height))
+    }
+
+    /// Drawn off the main thread; a caller cancelled (the view gone or resized) stops the drawing.
     static func image(seed: String, colors: Colors, dark: Bool, width: Int, height: Int) async -> CGImage? {
-        let key = "\(seed)|\(colors.hashValue)|\(dark)|\(width)x\(height)" as NSString
-        if let cached = cache.images.object(forKey: key) { return cached }
-        let image = await Task.detached(priority: .utility) {
+        let name = key(seed: seed, colors: colors, dark: dark, width: width, height: height)
+        if let cached = cache.images.object(forKey: name) { return cached }
+        let task = Task.detached(priority: .utility) {
             draw(seed: seed, colors: colors, dark: dark, width: width, height: height)
-        }.value
-        if let image { cache.images.setObject(image, forKey: key) }
+        }
+        let image = await withTaskCancellationHandler { await task.value } onCancel: { task.cancel() }
+        if let image { cache.images.setObject(image, forKey: name, cost: image.bytesPerRow * image.height) }
         return image
     }
 
@@ -655,6 +711,7 @@ enum StudioBokeh {
             let edge: CGFloat = max(0, (radius - blur) / outer)
             radial(point(x, y), outer, [0, edge, 1], [color(light, alpha), color(light, alpha * 0.9), color(light, 0)])
         }
+        guard !Task.isCancelled else { return nil }
         context.setBlendMode(.normal)
         // A soft vignette.
         let black = RGB(r: 0, g: 0, b: 0)

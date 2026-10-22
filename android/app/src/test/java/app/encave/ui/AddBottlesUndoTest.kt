@@ -121,4 +121,65 @@ class AddBottlesUndoTest {
         assertEquals(1, app.repository.cellar.value.bottlesInCellar.count { it.wineId == wine.id })
         collector.cancel()
     }
+
+    @Test
+    fun anAiAnswerWithNothingNewSaysSoAndLeavesTheWine() {
+        val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val viewModel = AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, app.backups)
+        val messages = mutableListOf<UiMessage>()
+        val collector = CoroutineScope(Dispatchers.Unconfined)
+        collector.launch { viewModel.messages.collect { messages += it } }
+        val wine = Wine(name = "Nothing new", producer = "Domaine Lu")
+        var done: Boolean? = null
+        viewModel.addBottles(wine, 1, emptyList(), PurchaseInfo()) { done = it }
+        waitFor { done != null }
+
+        viewModel.completeWine(wine, LabelAnalysis(producer = "Another producer"))
+        waitFor { messages.size == 2 }
+        assertEquals(R.string.msg_ai_nothing, (messages.last().text as UiText.Res).id)
+        assertNull(messages.last().undo)
+        assertNull(app.repository.cellar.value.wines[wine.id]?.aiCompletedAt)
+        assertEquals("Domaine Lu", app.repository.cellar.value.wines[wine.id]?.producer)
+        collector.cancel()
+    }
+
+    @Test
+    fun anAiAnswerThatMakesTheWineATwinOffersToMergeWithUndo() {
+        val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        val viewModel = AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, app.backups)
+        val messages = mutableListOf<UiMessage>()
+        val collector = CoroutineScope(Dispatchers.Unconfined)
+        collector.launch { viewModel.messages.collect { messages += it } }
+        val existing = Wine(name = "Clos Twin", vintage = 2018)
+        runBlocking { app.repository.update { it.addBottles(existing, 1) } }
+        // Added without its vintage: not the same wine yet.
+        val wine = Wine(name = "Clos Twin")
+        var done: Boolean? = null
+        viewModel.addBottles(wine, 2, emptyList(), PurchaseInfo()) { done = it }
+        waitFor { done != null }
+        messages.single().slot!!.finished = true
+
+        // The AI reads the vintage: now the same wine as the one already there.
+        viewModel.completeWine(wine, LabelAnalysis(vintage = 2018))
+        waitFor { messages.size == 3 }
+        assertEquals(R.string.msg_ai_completed, (messages[1].text as UiText.Res).id)
+        val offer = messages[2]
+        assertEquals(R.string.msg_same_wine, (offer.text as UiText.Res).id)
+        assertEquals(R.string.action_merge, (offer.actionLabel as UiText.Res).id)
+
+        offer.undo!!.invoke()
+        waitFor { messages.size == 4 }
+        val merged = messages[3]
+        assertEquals(R.string.msg_merged, (merged.text as UiText.Res).id)
+        val cellar = app.repository.cellar.value
+        assertNull(cellar.wines[wine.id])
+        assertEquals(3, cellar.bottlesInCellar.count { it.wineId == existing.id })
+
+        // Undo: two wines again, the bottles back with the new one.
+        merged.undo!!.invoke()
+        waitFor { app.repository.cellar.value.wines[wine.id] != null }
+        assertEquals(2, app.repository.cellar.value.bottlesInCellar.count { it.wineId == wine.id })
+        assertEquals(1, app.repository.cellar.value.bottlesInCellar.count { it.wineId == existing.id })
+        collector.cancel()
+    }
 }

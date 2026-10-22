@@ -77,6 +77,65 @@ public enum LabelFraming {
         return bottom - top > 0.9 ? nil : top...bottom
     }
 
+    /// The shape of a cut-out from its pixels (y going down): how far its main axis
+    /// leans, how long it is and how much of its own frame, turned with it, it fills,
+    /// all from its second moments. A leaning bottle fills its turned frame as well
+    /// as an upright one fills its frame; it fills less of the upright frame around it.
+    public struct Silhouette: Sendable {
+        public private(set) var count = 0
+        private var sumX = 0.0, sumY = 0.0, sumXX = 0.0, sumYY = 0.0, sumXY = 0.0
+
+        public init() {}
+
+        public mutating func add(x: Int, y: Int) {
+            let fx = Double(x), fy = Double(y)
+            count += 1
+            sumX += fx
+            sumY += fy
+            sumXX += fx * fx
+            sumYY += fy * fy
+            sumXY += fx * fy
+        }
+
+        /// Variances along x and y, covariance, and variances along the main and the other axis.
+        private var spread: (xx: Double, yy: Double, xy: Double, major: Double, minor: Double) {
+            let n = Double(max(count, 1))
+            let meanX = sumX / n, meanY = sumY / n
+            let xx = sumXX / n - meanX * meanX, yy = sumYY / n - meanY * meanY, xy = sumXY / n - meanX * meanY
+            let half = (xx - yy) / 2
+            let root = (half * half + xy * xy).squareRoot()
+            return (xx, yy, xy, (xx + yy) / 2 + root, max((xx + yy) / 2 - root, 1e-9))
+        }
+
+        /// How far the main axis leans from upright (degrees, positive when the top
+        /// leans right, which a counterclockwise turn by as much puts upright).
+        public var lean: Double {
+            let s = spread
+            let theta = 0.5 * atan2(2 * s.xy, s.xx - s.yy) * 180 / Double.pi
+            return theta > 0 ? theta - 90 : theta + 90
+        }
+
+        /// The main axis over the other one.
+        public var elongation: Double {
+            let s = spread
+            return (s.major / s.minor).squareRoot()
+        }
+
+        /// The share of its turned frame it fills (1 for a rectangle at any angle):
+        /// a rectangle a × b has variances a²/12 and b²/12 along its sides.
+        public var orientedFill: Double {
+            let s = spread
+            return min(1, Double(count) / max(12 * (s.major * s.minor).squareRoot(), 1))
+        }
+    }
+
+    /// The angle of a line of text (degrees, counterclockwise from level) from its
+    /// left and right ends, in Vision's coordinates (0 to 1, from the bottom left) of
+    /// a photo `aspect` times as wide as it is tall.
+    public static func angle(fromX x1: Double, y1: Double, toX x2: Double, y2: Double, aspect: Double) -> Double {
+        atan2(y2 - y1, (x2 - x1) * aspect) * 180 / Double.pi
+    }
+
     /// The angle to turn a photo by (degrees, counterclockwise) so its text lines
     /// are level: the median of the lines' angles, nil when they are level already
     /// or lean too much to be sure.

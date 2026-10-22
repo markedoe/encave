@@ -1056,6 +1056,10 @@
     <string name="msg_ai_completed">Fiche complétée par l’IA : %1$s</string>
     <string name="msg_added_ai_completed">Ajouté : %1$d × %2$s, fiche complétée par l’IA</string>
     <string name="msg_on_order_ai_completed">En commande : %1$d × %2$s, fiche complétée par l’IA</string>
+    <string name="msg_ai_nothing">L’IA n’a rien trouvé à ajouter</string>
+    <string name="msg_same_wine">Même vin que %1$s</string>
+    <string name="action_merge">Fusionner</string>
+    <string name="msg_merged">Fusionné avec %1$s</string>
     <string name="quantity_case">Une caisse de</string>
     <string name="add_auto_slots">Rangées automatiquement aux premiers emplacements libres. Touchez un emplacement pour choisir.</string>
     <string name="discard_title">Abandonner les modifications ?</string>
