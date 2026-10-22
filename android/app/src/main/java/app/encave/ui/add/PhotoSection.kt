@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -26,6 +27,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -38,21 +40,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.data.PhotoStore
 import app.encave.ui.AppViewModel
+import app.encave.ui.LabelReading
+import app.encave.ui.components.rememberCameraCapture
+import app.encave.ui.components.rememberRetained
 import app.encave.ui.UiText
 import app.encave.ui.theme.Dimens
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,30 +85,42 @@ fun WinePhoto(
 
 /**
  * Label photo: take or choose one, resized on the device. With AI label recognition
- * on, a new photo is read and fills the empty fields of the form.
+ * on, a new photo is read and fills the empty fields of the form. The reading runs in the
+ * view model, so it goes on when the device is rotated or folded, and completes the wine
+ * if the bottles are added before it ends. [onScanBarcode]: also offers the barcode scanner.
  */
 @Composable
-fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
+fun PhotoSection(
+    viewModel: AppViewModel,
+    form: WineFormState,
+    modifier: Modifier = Modifier,
+    onScanBarcode: (() -> Unit)? = null,
+) {
     val scope = rememberCoroutineScope()
     val ai by viewModel.ai.settings.collectAsStateWithLifecycle()
-    var reading by remember { mutableStateOf(false) }
+    val readings by viewModel.labelReadings.collectAsStateWithLifecycle()
+    val reading = readings[form.id]
     var filled by rememberSaveable { mutableStateOf(false) }
-    // Created when needed: the camera app writes the photo to this file in our cache.
-    var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-    fun cameraTarget(): Uri? = cameraUri ?: runCatching {
-        val file = File(context.cacheDir, "camera/label.jpg").apply { parentFile?.mkdirs() }
-        FileProvider.getUriForFile(context, "${context.packageName}.files", file)
-    }.getOrNull().also { cameraUri = it }
+    // Leaving the form stops its reading, unless the wine was just added (the answer completes it).
+    rememberRetained("photo.reading") { LabelReadingRelease { viewModel.releaseLabelReading(form.id) } }
+    LaunchedEffect(reading) {
+        when (reading) {
+            is LabelReading.Done -> {
+                form.apply(reading.analysis)
+                filled = true
+                viewModel.consumeLabelReading(form.id)
+            }
+            is LabelReading.Failed -> {
+                viewModel.showMessage(viewModel.aiErrorText(reading.error))
+                viewModel.consumeLabelReading(form.id)
+            }
+            else -> {}
+        }
+    }
 
     fun analyze(jpeg: ByteArray) {
-        reading = true
-        scope.launch {
-            viewModel.analyzeLabel(jpeg)
-                .onSuccess { form.apply(it); filled = true }
-                .onFailure { viewModel.showMessage(viewModel.aiErrorText(it)) }
-            reading = false
-        }
+        filled = false
+        viewModel.startLabelAnalysis(form.id, jpeg)
     }
 
     fun use(uri: Uri) {
@@ -122,7 +137,8 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
     }
 
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(::use) }
-    val take = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) cameraUri?.let(::use) }
+    val takePhoto = rememberCameraCapture(viewModel, "label.jpg", ::use)
+    val isReading = reading is LabelReading.Reading
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         if (form.hasPhoto) {
@@ -132,10 +148,7 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
             )
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
-            OutlinedButton(onClick = {
-                val target = cameraTarget()
-                if (target != null) runCatching { take.launch(target) }.onFailure { viewModel.showMessage(UiText.Res(R.string.photo_failed)) }
-            }) {
+            OutlinedButton(onClick = takePhoto, modifier = Modifier.testTag("action.photo_take")) {
                 app.encave.ui.components.ActionContent(
                     stringResource(if (form.hasPhoto) R.string.photo_replace else R.string.photo_take), Icons.Outlined.PhotoCamera,
                 )
@@ -143,13 +156,18 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
             OutlinedButton(onClick = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
                 app.encave.ui.components.ActionContent(stringResource(R.string.photo_choose), Icons.Outlined.PhotoLibrary)
             }
+            if (onScanBarcode != null) {
+                OutlinedButton(onClick = onScanBarcode, modifier = Modifier.testTag("action.scan_barcode.form")) {
+                    app.encave.ui.components.ActionContent(stringResource(R.string.action_scan_barcode), Icons.Outlined.QrCodeScanner)
+                }
+            }
             if (form.hasPhoto) {
                 TextButton(onClick = { form.newPhoto = null; form.photoRemoved = true; filled = false }) {
                     app.encave.ui.components.ActionContent(stringResource(R.string.photo_remove), Icons.Outlined.Delete)
                 }
             }
             val jpeg = form.newPhoto
-            if (ai.isEnabled && form.hasPhoto && !reading) {
+            if (ai.isEnabled && form.hasPhoto && !isReading) {
                 FilledTonalButton(onClick = {
                     scope.launch {
                         val bytes = jpeg ?: form.storedPhotoId?.let { id ->
@@ -162,7 +180,7 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
                 }
             }
         }
-        if (reading) {
+        if (isReading) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
                 Text(stringResource(R.string.ai_reading), style = MaterialTheme.typography.bodyMedium)
             }
@@ -172,9 +190,14 @@ fun PhotoSection(viewModel: AppViewModel, form: WineFormState, modifier: Modifie
                 stringResource(R.string.ai_filled), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
-        } else if (!ai.isEnabled && !form.hasPhoto) {
+        } else if (!ai.isEnabled) {
+            // No reading of the label text on Android itself (no third-party OCR): say so, and what helps.
             Text(stringResource(R.string.photo_hint_ai), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
+/** Closed when the form's screen is left for good (not on rotation). */
+private class LabelReadingRelease(private val release: () -> Unit) : AutoCloseable {
+    override fun close() = release()
+}
