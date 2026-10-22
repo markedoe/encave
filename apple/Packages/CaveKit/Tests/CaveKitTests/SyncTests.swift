@@ -134,6 +134,30 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(other.cellar.wines.values.map(\.name).contains("Mine"))
     }
 
+    @Test func aRecordedSampleRemovalWouldDeleteItElsewhere() throws {
+        // What the fix avoids: the sample has the same IDs on every device.
+        let sample = SampleData.cellar()
+        var host = Device(sample)
+        try host.edit { try $0.addBottles(of: Wine(name: "Mine"), quantity: 1) }
+        host.edit { $0 = $0.removingSample() }
+        var other = Device(sample)
+        syncBoth(&host, &other)
+        #expect(!other.cellar.containsSample)
+    }
+
+    @Test func forgettingDropsOnlyTheRemovedRecords() throws {
+        let (cellar, wine, rack) = try sample()
+        let state = SyncState.starting(with: cellar, device: UUID())
+        var without = cellar
+        without.deleteWine(wine.id)
+        var forgotten = state
+        forgotten.forget(from: cellar, to: without)
+        #expect(forgotten.stamps[SyncKey(.wine, wine.id).string] == nil)
+        #expect(cellar.bottles.keys.allSatisfy { forgotten.stamps[SyncKey(.bottle, $0).string] == nil })
+        #expect(forgotten.stamps[SyncKey(.rack, rack.id).string] == state.stamps[SyncKey(.rack, rack.id).string])
+        #expect(forgotten.clock == state.clock)
+    }
+
     @Test func aRevertLeavesChangesFromOtherDevicesAlone() throws {
         let (cellar, wine, _) = try sample()
         var (a, b) = pair(cellar)

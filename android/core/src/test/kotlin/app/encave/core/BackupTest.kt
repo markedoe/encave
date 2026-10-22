@@ -252,6 +252,31 @@ class CellarArchiveTest {
     }
 
     @Test
+    fun anArchiveWithACommentStillReads() {
+        // The end record may be followed by a comment (another tool's): it is still found.
+        val json = CellarExport.json(SampleData.cellar(year = 2026)).toByteArray()
+        val file = File(folder, "comment.zip")
+        java.util.zip.ZipOutputStream(file.outputStream()).use { out ->
+            out.setComment("Made by another tool")
+            out.putNextEntry(
+                java.util.zip.ZipEntry("cellar.json").apply {
+                    method = java.util.zip.ZipEntry.STORED
+                    size = json.size.toLong()
+                    crc = java.util.zip.CRC32().also { it.update(json) }.value
+                },
+            )
+            out.write(json)
+            out.closeEntry()
+        }
+        val contents = file.inputStream().use { CellarArchive.read(it, work()) }
+        assertEquals(CellarExport.backupFromJson(String(json)).cellar, contents.backup.cellar)
+        // Cut inside the comment: the end record no longer reaches the end.
+        val cut = file.readBytes().let { it.copyOf(it.size - 3) }
+        val error = assertThrows<ImportException> { CellarArchive.read(ByteArrayInputStream(cut), work()) }.error
+        assertEquals(ImportError.DamagedArchive, error)
+    }
+
+    @Test
     fun compressedEntriesAreNeverInflated() {
         val (cellar, _) = sample()
         val json = CellarExport.json(cellar).toByteArray()
