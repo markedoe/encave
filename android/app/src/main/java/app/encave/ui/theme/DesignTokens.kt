@@ -10,6 +10,9 @@ object DesignTokens {
 
     val accent = ThemedColor(light = 0xFF8E1E3A, dark = 0xFFE0607A)
 
+    /** Launch window (window_background in the values and values-night colors.xml), checked by DesignTokensTest. */
+    val launchBackground = ThemedColor(light = 0xFFFEFCFC, dark = 0xFF120F10)
+
     /** Keyed by token name ("wine-red"...). */
     val wineColors: Map<String, ThemedColor> = linkedMapOf(
         "wine-red" to ThemedColor(light = 0xFF8C1C2B, dark = 0xFFC8454F),

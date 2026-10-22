@@ -3,5 +3,6 @@
     <!-- Compose draws everything; this theme only covers the window before the first frame. -->
     <style name="Theme.Encave" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenBackground">@color/window_background</item>
     </style>
 </resources>
