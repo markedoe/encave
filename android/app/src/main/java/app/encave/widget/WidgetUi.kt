@@ -20,7 +20,6 @@ import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.components.TitleBar
 import androidx.glance.color.ColorProviders
 import androidx.compose.ui.graphics.Color
-import app.encave.ui.theme.DesignTokens
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row

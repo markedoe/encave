@@ -142,7 +142,7 @@ fun RatingInput(rating: Int?, onChange: (Int?) -> Unit, modifier: Modifier = Mod
         modifier.clearAndSetSemantics {
             contentDescription = label
             stateDescription = value
-            progressBarRangeInfo = ProgressBarRangeInfo((rating ?? 0).toFloat(), 0f..5f, steps = 4)
+            progressBarRangeInfo = ProgressBarRangeInfo((rating ?: 0).toFloat(), 0f..5f, steps = 4)
             setProgress { target ->
                 val stars = target.roundToInt().coerceIn(0, 5)
                 onChange(stars.takeIf { it > 0 })
