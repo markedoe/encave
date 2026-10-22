@@ -162,9 +162,9 @@ struct SettingsView: View {
                 Text("Your data")
             } footer: {
                 #if os(iOS)
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, iPhone or Android. The weekly one stays in Files › On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: iPhone, iPad, Mac or Android. The last two weekly backups stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.")
                 #else
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, Mac, iPhone or Android. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.")
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: Mac, iPhone, iPad or Android. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.")
                 #endif
             }
 

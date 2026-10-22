@@ -277,7 +277,7 @@
     <string name="settings_data">Vos données</string>
     <string name="settings_backup_now">Sauvegarder maintenant</string>
     <string name="settings_backing_up">Sauvegarde…</string>
-    <string name="settings_backup_now_body">Un fichier ZIP avec toute votre cave, ses photos et ses documents, à garder en lieu sûr</string>
+    <string name="settings_backup_now_body">Un fichier ZIP avec toute votre cave, ses photos et ses documents. Il n’est pas chiffré : gardez-le en lieu sûr</string>
     <string name="settings_reading_backup">Lecture de la sauvegarde…</string>
     <string name="versions_title">Versions précédentes</string>
     <string name="settings_versions_body">Votre cave telle qu’elle était ces derniers jours et semaines, gardée sur cet appareil</string>
@@ -330,8 +330,8 @@
     <string name="settings_sample_body">Proposée tant que la cave est vide et qu’aucun autre appareil n’est synchronisé avec celui-ci.</string>
     <string name="settings_erase">Effacer toutes les données</string>
     <string name="settings_erase_title">Effacer toutes les données ?</string>
-    <string name="settings_erase_body">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
-    <string name="settings_erase_body_devices">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil et des autres appareils synchronisés avec lui. Vos réglages (devise, recherches enregistrées) sont conservés.</string>
+    <string name="settings_erase_body">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil. Vos réglages (devise, recherches enregistrées) sont conservés. Vous pouvez annuler juste après.</string>
+    <string name="settings_erase_body_devices">Cela efface toutes les bouteilles, tous les vins, casiers et entrées du Journal de cet appareil et des autres appareils synchronisés avec lui. Vos réglages (devise, recherches enregistrées) sont conservés. Vous pouvez annuler juste après.</string>
     <string name="settings_privacy">Confidentialité</string>
     <string name="settings_privacy_stored">Votre cave est gardée sur cet appareil.</string>
     <string name="settings_privacy_body">Pas de compte, pas de mesure d’audience, pas de publicité. La synchronisation est chiffrée de bout en bout : sur le même Wi-Fi, vos appareils se connectent directement, et à distance le stockage que vous choisissez ne contient que des fichiers chiffrés. Si vous les activez, la reconnaissance des étiquettes par IA n’envoie que la photo de l’étiquette à votre service d’IA, et la recherche web que les termes de recherche à votre service de recherche.</string>
@@ -541,7 +541,7 @@
     <string name="help_bottles_footer">Chaque bouteille est suivie séparément : vous pouvez les boire ou les déplacer une par une.</string>
     <string name="help_field_storage">Pour les bouteilles qui ne sont pas dans un casier.</string>
     <string name="help_location_footer">Choisissez un casier pour savoir exactement où sont les bouteilles, ou indiquez où elles sont rangées.</string>
-    <string name="help_field_price">Sert à la valeur de votre cave dans les Statistiques. La devise se règle dans les réglages.</string>
+    <string name="help_field_price">Sert à la valeur de votre cave dans les Statistiques. La devise par défaut se règle dans les réglages.</string>
     <string name="help_field_place">Caviste, domaine ou site web.</string>
     <string name="help_field_received">Qui vous a offert la bouteille.</string>
     <string name="help_purchase_footer">Facultatif. Pour retrouver où racheter un vin et connaître la valeur de votre cave.</string>
@@ -782,7 +782,7 @@
     <string name="remote_title">Loin de la maison</string>
     <string name="remote_status">État</string>
     <string name="remote_turn_off">Désactiver</string>
-    <string name="remote_on_footer">Vos autres appareils recevront ce réglage et la clé à leur prochaine synchronisation sur le même Wi-Fi. Tant qu’elle est activée, cet appareil se synchronise aussi en arrière-plan environ toutes les 15 minutes, sauf s’il ne se synchronise que quand vous touchez Synchroniser.</string>
+    <string name="remote_on_footer">Vos autres appareils qui ne se synchronisent pas encore à distance recevront ce réglage à leur prochaine synchronisation sur le même Wi-Fi. Choisir un autre stockage ne concerne que cet appareil : faites de même sur les autres. Tant qu’elle est activée, cet appareil se synchronise aussi en arrière-plan environ toutes les 15 minutes, sauf s’il ne se synchronise que quand vous touchez Synchroniser.</string>
     <string name="remote_address">Adresse du relais</string>
     <string name="remote_check">Vérifier et activer</string>
     <string name="remote_relay_footer">Pour tous les appareils, iPhone et Mac compris. Un relais est un petit service open source : hébergez le vôtre sur un serveur à la maison ou un compte Cloudflare gratuit, ou utilisez celui d’une personne de confiance.</string>
@@ -828,7 +828,7 @@
     <string name="join_has_bottles">Cet appareil a déjà des bouteilles</string>
     <string name="join_combine">Réunir avec l’autre cave</string>
     <string name="join_replace">Remplacer par l’autre cave</string>
-    <string name="join_combine_footer">Les deux caves sont réunies. Choisissez Remplacer si cet appareil n’a que la cave d’exemple.</string>
+    <string name="join_combine_footer">Les deux caves sont réunies. Choisissez Remplacer par l’autre cave si cet appareil n’a que la cave d’exemple.</string>
     <string name="join_replace_footer">Cet appareil n’affichera que la cave de l’autre appareil. Faites d’abord une sauvegarde si vous pourriez avoir besoin de ces bouteilles.</string>
     <string name="join_button">Rejoindre</string>
     <string name="join_looking">Recherche de l’appareil qui affiche %1$s…</string>
@@ -1092,7 +1092,7 @@
     <string name="web_search_install_searxng">Installer SearXNG</string>
     <string name="web_search_searxng_json">SearXNG doit répondre en JSON : ajoutez json sous search: formats: dans son settings.yml.</string>
     <string name="settings_web_search_off_body">Facultatif. Cherche un vin sur le web pour compléter sa fiche ou trouver son prix actuel, avec le service de recherche de votre choix.</string>
-    <string name="settings_web_search_on_body">Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés.</string>
+    <string name="settings_web_search_on_body">Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent.</string>
     <string name="help_link_web_search">Comment configurer la recherche web</string>
     <string name="search_online">Chercher en ligne</string>
     <string name="search_online_footer">Cherche ce vin sur le web avec %1$s. Vous voyez les termes de recherche avant leur envoi.</string>

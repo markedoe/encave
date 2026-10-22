@@ -139,13 +139,13 @@ struct AddBottleView: View {
                     Button {
                         choosingSlots = true
                     } label: {
-                        LabeledContent("Positions") {
+                        LabeledContent("Places") {
                             Text(slotSummary(rack: rack))
                                 .foregroundStyle(chosenSlots.isEmpty ? Color.secondary : Color.primary)
                         }
                     }
                     if free < quantity {
-                        Label("Only \(free) free positions: the other bottles will have no position.",
+                        Label("Only \(free) free places: the other bottles will have no place.",
                               systemImage: "exclamationmark.triangle")
                             .font(.footnote)
                             .foregroundStyle(Color.warning)
@@ -158,7 +158,7 @@ struct AddBottleView: View {
                 Text("Location")
             } footer: {
                 if selectedRack != nil, chosenSlots.isEmpty {
-                    Text("The first free positions are used unless you choose them. Tap Positions to pick them on the rack.")
+                    Text("The first free places are used unless you choose them. Tap Places to pick them in the rack.")
                 } else if selectedRack == nil {
                     Text("Choose a rack to see exactly where the bottles are, or note where they are kept.")
                 }

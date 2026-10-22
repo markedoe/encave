@@ -1231,22 +1231,22 @@
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, Mac, iPhone or Android. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: Mac, iPhone, iPad or Android. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, Mac, iPhone ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device, iPhone or Android. The weekly one stays in Files › On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents; import it on any device: iPhone, iPad, Mac or Android. The last two weekly backups stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil, iPhone ou Android. Celle de chaque semaine reste dans Fichiers › Sur mon iPhone › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin avec ses emplacements et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. Les deux dernières sauvegardes hebdomadaires restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -2531,12 +2531,12 @@
         }
       }
     },
-    "Both cellars are put together. Choose Replace if this device only has the sample cellar.": {
+    "Both cellars are put together. Choose Replace with the other cellar if this device only has the sample cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les deux caves sont réunies. Choisissez Remplacer si cet appareil n’a que la cave d’exemple."
+            "value": "Les deux caves sont réunies. Choisissez Remplacer par l’autre cave si cet appareil n’a que la cave d’exemple."
           }
         }
       }
@@ -8181,7 +8181,7 @@
         }
       }
     },
-    "Only %lld free positions: the other bottles will have no position.": {
+    "Only %lld free places: the other bottles will have no place.": {
       "localizations": {
         "en": {
           "variations": {
@@ -8189,13 +8189,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Only %lld free position: the other bottles will have no position."
+                  "value": "Only %lld free place: the other bottles will have no place."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Only %lld free positions: the other bottles will have no position."
+                  "value": "Only %lld free places: the other bottles will have no place."
                 }
               }
             }
@@ -8207,13 +8207,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Seulement %lld emplacement libre : les autres bouteilles n’auront pas d’emplacement."
+                  "value": "Seulement %lld place libre : les autres bouteilles n’auront pas de place."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Seulement %lld emplacements libres : les autres bouteilles n’auront pas d’emplacement."
+                  "value": "Seulement %lld places libres : les autres bouteilles n’auront pas de place."
                 }
               }
             }
@@ -8291,12 +8291,12 @@
         }
       }
     },
-    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent.": {
+    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés."
+            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent."
           }
         }
       }
@@ -8521,12 +8521,12 @@
         }
       }
     },
-    "Optional. Looks up a wine on the web to complete its details, with the search service you choose.": {
+    "Optional. Looks up a wine on the web to complete its details or find its current price, with the search service you choose.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Facultatif. Cherche un vin sur le web pour compléter sa fiche, avec le service de recherche de votre choix."
+            "value": "Facultatif. Cherche un vin sur le web pour compléter sa fiche ou trouver son prix actuel, avec le service de recherche de votre choix."
           }
         }
       }
@@ -8846,7 +8846,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Emplacements"
+            "value": "Places"
           }
         }
       }
@@ -11991,22 +11991,22 @@
         }
       }
     },
+    "The first free places are used unless you choose them. Tap Places to pick them in the rack.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les premières places libres sont utilisées, sauf si vous les choisissez. Touchez Places pour les choisir dans le casier."
+          }
+        }
+      }
+    },
     "The first free positions are used unless you choose them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez."
-          }
-        }
-      }
-    },
-    "The first free positions are used unless you choose them. Tap Positions to pick them on the rack.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez. Touchez Emplacements pour les choisir sur le casier."
           }
         }
       }
@@ -12521,12 +12521,12 @@
         }
       }
     },
-    "This device is no longer part of the synced cellar: its key changed, for example after restoring a backup. The cellar stays here. Join the cellar again from another device.": {
+    "This device is no longer part of the synced cellar: its key changed, for example after this device was restored from an iCloud or computer backup. The cellar stays here. Join the cellar again from another device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet appareil ne fait plus partie de la cave synchronisée : sa clé a changé, par exemple après la restauration d’une sauvegarde. La cave reste ici. Rejoignez de nouveau la cave depuis un autre appareil."
+            "value": "Cet appareil ne fait plus partie de la cave synchronisée : sa clé a changé, par exemple après la restauration de cet appareil depuis une sauvegarde iCloud ou un ordinateur. La cave reste ici. Rejoignez de nouveau la cave depuis un autre appareil."
           }
         }
       }
@@ -13971,12 +13971,12 @@
         }
       }
     },
-    "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Your data.": {
+    "Your cellar file could not be read. It was kept as “%@” and Encave started with an empty cellar. Devices that sync with this one bring their copy back. To keep the file elsewhere, share it from Settings › Cellar files that could not be read.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Vos données."
+            "value": "Le fichier de votre cave n’a pas pu être lu. Il a été conservé sous le nom « %@ » et Encave a démarré avec une cave vide. Les appareils synchronisés avec celui-ci rapportent leur copie. Pour garder le fichier ailleurs, partagez-le depuis Réglages › Fichiers de cave illisibles."
           }
         }
       }
