@@ -1,6 +1,26 @@
 import CaveKit
 import SwiftUI
 
+/// What a tap on a place does on the rack screen, for VoiceOver's hints and actions.
+enum RackMode: Equatable {
+    /// A preview or a picker: no hints.
+    case none, browsing, moving, auditing
+}
+
+/// An action on the bottle of a place, from VoiceOver's actions.
+enum RackCellQuickAction {
+    case move, drink, winePage
+}
+
+/// How the rack screen reacts to its places beyond a tap.
+struct RackInteraction {
+    var mode: RackMode = .none
+    /// Move, Drink, Wine Page on a place holding one bottle, when browsing.
+    var perform: ((RackCellQuickAction, Bottle) -> Void)?
+    /// While checking: the bottles of a place, to check them one by one.
+    var checkOneByOne: ((RackCell) -> Void)?
+}
+
 /// Draws a rack as it looks in real life:
 /// - grid: square cells with row letters and column numbers,
 /// - honeycomb: touching round holes, every other row offset by half; on shelves (a wine
@@ -22,6 +42,7 @@ struct RackGrid: View {
     var onTap: (RackCell, [Bottle]) -> Void = { _, _ in }
     /// A bottle dragged onto a place (iPad, Mac): move it there.
     var onDrop: ((UUID, RackCell) -> Bool)?
+    var interaction = RackInteraction()
 
     private var size: CGFloat { rack.kind == .bins ? cellSize * 1.7 : cellSize }
     private var spacing: CGFloat {
@@ -92,7 +113,7 @@ struct RackGrid: View {
                     rack: rack, cell: cell, bottles: bottlesByCell[cell] ?? [],
                     size: size, selectedCount: selectedByCell[cell]?.count ?? 0,
                     isHighlighted: highlighted?.cell == cell || selectedCell == cell,
-                    focusWine: focusWine, onTap: onTap, onDrop: onDrop
+                    focusWine: focusWine, onTap: onTap, onDrop: onDrop, interaction: interaction
                 )
             }
         }
@@ -227,8 +248,8 @@ extension RackGrid {
     }
 }
 
-/// A rack drawn as large as the space allows. Pinch to zoom (and double-tap on iPhone
-/// and iPad); on the Mac, trackpad pinch and the zoom buttons set `zoom`.
+/// A rack drawn as large as the space allows. Pinch to zoom; on the Mac, trackpad pinch
+/// and the zoom buttons set `zoom`.
 struct FittedRackGrid: View {
     let rack: Rack
     /// Mac: 1 fits the whole rack; more zooms in. iPhone and iPad zoom natively.
@@ -241,6 +262,7 @@ struct FittedRackGrid: View {
     var onDrop: ((UUID, RackCell) -> Bool)?
     /// iPhone and iPad: a zoom step asked by a button.
     var zoomStep = RackZoomStep()
+    var interaction = RackInteraction()
 
     static let padding: CGFloat = 16
 
@@ -252,20 +274,22 @@ struct FittedRackGrid: View {
             #if os(iOS)
             ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
                          selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
-                         zoomStep: zoomStep)
+                         zoomStep: zoomStep, interaction: interaction)
             #else
             if zoom <= 1, base > 26 {
                 // The whole rack fits (its cells are not at the smallest size): no scroll
                 // view, whose bars (always shown without a trackpad) would take room and
                 // make the fitted rack scroll.
                 RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
+                         selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                         interaction: interaction)
                     .padding(padding)
                     .frame(width: proxy.size.width, height: proxy.size.height)
             } else {
                 ScrollView([.horizontal, .vertical]) {
                     RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                             selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop)
+                             selectedCell: selectedCell, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                             interaction: interaction)
                         .padding(padding)
                         .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
                 }
@@ -309,6 +333,7 @@ struct RackCellView: View {
     var focusWine: UUID?
     var onTap: (RackCell, [Bottle]) -> Void
     var onDrop: ((UUID, RackCell) -> Bool)?
+    var interaction = RackInteraction()
     @State private var isTargeted = false
 
     /// From this cell size the vintage is written on the bottle; from `nameSize`, the name below it.
@@ -326,6 +351,10 @@ struct RackCellView: View {
     /// With a wine chosen in the key: does this cell hold it?
     private var isFocused: Bool { focusWine.map { id in bottles.contains { $0.wineID == id } } ?? false }
     private var isDimmed: Bool { focusWine != nil && !isFocused }
+    /// Checking a rack: some, not all, of this place's bottles were found.
+    private var isPartlyFound: Bool {
+        interaction.mode == .auditing && selectedCount > 0 && selectedCount < bottles.count
+    }
 
     var body: some View {
         Button {
@@ -349,9 +378,46 @@ struct RackCellView: View {
             }
         }
         .help(Text(verbatim: bottles.compactMap { model.cellar.wines[$0.wineID]?.displayName }.joined(separator: ", ")))
+        .modifier(CheckMenu(isOn: canCheckOneByOne) { interaction.checkOneByOne?(cell) })
         .accessibilityLabel(accessibilityText)
+        .accessibilityHint(hintText ?? Text(verbatim: ""))
+        .accessibilityActions { cellActions }
         .accessibilityIdentifier("rack.cell.\(cell.row)-\(cell.column)")
         .accessibilityAddTraits(selectedCount > 0 ? .isSelected : [])
+    }
+
+    /// While checking, a place holding several bottles can be checked bottle by bottle.
+    private var canCheckOneByOne: Bool {
+        interaction.mode == .auditing && bottles.count > 1 && interaction.checkOneByOne != nil
+    }
+
+    /// What a tap does here, for VoiceOver.
+    private var hintText: Text? {
+        switch interaction.mode {
+        case .none:
+            return nil
+        case .browsing:
+            return bottles.isEmpty ? Text("Adds a bottle here") : Text("Shows this bottle")
+        case .moving:
+            if bottles.count < rack.positionsPerCell { return Text("Puts the bottle here") }
+            return rack.positionsPerCell == 1 ? Text("Swaps the two bottles") : nil
+        case .auditing:
+            return bottles.isEmpty ? nil : Text("Marks as found")
+        }
+    }
+
+    /// VoiceOver actions: those of the bottle card, or checking bottle by bottle.
+    @ViewBuilder
+    private var cellActions: some View {
+        if interaction.mode == .browsing, rack.positionsPerCell == 1, let bottle = bottles.first,
+           let perform = interaction.perform {
+            Button("Move") { perform(.move, bottle) }
+            Button("Drink") { perform(.drink, bottle) }
+            Button("Wine Page") { perform(.winePage, bottle) }
+        }
+        if canCheckOneByOne {
+            Button("Check One by One…") { interaction.checkOneByOne?(cell) }
+        }
     }
 
     // MARK: Single position (grid, honeycomb, shelf)
@@ -408,7 +474,11 @@ struct RackCellView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            if selectedCount > 0 { selectionBadge }
+            if isPartlyFound {
+                partlyFoundBadge
+            } else if selectedCount > 0 {
+                selectionBadge
+            }
         }
         .overlay(alignment: .bottom) {
             if rack.positionsPerCell > 1 { depthDots.offset(y: rack.kind == .shelves && !showsName ? size * 0.16 : size * 0.02) }
@@ -469,7 +539,8 @@ struct RackCellView: View {
                     .font(.system(size: max(10, size * 0.13), weight: .semibold).monospacedDigit())
                     .foregroundStyle(isFull ? Color.primary : Color.secondary)
                 if selectedCount > 0 {
-                    Text(verbatim: "+\(selectedCount)")
+                    // Checking: found of the bottles there; choosing places: how many are chosen.
+                    Text(verbatim: interaction.mode == .auditing ? "✓ \(selectedCount)/\(bottles.count)" : "+\(selectedCount)")
                         .font(.system(size: max(10, size * 0.12), weight: .bold).monospacedDigit())
                         .foregroundStyle(Color.accentColor)
                 }
@@ -484,7 +555,7 @@ struct RackCellView: View {
                 .fill(Color.accentColor.opacity(0.25))
                 .overlay(Circle().strokeBorder(Color.accentColor, lineWidth: 2))
                 .frame(width: size * 0.74, height: size * 0.74)
-            if rack.positionsPerCell > 1 {
+            if rack.positionsPerCell > 1 && interaction.mode != .auditing {
                 Text(verbatim: "+\(selectedCount)")
                     .font(.system(size: size * 0.24, weight: .bold).monospacedDigit())
                     .foregroundStyle(Color.accentColor)
@@ -496,19 +567,77 @@ struct RackCellView: View {
         }
     }
 
+    /// Some of the bottles found while checking: "8/10".
+    private var partlyFoundBadge: some View {
+        Text(verbatim: "\(selectedCount)/\(bottles.count)")
+            .font(.system(size: max(9, size * 0.2), weight: .bold).monospacedDigit())
+            .foregroundStyle(Color.accentColor)
+            .padding(.horizontal, size * 0.06)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.accentColor, lineWidth: 1.5))
+    }
+
+    /// The wine and its style in words (in the drawing the style is only the bottle's color).
+    private func wineWords(_ bottle: Bottle) -> String? {
+        model.cellar.wines[bottle.wineID].map { wine in
+            [wine.displayName, wine.color?.name].compactMap { $0 }.joined(separator: ", ")
+        }
+    }
+
+    /// Place, wine, style, then state: "B3: front Château X, Red; back empty, shown".
     private var accessibilityText: Text {
         let place = rack.displayLabel(for: cell)
+        var label: String
         if rack.kind == .bins {
-            return Text("\(place), \(bottles.count) of \(rack.positionsPerCell) bottles")
-        }
-        // The style in words too: in the drawing it is only the bottle's color.
-        let names = bottles.compactMap { bottle in
-            model.cellar.wines[bottle.wineID].map { wine in
-                [wine.displayName, wine.color?.name].compactMap { $0 }.joined(separator: ", ")
+            label = String(localized: "\(place), \(bottles.count) of \(rack.positionsPerCell) bottles")
+        } else if rack.positionsPerCell == 1 {
+            if let words = bottles.first.flatMap(wineWords) {
+                label = "\(place), \(words)"
+            } else {
+                label = String(localized: "\(place), empty")
             }
+        } else {
+            let depthsLabel = self.depthsLabel
+            label = String(localized: "\(place): \(depthsLabel)")
         }
-        if names.isEmpty { return Text("\(place), empty") }
-        return Text(verbatim: "\(place), \(names.joined(separator: ", "))")
+        if isPartlyFound {
+            let found = selectedCount, total = bottles.count
+            label = String(localized: "\(label), \(found) of \(total) found")
+        }
+        if isHighlighted || isFocused {
+            label = String(localized: "\(label), shown")
+        } else if isDimmed {
+            label = String(localized: "\(label), other wine")
+        }
+        return Text(verbatim: label)
+    }
+
+    /// Each place of the cell, front first: "front Château X, Red; back empty".
+    private var depthsLabel: String {
+        (0..<rack.positionsPerCell).map { depth -> String in
+            let depthName = rack.depthName(depth)
+            if let words = bottles.first(where: { $0.slot?.depth == depth }).flatMap(wineWords) {
+                return "\(depthName) \(words)"
+            }
+            return String(localized: "\(depthName) empty")
+        }
+        .joined(separator: "; ")
+    }
+}
+
+/// A context menu to check a place's bottles one by one, only while it applies.
+private struct CheckMenu: ViewModifier {
+    let isOn: Bool
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        if isOn {
+            content.contextMenu {
+                Button("Check One by One…", systemImage: "checklist", action: action)
+            }
+        } else {
+            content
+        }
     }
 }
 

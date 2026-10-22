@@ -34,8 +34,21 @@ struct RacksView: View {
                                 .buttonStyle(.plain)
                                 .contextMenu {
                                     Button("Edit Rack", systemImage: "pencil") { router?.sheet = .editRack(rackID: rack.id) }
+                                    Button("Move Up", systemImage: "arrow.up") { moveRack(at: index, by: -1) }
+                                        .disabled(index == 0)
+                                    Button("Move Down", systemImage: "arrow.down") { moveRack(at: index, by: 1) }
+                                        .disabled(index == model.cellar.racks.count - 1)
+                                    Divider()
                                     Button("Delete Rack", systemImage: "trash", role: .destructive) {
                                         model.deleteRack(rack.id)
+                                    }
+                                }
+                                .accessibilityActions {
+                                    if index > 0 {
+                                        Button("Move Up") { moveRack(at: index, by: -1) }
+                                    }
+                                    if index < model.cellar.racks.count - 1 {
+                                        Button("Move Down") { moveRack(at: index, by: 1) }
                                     }
                                 }
                             }
@@ -64,6 +77,17 @@ struct RacksView: View {
                 let rack = NavigationPath([slot.rackID])
                 if path != rack { path = rack }
             }
+        }
+    }
+
+    /// One place up (-1) or down (1) in the list of racks.
+    private func moveRack(at index: Int, by step: Int) {
+        let target = index + step
+        guard model.cellar.racks.indices.contains(index), model.cellar.racks.indices.contains(target) else { return }
+        // "Insert before" offsets, as List.onMove gives them.
+        let offset = step > 0 ? target + 1 : target
+        withAnimation(.snappy) {
+            _ = model.update { $0.moveRacks(fromOffsets: IndexSet(integer: index), toOffset: offset) }
         }
     }
 }

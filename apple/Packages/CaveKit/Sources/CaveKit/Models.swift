@@ -401,6 +401,35 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
         }
     }
 
+    /// Where each row of a fridge on shelves goes when its shelves are edited. `origins`
+    /// gives, for each shelf of the new rack from the top, the shelf of `old` it was (nil
+    /// for a new one). A layer keeps its place counted from the bottom of its shelf; the
+    /// rows of a removed shelf or layer map to nil. Empty unless both racks have shelf layers.
+    public static func shelfRowMap(from old: Rack, to new: Rack, origins: [Int?]) -> [Int: Int?] {
+        guard old.hasShelfLayers, new.hasShelfLayers else { return [:] }
+        let newShelves = new.shelfRows
+        var map: [Int: Int?] = [:]
+        for row in 0..<old.rows { map[row] = .some(nil) }
+        for (shelf, origin) in origins.enumerated() where newShelves.indices.contains(shelf) {
+            guard let origin, old.shelfRows.indices.contains(origin) else { continue }
+            let from = old.shelfRows[origin], to = newShelves[shelf]
+            // Layer 0 is the bottom one, the shelf's last row.
+            for layer in 0..<from.count where layer < to.count {
+                map[from.upperBound - 1 - layer] = .some(to.upperBound - 1 - layer)
+            }
+        }
+        return map
+    }
+
+    /// A slot moved by a row map (see `Cellar.updateRack`); nil when its row is gone.
+    static func moved(_ slot: Slot, rowMap: [Int: Int?]) -> Slot? {
+        guard let mapped = rowMap[slot.row] else { return slot }
+        guard let row = mapped else { return nil }
+        var moved = slot
+        moved.row = row
+        return moved
+    }
+
     /// "B3" for row 1, column 2.
     public func label(row: Int, column: Int) -> String {
         "\(Rack.rowLetters(row))\(column + 1)"

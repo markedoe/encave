@@ -7,7 +7,6 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
 import java.util.Locale
 import java.util.UUID
@@ -25,8 +24,9 @@ interface CellarVersionSource {
 /**
  * Automatic copies of the cellar file, in a folder next to it: when the cellar is saved on a
  * new day, the file as it was (its last state of the day it was saved) is kept first. One
- * copy is kept for each of the last 7 days the cellar changed, and one for each week of the
- * last 4 weeks; older ones are removed. CaveKit keeps them the same way (`CellarVersionFolder`).
+ * copy is kept for each of the last 7 days the cellar changed, then one for each of the 4
+ * weeks before; older ones are removed. Counted from the copies, not from today, so the last
+ * ones stay after weeks without a change. CaveKit keeps them the same way (`CellarVersionFolder`).
  *
  * Only the cellar file is copied: photos and documents are named after their content and
  * kept while a version refers to them ([fileRefs]).
@@ -53,7 +53,7 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
                 temp.delete()
                 return
             }
-            prune(now)
+            prune()
         }
     }
 
@@ -70,9 +70,9 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
     fun fileRefs(): Set<FileRef> = versions().flatMap { runCatching { cellar(it).fileRefs }.getOrDefault(emptySet()) }.toSet()
 
     /** Removes the versions no longer kept. */
-    fun prune(now: Instant = Instant.now()) {
+    fun prune() {
         val all = versions()
-        val kept = kept(all.map { it.date }, now, zone)
+        val kept = kept(all.map { it.date }, zone)
         all.filter { it.date !in kept }.forEach { File(folder, it.id).delete() }
     }
 
@@ -80,29 +80,33 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
 
     companion object {
         const val DAILY_COUNT = 7
-        const val WEEKLY_DAYS = 28
+        const val WEEKLY_COUNT = 4
         private const val PREFIX = "cellar-"
         private const val SUFFIX = ".json"
         private val formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss", Locale.ROOT)
 
         /**
-         * The dates kept: the newest of each of the last 7 days, and the newest of each ISO week
-         * of the last 28 days. Versions dated later than [now] (a clock set back) count as today's.
+         * The dates kept: the newest of each of the 7 latest days that have a version, then the
+         * newest of each of the 4 latest ISO weeks before those days. Counted from the versions
+         * themselves, not from today, so a long pause never removes them all.
          */
-        fun kept(dates: List<Instant>, now: Instant, zone: ZoneId): Set<Instant> {
-            val today = now.atZone(zone).toLocalDate()
+        fun kept(dates: List<Instant>, zone: ZoneId): Set<Instant> {
             val days = HashMap<LocalDate, Instant>()
-            val weeks = HashMap<Pair<Int, Int>, Instant>()
             for (date in dates) {
                 val day = date.atZone(zone).toLocalDate()
-                val age = maxOf(0L, ChronoUnit.DAYS.between(day, today))
-                if (age < DAILY_COUNT) days[day] = maxOf(days[day] ?: date, date)
-                if (age < WEEKLY_DAYS) {
-                    val week = day.get(WeekFields.ISO.weekBasedYear()) to day.get(WeekFields.ISO.weekOfWeekBasedYear())
-                    weeks[week] = maxOf(weeks[week] ?: date, date)
-                }
+                days[day] = maxOf(days[day] ?: date, date)
             }
-            return days.values.toSet() + weeks.values
+            val daily = days.keys.sortedDescending().take(DAILY_COUNT)
+            val oldestDaily = daily.lastOrNull()?.atStartOfDay(zone)?.toInstant() ?: return emptySet()
+            val weeks = HashMap<Pair<Int, Int>, Instant>()
+            for (date in dates) {
+                if (!date.isBefore(oldestDaily)) continue
+                val day = date.atZone(zone).toLocalDate()
+                val week = day.get(WeekFields.ISO.weekBasedYear()) to day.get(WeekFields.ISO.weekOfWeekBasedYear())
+                weeks[week] = maxOf(weeks[week] ?: date, date)
+            }
+            val weekly = weeks.values.sortedDescending().take(WEEKLY_COUNT)
+            return daily.mapNotNull { days[it] }.toSet() + weekly
         }
 
         /** "cellar-20261020-221430.json": the date in UTC, to the second. */
@@ -130,13 +134,14 @@ class InMemoryCellarVersions(items: List<Pair<Instant, Cellar>>) : CellarVersion
 
 /** How a backup or an earlier version is put back. */
 enum class RestoreMode {
-    /** Adds the wines, bottles, racks and Journal entries that are not in the cellar (by ID); nothing already there changes. */
+    /** Adds the wines, bottles, racks, Journal entries and saved searches that are not in the cellar (by ID); nothing already there changes. */
     AddMissing,
 
     /**
      * The cellar becomes the backup: what is not in it is deleted, what differs is put back as
-     * it was, settings included. Applied as a change made on this device, so sync takes it to
-     * the other devices (docs/SYNC.md).
+     * it was. The settings (currency, saved searches) stay as they are: they are preferences,
+     * not the cellar, and an older JSON backup may hold none. Applied as a change made on this
+     * device, so sync takes it to the other devices (docs/SYNC.md).
      */
     Replace,
 }
@@ -201,5 +206,5 @@ data class RestorePreview(
 /** The cellar after restoring [backup] (a new instance; this one is not changed). */
 fun Cellar.restoring(backup: Cellar, mode: RestoreMode): Cellar = when (mode) {
     RestoreMode.AddMissing -> copy().also { it.merge(backup) }
-    RestoreMode.Replace -> backup.copy()
+    RestoreMode.Replace -> backup.copy().also { it.settings = settings }
 }

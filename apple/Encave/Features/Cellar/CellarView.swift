@@ -246,6 +246,7 @@ struct CellarList: View {
                 if let selection { model.deleteWine(selection) }
             }
             #endif
+            .modifier(SyncRefresh())
             }
         }
     }
@@ -712,7 +713,7 @@ struct EmptyCellarView: View {
                 // Already using Encave on another device: bring its cellar here.
                 if model.sync.otherDevices.isEmpty {
                     Button {
-                        router?.sheet = .joinDevice
+                        router?.sheet = .joinDevice(code: "", commitment: nil)
                     } label: {
                         Text("Join a Cellar from Another Device").frame(minWidth: 200)
                     }
@@ -744,4 +745,17 @@ struct EmptyCellarView: View {
 
 #Preview {
     CellarView().environment(CellarModel.preview())
+}
+
+/// Pull down to sync with the other devices, when there are any.
+private struct SyncRefresh: ViewModifier {
+    @Environment(CellarModel.self) private var model
+
+    func body(content: Content) -> some View {
+        if model.sync.otherDevices.isEmpty || model.sync.isDemo {
+            content
+        } else {
+            content.refreshable { await model.sync.syncEverywhere() }
+        }
+    }
 }

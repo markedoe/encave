@@ -1,10 +1,12 @@
 package app.encave.ui.cellar
 
-import androidx.compose.ui.semantics.heading
 import androidx.compose.material.icons.outlined.Science
-import app.encave.ui.navigation.JoinDeviceRoute
-import app.encave.ui.devices.rememberLocalNetworkAccess
+import androidx.compose.ui.semantics.heading
 import app.encave.core.containsSample
+import app.encave.ui.devices.rememberLocalNetworkAccess
+import app.encave.ui.navigation.JoinDeviceRoute
+import app.encave.ui.devices.SettingsIcon
+import app.encave.ui.devices.SyncRefreshBox
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -51,6 +53,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalBar
 import androidx.compose.material.icons.outlined.LocalShipping
@@ -72,7 +75,6 @@ import androidx.compose.material.icons.outlined.TableChart
 import androidx.compose.material.icons.outlined.Outbox
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -140,6 +142,8 @@ import app.encave.ui.components.sampleLabels
 import app.encave.ui.drink.DrinkSheet
 import app.encave.ui.navigation.AddBottleRoute
 import app.encave.ui.navigation.DiscoveryEditorRoute
+import app.encave.ui.navigation.EditWineRoute
+import app.encave.ui.navigation.RackDetailRoute
 import app.encave.ui.navigation.SettingsRoute
 import app.encave.ui.theme.Dimens
 import kotlinx.coroutines.launch
@@ -381,74 +385,77 @@ private fun CellarList(
                 } else {
                     val scope = rememberCoroutineScope()
                     val showsSummary = filter.query.isEmpty() && !selecting
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(bottom = 88.dp),
-                        modifier = Modifier.fillMaxSize().testTag("cellar.list"),
-                    ) {
-                        if (showsSampleBanner && !selecting) {
-                            item(key = "sample") { SampleBanner(onRemove = { viewModel.removeSample() }) }
-                        }
-                        if (showsSummary) {
-                            item(key = "summary") {
-                                CellarSummary(
-                                    cellar = cellar,
-                                    year = viewModel.year,
-                                    filter = filter,
-                                    onBottles = { navigator.open(InsightsRoute) },
-                                    onWines = {
-                                        viewModel.filter.value = app.encave.core.CellarFilter()
-                                        // The first wine, just under the figures.
-                                        scope.launch { listState.animateScrollToItem(1) }
-                                    },
-                                    onSoon = { viewModel.filter.value = it },
-                                )
+                    // Pull down to sync now, with the devices around and away from home.
+                    SyncRefreshBox(enabled = shared) {
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = PaddingValues(bottom = 88.dp),
+                            modifier = Modifier.fillMaxSize().testTag("cellar.list"),
+                        ) {
+                            if (showsSampleBanner && !selecting) {
+                                item(key = "sample") { SampleBanner(onRemove = { viewModel.removeSample() }) }
                             }
-                        }
-                        if (showOrders && !selecting) {
-                            item(key = "orders.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.section_on_order)) }
-                            items(orders, key = { "order." + it.id }) { group ->
-                                OrderRow(
-                                    group = group, cellar = cellar, year = viewModel.year,
+                            if (showsSummary) {
+                                item(key = "summary") {
+                                    CellarSummary(
+                                        cellar = cellar,
+                                        year = viewModel.year,
+                                        filter = filter,
+                                        onBottles = { navigator.open(InsightsRoute) },
+                                        onWines = {
+                                            viewModel.filter.value = app.encave.core.CellarFilter()
+                                            // The first wine, just under the figures.
+                                            scope.launch { listState.animateScrollToItem(1) }
+                                        },
+                                        onSoon = { viewModel.filter.value = it },
+                                    )
+                                }
+                            }
+                            if (showOrders && !selecting) {
+                                item(key = "orders.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.section_on_order)) }
+                                items(orders, key = { "order." + it.id }) { group ->
+                                    OrderRow(
+                                        group = group, cellar = cellar, year = viewModel.year,
+                                        selected = group.id.toString() == selectedId,
+                                        onOpen = { onOpen(group.id.toString()) },
+                                        onReceive = { viewModel.receive(group.bottles.map { it.id }) },
+                                        modifier = Modifier.animateItem().testTag("order.row"),
+                                    )
+                                    HorizontalDivider(Modifier.padding(start = 56.dp))
+                                }
+                                if (groups.isNotEmpty()) {
+                                    item(key = "cellar.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.nav_cellar)) }
+                                }
+                            }
+                            if (selecting) {
+                                items(groups, key = { "select." + it.id }) { group ->
+                                    WineGroupRow(
+                                        group = group, cellar = cellar, year = viewModel.year,
+                                        checked = group.id in shownPicked,
+                                        onClick = { picked = if (group.id in picked) picked - group.id else picked + group.id },
+                                        modifier = Modifier.testTag("wine.select.row"),
+                                    )
+                                    HorizontalDivider(Modifier.padding(start = 56.dp))
+                                }
+                                return@LazyColumn
+                            }
+                            items(groups, key = { it.id.toString() }) { group ->
+                                CellarRow(
+                                    group = group,
+                                    cellar = cellar,
+                                    viewModel = viewModel,
+                                    navigator = navigator,
                                     selected = group.id.toString() == selectedId,
                                     onOpen = { onOpen(group.id.toString()) },
-                                    onReceive = { viewModel.receive(group.bottles.map { it.id }) },
-                                    modifier = Modifier.animateItem().testTag("order.row"),
+                                    onDrink = { drinking = group },
+                                    onSelect = {
+                                        selecting = true
+                                        picked = setOf(group.id)
+                                    },
+                                    modifier = Modifier.animateItem().testTag("wine.row"),
                                 )
                                 HorizontalDivider(Modifier.padding(start = 56.dp))
                             }
-                            if (groups.isNotEmpty()) {
-                                item(key = "cellar.header") { app.encave.ui.components.SectionHeader(stringResource(R.string.nav_cellar)) }
-                            }
-                        }
-                        if (selecting) {
-                            items(groups, key = { "select." + it.id }) { group ->
-                                WineGroupRow(
-                                    group = group, cellar = cellar, year = viewModel.year,
-                                    checked = group.id in shownPicked,
-                                    onClick = { picked = if (group.id in picked) picked - group.id else picked + group.id },
-                                    modifier = Modifier.testTag("wine.select.row"),
-                                )
-                                HorizontalDivider(Modifier.padding(start = 56.dp))
-                            }
-                            return@LazyColumn
-                        }
-                        items(groups, key = { it.id.toString() }) { group ->
-                            CellarRow(
-                                group = group,
-                                cellar = cellar,
-                                viewModel = viewModel,
-                                navigator = navigator,
-                                selected = group.id.toString() == selectedId,
-                                onOpen = { onOpen(group.id.toString()) },
-                                onDrink = { drinking = group },
-                                onSelect = {
-                                    selecting = true
-                                    picked = setOf(group.id)
-                                },
-                                modifier = Modifier.animateItem().testTag("wine.row"),
-                            )
-                            HorizontalDivider(Modifier.padding(start = 56.dp))
                         }
                     }
                 }
@@ -620,7 +627,7 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
                 }
             }
             IconButton(onClick = onSettings, modifier = Modifier.testTag("action.settings")) {
-                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.action_settings))
+                SettingsIcon()
             }
         }
     }
@@ -826,7 +833,7 @@ private fun SaveSearchDialog(initial: String, onSave: (String) -> Unit, onDismis
     )
 }
 
-/** Swipe right to drink; long press (or TalkBack actions) for the other actions (see [WineMenuBox]). */
+/** Swipe right to drink; long press (or TalkBack actions) for the other actions. */
 @Composable
 private fun CellarRow(
     group: WineGroup,

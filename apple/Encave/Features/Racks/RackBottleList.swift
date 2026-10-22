@@ -12,8 +12,8 @@ struct RackBottleList: View {
 
     var body: some View {
         if let rack = model.cellar.rack(rackID) {
-            let bottles = placed(in: rackID)
-            let rows: [Int: [Bottle]] = Dictionary(grouping: bottles) { $0.slot?.row ?? 0 }
+            let bottles = placed(in: rack)
+            let groups: [Int: [Bottle]] = Dictionary(grouping: bottles) { group(rack, of: $0) }
             List(selection: $selection) {
                 Section {
                     LabeledContent {
@@ -33,13 +33,13 @@ struct RackBottleList: View {
                                            description: Text("Tap a place in the rack to add a bottle there."))
                     #endif
                 }
-                ForEach(rows.keys.sorted(), id: \.self) { row in
+                ForEach(groups.keys.sorted(), id: \.self) { key in
                     Section {
-                        ForEach(rows[row] ?? []) { bottle in
+                        ForEach(groups[key] ?? []) { bottle in
                             listRow(rack, bottle)
                         }
                     } header: {
-                        Text(verbatim: header(rack, row: row))
+                        Text(verbatim: header(rack, group: key))
                     }
                 }
             }
@@ -54,21 +54,42 @@ struct RackBottleList: View {
 }
 
 extension RackBottleList {
-    /// The rack's bottles in place order: row, then column, then front to back.
-    private func placed(in rackID: UUID) -> [Bottle] {
-        let inRack: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rackID }
+    /// The rack's bottles in place order: row, then column, then front to back. On a
+    /// fridge with shelf layers: shelf, then layer from the bottom, then column and depth.
+    private func placed(in rack: Rack) -> [Bottle] {
+        let inRack: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
         return inRack.sorted { a, b in
             guard let x = a.slot, let y = b.slot else { return false }
-            if x.row != y.row { return x.row < y.row }
+            let first = order(rack, x), second = order(rack, y)
+            if first.group != second.group { return first.group < second.group }
+            if first.layer != second.layer { return first.layer < second.layer }
             if x.column != y.column { return x.column < y.column }
             return x.depth < y.depth
         }
     }
 
-    /// Shelves are named ("Shelf 2"), other rows lettered.
-    private func header(_ rack: Rack, row: Int) -> String {
-        guard rack.kind == .shelves else { return Rack.rowLetters(row) }
-        let label = rack.displayLabel(for: RackCell(rackID: rack.id, row: row, column: 0))
+    /// The section of a place (its shelf on a fridge with layers, else its row) and its
+    /// layer on that shelf (0 is the bottom one).
+    private func order(_ rack: Rack, _ slot: Slot) -> (group: Int, layer: Int) {
+        if let place = rack.shelfPlace(ofRow: slot.row) { return (place.shelf, place.layer) }
+        return (slot.row, 0)
+    }
+
+    private func group(_ rack: Rack, of bottle: Bottle) -> Int {
+        bottle.slot.map { order(rack, $0).group } ?? 0
+    }
+
+    /// Shelves are named ("Shelf 2", with its zone when the fridge has several), other
+    /// rows lettered.
+    private func header(_ rack: Rack, group: Int) -> String {
+        if rack.hasShelfLayers {
+            let number = group + 1
+            let shelf = String(localized: "Shelf \(number)")
+            guard rack.zoneCount > 1 else { return shelf }
+            return "\(shelf) · \(rack.zoneName(rack.zone(ofShelf: group)))"
+        }
+        guard rack.kind == .shelves else { return Rack.rowLetters(group) }
+        let label = rack.displayLabel(for: RackCell(rackID: rack.id, row: group, column: 0))
         return label.components(separatedBy: ",").first ?? ""
     }
 
@@ -113,17 +134,15 @@ private struct RackBottleRow: View {
     var body: some View {
         let wine = model.cellar.wines[bottle.wineID]
         HStack(spacing: 10) {
-            Text(verbatim: bottle.slot.map { rack.label(for: $0) } ?? "")
-                .font(.callout.monospacedDigit().weight(.medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 44, alignment: .leading)
             BottleEnd(color: wine?.color, size: 20)
             VStack(alignment: .leading, spacing: 1) {
                 Text(wine?.displayName ?? String(localized: "Unknown wine"))
                     .lineLimit(1)
-                let line = [wine?.color?.name, wine?.producer].compactMap { $0 }.joined(separator: " · ")
+                // "B3, back · Red · Producer": the place as named everywhere else.
+                let place: String? = bottle.slot.map { rack.displayLabel(for: $0) }
+                let line = [place, wine?.color?.name, wine?.producer].compactMap { $0 }.joined(separator: " · ")
                 if !line.isEmpty {
-                    Text(line).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(line).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                 }
             }
             if let documents = bottle.attachments?.count {

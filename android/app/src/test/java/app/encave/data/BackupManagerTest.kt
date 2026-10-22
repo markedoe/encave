@@ -100,7 +100,7 @@ class BackupManagerTest {
         cellar.updateWine(wine.copy(photoId = photo))
         val (manager, _) = manager(cellar)
         val file = File(context.cacheDir, "now.zip")
-        assertEquals(1, file.outputStream().use { manager.writeArchive(it).getOrThrow() })
+        assertEquals(1, file.outputStream().use { manager.writeArchive(it).getOrThrow() }.included)
         assertEquals(now, manager.lastBackup.value)
 
         val source = manager.source(context.contentResolver, Uri.fromFile(file))

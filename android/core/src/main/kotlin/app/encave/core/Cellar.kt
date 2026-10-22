@@ -454,17 +454,35 @@ class Cellar(
         rackList += rack.normalized()
     }
 
-    /** Updates name, layout or size. Shrinking is refused if it would drop bottles. */
-    fun updateRack(rack: Rack) {
+    /**
+     * Updates name, layout or size. [rowMap] moves the bottles of a row to another row (null:
+     * the row is gone), keeping their column and depth; rows it leaves out stay as they are.
+     * A bottle whose new place is not in the rack is displaced: with [takingOut] it stays in
+     * the cellar without a place, otherwise the update is refused.
+     */
+    fun updateRack(rack: Rack, rowMap: Map<Int, Int?> = emptyMap(), takingOut: Boolean = false) {
         val updated = rack.normalized()
         val index = rackList.indexOfFirst { it.id == updated.id }
         if (index < 0) throw CellarException(CellarError.UnknownRack)
-        val outside = bottlesInCellar.any {
-            val slot = it.slot
-            slot != null && slot.rackId == updated.id && !updated.contains(slot)
+        val displaced = displacedBottles(updated, rowMap).map { it.id }.toSet()
+        if (displaced.isNotEmpty() && !takingOut) throw CellarException(CellarError.RackNotEmpty)
+        bottlesInCellar.forEach { bottle ->
+            val slot = bottle.slot ?: return@forEach
+            if (slot.rackId != updated.id) return@forEach
+            bottleMap[bottle.id] = bottle.copy(slot = if (bottle.id in displaced) null else Rack.moved(slot, rowMap))
         }
-        if (outside) throw CellarException(CellarError.RackNotEmpty)
         rackList[index] = updated
+    }
+
+    /** Bottles of this rack that an update with [rowMap] would leave without a place, in the order of their places. */
+    fun displacedBottles(rack: Rack, rowMap: Map<Int, Int?> = emptyMap()): List<Bottle> {
+        val updated = rack.normalized()
+        return bottlesInCellar.filter { bottle ->
+            val slot = bottle.slot
+            if (slot == null || slot.rackId != updated.id) return@filter false
+            val moved = Rack.moved(slot, rowMap)
+            moved == null || !updated.contains(moved)
+        }.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
     }
 
     /** Same semantics as SwiftUI's `onMove(fromOffsets:toOffset:)`. */

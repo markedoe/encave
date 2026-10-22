@@ -23,7 +23,8 @@ struct SettingsButton: View {
         Button {
             router?.sheet = .settings
         } label: {
-            Label("Settings", systemImage: "gearshape")
+            // With a badge when sync needs attention.
+            SettingsButtonLabel()
         }
     }
 }
