@@ -52,11 +52,12 @@ jobs:
     # fixes reach main faster.
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    # Built once; the iPhone and the iPad run side by side: about an hour (measured:
-    # a runner runs an iPhone and an iPad together as fast as one, but not two iPads,
-    # two iPhones or three simulators, and each new job pays about 20 minutes to start
-    # its simulators).
-    timeout-minutes: 90
+    # Built once; the iPhone and the iPad run side by side: 65 to 90 minutes depending
+    # on the runner (measured: a runner runs an iPhone and an iPad together, but not two
+    # iPads, two iPhones or three simulators, and each new job pays about 20 minutes to
+    # start its simulators; the studio pictures of the sample cellar are made on the
+    # first launch).
+    timeout-minutes: 150
     defaults:
       run:
         working-directory: apple

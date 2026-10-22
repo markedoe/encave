@@ -23,6 +23,8 @@ struct EncaveApp: App {
             RootView()
                 .environment(model)
                 .onAppear { notifications.model = model }
+                // Screen tour: the studio pictures in dark mode.
+                .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--dark") ? .dark : nil)
         }
         #if os(macOS)
         // Sized to the screen: a fixed size larger than a small display put the window off screen.

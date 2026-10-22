@@ -25,6 +25,15 @@ NAMES = {
     "maturity-past-peak": "MaturityPastPeak",
     "maturity-keep": "MaturityKeep",
     "warning": "Warning",
+    "studio-base": "StudioBase",
+    "studio-candle": "StudioCandle",
+    "studio-red": "StudioRed",
+    "studio-white": "StudioWhite",
+    "studio-rose": "StudioRose",
+    "studio-sparkling": "StudioSparkling",
+    "studio-dessert": "StudioDessert",
+    "studio-fortified": "StudioFortified",
+    "studio-orange": "StudioOrange",
 }
 
 

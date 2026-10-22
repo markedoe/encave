@@ -17,6 +17,27 @@ enum PhotoStore {
         return folder
     }
 
+    /// Photos kept in memory only, never written: the label photos of the sample
+    /// cellar in the screen tour (`--sample-data`).
+    private static let memory = Memory()
+
+    private final class Memory: @unchecked Sendable {
+        private let lock = NSLock()
+        private var photos: [String: Data] = [:]
+        subscript(id: String) -> Data? {
+            get { lock.withLock { photos[id] } }
+            set { lock.withLock { photos[id] = newValue } }
+        }
+    }
+
+    /// Keeps a photo in memory for this run only (the screen tour's sample photos).
+    static func keepInMemory(_ data: Data, id: String) {
+        guard isSafe(id) else { return }
+        memory[id] = data
+    }
+
+    static func isInMemory(_ id: String) -> Bool { memory[id] != nil }
+
     static func url(for id: String) -> URL? {
         guard isSafe(id) else { return nil }
         return folder?.appendingPathComponent("\(id).jpg")
@@ -36,7 +57,9 @@ enum PhotoStore {
 
     /// False when a wine refers to a photo that is not on this device (after importing a backup).
     static func exists(_ id: String?) -> Bool {
-        guard let id, let url = url(for: id) else { return false }
+        guard let id else { return false }
+        if isInMemory(id) { return true }
+        guard let url = url(for: id) else { return false }
         return FileManager.default.fileExists(atPath: url.path)
     }
 
@@ -89,7 +112,9 @@ enum PhotoStore {
     }
 
     static func data(for id: String?) -> Data? {
-        guard let id, let url = url(for: id) else { return nil }
+        guard let id else { return nil }
+        if let data = memory[id] { return data }
+        guard let url = url(for: id) else { return nil }
         return try? Data(contentsOf: url)
     }
 

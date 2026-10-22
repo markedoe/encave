@@ -49,6 +49,22 @@ extension WineColor {
     }
 }
 
+extension WineColor {
+    /// The wine's color on the studio backdrop (design/tokens.json): the wash and
+    /// the colored lights; white wine as straw gold.
+    var studioTint: Color {
+        switch self {
+        case .red: Color("StudioRed")
+        case .white: Color("StudioWhite")
+        case .rose: Color("StudioRose")
+        case .sparkling: Color("StudioSparkling")
+        case .dessert: Color("StudioDessert")
+        case .fortified: Color("StudioFortified")
+        case .orange: Color("StudioOrange")
+        }
+    }
+}
+
 /// Small dot showing the wine style. Decorative: the style is always also given as text.
 struct WineColorDot: View {
     let color: WineColor?

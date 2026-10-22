@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Studio look framed on the label: Apple turns a leaning bottle upright,
+  cuts it out and frames it on its label (about 80% of the picture,
+  the glass running off its edges), straightens a close-up of a label, and
+  otherwise shows the photo centred on its label; Android shows the photo cut
+  to the band of its label (where its print is densest). On the device only,
+  on a backdrop of a softly lit cellar in the wine's color; Apple pictures are
+  made again once (photos that gave nothing before are tried again)
 - AI label recognition: Complete with AI has a full-width row of its own, reads
   Complete Again once used and shows "Completed by AI" with the day, also on the
   wine's page (wine.aiCompletedAt, synced)

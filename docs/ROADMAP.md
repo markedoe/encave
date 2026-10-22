@@ -200,7 +200,7 @@ kept within the privacy rules: everything is worked out on the device.
 | Saved searches | Done | Done |
 | Several photos per wine | Done | Done |
 | Documents attached to a wine or a bottle (invoice, certificate, technical sheet; synced, encrypted; up to 8 MB each) | Done (document scanner on iPhone and iPad) | Done |
-| Studio look for label photos (cut out and straightened on the device, photo kept as taken) | Done (Vision) | Light evened out on a clean background (no cut-out: it would need ML Kit) |
+| Studio look for label photos (made on the device, photo kept as taken), on a backdrop of a softly lit cellar in the wine's color | Done (Vision: photo turned level from its text; bottle cut out and framed on its label, the label about 80% of the picture and the glass running off its edges; a close-up of a label straightened; else the photo centred on its label) | Done without a cut-out (it would need ML Kit): photo cut to the band of its label (densest edges, else a centre band), filling the picture with a light vignette |
 | Undo from the keyboard (⌘Z, Edit menu, shake) | Done | — |
 | Find Current Price, estimated value today (web search; only the search terms are sent) | Done | Done |
 | Search Online (Brave Search, Tavily, SearXNG; only the search terms are sent) | Done | Done |
