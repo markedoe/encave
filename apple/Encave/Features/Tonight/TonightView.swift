@@ -37,7 +37,7 @@ struct TonightView: View {
     @ViewBuilder
     private func list(selection: Binding<UUID?>?) -> some View {
         let sections = model.cellar.groupsByMaturity(year: model.currentYear)
-        if model.cellar.bottlesInCellar.isEmpty {
+        if model.bottlesInCellar.isEmpty {
             EmptyTonightView()
         } else if let selection {
             List(selection: selection) { rows(sections: sections, linking: false) }
@@ -195,7 +195,7 @@ private struct ReminderOffer: View {
     @State private var refused = false
 
     var body: some View {
-        let hasWindow = model.cellar.bottlesInCellar.contains { bottle in
+        let hasWindow = model.bottlesInCellar.contains { bottle in
             model.cellar.wines[bottle.wineID].map { $0.drinkFrom != nil && $0.drinkUntil != nil } ?? false
         }
         if refused || (!offered && !Reminders.isEnabled && hasWindow && !model.loadFailed) {

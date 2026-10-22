@@ -133,11 +133,23 @@ class DocumentStore(context: Context) {
      * Stores a pending document for good and returns its attachment. The temporary copy
      * stays until [discard], so a failed save can be tried again.
      */
-    fun commit(pending: PendingDocument, at: Instant = ReferenceDates.now()): Attachment? {
+    fun commit(pending: PendingDocument, at: Instant = ReferenceDates.now()): Attachment? = commitTracked(pending, at)?.attachment
+
+    /** A document stored by [commitTracked]; [isNew] when its file was not there before. */
+    data class Committed(val attachment: Attachment, val isNew: Boolean)
+
+    /** Like [commit], telling whether the file is new, so a failed save can remove it. */
+    fun commitTracked(pending: PendingDocument, at: Instant = ReferenceDates.now()): Committed? {
         val data = runCatching { pendingFile(pending).readBytes() }.getOrNull() ?: return null
         val id = PhotoId.make(data)
+        val existed = exists(id)
         if (!store(id, data)) return null
-        return Attachment(id, pending.name.ifEmpty { defaultName }, pending.contentType, data.size.toLong(), at)
+        return Committed(Attachment(id, pending.name.ifEmpty { defaultName }, pending.contentType, data.size.toLong(), at), !existed)
+    }
+
+    /** Removes a document file at once (one written for a save that failed). */
+    fun delete(id: String) {
+        file(id)?.delete()
     }
 
     fun discard(pending: PendingDocument) {

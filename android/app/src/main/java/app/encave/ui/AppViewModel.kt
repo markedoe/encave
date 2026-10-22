@@ -73,6 +73,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.map
@@ -100,7 +101,30 @@ data class UiMessage(
     val persistent: Boolean = false,
     val actionLabel: UiText? = null,
     val long: Boolean = false,
+    /** Set when a later message may take this one's place while it is waiting or shown. */
+    val slot: MessageSlot? = null,
 )
+
+/**
+ * Lets a later message replace one still waiting or on screen (the AI completing a wine
+ * just added: one snackbar, whose Undo takes both back). Used on the main thread.
+ */
+class MessageSlot {
+    private val state = MutableStateFlow(false)
+
+    /** True once replaced: the snackbar goes away, its Undo with it. */
+    val replaced: StateFlow<Boolean> = state
+
+    /** Set by the screen once the snackbar is gone. */
+    var finished = false
+
+    /** Replaces the message if it is still waiting or shown; false once it is gone. */
+    fun replace(): Boolean {
+        if (finished) return false
+        state.value = true
+        return true
+    }
+}
 
 /** The AI reading a label photo for a form, kept by the view model so it survives rotation. */
 sealed interface LabelReading {
@@ -158,9 +182,10 @@ class AppViewModel(
     /** The Journal's tag chip; cleared, like the filter, when a new entry would be hidden. */
     val journalTag = MutableStateFlow<String?>(null)
 
+    /** The cellar list, filtered and sorted off the main thread (a large cellar takes time). */
     val groups: StateFlow<List<WineGroup>> = combine(cellar, filter, sort) { cellar, filter, sort ->
         cellar.groups(filter, sort, year)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         viewModelScope.launch {
@@ -229,7 +254,7 @@ class AppViewModel(
      * Adds bottles, with Undo. [photo] is a prepared JPEG (the label), saved first as the
      * wine's photo. [onDone] tells the screen whether they were added: on failure (a place
      * taken meanwhile by a sync, a full disk) it stays open with everything entered. Files
-     * already stored are then left to the cleanup at launch, which removes unused ones.
+     * written for it are then removed, so a retry stores them once and none is left over.
      */
     fun addBottles(
         wine: Wine,
@@ -243,8 +268,16 @@ class AppViewModel(
         onDone: (Boolean) -> Unit = {},
     ) {
         viewModelScope.launch {
-            val photoId = photo?.let { withContext(Dispatchers.IO) { photos.save(it) } }
-            val attachments = withContext(Dispatchers.IO) { pendingDocuments.mapNotNull { documents.commit(it) } }
+            val newPhotos = mutableListOf<String>()
+            val photoId = photo?.let {
+                withContext(Dispatchers.IO) {
+                    val existed = photos.contains(it)
+                    photos.save(it)?.also { id -> if (!existed) newPhotos += id }
+                }
+            }
+            val committed = withContext(Dispatchers.IO) { pendingDocuments.mapNotNull { documents.commitTracked(it) } }
+            val attachments = committed.map { it.attachment }
+            val newDocuments = committed.filter { it.isNew }.map { it.attachment.id }
             var record = if (photoId != null) wine.copy(photoId = photoId) else wine
             if (attachments.isNotEmpty()) record = record.copy(attachments = record.attachments.orEmpty() + attachments)
             val before = cellar.value
@@ -262,12 +295,16 @@ class AppViewModel(
                     if (readingJobs[record.id] != null) savedWhileReading[record.id] = record
                     val ids = added.map { it.id }
                     val text = UiText.Res(if (purchase.isOrdered) R.string.msg_on_order else R.string.msg_added, listOf(added.size, record.displayName))
-                    post(text) { undoAdd(ids, previousWine, previousDiscovery) }
+                    val revert = { c: Cellar -> revertAdd(c, ids, previousWine, previousDiscovery) }
+                    val slot = MessageSlot()
+                    lastAdd = AddBanner(record.id, added.size, purchase.isOrdered, slot, revert)
+                    messageChannel.trySend(UiMessage(text, { change<Unit>(block = revert) }, slot = slot))
                     // Added without the documents that could not be stored (a full disk…).
                     if (attachments.size < pendingDocuments.size) post(UiText.Res(R.string.err_document_unreadable))
                     onDone(true)
                 }
                 .onFailure {
+                    removeUnused(newPhotos, newDocuments)
                     fail(it)
                     onDone(false)
                 }
@@ -275,10 +312,30 @@ class AppViewModel(
     }
 
     /**
+     * Removes files written for a save that failed. One the cellar refers to meanwhile (the
+     * same photo or document, received from another device) is kept.
+     */
+    private suspend fun removeUnused(photoIds: List<String>, documentIds: List<String>) {
+        if (photoIds.isEmpty() && documentIds.isEmpty()) return
+        val now = cellar.value
+        val usedPhotos = now.photoIds
+        val usedDocuments = now.attachmentIds
+        withContext(Dispatchers.IO) {
+            photoIds.filterNot { it in usedPhotos }.forEach(photos::delete)
+            documentIds.filterNot { it in usedDocuments }.forEach(documents::delete)
+        }
+    }
+
+    /** The snackbar of the last add, so the AI completing that wine while it is shown takes its place. */
+    private class AddBanner(val wineId: UUID, val count: Int, val ordered: Boolean, val slot: MessageSlot, val revert: (Cellar) -> Unit)
+
+    private var lastAdd: AddBanner? = null
+
+    /**
      * Takes back bottles just added. A new wine left without bottles goes with them; a wine
      * that was there gets back its record as it was (barcode, photo, documents added).
      */
-    private fun undoAdd(bottleIds: List<UUID>, previousWine: Wine?, previousDiscovery: Discovery?) = change<Unit> { c ->
+    private fun revertAdd(c: Cellar, bottleIds: List<UUID>, previousWine: Wine?, previousDiscovery: Discovery?) {
         bottleIds.forEach { c.deleteBottle(it) }
         if (previousWine != null) {
             if (c.wines[previousWine.id] != null) c.updateWine(previousWine) else c.merge(Cellar(listOf(previousWine)))
@@ -666,7 +723,8 @@ class AppViewModel(
     }
 
     /** The AI answered after the wine was saved: fills the fields still as they were at saving, with Undo. */
-    private fun completeWine(saved: Wine, analysis: LabelAnalysis) {
+    @androidx.annotation.VisibleForTesting
+    internal fun completeWine(saved: Wine, analysis: LabelAnalysis) {
         val completed = analysis.completing(saved)
         viewModelScope.launch {
             var change: Pair<Wine, Wine>? = null
@@ -679,8 +737,20 @@ class AppViewModel(
                 }
             }.onSuccess {
                 val (live, updated) = change ?: return@onSuccess
-                post(UiText.Res(R.string.msg_ai_completed, listOf(updated.displayName))) {
-                    change<Unit> { c -> c.wines[live.id]?.let { c.updateWine(it.completed(from = updated, to = live)) } }
+                val revert = { c: Cellar -> c.wines[live.id]?.let { c.updateWine(it.completed(from = updated, to = live)) }; Unit }
+                // The bottles' "Added" snackbar still waiting or shown: one snackbar, whose Undo takes both back.
+                val add = lastAdd?.takeIf { it.wineId == saved.id && it.slot.replace() }
+                if (add == null) {
+                    post(UiText.Res(R.string.msg_ai_completed, listOf(updated.displayName))) { change<Unit>(block = revert) }
+                } else {
+                    lastAdd = null
+                    val text = if (add.ordered) R.string.msg_on_order_ai_completed else R.string.msg_added_ai_completed
+                    post(UiText.Res(text, listOf(add.count, updated.displayName))) {
+                        change<Unit> { c ->
+                            revert(c)
+                            add.revert(c)
+                        }
+                    }
                 }
             }.onFailure { fail(it) }
         }

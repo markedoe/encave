@@ -57,7 +57,7 @@ extension RackBottleList {
     /// The rack's bottles in place order: row, then column, then front to back. On a
     /// fridge with shelf layers: shelf, then layer from the bottom, then column and depth.
     private func placed(in rack: Rack) -> [Bottle] {
-        let inRack: [Bottle] = model.cellar.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
+        let inRack: [Bottle] = model.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
         return inRack.sorted { a, b in
             guard let x = a.slot, let y = b.slot else { return false }
             let first = order(rack, x), second = order(rack, y)

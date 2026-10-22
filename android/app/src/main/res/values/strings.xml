@@ -1036,6 +1036,8 @@
     <string name="same_wine_footer">Adding to it keeps the bottles and tastings of this wine together.</string>
     <string name="msg_added">Added %1$d × %2$s</string>
     <string name="msg_ai_completed">Details completed by AI: %1$s</string>
+    <string name="msg_added_ai_completed">Added %1$d × %2$s, details completed by AI</string>
+    <string name="msg_on_order_ai_completed">On order: %1$d × %2$s, details completed by AI</string>
     <string name="quantity_case">A case of</string>
     <string name="add_auto_slots">Placed automatically in the first free places. Tap a place to choose.</string>
     <string name="discard_title">Discard changes?</string>

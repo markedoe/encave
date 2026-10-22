@@ -82,11 +82,11 @@ struct MacRoot: View {
         List(selection: $destination) {
             Section("Library") {
                 Label("Cellar", systemImage: "wineglass")
-                    .badge(model.cellar.bottlesInCellar.count)
+                    .badge(model.bottlesInCellar.count)
                     .tag(MacDestination.cellar)
                     .accessibilityIdentifier("section.cellar")
                 Label("Tonight", systemImage: "moon.stars")
-                    .badge(model.cellar.statistics(year: model.currentYear).byMaturity[.drinkSoon, default: 0])
+                    .badge(model.overview.statistics.byMaturity[.drinkSoon, default: 0])
                     .tag(MacDestination.tonight)
                     .accessibilityIdentifier("section.tonight")
                 Label("Journal", systemImage: "book.closed")
