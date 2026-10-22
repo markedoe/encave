@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
@@ -1092,6 +1093,8 @@ private fun StatTile(
             contentDescription = "${Formats.integer(value)} $caption. $hint"
             selected = isSelected
             role = Role.Button
+            // clearAndSetSemantics drops the Surface's click: give it back to TalkBack.
+            this.onClick(label = hint) { onClick(); true }
         },
         shape = shape,
         color = if (isSelected) scheme.primaryContainer else scheme.surfaceContainerHigh,

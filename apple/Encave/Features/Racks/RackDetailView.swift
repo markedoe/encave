@@ -134,7 +134,7 @@ struct RackDetailView: View {
         )
         #if os(macOS)
         grid
-            .animation(.snappy, value: zoom)
+            .motionAnimation(.snappy, value: zoom)
             .gesture(
                 MagnifyGesture()
                     .updating($pinch) { value, state, _ in state = value.magnification }
@@ -178,7 +178,7 @@ struct RackDetailView: View {
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .motionTransition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 RackKey(rack: rack, focusWine: $focusWine)
             }

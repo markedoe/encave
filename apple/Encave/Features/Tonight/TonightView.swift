@@ -8,6 +8,7 @@ struct TonightView: View {
     var selection: Binding<UUID?>?
     /// "Another idea" taps since the screen opened.
     @State private var pickOffset = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if let selection {
@@ -68,7 +69,7 @@ struct TonightView: View {
                 let start = Cellar.tonightStartIndex(dayOfYear: dayOfYear, count: candidates.count)
                 TonightPick(group: candidates[(start + pickOffset) % candidates.count]) {
                     let next = pickOffset + 1
-                    withAnimation(.snappy) { pickOffset = next }
+                    withMotion(.snappy, reduceMotion: reduceMotion) { pickOffset = next }
                     // The card changes without moving focus: say which wine it shows now.
                     let wine = candidates[(start + next) % candidates.count].wine
                     AccessibilityNotification.Announcement([wine.displayName, wine.styleLine]
@@ -317,6 +318,6 @@ private struct TonightPick: View {
         )
         .padding(.vertical, 4)
         .id("pick-\(group.id)")
-        .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
+        .motionTransition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
     }
 }

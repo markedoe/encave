@@ -260,8 +260,20 @@ final class ScreenTourTests: XCTestCase {
 
     private func checkTable() {
         let layout = element("cellar.layout")
-        guard layout.waitForExistence(timeout: 3), layout.buttons.count > 1 else { return }
-        layout.buttons.element(boundBy: 1).press()
+        if layout.waitForExistence(timeout: 3), layout.buttons.count > 1 {
+            layout.buttons.element(boundBy: 1).press()
+        } else {
+            // iPad: in the Sort and Filter menu of the list.
+            let sort = element("cellar.sort")
+            guard sort.exists, sort.isHittable else { return }
+            sort.press()
+            let table = element("cellar.layout.table")
+            guard table.waitForExistence(timeout: 3) else {
+                dismissMenu()
+                return
+            }
+            table.press()
+        }
         sleep(1)
         snapshot("cellar-table")
         // Back to the list, which the rest of the tour expects.
@@ -351,6 +363,17 @@ final class ScreenTourTests: XCTestCase {
         if row.waitForExistence(timeout: 3) {
             row.press()
             snapshot("cellar-select")
+            // The actions must be above the tab bar (iPhone) and open.
+            let more = element("cellar.select.more")
+            if more.waitForExistence(timeout: 2), more.isHittable {
+                more.press()
+                sleep(1)
+                XCTAssertTrue(element("cellar.select.delete").waitForExistence(timeout: 2), "cellar: More has no Delete")
+                snapshot("cellar-select-more")
+                dismissMenu()
+            } else {
+                XCTFail("cellar: the More button of the selection cannot be pressed")
+            }
         } else {
             XCTFail("cellar: no wines to select")
         }
@@ -415,8 +438,21 @@ final class ScreenTourTests: XCTestCase {
         if element("restore.preview").waitForExistence(timeout: 5) {
             snapshot("restore-preview")
             scrollIntoView(replace)
+            // Down to the last button, so the capture shows both actions.
+            #if os(iOS)
+            app.swipeUp()
+            #else
+            app.scroll(byDeltaX: 0, deltaY: -300)
+            #endif
             XCTAssertTrue(replace.exists, "restore preview: no Replace This Cellar button")
             snapshot("restore-actions")
+            if replace.isHittable {
+                replace.press()
+                sleep(1)
+                snapshot("restore-replace-confirm")
+                // Cancel: the sample cellar stays for the rest of the tour.
+                dismissMenu()
+            }
         } else {
             XCTFail("previous versions: the preview did not open")
         }
@@ -675,6 +711,22 @@ final class ScreenTourTests: XCTestCase {
             XCTFail("wine-explore: no wine listed for the producer")
         }
         goBack()
+    }
+
+    /// Closes an open menu or confirmation without choosing anything.
+    private func dismissMenu() {
+        #if os(macOS)
+        app.typeKeyEscapeIfMac()
+        #else
+        let cancel = app.buttons["Cancel"].exists ? app.buttons["Cancel"] : app.buttons["Annuler"]
+        if cancel.exists, cancel.isHittable {
+            cancel.press()
+        } else {
+            // Away from the menu, which opens under its button.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap()
+        }
+        #endif
+        sleep(1)
     }
 
     private func scrollIntoView(_ element: XCUIElement) {

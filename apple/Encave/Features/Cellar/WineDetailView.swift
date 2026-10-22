@@ -270,14 +270,18 @@ struct WineDetailView: View {
         }
     }
 
-    /// "16 – 18 °C", or Fahrenheit where the locale uses it.
+    /// "16 – 18 °C", or Fahrenheit where the locale uses it: the unit once, after the range.
     private func temperatureRange(_ advice: ServingAdvice) -> String {
         let style = Measurement<UnitTemperature>.FormatStyle(
-            width: .narrow, usage: .weather, numberFormatStyle: .number.precision(.fractionLength(0))
+            width: .abbreviated, usage: .weather, numberFormatStyle: .number.precision(.fractionLength(0))
         )
         let low = Measurement(value: Double(advice.minTemperature), unit: UnitTemperature.celsius)
         let high = Measurement(value: Double(advice.maxTemperature), unit: UnitTemperature.celsius)
-        return "\(low.formatted(style)) – \(high.formatted(style))"
+        // The low end without its unit, in the unit the high end is shown in.
+        let lowText = low.formatted(style.attributed)
+        let lowNumber = lowText.runs.filter { $0.measurement == .value }
+            .map { String(lowText[$0.range].characters) }.joined()
+        return "\(lowNumber.isEmpty ? low.formatted(style) : lowNumber) – \(high.formatted(style))"
     }
 
     private func apply(_ details: WineDetails, fields: Set<WineDetailField>) {

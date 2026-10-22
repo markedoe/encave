@@ -115,8 +115,9 @@ struct CellarCommands: Commands {
             Button("Add Bottles…") { withWine { act(.present(.addBottle(AddBottleContext(wine: $0)))) } }
                 .disabled(selectedWineID == nil)
             Divider()
+            // No ⌘⌫ here: text fields keep it. On the Mac, the Delete key deletes the
+            // selected wine through the list or the table (`onDeleteCommand`).
             Button("Delete Wine") { withWine { model.deleteWine($0.id) } }
-                .keyboardShortcut(.delete)
                 .disabled(selectedWineID == nil)
         }
         CommandMenu("Cellar") {

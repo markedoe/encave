@@ -37,7 +37,7 @@ struct ToastOverlay: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 64)
                 .frame(maxWidth: 520)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .motionTransition(.move(edge: .bottom).combined(with: .opacity))
                 .task(id: toast.id) {
                     AccessibilityNotification.Announcement(toast.message).post()
                     try? await Task.sleep(for: .seconds(toast.seconds(voiceOver: voiceOver)))
@@ -48,7 +48,7 @@ struct ToastOverlay: View {
                 .accessibilityElement(children: .contain)
             }
         }
-        .animation(.spring(duration: 0.35), value: model.toast?.id)
+        .motionAnimation(.spring(duration: 0.35), reduced: .easeInOut(duration: 0.2), value: model.toast?.id)
         .onChange(of: model.toast?.id, initial: true) { registerUndo() }
         .onDisappear { unregister() }
     }

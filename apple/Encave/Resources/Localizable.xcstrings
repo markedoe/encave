@@ -951,6 +951,46 @@
         }
       }
     },
+    "%lld selected": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld selected"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld selected"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld sélectionné"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld sélectionnés"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld stars": {
       "localizations": {
         "en": {
@@ -10827,16 +10867,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez les détails à utiliser. Les autres restent tels quels."
-          }
-        }
-      }
-    },
-    "Selected: %lld": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélection : %lld"
           }
         }
       }
