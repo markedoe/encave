@@ -37,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -112,15 +114,19 @@ fun RatingStars(rating: Int?, modifier: Modifier = Modifier, size: Dp = 16.dp) {
     }
 }
 
-/** Five toggles; tapping the current rating again clears it. */
+/** Five toggles; tapping the current rating again clears it. Each change ticks, as on Apple. */
 @Composable
 fun RatingInput(rating: Int?, onChange: (Int?) -> Unit, modifier: Modifier = Modifier) {
+    val haptics = LocalHapticFeedback.current
     Row(modifier) {
         for (index in 1..5) {
             val selected = rating != null && index <= rating
             IconToggleButton(
                 checked = rating == index,
-                onCheckedChange = { onChange(if (rating == index) null else index) },
+                onCheckedChange = {
+                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    onChange(if (rating == index) null else index)
+                },
             ) {
                 Icon(
                     if (selected) Icons.Filled.Star else Icons.Outlined.StarOutline,
