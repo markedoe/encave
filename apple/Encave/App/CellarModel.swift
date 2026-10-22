@@ -230,6 +230,7 @@ final class CellarModel {
             let old = cellar
             cellar = copy
             if !undoing { dropStaleUndo() }
+            if hasUntouchedSample { setUntouchedSample(false) }
             onLocalChange?(old, copy)
             return true
         } catch let error as CellarError {
@@ -458,6 +459,16 @@ final class CellarModel {
         selectedTab = .racks
     }
 
+    /// The cellar is the sample, unchanged since it was loaded: joining another device's
+    /// cellar then offers to replace it. Kept across launches; the first change clears it.
+    private(set) var hasUntouchedSample = UserDefaults.standard.bool(forKey: CellarModel.untouchedSampleKey)
+    static let untouchedSampleKey = "sample.untouched"
+
+    private func setUntouchedSample(_ untouched: Bool) {
+        hasUntouchedSample = untouched
+        UserDefaults.standard.set(untouched, forKey: Self.untouchedSampleKey)
+    }
+
     /// The sample cellar replaces everything, so it is offered only for an empty cellar
     /// that no other device syncs with.
     var canLoadSample: Bool { cellar.isEmpty && sync.otherDevices.isEmpty }
@@ -468,6 +479,7 @@ final class CellarModel {
         var sample = SampleData.cellar(labels: .localized)
         sample.settings = snapshot.settings
         guard update({ $0 = sample }) else { return }
+        setUntouchedSample(true)
         showToast(String(localized: "Sample cellar loaded")) { [weak self] in
             self?.update { $0 = snapshot }
         }
@@ -557,6 +569,8 @@ enum AppSheet: Identifiable {
     /// A backup or an earlier version, previewed before restoring it.
     case restore(RestoreSource)
     case settings
+    /// Join a cellar with a pairing code from a link (the QR code scanned with the camera).
+    case joinDevice(code: String, commitment: Data?)
 
     var id: String {
         switch self {
@@ -571,6 +585,7 @@ enum AppSheet: Identifiable {
         case .bottleDocuments(let id, _): "documents-\(id)"
         case .restore(let source): "restore-\(source.id)"
         case .settings: "settings"
+        case .joinDevice(let code, _): "join-\(code)"
         }
     }
 }
