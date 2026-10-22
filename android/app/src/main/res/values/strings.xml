@@ -628,7 +628,7 @@
     <string name="help_scanning_device_title">On this device</string>
     <string name="help_scanning_device">Take a photo of the label or choose one in the add form; the first time, Encave asks for the camera, and if it is off, **Open settings** turns it on. Encave for Android does not read the label text on the device itself (that would need a third-party library): type the name, or scan the barcode to find a wine you already have. The photo is kept with the wine.</string>
     <string name="help_scanning_ai_title">With AI (optional)</string>
-    <string name="help_scanning_ai">If an AI service is set up in Settings, the label photo is sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, with **Undo**. Only that photo is sent, never your cellar.</string>
+    <string name="help_scanning_ai">If an AI service is set up in Settings, the label photo is sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, and one banner says so; its **Undo** takes back the bottles and the AI’s details together. Only that photo is sent, never your cellar.</string>
     <string name="help_scanning_typed_title">What you typed stays</string>
     <string name="help_scanning_typed">The AI only replaces fields that are empty or that were filled automatically. Everything you typed yourself is kept.</string>
     <string name="help_scanning_photo_title">The photo</string>

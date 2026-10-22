@@ -6151,12 +6151,12 @@
         }
       }
     },
-    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, with **Undo**. Only that photo is sent, never your cellar.": {
+    "If an AI service is set up in Settings, the label photo is also sent to it to fill in or complete the name, producer, vintage, style, appellation, region, country, grapes and drinking window. No need to wait: if you add the bottles first, the answer completes the wine afterwards, and one banner says so; its **Undo** takes back the bottles and the AI's details together. Only that photo is sent, never your cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, avec **Annuler**. Seule cette photo est envoyée, jamais votre cave."
+            "value": "Si un service d’IA est configuré dans les réglages, la photo de l’étiquette lui est aussi envoyée pour remplir ou compléter le nom, le producteur, le millésime, le style, l’appellation, la région, le pays, les cépages et la fenêtre de dégustation. Inutile d’attendre : si vous ajoutez les bouteilles avant, la réponse complète le vin ensuite, et un seul bandeau l’indique ; son **Annuler** retire ensemble les bouteilles et les informations de l’IA. Seule cette photo est envoyée, jamais votre cave."
           }
         }
       }
