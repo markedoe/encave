@@ -500,7 +500,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tab("Racks")
         capture("05-racks")
         for (index in 0 until 8) {
-            scrollTo("rack.row.$index")
+            // The list, not the rack shown beside it on a tablet.
+            scrollIn("racks.list", "rack.row.$index")
             tap("rack.row.$index")
             capture("06-rack-$index")
             checkRackFits("rack $index")

@@ -62,7 +62,7 @@ class ListDetailPanesTest {
     fun tonightShowsTheWineBesideTheList() {
         tab("Tonight")
         compose.onNodeWithText("Select a bottle to see its details.").assertIsDisplayed()
-        compose.onAllNodes(hasText("Clos des Tilleuls", substring = true) and inList).onFirst().performClick()
+        compose.onAllNodes(hasTestTag("tonight.row") and inList).onFirst().performClick()
         compose.waitForIdle()
         compose.onAllNodes(hasText("Drinking window") and inDetail).onFirst().assertExists()
         compose.onAllNodesWithTag("panes.list").onFirst().assertIsDisplayed()

@@ -322,7 +322,7 @@ private fun TonightRow(
             onLongClick = { menu = true },
             onLongClickLabel = stringResource(R.string.action_more),
             selected = selected,
-            modifier = Modifier.semantics {
+            modifier = Modifier.testTag("tonight.row").semantics {
                 customActions = listOfNotNull(
                     CustomAccessibilityAction(drinkLabel) { onDrink(); true },
                     onShowInRack?.let { show -> CustomAccessibilityAction(rackLabel) { show(); true } },
