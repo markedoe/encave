@@ -75,6 +75,7 @@ import app.encave.ui.navigation.TopLevel
 import app.encave.ui.navigation.WineDetailRoute
 import app.encave.ui.racks.RackDetailScreen
 import app.encave.ui.racks.RackEditorScreen
+import app.encave.ui.racks.RackWizardScreen
 import app.encave.ui.racks.RacksScreen
 import app.encave.ui.settings.SettingsScreen
 import app.encave.ui.tonight.PairingScreen
@@ -230,7 +231,11 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 }
                 composable<AddBottleRoute> { AddBottleScreen(viewModel, navigator, it.toRoute()) }
                 composable<RackDetailRoute> { RackDetailScreen(viewModel, navigator, it.toRoute()) }
-                composable<RackEditorRoute> { RackEditorScreen(viewModel, navigator, it.toRoute<RackEditorRoute>().rackId) }
+                composable<RackEditorRoute> {
+                    val rackId = it.toRoute<RackEditorRoute>().rackId
+                    // A new storage is made step by step; an existing one opens in the editor.
+                    if (rackId == null) RackWizardScreen(viewModel, navigator) else RackEditorScreen(viewModel, navigator, rackId)
+                }
                 composable<TastingRoute> { TastingScreen(viewModel, navigator, it.toRoute<TastingRoute>().bottleId) }
                 composable<PairingRoute> { PairingScreen(viewModel, navigator) }
                 composable<InsightsRoute> { InsightsScreen(viewModel, navigator) }

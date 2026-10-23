@@ -1322,6 +1322,44 @@
     <string name="kind_fridge_layers_reversed">Wine fridge, shelves in layers · two deep, head-to-tail</string>
     <string name="cell_check_found">Found</string>
     <string name="cell_check_not_found">Not found yet</string>
+    <string name="wizard_title">New storage</string>
+    <string name="wizard_step">Step %1$d of %2$d</string>
+    <string name="wizard_name_title">Name</string>
+    <string name="action_next">Next</string>
+    <string name="action_create">Create</string>
+    <string name="storage_type_rack">Rack</string>
+    <string name="storage_type_fridge">Wine fridge</string>
+    <string name="storage_type_crates">Crates</string>
+    <string name="storage_type_rack_body">A grid, a honeycomb or diamond bins</string>
+    <string name="storage_type_fridge_body">Shelves of bottles, in a single row or in layers</string>
+    <string name="storage_type_crates_body">Wooden crates or boxes, each holding several bottles</string>
+    <string name="wizard_type_footer">The type decides what you set up next. You can change the sizes later.</string>
+    <string name="layout_grid">Grid</string>
+    <string name="layout_honeycomb">Honeycomb</string>
+    <string name="layout_diamond">Diamond bins</string>
+    <string name="layout_grid_body">One bottle per position, in rows and columns.</string>
+    <string name="layout_honeycomb_body">Offset rows nesting into each other, like metal or terracotta racks.</string>
+    <string name="layout_diamond_body">Each bin holds several bottles in a pile.</string>
+    <string name="wizard_bins_per_row">Bins per row</string>
+    <string name="wizard_bottles_per_bin">Bottles per bin</string>
+    <string name="wizard_bottles_per_shelf_body">Bottles side by side on the bottom layer of a shelf.</string>
+    <string name="wizard_layers_body">Bottles stacked in quincunx, each layer resting in the gaps of the one below. 1 is a single row.</string>
+    <string name="wizard_bins">Bins</string>
+    <string name="wizard_bins_body">Each crate or box is a bin, named like B3.</string>
+    <string name="wizard_crate_body">A wooden crate usually holds 6 or 12 bottles.</string>
+    <string name="storage_menu">Actions for %1$s</string>
+    <plurals name="storage_rows">
+        <item quantity="one">%d row</item>
+        <item quantity="other">%d rows</item>
+    </plurals>
+    <plurals name="storage_shelves">
+        <item quantity="one">%d shelf</item>
+        <item quantity="other">%d shelves</item>
+    </plurals>
+    <plurals name="storage_bins">
+        <item quantity="one">%d bin</item>
+        <item quantity="other">%d bins</item>
+    </plurals>
     <plurals name="cell_bin_more">
         <item quantity="one">%d more</item>
         <item quantity="other">%d more</item>

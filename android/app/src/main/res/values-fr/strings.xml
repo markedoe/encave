@@ -1321,6 +1321,47 @@
     <string name="kind_fridge_layers_reversed">Cave à vin, étagères en couches · deux rangs, tête-bêche</string>
     <string name="cell_check_found">Trouvée</string>
     <string name="cell_check_not_found">Pas encore trouvée</string>
+    <string name="wizard_title">Nouveau rangement</string>
+    <string name="wizard_step">Étape %1$d sur %2$d</string>
+    <string name="wizard_name_title">Nom</string>
+    <string name="action_next">Suivant</string>
+    <string name="action_create">Créer</string>
+    <string name="storage_type_rack">Casier</string>
+    <string name="storage_type_fridge">Cave à vin réfrigérée</string>
+    <string name="storage_type_crates">Caisses</string>
+    <string name="storage_type_rack_body">Une grille, un nid d’abeille ou des cases en losange</string>
+    <string name="storage_type_fridge_body">Des étagères de bouteilles, sur une seule rangée ou en couches</string>
+    <string name="storage_type_crates_body">Des caisses en bois ou des cartons contenant chacun plusieurs bouteilles</string>
+    <string name="wizard_type_footer">Le type décide de ce que vous réglez ensuite. Vous pourrez changer les tailles plus tard.</string>
+    <string name="layout_grid">Grille</string>
+    <string name="layout_honeycomb">Nid d’abeille</string>
+    <string name="layout_diamond">Cases en losange</string>
+    <string name="layout_grid_body">Une bouteille par position, en rangées et en colonnes.</string>
+    <string name="layout_honeycomb_body">Des rangées décalées qui s’emboîtent, comme les casiers en métal ou en terre cuite.</string>
+    <string name="layout_diamond_body">Chaque case contient plusieurs bouteilles empilées.</string>
+    <string name="wizard_bins_per_row">Cases par rangée</string>
+    <string name="wizard_bottles_per_bin">Bouteilles par case</string>
+    <string name="wizard_bottles_per_shelf_body">Bouteilles côte à côte sur la couche du bas d’une étagère.</string>
+    <string name="wizard_layers_body">Bouteilles empilées en quinconce, chaque couche reposant dans les creux de celle du dessous. 1 : une seule rangée.</string>
+    <string name="wizard_bins">Cases</string>
+    <string name="wizard_bins_body">Chaque caisse ou carton est une case, nommée comme B3.</string>
+    <string name="wizard_crate_body">Une caisse en bois contient en général 6 ou 12 bouteilles.</string>
+    <string name="storage_menu">Actions pour %1$s</string>
+    <plurals name="storage_rows">
+        <item quantity="one">%d rangée</item>
+        <item quantity="many">%d rangées</item>
+        <item quantity="other">%d rangées</item>
+    </plurals>
+    <plurals name="storage_shelves">
+        <item quantity="one">%d étagère</item>
+        <item quantity="many">%d étagères</item>
+        <item quantity="other">%d étagères</item>
+    </plurals>
+    <plurals name="storage_bins">
+        <item quantity="one">%d case</item>
+        <item quantity="many">%d cases</item>
+        <item quantity="other">%d cases</item>
+    </plurals>
     <plurals name="cell_bin_more">
         <item quantity="one">%d autre</item>
         <item quantity="many">%d autres</item>

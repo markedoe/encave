@@ -66,6 +66,8 @@ struct RackEditor: View {
     @State private var onShelves = false
     @State private var shelves: [ShelfDraft] = []
     @State private var loaded = false
+    /// The type of the storage being edited: only its settings are shown (nil for a new one).
+    @State private var storageType: StorageType?
     @State private var deletingRackID: UUID?
     /// The form as loaded, to ask before discarding changes.
     @State private var initial: EditorState?
@@ -84,17 +86,19 @@ struct RackEditor: View {
                     Text("Describe each place where you keep bottles: a rack, a wine fridge, a set of bins.")
                 }
 
-                Section("Kind of storage") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
-                        ForEach(RackKind.allCases, id: \.self) { option in
-                            KindCard(kind: option, isSelected: kind == option) { choose(option) }
+                if kinds.count > 1 {
+                    Section("Kind of storage") {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                            ForEach(kinds, id: \.self) { option in
+                                KindCard(kind: option, isSelected: kind == option) { choose(option) }
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
 
                 Section {
-                    if kind == .staggered {
+                    if kind == .staggered && storageType == nil {
                         Picker("Layout", selection: $onShelves.animation()) {
                             Text("Continuous").tag(false)
                             Text("On shelves").tag(true)
@@ -196,7 +200,7 @@ struct RackEditor: View {
                     }
                 }
 
-                if kind != .staggered {
+                if offersCustomRows {
                     Section {
                         Toggle("Rows of different lengths", isOn: $customRows.animation())
                         if customRows {
@@ -298,6 +302,21 @@ struct RackEditor: View {
 
     /// A honeycomb on shelves, edited shelf by shelf.
     private var layered: Bool { kind == .staggered && onShelves }
+
+    /// The kinds this storage can become: a rack stays a rack (grid or honeycomb), a fridge
+    /// and crates keep theirs. Every kind for a new storage.
+    private var kinds: [RackKind] {
+        switch storageType {
+        case .rack: [.grid, .staggered]
+        case .wineFridge, .crates: []
+        case nil: RackKind.allCases
+        }
+    }
+
+    /// Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
+    private var offersCustomRows: Bool {
+        kind != .staggered && (storageType != .wineFridge || initial?.customRows == true)
+    }
 
     private var current: EditorState {
         EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
@@ -450,6 +469,7 @@ struct RackEditor: View {
         guard !loaded else { return }
         loaded = true
         if let rackID, let rack = model.cellar.rack(rackID) {
+            storageType = rack.storageType
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
             backReversed = rack.isBackReversed

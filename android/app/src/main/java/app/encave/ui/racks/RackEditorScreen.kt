@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Diamond
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Hive
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -75,6 +76,8 @@ import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.RackKind
 import app.encave.core.SampleData
+import app.encave.core.StorageType
+import app.encave.core.storageType
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
 import app.encave.ui.components.ConfirmDialog
@@ -207,8 +210,15 @@ val RackKind.icon: ImageVector
         RackKind.Bins -> Icons.Outlined.Diamond
     }
 
-/** The symbol of a rack's kind of storage; a fridge for a honeycomb on shelves. */
-val Rack.icon: ImageVector get() = if (hasShelfLayers) RackKind.Shelves.icon else kind.icon
+val StorageType.icon: ImageVector
+    get() = when (this) {
+        StorageType.Rack -> RackKind.Grid.icon
+        StorageType.WineFridge -> RackKind.Shelves.icon
+        StorageType.Crates -> Icons.Outlined.Inventory2
+    }
+
+/** The symbol of its type of storage; a honeycomb rack keeps its own. */
+val Rack.icon: ImageVector get() = if (storageType == StorageType.Rack) kind.icon else storageType.icon
 
 /** Create or edit a rack: the kind of storage, its size, rows of different lengths, with a live preview. */
 @Composable
@@ -241,6 +251,16 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     var onShelves by rememberSaveable { mutableStateOf(existing?.hasShelfLayers == true) }
     val shelves = rememberRetained("rack.shelves") { mutableStateListOf<ShelfDraft>().apply { existing?.let { addAll(ShelfDraft.of(it)) } } }
     val layered = kind == RackKind.Staggered && onShelves
+    // The type of the storage being edited: only its settings are shown (null for a new one).
+    val storageType = existing?.storageType
+    // A rack stays a rack (grid or honeycomb); a fridge and crates keep their kind.
+    val kinds = when (storageType) {
+        StorageType.Rack -> listOf(RackKind.Grid, RackKind.Staggered)
+        StorageType.WineFridge, StorageType.Crates -> emptyList()
+        null -> RackKind.entries
+    }
+    // Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
+    val offersCustomRows = kind != RackKind.Staggered && (storageType != StorageType.WineFridge || existing?.rowColumns != null)
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDisplaced by remember { mutableStateOf(false) }
@@ -353,28 +373,30 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             )
 
-            Header(R.string.kind_title)
-            // Two cards a row, the same width, so the choices line up.
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s),
-                maxItemsInEachRow = 2,
-            ) {
-                RackKind.entries.forEach { option ->
-                    KindCard(option, selected = kind == option, Modifier.weight(1f)) {
-                        kind = option
-                        if (option == RackKind.Staggered) {
-                            customRows = false
-                            depth = depth.coerceAtMost(Rack.MAX_STAGGERED_DEPTH)
+            if (kinds.size > 1) {
+                Header(R.string.kind_title)
+                // Two cards a row, the same width, so the choices line up.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s),
+                    maxItemsInEachRow = 2,
+                ) {
+                    kinds.forEach { option ->
+                        KindCard(option, selected = kind == option, Modifier.weight(1f)) {
+                            kind = option
+                            if (option == RackKind.Staggered) {
+                                customRows = false
+                                depth = depth.coerceAtMost(Rack.MAX_STAGGERED_DEPTH)
+                            }
+                            if (existing == null) presets.firstOrNull { it.kind == option }?.let(::apply)
                         }
-                        if (existing == null) presets.firstOrNull { it.kind == option }?.let(::apply)
                     }
                 }
+
+                Hint(stringResource(R.string.help_kind_footer))
             }
 
-            Hint(stringResource(R.string.help_kind_footer))
-
             Header(R.string.rack_size_title)
-            if (kind == RackKind.Staggered) {
+            if (kind == RackKind.Staggered && storageType == null) {
                 Text(stringResource(R.string.rack_layout), style = MaterialTheme.typography.bodyLarge)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     listOf(false to R.string.rack_layout_continuous, true to R.string.rack_layout_shelves).forEachIndexed { index, (value, label) ->
@@ -495,7 +517,7 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                 )
             }
 
-            if (kind != RackKind.Staggered) {
+            if (offersCustomRows) {
                 Row(
                     Modifier.fillMaxWidth().toggleable(customRows, role = Role.Switch) { on ->
                         customRows = on
@@ -688,7 +710,7 @@ private fun ShelfCard(
 }
 
 @Composable
-private fun Header(id: Int) {
+internal fun Header(id: Int) {
     Text(
         stringResource(id), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.semantics { heading() },
@@ -696,7 +718,7 @@ private fun Header(id: Int) {
 }
 
 @Composable
-private fun SizeRow(label: String, value: Int, onChange: (Int) -> Unit, range: IntRange) {
+internal fun SizeRow(label: String, value: Int, onChange: (Int) -> Unit, range: IntRange) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
         Stepper(

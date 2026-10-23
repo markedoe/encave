@@ -595,6 +595,20 @@ class ScreenTourTest(private val device: String, private val language: String) {
     }
 
     @Test
+    fun rackWizard() {
+        tab("Racks")
+        // A new storage, step by step: its type, its settings, its name.
+        tap("racks.add")
+        capture("08c-rack-wizard-1")
+        tap("wizard.type.winefridge")
+        tap("wizard.next")
+        capture("08d-rack-wizard-2")
+        tap("wizard.next")
+        compose.onNodeWithTag("wizard.create").assertExists()
+        capture("08e-rack-wizard-3")
+    }
+
+    @Test
     fun tonightAndJournal() {
         tab("Tonight")
         capture("09-tonight")

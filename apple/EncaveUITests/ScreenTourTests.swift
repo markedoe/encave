@@ -198,8 +198,19 @@ final class ScreenTourTests: XCTestCase {
             goBack()
         }
         if element("racks.add").exists {
+            // A new storage, step by step: its type, its settings, its name.
             element("racks.add").press()
-            snapshot("rack-editor")
+            snapshot("rack-wizard-1")
+            for step in 2...3 {
+                let next = element("wizard.next")
+                guard next.waitForExistence(timeout: 5) else { break }
+                next.press()
+                snapshot("rack-wizard-\(step)")
+            }
+            #if !os(macOS)
+            // Cancel is on the first step only.
+            for _ in 0..<2 where !element("sheet.cancel").exists { goBack() }
+            #endif
             closeSheet()
         }
 

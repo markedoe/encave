@@ -171,6 +171,46 @@
         }
       }
     },
+    "%lld bins": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bins"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld case"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld cases"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld bottles": {
       "localizations": {
         "en": {
@@ -951,6 +991,46 @@
         }
       }
     },
+    "%lld rows": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld row"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rows"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rangée"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rangées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld selected": {
       "localizations": {
         "en": {
@@ -984,6 +1064,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld sélectionnés"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld shelves": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld shelf"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld shelves"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld étagère"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld étagères"
                 }
               }
             }
@@ -1481,6 +1601,16 @@
         }
       }
     },
+    "A grid, a honeycomb or diamond bins": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une grille, un nid d’abeille ou des cases en losange"
+          }
+        }
+      }
+    },
     "A honeycomb rack, or the shelves of a wine fridge holding bottles stacked in quincunx.": {
       "localizations": {
         "fr": {
@@ -1607,6 +1737,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
+          }
+        }
+      }
+    },
+    "A wooden crate usually holds 6 or 12 bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une caisse en bois contient en général 6 ou 12 bouteilles."
           }
         }
       }
@@ -2741,6 +2881,16 @@
         }
       }
     },
+    "Bins": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cases"
+          }
+        }
+      }
+    },
     "Bins or crates": {
       "localizations": {
         "fr": {
@@ -3067,6 +3217,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bouteilles retirées de la cave : %lld"
+          }
+        }
+      }
+    },
+    "Bottles side by side on the bottom layer of a shelf.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles côte à côte sur la couche du bas d’une étagère."
+          }
+        }
+      }
+    },
+    "Bottles stacked in quincunx, each layer resting in the gaps of the one below. 1 is a single row.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles empilées en quinconce, chaque couche reposant dans les creux de celle du dessous. 1 : une seule rangée."
           }
         }
       }
@@ -4051,6 +4221,16 @@
         }
       }
     },
+    "Crates": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caisses"
+          }
+        }
+      }
+    },
     "Crates of 12, 2 × 4": {
       "localizations": {
         "fr": {
@@ -4067,6 +4247,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Caisses de 6, 3 × 4"
+          }
+        }
+      }
+    },
+    "Create": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer"
           }
         }
       }
@@ -4901,6 +5091,16 @@
         }
       }
     },
+    "Each bin holds several bottles in a pile.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque case contient plusieurs bouteilles empilées."
+          }
+        }
+      }
+    },
     "Each bottle is tracked on its own, so you can drink or move them one by one.": {
       "localizations": {
         "fr": {
@@ -4917,6 +5117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles."
+          }
+        }
+      }
+    },
+    "Each crate or box is a bin, named like B3.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque caisse ou carton est une case, nommée comme B3."
           }
         }
       }
@@ -6277,6 +6487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contient %lld bouteilles. Touchez longuement une étagère pour la dupliquer ou l’appliquer à toutes les étagères."
+          }
+        }
+      }
+    },
+    "Honeycomb": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nid d’abeille"
           }
         }
       }
@@ -7741,6 +7961,16 @@
         }
       }
     },
+    "New Storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau rangement"
+          }
+        }
+      }
+    },
     "New Vintage: %lld": {
       "localizations": {
         "fr": {
@@ -7777,6 +8007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nouvelle zone à partir de cette étagère"
+          }
+        }
+      }
+    },
+    "Next": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suivant"
           }
         }
       }
@@ -8501,6 +8741,16 @@
         }
       }
     },
+    "Offset rows nesting into each other, like metal or terracotta racks.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des rangées décalées qui s’emboîtent, comme les casiers en métal ou en terre cuite."
+          }
+        }
+      }
+    },
     "Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves": {
       "localizations": {
         "fr": {
@@ -8817,6 +9067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une bouteille par case, simple ou double profondeur"
+          }
+        }
+      }
+    },
+    "One bottle per position, in rows and columns.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille par position, en rangées et en colonnes."
           }
         }
       }
@@ -11271,6 +11531,16 @@
         }
       }
     },
+    "Shelves of bottles, in a single row or in layers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des étagères de bouteilles, sur une seule rangée ou en couches"
+          }
+        }
+      }
+    },
     "Shelves, from the top": {
       "localizations": {
         "fr": {
@@ -13141,6 +13411,16 @@
         }
       }
     },
+    "The type decides what you set up next. You can change the sizes later.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le type décide de ce que vous réglez ensuite. Vous pourrez changer les tailles plus tard."
+          }
+        }
+      }
+    },
     "The wine region, such as Bordeaux or Tuscany.": {
       "localizations": {
         "fr": {
@@ -14827,6 +15107,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sans synchronisation à distance, les appareils se synchronisent toujours sur le même Wi-Fi."
+          }
+        }
+      }
+    },
+    "Wooden crates or boxes, each holding several bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des caisses en bois ou des cartons contenant chacun plusieurs bouteilles"
           }
         }
       }

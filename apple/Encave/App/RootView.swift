@@ -135,7 +135,12 @@ private struct SheetContent: View {
         case .editTasting(let bottleID):
             TastingEditor(bottleID: bottleID)
         case .editRack(let rackID):
-            RackEditor(rackID: rackID)
+            // A new storage is made step by step; an existing one opens in the editor.
+            if let rackID {
+                RackEditor(rackID: rackID)
+            } else {
+                RackWizard()
+            }
         case .moveBottle(let bottleID):
             MoveBottleView(bottleID: bottleID)
         case .wineImage(let wineID):
