@@ -211,6 +211,19 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     private fun wineRows() = compose.onAllNodesWithTag("wine.row").fetchSemanticsNodes().size
 
+    /** Tablet: Back first closes the wine shown beside the list, then leaves the Cellar. */
+    @Test
+    fun tabletBackClosesTheWineFirst() {
+        if (device != "tablet") return
+        tap("wine.row")
+        compose.onAllNodesWithTag("action.drink").onFirst().assertExists()
+        scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        compose.onNodeWithTag("cellar.list").assertExists()
+        assertEquals("$device-$language: Back left the Cellar instead of closing the wine", 0,
+            compose.onAllNodesWithTag("action.drink").fetchSemanticsNodes().size)
+    }
+
     @Test
     fun cellarFigures() {
         val all = wineRows()

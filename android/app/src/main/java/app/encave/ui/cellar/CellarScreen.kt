@@ -101,6 +101,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -176,6 +177,9 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
 
     NavigableListDetailPaneScaffold(
         navigator = paneNavigator,
+        // Back closes the wine shown, then leaves the section (as Storage, Tonight and Journal):
+        // with both panes shown, popping until the layout changes would leave the Cellar at once.
+        defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
         listPane = {
             AnimatedPane {
                 CellarList(
@@ -192,7 +196,7 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     WineDetailScreen(
                         viewModel, navigator, selectedId,
                         showBack = !twoPane,
-                        onBack = { scope.launch { paneNavigator.navigateBack() } },
+                        onBack = { scope.launch { paneNavigator.navigateBack(BackNavigationBehavior.PopUntilContentChange) } },
                         showMessages = !twoPane,
                     )
                 } else {
