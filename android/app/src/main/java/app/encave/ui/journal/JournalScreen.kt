@@ -116,6 +116,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import app.encave.ui.components.ListDetailPanes
+import app.encave.ui.discoveries.DiscoveryEditorScreen
 import androidx.compose.ui.res.pluralStringResource
 import app.encave.core.bottleToOpen
 import app.encave.ui.drink.DrinkSheet
@@ -131,6 +134,25 @@ import androidx.compose.ui.graphics.Color
  */
 @Composable
 fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    ListDetailPanes(
+        navigator = navigator,
+        placeholder = stringResource(R.string.journal_select_entry),
+        list = { open, selected -> JournalList(viewModel, navigator, open, selected) },
+        detail = { key, paneNavigator, _ ->
+            val id = key.substringAfter(':')
+            if (key.startsWith(TASTING_KEY)) TastingScreen(viewModel, paneNavigator, id)
+            else DiscoveryEditorScreen(viewModel, paneNavigator, id)
+        },
+    )
+}
+
+/** Keys of the Journal's details: a tasting from the cellar (bottle ID) or a wine tasted elsewhere. */
+private const val TASTING_KEY = "tasting:"
+private const val DISCOVERY_KEY = "discovery:"
+
+/** The diary; [onOpenEntry] shows an entry beside the list on wide windows. */
+@Composable
+private fun JournalList(viewModel: AppViewModel, navigator: AppNavigator, onOpenEntry: ((String) -> Unit)?, selectedKey: String?) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val filter by viewModel.journalFilter.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
@@ -148,9 +170,9 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     var choosing by rememberSaveable { mutableStateOf(false) }
     var picking by rememberSaveable { mutableStateOf(false) }
     var drinking by rememberDrinking()
-    val actions = remember(viewModel, navigator) {
+    val actions = remember(viewModel, navigator, onOpenEntry) {
         DiscoveryActions(
-            open = { navigator.open(DiscoveryEditorRoute(it.id.toString())) },
+            open = { onOpenEntry?.invoke(DISCOVERY_KEY + it.id) ?: navigator.open(DiscoveryEditorRoute(it.id.toString())) },
             addToCellar = { navigator.open(AddBottleRoute(wineId = it.wineId.toString(), discoveryId = it.id.toString())) },
             toggleToBuy = { viewModel.toggleToBuy(it.id) },
             delete = { viewModel.deleteDiscovery(it.id) },
@@ -229,7 +251,10 @@ fun JournalScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         when (entry) {
                             is DiaryEntry.Opened -> TastingRow(
                                 cellar, entry.bottle, Modifier.animateItem(),
-                                onClick = { navigator.open(TastingRoute(entry.bottle.id.toString())) },
+                                onClick = {
+                                    onOpenEntry?.invoke(TASTING_KEY + entry.bottle.id) ?: navigator.open(TastingRoute(entry.bottle.id.toString()))
+                                },
+                                selected = selectedKey == TASTING_KEY + entry.bottle.id,
                                 onShowWine = { navigator.open(WineDetailRoute(entry.bottle.wineId.toString())) },
                                 onAddBottles = { navigator.open(AddBottleRoute(wineId = entry.bottle.wineId.toString())) },
                                 onPutBack = { viewModel.putBack(entry.bottle.id) },
@@ -398,6 +423,7 @@ private fun TastingRow(
     onShowWine: () -> Unit,
     onAddBottles: () -> Unit,
     onPutBack: () -> Unit,
+    selected: Boolean = false,
 ) {
     var menu by remember { mutableStateOf(false) }
     val showLabel = stringResource(R.string.action_show_wine)
@@ -427,12 +453,14 @@ private fun TastingRow(
                 .combinedClickable(onClick = onClick, onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.action_more))
                 .clearAndSetSemantics {
                     contentDescription = description
+                    this.selected = selected
                     customActions = listOf(
                         CustomAccessibilityAction(showLabel) { onShowWine(); true },
                         CustomAccessibilityAction(addLabel) { onAddBottles(); true },
                         CustomAccessibilityAction(putBackLabel) { onPutBack(); true },
                     )
                 },
+            colors = if (selected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
             leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
             overlineContent = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {

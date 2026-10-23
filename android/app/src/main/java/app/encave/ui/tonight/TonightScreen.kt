@@ -112,6 +112,8 @@ import app.encave.ui.components.Formats
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.MaturityLabel
 import app.encave.ui.components.WineGroupRow
+import app.encave.ui.components.ListDetailPanes
+import app.encave.ui.cellar.WineDetailScreen
 import app.encave.ui.components.icon
 import app.encave.ui.components.labelRes
 import app.encave.ui.components.tint
@@ -125,6 +127,20 @@ import app.encave.ui.theme.SerifDisplay
 /** What to open tonight: a suggestion that changes daily, food pairing, then bottles by maturity, most urgent first. */
 @Composable
 fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    ListDetailPanes(
+        navigator = navigator,
+        placeholder = stringResource(R.string.cellar_select_wine),
+        list = { open, selected -> TonightList(viewModel, navigator, open, selected) },
+        detail = { id, paneNavigator, twoPane ->
+            WineDetailScreen(viewModel, paneNavigator, id, showBack = !twoPane, showMessages = !twoPane)
+        },
+    )
+}
+
+/** The suggestion, then the wines by maturity; [onOpenWine] shows a wine beside the list on wide windows. */
+@Composable
+private fun TonightList(viewModel: AppViewModel, navigator: AppNavigator, onOpenWine: ((String) -> Unit)?, selectedId: String?) {
+    val openWine: (String) -> Unit = { id -> onOpenWine?.invoke(id) ?: navigator.open(WineDetailRoute(id)) }
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
     val resources = LocalResources.current
@@ -193,7 +209,7 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                             val pick = candidates[pickOffset % candidates.size]
                             SurpriseCard(
                                 group = pick, cellar = cellar, year = year,
-                                onOpen = { navigator.open(WineDetailRoute(pick.id.toString())) },
+                                onOpen = { openWine(pick.id.toString()) },
                                 onDrink = { drinking = pick.bottles.bottleToOpen?.id?.toString() },
                                 onShowInRack = showInRack,
                                 // Only when there is another wine to suggest.
@@ -249,7 +265,8 @@ fun TonightScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     items(section.groups, key = { section.maturity.raw + it.id }) { group ->
                         TonightRow(
                             group = group, cellar = cellar, year = year,
-                            onOpen = { navigator.open(WineDetailRoute(group.id.toString())) },
+                            onOpen = { openWine(group.id.toString()) },
+                            selected = group.id.toString() == selectedId,
                             onDrink = { drinking = group.bottles.bottleToOpen?.id?.toString() },
                             onShowInRack = group.bottles.firstOrNull { it.slot != null }?.let { bottle -> { showInRack(bottle) } },
                             onReserve = { reserving = group.bottles.bottleToOpen?.id?.toString() },
@@ -292,6 +309,7 @@ private fun TonightRow(
     onDrink: () -> Unit,
     onShowInRack: (() -> Unit)?,
     onReserve: () -> Unit,
+    selected: Boolean = false,
 ) {
     var menu by remember { mutableStateOf(false) }
     val drinkLabel = stringResource(R.string.action_drink)
@@ -303,7 +321,8 @@ private fun TonightRow(
             onClick = onOpen,
             onLongClick = { menu = true },
             onLongClickLabel = stringResource(R.string.action_more),
-            modifier = Modifier.semantics {
+            selected = selected,
+            modifier = Modifier.testTag("tonight.row").semantics {
                 customActions = listOfNotNull(
                     CustomAccessibilityAction(drinkLabel) { onDrink(); true },
                     onShowInRack?.let { show -> CustomAccessibilityAction(rackLabel) { show(); true } },

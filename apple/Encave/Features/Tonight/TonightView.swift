@@ -289,6 +289,7 @@ private struct TonightPick: View {
                 .foregroundStyle(.secondary)
             Button(action: open) { header(wine) }
                 .buttonStyle(.plain)
+                .pointerHighlight(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .accessibilityHint(Text("Opens the wine."))
                 .accessibilityIdentifier("action.tonight.open")
             // The bottle Drink opens first: a free one, as in the drink sheet.

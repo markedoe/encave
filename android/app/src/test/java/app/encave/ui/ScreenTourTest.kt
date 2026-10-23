@@ -590,7 +590,8 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         val count = ApplicationProvider.getApplicationContext<EncaveApplication>().repository.cellar.value.racks.size
         assertTrue("the sample has racks", count >= 8)
         for (index in 0 until count) {
-            scrollTo("rack.row.$index")
+            // The list, not the rack shown beside it on a tablet.
+            scrollIn("racks.list", "rack.row.$index")
             tap("rack.row.$index")
             capture("rack-${index + 1}")
             checkRackFits("rack $index")

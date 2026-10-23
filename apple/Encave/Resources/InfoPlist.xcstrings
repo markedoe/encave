@@ -48,6 +48,22 @@
           }
         }
       }
+    },
+    "Encave wine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encave wine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vin Encave"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

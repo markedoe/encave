@@ -46,6 +46,8 @@
     <string name="cellar_no_match">Aucune bouteille ne correspond</string>
     <string name="cellar_no_match_body">Essayez une autre recherche ou retirez les filtres.</string>
     <string name="cellar_select_wine">Sélectionnez une bouteille pour voir ses détails.</string>
+    <string name="storage_select">Sélectionnez un rangement pour voir ses bouteilles.</string>
+    <string name="journal_select_entry">Sélectionnez une dégustation pour voir sa note.</string>
     <string name="sort_name">Nom</string>
     <string name="sort_vintage">Millésime</string>
     <string name="sort_recent">Ajout récent</string>
