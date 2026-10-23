@@ -153,7 +153,8 @@ placeholders: never commit the real ones.
    When the run ends, download the `encave-release-aab` artifact (a ZIP with
    `app-release.aab`). `play-internal` ends with a notice: expected.
 3. **The app.** In the Play Console: Create app; name Encave; default
-   language English (United States); App; Free; accept the declarations.
+   language French (France); App; Free; accept the declarations. Then add
+   English (United States) as a translation of the store listing.
    The package name is set by the first bundle: `app.encave`
    (`applicationId` in `android/app/build.gradle.kts`).
 4. **Forms** (Dashboard › Set up your app), answers in `docs/STORE.md`: App
