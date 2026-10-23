@@ -1,5 +1,8 @@
 import CaveKit
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 /// iPhone and iPad: the list, and the selected wine beside it (or pushed on iPhone).
 /// On the Mac, the window's own columns show `CellarList` and `WinePane` directly.
@@ -119,7 +122,8 @@ struct CellarList: View {
             }
             #if os(iOS)
             // iPhone, like Mail and Files: the actions at the bottom take the tab bar's place.
-            .toolbar(isSelecting && !isWide ? .hidden : .visible, for: .tabBar)
+            // Not by size class: the iPad sidebar column is compact, and its tabs stay.
+            .toolbar(isSelecting && UIDevice.current.userInterfaceIdiom == .phone ? .hidden : .visible, for: .tabBar)
             #endif
             .alert("Save This Search", isPresented: $namingSearch) {
                 TextField("Name", text: $searchName)
