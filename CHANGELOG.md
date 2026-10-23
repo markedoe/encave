@@ -24,6 +24,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   codes typed in lower case
 - Help, privacy policy and store notes describe backups exactly (on by default,
   not encrypted, where they are kept)
+- Studio photos keep the whole label (script, logos, drawings, blurry lines):
+  it is found from its paper, and a photo without a label is shown whole
 
 ### Added
 - Privacy policy (docs/PRIVACY.md, linked from the apps) and store paperwork

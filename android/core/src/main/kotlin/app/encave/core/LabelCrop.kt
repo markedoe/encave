@@ -40,6 +40,59 @@ object LabelCrop {
     private const val CONTRAST = 1.5f
 
     fun find(pixels: IntArray, width: Int, height: Int): Box? {
+        val band = textBand(pixels, width, height, fallback = true) ?: return null
+        return frame(band.top, band.bottom, band.centre, band.w, band.h)?.scaled(band.step, width, height)
+    }
+
+    /**
+     * The part of the photo to show in the studio look, in this order: the label's
+     * paper (see [LabelPaper], looked for around the text band when there is one)
+     * with the text band, the paper keeping [PAPER_MARGIN] on each side; else the
+     * text band as [find] gives it; else null, the whole photo, never the centre
+     * band where labels usually sit. The same order as Apple's StudioPhoto.
+     */
+    fun studioFrame(pixels: IntArray, width: Int, height: Int): Box? {
+        val text = textBand(pixels, width, height, fallback = false)
+        val paper = LabelPaper.find(pixels, width, height, text?.let { (it.top + it.bottom) / 2.0 / it.h })
+            ?: return text?.let { frame(it.top, it.bottom, it.centre, it.w, it.h)?.scaled(it.step, width, height) }
+        val rows = paperFrame(text?.let { it.top.toDouble() / it.h..it.bottom.toDouble() / it.h }, paper.top..paper.bottom)
+            ?: return null
+        val top = (rows.start * height).toInt()
+        val bottom = min(height, kotlin.math.ceil(rows.endInclusive * height).toInt())
+        val centre = (paper.left + paper.right) / 2 * width
+        val half = max(1, min(centre, width - centre).roundToInt())
+        val middle = centre.roundToInt()
+        return Box(max(0, middle - half), top, min(width, middle + half), bottom)
+    }
+
+    /** Kept around a label found from its paper, as a share of the photo (the same as Apple's LabelFraming). */
+    const val PAPER_MARGIN = 0.06
+
+    /**
+     * The rows to keep (fractions from the top) for a label at [text] (from its
+     * text, if any) and [paper]: 15% above and 10% below both together (text away
+     * from the paper is not on this label and is left out), widened so the paper
+     * keeps [PAPER_MARGIN] on each side. Null when that is nearly the whole photo.
+     * The same as Apple's LabelFraming.frame(text:paper:).
+     */
+    fun paperFrame(text: ClosedFloatingPointRange<Double>?, paper: ClosedFloatingPointRange<Double>): ClosedFloatingPointRange<Double>? {
+        val onLabel = text?.takeIf { it.start < paper.endInclusive && it.endInclusive > paper.start }
+        val from = if (onLabel == null) paper.start else min(onLabel.start, paper.start)
+        val to = if (onLabel == null) paper.endInclusive else max(onLabel.endInclusive, paper.endInclusive)
+        val band = to - from
+        val top = max(0.0, min(from - band * ABOVE, paper.start - PAPER_MARGIN))
+        val bottom = min(1.0, max(to + band * BELOW, paper.endInclusive + PAPER_MARGIN))
+        return if (bottom - top > 0.9) null else top..bottom
+    }
+
+    /** The label's rows and centre on the analysis grid of [step] × [step] cells. */
+    private class Band(val top: Int, val bottom: Int, val centre: Float, val w: Int, val h: Int, val step: Int)
+
+    /**
+     * The band where edges are densest; with almost no edges, the centre band when
+     * [fallback], else null.
+     */
+    private fun textBand(pixels: IntArray, width: Int, height: Int, fallback: Boolean): Band? {
         if (width < 8 || height < 8 || pixels.size < width * height) return null
         val step = max(1, max(width, height) / GRID)
         val w = width / step
@@ -60,7 +113,7 @@ object LabelCrop {
             count.toFloat() / (columnRight - columnLeft)
         }
         val mean = rows.average().toFloat()
-        if (mean < 0.01f) return frame((h * FALLBACK_TOP).toInt(), (h * FALLBACK_BOTTOM).toInt(), w / 2f, w, h)?.scaled(step, width, height)
+        if (mean < 0.01f) return if (fallback) Band((h * FALLBACK_TOP).toInt(), (h * FALLBACK_BOTTOM).toInt(), w / 2f, w, h, step) else null
 
         // The densest window of rows, about the height of a label on a whole bottle.
         val window = max(3, (h * 0.22f).roundToInt())
@@ -92,7 +145,7 @@ object LabelCrop {
         val left = columns.indexOfFirst { it >= threshold && it > 0f }
         val right = columns.indexOfLast { it >= threshold && it > 0f } + 1
         val centre = if (right > left && left >= 0) (left + right) / 2f else w / 2f
-        return frame(top, bottom, centre, w, h)?.scaled(step, width, height)
+        return Band(top, bottom, centre, w, h, step)
     }
 
     /**

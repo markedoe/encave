@@ -22,8 +22,6 @@ public enum LabelFraming {
     public static let bottleAspect = 0.55
     /// Text covering more of the cut-out than this: already a close-up of the label.
     public static let closeUpTextCoverage = 0.4
-    /// Where labels sit on a bottle, used when neither text nor a rectangle is found.
-    public static let fallbackBand: ClosedRange<Double> = 0.35...0.85
 
     /// A line of text read on the bottle, in Vision's coordinates (0 to 1, from the bottom).
     public struct Line: Equatable, Sendable {
@@ -74,6 +72,26 @@ public enum LabelFraming {
         let labelHeight = label.upperBound - label.lowerBound
         let top = max(0, label.lowerBound - labelHeight * above)
         let bottom = min(1, label.upperBound + labelHeight * below)
+        return bottom - top > 0.9 ? nil : top...bottom
+    }
+
+    /// Kept around a label found from its paper (`LabelPaper`), as a share of the picture.
+    public static let paperMargin = 0.06
+
+    /// The part to keep for a label at `text` (from its text) and `paper` (from its
+    /// paper), either one missing: as `frame(label:width:height:)` for both together
+    /// (text away from the paper is not on this label and is left out), widened so
+    /// the paper keeps `paperMargin` on each side even where the text alone would
+    /// cut it. Nil when that is nearly the whole picture, or with neither.
+    public static func frame(text: ClosedRange<Double>?, paper: ClosedRange<Double>?, width: Double, height: Double)
+        -> ClosedRange<Double>? {
+        guard let paper else { return text.flatMap { frame(label: $0, width: width, height: height) } }
+        guard width > 0, height > 0 else { return nil }
+        let text = text.flatMap { $0.lowerBound < paper.upperBound && $0.upperBound > paper.lowerBound ? $0 : nil }
+        let label = text.map { min($0.lowerBound, paper.lowerBound)...max($0.upperBound, paper.upperBound) } ?? paper
+        let labelHeight = label.upperBound - label.lowerBound
+        let top = max(0, min(label.lowerBound - labelHeight * above, paper.lowerBound - paperMargin))
+        let bottom = min(1, max(label.upperBound + labelHeight * below, paper.upperBound + paperMargin))
         return bottom - top > 0.9 ? nil : top...bottom
     }
 

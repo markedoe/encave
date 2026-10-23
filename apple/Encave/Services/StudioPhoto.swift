@@ -17,9 +17,12 @@ import Vision
 ///   80% of the picture, the glass running off its top and bottom edges;
 /// - a clear cut-out of anything else is shown whole, a label seen at an angle
 ///   straightened from its corners;
-/// - without a clear cut-out, a label in a rectangle is straightened, else the photo
-///   is shown filling the picture, centred on its label (found from its text, else
-///   where its edges are densest, as on Android), with its light evened out.
+/// - without a clear cut-out (or one that cut off part of the label), a label in a
+///   rectangle is straightened, else the photo is shown filling the picture, centred
+///   on its label, with its light evened out.
+/// The label is found from its paper (CaveKit's `LabelPaper`, as on Android), so
+/// script, logos and drawings stay in the frame, else from its text; without
+/// either the picture is shown whole, never cut on a guess.
 ///
 /// The result is only a local cache (each device makes its own), so it is never
 /// synced and can be thrown away at any time.
@@ -47,8 +50,8 @@ enum StudioPhoto {
 
     /// A new folder when the look changes, so every device makes its pictures again
     /// (photos that gave nothing before are tried again too). Older folders are removed.
-    private static let folderName = "Encave/Studio4"
-    private static let oldFolderNames = ["Encave/Studio", "Encave/Studio2", "Encave/Studio3"]
+    private static let folderName = "Encave/Studio5"
+    private static let oldFolderNames = ["Encave/Studio", "Encave/Studio2", "Encave/Studio3", "Encave/Studio4"]
 
     private static let folder: URL? = {
         guard let base = try? FileManager.default.url(for: .cachesDirectory, in: .userDomainMask,
@@ -152,7 +155,10 @@ enum StudioPhoto {
         }
         var made: (picture: CIImage, kind: Kind)
         if let cut = lifted?.cut {
-            if let framed = LabelFrame.crop(cut, context: context) {
+            if LabelFrame.clipsLabel(cut, of: photo, context: context) {
+                // The cut-out lost an edge of the label (a pale label on a dark background).
+                made = LabelFrame.withoutCutout(photo, handler: handler, context: context)
+            } else if let framed = LabelFrame.crop(cut, context: context) {
                 made = (framed, .label)
             } else {
                 made = (LabelFrame.squared(cut, context: context) ?? cut, .cutout)
@@ -283,15 +289,16 @@ enum StudioPhoto {
     }
 }
 
-/// Frames a picture on its label (the rules are in CaveKit's `LabelFraming`,
-/// tested on every platform). The label is the text read on the bottle (on the
-/// device, without language correction); without text, a rectangle on the bottle;
-/// without either, the part of a bottle where labels sit.
+/// Frames a picture on its label (the rules are in CaveKit's `LabelFraming` and
+/// `LabelPaper`, tested on every platform), in this order: the label's paper,
+/// looked for around the text read on it (on the device, without language
+/// correction); else the text, or for a cut-out a rectangle on the bottle; else
+/// nothing, and the picture is shown whole. The frame always keeps the whole paper.
 enum LabelFrame {
     /// A cut-out standing bottle framed on its label, its full width, cut through
     /// the glass above and below (shown running off the picture's edges). Nil for a
     /// cut-out that is not a standing bottle, mostly covered with text (a close-up),
-    /// or when the frame would be nearly the whole bottle.
+    /// without a label found, or when the frame would be nearly the whole bottle.
     static func crop(_ cut: CIImage, context: CIContext) -> CIImage? {
         let extent = cut.extent
         let width = Double(extent.width), height = Double(extent.height)
@@ -300,17 +307,35 @@ enum LabelFrame {
         let gray = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5)).cropped(to: extent)
         guard let flat = context.createCGImage(cut.composited(over: gray), from: extent) else { return nil }
         let handler = VNImageRequestHandler(cgImage: flat, options: [:])
-        let band: ClosedRange<Double>
-        if let text = LabelFraming.label(lines: textBoxes(handler).map(line)) {
-            if text.coverage > LabelFraming.closeUpTextCoverage { return nil }
-            band = text.band
-        } else {
-            band = rectangleBand(handler) ?? LabelFraming.fallbackBand
-        }
-        guard let frame = LabelFraming.frame(label: band, width: width, height: height) else { return nil }
+        let text = LabelFraming.label(lines: textBoxes(handler).map(line))
+        if let text, text.coverage > LabelFraming.closeUpTextCoverage { return nil }
+        // The paper on black, which is never paper (the gray could be a white label's).
+        let paper = paperBox(onBlack(cut), seedRow: text.map { middle($0.band) }, context: context)
+        let printed = text?.band ?? rectangleBand(handler)
+        guard let frame = LabelFraming.frame(text: printed, paper: paper.map { $0.top...$0.bottom },
+                                             width: width, height: height) else { return nil }
         let below = CGFloat(1 - frame.upperBound), kept = CGFloat(frame.upperBound - frame.lowerBound)
         return cut.cropped(to: CGRect(x: extent.minX, y: extent.minY + extent.height * below,
                                       width: extent.width, height: extent.height * kept))
+    }
+
+    /// True when the label found from its paper on the whole photo reaches past the
+    /// cut-out, beside it at the same height: the cut-out lost an edge of the label,
+    /// so the photo is framed instead.
+    static func clipsLabel(_ cut: CIImage, of photo: CIImage, context: CIContext) -> Bool {
+        guard let whole = paperBox(photo, context: context) else { return false }
+        let p = photo.extent, c = cut.extent
+        guard p.width > 0, p.height > 0 else { return false }
+        // The cut-out's rows and sides, as fractions of the photo from its top left.
+        let top = Double((p.maxY - c.maxY) / p.height), bottom = Double((p.maxY - c.minY) / p.height)
+        guard whole.bottom > top, whole.top < bottom else { return false }
+        func across(_ fraction: Double) -> Double {
+            (Double(c.minX - p.minX) + fraction * Double(c.width)) / Double(p.width)
+        }
+        let own = paperBox(onBlack(cut), context: context)
+        let left = across(own?.left ?? 0), right = across(own?.right ?? 1)
+        let slack = 0.02
+        return whole.left < left - slack || whole.right > right + slack
     }
 
     /// A cut-out that is a rectangle seen at an angle (a label photographed close
@@ -342,8 +367,9 @@ enum LabelFrame {
     }
 
     /// A photo without a clear cut-out: the label straightened when a rectangle
-    /// holds its text, else the photo cut to the band of its label (shown filling
-    /// the picture, centred on the label), else the whole photo.
+    /// holds its text (and its whole paper), else the photo cut to the band of its
+    /// label, found from its paper, else from its text (shown filling the picture,
+    /// centred on the label), else the whole photo.
     /// A photo leaning (its text lines tilted) is first turned level.
     static func withoutCutout(_ photo: CIImage, handler: VNImageRequestHandler,
                               context: CIContext) -> (CIImage, StudioPhoto.Kind) {
@@ -365,18 +391,52 @@ enum LabelFrame {
             handler = VNImageRequestHandler(cgImage: turned, options: [:])
             boxes = textBoxes(handler).filter(central)
         }
-        if let label = straightenedLabel(photo, handler: handler, text: boxes) { return (label, .cutout) }
-        return (labelBand(photo, boxes: boxes) ?? densestBand(photo, context: context) ?? photo, .photo)
+        let text = LabelFraming.label(lines: boxes.map(line))
+        let paper = paperBox(photo, seedRow: text.map { middle($0.band) }, context: context)
+        if let label = straightenedLabel(photo, handler: handler, text: boxes, paper: paper) { return (label, .cutout) }
+        if let paper { return (paperBand(photo, paper: paper, text: text) ?? photo, .photo) }
+        return (labelBand(photo, boxes: boxes) ?? photo, .photo)
     }
 
-    /// The band where the photo's edges are densest (printed text), found as on
-    /// Android (CaveKit's `LabelCrop`), when Vision reads no text.
-    private static func densestBand(_ photo: CIImage, context: CIContext) -> CIImage? {
+    private static func middle(_ band: ClosedRange<Double>) -> Double { (band.lowerBound + band.upperBound) / 2 }
+
+    private static func onBlack(_ cut: CIImage) -> CIImage {
+        cut.composited(over: CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: cut.extent))
+    }
+
+    /// The label found from its paper (CaveKit's `LabelPaper`), as fractions of the
+    /// image from its top left; `seedRow` is the middle of its text, when read.
+    private static func paperBox(_ image: CIImage, seedRow: Double? = nil, context: CIContext) -> LabelPaper.Box? {
+        guard let bitmap = pixels(image, longest: 320, context: context) else { return nil }
+        return LabelPaper.find(pixels: bitmap.pixels, width: bitmap.width, height: bitmap.height, seedRow: seedRow)
+    }
+
+    /// The photo cut to the rows of the label found from its paper and its text
+    /// (`LabelFraming.frame(text:paper:)`, keeping the whole paper), as wide as it
+    /// can be while centred on the paper. Nil when that is nearly the whole photo.
+    private static func paperBand(_ photo: CIImage, paper: LabelPaper.Box,
+                                  text: (band: ClosedRange<Double>, coverage: Double)?) -> CIImage? {
+        let printed = text.flatMap { $0.coverage <= LabelFraming.closeUpTextCoverage ? $0.band : nil }
         let extent = photo.extent
-        let scale = min(1, 640 / max(extent.width, extent.height))
-        let small = photo.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        guard let frame = LabelFraming.frame(text: printed, paper: paper.top...paper.bottom,
+                                             width: Double(extent.width), height: Double(extent.height))
+        else { return nil }
+        let center = CGFloat(paper.left + paper.right) / 2
+        let half = min(center, 1 - center)
+        let below = CGFloat(1 - frame.upperBound), kept = CGFloat(frame.upperBound - frame.lowerBound)
+        return photo.cropped(to: CGRect(x: extent.minX + (center - half) * extent.width, y: extent.minY + extent.height * below,
+                                        width: 2 * half * extent.width, height: extent.height * kept))
+    }
+
+    /// The image's pixels (ARGB, from the top left), at most `longest` on its longest side.
+    private static func pixels(_ image: CIImage, longest: CGFloat,
+                               context: CIContext) -> (pixels: [UInt32], width: Int, height: Int)? {
+        let extent = image.extent
+        guard !extent.isInfinite, extent.width >= 1, extent.height >= 1 else { return nil }
+        let scale = min(1, longest / max(extent.width, extent.height))
+        let small = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let width = Int(small.extent.width), height = Int(small.extent.height)
-        guard width >= 8, height >= 8, let image = context.createCGImage(small, from: small.extent),
+        guard width >= 8, height >= 8, let picture = context.createCGImage(small, from: small.extent),
               let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
         var pixels = [UInt32](repeating: 0, count: width * height)
         let drawn = pixels.withUnsafeMutableBytes { bytes -> Bool in
@@ -384,19 +444,17 @@ enum LabelFrame {
                                          bytesPerRow: width * 4, space: space,
                                          bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
                                              | CGBitmapInfo.byteOrder32Little.rawValue) else { return false }
-            bitmap.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+            bitmap.draw(picture, in: CGRect(x: 0, y: 0, width: width, height: height))
             return true
         }
-        guard drawn, let box = LabelCrop.find(pixels: pixels, width: width, height: height) else { return nil }
-        let unit = 1 / scale
-        return photo.cropped(to: CGRect(x: extent.minX + CGFloat(box.left) * unit,
-                                        y: extent.minY + CGFloat(height - box.bottom) * unit,
-                                        width: CGFloat(box.width) * unit, height: CGFloat(box.height) * unit))
+        return drawn ? (pixels, width, height) : nil
     }
 
     /// The largest rectangle holding at least two lines of text (a label, not a
-    /// window or a tile), straightened from its four corners.
-    private static func straightenedLabel(_ photo: CIImage, handler: VNImageRequestHandler, text: [CGRect]) -> CIImage? {
+    /// window or a tile) and the whole paper when it was found (not a frame printed
+    /// on the label), straightened from its four corners.
+    private static func straightenedLabel(_ photo: CIImage, handler: VNImageRequestHandler, text: [CGRect],
+                                          paper: LabelPaper.Box?) -> CIImage? {
         let request = VNDetectRectanglesRequest()
         request.maximumObservations = 4
         request.minimumSize = 0.3
@@ -410,6 +468,13 @@ enum LabelFrame {
             let box = quad.boundingBox
             let inside = text.filter { box.contains(CGPoint(x: $0.midX, y: $0.midY)) }.count
             guard inside >= 2 else { continue }
+            if let paper {
+                // Vision's rectangles are from the bottom left, the paper from the top left.
+                let slack = 0.02
+                guard Double(box.minX) <= paper.left + slack, Double(box.maxX) >= paper.right - slack,
+                      Double(box.minY) <= 1 - paper.bottom + slack, Double(box.maxY) >= 1 - paper.top - slack
+                else { continue }
+            }
             if let current = best, current.boundingBox.width * current.boundingBox.height >= box.width * box.height { continue }
             best = quad
         }

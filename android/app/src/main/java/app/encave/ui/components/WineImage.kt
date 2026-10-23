@@ -47,8 +47,9 @@ fun PhotoStore.hasPicture(wine: Wine?): Boolean = wine != null && (exists(wine.c
 /**
  * The picture shown for a wine: its cover (a picture from the internet) if any,
  * else its label photo. In the studio look the label photo is turned so its text
- * lines are level (see [LabelTilt]), cut to the band of its label (where its
- * edges are densest, see [LabelCrop]) with its light evened out, on the device,
+ * lines are level (see [LabelTilt]), cut to the band of its label (its paper, see
+ * [app.encave.core.LabelPaper], with the band where its edges are densest, see [LabelCrop]; the
+ * whole photo when neither is found) with its light evened out, on the device,
  * and shown with a light vignette: filling the picture, centred on the label, or
  * as tall as the picture on the backdrop when it is narrower; a cover is shown
  * whole on a backdrop in the wine's color. The stored photo is never changed.
@@ -135,7 +136,7 @@ internal object StudioBitmaps {
 
     /**
      * The photo turned so its text lines are level, framed on its label (or
-     * whole), light evened out, at most [maxPixelSize] on its longest side.
+     * whole, see [LabelCrop.studioFrame]), light evened out, at most [maxPixelSize] on its longest side.
      */
     fun studio(photo: Bitmap, maxPixelSize: Int): StudioPicture {
         var pixels = IntArray(photo.width * photo.height)
@@ -145,7 +146,7 @@ internal object StudioBitmaps {
             pixels = IntArray(source.width * source.height)
             source.getPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
         }
-        val box = LabelCrop.find(pixels, source.width, source.height)
+        val box = LabelCrop.studioFrame(pixels, source.width, source.height)
         val (left, top, width, height) = box?.let { listOf(it.left, it.top, it.width, it.height) }
             ?: listOf(0, 0, source.width, source.height)
         val part = IntArray(width * height)

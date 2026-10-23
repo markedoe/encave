@@ -69,11 +69,36 @@ class StudioBitmapsTest {
     }
 
     @Test
-    fun aPlainPhotoGetsTheCentreBand() {
-        val source = photo(600, 800) { drawColor(Color.rgb(128, 128, 128)) }
+    fun aPhotoWithoutALabelIsShownWhole() {
+        // No blind crop on the middle of the bottle: the photo is shown as taken.
+        val source = photo(600, 800) {
+            drawColor(Color.rgb(110, 125, 140))
+            paint.color = Color.rgb(30, 50, 35)
+            drawRect(170f, 40f, 430f, 800f, paint) // a bottle without a label
+        }
         val result = StudioBitmaps.studio(source, maxPixelSize = 900)
+        assertFalse(result.framed)
+        assertEquals(600, result.bitmap.width)
+        assertEquals(800, result.bitmap.height)
+    }
+
+    @Test
+    fun theWholeLabelIsKeptWhenOnlyPartOfItHasText() {
+        // A label from 400 to 900 with text only in its lower third, script and a
+        // drawing above it that make no edges like print.
+        val source = photo(900, 1200) {
+            drawColor(Color.rgb(110, 125, 140))
+            paint.color = Color.rgb(30, 50, 35)
+            drawRect(250f, 60f, 650f, 1200f, paint) // the bottle
+            paint.color = Color.rgb(240, 232, 214)
+            drawRect(250f, 400f, 650f, 900f, paint) // its label
+            text(270, 760, 630, 890, seed = 3)
+        }
+        val result = StudioBitmaps.studio(source, maxPixelSize = 1200)
         assertTrue(result.framed)
-        assertTrue(result.bitmap.height < source.height)
+        // The frame starts above the label's top edge and ends below its bottom edge.
+        val scale = result.bitmap.width / 900f
+        assertTrue(result.bitmap.height / scale >= 500 + 2 * 0.06f * 1200 - 4)
     }
 
     @Test

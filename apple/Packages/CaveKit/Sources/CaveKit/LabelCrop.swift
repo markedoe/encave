@@ -8,8 +8,9 @@ import Foundation
 ///
 /// A photo whose edges are spread evenly (a close-up of the label) gives nil; a
 /// photo with almost no edges gets the centre band where labels usually sit.
-/// The Kotlin twin (LabelCrop.kt) is what Android shows; on Apple it frames a
-/// photo when Vision finds neither a cut-out nor text. Pixels are ARGB.
+/// The Kotlin twin (LabelCrop.kt) is what Android uses with `LabelPaper`; the Apple
+/// app reads the text with Vision instead, and this is kept tested for parity.
+/// Pixels are ARGB.
 public enum LabelCrop {
     /// A part of the photo, in pixels from the top left; right and bottom excluded.
     public struct Box: Equatable, Sendable {

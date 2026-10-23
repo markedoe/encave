@@ -21,6 +21,24 @@ struct LabelFramingTests {
         #expect(LabelFraming.frame(label: 0.02...0.97, width: 300, height: 1000) == nil)
     }
 
+    @Test func theFrameKeepsTheWholePaper() throws {
+        // Text read only in the middle of a label from 40% to 75%: the frame keeps
+        // the whole label (script, a logo, a blurry line) with its margin.
+        let frame = try #require(LabelFraming.frame(text: 0.5...0.6, paper: 0.4...0.75, width: 300, height: 1000))
+        #expect(frame.lowerBound <= 0.4 - LabelFraming.paperMargin + 1e-9)
+        #expect(frame.upperBound >= 0.75 + LabelFraming.paperMargin - 1e-9)
+        // Text alone is framed as before; text reaching past the paper is kept too.
+        #expect(LabelFraming.frame(text: 0.5...0.8, paper: nil, width: 300, height: 1000)
+            == LabelFraming.frame(label: 0.5...0.8, width: 300, height: 1000))
+        let wider = try #require(LabelFraming.frame(text: 0.3...0.6, paper: 0.4...0.75, width: 300, height: 1000))
+        #expect(wider.lowerBound < 0.3)
+        // Text on the neck, away from the paper, is left out.
+        #expect(LabelFraming.frame(text: 0.05...0.1, paper: 0.4...0.75, width: 300, height: 1000)
+            == LabelFraming.frame(text: nil, paper: 0.4...0.75, width: 300, height: 1000))
+        #expect(LabelFraming.frame(text: nil, paper: nil, width: 300, height: 1000) == nil)
+        #expect(LabelFraming.frame(text: nil, paper: 0.05...0.9, width: 300, height: 1000) == nil)
+    }
+
     @Test func tiltedTextIsStraightenedWithinLimits() {
         #expect(LabelFraming.straightening(lineAngles: [9, 10, 11, 40]) == -11)
         #expect(LabelFraming.straightening(lineAngles: [9, 10, 11]) == -10)
