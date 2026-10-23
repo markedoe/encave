@@ -347,6 +347,43 @@ class CellarVersionsTest {
     }
 
     @Test
+    fun aVersionIsSavedBeforeReplacingAndOutlivesTheNextCopies() {
+        val versions = CellarVersionFolder(File(folder, "versions"), ZoneOffset.UTC)
+        val store = JsonFileCellarStore(File(folder, "cellar.json"))
+        val mine = Cellar().apply { addBottles(Wine(name = "Mine"), 3) }
+        store.save(mine)
+        // Nothing to keep: an empty cellar, or only the sample.
+        assertNull(versions.keepBeforeReplacing(Cellar(), day(0, hour = 9)))
+        assertNull(versions.keepBeforeReplacing(SampleData.cellar(year = 2026), day(0, hour = 9)))
+        assertTrue(versions.versions().isEmpty())
+
+        // Replace and join: the cellar as it was is a version.
+        val kept = requireNotNull(versions.keepBeforeReplacing(mine, day(0, hour = 9)))
+        assertTrue(kept.isBeforeReplacing)
+        assertEquals(listOf(kept), versions.versions())
+        assertEquals(mine, versions.cellar(kept))
+
+        // The other cellar arrives and is saved the same day; the next day's copy of it does not
+        // take the place of the one saved before replacing.
+        store.save(Cellar())
+        store.file.setLastModified(day(0, hour = 20).toEpochMilli())
+        store.save(SampleData.cellar(year = 2026))
+        store.file.setLastModified(day(0, hour = 21).toEpochMilli())
+        versions.keepCopy(store.file, day(1))
+        assertEquals(2, versions.versions().size)
+        assertTrue(kept in versions.versions())
+
+        // Only the last 3 saved before replacing are kept.
+        for (hour in 10 until 14) versions.keepBeforeReplacing(mine, day(2, hour = hour))
+        assertEquals(listOf(day(2, hour = 13), day(2, hour = 12), day(2, hour = 11)), versions.versions().filter { it.isBeforeReplacing }.map { it.date })
+        assertTrue(versions.versions().any { !it.isBeforeReplacing })
+
+        // Erase all data with the previous versions.
+        versions.removeAll()
+        assertTrue(versions.versions().isEmpty())
+    }
+
+    @Test
     fun aCopyIsKeptWhenTheFileWasLastSavedOnAnEarlierDay() {
         val versions = CellarVersionFolder(File(folder, "versions"), ZoneOffset.UTC)
         val store = JsonFileCellarStore(File(folder, "cellar.json"))
@@ -457,10 +494,33 @@ class RestoreTest {
         assertEquals("CHF", added.settings.currency)
         assertNull(current.bottles[bottle.id])
 
-        // Replace takes the backup, but the settings stay those of the cellar.
+        // Replace takes the backup, its settings included.
         val replaced = current.restoring(backup, RestoreMode.Replace)
-        assertEquals(backup.copy().also { it.settings = current.settings }, replaced)
+        assertEquals(backup, replaced)
+        assertEquals(backup.settings.currency, replaced.settings.currency)
+    }
+
+    @Test
+    fun replaceRestoresTheSettingsAndAddMissingOnlyAddsSearches() {
+        val backup = SampleData.cellar(year = 2026)
+        backup.settings = backup.settings.copy(currency = "CHF")
+        backup.saveSearch("Ready", CellarFilter(query = "bordeaux"))
+        backup.saveSearch("Old", CellarFilter(query = "1990"))
+        val current = backup.copy()
+        current.settings = current.settings.copy(currency = "USD", savedSearches = null)
+        current.saveSearch("ready", CellarFilter(query = "mine"))
+        current.saveSearch("Mine", CellarFilter(query = "loire"))
+
+        val replaced = current.restoring(backup, RestoreMode.Replace)
+        assertEquals(backup.settings, replaced.settings)
         assertEquals("CHF", replaced.settings.currency)
+        assertEquals(listOf("Old", "Ready"), replaced.settings.savedSearches?.map { it.name }?.sorted())
+
+        // Only the searches whose name is not there yet (ignoring case); the currency stays.
+        val added = current.restoring(backup, RestoreMode.AddMissing)
+        assertEquals("USD", added.settings.currency)
+        assertEquals(listOf("Mine", "Old", "ready"), added.settings.savedSearches?.map { it.name }?.sorted())
+        assertEquals("mine", added.settings.savedSearches?.first { it.name == "ready" }?.query)
     }
 
     @Test

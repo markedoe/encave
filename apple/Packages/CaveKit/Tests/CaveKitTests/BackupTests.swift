@@ -413,6 +413,44 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(!versions.versions().contains { $0.date == day(40) })
     }
 
+    @Test func aVersionIsSavedBeforeReplacingAndOutlivesTheNextCopies() throws {
+        let folder = try TemporaryFolder()
+        let versions = CellarVersionFolder(folder: folder.file("Versions"), timeZone: utc)
+        let store = JSONFileCellarStore(fileURL: folder.file("cellar.json"))
+        var mine = Cellar()
+        try mine.addBottles(of: Wine(name: "Mine"), quantity: 3)
+        try store.save(mine)
+        // Nothing to keep: an empty cellar, or only the sample.
+        #expect(versions.keepBeforeReplacing(Cellar(), now: day(0, hour: 9)) == nil)
+        #expect(versions.keepBeforeReplacing(SampleData.cellar(year: 2026), now: day(0, hour: 9)) == nil)
+        #expect(versions.versions().isEmpty)
+
+        // Replace and Join: the cellar as it was is a version.
+        let kept = try #require(versions.keepBeforeReplacing(mine, now: day(0, hour: 9)))
+        #expect(kept.isBeforeReplacing)
+        #expect(versions.versions() == [kept])
+        #expect(try versions.cellar(of: kept) == mine)
+
+        // The other cellar arrives and is saved the same day; the next day's copy of it does
+        // not take the place of the one saved before replacing.
+        try store.save(Cellar())
+        try FileManager.default.setAttributes([.modificationDate: day(0, hour: 20)], ofItemAtPath: store.fileURL.path)
+        try store.save(SampleData.cellar(year: 2026))
+        try FileManager.default.setAttributes([.modificationDate: day(0, hour: 21)], ofItemAtPath: store.fileURL.path)
+        versions.keepCopy(of: store.fileURL, now: day(1))
+        #expect(versions.versions().count == 2)
+        #expect(versions.versions().contains(kept))
+
+        // Only the last 3 saved before replacing are kept.
+        for hour in 10..<14 { versions.keepBeforeReplacing(mine, now: day(2, hour: hour)) }
+        #expect(versions.versions().filter(\.isBeforeReplacing).map(\.date) == [day(2, hour: 13), day(2, hour: 12), day(2, hour: 11)])
+        #expect(versions.versions().contains { !$0.isBeforeReplacing })
+
+        // Erase All Data with previous versions.
+        versions.removeAll()
+        #expect(versions.versions().isEmpty)
+    }
+
     @Test func aCopyThatCannotBeReadIsNotKept() throws {
         let folder = try TemporaryFolder()
         let versions = CellarVersionFolder(folder: folder.file("Versions"), timeZone: utc)
@@ -503,12 +541,33 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(added.wines[extra.id] != nil)
         #expect(added.settings.currency == "CHF")
 
-        // Replace takes the backup, but the settings stay those of the cellar.
+        // Replace takes the backup, its settings included.
         let replaced = current.restoring(backup, mode: .replace)
-        var expected = backup
-        expected.settings = current.settings
-        #expect(replaced == expected)
+        #expect(replaced == backup)
+        #expect(replaced.settings.currency == backup.settings.currency)
+    }
+
+    @Test func replaceRestoresTheSettingsAndAddMissingOnlyAddsSearches() throws {
+        var backup = SampleData.cellar(year: 2026)
+        backup.settings.currency = "CHF"
+        backup.saveSearch("Ready", filter: CellarFilter(query: "bordeaux"))
+        backup.saveSearch("Old", filter: CellarFilter(query: "1990"))
+        var current = backup
+        current.settings.currency = "USD"
+        current.settings.savedSearches = nil
+        current.saveSearch("ready", filter: CellarFilter(query: "mine"))
+        current.saveSearch("Mine", filter: CellarFilter(query: "loire"))
+
+        let replaced = current.restoring(backup, mode: .replace)
+        #expect(replaced.settings == backup.settings)
         #expect(replaced.settings.currency == "CHF")
+        #expect(replaced.settings.savedSearches?.map(\.name).sorted() == ["Old", "Ready"])
+
+        // Only the searches whose name is not there yet (ignoring case); the currency stays.
+        let added = current.restoring(backup, mode: .addMissing)
+        #expect(added.settings.currency == "USD")
+        #expect(added.settings.savedSearches?.map(\.name).sorted() == ["Mine", "Old", "ready"])
+        #expect(added.settings.savedSearches?.first { $0.name == "ready" }?.query == "mine")
     }
 
     @Test func addMissingBringsBackSavedSearchesAndKeepsBottlesInTheirRack() throws {

@@ -11,6 +11,10 @@ public struct CellarVersion: Identifiable, Hashable, Sendable {
         self.id = id
         self.date = date
     }
+
+    /// Saved on purpose before the cellar was replaced by another device's (Replace and
+    /// Join), rather than automatically on a new day.
+    public var isBeforeReplacing: Bool { CellarVersionFolder.isBeforeReplacing(id) }
 }
 
 /// Where earlier versions of the cellar are read from: the folder next to the cellar,
@@ -30,6 +34,10 @@ public protocol CellarVersionSource: Sendable {
 ///
 /// Only the cellar file is copied: photos and documents are named after their content
 /// and kept while a version refers to them (`fileRefs`).
+///
+/// A version is also saved before the cellar is replaced by another device's
+/// (`keepBeforeReplacing`): those are kept apart from the daily and weekly ones, the
+/// last 3 of them, so the next day's copy never takes their place.
 public struct CellarVersionFolder: CellarVersionSource {
     public let folder: URL
     /// Days and ISO weeks of the device's time zone.
@@ -37,7 +45,11 @@ public struct CellarVersionFolder: CellarVersionSource {
 
     public static let dailyCount = 7
     public static let weeklyCount = 4
+    /// Versions saved before replacing the cellar that are kept.
+    public static let beforeReplacingCount = 3
     static let prefix = "cellar-", suffix = ".json", temporarySuffix = ".tmp"
+    /// "cellar-20261020-221430-before-replace.json"
+    static let beforeReplacingMark = "-before-replace"
 
     public init(folder: URL, timeZone: TimeZone = .current) {
         self.folder = folder
@@ -76,6 +88,34 @@ public struct CellarVersionFolder: CellarVersionSource {
         return Self.date(fromName: target.lastPathComponent).map { CellarVersion(id: target.lastPathComponent, date: $0) }
     }
 
+    /// Saves `cellar` as a version now, before it is replaced by another device's cellar
+    /// (Replace and Join), so it can be restored from Previous Versions. Nothing is saved
+    /// for an empty cellar or one that holds only the sample. Returns the version saved.
+    @discardableResult
+    public func keepBeforeReplacing(_ cellar: Cellar, now: Date = .now) -> CellarVersion? {
+        guard !cellar.isEmpty, !cellar.isOnlySample else { return nil }
+        let name = Self.prefix + Self.formatter.string(from: now) + Self.beforeReplacingMark + Self.suffix
+        let target = folder.appendingPathComponent(name)
+        let temporary = folder.appendingPathComponent(name + "." + UUID().uuidString + Self.temporarySuffix)
+        do {
+            let data = try JSONFileCellarStore.makeEncoder().encode(cellar)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try data.write(to: temporary)
+            try? FileManager.default.removeItem(at: target)
+            try FileManager.default.moveItem(at: temporary, to: target)
+        } catch {
+            try? FileManager.default.removeItem(at: temporary)
+            return nil
+        }
+        prune()
+        return Self.date(fromName: name).map { CellarVersion(id: name, date: $0) }
+    }
+
+    /// Erase All Data: removes every version.
+    public func removeAll() {
+        try? FileManager.default.removeItem(at: folder)
+    }
+
     /// Removes `copy` if it cannot be read or holds an empty cellar, copies left half made, and
     /// the versions no longer kept.
     public func tidy(checking copy: CellarVersion? = nil) {
@@ -112,8 +152,11 @@ public struct CellarVersionFolder: CellarVersionSource {
     /// Removes the versions no longer kept.
     public func prune() {
         let all = versions()
-        let kept = Self.kept(all.map(\.date), calendar: calendar)
-        for version in all where !kept.contains(version.date) {
+        let automatic = all.filter { !$0.isBeforeReplacing }
+        let keptDates = Self.kept(automatic.map(\.date), calendar: calendar)
+        let kept = Set(automatic.filter { keptDates.contains($0.date) }.map(\.id))
+            .union(all.filter(\.isBeforeReplacing).prefix(Self.beforeReplacingCount).map(\.id))
+        for version in all where !kept.contains(version.id) {
             try? FileManager.default.removeItem(at: folder.appendingPathComponent(version.id))
         }
     }
@@ -146,7 +189,13 @@ public struct CellarVersionFolder: CellarVersionSource {
 
     static func date(fromName name: String) -> Date? {
         guard name.hasPrefix(prefix), name.hasSuffix(suffix) else { return nil }
-        return formatter.date(from: String(name.dropFirst(prefix.count).dropLast(suffix.count)))
+        var stem = String(name.dropFirst(prefix.count).dropLast(suffix.count))
+        if stem.hasSuffix(beforeReplacingMark) { stem.removeLast(beforeReplacingMark.count) }
+        return formatter.date(from: stem)
+    }
+
+    static func isBeforeReplacing(_ name: String) -> Bool {
+        name.hasSuffix(beforeReplacingMark + suffix) && date(fromName: name) != nil
     }
 
     private static var formatter: DateFormatter {

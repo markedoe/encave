@@ -279,14 +279,10 @@ struct SettingsView: View {
             }
         }
         #endif
-        .confirmationDialog("Erase all data?", isPresented: $confirmingErase, titleVisibility: .visible) {
-            Button("Erase all data", role: .destructive) { model.eraseAll() }
-        } message: {
-            if model.sync.otherDevices.isEmpty {
-                Text("This erases every bottle, wine, rack and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
-            } else {
-                Text("This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
-            }
+        .sheet(isPresented: $confirmingErase) {
+            EraseAllView()
+                .environment(model)
+                .macSheetFrame(width: 460, height: 420)
         }
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
@@ -415,6 +411,53 @@ struct SettingsView: View {
             message += " " + String(localized: "Rows without a wine name, skipped: \(summary.rowsSkipped)")
         }
         return message
+    }
+}
+
+/// Erase All Data, confirmed in a sheet: it holds the choice to erase the previous
+/// versions and backups too (on by default).
+private struct EraseAllView: View {
+    @Environment(CellarModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    @State private var alsoBackups = true
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Toggle("Also erase previous versions and backups", isOn: $alsoBackups)
+                        .accessibilityIdentifier("settings.eraseBackups")
+                } footer: {
+                    if alsoBackups {
+                        Text("The previous versions and the weekly backups Encave kept on this device are erased too. Files you exported or saved elsewhere are never touched.")
+                    } else {
+                        Text("The previous versions and the weekly backups stay on this device. Files you exported or saved elsewhere are never touched.")
+                    }
+                }
+                Section {
+                    Button("Erase all data", role: .destructive) {
+                        model.eraseAll(alsoBackups: alsoBackups)
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("settings.eraseConfirm")
+                } footer: {
+                    if model.sync.otherDevices.isEmpty {
+                        Text("This erases every bottle, wine, rack and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+                    } else {
+                        Text("This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Erase all data?")
+            .inlineTitle()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("sheet.cancel")
+                }
+            }
+        }
     }
 }
 

@@ -885,7 +885,7 @@ struct JoinDeviceView: View {
                             isPresented: $confirmingReplace, titleVisibility: .visible) {
             Button("Replace and Join", role: .destructive) { join() }
         } message: {
-            Text("This device will show only the other device’s cellar.")
+            Text("This device will show only the other device’s cellar. Its cellar as it is now is saved first: you find it in Settings › Your data › Previous Versions.")
         }
         .macSheetFrame(width: 460, height: 560)
         .solidSheetBackground()
@@ -949,7 +949,7 @@ struct JoinDeviceView: View {
                     Text("This device already has bottles")
                 } footer: {
                     if replace {
-                        Text("This device will show only the other device’s cellar. Make a backup first if you may need these bottles.")
+                        Text("This device will show only the other device’s cellar. Its cellar as it is now is saved first: you find it in Settings › Your data › Previous Versions.")
                     } else if model.cellar.containsSample {
                         Text("Both cellars are put together. The sample cellar is removed first.")
                     } else {

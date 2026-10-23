@@ -234,6 +234,11 @@ struct PreviousVersionsView: View {
                                         .joined(separator: " · "))
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
+                                    if row.version.isBeforeReplacing {
+                                        Text("Saved before joining another cellar")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
                                 .accessibilityElement(children: .combine)
                             }
@@ -365,7 +370,7 @@ struct RestorePreviewView: View {
                 }
                 .accessibilityIdentifier("restore.replace")
             } footer: {
-                Text("Add What Is Missing adds the wines, bottles, racks, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.")
+                Text("Add What Is Missing adds the wines, bottles, storage and Journal entries that are not in your cellar, and the saved searches whose name you do not have; nothing else changes, the currency included. Replace This Cellar makes your cellar exactly as in this backup, its settings (currency, saved searches) included. You can undo right after.")
             }
             .disabled(working)
         }

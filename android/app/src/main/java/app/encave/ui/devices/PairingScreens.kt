@@ -246,7 +246,7 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
         val count = cellar.bottles.size
         ConfirmDialog(
             title = pluralStringResource(R.plurals.join_replace_confirm_title, count, count),
-            body = stringResource(R.string.join_replace_confirm_body),
+            body = stringResource(R.string.join_replace_confirm_version),
             confirm = stringResource(R.string.join_replace_confirm),
             onConfirm = { begin() },
             onDismiss = { confirmingReplace = false },
@@ -338,7 +338,7 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
                 Text(
                     stringResource(
                         when {
-                            replace -> R.string.join_replace_footer
+                            replace -> R.string.join_replace_version
                             cellar.containsSample -> R.string.join_combine_sample_footer
                             else -> R.string.join_combine_footer
                         },

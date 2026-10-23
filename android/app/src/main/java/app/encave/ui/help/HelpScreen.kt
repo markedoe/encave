@@ -51,6 +51,14 @@ import app.encave.ui.ProjectLinks
 import app.encave.ui.components.readableWidth
 import app.encave.data.ai.AiProvider
 import app.encave.ui.AppNavigator
+import app.encave.ui.AppViewModel
+import app.encave.ui.components.sampleLabels
+import app.encave.core.containsSample
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.ui.settings.keyLinkLabel
 import app.encave.ui.theme.Dimens
 
@@ -83,9 +91,12 @@ private fun openLink(context: android.content.Context, url: String) {
     runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
 }
 
-/** The sections of one article; the AI article ends with a key link per provider. */
+/**
+ * The sections of one article; the AI article ends with a key link per provider. With [viewModel],
+ * Getting started ends with Try with a sample cellar.
+ */
 @Composable
-fun HelpArticleContent(article: HelpArticle, modifier: Modifier = Modifier) {
+fun HelpArticleContent(article: HelpArticle, modifier: Modifier = Modifier, viewModel: AppViewModel? = null) {
     val context = LocalContext.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.l)) {
         Text(stringResource(article.summary), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -99,6 +110,9 @@ fun HelpArticleContent(article: HelpArticle, modifier: Modifier = Modifier) {
                 }
                 Text(helpText(stringResource(section.body)), style = MaterialTheme.typography.bodyMedium)
             }
+        }
+        if (article.topic == HelpTopic.Start && viewModel != null) {
+            SampleCellarHelp(viewModel)
         }
         if (article.topic == HelpTopic.Privacy) {
             LinkRow(stringResource(R.string.settings_privacy_policy)) { openLink(context, ProjectLinks.PRIVACY_POLICY) }
@@ -119,6 +133,35 @@ fun HelpArticleContent(article: HelpArticle, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Getting started › Try with a sample cellar: loads the sample cellar, in every build (store
+ * builds offer it nowhere else), only into an empty cellar.
+ */
+@Composable
+private fun SampleCellarHelp(viewModel: AppViewModel) {
+    val cellar by viewModel.cellar.collectAsStateWithLifecycle()
+    val shared by viewModel.sharedWithDevices.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
+    val allowed = viewModel.sampleAllowed(cellar, shared)
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+            Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Text(stringResource(R.string.help_sample_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+        }
+        val body = when {
+            cellar.containsSample -> R.string.help_sample_loaded
+            allowed -> R.string.help_sample_body
+            else -> R.string.help_sample_unavailable
+        }
+        Text(helpText(stringResource(body)), style = MaterialTheme.typography.bodyMedium)
+        if (allowed) {
+            FilledTonalButton(onClick = { viewModel.loadSample(sampleLabels(resources)) }, modifier = Modifier.testTag("help.load_sample")) {
+                Text(stringResource(R.string.action_load_sample))
+            }
+        }
+    }
+}
+
 @Composable
 private fun LinkRow(label: String, onClick: () -> Unit) {
     ListItem(
@@ -130,7 +173,7 @@ private fun LinkRow(label: String, onClick: () -> Unit) {
 
 /** Settings → Help: the list of topics, then one article. */
 @Composable
-fun HelpScreen(navigator: AppNavigator, initialTopic: String? = null) {
+fun HelpScreen(navigator: AppNavigator, initialTopic: String? = null, viewModel: AppViewModel? = null) {
     val context = LocalContext.current
     var open by rememberSaveable { mutableStateOf(initialTopic) }
     val article = open?.let { name -> HelpArticle.all.firstOrNull { it.topic.name == name } }
@@ -150,7 +193,7 @@ fun HelpScreen(navigator: AppNavigator, initialTopic: String? = null) {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).readableWidth()) {
             if (article != null) {
-                HelpArticleContent(article, Modifier.padding(Dimens.l))
+                HelpArticleContent(article, Modifier.padding(Dimens.l), viewModel)
             } else {
                 HelpArticle.all.forEach { item ->
                     ListItem(

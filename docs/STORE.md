@@ -89,7 +89,7 @@ Other questions:
 | Question | Answer |
 |---|---|
 | Is all of the user data collected by your app encrypted in transit? | Yes (if the conservative reading is used: HTTPS, plain HTTP only to a server on the user's local network) |
-| Do you provide a way for users to request that their data is deleted? | Nothing is held by the developer. On the device, **Erase all data** empties the cellar but keeps the previous versions and the weekly backups; removing the app deletes its own storage, but not the weekly backups in Download/Encave, which the user deletes in the Files app |
+| Do you provide a way for users to request that their data is deleted? | Nothing is held by the developer. On the device, **Erase all data** empties the cellar and, unless the user turns that off, the previous versions and the weekly backups Encave made (never files exported elsewhere); removing the app deletes its own storage, but not the weekly backups in Download/Encave, which the user deletes in the Files app |
 | Independent security review | No |
 | Privacy policy URL | The published PRIVACY.md |
 
@@ -140,11 +140,18 @@ the app out of the Families programme.
   (`ENCAVE_CHANNEL=beta`, `ENCAVE_BETA` unset): while the cellar is empty they
   offer the sample cellar (**Load sample cellar** on the empty Cellar, or
   **Settings › Try Encave**). A store build (`ENCAVE_CHANNEL=store`,
-  `ENCAVE_BETA=false`) does not, so the notes for it read: "Open the app and add
-  a bottle with + (scan a label or type a name), then add a rack in Racks and
-  place the bottle; Tonight and the Journal fill as bottles are added and
-  opened. AI label recognition and web search are optional and need the
-  reviewer's own key or server; sync needs a second device."
+  `ENCAVE_BETA=false`) does not offer it at first run; it is in Help only, so the
+  notes for it read: "To explore with example data: open Settings (on Mac, the
+  Help menu › Encave Help), then Help › Getting started, scroll to the end and
+  tap Load sample cellar under Try with a sample cellar. It is offered only while
+  the cellar is empty and no other device syncs with it. Remove Sample, at the
+  top of the Cellar, removes it. Or start from scratch: add a bottle with +
+  (scan a label or type a name), then add a storage in Storage and place the
+  bottle; Tonight and the Journal fill as bottles are added and opened. AI label
+  recognition and web search are optional and need the reviewer's own key or
+  server; sync needs a second device." On Android the path is the same:
+  Settings › Help › Getting started › Try with a sample cellar › Load sample
+  cellar.
 - **Google Play: ads**: the app contains no ads.
 - **Google Play: health apps, financial features, government apps, news**: No.
 

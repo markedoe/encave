@@ -802,9 +802,13 @@ final class CellarModel {
         activeRouter?.showInRack(bottle, model: self)
     }
 
-    /// The sample cellar replaces everything, so it is offered only for an empty cellar
-    /// that no other device syncs with, and only in beta builds (AppChannel).
-    var canLoadSample: Bool { AppChannel.isBeta && cellar.isEmpty && sync.otherDevices.isEmpty }
+    /// The sample cellar replaces everything, so it can be loaded only into an empty cellar
+    /// that no other device syncs with.
+    var sampleAllowed: Bool { cellar.isEmpty && sync.otherDevices.isEmpty }
+
+    /// Offered on the empty screens and in Settings in beta builds only (AppChannel); store
+    /// builds offer it in Help only (Getting started › Try with a sample cellar).
+    var canLoadSample: Bool { AppChannel.isBeta && sampleAllowed }
 
     /// Records of the sample cellar are still here: the Cellar offers to remove them
     /// (not in the screen tour, whose cellar is the sample).
@@ -820,7 +824,7 @@ final class CellarModel {
     }
 
     func loadSample() {
-        guard canLoadSample else { return }
+        guard sampleAllowed else { return }
         let snapshot = cellar
         var sample = SampleData.cellar(labels: .localized)
         sample.settings = snapshot.settings
@@ -832,12 +836,44 @@ final class CellarModel {
     }
 
     /// Erases the cellar but keeps the settings (currency, saved searches). Synced
-    /// like any change: the other devices of the cellar erase it too.
-    func eraseAll() {
+    /// like any change: the other devices of the cellar erase it too. `alsoBackups`: the
+    /// previous versions and backups Encave kept on this device go too (`eraseBackups`).
+    func eraseAll(alsoBackups: Bool = false) {
         let snapshot = cellar
         guard update({ $0 = Cellar(settings: snapshot.settings) }) else { return }
+        if alsoBackups { eraseBackups() }
         showToast(String(localized: "All data erased")) { [weak self] in
             self?.update { $0 = snapshot }
+        }
+    }
+
+    /// Replace and Join: the cellar as it is now is saved as a previous version first, to
+    /// restore from Settings › Your data › Previous Versions.
+    func keepVersionBeforeReplacing() {
+        guard let versions = (store as? JSONFileCellarStore)?.versions else { return }
+        let current = cellar
+        Task {
+            _ = await Task.detached(priority: .userInitiated) { versions.keepBeforeReplacing(current) }.value
+            backups.noteVersionsChanged()
+        }
+    }
+
+    /// Once the empty cellar is saved (the store may first keep a copy of the day before),
+    /// removes the previous versions, the cellar files set aside, the weekly archives and
+    /// the archives waiting to be shared. Only files Encave made itself: files the user
+    /// exported or saved elsewhere are never touched.
+    private func eraseBackups() {
+        guard let file = store as? JSONFileCellarStore else { return }
+        let writer = writer
+        Task {
+            await writer?.flush()
+            await Task.detached(priority: .userInitiated) {
+                file.versions?.removeAll()
+                for url in file.unreadableFiles() { try? FileManager.default.removeItem(at: url) }
+            }.value
+            backups.eraseArchives()
+            unreadableFile = nil
+            unreadableFilesVersion += 1
         }
     }
 

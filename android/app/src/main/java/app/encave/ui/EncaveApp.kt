@@ -235,7 +235,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                 composable<PairingRoute> { PairingScreen(viewModel, navigator) }
                 composable<InsightsRoute> { InsightsScreen(viewModel, navigator) }
                 composable<SettingsRoute> { SettingsScreen(viewModel, navigator) }
-                composable<HelpRoute> { HelpScreen(navigator, it.toRoute<HelpRoute>().topic) }
+                composable<HelpRoute> { HelpScreen(navigator, it.toRoute<HelpRoute>().topic, viewModel) }
                 composable<DevicesRoute> { DevicesScreen(navigator) }
                 composable<app.encave.ui.navigation.LicencesRoute> { app.encave.ui.settings.LicencesScreen(navigator) }
                 composable<app.encave.ui.navigation.PreviousVersionsRoute> {

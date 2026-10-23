@@ -230,6 +230,27 @@ final class BackupCenter {
         return candidate
     }
 
+    /// A version was saved (before joining another cellar): lists reload.
+    func noteVersionsChanged() {
+        changeCount += 1
+    }
+
+    /// Erase All Data with the backups: removes the weekly archives (only those Encave wrote,
+    /// by name; a file the user saved in the folder stays) and the archives waiting to be
+    /// shared. The weekly backup stays on, and starts again once there is a cellar to keep.
+    func eraseArchives() {
+        if let folder = Self.automaticFolder {
+            for name in automaticNames { try? FileManager.default.removeItem(at: folder.appendingPathComponent(name)) }
+        }
+        automaticNames = []
+        Self.removeTemporaryFiles()
+        defaults.removeObject(forKey: Self.lastAutomaticKey)
+        defaults.removeObject(forKey: Self.lastKey)
+        lastBackup = nil
+        lastAutomaticFailure = nil
+        changeCount += 1
+    }
+
     #if os(macOS)
     /// The Mac keeps the weekly archives in the app's container: shows them in the Finder.
     func showAutomaticArchivesInFinder() {

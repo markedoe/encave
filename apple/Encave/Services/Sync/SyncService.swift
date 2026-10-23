@@ -1166,6 +1166,8 @@ final class SyncService {
             resetRemote()
         }
         if replace {
+            // The cellar as it is now can be restored from Previous Versions.
+            model.keepVersionBeforeReplacing()
             // The stamps start over; the bottles here stay until the other cellar has
             // arrived, and are never sent (`pendingReplace`).
             state = SyncState(device: identity.id, clock: state?.clock ?? 0)

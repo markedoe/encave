@@ -66,6 +66,9 @@ struct HelpArticleView: View {
                         .padding(.vertical, 4)
                     }
                 }
+                if topic == .start {
+                    SampleCellarHelpSection()
+                }
                 if topic == .privacy {
                     Section {
                         Link(destination: ProjectLinks.privacyPolicy) {
@@ -93,6 +96,40 @@ struct HelpArticleView: View {
             }
             .navigationTitle(article.title)
             .inlineTitle()
+        }
+    }
+}
+
+/// Getting started › Try with a sample cellar: loads the sample cellar, in every build
+/// (store builds offer it nowhere else), only into an empty cellar.
+private struct SampleCellarHelpSection: View {
+    @Environment(CellarModel.self) private var model: CellarModel?
+
+    var body: some View {
+        if let model {
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles").foregroundStyle(.secondary)
+                        Text("Try with a sample cellar").font(.headline)
+                    }
+                    Group {
+                        if model.cellar.containsSample {
+                            Text("The sample cellar is in your Cellar. **Remove Sample** at the top of the Cellar removes it, and only it, at any time.")
+                        } else if model.sampleAllowed {
+                            Text("Example wines, storage and tastings to explore every screen before adding your own bottles. **Remove Sample** at the top of the Cellar removes them, and only them, at any time.")
+                        } else {
+                            Text("The sample cellar is offered while your cellar is empty and no other device syncs with this one.")
+                        }
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 4)
+                if model.sampleAllowed {
+                    Button("Load sample cellar") { model.loadSample() }
+                        .accessibilityIdentifier("help.loadSample")
+                }
+            }
         }
     }
 }

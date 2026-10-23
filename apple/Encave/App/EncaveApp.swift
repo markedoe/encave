@@ -48,6 +48,7 @@ struct EncaveApp: App {
         #if os(macOS)
         Window("Encave Help", id: "help") {
             NavigationStack { HelpView() }
+                .environment(model)
                 .frame(minWidth: 520, minHeight: 560)
         }
         .defaultSize(width: 620, height: 720)
