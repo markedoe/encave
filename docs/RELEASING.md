@@ -160,6 +160,42 @@ are in the Console: the job warns when the contact email, which Google needs
 before a review, is missing. `play_publish.py listing` publishes the listing
 alone (`LISTING_JSON`, `LISTING_IMAGES`).
 
+**`play-listing.yml`** (Actions › Google Play listing › Run workflow, branch
+`main`) publishes the listing and the **Data safety** form at any time,
+without a release: it runs the screen tour for the images, then
+`play_publish.py listing` and `play_publish.py data-safety`. The Data safety
+answers (`docs/store/play-data-safety.csv`, "no data collected or shared",
+reasons in `docs/STORE.md`) are in the Play Console's CSV format: all its
+questions, only the first one answered. When the form changes, export it
+from the Console (App content › Data safety › Export to CSV) and commit it
+there. Permissions: "Manage store presence" for the listing, "Manage policy
+declarations" for Data safety.
+
+### App content without an API
+
+Google offers no API for these Play Console forms (Policy and programs ›
+App content); the answers are in `docs/STORE.md`. Data safety is the only
+App content form the API fills (above).
+
+| Form | Answer (`docs/STORE.md`) |
+|---|---|
+| Privacy policy | The URL of the published `docs/PRIVACY.md` |
+| App access | All functionality is available without special access (no login) |
+| Ads | No, the app contains no ads |
+| Content rating (IARC questionnaire) | Category All Other App Types; alcohol references: yes; everything else no |
+| Target audience and content | 18 and over only; not appealing to children |
+| News apps | No |
+| Advertising ID | No (the app does not use it) |
+| Government apps | No |
+| Financial features | None |
+| Health apps | No health features |
+| Store settings: app category, contact details | Food and drink; a contact email (step 6) |
+| Testers, countries and feedback of closed testing | Step 6 |
+
+The Console may add forms over time (Dashboard and App content list what is
+missing); the camera, notification and local network permissions of the
+app need no declaration form.
+
 Authentication: Workload Identity Federation. GitHub gives the job a
 short-lived OpenID Connect token; Google exchanges it for a one-hour token of
 the service account, only for this repository and `refs/heads/main`. No key is
@@ -263,10 +299,14 @@ placeholders: never commit the real ones.
    be impersonated by runs on `main` of this repository.
 8. **Invite the service account** in the Play Console: Users and
    permissions › Invite new users; email: the `PLAY_SERVICE_ACCOUNT` value;
-   App permissions › Add app › Encave; tick only **Release apps to testing
-   tracks** (add "Release to production, exclude devices, and use Play App
-   Signing" only when production is turned on). Invite user. No account
-   permission is needed.
+   App permissions › Add app › Encave; tick **Release apps to testing
+   tracks** (releases), **Manage store presence** (the store listing) and
+   **Manage policy declarations** (the Data safety form), with **View app
+   information (read-only)**, which they build on (add "Release to
+   production, exclude devices, and use Play App Signing" only when
+   production is turned on). Invite user (or, already invited: the service
+   account › App permissions › Encave, tick, Apply). No account permission
+   is needed. A job that lacks one names it in its error.
 9. **GitHub variables**: set `PLAY_WIF_PROVIDER` and `PLAY_SERVICE_ACCOUNT`
    to the two values printed in step 7 (Settings › Secrets and variables ›
    Actions › Variables). Leave `PLAY_CLOSED_TRACK` unset (closed testing on

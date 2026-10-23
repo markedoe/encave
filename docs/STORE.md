@@ -66,6 +66,9 @@ are not partners of the developer.
 
 ## Google Play: Data safety
 
+Sent by `play-listing.yml` from `docs/store/play-data-safety.csv` (the
+Console's CSV format; only the first question answered: No).
+
 **Does your app collect or share any of the required user data types?** No.
 
 Reasoning, from Google's definitions (collection = transmitting data off the

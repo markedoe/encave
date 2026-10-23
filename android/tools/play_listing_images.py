@@ -5,7 +5,7 @@ Usage: python3 android/tools/play_listing_images.py <screens folder> <output fol
 
 <screens folder> is the android-screens artifact of android.yml (ScreenTourTest, sample
 cellar only): phone/<lang>-NN-<screen>.png (411x891 dp at xxhdpi) and tablet/... (1280x800 dp
-landscape). The screens and captions come from docs/store/play.json.
+landscape), or the older layout phone-<lang>/NN-<screen>.png. The screens and captions come from docs/store/play.json.
 
 Writes, for fr-FR and en-US, <output>/<language>/<imageType>/NN.png, the layout read by
 play_publish.py:
@@ -180,9 +180,15 @@ def check(path, image_type):
 
 
 def capture(screens, device, prefix, screen):
-    """The tour's file for a screen, whatever its number: phone/en-01-cellar.png."""
-    found = sorted((screens / device).glob(f"{prefix}-[0-9][0-9]-{screen}.png"))
-    return found[0] if found else None
+    """The tour's file for a screen, whatever its number: phone/en-01-cellar.png, or in the
+    older tour layout phone-en/01-cellar.png. screen may list other names for the same screen."""
+    for name in [screen] if isinstance(screen, str) else screen:
+        found = sorted((screens / device).glob(f"{prefix}-[0-9][0-9]-{name}.png"))
+        found += sorted((screens / f"{device}-{prefix}").glob(f"[0-9][0-9]-{name}.png"))
+        found += sorted((screens / f"{device}-{prefix}").glob(f"[0-9][0-9][a-z]-{name}.png"))
+        if found:
+            return found[0]
+    return None
 
 
 def main():
@@ -203,7 +209,7 @@ def main():
             for device in count:
                 source = capture(screens, device, prefix, item["screen"])
                 if source is None:
-                    print(f"::warning::No {device}/{prefix}-NN-{item['screen']}.png: left out of the listing.")
+                    print(f"::warning::No {device} screenshot of {item['screen']} ({prefix}): left out of the listing.")
                     continue
                 count[device] += 1
                 name = f"{count[device]:02d}.png"

@@ -10,7 +10,13 @@ Steps, run by android.yml on main:
            smoke test passed. Nothing is rebuilt between the tracks. With
            LISTING_JSON set, the store listing is updated in the same edit, so
            Google reviews the release and the listing together;
-  listing  only the store listing (texts and images), for a run by hand.
+  listing  only the store listing (texts and images): play-listing.yml, or by hand;
+  data-safety  the Data safety form, from the CSV of DATA_SAFETY_CSV
+           (docs/store/play-data-safety.csv; applications.dataSafety, no edit).
+
+Play Console permissions of the service account (Users and permissions), per step:
+upload and promote need "Release apps to testing tracks", listing "Manage store
+presence", data-safety "Manage policy declarations".
 
 The listing: texts from docs/store/play.json (title, short and full description
 per language) and the images made by play_listing_images.py. Unchanged texts and
@@ -35,6 +41,8 @@ Environment:
   LISTING_JSON       promote, listing: the listing texts (docs/store/play.json)
   LISTING_IMAGES     promote, listing: the folder of play_listing_images.py,
                      <language>/<imageType>/NN.png (optional: texts only without it)
+  DATA_SAFETY_CSV    data-safety: the Data safety answers, in the Play Console's
+                     CSV format (export: App content › Data safety › Export to CSV)
 """
 
 import hashlib
@@ -56,6 +64,13 @@ UPLOAD = "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/app
 RETRY_DELAYS = (5, 15, 30, 60, 120)
 NOTES_LIMIT = 500
 LISTING_LIMITS = {"title": 30, "shortDescription": 80, "fullDescription": 4000}
+PERMISSIONS = {
+    "tracks": "Release apps to testing tracks",
+    "listing": "Manage store presence",
+    "data-safety": "Manage policy declarations",
+}
+# What the step is doing, for the error message when a permission is missing.
+doing = "tracks"
 IMAGE_TYPES = ("icon", "featureGraphic", "phoneScreenshots", "sevenInchScreenshots", "tenInchScreenshots")
 
 
@@ -106,9 +121,10 @@ def explain(error, package):
     if error.status == 404 or "package not found" in body:
         return (f"Google Play does not know {package} yet: create the app in the Play Console and upload the "
                 "first bundle by hand (docs/RELEASING.md, one-time setup).")
-    if error.status in (401, 403) and "permission" in body:
-        return ("The service account has no access to the app: invite it in the Play Console (Users and "
-                "permissions) with the release permissions (docs/RELEASING.md, one-time setup).")
+    if error.status in (401, 403):
+        return (f"The service account lacks the Play Console permission \"{PERMISSIONS[doing]}\" for this app: "
+                "Users and permissions › the service account › App permissions › Encave, tick it, Apply "
+                "(docs/RELEASING.md, one-time setup).")
     if "draft app" in body:
         return ("The app is still a draft: roll out the first release to internal testing by hand in the "
                 "Play Console (docs/RELEASING.md, one-time setup); later releases are made by the CI.")
@@ -274,6 +290,8 @@ def update_images(base, edit, package, language, image_type, files):
 
 def update_listing(base, edit, package):
     """The store listing in this edit; True when something changed."""
+    global doing
+    doing = "listing"
     data = read_listing(os.environ["LISTING_JSON"])
     check_details(base, edit, data.get("defaultLanguage", "fr-FR"))
     changed = False
@@ -293,12 +311,33 @@ def update_listing(base, edit, package):
     return changed
 
 
+def data_safety(base):
+    global doing
+    doing = "data-safety"
+    path = os.environ.get("DATA_SAFETY_CSV", "").strip()
+    if not path:
+        sys.exit("data-safety needs DATA_SAFETY_CSV (docs/store/play-data-safety.csv).")
+    with open(path, encoding="utf-8") as file:
+        labels = file.read()
+    if not labels.startswith("Question ID"):
+        sys.exit(f"{path} is not a Data safety CSV of the Play Console (first column: Question ID).")
+    # No edit and nothing to compare with: the API replaces the whole form, the same answers are harmless.
+    call("POST", f"{base}/dataSafety", {"safetyLabels": labels})
+    notice("Google Play Data safety form sent (docs/store/play-data-safety.csv).")
+
+
 def main():
     step = sys.argv[1] if len(sys.argv) > 1 else ""
-    if step not in ("upload", "promote", "listing"):
-        sys.exit("Usage: play_publish.py upload|promote|listing")
+    if step not in ("upload", "promote", "listing", "data-safety"):
+        sys.exit("Usage: play_publish.py upload|promote|listing|data-safety")
     package = os.environ.get("PACKAGE_NAME", "markeddoe.com.encave")
     base = f"{API}/{package}"
+    if step == "data-safety":
+        try:
+            data_safety(base)
+        except APIError as error:
+            sys.exit(f"{explain(error, package) or 'Google Play refused the Data safety form.'}\n{error}")
+        return
     if step == "listing":
         if not os.environ.get("LISTING_JSON"):
             sys.exit("listing needs LISTING_JSON (docs/store/play.json).")
@@ -321,6 +360,8 @@ def main():
             notice("The Google Play store listing is up to date: nothing sent.")
             return
         if track:
+            global doing
+            doing = "tracks"
             set_track(base, edit, track, version_code)
         commit(base, edit)
     except APIError as error:
