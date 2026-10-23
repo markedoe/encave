@@ -208,8 +208,8 @@ struct PreviousVersionsView: View {
 
     struct Row: Identifiable, Sendable {
         var version: CellarVersion
+        /// Bottles in the cellar: the one figure counted the same way everywhere.
         var bottles: Int
-        var wines: Int
         var id: String { version.id }
     }
 
@@ -230,8 +230,7 @@ struct PreviousVersionsView: View {
                             } label: {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(row.version.date.formatted(date: .complete, time: .shortened))
-                                    Text([String(localized: "\(row.bottles) bottles"), String(localized: "\(row.wines) wines")]
-                                        .joined(separator: " · "))
+                                    Text("\(row.bottles) bottles")
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                 }
@@ -255,8 +254,7 @@ struct PreviousVersionsView: View {
                 versions.versions().map { version -> Row in
                     let cellar = try? versions.cellar(of: version)
                     return Row(version: version,
-                               bottles: cellar?.bottles.values.filter { $0.status == .inCellar }.count ?? 0,
-                               wines: cellar?.wines.count ?? 0)
+                               bottles: cellar?.bottlesInCellarCount ?? 0)
                 }
             }.value
         }
@@ -321,7 +319,7 @@ struct RestorePreviewView: View {
                 }
             }
             Section("In This Backup") {
-                count("Wines", preview.wines)
+                count("Wines with bottles", preview.wines)
                 count("Bottles in the cellar", preview.bottles)
                 count("Racks", preview.racks)
                 count("Journal entries", preview.journalEntries)

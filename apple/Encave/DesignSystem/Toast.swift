@@ -1,14 +1,13 @@
 import SwiftUI
 
 /// Bottom banner confirming an action, with Undo (and another button, such as Merge). Disappears after a few seconds.
-/// While it shows, its Undo is also the window's undo action.
+/// Its Undo is also the window's undo action (⌘Z on Mac and iPad, shake on iPhone), which
+/// stays once the banner is gone, until it runs or the model cancels it (an Undo that puts
+/// back a whole earlier cellar goes as soon as anything else changes).
 struct ToastOverlay: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.undoManager) private var undoManager
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
-    @State private var registered: ToastUndo?
-    /// The undo manager `registered` went to, which may not be the current one.
-    @State private var registeredIn: UndoManager?
 
     var body: some View {
         VStack {
@@ -59,23 +58,12 @@ struct ToastOverlay: View {
         }
         .motionAnimation(.spring(duration: 0.35), reduced: .easeInOut(duration: 0.2), value: model.toast?.id)
         .onChange(of: model.toast?.id, initial: true) { registerUndo() }
-        .onDisappear { unregister() }
     }
 
-    /// Only the banner on screen can be undone this way: some undos restore a
-    /// whole earlier cellar, which must not happen after later changes.
+    /// Each Undo goes on the window's undo stack as its banner appears, and leaves it when
+    /// it runs or is cancelled (`ToastUndo`), not when the banner goes.
     private func registerUndo() {
-        unregister()
         guard let toast = model.toast, let undo = toast.undo, let undoManager else { return }
-        undoManager.registerUndo(withTarget: undo, selector: #selector(ToastUndo.run), object: nil)
-        undoManager.setActionName(toast.message)
-        registered = undo
-        registeredIn = undoManager
-    }
-
-    private func unregister() {
-        if let registered { registeredIn?.removeAllActions(withTarget: registered) }
-        registered = nil
-        registeredIn = nil
+        undo.register(in: undoManager, name: toast.message)
     }
 }

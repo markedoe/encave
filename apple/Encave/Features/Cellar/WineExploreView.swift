@@ -18,7 +18,7 @@ struct WineExploreView: View {
         let all = model.cellar.wines(sharing: attribute)
         let current = all.first { $0.wine.id == currentWineID }
         let groups = all.filter { $0.wine.id != currentWineID }
-        let bottleCount = groups.reduce(0) { $0 + $1.count }
+        let bottleCount = groups.bottleCount
         List {
             if let current {
                 Section("This wine") {
@@ -40,11 +40,8 @@ struct WineExploreView: View {
                         .accessibilityIdentifier("explore.row")
                     }
                 } header: {
-                    if current != nil {
-                        Text("\(groups.count) other wines") + Text(verbatim: " · ") + Text("\(bottleCount) bottles")
-                    } else {
-                        Text("\(groups.count) wines") + Text(verbatim: " · ") + Text("\(bottleCount) bottles")
-                    }
+                    // Bottles, as everywhere: a count of wine records would mean nothing here.
+                    Text("\(bottleCount) bottles")
                 }
             }
         }
@@ -146,6 +143,7 @@ struct ExploreDetailRow<Value: View>: View {
     var body: some View {
         let sharing = model.cellar.wines(sharing: attribute)
         let others = sharing.filter { $0.wine.id != wineID }.count
+        let bottleCount = sharing.bottleCount
         Group {
             if others > 0 {
                 NavigationLink {
@@ -154,7 +152,7 @@ struct ExploreDetailRow<Value: View>: View {
                     LabeledContent {
                         VStack(alignment: .trailing, spacing: 2) {
                             content
-                            Text("\(sharing.count) wines")
+                            Text("\(bottleCount) bottles")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

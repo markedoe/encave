@@ -177,7 +177,8 @@ struct CellarTable: View {
 }
 
 /// Deleting the selected rows: the Delete key on the Mac, like the context menu, deletes
-/// one wine at once (with Undo) and several after a confirmation.
+/// one wine with a single bottle at once (with Undo), and asks first for several wines or
+/// a wine with several bottles (`DeletionRule`).
 private struct TableCommands: ViewModifier {
     @Environment(CellarModel.self) private var model
     @Binding var picked: Set<UUID>
@@ -187,24 +188,17 @@ private struct TableCommands: ViewModifier {
         content
             #if os(macOS)
             .onDeleteCommand {
-                if picked.count == 1, let id = picked.first {
-                    model.deleteWine(id)
-                } else if picked.count > 1 {
+                // One wine with a single bottle goes with Undo; the others are confirmed.
+                guard !picked.isEmpty else { return }
+                if model.cellar.deletionGuard(ofWines: picked) == .confirm {
                     confirmingDelete = picked
+                } else if let id = picked.first {
+                    model.deleteWine(id)
+                    picked = []
                 }
             }
             #endif
-            .confirmationDialog("Delete these wines?", isPresented: Binding(
-                get: { !confirmingDelete.isEmpty }, set: { if !$0 { confirmingDelete = [] } }
-            ), titleVisibility: .visible) {
-                Button("Delete Wines", role: .destructive) {
-                    model.deleteWines(confirmingDelete)
-                    picked = []
-                    confirmingDelete = []
-                }
-            } message: {
-                Text("Their bottles and tastings are deleted too. You can undo right after.")
-            }
+            .confirmsWineDeletion($confirmingDelete) { picked = [] }
     }
 }
 

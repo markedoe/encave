@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.core.Bottle
+import app.encave.core.bottlesInCellarCount
 import app.encave.core.CellarArchive
 import app.encave.core.CellarVersion
 import app.encave.core.RestoreMode
@@ -139,12 +140,13 @@ fun BackupSettingsItems(viewModel: AppViewModel, navigator: AppNavigator) {
 @Composable
 fun PreviousVersionsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val last by viewModel.backups.lastBackup.collectAsStateWithLifecycle()
-    val rows by produceState<List<Pair<CellarVersion, Pair<Int, Int>>>?>(null, last) {
+    // Each version with its bottles in the cellar: the one figure counted the same way everywhere.
+    val rows by produceState<List<Pair<CellarVersion, Int>>?>(null, last) {
         val versions = viewModel.backups.versions
         value = withContext(Dispatchers.IO) {
             versions.versions().map { version ->
                 val cellar = runCatching { versions.cellar(version) }.getOrNull()
-                version to ((cellar?.bottles?.values?.count { it.status == Bottle.Status.InCellar } ?: 0) to (cellar?.wines?.size ?: 0))
+                version to (cellar?.bottlesInCellarCount ?: 0)
             }
         }
     }
@@ -169,17 +171,13 @@ fun PreviousVersionsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 Text(stringResource(R.string.versions_empty_body), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> LazyColumn(Modifier.padding(padding).fillMaxSize().readableWidth().testTag("versions.list")) {
-                items(list, key = { it.first.id }) { (version, counts) ->
-                    val (bottles, wines) = counts
+                items(list, key = { it.first.id }) { (version, bottles) ->
                     ListItem(
                         modifier = Modifier.clickable { viewModel.openVersion(version) { navigator.open(RestoreRoute) } }.testTag("versions.row"),
                         leadingContent = { Icon(Icons.Outlined.History, contentDescription = null) },
                         headlineContent = { Text(formatDate(version.date)) },
                         supportingContent = {
-                            Text(
-                                pluralStringResource(R.plurals.bottle_count, bottles, bottles) + " · " +
-                                    pluralStringResource(R.plurals.wine_count, wines, wines),
-                            )
+                            Text(pluralStringResource(R.plurals.bottle_count, bottles, bottles))
                         },
                     )
                 }
@@ -234,7 +232,7 @@ fun RestorePreviewScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 supportingContent = { Text(formatDate(source.date)) },
             )
             SectionHeader(stringResource(R.string.restore_in_backup))
-            Count(R.string.restore_wines, preview.wines)
+            Count(R.string.restore_wines_with_bottles, preview.wines)
             Count(R.string.restore_bottles, preview.bottles)
             Count(R.string.restore_racks, preview.racks)
             Count(R.string.restore_journal, preview.journalEntries)

@@ -422,7 +422,13 @@ class AppViewModel(
 
     fun saveSearch(name: String, filter: CellarFilter) = change<Unit> { it.saveSearch(name, filter) }
 
-    fun deleteSearch(id: UUID) = change<Unit> { it.deleteSearch(id) }
+    /** A saved search, with Undo: it comes back in its place among the filters. */
+    fun deleteSearch(id: UUID) {
+        val search = cellar.value.settings.savedSearches.orEmpty().firstOrNull { it.id == id } ?: return
+        change<Unit>({
+            post(UiText.Res(R.string.msg_search_deleted, listOf(search.name))) { change<Unit> { it.restoreSearch(search) } }
+        }) { it.deleteSearch(id) }
+    }
 
     // region Several wines or bottles at once (one Undo for all)
 

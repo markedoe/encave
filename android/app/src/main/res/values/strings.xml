@@ -258,6 +258,7 @@
     <string name="cellar_stat_bottles_hint">Shows your cellar in figures.</string>
     <string name="cellar_stat_wines_hint">Shows all your wines.</string>
     <string name="cellar_stat_soon_hint">Shows only the wines to drink soon.</string>
+    <string name="cellar_stat_keep_hint">Shows only the bottles to keep.</string>
     <string name="insights_avg_rating">average rating</string>
     <string name="insights_rating_value">%1$s / 5</string>
     <string name="insights_value">Cellar value</string>
@@ -302,6 +303,7 @@
     <string name="restore_made_on">Made on</string>
     <string name="restore_in_backup">In this backup</string>
     <string name="restore_wines">Wines</string>
+    <string name="restore_wines_with_bottles">Wines with bottles</string>
     <string name="restore_bottles">Bottles in the cellar</string>
     <string name="restore_racks">Racks</string>
     <string name="restore_journal">Journal entries</string>
@@ -1008,6 +1010,9 @@
     <string name="confirm_delete_wines_title">Delete these wines?</string>
     <string name="confirm_delete_wines_body">Their bottles and tastings are deleted too. You can undo right after.</string>
     <string name="action_delete_wines">Delete wines</string>
+    <string name="action_delete_wine">Delete wine</string>
+    <string name="confirm_delete_wine_title">Delete “%1$s”?</string>
+    <string name="msg_search_deleted">Deleted %1$s</string>
     <string name="msg_bottles_placed">Bottles placed: %1$d</string>
     <string name="msg_no_free_place">No free place in this rack for bottles without a place.</string>
     <string name="msg_bottles_taken_out">Bottles taken out of their places: %1$d</string>
@@ -1445,6 +1450,22 @@
     <plurals name="stat_different_wines" tools:ignore="ImpliedQuantity">
         <item quantity="one">different wine</item>
         <item quantity="other">different wines</item>
+    </plurals>
+    <plurals name="confirm_delete_wines_count">
+        <item quantity="one">Delete %d wine?</item>
+        <item quantity="other">Delete %d wines?</item>
+    </plurals>
+    <plurals name="confirm_delete_wines_bottles">
+        <item quantity="one">%d bottle and its tasting are deleted too. You can undo right after.</item>
+        <item quantity="other">%d bottles and their tastings are deleted too. You can undo right after.</item>
+    </plurals>
+    <plurals name="stat_bottles_to_keep" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bottle to keep</item>
+        <item quantity="other">bottles to keep</item>
+    </plurals>
+    <plurals name="stat_wines_with_bottles" tools:ignore="ImpliedQuantity">
+        <item quantity="one">wine with bottles</item>
+        <item quantity="other">wines with bottles</item>
     </plurals>
     <plurals name="stat_bottles_opened" tools:ignore="ImpliedQuantity">
         <item quantity="one">bottle opened</item>

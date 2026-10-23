@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.core.WineAttribute
+import app.encave.core.bottleCount
 import app.encave.core.WineColor
 import app.encave.core.winesSharing
 import app.encave.ui.AppNavigator
@@ -134,7 +135,7 @@ fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: W
     val all = attribute?.let { cellar.winesSharing(it) }.orEmpty()
     val current = all.firstOrNull { it.id.toString() == route.currentWineId }
     val groups = all.filter { it !== current }
-    val bottles = groups.sumOf { it.count }
+    val bottles = groups.bottleCount
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -178,9 +179,8 @@ fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: W
                 }
             } else {
                 item {
-                    val wines = if (current != null) pluralStringResource(R.plurals.other_wine_count, groups.size, groups.size)
-                    else pluralStringResource(R.plurals.wine_count, groups.size, groups.size)
-                    SectionHeader(wines + " · " + pluralStringResource(R.plurals.bottle_count, bottles, bottles))
+                    // Bottles, as everywhere: a count of wine records would mean nothing here.
+                    SectionHeader(pluralStringResource(R.plurals.bottle_count, bottles, bottles))
                 }
             }
             items(groups, key = { it.id.toString() }) { group ->
@@ -195,7 +195,6 @@ fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: W
     }
 }
 
-/** "3 wines", shown under a detail when other wines share it. */
+/** "7 bottles": those of the wines sharing a detail, shown under it when other wines share it. */
 @Composable
-internal fun sharedCount(count: Int): String? =
-    if (count > 1) pluralStringResource(R.plurals.wine_count, count, count) else null
+internal fun sharedCount(bottles: Int): String = pluralStringResource(R.plurals.bottle_count, bottles, bottles)

@@ -93,6 +93,8 @@ import app.encave.ui.AppNavigator
 import app.encave.data.PendingDocument
 import app.encave.ui.AppViewModel
 import app.encave.ui.cellar.PendingDocumentsSection
+import app.encave.core.AddFormLayout
+import app.encave.core.AddFormSection
 import app.encave.ui.components.Formats
 import app.encave.ui.components.Hint
 import app.encave.ui.help.HelpLink
@@ -366,48 +368,77 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
                 location()
                 PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
             } else {
-                if (cellar.wines.isNotEmpty()) {
-                    OutlinedTextField(
-                        value = search,
-                        onValueChange = { search = it },
-                        label = { Text(stringResource(R.string.add_search_hint)) },
-                        supportingText = { Text(stringResource(R.string.help_field_search)) },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    val suggestions = remember(search, cellar) { cellar.wineSuggestions(search, limit = 5) }
-                    suggestions.forEach { wine ->
-                        ListItem(
-                            headlineContent = { Text(wine.displayName) },
-                            supportingContent = { Text(wine.origin()) },
-                            leadingContent = { WineColorDot(wine.color, size = 16.dp) },
-                            modifier = Modifier.clickable {
-                                existingId = wine.id.toString()
-                                search = ""
-                            },
+                // The wines of the cellar: a search, and with "by hand" the name typed too.
+                val cellarWines: @Composable (byName: Boolean) -> Unit = { byName ->
+                    if (cellar.wines.isNotEmpty()) {
+                        OutlinedTextField(
+                            value = search,
+                            onValueChange = { search = it },
+                            label = { Text(stringResource(R.string.add_search_hint)) },
+                            supportingText = { Text(stringResource(R.string.help_field_search)) },
+                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        val needle = if (byName && search.isBlank()) form.name else search
+                        val suggestions = remember(needle, cellar) { cellar.wineSuggestions(needle, limit = 5) }
+                        suggestions.forEach { wine ->
+                            ListItem(
+                                headlineContent = { Text(wine.displayName) },
+                                supportingContent = { Text(wine.origin()) },
+                                leadingContent = { WineColorDot(wine.color, size = 16.dp) },
+                                modifier = Modifier.clickable {
+                                    existingId = wine.id.toString()
+                                    search = ""
+                                }.testTag("add.cellar_wine"),
+                            )
+                        }
+                        if (suggestions.isNotEmpty()) {
+                            Hint(stringResource(R.string.help_field_existing))
+                            HorizontalDivider()
+                        }
+                    }
+                }
+                val photo: @Composable () -> Unit = {
+                    Header(R.string.photo_section)
+                    PhotoSection(viewModel, form, onScanBarcode = { scanning = true })
+                }
+                val wineFields: @Composable () -> Unit = {
+                    Header(R.string.add_section_wine)
+                    WineEssentials(form, known, Modifier.bringIntoViewRequester(essentials), nameFocus = nameFocus, vintageFocus = vintageFocus)
+                }
+                val sameWineCard: @Composable () -> Unit = {
+                    sameWine?.let { match ->
+                        SameWineCard(
+                            match, cellar.bottlesOf(match.id).size,
+                            onUse = { existingId = match.id.toString() },
+                            onDifferent = { dismissedMatchId = match.id.toString() },
                         )
                     }
-                    if (suggestions.isNotEmpty()) {
-                        Hint(stringResource(R.string.help_field_existing))
-                        HorizontalDivider()
+                }
+                if (route.scan) {
+                    // Opened to scan: the order it has always had, the label photo before the name.
+                    cellarWines(false)
+                    photo()
+                    wineFields()
+                    sameWineCard()
+                    QuantityRow(quantity) { quantity = it }
+                    location()
+                    PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
+                } else {
+                    // By hand (core AddFormLayout.byHand): the wine first, its name the first field,
+                    // then the bottles, where they go and their documents; the label photo after.
+                    for (section in AddFormLayout.byHand) {
+                        when (section) {
+                            AddFormSection.Wine -> wineFields()
+                            AddFormSection.CellarWines -> if (sameWine != null) sameWineCard() else cellarWines(true)
+                            AddFormSection.Bottles -> QuantityRow(quantity) { quantity = it }
+                            AddFormSection.Location -> location()
+                            AddFormSection.Documents -> PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
+                            AddFormSection.Label -> photo()
+                        }
                     }
                 }
-                Header(R.string.photo_section)
-                PhotoSection(viewModel, form, onScanBarcode = { scanning = true })
-                // The name (the only required field) right after the photo, before the rack.
-                Header(R.string.add_section_wine)
-                WineEssentials(form, known, Modifier.bringIntoViewRequester(essentials), nameFocus = nameFocus, vintageFocus = vintageFocus)
-                sameWine?.let { match ->
-                    SameWineCard(
-                        match, cellar.bottlesOf(match.id).size,
-                        onUse = { existingId = match.id.toString() },
-                        onDifferent = { dismissedMatchId = match.id.toString() },
-                    )
-                }
-                QuantityRow(quantity) { quantity = it }
-                location()
-                PendingDocumentsSection(viewModel, pendingDocuments) { pendingDocuments = it }
             }
 
             Header(R.string.add_section_bottles)

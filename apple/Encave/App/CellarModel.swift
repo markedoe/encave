@@ -115,7 +115,7 @@ final class CellarModel {
         load(file, demo: false)
         guard !loadFailed else { return }
         // An Undo would apply to the cellar now loaded.
-        toast = nil
+        cancelAllUndos()
         indexInSpotlight()
         #if os(iOS)
         sync.scheduleBackgroundSync()
@@ -384,8 +384,7 @@ final class CellarModel {
             // Sync recorded the changes as they were made: it records them again as saved.
             onSaveReverted?(shown, lastSaved)
             // Every banner's Undo was about changes now gone.
-            toast?.undo?.cancel()
-            toast = nil
+            cancelAllUndos()
         }
         return generation
     }
@@ -687,11 +686,26 @@ final class CellarModel {
         }
     }
 
+    /// One entry of the Journal: no question, an Undo that puts back only its records, so it
+    /// stays after other changes (and in the window's Undo).
     func deleteDiscovery(_ id: UUID) {
-        let snapshot = cellar
+        guard let discovery = cellar.discoveries[id] else { return }
+        var removed = Cellar()
+        removed.discoveries[id] = discovery
+        removed.wines[discovery.wineID] = cellar.wines[discovery.wineID]
         guard update({ $0.deleteDiscovery(id) }) else { return }
-        showToast(String(localized: "Deleted from your journal")) { [weak self] in
-            self?.update { $0 = snapshot }
+        showToast(String(localized: "Deleted from your journal"), lasting: .afterChanges) { [weak self] in
+            self?.update { _ = $0.merge(removed) }
+        }
+    }
+
+    /// A saved search, with Undo: it comes back in its place among the filters.
+    func deleteSearch(_ id: UUID) {
+        guard let search = cellar.settings.savedSearches?.first(where: { $0.id == id }),
+              update({ $0.deleteSearch(id) }) else { return }
+        let name = search.name
+        showToast(String(localized: "Deleted \(name)"), lasting: .afterChanges) { [weak self] in
+            self?.update { $0.restoreSearch(search) }
         }
     }
 
@@ -971,12 +985,17 @@ final class CellarModel {
         toast.action = action
         if let undo {
             let id = toast.id
-            toast.undo = ToastUndo { [weak self] in
+            let toastUndo = ToastUndo { [weak self] in
                 self?.undoing = true
                 undo()
                 self?.undoing = false
                 if self?.toast?.id == id { self?.toast = nil }
             }
+            toast.undo = toastUndo
+            liveUndos.removeAll { !$0.undo.isPending }
+            liveUndos.append((undo: toastUndo, lasting: lasting))
+            // Kept here (an undo manager does not keep its targets), the latest ones only.
+            while liveUndos.count > Self.undoLimit { liveUndos.removeFirst().undo.cancel() }
         }
         self.toast = toast
     }
@@ -984,12 +1003,29 @@ final class CellarModel {
     /// True while a banner's Undo runs, so its own change does not cancel it.
     @ObservationIgnored private var undoing = false
 
+    /// The undos not run yet, also once their banner is gone: the window's Undo still
+    /// reaches them (`ToastOverlay` registers them in its undo manager).
+    @ObservationIgnored private var liveUndos: [(undo: ToastUndo, lasting: Toast.Lasting)] = []
+    private static let undoLimit = 30
+
     /// Some undos put back a whole earlier cellar: once anything else has changed
-    /// (here or by sync), the banner and its Undo go away so nothing newer is lost.
+    /// (here or by sync), they go away, with their banner, so nothing newer is lost.
     /// Undos that put back only their own records (`.long`, `.afterChanges`) stay.
     private func dropStaleUndo() {
-        guard let current = toast, let undo = current.undo, current.lasting == .standard else { return }
-        undo.cancel()
+        liveUndos.removeAll { entry in
+            guard entry.lasting == .standard || !entry.undo.isPending else { return false }
+            entry.undo.cancel()
+            return true
+        }
+        guard let current = toast, current.lasting == .standard, current.undo != nil else { return }
+        toast = nil
+    }
+
+    /// Every Undo was about a cellar now gone (another one loaded, a save that failed).
+    private func cancelAllUndos() {
+        liveUndos.forEach { $0.undo.cancel() }
+        liveUndos = []
+        toast?.undo?.cancel()
         toast = nil
     }
 }
@@ -1092,19 +1128,43 @@ struct ToastAction {
 @MainActor
 final class ToastUndo: NSObject {
     private var action: (@MainActor () -> Void)?
+    /// The undo managers (one a window) that hold it, so it leaves their menus once done.
+    private let managers = NSHashTable<UndoManager>.weakObjects()
 
     init(_ action: @escaping @MainActor () -> Void) {
         self.action = action
     }
 
+    /// Still to be run.
+    var isPending: Bool { action != nil }
+
     @objc func run() {
         let action = self.action
         self.action = nil
+        unregister()
         action?()
     }
 
     func cancel() {
         action = nil
+        unregister()
+    }
+
+    /// The window's Undo (⌘Z, Edit ▸ Undo, shake) runs it, also after the banner is gone,
+    /// until it runs or is cancelled.
+    func register(in manager: UndoManager, name: String) {
+        guard isPending, !managers.contains(manager) else { return }
+        manager.registerUndo(withTarget: self, selector: #selector(run), object: nil)
+        manager.setActionName(name)
+        managers.add(manager)
+    }
+
+    private func unregister() {
+        // The manager running it has already taken it off its stack.
+        for manager in managers.allObjects where !manager.isUndoing {
+            manager.removeAllActions(withTarget: self)
+        }
+        managers.removeAllObjects()
     }
 }
 

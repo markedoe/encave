@@ -257,6 +257,7 @@
     <string name="cellar_stat_bottles_hint">Affiche votre cave en chiffres.</string>
     <string name="cellar_stat_wines_hint">Affiche tous vos vins.</string>
     <string name="cellar_stat_soon_hint">N’affiche que les vins à boire bientôt.</string>
+    <string name="cellar_stat_keep_hint">N’affiche que les bouteilles à garder.</string>
     <string name="insights_avg_rating">note moyenne</string>
     <string name="insights_rating_value">%1$s / 5</string>
     <string name="insights_value">Valeur de la cave</string>
@@ -301,6 +302,7 @@
     <string name="restore_made_on">Faite le</string>
     <string name="restore_in_backup">Dans cette sauvegarde</string>
     <string name="restore_wines">Vins</string>
+    <string name="restore_wines_with_bottles">Vins en cave</string>
     <string name="restore_bottles">Bouteilles en cave</string>
     <string name="restore_racks">Casiers</string>
     <string name="restore_journal">Entrées du Journal</string>
@@ -1007,6 +1009,9 @@
     <string name="confirm_delete_wines_title">Supprimer ces vins ?</string>
     <string name="confirm_delete_wines_body">Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après.</string>
     <string name="action_delete_wines">Supprimer les vins</string>
+    <string name="action_delete_wine">Supprimer le vin</string>
+    <string name="confirm_delete_wine_title">Supprimer « %1$s » ?</string>
+    <string name="msg_search_deleted">%1$s supprimée</string>
     <string name="msg_bottles_placed">Bouteilles rangées : %1$d</string>
     <string name="msg_no_free_place">Aucun emplacement libre dans ce casier pour les bouteilles sans emplacement.</string>
     <string name="msg_bottles_taken_out">Bouteilles sorties de leur emplacement : %1$d</string>
@@ -1475,6 +1480,26 @@
         <item quantity="one">vin différent</item>
         <item quantity="many">vins différents</item>
         <item quantity="other">vins différents</item>
+    </plurals>
+    <plurals name="confirm_delete_wines_count">
+        <item quantity="one">Supprimer %d vin ?</item>
+        <item quantity="many">Supprimer %d vins ?</item>
+        <item quantity="other">Supprimer %d vins ?</item>
+    </plurals>
+    <plurals name="confirm_delete_wines_bottles">
+        <item quantity="one">%d bouteille et sa dégustation sont aussi supprimées. Vous pouvez annuler juste après.</item>
+        <item quantity="many">%d bouteilles et leurs dégustations sont aussi supprimées. Vous pouvez annuler juste après.</item>
+        <item quantity="other">%d bouteilles et leurs dégustations sont aussi supprimées. Vous pouvez annuler juste après.</item>
+    </plurals>
+    <plurals name="stat_bottles_to_keep" tools:ignore="ImpliedQuantity">
+        <item quantity="one">bouteille à garder</item>
+        <item quantity="many">bouteilles à garder</item>
+        <item quantity="other">bouteilles à garder</item>
+    </plurals>
+    <plurals name="stat_wines_with_bottles" tools:ignore="ImpliedQuantity">
+        <item quantity="one">vin en cave</item>
+        <item quantity="many">vins en cave</item>
+        <item quantity="other">vins en cave</item>
     </plurals>
     <plurals name="stat_bottles_opened" tools:ignore="ImpliedQuantity">
         <item quantity="one">bouteille ouverte</item>

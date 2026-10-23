@@ -251,6 +251,46 @@
         }
       }
     },
+    "%lld bottles and their tastings are deleted too. You can undo right after.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle and its tasting are deleted too. You can undo right after."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles and their tastings are deleted too. You can undo right after."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille et sa dégustation sont aussi supprimées. Vous pouvez annuler juste après."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles et leurs dégustations sont aussi supprimées. Vous pouvez annuler juste après."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld bottles are in places you removed": {
       "localizations": {
         "en": {
@@ -4197,6 +4237,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Delete %lld wines?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete %lld wine?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete %lld wines?"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld vin ?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld vins ?"
+                }
+              }
+            }
           }
         }
       }
@@ -11461,6 +11541,16 @@
         }
       }
     },
+    "Shows only the bottles to keep.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche seulement les bouteilles à garder."
+          }
+        }
+      }
+    },
     "Shows only the wines to drink soon.": {
       "localizations": {
         "fr": {
@@ -14791,6 +14881,16 @@
         }
       }
     },
+    "Wines with bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vins en cave"
+          }
+        }
+      }
+    },
     "Wines, bottles, racks and wines tasted elsewhere.": {
       "localizations": {
         "fr": {
@@ -15367,6 +15467,70 @@
         }
       }
     },
+    "bottles to drink soon [one]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle to drink soon"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille à boire bientôt"
+          }
+        }
+      }
+    },
+    "bottles to drink soon [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles to drink soon"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles à boire bientôt"
+          }
+        }
+      }
+    },
+    "bottles to keep [one]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottle to keep"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteille à garder"
+          }
+        }
+      }
+    },
+    "bottles to keep [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bottles to keep"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bouteilles à garder"
+          }
+        }
+      }
+    },
     "classic style for this dish": {
       "localizations": {
         "fr": {
@@ -15619,6 +15783,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "vins"
+          }
+        }
+      }
+    },
+    "wines with bottles [one]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wine with bottles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vin en cave"
+          }
+        }
+      }
+    },
+    "wines with bottles [other]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wines with bottles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vins en cave"
           }
         }
       }

@@ -153,6 +153,7 @@ enum class RestoreMode {
 data class RestorePreview(
     /** When the backup was made, or when the version was saved. */
     val date: Instant,
+    /** Wines with bottles in the cellar ([CellarCounts.winesWithBottles]). */
     val wines: Int,
     /** Bottles in the cellar (not opened, given away, or on order). */
     val bottles: Int,
@@ -189,8 +190,8 @@ data class RestorePreview(
             compare(backup.discoveries, current.discoveries)
             return RestorePreview(
                 date = date,
-                wines = backup.wines.size,
-                bottles = backup.bottles.values.count { it.status == Bottle.Status.InCellar },
+                wines = backup.winesWithBottlesCount,
+                bottles = backup.bottlesInCellarCount,
                 racks = backup.racks.size,
                 journalEntries = backup.bottles.values.count { it.status == Bottle.Status.Consumed } + backup.discoveries.size,
                 photos = backup.photoIds.size,

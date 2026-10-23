@@ -17,6 +17,7 @@ public enum RestoreMode: String, Sendable, CaseIterable {
 public struct RestorePreview: Equatable, Sendable {
     /// When the backup was made, or when the version was saved.
     public var date: Date
+    /// Wines with bottles in the cellar (`CellarCounts.winesWithBottles`).
     public var wines: Int
     /// Bottles in the cellar (not opened, given away, or on order).
     public var bottles: Int
@@ -35,8 +36,8 @@ public struct RestorePreview: Equatable, Sendable {
 
     public init(of backup: Cellar, date: Date, comparedWith current: Cellar) {
         self.date = date
-        wines = backup.wines.count
-        bottles = backup.bottles.values.filter { $0.status == .inCellar }.count
+        wines = backup.winesWithBottlesCount
+        bottles = backup.bottlesInCellarCount
         racks = backup.racks.count
         journalEntries = backup.bottles.values.filter { $0.status == .consumed }.count + backup.discoveries.count
         photos = backup.photoIDs.count

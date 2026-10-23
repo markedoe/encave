@@ -113,6 +113,9 @@ struct WineFormSections: View {
     var showsCellarDetails = true
     /// Opens Search Online, presented by the screen. Shown only when web search is set up.
     var onSearchOnline: (() -> Void)?
+    /// Sections right under the name, producer and vintage (Add Bottles: the wines of the
+    /// cellar with that name).
+    var afterName: AnyView?
     private let webSearch = WebSearchSettings.load()
 
     private let currentYear = CellarYear.current
@@ -148,6 +151,8 @@ struct WineFormSections: View {
                 }
             }
         }
+
+        if let afterName { afterName }
 
         Section {
             StyleChips(color: $draft.color)

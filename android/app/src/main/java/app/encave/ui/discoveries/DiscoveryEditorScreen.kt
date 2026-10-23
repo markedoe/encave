@@ -113,7 +113,6 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     var pendingTag by rememberSaveable { mutableStateOf("") }
     var wantsToBuy by rememberSaveable { mutableStateOf(existing?.wantsToBuy ?: false) }
     var price by rememberSaveable { mutableStateOf(existing?.price?.toPlainString().orEmpty()) }
-    var confirmDelete by remember { mutableStateOf(false) }
     // Back, the back gesture and ✕ ask first when something was entered.
     val snapshot = form.snapshot() + listOf(setting, place, date, rating, note, tags.toList(), pendingTag, wantsToBuy, price)
     val start = rememberRetained("discovery.start") { snapshot }
@@ -260,8 +259,12 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (existing != null) {
+                // One entry, with Undo: no question first (core DeletionRule).
                 OutlinedButton(
-                    onClick = { confirmDelete = true },
+                    onClick = {
+                        viewModel.deleteDiscovery(existing.id)
+                        navigator.back()
+                    },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.l).testTag("action.delete_discovery"),
                 ) {
@@ -273,18 +276,6 @@ private fun DiscoveryEditorForm(viewModel: AppViewModel, navigator: AppNavigator
     }
     if (pickingDate) {
         DateDialog(initial = date, onPick = { picked -> picked?.let { date = it } }, onDismiss = { pickingDate = false }, allowClear = false)
-    }
-    if (confirmDelete && existing != null) {
-        ConfirmDialog(
-            title = stringResource(R.string.discovery_delete_title),
-            body = wine?.displayName.orEmpty(),
-            confirm = stringResource(R.string.discovery_delete),
-            onConfirm = {
-                viewModel.deleteDiscovery(existing.id)
-                navigator.back()
-            },
-            onDismiss = { confirmDelete = false },
-        )
     }
 }
 

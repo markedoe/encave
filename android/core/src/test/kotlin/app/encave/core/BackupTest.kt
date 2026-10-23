@@ -427,7 +427,9 @@ class RestoreTest {
         current.updateRack(rack.copy(name = "Renamed"))
 
         val preview = RestorePreview.of(backup, Instant.EPOCH, current)
-        assertEquals(backup.wines.size, preview.wines)
+        // Wines with bottles in the cellar, not every wine record (those tasted elsewhere).
+        assertEquals(backup.bottlesInCellar.map { it.wineId }.toSet().size, preview.wines)
+        assertTrue(preview.wines < backup.wines.size)
         assertEquals(backup.bottlesInCellar.size, preview.bottles)
         assertEquals(backup.racks.size, preview.racks)
         assertEquals(backup.consumedBottles.size + backup.discoveries.size, preview.journalEntries)

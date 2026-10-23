@@ -81,3 +81,74 @@ struct StatTile: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
+
+/// A figure on one line, for the largest text sizes, where tiles would fill the first
+/// screen: icon, figure, caption, then a chevron (opens) or a checkmark (filter on).
+struct CompactStatRow: View {
+    let value: String
+    let caption: LocalizedStringKey
+    var systemImage: String?
+    var isSelected = false
+    var opens = false
+
+    init(count: Int, caption: CountCaption, systemImage: String? = nil, isSelected: Bool = false, opens: Bool = false) {
+        value = count.formatted()
+        self.caption = caption.key
+        self.systemImage = systemImage
+        self.isSelected = isSelected
+        self.opens = opens
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .foregroundStyle(Color.accentColor)
+                    .accessibilityHidden(true)
+            }
+            // The figure and its caption read as one phrase and wrap together.
+            (Text(verbatim: value).fontWeight(.semibold).monospacedDigit() + Text(verbatim: " ") + Text(caption))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.accentColor)
+                    .accessibilityHidden(true)
+            } else if opens {
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .contentShape(Rectangle())
+        .background(isSelected ? Color.accentColor.opacity(0.15) : .clear)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+extension DynamicTypeSize {
+    /// The body text size against the default (Large, 17 pt), as Android's font scale:
+    /// the accessibility sizes start at 28 pt, about 1.65.
+    var textScale: Double {
+        let points: Double = switch self {
+        case .xSmall: 14
+        case .small: 15
+        case .medium: 16
+        case .large: 17
+        case .xLarge: 19
+        case .xxLarge: 21
+        case .xxxLarge: 23
+        case .accessibility1: 28
+        case .accessibility2: 33
+        case .accessibility3: 40
+        case .accessibility4: 47
+        case .accessibility5: 53
+        @unknown default: isAccessibilitySize ? 28 : 17
+        }
+        return points / 17
+    }
+}

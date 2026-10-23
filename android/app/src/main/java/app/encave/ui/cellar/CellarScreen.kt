@@ -127,6 +127,9 @@ import app.encave.core.Cellar
 import app.encave.core.CellarSort
 import app.encave.core.Maturity
 import app.encave.core.statistics
+import app.encave.core.StatTileLayout
+import app.encave.core.counts
+import androidx.compose.ui.graphics.Color
 import app.encave.core.WineColor
 import app.encave.core.WineGroup
 import app.encave.ui.AppNavigator
@@ -238,7 +241,6 @@ private fun CellarList(
     // Choosing several wines: a contextual top bar acts on all of them, with one Undo.
     var selecting by rememberSaveable { mutableStateOf(false) }
     var picked by rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(setOf<java.util.UUID>()) }
-    var confirmBulkDelete by remember { mutableStateOf(false) }
     var reservingPicked by remember { mutableStateOf(false) }
     var namingSearch by remember { mutableStateOf(false) }
     var confirmSample by remember { mutableStateOf(false) }
@@ -250,6 +252,8 @@ private fun CellarList(
         picked = emptySet()
     }
     androidx.activity.compose.BackHandler(selecting) { endSelection() }
+    // Several wines are asked first; one with a single bottle goes with Undo.
+    val deleteWines = rememberWineDeletion(cellar, viewModel, onDeleted = ::endSelection)
     // Wines that left the list (filter, deleted elsewhere) are no longer ticked.
     val shownPicked = picked.filter { id -> groups.any { it.id == id } }.toSet()
 
@@ -271,7 +275,7 @@ private fun CellarList(
                         viewModel.markGone(groups.filter { it.id in shownPicked }.flatMap { it.bottles }.map { it.id }.toSet())
                         endSelection()
                     },
-                    onDelete = { confirmBulkDelete = true },
+                    onDelete = { deleteWines(shownPicked) },
                 )
             } else {
                 CellarSearchBar(
@@ -389,7 +393,6 @@ private fun CellarList(
                         }
                     }
                 } else {
-                    val scope = rememberCoroutineScope()
                     val showsSummary = filter.query.isEmpty() && !selecting
                     // Pull down to sync now, with the devices around and away from home.
                     SyncRefreshBox(enabled = shared) {
@@ -408,12 +411,7 @@ private fun CellarList(
                                         year = viewModel.year,
                                         filter = filter,
                                         onBottles = { navigator.open(InsightsRoute) },
-                                        onWines = {
-                                            viewModel.filter.value = app.encave.core.CellarFilter()
-                                            // The first wine, just under the figures.
-                                            scope.launch { listState.animateScrollToItem(1) }
-                                        },
-                                        onSoon = { viewModel.filter.value = it },
+                                        onFilter = { viewModel.filter.value = it },
                                     )
                                 }
                             }
@@ -492,15 +490,6 @@ private fun CellarList(
             onConfirm = { viewModel.loadSample(sampleLabels(resources)) },
             onDismiss = { confirmSample = false },
             destructive = false,
-        )
-    }
-    if (confirmBulkDelete) {
-        ConfirmDialog(
-            title = stringResource(R.string.confirm_delete_wines_title),
-            body = stringResource(R.string.confirm_delete_wines_body),
-            confirm = stringResource(R.string.action_delete_wines),
-            onConfirm = { viewModel.deleteWines(shownPicked); endSelection() },
-            onDismiss = { confirmBulkDelete = false },
         )
     }
     if (reservingPicked) {
@@ -1009,64 +998,119 @@ private fun OrderRow(
 }
 
 /**
- * The three figures at the top of the cellar, each a shortcut: bottles opens the cellar
- * in figures, wines shows the whole list, and "to drink soon" filters the list (tap again
- * to show all).
+ * The three figures at the top of the cellar, each a shortcut: bottles opens the cellar in
+ * figures; "to keep" and "to drink soon" filter the list (tap again to show all). Counted
+ * with [counts], as everywhere. From 150 % font scale they become a short list, one line a
+ * figure, so they do not fill the first screen ([StatTileLayout]).
  */
 @Composable
-private fun CellarSummary(
+internal fun CellarSummary(
     cellar: Cellar,
     year: Int,
     filter: app.encave.core.CellarFilter,
     onBottles: () -> Unit,
-    onWines: () -> Unit,
-    onSoon: (app.encave.core.CellarFilter) -> Unit,
+    onFilter: (app.encave.core.CellarFilter) -> Unit,
 ) {
-    val stats = remember(cellar, year) { cellar.statistics(year) }
-    val soonOnly = filter.maturities == setOf(Maturity.DrinkSoon) && filter.colors.isEmpty() && filter.rackId == null && filter.tag == null &&
-        filter.reservation == null && filter.grape == null
-    // Side by side, or one above the other from 150 % font scale so captions are not clipped.
-    val stacked = LocalDensity.current.fontScale >= 1.5f
-    val bottles: @Composable (Modifier) -> Unit = { modifier ->
-        StatTile(
-            value = stats.bottleCount, caption = pluralStringResource(R.plurals.stat_bottles, stats.bottleCount), icon = Icons.Outlined.WineBar,
-            hint = stringResource(R.string.cellar_stat_bottles_hint), opens = true, onClick = onBottles,
-            modifier = modifier.testTag("cellar.stat.bottles"), stacked = stacked,
+    val counts = remember(cellar, year) { cellar.counts(year) }
+    val keepOnly = filter.showsOnly(Maturity.Young)
+    val soonOnly = filter.showsOnly(Maturity.DrinkSoon)
+    val toggle = { maturity: Maturity, on: Boolean ->
+        onFilter(
+            if (on) app.encave.core.CellarFilter(query = filter.query)
+            else app.encave.core.CellarFilter(query = filter.query, maturities = setOf(maturity)),
         )
     }
-    val wines: @Composable (Modifier) -> Unit = { modifier ->
-        StatTile(
-            value = stats.wineCount, caption = pluralStringResource(R.plurals.stat_wines, stats.wineCount), icon = Icons.AutoMirrored.Outlined.List,
-            hint = stringResource(R.string.cellar_stat_wines_hint), onClick = onWines,
-            modifier = modifier.testTag("cellar.stat.wines"), stacked = stacked,
-        )
-    }
-    val soon: @Composable (Modifier) -> Unit = { modifier ->
-        StatTile(
-            value = stats.byMaturity[Maturity.DrinkSoon] ?: 0, caption = stringResource(R.string.cellar_stat_soon),
-            icon = Maturity.DrinkSoon.icon, hint = stringResource(R.string.cellar_stat_soon_hint), isSelected = soonOnly,
-            onClick = {
-                onSoon(
-                    if (soonOnly) app.encave.core.CellarFilter(query = filter.query)
-                    else app.encave.core.CellarFilter(query = filter.query, maturities = setOf(Maturity.DrinkSoon)),
-                )
-            },
-            modifier = modifier.testTag("cellar.stat.soon"), stacked = stacked,
-        )
-    }
-    if (stacked) {
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s),
-            verticalArrangement = Arrangement.spacedBy(Dimens.s),
+    val figures = listOf(
+        SummaryFigure(
+            "cellar.stat.bottles", counts.bottles, pluralStringResource(R.plurals.stat_bottles, counts.bottles), Icons.Outlined.WineBar,
+            stringResource(R.string.cellar_stat_bottles_hint), opens = true, onClick = onBottles,
+        ),
+        SummaryFigure(
+            "cellar.stat.keep", counts.bottlesToKeep, pluralStringResource(R.plurals.stat_bottles_to_keep, counts.bottlesToKeep),
+            Maturity.Young.icon, stringResource(R.string.cellar_stat_keep_hint), isSelected = keepOnly,
+            onClick = { toggle(Maturity.Young, keepOnly) },
+        ),
+        SummaryFigure(
+            "cellar.stat.soon", counts.bottlesToDrinkSoon, stringResource(R.string.cellar_stat_soon), Maturity.DrinkSoon.icon,
+            stringResource(R.string.cellar_stat_soon_hint), isSelected = soonOnly, onClick = { toggle(Maturity.DrinkSoon, soonOnly) },
+        ),
+    )
+    if (StatTileLayout.of(LocalDensity.current.fontScale) == StatTileLayout.Compact) {
+        Surface(
+            shape = RoundedCornerShape(Dimens.radiusCard),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.stats.compact"),
         ) {
-            listOf(bottles, wines, soon).forEach { it(Modifier.fillMaxWidth()) }
+            Column {
+                figures.forEachIndexed { index, figure ->
+                    if (index > 0) HorizontalDivider()
+                    CompactStatRow(figure)
+                }
+            }
         }
     } else {
         Row(
             Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Dimens.l, vertical = Dimens.s),
             horizontalArrangement = Arrangement.spacedBy(Dimens.s),
         ) {
-            listOf(bottles, wines, soon).forEach { it(Modifier.weight(1f).fillMaxHeight()) }
+            figures.forEach { figure ->
+                StatTile(
+                    value = figure.value, caption = figure.caption, icon = figure.icon, hint = figure.hint, onClick = figure.onClick,
+                    modifier = Modifier.weight(1f).fillMaxHeight().testTag(figure.tag), isSelected = figure.isSelected, opens = figure.opens,
+                )
+            }
+        }
+    }
+}
+
+/** One of the figures above the cellar list. */
+private class SummaryFigure(
+    val tag: String,
+    val value: Int,
+    val caption: String,
+    val icon: ImageVector,
+    val hint: String,
+    val isSelected: Boolean = false,
+    val opens: Boolean = false,
+    val onClick: () -> Unit,
+)
+
+/** Filters on this maturity alone, as the figure for it does. */
+private fun app.encave.core.CellarFilter.showsOnly(maturity: Maturity) =
+    maturities == setOf(maturity) && colors.isEmpty() && rackId == null && tag == null && reservation == null && grape == null
+
+/**
+ * A figure on one line, for the largest font scales: icon, figure and caption, then a
+ * chevron (opens) or a check mark (filter on), so the state is not shown by color alone.
+ */
+@Composable
+private fun CompactStatRow(figure: SummaryFigure) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        Modifier
+            .testTag(figure.tag)
+            .fillMaxWidth()
+            .background(if (figure.isSelected) scheme.primaryContainer else Color.Transparent)
+            .clickable(onClickLabel = figure.hint, onClick = figure.onClick)
+            .clearAndSetSemantics {
+                contentDescription = "${Formats.integer(figure.value)} ${figure.caption}. ${figure.hint}"
+                selected = figure.isSelected
+                role = Role.Button
+                onClick(label = figure.hint) { figure.onClick(); true }
+            }
+            .padding(horizontal = Dimens.m, vertical = Dimens.s),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.s),
+    ) {
+        Icon(figure.icon, contentDescription = null, tint = scheme.primary)
+        Text(
+            "${Formats.integer(figure.value)} ${figure.caption}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        when {
+            figure.isSelected -> Icon(Icons.Filled.Check, contentDescription = null, tint = scheme.primary)
+            figure.opens -> Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = scheme.outline)
         }
     }
 }

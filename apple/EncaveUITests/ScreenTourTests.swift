@@ -64,9 +64,11 @@ final class ScreenTourTests: XCTestCase {
         guard app.horizontalSizeClassIsCompact else { return }
         openSection(0, "cellar")
         snapshot("cellar")
-        let bottles = element("cellar.stat.bottles"), wines = element("cellar.stat.wines")
-        if bottles.waitForExistence(timeout: 10), wines.exists {
-            XCTAssertGreaterThanOrEqual(wines.frame.minY, bottles.frame.maxY - 1, "The cellar tiles stack at AX5")
+        let bottles = element("cellar.stat.bottles"), keep = element("cellar.stat.keep"), soon = element("cellar.stat.soon")
+        if bottles.waitForExistence(timeout: 10), keep.exists, soon.exists {
+            XCTAssertGreaterThanOrEqual(keep.frame.minY, bottles.frame.maxY - 1, "The cellar figures are a list at AX5")
+            // One short line a figure: the wines still start on the first screen.
+            XCTAssertLessThan(soon.frame.maxY - bottles.frame.minY, app.frame.height / 2, "The cellar figures fill the screen at AX5")
         }
     }
     #endif

@@ -203,6 +203,42 @@ struct AddBottleView: View {
         }
     }
 
+    /// Right under the name typed by hand: the wine of the cellar it matches, or a search of
+    /// the cellar's wines (by the name typed, until something is typed in the search), to
+    /// add bottles to one without typing the wine again.
+    @ViewBuilder
+    private var cellarWinesSection: some View {
+        if let match = sameWine {
+            sameWineSection(match)
+        } else if !model.cellar.wines.isEmpty {
+            let typed = search.trimmingCharacters(in: .whitespaces)
+            let suggestions = model.cellar.wineSuggestions(matching: typed.isEmpty ? draft.name : typed, limit: 5)
+            Section {
+                TextField("Search your wines", text: $search)
+                    .autocorrectionDisabled()
+                    .fieldHelp("Type a few letters of the name to add bottles of a wine you already have.")
+                ForEach(suggestions) { wine in
+                    Button {
+                        withAnimation { existingWine = wine }
+                    } label: {
+                        HStack(spacing: 10) {
+                            BottleEnd(color: wine.color, size: 22)
+                            Text(wine.displayName)
+                            Spacer()
+                            Image(systemName: "plus.circle.fill").foregroundStyle(Color.accentColor)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("add.cellarWine")
+                }
+            } header: {
+                Text("Already in your cellar?")
+            } footer: {
+                Text("Choose it to add bottles without typing the wine again.")
+            }
+        }
+    }
+
     /// The scan or the name typed is a wine already in the cellar: add to it in one tap.
     private func sameWineSection(_ wine: Wine) -> some View {
         Section {
@@ -238,42 +274,21 @@ struct AddBottleView: View {
                 if let wine = existingWine {
                     existingWineSection(wine)
                     quantitySection
-                } else {
+                } else if scan.showsSummary {
+                    // After a scan: the label and what was read, then the bottles.
                     LabelScanSection(scan: scan, draft: $draft)
-                    let match = sameWine
-                    if let match { sameWineSection(match) }
-                    if scan.showsSummary {
-                        WineSummarySections(draft: $draft, scan: scan)
-                        quantitySection
-                    } else {
-                        quantitySection
-                        if !model.cellar.wines.isEmpty, match == nil {
-                            Section {
-                                TextField("Search your wines", text: $search)
-                                    .autocorrectionDisabled()
-                                    .fieldHelp("Type a few letters of the name to add bottles of a wine you already have.")
-                                ForEach(model.cellar.wineSuggestions(matching: search)) { wine in
-                                    Button {
-                                        withAnimation { existingWine = wine }
-                                    } label: {
-                                        HStack(spacing: 10) {
-                                            BottleEnd(color: wine.color, size: 22)
-                                            Text(wine.displayName)
-                                            Spacer()
-                                            Image(systemName: "plus.circle.fill").foregroundStyle(Color.accentColor)
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            } header: {
-                                Text("Already in your cellar?")
-                            } footer: {
-                                Text("Choose it to add bottles without typing the wine again.")
-                            }
-                        }
-                        WineFormSections(draft: $draft, focusName: context.wine == nil && model.cellar.wines.isEmpty,
-                                         onSearchOnline: { searchingOnline = true })
-                    }
+                    if let match = sameWine { sameWineSection(match) }
+                    WineSummarySections(draft: $draft, scan: scan)
+                    quantitySection
+                } else {
+                    // By hand (`AddFormLayout.byHand`): the wine first, its name the first
+                    // field, then the bottles, where they go and their documents. The label
+                    // can still be scanned after.
+                    WineFormSections(draft: $draft, focusName: context.wine == nil && !context.scan,
+                                     onSearchOnline: { searchingOnline = true },
+                                     afterName: AnyView(cellarWinesSection))
+                    quantitySection
+                    LabelScanSection(scan: scan, draft: $draft)
                 }
 
                 Section {
