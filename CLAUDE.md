@@ -10,6 +10,8 @@ sync between devices and users (see `docs/ROADMAP.md`):
 - `relay/`: self-hostable relay that stores ciphertext only (Node, Cloudflare Workers)
 - Sync protocol: `docs/SYNC.md`, implemented in CaveKit and mirrored in Kotlin
   with shared test vectors
+- Releases: `docs/RELEASING.md` (testers, release train twice a week, urgent
+  lane, feature switches); keep it up to date when the pipeline changes
 
 ## Product and design rules
 

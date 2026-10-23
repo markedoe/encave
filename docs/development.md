@@ -217,6 +217,9 @@ off without code changes:
 
 ## Continuous integration
 
+How builds reach the testers and the stores, and the release policy:
+[RELEASING.md](RELEASING.md).
+
 | Workflow | What it does |
 |----------|--------------|
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
