@@ -12,7 +12,6 @@ import app.encave.core.RackKind
 import app.encave.core.SampleData
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -55,7 +54,8 @@ class RackWizardTest {
         compose.onNodeWithTag("wizard.layout.grid").assertDoesNotExist()
         tap("wizard.next")
         tap("wizard.create")
-        assertEquals(before + 1, cellar.racks.size)
+        // Saved in the background.
+        compose.waitUntil(5_000) { cellar.racks.size == before + 1 }
         val fridge = cellar.racks.last()
         assertEquals(RackKind.Staggered, fridge.kind)
         assertEquals(List(5) { 2 }, fridge.shelfLayers)
@@ -73,7 +73,6 @@ class RackWizardTest {
         // The same confirmation as in the editor.
         compose.onNodeWithText("Delete “${first.name}”?").assertExists()
         compose.onNodeWithText("Delete rack").performClick()
-        compose.waitForIdle()
-        assertFalse(cellar.racks.any { it.id == first.id })
+        compose.waitUntil(5_000) { cellar.racks.none { it.id == first.id } }
     }
 }
