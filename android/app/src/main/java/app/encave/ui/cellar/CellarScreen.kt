@@ -1171,28 +1171,47 @@ internal fun StatTile(
     }
 }
 
-/** Shown while records of the sample cellar remain: removes them, and only them, with Undo. */
+/**
+ * Shown while records of the sample cellar remain: removes them, and only them, with Undo.
+ * From 150 % font scale the button goes under the text, so no word is broken in the middle.
+ */
 @Composable
-private fun SampleBanner(onRemove: () -> Unit) {
+internal fun SampleBanner(onRemove: () -> Unit) {
+    val stacked = LocalDensity.current.fontScale >= 1.5f
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.l, vertical = Dimens.s).testTag("cellar.sample"),
     ) {
-        Row(
-            Modifier.padding(start = Dimens.l, end = Dimens.s, top = Dimens.xs, bottom = Dimens.xs),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.m),
-        ) {
-            Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-            Text(
-                stringResource(R.string.cellar_sample_title),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
+        val text: @Composable (Modifier) -> Unit = { modifier ->
+            Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                Icon(Icons.Outlined.Science, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                Text(
+                    stringResource(R.string.cellar_sample_title),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.weight(1f).semantics { heading() }.testTag("cellar.sample.title"),
+                )
+            }
+        }
+        val button: @Composable () -> Unit = {
             TextButton(onClick = onRemove, modifier = Modifier.testTag("action.remove_sample")) {
                 Text(stringResource(R.string.action_remove_sample))
+            }
+        }
+        if (stacked) {
+            Column(Modifier.padding(start = Dimens.l, end = Dimens.s, top = Dimens.s, bottom = Dimens.xs)) {
+                text(Modifier.fillMaxWidth())
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { button() }
+            }
+        } else {
+            Row(
+                Modifier.padding(start = Dimens.l, end = Dimens.s, top = Dimens.xs, bottom = Dimens.xs),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.m),
+            ) {
+                text(Modifier.weight(1f))
+                button()
             }
         }
     }

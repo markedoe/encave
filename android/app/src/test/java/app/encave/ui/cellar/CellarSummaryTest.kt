@@ -78,3 +78,34 @@ class CellarSummaryTest {
         assert(soon.bottom - bottles.top < 3 * 4 * bottles.height) { "the figures are too tall" }
     }
 }
+
+/** The sample banner at 200 % font scale: the button goes under the text, which keeps its whole width. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], qualifiers = "w411dp-h891dp-port-xxhdpi")
+class SampleBannerTest {
+    @get:Rule
+    val compose = createComposeRule()
+
+    private fun show(fontScale: Float) {
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) { SampleBanner(onRemove = {}) }
+        }
+    }
+
+    @Test
+    fun buttonGoesUnderTheTextAtLargeFontScales() {
+        show(2f)
+        val title = compose.onNodeWithTag("cellar.sample.title", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val button = compose.onNodeWithTag("action.remove_sample").fetchSemanticsNode().boundsInRoot
+        assert(button.top >= title.bottom - 1f) { "the button is beside the text at 200 %" }
+    }
+
+    @Test
+    fun buttonStaysBesideTheTextAtTheDefaultSize() {
+        show(1f)
+        val title = compose.onNodeWithTag("cellar.sample.title", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val button = compose.onNodeWithTag("action.remove_sample").fetchSemanticsNode().boundsInRoot
+        assert(button.left >= title.right - 1f) { "the button is not beside the text" }
+    }
+}

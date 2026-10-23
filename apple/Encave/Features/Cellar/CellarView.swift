@@ -726,13 +726,18 @@ struct OrdersSection: View {
 }
 
 /// Shown while records of the sample cellar remain: removes them, and only them, with Undo.
+/// At the accessibility text sizes the button goes under the text, so no word is broken.
 struct SampleBanner: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(spacing: 12) {
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout = stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 12))
+        layout {
             Label("You are exploring the sample cellar", systemImage: "testtube.2")
                 .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button("Remove Sample") { model.removeSample() }
                 .buttonStyle(.bordered)
