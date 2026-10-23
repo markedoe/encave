@@ -17,7 +17,7 @@ third-party SDK, and the developer runs no server that the apps talk to.
 
 ### What stays on your device
 
-Your cellar (wines, bottles, racks, the Journal, prices, places, notes), its
+Your cellar (wines, bottles, storage, the Journal, prices, places, notes), its
 photos and documents, and your settings are kept in Encave's own storage on
 your device. Encave does not add encryption of its own to these files; they
 are protected by the device:
@@ -131,7 +131,7 @@ lequel les apps communiquent.
 
 ### Ce qui reste sur votre appareil
 
-Votre cave (vins, bouteilles, casiers, le Journal, prix, lieux, notes), ses
+Votre cave (vins, bouteilles, rangements, le Journal, prix, lieux, notes), ses
 photos et ses documents, ainsi que vos réglages, sont gardés dans le stockage
 propre à Encave sur votre appareil. Encave n'ajoute pas de chiffrement à ces
 fichiers ; ils sont protégés par l'appareil :

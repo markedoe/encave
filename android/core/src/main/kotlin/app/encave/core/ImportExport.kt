@@ -31,7 +31,7 @@ data class ImportSummary(val winesAdded: Int, val bottlesAdded: Int, val rowsSki
 object CellarExport {
     val csvColumns = listOf(
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
-        "drink_from", "drink_until", "status", "rack", "slot", "storage",
+        "drink_from", "drink_until", "status", "rack", "slot", "location", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
         "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
         "current_price", "current_price_currency", "current_price_date",
@@ -45,8 +45,16 @@ object CellarExport {
     /**
      * One row per bottle. Includes consumed and gone bottles when [includeHistory] is true;
      * ordered ones always. Dates are days of [zone], the calendar day the user saw when entering them.
+     * Next to the technical "slot" ("B3-2"), "location" names the position for people,
+     * "Cabinet · Shelf 1, position 6": [placeName] gives it in the person's language (English
+     * when null). The import reads the "rack" column before it, so "location" is ignored there.
      */
-    fun csv(cellar: Cellar, includeHistory: Boolean = true, zone: ZoneId = ZoneId.systemDefault()): String {
+    fun csv(
+        cellar: Cellar,
+        includeHistory: Boolean = true,
+        zone: ZoneId = ZoneId.systemDefault(),
+        placeName: ((Rack, Slot) -> String)? = null,
+    ): String {
         val day = { instant: Instant -> day(instant, zone) }
         val collator = Cellar.collator()
         val bottles = cellar.bottles.values
@@ -64,7 +72,9 @@ object CellarExport {
                 wine.name, wine.producer, wine.vintage?.toString(), wine.color?.raw,
                 wine.region, wine.country, wine.appellation, wine.grapes.joinToString("; "),
                 wine.drinkFrom?.toString(), wine.drinkUntil?.toString(), bottle.status.raw,
-                rack?.name, bottle.slot?.let { rack?.label(it) }, bottle.storageNote,
+                rack?.name, bottle.slot?.let { rack?.label(it) },
+                bottle.slot?.let { slot -> rack?.let { "${it.name} · ${placeName?.invoke(it, slot) ?: it.placeName(slot)}" } },
+                bottle.storageNote,
                 bottle.purchaseDate?.let(day), bottle.purchasePrice?.let(DecimalSerializer::plain), bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, bottle.sizeML.toString(),
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
