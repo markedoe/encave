@@ -277,12 +277,12 @@ final class ScreenTourTests: XCTestCase {
                 return byTitle.waitForExistence(timeout: 2) ? byTitle : nil
             }
             sort.press()
-            var table = tableItem()
-            if table == nil, sort.exists, sort.isHittable {
+            var found = tableItem()
+            if found == nil, sort.exists, sort.isHittable {
                 sort.press()
-                table = tableItem()
+                found = tableItem()
             }
-            guard let table else {
+            guard let table = found else {
                 XCTFail("cellar: Show as Table is missing from the Sort and Filter menu")
                 // A menu left open blocks every later tap: start the app again.
                 app.terminate()
