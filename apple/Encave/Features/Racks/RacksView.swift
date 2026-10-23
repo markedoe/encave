@@ -105,7 +105,7 @@ private struct RackCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(rack.name)
                         .font(.title3.weight(.semibold))
-                    Text(rack.kindTitle)
+                    Text(rack.storageSummary)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

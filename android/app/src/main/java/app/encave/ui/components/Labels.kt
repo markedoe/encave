@@ -24,6 +24,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import app.encave.R
 import app.encave.core.CellarSort
+import app.encave.core.StorageType
+import app.encave.core.storageCount
+import app.encave.core.storageType
 import app.encave.core.DishCategory
 import app.encave.core.Discovery
 import app.encave.core.Maturity
@@ -123,6 +126,31 @@ val Rack.kindLabelRes: Int
         hasShelfLayers -> R.string.kind_fridge_layers
         else -> kind.labelRes
     }
+
+val StorageType.labelRes: Int
+    get() = when (this) {
+        StorageType.Rack -> R.string.storage_type_rack
+        StorageType.WineFridge -> R.string.storage_type_fridge
+        StorageType.Crates -> R.string.storage_type_crates
+    }
+
+val StorageType.bodyRes: Int
+    get() = when (this) {
+        StorageType.Rack -> R.string.storage_type_rack_body
+        StorageType.WineFridge -> R.string.storage_type_fridge_body
+        StorageType.Crates -> R.string.storage_type_crates_body
+    }
+
+/** "Wine fridge · 4 shelves", "Rack · 6 rows" or "Crates · 10 bins", as in the Storage list. */
+fun Rack.storageSummary(resources: Resources): String {
+    val count = storageCount
+    val detail = when (storageType) {
+        StorageType.Rack -> resources.getQuantityString(R.plurals.storage_rows, count, count)
+        StorageType.WineFridge -> resources.getQuantityString(R.plurals.storage_shelves, count, count)
+        StorageType.Crates -> resources.getQuantityString(R.plurals.storage_bins, count, count)
+    }
+    return "${resources.getString(storageType.labelRes)} · $detail"
+}
 
 val RackKind.bodyRes: Int
     get() = when (this) {

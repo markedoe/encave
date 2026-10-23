@@ -111,7 +111,7 @@ data class HelpArticle(
             HelpArticle(
                 HelpTopic.Racks, R.string.help_racks_title, R.string.help_racks_summary, Icons.Outlined.GridOn,
                 listOf(
-                    HelpSection(R.string.help_racks_add, R.string.action_add_rack, Icons.Filled.Add),
+                    HelpSection(R.string.help_racks_add, R.string.help_racks_add_title, Icons.Filled.Add),
                     HelpSection(R.string.help_racks_grid, R.string.kind_grid, Icons.Outlined.GridOn),
                     HelpSection(R.string.help_racks_staggered, R.string.kind_staggered, Icons.Outlined.Hive),
                     HelpSection(R.string.help_racks_layers, R.string.help_racks_layers_title, Icons.Outlined.Hive),

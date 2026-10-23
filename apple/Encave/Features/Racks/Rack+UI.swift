@@ -48,15 +48,47 @@ extension RackKind {
     }
 }
 
-extension Rack {
-    /// The kind of storage, as in the Storage list: a honeycomb on shelves is a wine fridge.
-    var kindTitle: LocalizedStringKey {
-        guard hasShelfLayers else { return kind.title }
-        return isBackReversed ? "Wine fridge, shelves in layers · two deep, head-to-tail" : "Wine fridge, shelves in layers"
+extension StorageType {
+    /// Also the default name of a new storage of this type.
+    var name: String {
+        switch self {
+        case .rack: String(localized: "Rack")
+        case .wineFridge: String(localized: "Wine fridge")
+        case .crates: String(localized: "Crates")
+        }
     }
 
-    /// The symbol of its kind of storage; a fridge for a honeycomb on shelves.
-    var systemImage: String { hasShelfLayers ? RackKind.shelves.systemImage : kind.systemImage }
+    var subtitle: String {
+        switch self {
+        case .rack: String(localized: "A grid, a honeycomb or diamond bins")
+        case .wineFridge: String(localized: "Shelves of bottles, in a single row or in layers")
+        case .crates: String(localized: "Wooden crates or boxes, each holding several bottles")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .rack: RackKind.grid.systemImage
+        case .wineFridge: "refrigerator"
+        case .crates: "shippingbox"
+        }
+    }
+}
+
+extension Rack {
+    /// "Wine fridge · 4 shelves", "Rack · 6 rows" or "Crates · 10 bins", as in the Storage list.
+    var storageSummary: String {
+        let count = storageCount
+        let detail = switch storageType {
+        case .rack: String(localized: "\(count) rows")
+        case .wineFridge: String(localized: "\(count) shelves")
+        case .crates: String(localized: "\(count) bins")
+        }
+        return "\(storageType.name) · \(detail)"
+    }
+
+    /// The symbol of its type of storage; a honeycomb rack keeps its own.
+    var systemImage: String { storageType == .rack ? kind.systemImage : storageType.systemImage }
 
     /// "B3", "B3, back", "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
     /// "Shelf 3, back, bottom layer, position 2" or "Bin B3", for people (not for files), in

@@ -1,57 +1,12 @@
 import CaveKit
 import SwiftUI
 
-/// A ready-made size for a kind of storage.
-struct RackPreset: Identifiable {
-    let title: LocalizedStringKey
-    let kind: RackKind
-    let rows: Int
-    let columns: Int
-    var depth = 1
-    var binCapacity = 10
-    /// Honeycomb on shelves: the layers of each shelf, from the top, the bottles of each
-    /// row (default: the usual quincunx) and the shelves that start a new zone.
-    var shelfLayers: [Int]?
-    var shelfRows: [Int]?
-    var zoneBreaks: [Int]?
-    /// Two deep: the back bottles lie head-to-tail.
-    var backReversed = false
-    var id: String { "\(kind)-\(rows)-\(columns)-\(depth)-\(binCapacity)-\(shelfLayers ?? [])-\(zoneBreaks ?? [])" }
-
-    /// The fridge these shelves make.
-    var shelvesRack: Rack? {
-        shelfLayers.map { Rack(name: "", kind: kind, rows: rows, columns: columns, depth: depth, rowColumns: shelfRows,
-                               shelfLayers: $0, zoneBreaks: zoneBreaks, backReversed: backReversed) }
-    }
-
-    // Computed: LocalizedStringKey is not Sendable, so it cannot be a stored static.
-    static var all: [RackPreset] {
-        [
-            RackPreset(title: "6 rows of 8", kind: .grid, rows: 6, columns: 8),
-            RackPreset(title: "Double depth, 6 × 8", kind: .grid, rows: 6, columns: 8, depth: 2),
-            RackPreset(title: "Large, 10 × 12", kind: .grid, rows: 10, columns: 12),
-            RackPreset(title: "5 rows of 8", kind: .staggered, rows: 5, columns: 8),
-            RackPreset(title: "8 rows of 10", kind: .staggered, rows: 8, columns: 10),
-            RackPreset(title: "Wine fridge, shelves in layers", kind: .staggered, rows: 10, columns: 6, depth: 2,
-                       shelfLayers: Array(repeating: 2, count: 5), backReversed: true),
-            RackPreset(title: "Wine fridge, 2 zones", kind: .staggered, rows: SampleData.twoZoneFridgeRows.count, columns: 6,
-                       depth: 2, shelfLayers: SampleData.twoZoneFridgeLayers, shelfRows: SampleData.twoZoneFridgeRows,
-                       zoneBreaks: [4], backReversed: true),
-            RackPreset(title: "Fridge, 6 shelves of 6", kind: .shelves, rows: 6, columns: 6),
-            RackPreset(title: "Fridge, 2 deep, 6 shelves of 7", kind: .shelves, rows: 6, columns: 7, depth: 2),
-            RackPreset(title: "Cabinet, 10 shelves of 8, 2 deep", kind: .shelves, rows: 10, columns: 8, depth: 2),
-            RackPreset(title: "Diamond bins, 2 × 3 of 10", kind: .bins, rows: 2, columns: 3, binCapacity: 10),
-            RackPreset(title: "Crates of 6, 3 × 4", kind: .bins, rows: 3, columns: 4, binCapacity: 6),
-            RackPreset(title: "Crates of 12, 2 × 4", kind: .bins, rows: 2, columns: 4, binCapacity: 12),
-        ]
-    }
-}
-
-/// Create or edit a rack: choose the kind of storage, its size, and see it live.
+/// Edit a storage: the settings of its type, its size, and see it live. New storages are
+/// made step by step in `RackWizard`.
 struct RackEditor: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    let rackID: UUID?
+    let rackID: UUID
     @State private var name = ""
     @State private var kind: RackKind = .grid
     @State private var rows = 6
@@ -66,6 +21,8 @@ struct RackEditor: View {
     @State private var onShelves = false
     @State private var shelves: [ShelfDraft] = []
     @State private var loaded = false
+    /// The type of the storage being edited: only its settings are shown.
+    @State private var storageType: StorageType = .rack
     @State private var deletingRackID: UUID?
     /// The form as loaded, to ask before discarding changes.
     @State private var initial: EditorState?
@@ -84,24 +41,18 @@ struct RackEditor: View {
                     Text("Describe where you keep bottles: a rack, a wine fridge, a set of bins.")
                 }
 
-                Section("Kind of storage") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
-                        ForEach(RackKind.allCases, id: \.self) { option in
-                            KindCard(kind: option, isSelected: kind == option) { choose(option) }
+                if kinds.count > 1 {
+                    Section("Kind of storage") {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                            ForEach(kinds, id: \.self) { option in
+                                KindCard(kind: option, isSelected: kind == option) { choose(option) }
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
 
                 Section {
-                    if kind == .staggered {
-                        Picker("Layout", selection: $onShelves.animation()) {
-                            Text("Continuous").tag(false)
-                            Text("On shelves").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .fieldHelp("A honeycomb rack, or the shelves of a wine fridge holding bottles stacked in quincunx.")
-                    }
                     if !layered {
                         Stepper(value: $rows, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
@@ -196,7 +147,7 @@ struct RackEditor: View {
                     }
                 }
 
-                if kind != .staggered {
+                if offersCustomRows {
                     Section {
                         Toggle("Rows of different lengths", isOn: $customRows.animation())
                         if customRows {
@@ -219,17 +170,6 @@ struct RackEditor: View {
                     }
                 }
 
-                if rackID == nil {
-                    Section("Quick start") {
-                        FlowLayout(spacing: 8) {
-                            ForEach(RackPreset.all.filter { $0.kind == kind }) { preset in
-                                ChoiceChip(title: preset.title, isSelected: matches(preset)) { apply(preset) }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-
                 Section("Preview") {
                     ScrollView([.horizontal, .vertical]) {
                         RackGrid(rack: preview, cellSize: 26, showsHeaders: false)
@@ -240,19 +180,17 @@ struct RackEditor: View {
                     .accessibilityHidden(true)
                 }
 
-                if rackID != nil {
-                    Section {
-                        Button("Delete Storage…", role: .destructive) { deletingRackID = rackID }
-                    } footer: {
-                        Text("Bottles in this storage stay in your cellar without a position.")
-                    }
+                Section {
+                    Button("Delete Storage…", role: .destructive) { deletingRackID = rackID }
+                } footer: {
+                    Text("Bottles in this storage stay in your cellar without a position.")
                 }
                 Section {
                     HelpLink(topic: .racks, title: "Help with storage")
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle(rackID == nil ? Text("New Storage") : Text("Edit Storage"))
+            .navigationTitle("Edit Storage")
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -280,7 +218,6 @@ struct RackEditor: View {
             .confirmsRackDeletion($deletingRackID) { dismiss() }
             .onAppear(perform: load)
             .onChange(of: rows) { _, count in if customRows { resizeRows(count) } }
-            .onChange(of: onShelves) { _, on in if on { startShelves() } }
             // Turned on by hand: every row starts at the rack's width. Loading an irregular
             // rack sets its rows first, so they are kept.
             .onChange(of: customRows) { _, on in
@@ -299,6 +236,15 @@ struct RackEditor: View {
     /// A honeycomb on shelves, edited shelf by shelf.
     private var layered: Bool { kind == .staggered && onShelves }
 
+    /// The kinds this storage can become: a rack stays a rack (grid or honeycomb), a fridge
+    /// and crates keep theirs.
+    private var kinds: [RackKind] { storageType == .rack ? [.grid, .staggered] : [] }
+
+    /// Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
+    private var offersCustomRows: Bool {
+        kind != .staggered && (storageType != .wineFridge || initial?.customRows == true)
+    }
+
     private var current: EditorState {
         EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
                     customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves,
@@ -311,15 +257,12 @@ struct RackEditor: View {
     /// Where the rows of the fridge go when its shelves were added, duplicated or removed:
     /// its bottles stay on their shelf and layer.
     private var rowMap: [Int: Int?] {
-        guard layered, let rackID, let old = model.cellar.rack(rackID) else { return [:] }
+        guard layered, let old = model.cellar.rack(rackID) else { return [:] }
         return Rack.shelfRowMap(from: old, to: preview, origins: shelves.map(\.originalShelf))
     }
 
     /// Bottles whose place this edit removes.
-    private var outsideCount: Int {
-        guard rackID != nil else { return 0 }
-        return model.cellar.displacedBottles(by: preview, rowMap: rowMap).count
-    }
+    private var outsideCount: Int { model.cellar.displacedBottles(by: preview, rowMap: rowMap).count }
 
     /// Said under the size while bottles are in places removed.
     @ViewBuilder
@@ -345,13 +288,13 @@ struct RackEditor: View {
         if layered {
             // Rows are the layers, from the top: each shelf's top layer first.
             let widths = shelves.flatMap { $0.counts.prefix($0.layers).reversed() }
-            return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: max(1, widths.count),
+            return Rack(id: rackID, name: name, kind: kind, rows: max(1, widths.count),
                         columns: shelves.map { $0.counts[0] }.max() ?? 1, depth: depth, rowColumns: widths,
                         shelfLayers: shelves.map(\.layers),
                         zoneBreaks: shelves.indices.filter { $0 > 0 && shelves[$0].startsZone },
                         backReversed: backReversed)
         }
-        return Rack(id: rackID ?? UUID(), name: name, kind: kind, rows: rows,
+        return Rack(id: rackID, name: name, kind: kind, rows: rows,
                     columns: customRows ? (rowColumns.max() ?? columns) : columns,
                     depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil)
     }
@@ -415,41 +358,14 @@ struct RackEditor: View {
                 customRows = false
                 depth = min(depth, Rack.maxStaggeredDepth)
             }
-            if rackID == nil, let preset = RackPreset.all.first(where: { $0.kind == option }) { apply(preset) }
         }
-    }
-
-    private func matches(_ preset: RackPreset) -> Bool {
-        if let fridge = preset.shelvesRack {
-            return layered && depth == preset.depth && shelves == ShelfDraft.shelves(of: fridge)
-                && backReversed == preset.backReversed
-        }
-        return !customRows && !layered && rows == preset.rows && columns == preset.columns
-            && (kind == .bins ? binCapacity == preset.binCapacity : depth == preset.depth)
-    }
-
-    private func apply(_ preset: RackPreset) {
-        withAnimation(.snappy) {
-            kind = preset.kind; rows = preset.rows; columns = preset.columns
-            depth = preset.depth; binCapacity = preset.binCapacity; customRows = false
-            onShelves = preset.shelfLayers != nil
-            backReversed = preset.backReversed
-            if let fridge = preset.shelvesRack { shelves = ShelfDraft.shelves(of: fridge) }
-        }
-    }
-
-    /// A new fridge on shelves: five shelves of 6 bottles and 5 on top, two deep, head-to-tail.
-    private func startShelves() {
-        guard shelves.isEmpty else { return }
-        shelves = (0..<5).map { _ in ShelfDraft() }
-        depth = 2
-        backReversed = true
     }
 
     private func load() {
         guard !loaded else { return }
         loaded = true
-        if let rackID, let rack = model.cellar.rack(rackID) {
+        if let rack = model.cellar.rack(rackID) {
+            storageType = rack.storageType
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
             backReversed = rack.isBackReversed
@@ -460,18 +376,11 @@ struct RackEditor: View {
                 rowColumns = custom
                 customRows = true
             }
-        } else {
-            name = model.cellar.racks.isEmpty ? String(localized: "Main rack") : ""
         }
         initial = current
     }
 
     private func save() {
-        guard rackID != nil else {
-            let rack = named(preview)
-            if model.update({ $0.addRack(rack) }) { dismiss() }
-            return
-        }
         if outsideCount > 0 { confirmingTakeOut = true } else { commit() }
     }
 

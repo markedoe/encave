@@ -171,6 +171,46 @@
         }
       }
     },
+    "%lld bins": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bins"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld case"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld cases"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld bottles": {
       "localizations": {
         "en": {
@@ -941,6 +981,46 @@
         }
       }
     },
+    "%lld rows": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld row"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rows"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rangée"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rangées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld selected": {
       "localizations": {
         "en": {
@@ -974,6 +1054,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld sélectionnés"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld shelves": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld shelf"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld shelves"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld étagère"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld étagères"
                 }
               }
             }
@@ -1291,36 +1411,6 @@
         }
       }
     },
-    "5 rows of 8": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 rangées de 8"
-          }
-        }
-      }
-    },
-    "6 rows of 8": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "6 rangées de 8"
-          }
-        }
-      }
-    },
-    "8 rows of 10": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "8 rangées de 10"
-          }
-        }
-      }
-    },
     "A Bottle from My Cellar": {
       "localizations": {
         "fr": {
@@ -1481,12 +1571,12 @@
         }
       }
     },
-    "A honeycomb rack, or the shelves of a wine fridge holding bottles stacked in quincunx.": {
+    "A grid, a honeycomb or diamond bins": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un casier nid d’abeille, ou les étagères d’une cave à vin réfrigérée portant des bouteilles empilées en quinconce."
+            "value": "Une grille, un nid d’abeille ou des cases en losange"
           }
         }
       }
@@ -1607,6 +1697,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La fiche d’un vin montre d’abord ses bouteilles : où est chacune, et ce que vous pouvez en faire. Touchez un détail du vin : quand d’autres vins de votre cave partagent son producteur, son millésime, son style, son appellation, sa région, son pays, un cépage ou un tag, il les liste, avec le nombre de bouteilles ; sinon, et pour les autres détails, il ouvre le vin pour le modifier. Maintenez un détail appuyé pour le copier, le modifier ou, pour le producteur et l’appellation quand la recherche web est configurée, le chercher sur le Web."
+          }
+        }
+      }
+    },
+    "A wooden crate usually holds 6 or 12 bottles.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une caisse en bois contient en général 6 ou 12 bouteilles."
           }
         }
       }
@@ -2061,22 +2161,22 @@
         }
       }
     },
+    "Adding a storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un rangement"
+          }
+        }
+      }
+    },
     "Adding bottles": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter des bouteilles"
-          }
-        }
-      }
-    },
-    "Adding storage": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un rangement"
           }
         }
       }
@@ -2751,6 +2851,16 @@
         }
       }
     },
+    "Bins": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cases"
+          }
+        }
+      }
+    },
     "Bins or crates": {
       "localizations": {
         "fr": {
@@ -3091,6 +3201,26 @@
         }
       }
     },
+    "Bottles side by side on the bottom layer of a shelf.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles côte à côte sur la couche du bas d’une étagère."
+          }
+        }
+      }
+    },
+    "Bottles stacked in quincunx, each layer resting in the gaps of the one below. 1 is a single row.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteilles empilées en quinconce, chaque couche reposant dans les creux de celle du dessous. 1 : une seule rangée."
+          }
+        }
+      }
+    },
     "Bottles stacked in quincunx: %lld at the bottom, %lld in the middle, %lld on top.": {
       "localizations": {
         "fr": {
@@ -3287,16 +3417,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Armoire"
-          }
-        }
-      }
-    },
-    "Cabinet, 10 shelves of 8, 2 deep": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Armoire, 10 étagères de 8, 2 en profondeur"
           }
         }
       }
@@ -4011,16 +4131,6 @@
         }
       }
     },
-    "Continuous": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Continu"
-          }
-        }
-      }
-    },
     "Copy": {
       "localizations": {
         "fr": {
@@ -4091,22 +4201,22 @@
         }
       }
     },
-    "Crates of 12, 2 × 4": {
+    "Crates": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Caisses de 12, 2 × 4"
+            "value": "Caisses"
           }
         }
       }
     },
-    "Crates of 6, 3 × 4": {
+    "Create": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Caisses de 6, 3 × 4"
+            "value": "Créer"
           }
         }
       }
@@ -4616,7 +4726,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Casiers en losange"
+            "value": "Cases en losange"
           }
         }
       }
@@ -4637,16 +4747,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cases en losange ou caisses de plusieurs bouteilles"
-          }
-        }
-      }
-    },
-    "Diamond bins, 2 × 3 of 10": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Casiers en losange, 2 × 3 de 10"
           }
         }
       }
@@ -4797,16 +4897,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
-          }
-        }
-      }
-    },
-    "Double depth, 6 × 8": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Double profondeur, 6 × 8"
           }
         }
       }
@@ -4991,6 +5081,16 @@
         }
       }
     },
+    "Each bin holds several bottles in a pile.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque case contient plusieurs bouteilles empilées."
+          }
+        }
+      }
+    },
     "Each bottle is tracked on its own, so you can drink or move them one by one.": {
       "localizations": {
         "fr": {
@@ -5007,6 +5107,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin réfrigérées, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le dessin pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le rangement** ouvre le rangement en faisant ressortir ses bouteilles."
+          }
+        }
+      }
+    },
+    "Each crate or box is a bin, named like B3.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque caisse ou carton est une case, nommée comme B3."
           }
         }
       }
@@ -5731,12 +5841,12 @@
         }
       }
     },
-    "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to All Shelves** (touch and hold it). Positions are named by shelf, layer and number, like **Shelf 1, top layer, position 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone; **Wine fridge, 2 zones** is a ready-made start.": {
+    "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Wine fridge** when adding the storage, then 2 or 3 in **Layers per shelf**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to All Shelves** (touch and hold it). Positions are named by shelf, layer and number, like **Shelf 1, top layer, position 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone, in the editor.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une cave à vin réfrigérée dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les positions sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, position 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin réfrigérée, 2 zones** est un point de départ tout prêt."
+            "value": "Pour une cave à vin réfrigérée dont les étagères portent des bouteilles empilées en quinconce, choisissez **Cave à vin réfrigérée** en ajoutant le rangement, puis 2 ou 3 dans **Couches par étagère**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les positions sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, position 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse, dans l’éditeur."
           }
         }
       }
@@ -5847,26 +5957,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Libérer cette bouteille"
-          }
-        }
-      }
-    },
-    "Fridge, 2 deep, 6 shelves of 7": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cave à vin réfrigérée, 2 en profondeur, 6 étagères de 7"
-          }
-        }
-      }
-    },
-    "Fridge, 6 shelves of 6": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cave à vin réfrigérée, 6 étagères de 6"
           }
         }
       }
@@ -6327,6 +6417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contient %lld bouteilles. Touchez longuement une étagère pour la dupliquer ou l’appliquer à toutes les étagères."
+          }
+        }
+      }
+    },
+    "Honeycomb": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nid d’abeille"
           }
         }
       }
@@ -7121,16 +7221,6 @@
         }
       }
     },
-    "Large, 10 × 12": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Grand, 10 × 12"
-          }
-        }
-      }
-    },
     "Last attempt failed: %@": {
       "localizations": {
         "fr": {
@@ -7827,6 +7917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nouvelle zone à partir de cette étagère"
+          }
+        }
+      }
+    },
+    "Next": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suivant"
           }
         }
       }
@@ -8571,6 +8671,16 @@
         }
       }
     },
+    "Offset rows nesting into each other, like metal or terracotta racks.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des rangées décalées qui s’emboîtent, comme les casiers en métal ou en terre cuite."
+          }
+        }
+      }
+    },
     "Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves": {
       "localizations": {
         "fr": {
@@ -8721,16 +8831,6 @@
         }
       }
     },
-    "On shelves": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur étagères"
-          }
-        }
-      }
-    },
     "On the Mac, and on iPad with a keyboard.": {
       "localizations": {
         "fr": {
@@ -8867,6 +8967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une"
+          }
+        }
+      }
+    },
+    "One bottle per position, in rows and columns.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une bouteille par position, en rangées et en colonnes."
           }
         }
       }
@@ -9911,12 +10021,12 @@
         }
       }
     },
-    "Quick start": {
+    "Rack": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Démarrage rapide"
+            "value": "Casier"
           }
         }
       }
@@ -11341,6 +11451,16 @@
         }
       }
     },
+    "Shelves of bottles, in a single row or in layers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des étagères de bouteilles, sur une seule rangée ou en couches"
+          }
+        }
+      }
+    },
     "Shelves, from the top": {
       "localizations": {
         "fr": {
@@ -12381,12 +12501,12 @@
         }
       }
     },
-    "Tap **Add Storage**, choose the kind, then its size, or a ready-made size under **Quick start** (only when creating storage). Free positions fill row by row from the top, the front positions before the back ones.": {
+    "Tap **Add Storage**, then follow three steps: choose the type (**Rack**, **Wine fridge** or **Crates**), set its size while the preview follows, then give it a name and tap **Create**. Only the settings of that type are asked, and you can change them later in the editor. Free positions fill row by row from the top, the front positions before the back ones.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez **Ajouter un rangement**, choisissez le type, puis la taille, ou une taille toute prête dans **Démarrage rapide** (seulement en créant un rangement). Les positions libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond."
+            "value": "Touchez **Ajouter un rangement**, puis suivez trois étapes : choisissez le type (**Casier**, **Cave à vin réfrigérée** ou **Caisses**), réglez sa taille en suivant l’aperçu, puis donnez-lui un nom et touchez **Créer**. Seuls les réglages de ce type sont demandés, et vous pourrez les changer plus tard dans l’éditeur. Les positions libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond."
           }
         }
       }
@@ -13237,6 +13357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le texte est lu sur cet appareil pour remplir le nom, le producteur, le millésime et l’appellation."
+          }
+        }
+      }
+    },
+    "The type decides what you set up next. You can change the sizes later.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le type décide de ce que vous réglez ensuite. Vous pourrez changer les tailles plus tard."
           }
         }
       }
@@ -14561,12 +14691,12 @@
         }
       }
     },
-    "When a wine fridge with bottles in layers (**Honeycomb rack**, **On shelves**) is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many wine fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other storage two deep shows the dots described below.": {
+    "When a wine fridge with bottles in layers is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many wine fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other storage two deep shows the dots described below.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand une cave à vin réfrigérée avec bouteilles en couches (**Casier nid d’abeille**, **Sur étagères**) a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas."
+            "value": "Quand une cave à vin réfrigérée avec bouteilles en couches a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas."
           }
         }
       }
@@ -14781,16 +14911,6 @@
         }
       }
     },
-    "Wine fridge, 2 zones": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cave à vin réfrigérée, 2 zones"
-          }
-        }
-      }
-    },
     "Wine fridge, 24": {
       "localizations": {
         "fr": {
@@ -14807,16 +14927,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cave à vin réfrigérée, étagères en couches"
-          }
-        }
-      }
-    },
-    "Wine fridge, shelves in layers · two deep, head-to-tail": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cave à vin réfrigérée, étagères en couches · deux rangs, tête-bêche"
           }
         }
       }
@@ -14957,6 +15067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sans synchronisation à distance, les appareils se synchronisent toujours sur le même Wi-Fi."
+          }
+        }
+      }
+    },
+    "Wooden crates or boxes, each holding several bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des caisses en bois ou des cartons contenant chacun plusieurs bouteilles"
           }
         }
       }
