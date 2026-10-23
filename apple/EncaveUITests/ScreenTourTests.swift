@@ -827,17 +827,19 @@ final class ScreenTourTests: XCTestCase {
     }
 
     #if os(iOS)
-    /// Scrolls the screen's content up: a drag between two points of the screen, as
+    /// Scrolls the screen's content up: a flick between two points of the screen, as
     /// swipeUp() on the app needs a hit point XCUITest sometimes cannot find for the app itself.
+    /// Around the middle, so it stays inside a sheet centered on an iPad.
     private func swipeContentUp() {
-        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
-        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35)))
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.38)),
+                    withVelocity: .fast, thenHoldForDuration: 0)
     }
     #endif
 
     private func scrollIntoView(_ element: XCUIElement) {
         var tries = 0
-        while !(element.exists && element.isHittable), tries < 6 {
+        while !(element.exists && element.isHittable), tries < 10 {
             #if os(iOS)
             swipeContentUp()
             #else
