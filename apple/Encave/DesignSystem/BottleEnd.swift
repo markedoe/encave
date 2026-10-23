@@ -9,6 +9,8 @@ struct BottleEnd: View {
     var size: CGFloat = 28
     var isEmpty = false
     var isHighlighted = false
+    /// The style's symbol on the glass (in racks), so the style never relies on color alone.
+    var showsStyle = false
 
     var body: some View {
         ZStack {
@@ -33,6 +35,11 @@ struct BottleEnd: View {
                     .strokeBorder(.white.opacity(0.18), lineWidth: max(0.5, size * 0.03))
                     .padding(size * 0.3)
                 if color == .sparkling { Bubbles(size: size) }
+                if showsStyle, let color, StyleMark.fits(size) {
+                    // Above the vintage written in the middle.
+                    StyleMark(color: color, size: size * 0.24)
+                        .offset(y: -size * 0.29)
+                }
             }
             if isHighlighted {
                 Circle()
@@ -54,6 +61,8 @@ struct BottleNeck: View {
     var color: WineColor?
     var size: CGFloat = 20
     var isHighlighted = false
+    /// The style's symbol on the capsule (see `BottleEnd.showsStyle`).
+    var showsStyle = false
 
     var body: some View {
         ZStack {
@@ -80,6 +89,8 @@ struct BottleNeck: View {
                     path.addLine(to: CGPoint(x: size * 0.5, y: size * 0.7))
                 }
                 .stroke(.white.opacity(0.8), lineWidth: max(1, size * 0.05))
+            } else if showsStyle, let color, StyleMark.fits(size) {
+                StyleMark(color: color, size: size * 0.26)
             }
             if isHighlighted {
                 Circle()
@@ -92,6 +103,25 @@ struct BottleNeck: View {
     }
 
     private var fill: Color { color?.tint ?? Color.gray }
+}
+
+/// The style's symbol on a bottle (`WineColor.styleMark`), in a color readable on that wine's
+/// tint. Sparkling wine keeps its drawn bubbles (or its wire cage) instead.
+private struct StyleMark: View {
+    let color: WineColor
+    let size: CGFloat
+
+    /// Drawn only on a bottle end this large; smaller ones keep the style in words.
+    static func fits(_ bottle: CGFloat) -> Bool { bottle >= 28 }
+
+    var body: some View {
+        if color != .sparkling {
+            Image(systemName: color.styleMark.systemImage)
+                .font(.system(size: size, weight: .bold))
+                .foregroundStyle(color.prefersDarkLabel ? Color.black.opacity(0.78) : Color.white)
+                .accessibilityHidden(true)
+        }
+    }
 }
 
 /// Bubbles drawn on sparkling wine, so it differs from white by shape, not only color.
@@ -120,7 +150,7 @@ private struct Bubbles: View {
 
 #Preview {
     HStack {
-        ForEach(WineColor.allCases, id: \.self) { BottleEnd(color: $0, size: 40) }
+        ForEach(WineColor.allCases, id: \.self) { BottleEnd(color: $0, size: 40, showsStyle: true) }
         BottleEnd(color: nil, size: 40, isEmpty: true)
     }
     .padding()

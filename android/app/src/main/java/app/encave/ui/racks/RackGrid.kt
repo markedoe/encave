@@ -28,6 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.layout
@@ -75,12 +82,14 @@ import app.encave.core.Cellar
 import app.encave.core.Rack
 import app.encave.core.RackCell
 import app.encave.core.RackKind
+import app.encave.core.RackViewport
 import app.encave.core.Slot
 import app.encave.core.Wine
 import app.encave.core.WineColor
 import java.util.UUID
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.BottleNeck
+import app.encave.ui.components.prefersDarkLabel
 import app.encave.ui.components.depthName
 import app.encave.ui.components.displayLabel
 import app.encave.ui.components.labelRes
@@ -197,15 +206,11 @@ private const val SHELF_GAP = 0.12f
 
 /** Fridge drawn front and back: the back places' height as a share of the front ones' (same width, so each
  * sits right under its front one), the space above the back band's caption, and around the back places. */
-private const val BACK_HEIGHT = 0.78f
+private const val BACK_HEIGHT = RackViewport.BACK_PLACE_HEIGHT.toFloat()
 private const val BAND_GAP = 0.06f
 private const val BACK_PADDING = 0.04f
 
 private fun shelfBar(cell: Dp): Dp = maxOf(4.dp, cell * 0.09f)
-
-/** Light wine colors need dark text written on them; red and fortified need light text. */
-val WineColor?.prefersDarkLabel: Boolean
-    get() = this != WineColor.Red && this != WineColor.Fortified
 
 /** A rhombus, for diamond bins. */
 val DiamondShape: Shape = GenericShape { size, _ ->
@@ -341,7 +346,7 @@ fun RackGrid(
     }
     val headerWidth = maxOf(18.dp, cellSize * 0.42f)
     val scheme = MaterialTheme.colorScheme
-    // No touch-target minimum here: the rack screen fits the rack to the screen and zooms from there.
+    // Places reach the touch-target minimum through the cell size (see ZoomableRack).
     val cellWidth = size
 
     /** One place: a whole cell, or a front or back place of a fridge drawn in bands. */
@@ -642,16 +647,6 @@ private fun RackCellView(
             .size(size, height)
             .testTag("cell.${cell.row}.${cell.column}" + if (place.depth == 1) ".back" else "")
             .then(if (onPositioned != null) Modifier.onGloballyPositioned { onPositioned(it.boundsInRoot()) } else Modifier)
-            .then(
-                if (onClick != null) {
-                    Modifier.combinedClickable(
-                        onClick = onClick, onLongClick = onLongClick, onDoubleClick = onDoubleClick, onClickLabel = clickLabel,
-                        onLongClickLabel = longClickLabel,
-                    )
-                } else {
-                    Modifier
-                },
-            )
             .clearAndSetSemantics {
                 contentDescription = description
                 if (checkState != null) stateDescription = checkState
@@ -674,6 +669,33 @@ private fun RackCellView(
             )
             else -> Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused, countsFound)
         }
+        if (onClick != null) {
+            // Touches reach the drawn shape only: honeycomb and fridge holes, diamond bins (their
+            // rows nest into each other), else the whole cell.
+            Box(
+                Modifier.matchParentSize().clip(rack.hitShape).combinedClickable(
+                    onClick = onClick, onLongClick = onLongClick, onDoubleClick = onDoubleClick, onClickLabel = clickLabel,
+                    onLongClickLabel = longClickLabel,
+                ),
+            )
+        }
+    }
+}
+
+/** What a tap on a place reaches: the round hole of a honeycomb or a fridge, the diamond of a bin, else the whole cell. */
+internal val Rack.hitShape: Shape
+    get() = when (kind) {
+        RackKind.Staggered -> CenteredCircleShape
+        RackKind.Bins -> DiamondShape
+        RackKind.Grid, RackKind.Shelves -> RectangleShape
+    }
+
+/** The largest circle in the middle of a place (a back place of a fridge is wider than tall). */
+val CenteredCircleShape: Shape = object : Shape {
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val diameter = minOf(size.width, size.height)
+        val square = Rect(Offset((size.width - diameter) / 2f, (size.height - diameter) / 2f), androidx.compose.ui.geometry.Size(diameter, diameter))
+        return Outline.Rounded(RoundRect(square, CornerRadius(diameter / 2f)))
     }
 }
 
@@ -703,9 +725,9 @@ private fun BandPlace(
         if (bottle != null) {
             val wine = cellar.wines[bottle.wineId]
             if (back && rack.isBackReversed) {
-                BottleNeck(wine?.color, size = diameter)
+                BottleNeck(wine?.color, size = diameter, showsStyle = true)
             } else {
-                BottleEnd(wine?.color, size = diameter)
+                BottleEnd(wine?.color, size = diameter, showsStyle = true)
                 if (!back && RackLabels.showsVintage(rack, width)) VintageLabel(wine, diameter)
             }
         } else {
@@ -767,10 +789,10 @@ private fun Position(
             when {
                 front != null -> {
                     val wine = cellar.wines[front.wineId]
-                    BottleEnd(wine?.color, size = bottle)
+                    BottleEnd(wine?.color, size = bottle, showsStyle = true)
                     if (RackLabels.showsVintage(rack, size)) VintageLabel(wine, bottle)
                 }
-                behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f)
+                behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f, showsStyle = true)
                 else -> {
                     Box(Modifier.size(bottle).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
                     if (selectedCount == 0) {

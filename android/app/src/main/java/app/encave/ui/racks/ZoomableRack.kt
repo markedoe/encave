@@ -9,8 +9,14 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -23,8 +29,17 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -41,6 +56,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import app.encave.core.Rack
 import app.encave.core.RackCell
+import app.encave.core.RackViewport
+import app.encave.core.ViewportArea
+import app.encave.core.ViewportPoint
 import app.encave.ui.theme.Dimens
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -71,8 +89,38 @@ class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
     var live by mutableFloatStateOf(1f)
     var center by mutableStateOf(center)
 
+    /** The drawing's size at [level] and the view's, in pixels, for the overview (set when laid out). */
+    var contentSize by mutableStateOf(Size.Zero)
+        internal set
+    var viewSize by mutableStateOf(Size.Zero)
+        internal set
+
     /** The zoom as seen. */
     val effective: Float get() = level * live
+
+    /** The part of the drawing in view, as fractions of it. */
+    val visibleArea: ViewportArea
+        get() {
+            val content = Size(contentSize.width * live, contentSize.height * live)
+            val x = place(viewSize.width, content.width, center.x)
+            val y = place(viewSize.height, content.height, center.y)
+            return RackViewport.visibleArea(
+                content.width.toDouble(), content.height.toDouble(), viewSize.width.toDouble(), viewSize.height.toDouble(),
+                ViewportPoint(-x.toDouble(), -y.toDouble()),
+            )
+        }
+
+    /** Brings a point of the drawing (fractions of it) to the middle of the view, as far as it goes. */
+    fun jump(point: ViewportPoint) {
+        val width = contentSize.width * live
+        val height = contentSize.height * live
+        if (width <= 0f || height <= 0f) return
+        val offset = RackViewport.offsetCentering(point, width.toDouble(), height.toDouble(), viewSize.width.toDouble(), viewSize.height.toDouble())
+        center = Offset(
+            if (width <= viewSize.width) 0.5f else ((offset.x + viewSize.width / 2) / width).toFloat(),
+            if (height <= viewSize.height) 0.5f else ((offset.y + viewSize.height / 2) / height).toFloat(),
+        )
+    }
 
     /** Draws the rack again at the zoom as seen. */
     fun settle() {
@@ -81,11 +129,15 @@ class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
         live = 1f
     }
 
-    /** Brings a cell to the middle of the view when zoomed in (head-to-tail, a back place half a place right). */
+    /**
+     * Brings a place to the middle of the view when the rack is larger than the view (zoomed in,
+     * or drawn at the smallest place size); head-to-tail, a back place is half a place right.
+     */
     fun show(rack: Rack, cell: RackCell, depth: Int? = null) {
-        if (effective <= 1.01f) return
-        val x = (cell.column + 0.5f + rack.bandShift(depth)) / (rack.maxColumns + rack.bandShift(1)).coerceAtLeast(1f)
-        center = Offset(x, (cell.row + 0.5f) / rack.rows.coerceAtLeast(1))
+        val fits = viewSize != Size.Zero && contentSize.width * live <= viewSize.width && contentSize.height * live <= viewSize.height
+        if (effective <= 1.01f && fits) return
+        val point = RackViewport.center(rack, cell, depth)
+        center = Offset(point.x.toFloat(), point.y.toFloat())
     }
 
     companion object {
@@ -111,7 +163,7 @@ private class Measured {
 }
 
 /** Where the drawing goes on one axis: centered when it is smaller than the view, else around [center]. */
-private fun place(view: Float, content: Float, center: Float): Float =
+internal fun place(view: Float, content: Float, center: Float): Float =
     if (content <= view) (view - content) / 2 else (view / 2 - center * content).coerceIn(view - content, 0f)
 
 private fun clampCenter(view: Float, content: Float, center: Float): Float =
@@ -122,6 +174,9 @@ private fun clampCenter(view: Float, content: Float, center: Float): Float =
  * drag to look around once zoomed in, double-tap a spot to zoom in on it and double-tap
  * again to see the whole rack. The rack is drawn again at each size, so labels stay
  * sharp and names appear once cells are large enough.
+ *
+ * Places are never drawn under 48 dp: a larger rack is drawn at that size, scrolls both ways
+ * (drag) under an overview of the whole rack showing the part in view, and zooms from there.
  *
  * [content] draws the rack at the given cell size; its second argument zooms on a double
  * tap (cells handle their own taps, so they pass double taps on to it).
@@ -208,44 +263,137 @@ fun ZoomableRack(
         }
     }
 
-    BoxWithConstraints(
-        modifier
-            .clipToBounds()
-            .testTag("rack.canvas")
-            // Where the last finger went down, for double taps on cells.
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    lastDown = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial).position
-                }
-            }
-            .pointerInput(Unit) { detectTapGestures(onDoubleTap = { doubleTap(it) }) }
-            .pointerInput(Unit) { detectZoomAndPan(onZoom = ::zoomBy, onPan = ::panBy, onEnd = { current.settle() }) },
-    ) {
+    BoxWithConstraints(modifier) {
         val density = LocalDensity.current
         val labelHeight = with(density) { (MaterialTheme.typography.labelSmall.lineHeight * 1.25f).toDp() }
-        // The rack fits the space at zoom 1, whatever its size; zoom is relative to that.
-        val base = fittingCellSize(rack, maxWidth - padding * 2, maxHeight - padding * 2, labelHeight = labelHeight)
-        measured.view = with(density) { Size(maxWidth.toPx(), maxHeight.toPx()) }
-        androidx.compose.foundation.layout.Box(
-            Modifier.layout { measurable, constraints ->
-                val placeable = measurable.measure(Constraints())
-                measured.content = IntSize(placeable.width, placeable.height)
-                layout(constraints.maxWidth, constraints.maxHeight) {
-                    // Read when placing and drawing only: a gesture moves and scales the drawing
-                    // without composing or measuring it again.
-                    val origin = topLeft()
-                    placeable.placeWithLayer(IntOffset(origin.x.roundToInt(), origin.y.roundToInt())) {
-                        val scale = current.live
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0f, 0f)
+        // The rack fits the space at zoom 1 when its places reach the minimum; else it is drawn at
+        // the minimum and scrolls. Zoom is relative to that.
+        val fitted = fittingCellSize(rack, maxWidth - padding * 2, maxHeight - padding * 2, labelHeight = labelHeight)
+        val minimum = RackViewport.minimumCellSize(rack).toFloat()
+        val scrolls = RackViewport.scrolls(fitted.value.toDouble(), minimum.toDouble())
+        val base = RackViewport.cellSize(fitted.value.toDouble(), minimum.toDouble()).toFloat().dp
+        Column(Modifier.fillMaxSize()) {
+            if (scrolls) {
+                RackOverview(state) { Box(Modifier.padding(padding)) { content(base * state.level) {} } }
+                HorizontalDivider()
+            }
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clipToBounds()
+                    .testTag("rack.canvas")
+                    // Where the last finger went down, for double taps on cells.
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            lastDown = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial).position
+                        }
+                    }
+                    .pointerInput(Unit) { detectTapGestures(onDoubleTap = { doubleTap(it) }) }
+                    .pointerInput(Unit) { detectZoomAndPan(onZoom = ::zoomBy, onPan = ::panBy, onEnd = { current.settle() }) }
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(Constraints())
+                        measured.content = IntSize(placeable.width, placeable.height)
+                        measured.view = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
+                        // For the overview and for showing a bottle (read when drawing or later, not here).
+                        current.contentSize = Size(placeable.width.toFloat(), placeable.height.toFloat())
+                        current.viewSize = measured.view
+                        layout(constraints.maxWidth, constraints.maxHeight) {
+                            // Read when placing and drawing only: a gesture moves and scales the drawing
+                            // without composing or measuring it again.
+                            val origin = topLeft()
+                            placeable.placeWithLayer(IntOffset(origin.x.roundToInt(), origin.y.roundToInt())) {
+                                val scale = current.live
+                                scaleX = scale
+                                scaleY = scale
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            }
+                        }
+                    },
+            ) {
+                Box(Modifier.padding(padding)) {
+                    content(base * state.level) { doubleTap(lastDown) }
+                }
+            }
+        }
+    }
+}
+
+/** Height of the overview above a rack that scrolls. */
+private val OverviewHeight = 56.dp
+
+/**
+ * The whole rack, small, above a rack that scrolls: the part in view is framed. A tap, or a
+ * drag, brings that part into view. Hidden from TalkBack, which moves from place to place and
+ * scrolls to each one.
+ */
+@Composable
+private fun RackOverview(state: RackZoomState, drawing: @Composable () -> Unit) {
+    val frame = MaterialTheme.colorScheme.primary
+    // Where the small rack is in the strip: a touch anywhere along the strip goes to its nearest spot.
+    var map by remember { mutableStateOf(Rect.Zero) }
+    Box(
+        Modifier.fillMaxWidth().height(OverviewHeight + Dimens.s * 2).padding(Dimens.s).testTag("rack.overview")
+            .clearAndSetSemantics { }
+            .pointerInput(state) {
+                fun jump(at: Offset) {
+                    if (map.width <= 0f || map.height <= 0f) return
+                    state.jump(
+                        ViewportPoint(
+                            ((at.x - map.left) / map.width).coerceIn(0f, 1f).toDouble(),
+                            ((at.y - map.top) / map.height).coerceIn(0f, 1f).toDouble(),
+                        ),
+                    )
+                }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    down.consume()
+                    jump(down.position)
+                    while (true) {
+                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        change.consume()
+                        jump(change.position)
                     }
                 }
             },
-        ) {
-            androidx.compose.foundation.layout.Box(Modifier.padding(padding)) {
-                content(base * state.level) { doubleTap(lastDown) }
-            }
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.onPlaced { map = it.boundsInParent() }) {
+            // Drawn as in the view, then scaled down, so the frame matches it exactly.
+            Box(
+                Modifier.layout { measurable, constraints ->
+                    val placeable = measurable.measure(Constraints())
+                    if (placeable.width == 0 || placeable.height == 0) return@layout layout(0, 0) {}
+                    val scale = minOf(constraints.maxWidth.toFloat() / placeable.width, constraints.maxHeight.toFloat() / placeable.height, 1f)
+                    layout((placeable.width * scale).roundToInt(), (placeable.height * scale).roundToInt()) {
+                        placeable.placeWithLayer(0, 0) {
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = TransformOrigin(0f, 0f)
+                        }
+                    }
+                },
+            ) { drawing() }
+            // On top: keeps touches from the places below, and frames the part in view.
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .pointerInput(Unit) { awaitEachGesture { awaitFirstDown(requireUnconsumed = false) } }
+                    .drawBehind {
+                        val area = state.visibleArea
+                        val stroke = 2.dp.toPx()
+                        val topLeft = Offset((area.x * size.width).toFloat(), (area.y * size.height).toFloat())
+                        val width = maxOf(stroke * 4, (area.width * size.width).toFloat())
+                        val height = maxOf(stroke * 4, (area.height * size.height).toFloat())
+                        val corner = CornerRadius(3.dp.toPx())
+                        drawRoundRect(frame.copy(alpha = 0.12f), topLeft, Size(width, height), corner)
+                        drawRoundRect(
+                            frame, topLeft + Offset(stroke / 2, stroke / 2), Size(width - stroke, height - stroke), corner,
+                            style = Stroke(stroke),
+                        )
+                    },
+            )
         }
     }
 }
