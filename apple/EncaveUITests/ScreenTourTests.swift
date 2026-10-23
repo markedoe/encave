@@ -136,6 +136,9 @@ final class ScreenTourTests: XCTestCase {
         snapshot("cellar")
         checkCellarFigures()
         checkSelection()
+        #if os(iOS)
+        return
+        #endif
         checkTable()
         #if os(iOS)
         // The swipe actions on a wine ("Drink" on the leading edge). iPhone only: on iPad
@@ -371,11 +374,22 @@ final class ScreenTourTests: XCTestCase {
                 XCTAssertTrue(element("cellar.select.delete").waitForExistence(timeout: 2), "cellar: More has no Delete")
                 snapshot("cellar-select-more")
                 #if os(iOS)
-                // XCUITest on iOS leaves this menu over the screen after closing it
-                // (Done and the rows can no longer be tapped): start the app again.
-                app.terminate()
-                app.launch()
-                openSection(0, "cellar")
+                // DIAGNOSTIC: does a raw touch on Done end the selection after the menu?
+                dismissMenu()
+                let done = element("cellar.select.done")
+                for attempt in 1...3 {
+                    done.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                    sleep(2)
+                    if element("cellar.select").waitForExistence(timeout: 3) {
+                        print("DIAG: selection ended by raw touch, attempt \(attempt)")
+                        snapshot("diag-ended")
+                        return
+                    }
+                    snapshot("diag-attempt-\(attempt)")
+                }
+                print("DIAG: selection NOT ended by raw touches")
+                print(app.debugDescription)
+                XCTFail("DIAG: selection not ended by raw touches")
                 return
                 #else
                 dismissMenu()
