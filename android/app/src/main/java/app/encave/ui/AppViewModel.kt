@@ -1151,7 +1151,10 @@ class AppViewModel(
 
     // endregion
 
-    fun exportCsv(resolver: ContentResolver, uri: Uri) = export(resolver, uri) { CellarExport.csv(it) }
+    /** The spreadsheet; its "location" column names positions in the language of [resources]. */
+    fun exportCsv(resolver: ContentResolver, uri: Uri, resources: android.content.res.Resources) = export(resolver, uri) {
+        CellarExport.csv(it, placeName = { rack, slot -> rack.displayLabel(slot, resources) })
+    }
 
     /** The printable inventory (PDF, A4); labels come from [resources]. */
     fun exportPdf(resolver: ContentResolver, uri: Uri, resources: android.content.res.Resources) {

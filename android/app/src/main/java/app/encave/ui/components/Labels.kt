@@ -116,7 +116,7 @@ val RackKind.labelRes: Int
         RackKind.Bins -> R.string.kind_bins
     }
 
-/** The kind of storage, as in the Racks list: a honeycomb on shelves is a wine fridge. */
+/** The kind of storage, as in the Storage list: a honeycomb on shelves is a wine fridge. */
 val Rack.kindLabelRes: Int
     get() = when {
         isBackReversed -> R.string.kind_fridge_layers_reversed
@@ -149,28 +149,28 @@ val RackKind.columnsRes: Int
     }
 
 /**
- * "B3", "B3, back", "Shelf 2, 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
- * for people (files use "B3-2").
+ * "B3", "B3, back", "Shelf 2, back, position 3", "Shelf 1, back, top layer, position 3" or
+ * "Bin B3", for people (files use "B3-2"). One order everywhere: shelf, side, layer, position.
  */
 fun Rack.displayLabel(slot: Slot, resources: Resources): String {
-    // A fridge drawn front and back names the band first, as drawn: "Shelf 3, front, bottom layer, place 2".
-    if (hasDepthBands) {
-        shelfPlace(slot.row)?.let { place ->
-            val res = when {
-                place.layers == 1 -> R.string.place_shelf_band_single
-                place.layer == 0 -> R.string.place_shelf_band_bottom
-                place.layer == place.layers - 1 -> R.string.place_shelf_band_top
-                else -> R.string.place_shelf_band_middle
-            }
-            return resources.getString(res, place.shelf + 1, depthName(slot.depth, resources), slot.column + 1)
+    if (kind == RackKind.Bins || positionsPerCell <= 1) return displayLabel(slot.cell, resources)
+    val side = depthName(slot.depth, resources)
+    // A fridge with bottles in layers names the side before the layer: "Shelf 3, front, bottom layer, position 2".
+    shelfPlace(slot.row)?.let { place ->
+        val res = when {
+            place.layers == 1 -> R.string.place_shelf_band_single
+            place.layer == 0 -> R.string.place_shelf_band_bottom
+            place.layer == place.layers - 1 -> R.string.place_shelf_band_top
+            else -> R.string.place_shelf_band_middle
         }
+        return resources.getString(res, place.shelf + 1, side, slot.column + 1)
     }
-    val cell = displayLabel(slot.cell, resources)
-    if (kind == RackKind.Bins || positionsPerCell <= 1) return cell
-    return resources.getString(R.string.place_with_depth, cell, depthName(slot.depth, resources))
+    // Shelves one to three deep: "Shelf 2, back, position 3".
+    if (kind == RackKind.Shelves) return resources.getString(R.string.place_shelf_band_single, slot.row + 1, side, slot.column + 1)
+    return resources.getString(R.string.place_with_depth, displayLabel(slot.cell, resources), side)
 }
 
-/** Front, middle or back of a place. */
+/** Front, middle or back of a position. */
 fun Rack.depthName(depth: Int, resources: Resources): String = resources.getString(
     when (depth) {
         0 -> R.string.depth_front
@@ -180,7 +180,7 @@ fun Rack.depthName(depth: Int, resources: Resources): String = resources.getStri
 )
 
 fun Rack.displayLabel(cell: RackCell, resources: Resources): String {
-    // A fridge with bottles in layers: "Shelf 1, top layer, place 3".
+    // A fridge with bottles in layers: "Shelf 1, top layer, position 3".
     shelfPlace(cell.row)?.let { place ->
         val res = when {
             place.layers == 1 -> R.string.place_shelf_layer_single
@@ -207,7 +207,7 @@ private fun Rack.displayLabelByKind(cell: RackCell, resources: Resources): Strin
     RackKind.Bins -> resources.getString(R.string.place_bin, label(cell))
 }
 
-/** "Main rack · Shelf 2, 3, back", the storage note, or null. */
+/** "Main rack · Shelf 2, back, position 3", the storage note, or null. */
 fun Cellar.displayLocation(bottle: Bottle, resources: Resources): String? {
     val slot = bottle.slot
     val rack = slot?.let { rack(it.rackId) }
