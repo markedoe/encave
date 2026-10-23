@@ -78,7 +78,7 @@ val Rack.shape: String
  * keeps the same spot in view when the space changes (card shown, rotation).
  */
 @Stable
-class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
+class RackZoomState(level: Float = 1f, center: Offset = StartCenter) {
     /** The zoom the rack is drawn at; changes once a gesture ends, so the rack is drawn again once. */
     var level by mutableFloatStateOf(level)
 
@@ -95,6 +95,9 @@ class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
     var viewSize by mutableStateOf(Size.Zero)
         internal set
 
+    /** A rack that scrolls sits right under its overview, not centered in the height left. */
+    internal var alignsTop = false
+
     /** The zoom as seen. */
     val effective: Float get() = level * live
 
@@ -103,7 +106,7 @@ class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
         get() {
             val content = Size(contentSize.width * live, contentSize.height * live)
             val x = place(viewSize.width, content.width, center.x)
-            val y = place(viewSize.height, content.height, center.y)
+            val y = place(viewSize.height, content.height, center.y, alignsTop)
             return RackViewport.visibleArea(
                 content.width.toDouble(), content.height.toDouble(), viewSize.width.toDouble(), viewSize.height.toDouble(),
                 ViewportPoint(-x.toDouble(), -y.toDouble()),
@@ -162,9 +165,17 @@ private class Measured {
     var view = Size.Zero
 }
 
-/** Where the drawing goes on one axis: centered when it is smaller than the view, else around [center]. */
-internal fun place(view: Float, content: Float, center: Float): Float =
-    if (content <= view) (view - content) / 2 else (view / 2 - center * content).coerceIn(view - content, 0f)
+/**
+ * Where the drawing goes on one axis: centered when it is smaller than the view (at its start
+ * with [alignStart]), else around [center].
+ */
+internal fun place(view: Float, content: Float, center: Float, alignStart: Boolean = false): Float = when {
+    content <= view -> if (alignStart) 0f else (view - content) / 2
+    else -> (view / 2 - center * content).coerceIn(view - content, 0f)
+}
+
+/** A rack that scrolls opens at its top-leading corner ([RackViewport.start]); a center at 0 places it there. */
+private val StartCenter = Offset(RackViewport.start.x.toFloat(), RackViewport.start.y.toFloat())
 
 private fun clampCenter(view: Float, content: Float, center: Float): Float =
     if (content <= view || content <= 0f) 0.5f else center.coerceIn(view / 2 / content, 1 - view / 2 / content)
@@ -202,7 +213,10 @@ fun ZoomableRack(
     fun topLeft(): Offset {
         val view = measured.view
         val content = shown()
-        return Offset(place(view.width, content.width, current.center.x), place(view.height, content.height, current.center.y))
+        return Offset(
+            place(view.width, content.width, current.center.x),
+            place(view.height, content.height, current.center.y, current.alignsTop),
+        )
     }
 
     fun clamped(center: Offset, content: Size): Offset =
@@ -239,7 +253,7 @@ fun ZoomableRack(
         val toCenter: Offset
         if (fromLevel > 1.01f) {
             toLevel = 1f
-            toCenter = Offset(0.5f, 0.5f)
+            toCenter = StartCenter
         } else {
             val size = shown()
             if (size.width == 0f || size.height == 0f) return
@@ -269,9 +283,11 @@ fun ZoomableRack(
         // The rack fits the space at zoom 1 when its places reach the minimum; else it is drawn at
         // the minimum and scrolls. Zoom is relative to that.
         val fitted = fittingCellSize(rack, maxWidth - padding * 2, maxHeight - padding * 2, labelHeight = labelHeight)
-        val minimum = RackViewport.minimumCellSize(rack).toFloat()
-        val scrolls = RackViewport.scrolls(fitted.value.toDouble(), minimum.toDouble())
-        val base = RackViewport.cellSize(fitted.value.toDouble(), minimum.toDouble()).toFloat().dp
+        val minimum = RackViewport.minimumCellSize(rack)
+        val nearFit = RackViewport.minimumCellSize(rack, RackViewport.NEAR_FIT_TARGET)
+        val scrolls = RackViewport.scrolls(fitted.value.toDouble(), minimum, nearFit)
+        val base = RackViewport.cellSize(fitted.value.toDouble(), minimum, nearFit).toFloat().dp
+        state.alignsTop = scrolls
         Column(Modifier.fillMaxSize()) {
             if (scrolls) {
                 RackOverview(state) { Box(Modifier.padding(padding)) { content(base * state.level) {} } }

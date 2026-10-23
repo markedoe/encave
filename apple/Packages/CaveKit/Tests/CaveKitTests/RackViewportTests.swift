@@ -31,11 +31,31 @@ import Testing
     }
 
     @Test func fitsWhenEveryPlaceReachesTheMinimumElseScrolls() {
-        #expect(!RackViewport.scrolls(fitted: 60, minimum: 44))
-        #expect(RackViewport.cellSize(fitted: 60, minimum: 44) == 60)
-        #expect(!RackViewport.scrolls(fitted: 44, minimum: 44))
-        #expect(RackViewport.scrolls(fitted: 30, minimum: 44))
-        #expect(RackViewport.cellSize(fitted: 30, minimum: 44) == 44)
+        #expect(!RackViewport.scrolls(fitted: 60, minimum: 44, nearFit: 40))
+        #expect(RackViewport.cellSize(fitted: 60, minimum: 44, nearFit: 40) == 60)
+        #expect(!RackViewport.scrolls(fitted: 44, minimum: 44, nearFit: 40))
+        #expect(RackViewport.scrolls(fitted: 30, minimum: 44, nearFit: 40))
+        #expect(RackViewport.cellSize(fitted: 30, minimum: 44, nearFit: 40) == 44)
+    }
+
+    @Test func aStorageSlightlyTooLargeIsFittedRatherThanScrolledByAFewPoints() {
+        // 8 cells of 48 in a little less: 7 % too wide at the minimum, places of 45: fitted.
+        #expect(!RackViewport.scrolls(fitted: 45, minimum: 48, nearFit: 40))
+        #expect(RackViewport.cellSize(fitted: 45, minimum: 48, nearFit: 40) == 45)
+        // 10 % exactly: still fitted; more: scrolls.
+        #expect(!RackViewport.scrolls(fitted: 40, minimum: 44, nearFit: 40))
+        #expect(RackViewport.scrolls(fitted: 43, minimum: 48, nearFit: 40))
+        // Places would be under 40: scrolls, however close.
+        #expect(RackViewport.scrolls(fitted: 39.5, minimum: 42, nearFit: 40))
+        #expect(RackViewport.cellSize(fitted: 39.5, minimum: 42, nearFit: 40) == 42)
+    }
+
+    @Test func aStorageThatScrollsOpensAtItsTopLeadingCorner() {
+        let offset = RackViewport.offset(centering: RackViewport.start, content: CGSize(width: 1000, height: 800),
+                                         view: CGSize(width: 300, height: 400))
+        #expect(offset == .zero)
+        #expect(RackViewport.visibleArea(content: CGSize(width: 1000, height: 800), view: CGSize(width: 300, height: 400), offset: offset)
+            == CGRect(x: 0, y: 0, width: 0.3, height: 0.5))
     }
 
     @Test func visibleAreaIsAFractionOfTheDrawing() {

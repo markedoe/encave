@@ -21,11 +21,26 @@ public enum RackViewport {
         rack.hasDepthBands ? target / backPlaceHeight : target
     }
 
-    /// Whether the storage scrolls: its places would be smaller than `minimum` when fitted.
-    public static func scrolls(fitted: CGFloat, minimum: CGFloat) -> Bool { fitted < minimum }
+    /// A storage only slightly larger than the space is fitted rather than scrolled by a few
+    /// points, as long as its places stay at least this large.
+    public static let nearFitTarget: CGFloat = 40
+    /// How much larger than the space a storage may be at the minimum and still be fitted.
+    public static let nearFitMargin: CGFloat = 1.1
 
-    /// The cell size to draw at: the fitted one when every place reaches the minimum, else the minimum.
-    public static func cellSize(fitted: CGFloat, minimum: CGFloat) -> CGFloat { max(fitted, minimum) }
+    /// Where a storage that scrolls opens: its top-leading corner (fractions of the drawing).
+    public static let start = CGPoint.zero
+
+    /// Whether the storage scrolls: its places would be smaller than `minimum` when fitted, and
+    /// it is more than 10 % larger than the space at the minimum, or its places would be smaller
+    /// than `nearFit` (the cell size for `nearFitTarget`).
+    public static func scrolls(fitted: CGFloat, minimum: CGFloat, nearFit: CGFloat) -> Bool {
+        fitted < minimum && !(fitted >= nearFit && minimum <= fitted * nearFitMargin)
+    }
+
+    /// The cell size to draw at: the fitted one, unless the storage scrolls at the minimum.
+    public static func cellSize(fitted: CGFloat, minimum: CGFloat, nearFit: CGFloat) -> CGFloat {
+        scrolls(fitted: fitted, minimum: minimum, nearFit: nearFit) ? minimum : fitted
+    }
 
     /// The part of the drawing in view, as fractions of it (0...1). `offset` is the point of
     /// the drawing at the view's top left corner.

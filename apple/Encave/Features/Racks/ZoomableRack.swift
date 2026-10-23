@@ -26,6 +26,8 @@ struct ZoomableRack: UIViewRepresentable {
     var interaction = RackInteraction()
     /// Told what is in view, for the overview; brings a part of the rack into view.
     var tracker: RackViewportTracker?
+    /// A rack that scrolls sits right under its overview instead of being centered vertically.
+    var alignsTop = false
 
     static let maxZoom: CGFloat = 4
 
@@ -60,6 +62,10 @@ struct ZoomableRack: UIViewRepresentable {
     func updateUIView(_ scroll: CenteringScrollView, context: Context) {
         let coordinator = context.coordinator
         coordinator.parent = self
+        if scroll.alignsTop != alignsTop {
+            scroll.alignsTop = alignsTop
+            scroll.centerContent()
+        }
         coordinator.model = model
         // SwiftUI redraws this view whenever something it reads changes, also during a pinch
         // (a sync round, the sync status). Changing the drawing then would fight the gesture:
@@ -281,8 +287,10 @@ struct ZoomableRack: UIViewRepresentable {
             scroll.contentSize = size
             scroll.centerContent()
             if !keepingCenter {
-                // From the top left: a rack larger than the screen starts at its first row.
-                scroll.contentOffset = CGPoint(x: -scroll.contentInset.left, y: -scroll.contentInset.top)
+                // A rack larger than the screen opens at its top-leading corner (RackViewport.start),
+                // its row letters and captions in view.
+                let start = RackViewport.offset(centering: RackViewport.start, content: size, view: scroll.bounds.size)
+                scroll.contentOffset = CGPoint(x: start.x - scroll.contentInset.left, y: start.y - scroll.contentInset.top)
             } else {
                 let maxX = max(0, size.width - scroll.bounds.width)
                 let maxY = max(0, size.height - scroll.bounds.height)
@@ -295,9 +303,11 @@ struct ZoomableRack: UIViewRepresentable {
     }
 }
 
-/// A scroll view that keeps its content centered while it is smaller than the screen.
+/// A scroll view that keeps its content centered while it is smaller than the screen (at the
+/// top with `alignsTop`); an axis that fits always shows all of it.
 final class CenteringScrollView: UIScrollView {
     weak var zoomedView: UIView?
+    var alignsTop = false
 
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -308,9 +318,15 @@ final class CenteringScrollView: UIScrollView {
         guard let zoomedView else { return }
         let size = zoomedView.frame.size
         let horizontal = max(0, (bounds.width - size.width) / 2)
-        let vertical = max(0, (bounds.height - size.height) / 2)
+        let vertical = alignsTop ? 0 : max(0, (bounds.height - size.height) / 2)
         let insets = UIEdgeInsets(top: vertical, left: horizontal, bottom: vertical, right: horizontal)
-        if contentInset != insets { contentInset = insets }
+        guard contentInset != insets else { return }
+        contentInset = insets
+        // An axis that fits has one place only: centered (or at the top).
+        var offset = contentOffset
+        if size.width <= bounds.width { offset.x = -horizontal }
+        if size.height <= bounds.height { offset.y = -vertical }
+        if offset != contentOffset { contentOffset = offset }
     }
 }
 
