@@ -113,10 +113,17 @@ cd android
   read `files/widget-snapshot.json`, a summary (`WidgetSnapshot` in core; the Apple
   app has no widgets yet) that the app rewrites after each saved or synced change; the cellar
   is loaded only when it is missing or from last year. `WidgetContentTest` renders them with `glance-appwidget-testing`.
-- `ScreenTourTest` opens every main screen with the sample cellar on a phone
-  and a tablet, in English and French, and on a phone in dark mode, saves screenshots to
-  `android/app/build/screens` (never commit them) and checks the layout:
-  centered `action.*` buttons, equal side-by-side buttons, racks that fit.
+- `ScreenTourTest` (Robolectric, no emulator) opens every main screen with the
+  sample cellar, saves screenshots to `android/app/build/screens` (never commit
+  them) and checks the layout: centered `action.*` buttons, equal side-by-side
+  buttons, racks that fit, no blank screen. It navigates by test tags and
+  content descriptions only, never by displayed text. The unit tests run a
+  quick set (phone and tablet in English and French, phone in dark mode); the
+  full tour adds dark mode everywhere and the phone at font scale 2.0:
+  `./gradlew :app:testDebugUnitTest --tests 'app.encave.ui.ScreenTourTest' -Pencave.tour=full`.
+  Files are named like the Apple tour, one folder per device:
+  `phone/en-01-cellar.png`, `tablet/fr-dark-29-rack-3.png`, `phone/xl-45-tonight.png`
+  (`xl`: English at font scale 2.0).
 
 ### Android release
 
@@ -215,7 +222,7 @@ off without code changes:
 | `ci.yml` | Secret scanning, public-safety and commit message checks (pull requests, pushes to `main` and `claude/**`) |
 | `apple.yml` | Every run: CaveKit tests on Linux and the French strings check. A macOS job builds both apps, checks they bundle the privacy manifest and runs the Mac launch test; a branch push runs only this macOS job. On main, pull requests and manual runs (on any branch), the same job also makes the Mac screenshots for the App Store, 2880x1800 in English and French, light and dark (artifact `mac-screens`, made by `apple/tools/mac-screenshots.sh`), and another job runs the model tests on macOS and the screen tour on iPhone and iPad, then on the Mac (artifact `screens`; see `apple/README.md`). Uploads to TestFlight only from main (a push or a manual run), when the App Store Connect secrets are set (never on forks); branch pushes, manual runs on a branch and pull requests never upload. An uploaded build reaches the internal testers; the `testers` job then gives it to the external testers and submits it to Beta App Review once the screen tour of the same run has passed: for every push to main, and for a manual run on main with "external testers" ticked |
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
-| `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`). Nothing is uploaded to Google Play |
+| `android.yml` | Core and app unit tests (with the quick screen tour's layout checks), lint, debug APK (artifact `encave-debug-apk`); on a push to main (or a manual run, on any branch), the full screen tour on a phone (411x891 dp) and a tablet (1280x800 dp landscape), English and French, light and dark, plus the phone at font scale 2.0 (Robolectric, about 10 minutes; artifact `android-screens`, one folder per device, reviewed like the Apple `screens`), and release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`). Nothing is uploaded to Google Play |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
 | `testflight-status.yml` | Manual, read-only: the latest TestFlight builds, which external groups have them and where Beta App Review stands |
 | `testflight-external.yml` | Manual: gives a build already in TestFlight (its build number) to every external group and submits it to Beta App Review, with an optional "What to Test"; builds nothing |
