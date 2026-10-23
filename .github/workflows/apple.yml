@@ -85,27 +85,30 @@ jobs:
     # fixes reach main faster.
     if: (github.event_name != 'push' || github.ref == 'refs/heads/main') && needs.tour-check.outputs.passed != 'true'
     runs-on: macos-latest
-    # One simulator per job, four jobs side by side (with the apps job, the five macOS
-    # runners a free account runs at once). Two simulators on one runner slow each other,
+    # One simulator per job, four jobs, three side by side next to the apps job (macOS
+    # runners are shared by the account's repositories). Two simulators on one runner slow each other,
     # and three fail to launch the app; one a runner runs at full speed. Measured: 28 to
     # 43 minutes a job, against 80 to 85 for one job with both simulators.
     timeout-minutes: 90
     strategy:
       fail-fast: false
+      # Three at a time, so that the apps job (the TestFlight upload, for the internal
+      # testers) never waits for a free macOS runner. The shortest part runs last.
+      max-parallel: 3
       matrix:
         include:
-          - device: iPhone
-            language: English
-            tests: testTourInEnglish testLargeText testLargestText
-            mac: true
-          - device: iPhone
-            language: French
-            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
           - device: iPad
             language: English
             tests: testTourInEnglish
             model: true
           - device: iPad
+            language: French
+            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
+          - device: iPhone
+            language: English
+            tests: testTourInEnglish testLargeText testLargestText
+            mac: true
+          - device: iPhone
             language: French
             tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
     defaults:

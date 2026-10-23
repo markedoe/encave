@@ -91,7 +91,9 @@ English then French), then Beta App Review.
   simulator each, and merges the screenshots into the `screens` artifact.
   "Re-run failed jobs" re-runs only the part that failed. Measured on
   2026-10-23: 28 to 43 minutes per job (build, simulator and tour), against
-  80 to 85 minutes for the single job; a job may wait for a free macOS runner.
+  80 to 85 minutes for the single job (about 40 minutes for the whole tour).
+  Three parts run at a time, so that the TestFlight upload starts at once and
+  the internal testers get the build about 20 to 30 minutes after the push.
 
 ## One-time setup by hand (no API)
 
