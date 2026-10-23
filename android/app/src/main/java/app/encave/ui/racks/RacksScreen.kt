@@ -32,6 +32,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import app.encave.ui.components.ListDetailPanes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -64,12 +68,23 @@ import app.encave.ui.navigation.SettingsRoute
 import app.encave.ui.theme.Dimens
 
 /**
- * Racks with their occupancy. Reorder mode uses buttons, which also work with TalkBack;
- * touch and hold a storage to edit or delete it.
+ * The storages; on wide windows, the one chosen is shown beside the list. Reorder mode uses
+ * buttons, which also work with TalkBack; touch and hold a storage to edit or delete it.
  */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
+    ListDetailPanes(
+        navigator = navigator,
+        placeholder = stringResource(R.string.storage_select),
+        list = { open, selected -> RacksList(viewModel, navigator, open, selected) },
+        detail = { id, paneNavigator, _ -> RackDetailScreen(viewModel, paneNavigator, RackDetailRoute(id)) },
+    )
+}
+
+/** Racks with their occupancy. Reorder mode uses buttons, which also work with TalkBack. */
+@Composable
+private fun RacksList(viewModel: AppViewModel, navigator: AppNavigator, onOpen: ((String) -> Unit)?, selectedId: String?) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     var reordering by rememberSaveable { mutableStateOf(false) }
     // The storage whose long-press menu is open, and the one asked about before deleting.
@@ -123,19 +138,23 @@ fun RacksScreen(viewModel: AppViewModel, navigator: AppNavigator) {
             }
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 96.dp)) {
+        LazyColumn(Modifier.fillMaxSize().testTag("racks.list"), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 96.dp)) {
             itemsIndexed(cellar.racks, key = { _, rack -> rack.id.toString() }) { index, rack ->
                 val used = cellar.occupancy(rack)
                 val id = rack.id.toString()
+                val isSelected = id == selectedId
                 Box(Modifier.animateItem()) {
                     ListItem(
-                        modifier = Modifier.testTag("rack.row.$index").combinedClickable(
-                            enabled = !reordering,
-                            onLongClickLabel = stringResource(R.string.storage_menu, rack.name),
-                            onLongClick = { menuRackId = id },
-                        ) {
-                            navigator.open(RackDetailRoute(id))
-                        },
+                        modifier = Modifier.testTag("rack.row.$index")
+                            .semantics { selected = isSelected }
+                            .combinedClickable(
+                                enabled = !reordering,
+                                onLongClickLabel = stringResource(R.string.storage_menu, rack.name),
+                                onLongClick = { menuRackId = id },
+                            ) {
+                                onOpen?.invoke(id) ?: navigator.open(RackDetailRoute(id))
+                            },
+                        colors = if (isSelected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
                         // A fixed-width slot, so the names line up whatever the shape of the rack.
                         leadingContent = {
                             Box(Modifier.width(92.dp), contentAlignment = Alignment.CenterStart) {

@@ -58,6 +58,8 @@ S = [
  ("cellar_no_match", "No bottles match", "Aucune bouteille ne correspond"),
  ("cellar_no_match_body", "Try another search or clear the filters.", "Essayez une autre recherche ou retirez les filtres."),
  ("cellar_select_wine", "Select a bottle to see its details.", "Sélectionnez une bouteille pour voir ses détails."),
+ ("storage_select", "Select a storage to see its bottles.", "Sélectionnez un rangement pour voir ses bouteilles."),
+ ("journal_select_entry", "Select a tasting to see its note.", "Sélectionnez une dégustation pour voir sa note."),
  ("sort_name", "Name", "Nom"),
  ("sort_vintage", "Vintage", "Millésime"),
  ("sort_recent", "Recently added", "Ajout récent"),

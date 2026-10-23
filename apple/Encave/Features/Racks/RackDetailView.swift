@@ -480,11 +480,16 @@ private struct RackKey: View {
                 BottleEnd(color: entry.wine.color, size: 16)
                 Text(verbatim: entry.wine.displayName)
                     .lineLimit(1)
-                // The style in words too, not only the bottle's color.
-                if let style = entry.wine.color?.name {
-                    Text(verbatim: style)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                // The style in words and by its symbol (as on the bottles), not only by color.
+                if let color = entry.wine.color {
+                    Label {
+                        Text(verbatim: color.name)
+                    } icon: {
+                        Image(systemName: color.styleMark.systemImage)
+                    }
+                    .labelStyle(StyleLabelStyle())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 }
                 Text(verbatim: "×\(entry.count)")
                     .monospacedDigit()
@@ -512,6 +517,18 @@ private struct RackKey: View {
         .accessibilityHint(Text("Shows where its bottles are in this storage."))
         .accessibilityAddTraits(isOn ? .isSelected : [])
         .accessibilityIdentifier("rack.key.wine")
+    }
+}
+
+/// A style in a key chip: its symbol, then its name, close together.
+private struct StyleLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 3) {
+            configuration.icon
+                .imageScale(.small)
+                .accessibilityHidden(true)
+            configuration.title
+        }
     }
 }
 

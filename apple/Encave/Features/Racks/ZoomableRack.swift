@@ -4,7 +4,8 @@ import SwiftUI
 import UIKit
 
 /// A rack in a native zooming scroll view, as in Photos or Maps: pinch to zoom up to 4×,
-/// pan when zoomed in. No double-tap zoom: the second tap would also reach the place
+/// pan when zoomed in or when the rack is larger than the screen (its places never drawn
+/// under 44 pt); a bottle to find is brought into view. No double-tap zoom: the second tap would also reach the place
 /// under the finger (adding or showing a bottle, or moving one there).
 /// When a pinch ends the rack is drawn again at the new size, so labels stay sharp
 /// and names appear once cells are large enough.
@@ -23,6 +24,8 @@ struct ZoomableRack: UIViewRepresentable {
     var onDrop: ((UUID, RackPlace) -> Bool)?
     var zoomStep = RackZoomStep()
     var interaction = RackInteraction()
+    /// Told what is in view, for the overview; brings a part of the rack into view.
+    var tracker: RackViewportTracker?
 
     static let maxZoom: CGFloat = 4
 
@@ -49,6 +52,8 @@ struct ZoomableRack: UIViewRepresentable {
         let pinch = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pinched(_:)))
         scroll.addGestureRecognizer(pinch)
         context.coordinator.pinch = pinch
+        context.coordinator.tracker = tracker
+        tracker?.jump = { [weak coordinator = context.coordinator] point in coordinator?.jump(to: point) }
         return scroll
     }
 
@@ -63,6 +68,11 @@ struct ZoomableRack: UIViewRepresentable {
             coordinator.hasPendingUpdate = true
         } else {
             coordinator.update()
+        }
+        // A bottle to find (shown from elsewhere, or picked in the list): bring it into view.
+        if highlighted != coordinator.highlighted {
+            coordinator.highlighted = highlighted
+            if let highlighted, highlighted.rackID == rack.id { tracker?.show(highlighted, in: rack) }
         }
         // A zoom button was pressed: zoom around the middle, as a pinch would.
         if zoomStep.id != coordinator.zoomStepID {
@@ -84,6 +94,10 @@ struct ZoomableRack: UIViewRepresentable {
         var level: CGFloat = 1
         /// The last zoom button press handled.
         var zoomStepID = 0
+        /// The bottle to find last brought into view.
+        var highlighted: Slot?
+        weak var tracker: RackViewportTracker?
+        private var isReportScheduled = false
         /// SwiftUI asked for a redraw while the rack was being zoomed or scrolled.
         var hasPendingUpdate = false
         /// Our pinch, and the zoom and the point of the drawing under the fingers when it began.
@@ -179,6 +193,35 @@ struct ZoomableRack: UIViewRepresentable {
             report(scrollView)
         }
 
+        func scrollViewDidScroll(_ scrollView: UIScrollView) { reportViewport() }
+
+        /// Tells the overview what is in view, once per run of the main loop (also when the
+        /// scroll view moves while SwiftUI updates it).
+        func reportViewport() {
+            guard tracker != nil, !isReportScheduled else { return }
+            isReportScheduled = true
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isReportScheduled = false
+                guard let scroll = self.scroll else { return }
+                self.tracker?.report(
+                    RackViewportTracker.Geometry(content: scroll.contentSize, view: scroll.bounds.size, offset: scroll.contentOffset),
+                    cellSize: self.base * self.level
+                )
+            }
+        }
+
+        /// Brings a point of the drawing (fractions of it) to the middle, as far as it goes.
+        func jump(to point: CGPoint) {
+            guard let scroll else { return }
+            let content = scroll.contentSize, view = scroll.bounds.size, inset = scroll.contentInset
+            let offset = RackViewport.offset(centering: point, content: content, view: view)
+            // An axis smaller than the screen stays centered.
+            scroll.setContentOffset(CGPoint(x: content.width <= view.width ? -inset.left : offset.x,
+                                            y: content.height <= view.height ? -inset.top : offset.y), animated: false)
+            reportViewport()
+        }
+
         /// The zoom, for VoiceOver and for the screen tour ("2.2×").
         func report(_ scrollView: UIScrollView) {
             let zoom = level * scrollView.zoomScale
@@ -231,12 +274,16 @@ struct ZoomableRack: UIViewRepresentable {
             scroll.pinchGestureRecognizer?.isEnabled = false
             if scroll.zoomScale != 1 { scroll.zoomScale = 1 }
             report(scroll)
+            reportViewport()
             let size = host.sizeThatFits(in: CGSize(width: CGFloat.infinity, height: CGFloat.infinity))
             guard size != oldSize || !keepingCenter else { return }
             host.view.frame = CGRect(origin: .zero, size: size)
             scroll.contentSize = size
             scroll.centerContent()
-            if keepingCenter {
+            if !keepingCenter {
+                // From the top left: a rack larger than the screen starts at its first row.
+                scroll.contentOffset = CGPoint(x: -scroll.contentInset.left, y: -scroll.contentInset.top)
+            } else {
                 let maxX = max(0, size.width - scroll.bounds.width)
                 let maxY = max(0, size.height - scroll.bounds.height)
                 let x = fraction.x * size.width - scroll.bounds.width / 2

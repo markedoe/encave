@@ -47,6 +47,8 @@
     <string name="cellar_no_match">No bottles match</string>
     <string name="cellar_no_match_body">Try another search or clear the filters.</string>
     <string name="cellar_select_wine">Select a bottle to see its details.</string>
+    <string name="storage_select">Select a storage to see its bottles.</string>
+    <string name="journal_select_entry">Select a tasting to see its note.</string>
     <string name="sort_name">Name</string>
     <string name="sort_vintage">Vintage</string>
     <string name="sort_recent">Recently added</string>

@@ -226,7 +226,7 @@ struct RackGrid: View {
 
     /// The back places, as a share of the front ones' height (their width stays, so each back
     /// place sits right under the front one of its cell).
-    static let backHeight: CGFloat = 0.78
+    static let backHeight: CGFloat = RackViewport.backPlaceHeight
     /// A band's caption, in places, and at least in points.
     static let bandCaptionHeight: CGFloat = 0.3
     static let bandCaptionMinHeight: CGFloat = 13
@@ -295,8 +295,8 @@ extension RackGrid {
     /// small enough that a little rack does not look like a toy.
     static let maxFittedCell: CGFloat = 112
 
-    /// The cell size at which the whole rack fits in a space, headers included.
-    static func fittingCellSize(for rack: Rack, in space: CGSize, showsHeaders: Bool = true) -> CGFloat {
+    /// The cell size at which the whole rack fits in a space, headers included, and at least `floor`.
+    static func fittingCellSize(for rack: Rack, in space: CGSize, showsHeaders: Bool = true, floor: CGFloat = 26) -> CGFloat {
         let columns = CGFloat(rack.maxColumns), rows = CGFloat(rack.rows)
         var width: CGFloat, height: CGFloat
         /// Points taken whatever the cell size (zone names).
@@ -340,14 +340,15 @@ extension RackGrid {
         if fit >= RackCellView.nameSize, rack.kind == .grid || rack.kind == .shelves {
             let taller = height + rows * (RackCellView.nameHeightRatio - 1)
             let withNames = min(space.width / width, space.height / taller)
-            return min(max(withNames >= RackCellView.nameSize ? withNames : min(fit, RackCellView.nameSize - 0.5), 26), Self.maxFittedCell)
+            return min(max(withNames >= RackCellView.nameSize ? withNames : min(fit, RackCellView.nameSize - 0.5), floor), Self.maxFittedCell)
         }
-        return min(max(fit, 26), Self.maxFittedCell)
+        return min(max(fit, floor), Self.maxFittedCell)
     }
 }
 
-/// A rack drawn as large as the space allows. Pinch to zoom; on the Mac, trackpad pinch
-/// and the zoom buttons set `zoom`.
+/// A rack drawn as large as the space allows, but never with places under 44 pt: a larger
+/// rack is drawn at that size, scrolls both ways under an overview of the whole rack, and
+/// zooms in from there. Pinch to zoom; on the Mac, trackpad pinch and the zoom buttons set `zoom`.
 struct FittedRackGrid: View {
     let rack: Rack
     /// Mac: 1 fits the whole rack; more zooms in. iPhone and iPad zoom natively.
@@ -362,39 +363,194 @@ struct FittedRackGrid: View {
     var zoomStep = RackZoomStep()
     var interaction = RackInteraction()
 
+    @State private var tracker = RackViewportTracker()
+    #if os(macOS)
+    @State private var position = ScrollPosition()
+    #endif
+
     static let padding: CGFloat = 16
+    /// Height of the overview above a rack that scrolls.
+    static let overviewHeight: CGFloat = 56
 
     var body: some View {
         GeometryReader { proxy in
             let padding = Self.padding
             let space = CGSize(width: proxy.size.width - padding * 2, height: proxy.size.height - padding * 2)
-            let base = RackGrid.fittingCellSize(for: rack, in: space)
-            #if os(iOS)
-            ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
-                         selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
-                         zoomStep: zoomStep, interaction: interaction)
-            #else
-            if zoom <= 1, base > 26 {
-                // The whole rack fits (its cells are not at the smallest size): no scroll
-                // view, whose bars (always shown without a trackpad) would take room and
-                // make the fitted rack scroll.
-                RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                         selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
-                         interaction: interaction)
-                    .padding(padding)
+            let fitted = RackGrid.fittingCellSize(for: rack, in: space, floor: 0)
+            let minimum = RackViewport.minimumCellSize(for: rack)
+            let scrolls = RackViewport.scrolls(fitted: fitted, minimum: minimum)
+            let base = RackViewport.cellSize(fitted: fitted, minimum: minimum)
+            VStack(spacing: 0) {
+                if scrolls {
+                    RackOverview(rack: rack, tracker: tracker, selected: selected, highlighted: highlighted,
+                                 focusWine: focusWine)
+                        .frame(height: Self.overviewHeight)
+                        .padding(.horizontal, padding)
+                        .padding(.vertical, 6)
+                    Divider()
+                }
+                drawing(base: base, scrolls: scrolls)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func drawing(base: CGFloat, scrolls: Bool) -> some View {
+        #if os(iOS)
+        ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
+                     selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                     zoomStep: zoomStep, interaction: interaction, tracker: tracker)
+        #else
+        let cellSize = max(RackViewport.minimumCellSize(for: rack), base * zoom)
+        GeometryReader { proxy in
+            if !scrolls, cellSize <= base {
+                // The whole rack fits: no scroll view, whose bars (always shown without a
+                // trackpad) would take room and make the fitted rack scroll.
+                grid(cellSize)
+                    .padding(Self.padding)
                     .frame(width: proxy.size.width, height: proxy.size.height)
             } else {
                 ScrollView([.horizontal, .vertical]) {
-                    RackGrid(rack: rack, cellSize: base * zoom, selected: selected, highlighted: highlighted,
-                             selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
-                             interaction: interaction)
-                        .padding(padding)
+                    grid(cellSize)
+                        .padding(Self.padding)
                         .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
                 }
-                .defaultScrollAnchor(.center)
+                .scrollPosition($position)
+                .defaultScrollAnchor(scrolls ? .topLeading : .center)
+                .onScrollGeometryChange(for: RackViewportTracker.Geometry.self) { geometry in
+                    RackViewportTracker.Geometry(content: geometry.contentSize, view: geometry.containerSize,
+                                                 offset: geometry.contentOffset)
+                } action: { _, geometry in
+                    tracker.report(geometry, cellSize: cellSize)
+                }
+                .onAppear {
+                    tracker.jump = { point in
+                        position.scrollTo(point: RackViewport.offset(centering: point, content: tracker.geometry.content,
+                                                                     view: tracker.geometry.view))
+                    }
+                }
+                .onChange(of: highlighted, initial: true) { _, slot in
+                    // A bottle to find: bring its place into view.
+                    if let slot, slot.rackID == rack.id { tracker.show(slot, in: rack) }
+                }
             }
-            #endif
         }
+        #endif
+    }
+
+    #if os(macOS)
+    private func grid(_ cellSize: CGFloat) -> some View {
+        RackGrid(rack: rack, cellSize: cellSize, selected: selected, highlighted: highlighted,
+                 selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
+                 interaction: interaction)
+    }
+    #endif
+}
+
+/// Where a rack that scrolls is: the part in view and the size it is drawn at, for its
+/// overview; and how to bring another part into view. Read by the overview only, so
+/// scrolling does not draw the rack again.
+@MainActor @Observable
+final class RackViewportTracker {
+    struct Geometry: Equatable {
+        var content: CGSize = .zero
+        var view: CGSize = .zero
+        var offset: CGPoint = .zero
+    }
+
+    /// The part in view, as fractions of the drawing.
+    private(set) var visible = CGRect(x: 0, y: 0, width: 1, height: 1)
+    /// The cell size the rack is drawn at.
+    private(set) var cellSize: CGFloat = 0
+    @ObservationIgnored private(set) var geometry = Geometry()
+    /// Brings a point of the drawing (fractions of it) to the middle of the view, as far as it goes.
+    @ObservationIgnored var jump: (@MainActor (CGPoint) -> Void)? {
+        didSet { showPending() }
+    }
+    /// A place to bring into view once the drawing is laid out (fractions of the rack).
+    @ObservationIgnored private var pending: CGPoint?
+
+    func report(_ geometry: Geometry, cellSize: CGFloat) {
+        self.geometry = geometry
+        let visible = RackViewport.visibleArea(content: geometry.content, view: geometry.view, offset: geometry.offset)
+        if visible != self.visible { self.visible = visible }
+        if cellSize != self.cellSize { self.cellSize = cellSize }
+        showPending()
+    }
+
+    /// Brings a bottle's place into view (a bottle to find).
+    func show(_ slot: Slot, in rack: Rack) {
+        pending = RackViewport.center(of: slot.cell, depth: rack.hasDepthBands ? slot.depth : nil, in: rack)
+        showPending()
+    }
+
+    private func showPending() {
+        let content = geometry.content
+        guard let point = pending, let jump, content.width > 0, content.height > 0 else { return }
+        pending = nil
+        // The rack is drawn inside a padding.
+        let padding = FittedRackGrid.padding
+        jump(CGPoint(x: (padding + point.x * max(0, content.width - 2 * padding)) / content.width,
+                     y: (padding + point.y * max(0, content.height - 2 * padding)) / content.height))
+    }
+}
+
+/// The whole rack, small, above a rack that scrolls: the part in view is framed. A tap, or a
+/// drag, brings that part into view. Hidden from VoiceOver, which moves from place to place
+/// and scrolls to each one.
+private struct RackOverview: View {
+    let rack: Rack
+    let tracker: RackViewportTracker
+    var selected: Set<Slot> = []
+    var highlighted: Slot?
+    var focusWine: UUID?
+    /// The rack's own size, before scaling it down.
+    @State private var natural: CGSize = .zero
+
+    var body: some View {
+        GeometryReader { proxy in
+            let scale = natural.width > 0 && natural.height > 0
+                ? min(proxy.size.width / natural.width, proxy.size.height / natural.height, 1) : 0
+            let shown = CGSize(width: natural.width * scale, height: natural.height * scale)
+            // Drawn as in the view, then scaled down, so the frame matches it exactly.
+            RackGrid(rack: rack, cellSize: max(1, tracker.cellSize), selected: selected, highlighted: highlighted,
+                     focusWine: focusWine)
+                .padding(FittedRackGrid.padding)
+                .fixedSize()
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { natural = $0 }
+                .scaleEffect(scale, anchor: .topLeading)
+                .frame(width: shown.width, height: shown.height, alignment: .topLeading)
+                .allowsHitTesting(false)
+                .overlay { ViewportFrame(tracker: tracker) }
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0).onChanged { value in
+                        guard shown.width > 0, shown.height > 0 else { return }
+                        tracker.jump?(CGPoint(x: min(1, max(0, value.location.x / shown.width)),
+                                              y: min(1, max(0, value.location.y / shown.height))))
+                    }
+                )
+                .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+        .opacity(tracker.cellSize > 0 ? 1 : 0)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The part of the rack in view, framed on its overview.
+private struct ViewportFrame: View {
+    let tracker: RackViewportTracker
+
+    var body: some View {
+        GeometryReader { proxy in
+            let area = tracker.visible
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(Color.accentColor.opacity(0.12))
+                .overlay(RoundedRectangle(cornerRadius: 3, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 2))
+                .frame(width: max(8, area.width * proxy.size.width), height: max(8, area.height * proxy.size.height))
+                .offset(x: area.minX * proxy.size.width, y: area.minY * proxy.size.height)
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -478,6 +634,7 @@ struct RackCellView: View {
             .opacity(isDimmed ? 0.25 : 1)
         }
         .buttonStyle(.plain)
+        .pointerHighlight(hitShape)
         .modifier(DragAndDrop(bottle: capacity == 1 ? bottles.first : nil, place: place,
                               onDrop: onDrop, isTargeted: $isTargeted))
         .overlay {
@@ -582,11 +739,11 @@ struct RackCellView: View {
                 Circle().fill(Color.secondary.opacity(0.1))
             }
             if let front {
-                BottleEnd(color: color(front), size: size * 0.72, isHighlighted: isHighlighted || isFocused)
+                BottleEnd(color: color(front), size: size * 0.72, isHighlighted: isHighlighted || isFocused, showsStyle: true)
                 if showsVintage { vintageLabel(front, diameter: size * 0.72) }
             } else if let back = behind.first {
                 // Nothing in front: show the bottle behind, smaller and faded.
-                BottleEnd(color: color(back), size: size * 0.52, isHighlighted: isHighlighted)
+                BottleEnd(color: color(back), size: size * 0.52, isHighlighted: isHighlighted, showsStyle: true)
                     .opacity(0.55)
             } else {
                 BottleEnd(color: nil, size: size * 0.72, isEmpty: true, isHighlighted: isHighlighted)
@@ -620,9 +777,9 @@ struct RackCellView: View {
                 .frame(width: backdrop, height: backdrop)
             if let bottle {
                 if isBack, rack.isBackReversed {
-                    BottleNeck(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused)
+                    BottleNeck(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused, showsStyle: true)
                 } else {
-                    BottleEnd(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused)
+                    BottleEnd(color: color(bottle), size: diameter, isHighlighted: isHighlighted || isFocused, showsStyle: true)
                     if showsVintage, !isBack { vintageLabel(bottle, diameter: diameter) }
                 }
             } else {
@@ -750,8 +907,8 @@ struct RackCellView: View {
             .overlay(Capsule().strokeBorder(Color.accentColor, lineWidth: 1.5))
     }
 
-    /// The wine, its style and maturity in words (in the drawing the style is only the
-    /// bottle's color): "Château X 2015, Red, Ready".
+    /// The wine, its style and maturity in words (the drawing shows the style by the bottle's
+    /// color and symbol): "Château X 2015, Red, Ready".
     private func wineWords(_ bottle: Bottle) -> String? {
         model.cellar.wines[bottle.wineID].map { wine in
             let maturity = Maturity.of(wine, year: model.currentYear).shortName

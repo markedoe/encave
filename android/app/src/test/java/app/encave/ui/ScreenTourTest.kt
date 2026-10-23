@@ -593,7 +593,8 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         val count = ApplicationProvider.getApplicationContext<EncaveApplication>().repository.cellar.value.racks.size
         assertTrue("the sample has racks", count >= 8)
         for (index in 0 until count) {
-            scrollTo("rack.row.$index")
+            // The list, not the rack shown beside it on a tablet.
+            scrollIn("racks.list", "rack.row.$index")
             // The row's own click: a touch at its center can land on the button floating above the list.
             compose.onAllNodesWithTag("rack.row.$index").onFirst().performSemanticsAction(SemanticsActions.OnClick)
             compose.waitForIdle()

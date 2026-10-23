@@ -82,15 +82,23 @@ import app.encave.ui.tonight.PairingScreen
 import app.encave.ui.tonight.TonightScreen
 
 /** Navigation actions shared by every screen. */
-class AppNavigator(private val nav: NavHostController) {
+class AppNavigator(
+    private val nav: NavHostController,
+    /** Set for a screen shown in a detail pane: going back closes the pane, not the section. */
+    private val onPaneBack: (() -> Unit)? = null,
+) {
     fun back() {
-        nav.popBackStack()
+        if (onPaneBack != null) onPaneBack.invoke() else nav.popBackStack()
     }
 
     /** Back to [to] if it is on the stack (the screens opened from it close), else one step back. */
     fun back(to: Any) {
-        if (!nav.popBackStack(to, inclusive = false)) nav.popBackStack()
+        if (onPaneBack != null) onPaneBack.invoke()
+        else if (!nav.popBackStack(to, inclusive = false)) nav.popBackStack()
     }
+
+    /** The same navigator for a screen in a detail pane, where Back calls [onBack]. */
+    fun inPane(onBack: () -> Unit) = AppNavigator(nav, onBack)
 
     fun open(route: Any) = nav.navigate(route) { launchSingleTop = true }
 

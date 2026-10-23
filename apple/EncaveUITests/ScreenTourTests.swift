@@ -278,11 +278,27 @@ final class ScreenTourTests: XCTestCase {
             guard !app.horizontalSizeClassIsCompact else { return }
             let sort = element("cellar.sort")
             guard sort.exists, sort.isHittable else { return }
+            // The menu item, by identifier or by its title (menus do not always carry identifiers);
+            // the menu is opened again once if the first press came too early.
+            func tableItem() -> XCUIElement? {
+                let byID = element("cellar.layout.table")
+                if byID.waitForExistence(timeout: 5) { return byID }
+                let byTitle = app.buttons.matching(NSPredicate(format: "label IN %@",
+                                                                ["Show as Table", "Afficher en tableau"])).firstMatch
+                return byTitle.waitForExistence(timeout: 2) ? byTitle : nil
+            }
             sort.press()
-            let table = element("cellar.layout.table")
-            guard table.waitForExistence(timeout: 3) else {
+            var found = tableItem()
+            if found == nil, sort.exists, sort.isHittable {
+                sort.press()
+                found = tableItem()
+            }
+            guard let table = found else {
                 XCTFail("cellar: Show as Table is missing from the Sort and Filter menu")
-                dismissMenu()
+                // A menu left open blocks every later tap: start the app again.
+                app.terminate()
+                app.launch()
+                openSection(0, "cellar")
                 return
             }
             table.press()

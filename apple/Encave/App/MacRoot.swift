@@ -105,6 +105,8 @@ struct MacRoot: View {
                         .badge(model.cellar.occupancy(of: rack))
                         .tag(MacDestination.rack(rack.id))
                         .accessibilityIdentifier("rack.card.\(index)")
+                        // A wine or a bottle dropped here: one bottle to the first free position.
+                        .storageDropTarget(rack.id)
                         .contextMenu {
                             Button("Edit Storage", systemImage: "pencil") { router.sheet = .editRack(rackID: rack.id) }
                             Divider()

@@ -121,7 +121,8 @@ struct RootView: View {
 }
 
 
-private struct SheetContent: View {
+/// The sheet a window shows for its router (`RootView`, `WineWindow`).
+struct SheetContent: View {
     let sheet: AppSheet
 
     var body: some View {

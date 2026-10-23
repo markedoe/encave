@@ -2941,6 +2941,16 @@
         }
       }
     },
+    "Bottle placed: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bouteille rangée : %@"
+          }
+        }
+      }
+    },
     "Bottle put back in the cellar": {
       "localizations": {
         "fr": {
@@ -4891,12 +4901,32 @@
         }
       }
     },
+    "Drag a wine from the Cellar, or a bottle from a wine’s page, onto a storage in the sidebar: one bottle goes to its first free position, with Undo. A full storage takes none.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glissez un vin de la Cave, ou une bouteille depuis la page d’un vin, sur un rangement de la barre latérale : une bouteille va à sa première position libre, avec Annuler. Un rangement plein n’en prend aucune."
+          }
+        }
+      }
+    },
     "Drag and drop": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Glisser-déposer"
+          }
+        }
+      }
+    },
+    "Drag to a storage (Mac)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glisser vers un rangement (Mac)"
           }
         }
       }
@@ -7981,6 +8011,16 @@
         }
       }
     },
+    "No bottle to place in this storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune bouteille à mettre dans ce rangement"
+          }
+        }
+      }
+    },
     "No bottle with this detail is left in the cellar or on order.": {
       "localizations": {
         "fr": {
@@ -8067,6 +8107,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas encore de chiffres"
+          }
+        }
+      }
+    },
+    "No free position": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune position libre"
           }
         }
       }
@@ -9191,12 +9241,32 @@
         }
       }
     },
+    "Open in New Window": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir dans une nouvelle fenêtre"
+          }
+        }
+      }
+    },
     "Open the provider's page with the link below the key field, create a key and paste it. The key is stored in the Keychain on this device and sent only to that provider.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrez la page du fournisseur avec le lien sous le champ de la clé, créez une clé et collez-la. La clé est conservée dans le trousseau de cet appareil et n’est envoyée qu’à ce fournisseur."
+          }
+        }
+      }
+    },
+    "Open the selected wine in a new window (Mac and iPad)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir le vin sélectionné dans une nouvelle fenêtre (Mac et iPad)"
           }
         }
       }
@@ -15849,6 +15919,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌥⌘N"
+          }
+        }
+      }
+    },
+    "⌥⌘O": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌥⌘O"
           }
         }
       }

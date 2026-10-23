@@ -239,6 +239,8 @@ struct CellarList: View {
                                 .tint(.blue)
                             }
                             .contextMenu { WineContextMenu(group: group, onSelect: { startSelection(with: group.wine.id) }) }
+                            // Onto a storage in the sidebar: one bottle to its first free position.
+                            .sidebarDraggable(WineDrag(wineID: group.wine.id, name: group.wine.displayName))
                     }
                 } header: {
                     if filter.isActive || searching {
@@ -648,6 +650,7 @@ struct WineContextMenu: View {
         }
         Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: group.wine)) }
         Button("Edit Wine", systemImage: "pencil") { router?.sheet = .editWine(wineID: group.wine.id) }
+        OpenWineWindowButton(wineID: group.wine.id)
         if let onSelect {
             Button("Select", systemImage: "checkmark.circle", action: onSelect)
         }
