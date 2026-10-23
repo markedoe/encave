@@ -16,7 +16,7 @@
   "screenshots": [
     {"screen": "cellar", "fr-FR": "Toute votre cave, d'un coup d'œil", "en-US": "Your whole cellar at a glance"},
     {"screen": ["wine", "wine-detail"], "fr-FR": "Chaque bouteille, et où elle est", "en-US": "Every bottle, and where it is"},
-    {"screen": "rack-1", "fr-FR": "Vos casiers, tels qu'ils sont", "en-US": "Your racks, as they are"},
+    {"screen": "rack-1", "fr-FR": "Vos rangements, tels qu'ils sont", "en-US": "Your storage, as it is"},
     {"screen": "add-bottle", "fr-FR": "Ajoutez une bouteille en quelques secondes", "en-US": "Add a bottle in seconds"},
     {"screen": "tonight", "fr-FR": "Quoi ouvrir ce soir", "en-US": "What to open tonight"},
     {"screen": "journal", "fr-FR": "Vos dégustations et vos notes", "en-US": "Your tastings and notes"},

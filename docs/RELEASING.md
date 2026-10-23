@@ -171,6 +171,12 @@ from the Console (App content › Data safety › Export to CSV) and commit it
 there. Permissions: "Manage store presence" for the listing, "Manage policy
 declarations" for Data safety.
 
+Nothing to re-run by hand for the listing: every closed release from `main`
+publishes it again, with screenshots from that run's tour, so UI changes
+reach the store with the next build. Run `play-listing.yml` only for the
+Data safety form, or to update the listing without a release (closed
+testing turned off with `PLAY_CLOSED_TRACK` = `none`).
+
 ### App content without an API
 
 Google offers no API for these Play Console forms (Policy and programs ›
