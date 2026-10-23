@@ -370,7 +370,16 @@ final class ScreenTourTests: XCTestCase {
                 sleep(1)
                 XCTAssertTrue(element("cellar.select.delete").waitForExistence(timeout: 2), "cellar: More has no Delete")
                 snapshot("cellar-select-more")
+                #if os(iOS)
+                // XCUITest on iOS leaves this menu over the screen after closing it
+                // (Done and the rows can no longer be tapped): start the app again.
+                app.terminate()
+                app.launch()
+                openSection(0, "cellar")
+                return
+                #else
                 dismissMenu()
+                #endif
             } else {
                 XCTFail("cellar: the More button of the selection cannot be pressed")
             }
@@ -384,15 +393,7 @@ final class ScreenTourTests: XCTestCase {
             sleep(1)
             if element("cellar.select").waitForExistence(timeout: 2) { return }
         }
-        // After the More menu, XCUITest on iOS can leave Done untappable although the
-        // app shows it (the Mac tour, closing the menu with Escape, ends the selection).
-        // Say so in the log with what it sees, and start the app again for the rest of
-        // the tour rather than failing every later step.
-        print("cellar: the selection did not end after the More menu; restarting the app")
-        print(app.debugDescription)
-        app.terminate()
-        app.launch()
-        openSection(0, "cellar")
+        XCTFail("cellar: the selection did not end")
     }
 
     // MARK: Devices
@@ -463,8 +464,16 @@ final class ScreenTourTests: XCTestCase {
                 replace.press()
                 sleep(1)
                 snapshot("restore-replace-confirm")
+                #if os(iOS)
+                // The last step on iPhone and iPad. XCUITest leaves this confirmation
+                // over the screen after closing it: start the app again, untouched.
+                app.terminate()
+                app.launch()
+                return
+                #else
                 // Cancel: the sample cellar stays for the rest of the tour.
                 dismissMenu()
+                #endif
             }
         } else {
             XCTFail("previous versions: the preview did not open")
