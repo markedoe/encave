@@ -57,7 +57,9 @@ The train then, with no manual step:
 6. tags the commit `vX.Y` and notifies.
 
 The first public release waits for the owner's explicit go: the train is
-built switched off and turned on with a committed setting.
+built switched off and turned on with a committed setting. As of 2026-10-23
+the owner keeps the apps in TestFlight (and Play testing) for now: the train
+stays off.
 
 ## Urgent lane *(planned)*
 
@@ -96,7 +98,7 @@ Apple:
 
 - App Privacy questionnaire in App Store Connect (answers in `docs/STORE.md`).
 - Be in the "Internal" TestFlight group (App Store Connect › TestFlight ›
-  Internal Testing) to get every build first.
+  Internal Testing) to get every build first. Done: the owner is in it.
 
 Google:
 
@@ -108,7 +110,8 @@ Google:
 - A service account with release rights in the Play Console, reached from
   GitHub Actions through Workload Identity Federation (no stored key).
 - Personal accounts created after November 2023: a closed test with at least
-  12 testers for 14 days before production can be requested.
+  12 testers for 14 days before production can be requested. The owner's
+  account is personal, created in 2026: this applies.
 
 ## Security
 
