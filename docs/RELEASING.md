@@ -155,8 +155,10 @@ placeholders: never commit the real ones.
 3. **The app.** In the Play Console: Create app; name Encave; default
    language French (France); App; Free; accept the declarations. Then add
    English (United States) as a translation of the store listing.
-   The package name is set by the first bundle: `app.encave`
-   (`applicationId` in `android/app/build.gradle.kts`).
+   The Play Console asks for the package name when the app is created; it is
+   permanent: `markeddoe.com.encave` (`applicationId` in
+   `android/app/build.gradle.kts`; the Kotlin code stays in `app.encave`, and
+   the Apple apps keep the bundle ID `app.encave`).
 4. **Forms** (Dashboard › Set up your app), answers in `docs/STORE.md`: App
    access, Ads, Content rating, Target audience (18 and over), Data safety,
    Government apps, Financial features, Health, the privacy policy URL, and

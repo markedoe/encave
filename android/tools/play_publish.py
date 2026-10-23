@@ -14,7 +14,7 @@ Standard library only. The access token comes from Workload Identity Federation
 
 Environment:
   PLAY_ACCESS_TOKEN  OAuth access token with the androidpublisher scope
-  PACKAGE_NAME       app.encave
+  PACKAGE_NAME       markeddoe.com.encave
   VERSION_CODE       the versionCode of the bundle (BUILD_NUMBER in CI)
   BUNDLE_PATH        upload: the signed .aab
   MAPPING_PATH       upload: R8 mapping.txt (optional)
@@ -194,7 +194,7 @@ def main():
     step = sys.argv[1] if len(sys.argv) > 1 else ""
     if step not in ("upload", "promote"):
         sys.exit("Usage: play_publish.py upload|promote")
-    package = os.environ.get("PACKAGE_NAME", "app.encave")
+    package = os.environ.get("PACKAGE_NAME", "markeddoe.com.encave")
     version_code = int(os.environ["VERSION_CODE"])
     track = os.environ.get("TRACK", "").strip() or ("internal" if step == "upload" else "")
     if not track:

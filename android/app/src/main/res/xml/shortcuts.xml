@@ -10,7 +10,7 @@
             android:action="android.intent.action.VIEW"
             android:data="encave://scan"
             android:targetClass="app.encave.MainActivity"
-            android:targetPackage="app.encave" />
+            android:targetPackage="markeddoe.com.encave" />
     </shortcut>
     <shortcut
         android:shortcutId="tonight"
@@ -22,6 +22,6 @@
             android:action="android.intent.action.VIEW"
             android:data="encave://tonight"
             android:targetClass="app.encave.MainActivity"
-            android:targetPackage="app.encave" />
+            android:targetPackage="markeddoe.com.encave" />
     </shortcut>
 </shortcuts>

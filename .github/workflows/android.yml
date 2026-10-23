@@ -307,7 +307,7 @@ jobs:
         if: ${{ steps.setup.outputs.ready == 'true' }}
         env:
           PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
-          PACKAGE_NAME: app.encave
+          PACKAGE_NAME: markeddoe.com.encave
           VERSION_CODE: ${{ needs.release.outputs.version-code }}
           BUNDLE_PATH: ${{ runner.temp }}/bundle/app-release.aab
           MAPPING_PATH: ${{ runner.temp }}/mapping/mapping.txt
@@ -347,7 +347,7 @@ jobs:
       - name: Release to closed testing
         env:
           PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
-          PACKAGE_NAME: app.encave
+          PACKAGE_NAME: markeddoe.com.encave
           VERSION_CODE: ${{ needs.release.outputs.version-code }}
           TRACK: ${{ vars.PLAY_CLOSED_TRACK }}
         run: python3 android/tools/play_publish.py promote

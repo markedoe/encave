@@ -18,8 +18,8 @@ import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-PACKAGE = "app.encave"
-ACTIVITY = f"{PACKAGE}/.MainActivity"
+PACKAGE = "markeddoe.com.encave"  # applicationId; the classes stay in app.encave
+ACTIVITY = f"{PACKAGE}/app.encave.MainActivity"
 
 # The four tabs and the sample cellar, as android/app/src/main/res/values*/strings.xml
 # give them (nav_*, action_load_sample, cellar_sample_title, action_remove_sample).

@@ -127,6 +127,11 @@ cd android
 
 ### Android release
 
+The Android package name (`applicationId`) is `markeddoe.com.encave`, the one
+fixed in the Play Console; the Kotlin packages and the `namespace` stay
+`app.encave` (so do the Apple bundle IDs). Static shortcuts
+(`res/xml/shortcuts.xml`) name it as their target package.
+
 The release build is shrunk and obfuscated with R8 (keep rules in
 `android/app/proguard-rules.pro`) and must pass `:app:lintRelease`.
 
