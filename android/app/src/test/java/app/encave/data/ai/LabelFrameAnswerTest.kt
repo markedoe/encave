@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -17,14 +18,32 @@ import org.junit.Test
 class LabelFrameAnswerTest {
     private val details = """"name":"Clos","producer":"","vintage":2019,"color":"red","appellation":"","region":"","country":"","grapes":[],"drinkFrom":0,"drinkUntil":0"""
 
+    private fun required(schema: JsonObject) = (schema["required"] as JsonArray).map { it.jsonPrimitive.content }
+
     @Test
-    fun theRequestAsksForTheLabelsPlace() {
-        val required = (LabelAnalysis.schema["required"] as JsonArray).map { it.jsonPrimitive.content }
-        assertTrue("label_box" in required && "label_angle" in required)
-        val properties = LabelAnalysis.schema["properties"] as JsonObject
+    fun withTheStudioLookTheRequestAsksForTheLabelsPlace() {
+        val schema = LabelAnalysis.schema(findsLabel = true)
+        assertTrue("label_box" in required(schema) && "label_angle" in required(schema))
+        val properties = schema["properties"] as JsonObject
         assertNotNull(properties["label_box"])
         assertNotNull(properties["label_angle"])
-        assertTrue(LabelAnalysis.prompt.contains("label_box") && LabelAnalysis.prompt.contains("uphill"))
+        // Every property is required, as strict schemas want.
+        assertEquals(properties.keys, required(schema).toSet())
+        val prompt = LabelAnalysis.prompt(findsLabel = true)
+        assertTrue(prompt.contains("label_box") && prompt.contains("uphill to the right"))
+    }
+
+    @Test
+    fun withoutItTheRequestIsAsBefore() {
+        val schema = LabelAnalysis.schema(findsLabel = false)
+        assertFalse("label_box" in required(schema) || "label_angle" in required(schema))
+        val properties = schema["properties"] as JsonObject
+        assertNull(properties["label_box"])
+        assertEquals(properties.keys, required(schema).toSet())
+        val prompt = LabelAnalysis.prompt(findsLabel = false)
+        assertFalse(prompt.contains("label_"))
+        assertTrue(prompt.startsWith("This is a photo of a wine label."))
+        assertTrue(prompt.endsWith("Do not invent a producer or vintage that is not visible."))
     }
 
     @Test

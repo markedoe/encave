@@ -134,7 +134,10 @@ struct SettingsView: View {
             } header: {
                 Text("Display")
             } footer: {
-                Text("Label photos are shown cut out and framed on the label, on a backdrop in the wine's color, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Label photos are shown cut out and framed on the label, on a backdrop in the wine's color, made on this device. The photo you took is kept as is; turn this off to see it as taken.")
+                    Text("When AI is set up below, the AI also finds the label in the photo, so the picture is framed on it. Otherwise it is framed on this device.")
+                }
             }
 
             AISettingsSection()

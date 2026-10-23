@@ -787,11 +787,15 @@ class AppViewModel(
         }) { it.mergeWine(source, target) }
     }
 
-    /** Sends only the label photo to the provider set in Settings. */
+    /**
+     * Sends only the label photo to the provider set in Settings. With the studio look on,
+     * the same request also asks where the label is, to frame the studio picture on it.
+     */
     suspend fun analyzeLabel(jpeg: ByteArray): Result<LabelAnalysis> {
         val settings = ai.settings.value
         val key = withContext(Dispatchers.IO) { ai.apiKey(settings.provider) }
-        return runCatching { AiService.analyzeLabel(jpeg, settings, key) }
+        val findsLabel = preferences.studioLook.value
+        return runCatching { AiService.analyzeLabel(jpeg, settings, key, findsLabel) }
     }
 
     fun aiErrorText(error: Throwable): UiText = when (error) {

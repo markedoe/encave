@@ -55,15 +55,18 @@ data class LabelAnalysis(
     companion object {
         private val colors = listOf("red", "white", "rose", "sparkling", "dessert", "fortified", "orange")
 
-        val schema: JsonObject = buildJsonObject {
+        private val detailKeys = listOf("name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil")
+
+        /**
+         * The JSON schema of the answer, the same for every provider. With [findsLabel] (the
+         * studio look on), it also asks where the label is: "label_box" and "label_angle".
+         */
+        fun schema(findsLabel: Boolean): JsonObject = buildJsonObject {
             put("type", "object")
             put("additionalProperties", false)
+            // Strict schemas want every key listed: the label's place is null when not found.
             putJsonArray("required") {
-                // Strict schemas want every key listed: the label's place is null when not found.
-                listOf(
-                    "name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil",
-                    "label_box", "label_angle",
-                ).forEach { add(JsonPrimitive(it)) }
+                (detailKeys + if (findsLabel) listOf("label_box", "label_angle") else emptyList()).forEach { add(JsonPrimitive(it)) }
             }
             putJsonObject("properties") {
                 listOf("name", "producer").forEach { putJsonObject(it) { put("type", "string") } }
@@ -79,43 +82,52 @@ data class LabelAnalysis(
                 }
                 putJsonObject("drinkFrom") { put("type", "integer") }
                 putJsonObject("drinkUntil") { put("type", "integer") }
-                putJsonObject("label_box") {
-                    putJsonArray("anyOf") {
-                        add(
-                            buildJsonObject {
-                                put("type", "object")
-                                put("additionalProperties", false)
-                                putJsonArray("required") { listOf("x", "y", "w", "h").forEach { add(JsonPrimitive(it)) } }
-                                putJsonObject("properties") {
-                                    listOf("x", "y", "w", "h").forEach { putJsonObject(it) { put("type", "number") } }
-                                }
-                            },
-                        )
-                        add(buildJsonObject { put("type", "null") })
+                if (findsLabel) {
+                    putJsonObject("label_box") {
+                        putJsonArray("anyOf") {
+                            add(
+                                buildJsonObject {
+                                    put("type", "object")
+                                    put("additionalProperties", false)
+                                    putJsonArray("required") { listOf("x", "y", "w", "h").forEach { add(JsonPrimitive(it)) } }
+                                    putJsonObject("properties") {
+                                        listOf("x", "y", "w", "h").forEach { putJsonObject(it) { put("type", "number") } }
+                                    }
+                                },
+                            )
+                            add(buildJsonObject { put("type", "null") })
+                        }
                     }
-                }
-                putJsonObject("label_angle") {
-                    putJsonArray("anyOf") {
-                        add(buildJsonObject { put("type", "number") })
-                        add(buildJsonObject { put("type", "null") })
+                    putJsonObject("label_angle") {
+                        putJsonArray("anyOf") {
+                            add(buildJsonObject { put("type", "number") })
+                            add(buildJsonObject { put("type", "null") })
+                        }
                     }
                 }
             }
         }
 
-        val prompt = """
-            This is a photo of a wine label. Read it and return the wine's details.
-            - name: the wine or cuvée name as printed (for example the château or domaine and cuvée), without the vintage.
-            - producer: the estate, domaine or house, if different from the name; otherwise "".
-            - vintage: the year on the label, or 0 for a non-vintage wine.
-            - color: one of red, white, rose, sparkling, dessert, fortified, orange; "" if you cannot tell.
-            - appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.
-            - grapes: the grape varieties if printed or typical of the appellation; [] if unsure.
-            - drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.
-            - label_box: where the whole paper front label is in the photo, including its borders and any logo or picture printed on it, as {"x", "y", "w", "h"}: fractions from 0 to 1 of the photo's width and height, from its top-left corner; null if you cannot see it.
-            - label_angle: the label's slant in degrees, positive when its text runs uphill to the right, 0 when level; null if unknown.
-            Use "" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.
-        """.trimIndent()
+        /** The text sent with the photo; with [findsLabel], it also asks where the label is. */
+        fun prompt(findsLabel: Boolean): String = buildList {
+            add("This is a photo of a wine label. Read it and return the wine's details.")
+            add("- name: the wine or cuvée name as printed (for example the château or domaine and cuvée), without the vintage.")
+            add("- producer: the estate, domaine or house, if different from the name; otherwise \"\".")
+            add("- vintage: the year on the label, or 0 for a non-vintage wine.")
+            add("- color: one of red, white, rose, sparkling, dessert, fortified, orange; \"\" if you cannot tell.")
+            add("- appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.")
+            add("- grapes: the grape varieties if printed or typical of the appellation; [] if unsure.")
+            add("- drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.")
+            if (findsLabel) {
+                add(
+                    "- label_box: where the whole paper front label is in the photo, including its borders and any logo or " +
+                        "picture printed on it, as {\"x\", \"y\", \"w\", \"h\"}: fractions from 0 to 1 of the photo's width " +
+                        "and height, from its top-left corner; null if you cannot see it.",
+                )
+                add("- label_angle: the label's slant in degrees, positive when its text runs uphill to the right, 0 when level; null if unknown.")
+            }
+            add("Use \"\" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.")
+        }.joinToString("\n")
     }
 }
 
@@ -134,15 +146,21 @@ sealed class AiError : Exception() {
 object AiService {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
-    suspend fun analyzeLabel(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis {
+    /**
+     * Sends the label photo to the provider set up, in one request. With [findsLabel] (the
+     * studio look on), the same request also asks where the label is in the photo.
+     */
+    suspend fun analyzeLabel(jpeg: ByteArray, settings: AiSettings, apiKey: String?, findsLabel: Boolean = true): LabelAnalysis {
         if (!settings.isEnabled) throw AiError.NotConfigured
         if (settings.provider.requiresKey && apiKey.isNullOrEmpty()) throw AiError.MissingKey
         if (settings.effectiveModel.isEmpty()) throw AiError.NoModel
-        return when {
-            settings.provider.usesAnthropicApi -> claude(jpeg, settings.effectiveModel, apiKey.orEmpty(), settings.effectiveBaseUrl)
-            settings.provider.usesOllamaApi -> ollama(jpeg, settings)
-            else -> openAiCompatible(jpeg, settings, apiKey)
+        val analysis = when {
+            settings.provider.usesAnthropicApi -> claude(jpeg, settings.effectiveModel, apiKey.orEmpty(), settings.effectiveBaseUrl, findsLabel)
+            settings.provider.usesOllamaApi -> ollama(jpeg, settings, findsLabel)
+            else -> openAiCompatible(jpeg, settings, apiKey, findsLabel)
         }
+        // Not asked for: an answer that gives it anyway is not used.
+        return if (findsLabel) analysis else analysis.copy(placement = null)
     }
 
     /** Models that cannot chat: embeddings, speech, image generation, moderation. */
@@ -199,18 +217,25 @@ object AiService {
     }
 
     /** Claude (Anthropic Messages API). */
-    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String): LabelAnalysis {
+    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String, findsLabel: Boolean): LabelAnalysis {
         val options = claudeOptions(model)
         return try {
-            claude(jpeg, model, apiKey, baseUrl, options)
+            claude(jpeg, model, apiKey, baseUrl, findsLabel, options)
         } catch (error: AiError.Server) {
             // A model or service that does not take these options: once more without them.
             if (error.status != 400 || options == ClaudeOptions(effort = false, fallbacks = false)) throw error
-            claude(jpeg, model, apiKey, baseUrl, ClaudeOptions(effort = false, fallbacks = false))
+            claude(jpeg, model, apiKey, baseUrl, findsLabel, ClaudeOptions(effort = false, fallbacks = false))
         }
     }
 
-    private suspend fun claude(jpeg: ByteArray, model: String, apiKey: String, baseUrl: String, options: ClaudeOptions): LabelAnalysis {
+    private suspend fun claude(
+        jpeg: ByteArray,
+        model: String,
+        apiKey: String,
+        baseUrl: String,
+        findsLabel: Boolean,
+        options: ClaudeOptions,
+    ): LabelAnalysis {
         val body = buildJsonObject {
             put("model", model)
             put("max_tokens", 8000)
@@ -219,7 +244,7 @@ object AiService {
                 if (options.effort) put("effort", "low")
                 putJsonObject("format") {
                     put("type", "json_schema")
-                    put("schema", LabelAnalysis.schema)
+                    put("schema", LabelAnalysis.schema(findsLabel))
                 }
             }
             putJsonArray("messages") {
@@ -236,7 +261,7 @@ object AiService {
                         })
                         add(buildJsonObject {
                             put("type", "text")
-                            put("text", LabelAnalysis.prompt)
+                            put("text", LabelAnalysis.prompt(findsLabel))
                         })
                     }
                 })
@@ -259,14 +284,14 @@ object AiService {
     }
 
     /** OpenAI-compatible (Chat Completions). Not every service supports a JSON schema: falls back to plain JSON, then to no format. */
-    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?): LabelAnalysis {
+    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, findsLabel: Boolean): LabelAnalysis {
         val formats: List<JsonObject?> = listOf(
             buildJsonObject {
                 put("type", "json_schema")
                 putJsonObject("json_schema") {
                     put("name", "wine_label")
                     put("strict", true)
-                    put("schema", LabelAnalysis.schema)
+                    put("schema", LabelAnalysis.schema(findsLabel))
                 }
             },
             buildJsonObject { put("type", "json_object") },
@@ -275,7 +300,7 @@ object AiService {
         var lastError: AiError = AiError.InvalidResponse
         for (format in formats) {
             try {
-                return openAiCompatible(jpeg, settings, apiKey, format)
+                return openAiCompatible(jpeg, settings, apiKey, findsLabel, format)
             } catch (error: AiError.Server) {
                 if (error.status != 400 && error.status != 422) throw error
                 lastError = error
@@ -284,7 +309,7 @@ object AiService {
         throw lastError
     }
 
-    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, format: JsonObject?): LabelAnalysis {
+    private suspend fun openAiCompatible(jpeg: ByteArray, settings: AiSettings, apiKey: String?, findsLabel: Boolean, format: JsonObject?): LabelAnalysis {
         val url = runCatching { URL(settings.effectiveBaseUrl + "/chat/completions") }.getOrElse { throw AiError.NotConfigured }
         val body = buildJsonObject {
             put("model", settings.effectiveModel)
@@ -295,7 +320,7 @@ object AiService {
                     putJsonArray("content") {
                         add(buildJsonObject {
                             put("type", "text")
-                            put("text", LabelAnalysis.prompt)
+                            put("text", LabelAnalysis.prompt(findsLabel))
                         })
                         add(buildJsonObject {
                             put("type", "image_url")
@@ -332,12 +357,12 @@ object AiService {
     }
 
     /** Ollama's native API: structured output with the label schema, and the photo in "images". */
-    private suspend fun ollama(jpeg: ByteArray, settings: AiSettings): LabelAnalysis {
+    private suspend fun ollama(jpeg: ByteArray, settings: AiSettings, findsLabel: Boolean): LabelAnalysis {
         val url = runCatching { URL(ollamaBase(settings) + "/api/chat") }.getOrElse { throw AiError.NotConfigured }
         val body = buildJsonObject {
             put("model", settings.effectiveModel)
             put("stream", false)
-            put("format", LabelAnalysis.schema)
+            put("format", LabelAnalysis.schema(findsLabel))
             // A photo needs more room than Ollama's default context.
             putJsonObject("options") {
                 put("temperature", 0)
@@ -346,7 +371,7 @@ object AiService {
             putJsonArray("messages") {
                 add(buildJsonObject {
                     put("role", "user")
-                    put("content", LabelAnalysis.prompt)
+                    put("content", LabelAnalysis.prompt(findsLabel))
                     putJsonArray("images") { add(JsonPrimitive(base64(jpeg))) }
                 })
             }
