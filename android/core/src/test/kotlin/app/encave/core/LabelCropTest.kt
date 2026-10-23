@@ -78,6 +78,9 @@ class LabelCropTest {
     @Test
     fun theStudioFrameIsNeverABlindCrop() {
         assertNull(LabelCrop.studioFrame(IntArray(600 * 800) { gray(128) }, 600, 800))
+        // A bottle without a label: no paper, no print, the whole photo.
+        val bottle = IntArray(600 * 800) { i -> if (i % 600 in 170 until 430) rgb(30, 50, 35) else rgb(110, 125, 140) }
+        assertNull(LabelCrop.studioFrame(bottle, 600, 800))
     }
 
     @Test

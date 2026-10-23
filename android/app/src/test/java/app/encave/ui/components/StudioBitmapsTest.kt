@@ -74,7 +74,7 @@ class StudioBitmapsTest {
         val source = photo(600, 800) {
             drawColor(Color.rgb(110, 125, 140))
             paint.color = Color.rgb(30, 50, 35)
-            drawRect(170f, 40f, 430f, 800f, paint) // a bottle without a label
+            drawRect(170f, 0f, 430f, 800f, paint) // a bottle without a label, no text nor print
         }
         val result = StudioBitmaps.studio(source, maxPixelSize = 900)
         assertFalse(result.framed)
