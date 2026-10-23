@@ -154,8 +154,10 @@ class ScreenTourTest(private val device: String, private val variant: String) {
     private val density get() = RuntimeEnvironment.getApplication().resources.displayMetrics.density
 
     private fun tap(tag: String) {
-        // Not composed yet (below a lazy list's fold, as at font scale 2.0): scroll to it first.
-        if (compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty()) {
+        // Not composed yet or cut off (below a lazy list's fold, as at font scale 2.0, where a
+        // floating button may cover it): scroll it into view first.
+        val node = compose.onAllNodesWithTag(tag).fetchSemanticsNodes().firstOrNull()
+        if (node == null || node.boundsInWindow.height < node.size.height - 1) {
             val lists = compose.onAllNodes(hasScrollAction())
             for (index in lists.fetchSemanticsNodes().indices) {
                 if (runCatching { lists[index].performScrollToNode(hasTestTag(tag)) }.isSuccess) break
