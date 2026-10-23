@@ -22,6 +22,8 @@ final class SceneRouter {
     var selectedTab: AppTab = .cellar
     /// A wine for the Cellar to select, then cleared.
     var openWineRequest: UUID?
+    /// Wines to delete once the alert of this window confirms it (`deleteFollowingRule`).
+    var confirmingWineDeletion: Set<UUID> = []
     /// Asked while a sheet was open: done once it closes, so a form being filled in is
     /// never closed to show something else.
     @ObservationIgnored private var deferred: SceneAction?

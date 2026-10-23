@@ -21,6 +21,8 @@ struct RootView: View {
         sections
             .environment(router)
             .overlay { ToastOverlay() }
+            // A wine with several bottles, deleted from anywhere in this window, is confirmed here.
+            .confirmsWineDeletion($router.confirmingWineDeletion)
         .sheet(item: $router.sheet, onDismiss: { router.sheetDismissed() }) { sheet in
             SheetContent(sheet: sheet)
                 .environment(model)

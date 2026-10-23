@@ -79,6 +79,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import app.encave.core.WindowSource
+import app.encave.core.bottleCount
 import app.encave.ui.components.ArrivalLabel
 import app.encave.ui.components.displayLocation
 import app.encave.core.Bottle
@@ -153,6 +154,8 @@ fun WineDetailScreen(
         if (wine != null) shown = true else if (shown) back()
     }
     var menu by remember { mutableStateOf(false) }
+    // With Undo, or asked first for a wine with several bottles.
+    val deleteWines = rememberWineDeletion(cellar, viewModel)
     var drinking by rememberDrinking()
     var reserving by remember { mutableStateOf<Bottle?>(null) }
     /** A bottle being moved to a place, another rack, or out of the racks. */
@@ -193,8 +196,8 @@ fun WineDetailScreen(
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
                                     leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                                    // With Undo; the page closes once the wine is gone.
-                                    onClick = { menu = false; viewModel.deleteWine(wine.id) },
+                                    // With Undo (asked first with several bottles); the page closes once the wine is gone.
+                                    onClick = { menu = false; deleteWines(setOf(wine.id)) },
                                 )
                             }
                         }
@@ -875,7 +878,7 @@ private fun Details(
                 onEdit = { onEdit(attribute.field) },
                 modifier = Modifier.testTag((if (explores) "detail.explore." else "detail.edit.") + attribute.kind.name.lowercase()),
                 onSearchWeb = if (attribute.isSearchable) onSearchWeb?.let { search -> { search(value) } } else null,
-                supporting = if (explores) sharedCount(sharing.size) else null,
+                supporting = if (explores) sharedCount(sharing.bottleCount) else null,
                 leading = if (attribute is WineAttribute.Color) ({ WineColorDot(attribute.color, size = 16.dp) }) else null,
             )
         }

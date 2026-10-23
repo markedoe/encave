@@ -258,7 +258,9 @@ struct WineDetailView: View {
                         Button("Change Picture…", systemImage: "photo.on.rectangle") { router?.sheet = .wineImage(wineID: wineID) }
                         Button("Add Bottles", systemImage: "plus") { router?.sheet = .addBottle(AddBottleContext(wine: wine)) }
                         Divider()
-                        Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(wineID) }
+                        Button("Delete Wine", systemImage: "trash", role: .destructive) {
+                            model.deleteFollowingRule(wines: [wineID], router: router)
+                        }
                     } label: {
                         Label("More", systemImage: "ellipsis.circle")
                     }

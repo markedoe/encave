@@ -81,7 +81,8 @@ struct CellarList: View {
     /// Selecting several wines for one action.
     @State private var isSelecting = false
     @State private var picked: Set<UUID> = []
-    @State private var confirmingDelete = false
+    /// The wines picked, while the alert asks before deleting them.
+    @State private var confirmingDelete: Set<UUID> = []
     @State private var reservingPicked = false
     @State private var occasion = ""
     @State private var namingSearch = false
@@ -143,14 +144,7 @@ struct CellarList: View {
             } message: {
                 Text("The bottles stay where they are but are no longer suggested for tonight.")
             }
-            .confirmationDialog("Delete these wines?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                Button("Delete Wines", role: .destructive) {
-                    model.deleteWines(picked)
-                    endSelection()
-                }
-            } message: {
-                Text("Their bottles and tastings are deleted too. You can undo right after.")
-            }
+            .confirmsWineDeletion($confirmingDelete) { endSelection() }
             .sheet(isPresented: $showsInsights) {
                 NavigationStack {
                     InsightsView()
@@ -172,7 +166,6 @@ struct CellarList: View {
         if model.bottlesInCellar.isEmpty && model.cellar.bottlesOnOrder.isEmpty {
             EmptyCellarView()
         } else {
-            ScrollViewReader { proxy in
             List(selection: $selection) {
                 if model.showsSampleBanner {
                     Section {
@@ -183,14 +176,7 @@ struct CellarList: View {
                 // filters stay in sight and can be turned off.
                 Section {
                     if !searching {
-                        CellarStats(filter: filterBinding, onBottles: { showsInsights = true }, onWines: {
-                            withAnimation(.snappy) {
-                                filter = CellarFilter()
-                                if let first = model.cellar.groups(filter: CellarFilter(), sort: model.cellarSort, year: model.currentYear).first {
-                                    proxy.scrollTo(first.id, anchor: .top)
-                                }
-                            }
-                        })
+                        CellarStats(filter: filterBinding, onBottles: { showsInsights = true })
                     }
                     CellarFilterChips(filter: filterBinding)
                 }
@@ -253,11 +239,10 @@ struct CellarList: View {
             #if os(macOS)
             // The Delete key, like in Finder; Undo puts it back.
             .onDeleteCommand {
-                if let selection { model.deleteWine(selection) }
+                if let selection { model.deleteFollowingRule(wines: [selection], router: router) }
             }
             #endif
             .modifier(SyncRefresh())
-            }
         }
     }
 
@@ -384,7 +369,13 @@ extension CellarList {
                 }
                 Divider()
                 Button("Delete Wines…", systemImage: "trash", role: .destructive) {
-                    confirmingDelete = true
+                    // Several wines are confirmed; one with a single bottle goes with Undo.
+                    if model.cellar.deletionGuard(ofWines: picked) == .confirm {
+                        confirmingDelete = picked
+                    } else if let id = picked.first {
+                        model.deleteWine(id)
+                        endSelection()
+                    }
                 }
                 .accessibilityIdentifier("cellar.select.delete")
             } label: {
@@ -437,45 +428,82 @@ private struct CellarSelectionList: View {
     }
 }
 
-/// Quick figures at the top of the cellar.
+/// Quick figures at the top of the cellar: bottles opens the cellar in figures; "to keep"
+/// and "to drink soon" filter the list (tap again to show all).
 private struct CellarStats: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Binding var filter: CellarFilter
     /// Bottles: the cellar in figures.
     var onBottles: () -> Void
-    /// Wines: the whole list, without filters.
-    var onWines: () -> Void
 
     var body: some View {
-        let stats = model.overview.statistics
-        let soonOnly = filter.maturities == [.drinkSoon] && filter.colors.isEmpty && filter.rackID == nil && filter.tag == nil
-            && filter.reservation == nil && filter.grape == nil
-        // Side by side, or one above the other at the accessibility text sizes so captions fit.
-        let tiles = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 10))
-        tiles {
-            Button(action: onBottles) {
-                StatTile(count: stats.bottleCount, caption: .count("bottles", stats.bottleCount), systemImage: "wineglass", opens: true)
-            }
-            .accessibilityHint(Text("Shows your cellar in figures."))
-            .accessibilityIdentifier("cellar.stat.bottles")
-            Button(action: onWines) {
-                StatTile(count: stats.wineCount, caption: .count("wines", stats.wineCount), systemImage: "list.bullet")
-            }
-            .accessibilityHint(Text("Shows all your wines."))
-            .accessibilityIdentifier("cellar.stat.wines")
-            Button {
-                withAnimation(.snappy) {
-                    filter = soonOnly ? CellarFilter(query: filter.query) : CellarFilter(query: filter.query, maturities: [.drinkSoon])
+        let counts = model.overview.counts
+        let keepOnly = filter.showsOnly(.young), soonOnly = filter.showsOnly(.drinkSoon)
+        // At the accessibility text sizes, one short line a figure instead of three tiles
+        // that would fill the first screen.
+        if StatTileLayout.of(textScale: dynamicTypeSize.textScale) == .compact {
+            VStack(spacing: 0) {
+                Button(action: onBottles) {
+                    CompactStatRow(count: counts.bottles, caption: .count("bottles", counts.bottles), systemImage: "wineglass", opens: true)
                 }
-            } label: {
-                StatTile(value: stats.byMaturity[.drinkSoon, default: 0].formatted(), caption: "to drink soon",
-                         systemImage: "hourglass", isSelected: soonOnly)
+                .accessibilityHint(Text("Shows your cellar in figures."))
+                .accessibilityIdentifier("cellar.stat.bottles")
+                Divider()
+                Button { toggle(.young, on: keepOnly) } label: {
+                    CompactStatRow(count: counts.bottlesToKeep, caption: .count("bottles to keep", counts.bottlesToKeep),
+                                   systemImage: Maturity.young.systemImage, isSelected: keepOnly)
+                }
+                .accessibilityHint(Text("Shows only the bottles to keep."))
+                .accessibilityIdentifier("cellar.stat.keep")
+                Divider()
+                Button { toggle(.drinkSoon, on: soonOnly) } label: {
+                    CompactStatRow(count: counts.bottlesToDrinkSoon, caption: .count("bottles to drink soon", counts.bottlesToDrinkSoon),
+                                   systemImage: "hourglass", isSelected: soonOnly)
+                }
+                .accessibilityHint(Text("Shows only the wines to drink soon."))
+                .accessibilityIdentifier("cellar.stat.soon")
             }
-            .accessibilityHint(Text("Shows only the wines to drink soon."))
-            .accessibilityIdentifier("cellar.stat.soon")
+            .buttonStyle(.plain)
+            .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .accessibilityIdentifier("cellar.stats.compact")
+        } else {
+            HStack(spacing: 10) {
+                Button(action: onBottles) {
+                    StatTile(count: counts.bottles, caption: .count("bottles", counts.bottles), systemImage: "wineglass", opens: true)
+                }
+                .accessibilityHint(Text("Shows your cellar in figures."))
+                .accessibilityIdentifier("cellar.stat.bottles")
+                Button { toggle(.young, on: keepOnly) } label: {
+                    StatTile(count: counts.bottlesToKeep, caption: .count("bottles to keep", counts.bottlesToKeep),
+                             systemImage: Maturity.young.systemImage, isSelected: keepOnly)
+                }
+                .accessibilityHint(Text("Shows only the bottles to keep."))
+                .accessibilityIdentifier("cellar.stat.keep")
+                Button { toggle(.drinkSoon, on: soonOnly) } label: {
+                    StatTile(value: counts.bottlesToDrinkSoon.formatted(), caption: "to drink soon",
+                             systemImage: "hourglass", isSelected: soonOnly)
+                }
+                .accessibilityHint(Text("Shows only the wines to drink soon."))
+                .accessibilityIdentifier("cellar.stat.soon")
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    /// Only this maturity, or everything again when it is the filter already.
+    private func toggle(_ maturity: Maturity, on: Bool) {
+        withAnimation(.snappy) {
+            filter = on ? CellarFilter(query: filter.query) : CellarFilter(query: filter.query, maturities: [maturity])
+        }
+    }
+}
+
+private extension CellarFilter {
+    /// Filters on this maturity alone, as the figure for it does.
+    func showsOnly(_ maturity: Maturity) -> Bool {
+        maturities == [maturity] && colors.isEmpty && rackID == nil && tag == nil && reservation == nil && grape == nil
     }
 }
 
@@ -531,12 +559,12 @@ private struct CellarFilterChips: View {
                         }
                         .contextMenu {
                             Button("Delete Search", systemImage: "trash", role: .destructive) {
-                                model.update { $0.deleteSearch(search.id) }
+                                model.deleteSearch(search.id)
                             }
                         }
                         .accessibilityHint(Text("Applies this saved search."))
                         .accessibilityAction(named: Text("Delete Search")) {
-                            model.update { $0.deleteSearch(search.id) }
+                            model.deleteSearch(search.id)
                         }
                     }
                     if !saved.isEmpty, !options.colors.isEmpty || !options.maturities.isEmpty { Divider().frame(height: 24) }
@@ -655,7 +683,9 @@ struct WineContextMenu: View {
             Button("Select", systemImage: "checkmark.circle", action: onSelect)
         }
         Divider()
-        Button("Delete Wine", systemImage: "trash", role: .destructive) { model.deleteWine(group.wine.id) }
+        Button("Delete Wine", systemImage: "trash", role: .destructive) {
+            model.deleteFollowingRule(wines: [group.wine.id], router: router)
+        }
     }
 }
 
@@ -699,13 +729,18 @@ struct OrdersSection: View {
 }
 
 /// Shown while records of the sample cellar remain: removes them, and only them, with Undo.
+/// At the accessibility text sizes the button goes under the text, so no word is broken.
 struct SampleBanner: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(spacing: 12) {
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout = stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 12))
+        layout {
             Label("You are exploring the sample cellar", systemImage: "testtube.2")
                 .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button("Remove Sample") { model.removeSample() }
                 .buttonStyle(.bordered)

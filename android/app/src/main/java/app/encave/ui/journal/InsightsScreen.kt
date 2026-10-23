@@ -145,7 +145,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 maxItemsInEachRow = if (wide) 4 else 2,
             ) {
                 StatTile(Formats.integer(stats.bottleCount), pluralStringResource(R.plurals.stat_bottles_in_cellar, stats.bottleCount))
-                StatTile(Formats.integer(stats.wineCount), pluralStringResource(R.plurals.stat_different_wines, stats.wineCount))
+                StatTile(Formats.integer(stats.wineCount), pluralStringResource(R.plurals.stat_wines_with_bottles, stats.wineCount))
                 StatTile(Formats.integer(stats.consumedCount), pluralStringResource(R.plurals.stat_bottles_opened, stats.consumedCount))
                 StatTile(
                     stats.averageRating?.let { stringResource(R.string.insights_rating_value, Formats.decimal(it)) } ?: "–",

@@ -26,6 +26,8 @@ FR = {
     'Put in Storage': 'Mettre dans un rangement',
     'Take Out of Storage': 'Sortir des rangements',
     'Delete Wines': 'Supprimer les vins',
+    'Shows only the bottles to keep.': 'Affiche seulement les bouteilles à garder.',
+    'Wines with bottles': 'Vins en cave',
     'Display': 'Affichage',
     'Select': 'Sélectionner',
     'Show Tonight in the Menu Bar': 'Afficher Ce soir dans la barre des menus',
@@ -1481,6 +1483,12 @@ FR = {
 
 # Keys with plural forms: English one/other and French one/other.
 PLURALS = {
+    "Delete %lld wines?": (("Delete %lld wine?", "Delete %lld wines?"), ("Supprimer %lld vin ?", "Supprimer %lld vins ?")),
+    "%lld bottles and their tastings are deleted too. You can undo right after.": (
+        ("%lld bottle and its tasting are deleted too. You can undo right after.",
+         "%lld bottles and their tastings are deleted too. You can undo right after."),
+        ("%lld bouteille et sa dégustation sont aussi supprimées. Vous pouvez annuler juste après.",
+         "%lld bouteilles et leurs dégustations sont aussi supprimées. Vous pouvez annuler juste après.")),
     "%lld selected": (("%lld selected", "%lld selected"), ("%lld sélectionné", "%lld sélectionnés")),
     "%lld bottles stay in your cellar without a position.": (
         ("%lld bottle stays in your cellar without a position.", "%lld bottles stay in your cellar without a position."),
@@ -1543,6 +1551,10 @@ PLURALS = {
 # the figure already shows. Xcode needs the number in a plural variation, so each caption is
 # two strings, "<name> [one]" and "<name> [other]", that the app picks (StatTile.swift).
 CAPTIONS = {
+    "bottles to keep": (("bottle to keep", "bottles to keep"), ("bouteille à garder", "bouteilles à garder")),
+    "bottles to drink soon": (("bottle to drink soon", "bottles to drink soon"),
+                              ("bouteille à boire bientôt", "bouteilles à boire bientôt")),
+    "wines with bottles": (("wine with bottles", "wines with bottles"), ("vin en cave", "vins en cave")),
     "bottles": (("bottle", "bottles"), ("bouteille", "bouteilles")),
     "wines": (("wine", "wines"), ("vin", "vins")),
     "bottles in the cellar": (("bottle in the cellar", "bottles in the cellar"),

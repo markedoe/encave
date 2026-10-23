@@ -130,7 +130,7 @@ struct CellarCommands: Commands {
             Divider()
             // No ⌘⌫ here: text fields keep it. On the Mac, the Delete key deletes the
             // selected wine through the list or the table (`onDeleteCommand`).
-            Button("Delete Wine") { withWine { model.deleteWine($0.id) } }
+            Button("Delete Wine") { withWine { model.deleteFollowingRule(wines: [$0.id], router: router) } }
                 .disabled(selectedWineID == nil)
         }
         CommandMenu("Cellar") {

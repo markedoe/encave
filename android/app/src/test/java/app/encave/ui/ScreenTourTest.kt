@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.assertIsOn
@@ -35,6 +36,7 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -280,6 +282,19 @@ class ScreenTourTest(private val device: String, private val variant: String) {
 
     private fun wineRows() = compose.onAllNodesWithTag("wine.row").fetchSemanticsNodes().size
 
+    /** Tablet: Back first closes the wine shown beside the list, then leaves the Cellar. */
+    @Test
+    fun tabletBackClosesTheWineFirst() {
+        if (device != "tablet") return
+        tap("wine.row")
+        compose.onAllNodesWithTag("action.drink").onFirst().assertExists()
+        scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        compose.onNodeWithTag("cellar.list").assertExists()
+        assertEquals("$device-$variant: Back left the Cellar instead of closing the wine", 0,
+            compose.onAllNodesWithTag("action.drink").fetchSemanticsNodes().size)
+    }
+
     /**
      * Checks a count of the rows on screen. Skipped at font scale 2.0, where only a row or two
      * fits on the phone: the other runs check the same filters.
@@ -319,14 +334,17 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         capture(name)
     }
 
-    /** The cellar at 200 % font scale on a phone: the summary tiles stack, one above the other. */
+    /** The cellar at 200 % font scale on a phone: the figures are a short list, one line each. */
     @Test
     fun cellarAtLargestFontScale() {
         if (device != "phone" || dark) return
         largestFontScale("cellar-font-200")
         val bottles = compose.onNodeWithTag("cellar.stat.bottles").fetchSemanticsNode().boundsInRoot
-        val wines = compose.onNodeWithTag("cellar.stat.wines").fetchSemanticsNode().boundsInRoot
-        assertTrue("$device-$variant: the cellar tiles are not stacked at 200 %", wines.top >= bottles.bottom - 1f)
+        val keep = compose.onNodeWithTag("cellar.stat.keep").fetchSemanticsNode().boundsInRoot
+        val soon = compose.onNodeWithTag("cellar.stat.soon").fetchSemanticsNode().boundsInRoot
+        assertTrue("$device-$variant: the cellar figures are not listed at 200 %", keep.top >= bottles.bottom - 1f)
+        val screen = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("$device-$variant: the cellar figures fill the screen at 200 %", soon.bottom - bottles.top < screen.height / 2)
     }
 
     /** Tonight and the wine page at 200 % font scale on a phone: paired buttons stack, one above the other. */

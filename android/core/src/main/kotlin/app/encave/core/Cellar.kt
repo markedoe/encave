@@ -362,6 +362,16 @@ class Cellar(
         settings = settings.copy(savedSearches = settings.savedSearches.orEmpty().filter { it.id != id }.ifEmpty { null })
     }
 
+    /**
+     * Puts back a saved search deleted by mistake, in its place in the list (the Undo of
+     * [deleteSearch]). Nothing changes when it, or another with its name, is there again.
+     */
+    fun restoreSearch(search: SavedSearch) {
+        val list = settings.savedSearches.orEmpty()
+        if (list.any { it.id == search.id || it.name.equals(search.name, ignoreCase = true) }) return
+        settings = settings.copy(savedSearches = SavedSearch.ordered(list + search))
+    }
+
     /** Reserves bottles in the cellar for an occasion, or frees them (null or blank). */
     fun reserve(bottleIds: List<UUID>, occasion: String?) {
         val name = occasion?.trim()?.ifEmpty { null }

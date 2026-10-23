@@ -23,7 +23,6 @@ struct DiscoveryEditor: View {
     @State private var price: Decimal?
     @State private var wantsToBuy = false
     @State private var loaded = false
-    @State private var confirmingDelete = false
     /// The form as it opened, to ask before discarding changes.
     @State private var initial: FormState?
 
@@ -125,7 +124,11 @@ struct DiscoveryEditor: View {
                 if discoveryID != nil {
                     PhotoSection(photoID: draft.photoID, newPhoto: $newPhoto, removed: $photoRemoved)
                     Section {
-                        Button("Delete from Journal", role: .destructive) { confirmingDelete = true }
+                        // One entry, with Undo: no question first (`DeletionRule`).
+                        Button("Delete from Journal", role: .destructive) {
+                            if let discoveryID { model.deleteDiscovery(discoveryID) }
+                            dismiss()
+                        }
                     }
                 }
                 Section {
@@ -145,12 +148,6 @@ struct DiscoveryEditor: View {
                     Button("Save", action: save)
                         .disabled(!draft.isValid)
                         .keyboardShortcut(.defaultAction)
-                }
-            }
-            .confirmationDialog("Delete this entry from your journal?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                Button("Delete from Journal", role: .destructive) {
-                    if let discoveryID { model.deleteDiscovery(discoveryID) }
-                    dismiss()
                 }
             }
             .onAppear(perform: load)

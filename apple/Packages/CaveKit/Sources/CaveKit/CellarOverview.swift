@@ -6,6 +6,8 @@ import Foundation
 public struct CellarOverview: Sendable, Equatable {
     public var year: Int
     public var statistics: CellarStatistics
+    /// Bottles, bottles to keep and to drink soon, as the figures above the list show them.
+    public var counts: CellarCounts
     /// Grapes, occasions and tags of the bottles in the cellar, as the filter chips offer them.
     public var grapes: [String]
     public var reservations: [String]
@@ -14,6 +16,7 @@ public struct CellarOverview: Sendable, Equatable {
     public init(_ cellar: Cellar, year: Int, now: Date = .now) {
         self.year = year
         statistics = cellar.statistics(year: year, now: now)
+        counts = cellar.counts(year: year)
         grapes = cellar.wineGrapes
         reservations = cellar.reservations
         tags = cellar.wineTags

@@ -25,7 +25,7 @@ struct InsightsView: View {
                 YearInWineCard()
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
                     StatTile(count: stats.bottleCount, caption: .count("bottles in the cellar", stats.bottleCount), systemImage: "wineglass")
-                    StatTile(count: stats.wineCount, caption: .count("different wines", stats.wineCount), systemImage: "list.bullet")
+                    StatTile(count: stats.wineCount, caption: .count("wines with bottles", stats.wineCount), systemImage: "list.bullet")
                     StatTile(count: stats.consumedCount, caption: .count("bottles opened", stats.consumedCount), systemImage: "book.closed")
                     StatTile(value: stats.averageRating.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "–",
                              caption: "average rating", systemImage: "star")

@@ -476,7 +476,9 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         current.racks[0].name = "Renamed"
 
         let preview = RestorePreview(of: backup, date: Date(timeIntervalSince1970: 0), comparedWith: current)
-        #expect(preview.wines == backup.wines.count)
+        // Wines with bottles in the cellar, not every wine record (those tasted elsewhere).
+        #expect(preview.wines == Set(backup.bottlesInCellar.map(\.wineID)).count)
+        #expect(preview.wines < backup.wines.count)
         #expect(preview.bottles == backup.bottles.values.filter { $0.status == .inCellar }.count)
         #expect(preview.racks == backup.racks.count)
         #expect(preview.journalEntries == backup.consumedBottles.count + backup.discoveries.count)

@@ -47,7 +47,7 @@ private class WineAction(
  * A wine row of the Cellar or Tonight with its actions, in the order of the Apple app's
  * menu: Drink, Show in rack, Move, Add bottles, Edit, (Select), Delete. [row] gets the
  * modifier giving TalkBack the same actions, and opens the menu on a long press. Delete
- * has no confirmation: the snackbar offers Undo.
+ * follows [rememberWineDeletion]: Undo for a wine with one bottle, a question first otherwise.
  */
 @Composable
 fun WineMenuBox(
@@ -62,6 +62,8 @@ fun WineMenuBox(
     row: @Composable (rowModifier: Modifier, openMenu: () -> Unit) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // With Undo, or asked first for a wine with several bottles.
+    val deleteWines = rememberWineDeletion(cellar, viewModel)
     // A bottle without a place and several racks: the menu lists the racks to move it to.
     var pickingRack by remember { mutableStateOf(false) }
     // The bottle Drink would suggest first: one not kept for an occasion.
@@ -93,7 +95,7 @@ fun WineMenuBox(
         WineAction(stringResource(R.string.action_edit), Icons.Outlined.Edit, "edit") { navigator.open(EditWineRoute(group.id.toString())) },
         onSelect?.let { WineAction(stringResource(R.string.action_select), Icons.Outlined.Checklist, "select", run = it) },
         WineAction(stringResource(R.string.action_delete), Icons.Outlined.Delete, "delete", destructive = true) {
-            viewModel.deleteWine(group.id)
+            deleteWines(setOf(group.id))
         },
     )
     fun dismiss() {
