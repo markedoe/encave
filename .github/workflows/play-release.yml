@@ -1,0 +1,89 @@
+name: Google Play release
+
+# Run by hand on main: releases a version code already on Google Play (uploaded to the
+# internal track by android.yml) to a testing track, closed testing by default. Nothing
+# is built or uploaded: the same bundle moves to the other track (docs/RELEASING.md).
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "Track to release to"
+        type: choice
+        options: [alpha, internal]
+        default: alpha
+      version_code:
+        description: "Version code (empty: the one released on internal testing)"
+        type: string
+        default: ""
+      draft:
+        description: "Prepare the release as a draft, rolled out from the Play Console (needed while the app is a draft)"
+        type: boolean
+        default: false
+      notes_en:
+        description: "Release notes in English (empty: the build number)"
+        type: string
+        default: ""
+      notes_fr:
+        description: "Release notes in French (empty: the build number)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Release to a Google Play track
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Google Play access
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.PLAY_WIF_PROVIDER }}
+          service_account: ${{ vars.PLAY_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          create_credentials_file: false
+
+      - name: Release
+        env:
+          PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          PACKAGE_NAME: markeddoe.com.encave
+          TRACK: ${{ inputs.track }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          NOTES_EN: ${{ inputs.notes_en }}
+          NOTES_FR: ${{ inputs.notes_fr }}
+          RELEASE_STATUS: ${{ inputs.draft && 'draft' || '' }}
+        run: |
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE=$(python3 - <<'PY'
+          import json, os, urllib.request
+          base = f"https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{os.environ['PACKAGE_NAME']}"
+          def call(method, path):
+              request = urllib.request.Request(base + path, data=b"{}" if method == "POST" else None, method=method,
+                  headers={"Authorization": "Bearer " + os.environ["PLAY_ACCESS_TOKEN"], "Content-Type": "application/json"})
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  text = response.read().decode()
+                  return json.loads(text) if text else {}
+          edit = call("POST", "/edits")["id"]
+          track = call("GET", f"/edits/{edit}/tracks/internal")
+          call("DELETE", f"/edits/{edit}")
+          codes = [int(c) for r in track.get("releases", []) if r.get("status") == "completed" for c in r.get("versionCodes", [])]
+          print(max(codes) if codes else "")
+          PY
+            )
+          fi
+          [ -n "$VERSION_CODE" ] || { echo "::error::No version code given, and none released on internal testing."; exit 1; }
+          export VERSION_CODE
+          export RELEASE_NOTES_EN="${NOTES_EN:-Beta build $VERSION_CODE.}"
+          export RELEASE_NOTES_FR="${NOTES_FR:-Version bêta $VERSION_CODE.}"
+          echo "Releasing version code $VERSION_CODE to $TRACK"
+          python3 android/tools/play_publish.py promote

@@ -66,6 +66,9 @@ are not partners of the developer.
 
 ## Google Play: Data safety
 
+Sent by `play-listing.yml` from `docs/store/play-data-safety.csv` (the
+Console's CSV format; only the first question answered: No).
+
 **Does your app collect or share any of the required user data types?** No.
 
 Reasoning, from Google's definitions (collection = transmitting data off the
@@ -153,6 +156,9 @@ the app out of the Families programme.
   Settings › Help › Getting started › Try with a sample cellar › Load sample
   cellar.
 - **Google Play: ads**: the app contains no ads.
+- **Google Play: advertising ID**: No (the app does not declare
+  `com.google.android.gms.permission.AD_ID` and uses no advertising library).
+- **Google Play: app category**: Food & Drink; no tags needed.
 - **Google Play: health apps, financial features, government apps, news**: No.
 
 ## App Store header and search results image

@@ -36,7 +36,8 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "app.encave"
+        // The Google Play package name (fixed in the Play Console); the code stays in app.encave.
+        applicationId = "markeddoe.com.encave"
         minSdk = 35
         targetSdk = 37
         versionCode = buildNumber
