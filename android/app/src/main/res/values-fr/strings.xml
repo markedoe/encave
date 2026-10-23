@@ -53,6 +53,7 @@
     <string name="sort_region">Région</string>
     <string name="count_times">×%1$d</string>
     <string name="location_none">Pas rangée dans un casier</string>
+    <string name="location_and_more">%1$s et %2$s</string>
     <string name="color_red">Rouge</string>
     <string name="color_white">Blanc</string>
     <string name="color_rose">Rosé</string>

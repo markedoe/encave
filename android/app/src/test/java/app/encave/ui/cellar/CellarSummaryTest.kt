@@ -109,3 +109,25 @@ class SampleBannerTest {
         assert(button.left >= title.right - 1f) { "the button is not beside the text" }
     }
 }
+
+/** The place under a wine of the list: the first one, then "and N more", on one line. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
+class LocationLineTest {
+    @get:Rule
+    val compose = createComposeRule()
+
+    @Test
+    fun firstPlaceAndHowManyMore() {
+        val cellar = Cellar()
+        val rack = app.encave.core.Rack(name = "Main rack", rows = 4, columns = 4)
+        cellar.addRack(rack)
+        val wine = Wine(name = "Placed")
+        val slots = listOf(app.encave.core.Slot(rack.id, 0, 0), app.encave.core.Slot(rack.id, 0, 1), app.encave.core.Slot(rack.id, 1, 0))
+        val bottles = cellar.addBottles(wine, quantity = 3, slots = slots)
+        compose.setContent { app.encave.ui.components.LocationLine(cellar, bottles) }
+        val text = compose.onNodeWithTag("wine.row.location").fetchSemanticsNode()
+            .config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString()
+        assert(text.startsWith("Main rack · ") && text.endsWith(" and 2 more")) { "location line: $text" }
+    }
+}

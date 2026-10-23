@@ -65,6 +65,7 @@ S = [
  ("sort_region", "Region", "Région"),
  ("count_times", "×%1$d", "×%1$d"),
  ("location_none", "Not placed in a rack", "Pas rangée dans un casier"),
+ ("location_and_more", "%1$s and %2$s", "%1$s et %2$s"),
 
  ("color_red", "Red", "Rouge"),
  ("color_white", "White", "Blanc"),

@@ -124,3 +124,16 @@ object AddFormLayout {
         AddFormSection.Location, AddFormSection.Documents, AddFormSection.Label,
     )
 }
+
+/**
+ * The places of a wine's bottles on one line, as the Apple row shows them: the first place,
+ * and how many other distinct places there are (each counted once). Null when there is none.
+ */
+data class FirstPlace(val first: String, val others: Int) {
+    companion object {
+        fun of(labels: List<String>): FirstPlace? {
+            val distinct = labels.distinct()
+            return distinct.firstOrNull()?.let { FirstPlace(it, distinct.size - 1) }
+        }
+    }
+}

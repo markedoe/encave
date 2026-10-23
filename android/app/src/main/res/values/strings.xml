@@ -54,6 +54,7 @@
     <string name="sort_region">Region</string>
     <string name="count_times">×%1$d</string>
     <string name="location_none">Not placed in a rack</string>
+    <string name="location_and_more">%1$s and %2$s</string>
     <string name="color_red">Red</string>
     <string name="color_white">White</string>
     <string name="color_rose">Rosé</string>

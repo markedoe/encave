@@ -37,6 +37,10 @@ import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.Maturity
 import app.encave.core.WineGroup
+import app.encave.core.FirstPlace
+import app.encave.core.RackKind
+import app.encave.ui.racks.icon
+import androidx.compose.ui.platform.testTag
 
 /** "Main rack · A1, A3" for bottles in racks (people's labels), storage notes as they are. */
 @Composable
@@ -53,6 +57,35 @@ fun locationsText(cellar: Cellar, bottles: List<Bottle>): String {
         parts += stringResource(R.string.location_none)
     }
     return parts.joinToString(" · ")
+}
+
+/**
+ * One line, as on Apple: the symbol of the first placed bottle's storage, then its place
+ * ("Wine fridge · Shelf 1, place 5"), or "… and 2 more" when the bottles are in several places.
+ */
+@Composable
+fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
+    val resources = LocalResources.current
+    val placed = bottles.filter { it.slot != null }
+        .sortedWith(compareBy({ it.slot!!.rackId.toString() }, { it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
+    val labels = placed.mapNotNull { bottle ->
+        cellar.rack(bottle.slot!!.rackId)?.let { "${it.name} · ${it.displayLabel(bottle.slot!!, resources)}" }
+    } + bottles.filter { it.slot == null }.map { it.storageNote?.takeIf(String::isNotBlank) ?: stringResource(R.string.location_none) }
+    val place = FirstPlace.of(labels) ?: return
+    val text = if (place.others == 0) place.first
+    else stringResource(R.string.location_and_more, place.first, pluralStringResource(R.plurals.cell_bin_more, place.others, place.others))
+    val rack = placed.firstNotNullOfOrNull { cellar.rack(it.slot!!.rackId) }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Icon(
+            rack?.icon ?: RackKind.Grid.icon, contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.testTag("wine.row.location"),
+        )
+    }
 }
 
 /** List row: "Name Vintage", style · producer · region, location, ×N and maturity. */
@@ -115,10 +148,7 @@ fun WineGroupRow(
                 if (isOrder) {
                     ArrivalLabel(group.bottles.first().expectedAt)
                 } else {
-                    Text(
-                        locationsText(cellar, group.bottles), maxLines = 2, overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall,
-                    )
+                    LocationLine(cellar, group.bottles)
                 }
                 extra?.invoke()
             }

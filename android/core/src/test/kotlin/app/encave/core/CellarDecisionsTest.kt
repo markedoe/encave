@@ -119,3 +119,12 @@ class CellarDecisionsTest {
         assertEquals(AddFormSection.entries.toSet(), order.toSet())
     }
 }
+
+class FirstPlaceTest {
+    @Test
+    fun firstPlaceAndHowManyOthers() {
+        assertEquals(null, FirstPlace.of(emptyList()))
+        assertEquals(FirstPlace("Fridge · A1", 0), FirstPlace.of(listOf("Fridge · A1", "Fridge · A1")))
+        assertEquals(FirstPlace("Fridge · A1", 2), FirstPlace.of(listOf("Fridge · A1", "Fridge · A2", "Fridge · A1", "Kitchen")))
+    }
+}
