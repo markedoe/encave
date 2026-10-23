@@ -377,9 +377,14 @@ final class ScreenTourTests: XCTestCase {
         } else {
             XCTFail("cellar: no wines to select")
         }
-        let done = element("cellar.select.done")
-        if done.waitForExistence(timeout: 2) { done.press() }
-        sleep(1)
+        // Leave the selection: the rest of the tour needs the list and the tab bar back.
+        for _ in 0..<3 {
+            let done = element("cellar.select.done")
+            if done.waitForExistence(timeout: 2), done.isHittable { done.press() }
+            sleep(1)
+            if element("cellar.select").waitForExistence(timeout: 2) { return }
+        }
+        XCTFail("cellar: the selection did not end")
     }
 
     // MARK: Devices
@@ -718,12 +723,17 @@ final class ScreenTourTests: XCTestCase {
         #if os(macOS)
         app.typeKeyEscapeIfMac()
         #else
+        // iPad shows menus and confirmations as popovers, closed by a tap outside them.
+        let outside = app.otherElements["PopoverDismissRegion"].firstMatch
         let cancel = app.buttons["Cancel"].exists ? app.buttons["Cancel"] : app.buttons["Annuler"]
-        if cancel.exists, cancel.isHittable {
+        if outside.exists {
+            outside.tap()
+        } else if cancel.exists, cancel.isHittable {
             cancel.press()
         } else {
-            // Away from the menu, which opens under its button.
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap()
+            // Away from the menu, which opens under its button: the status bar, which
+            // has nothing to tap (the tab bar sits below it on iPad).
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.01)).tap()
         }
         #endif
         sleep(1)
