@@ -88,12 +88,11 @@ class RackTouchTargetTest {
 
     @Test
     fun aRackSlightlyTooWideIsFittedRatherThanScrolled() {
-        // A single row whose places fit at 40 to 48 dp: fitted, no overview.
-        val columns = (4..20).first { n ->
-            val fitted = fittingCellSize(Rack(name = "R", rows = 1, columns = n), 360.dp - Dimens.l * 2, 480.dp - Dimens.l * 2).value
-            fitted in 42f..46f
+        // A rack whose places fit at 44 to 47 dp (under 10 % too large at 48): fitted, no overview.
+        val rack = (1..12).flatMap { rows -> (3..30).map { Rack(name = "Near", rows = rows, columns = it) } }.first {
+            fittingCellSize(it, 360.dp - Dimens.l * 2, 480.dp - Dimens.l * 2).value in 44f..47f
         }
-        val (state, cell) = show(Rack(name = "Wide", rows = 1, columns = columns))
+        val (state, cell) = show(rack)
         assertTrue("fitted near the minimum (${cell()})", cell().value in 40f..48f)
         compose.onAllNodesWithTag("rack.overview").assertCountEquals(0)
         assertEquals(ViewportAreaAll, state.visibleArea.rounded())
