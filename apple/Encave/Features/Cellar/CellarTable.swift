@@ -290,13 +290,13 @@ private struct SeveralWinesMenu: View {
 
     var body: some View {
         if !model.cellar.racks.isEmpty {
-            Menu("Place in a Rack", systemImage: "square.grid.3x3") {
+            Menu("Put in Storage", systemImage: "square.grid.3x3") {
                 ForEach(model.cellar.racks) { rack in
                     Button(rack.name) { model.place(wineIDs, inRack: rack.id) }
                 }
             }
         }
-        Button("Take Out of Racks", systemImage: "tray.and.arrow.up") { model.unplace(wineIDs) }
+        Button("Take Out of Storage", systemImage: "tray.and.arrow.up") { model.unplace(wineIDs) }
         Divider()
         Button("Delete Wines…", systemImage: "trash", role: .destructive, action: onDelete)
     }

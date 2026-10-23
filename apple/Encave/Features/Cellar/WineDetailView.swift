@@ -74,7 +74,7 @@ struct WineDetailView: View {
                     } header: {
                         Text("\(orders.count) bottles on order")
                     } footer: {
-                        Text("Received bottles join the cellar without a place; move them to a rack from here.")
+                        Text("Received bottles join the cellar without a position; move them to storage from here.")
                     }
                 }
 
@@ -523,7 +523,7 @@ struct BottleRow: View {
                     Image(systemName: "scope")
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Show in Rack"))
+                .accessibilityLabel(Text("Show in Storage"))
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -567,7 +567,7 @@ struct BottleRow: View {
                 Button("Free This Bottle", systemImage: "gift.slash") { model.reserve([bottle.id], for: nil) }
             }
             if bottle.slot != nil {
-                Button("Show in Rack", systemImage: "scope") { router?.showInRack(bottle, model: model) }
+                Button("Show in Storage", systemImage: "scope") { router?.showInRack(bottle, model: model) }
             }
             BottleDocumentButtons(bottle: bottle) { router?.sheet = $0 }
             Divider()
@@ -588,7 +588,7 @@ struct BottleRow: View {
             Button("Keep Bottle") { model.reserve([bottle.id], for: occasion) }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The bottle stays in its place but is no longer suggested for tonight.")
+            Text("The bottle stays where it is but is no longer suggested for tonight.")
         }
     }
 

@@ -141,7 +141,7 @@ struct CellarList: View {
                 .disabled(occasion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("The bottles stay in their places but are no longer suggested for tonight.")
+                Text("The bottles stay where they are but are no longer suggested for tonight.")
             }
             .confirmationDialog("Delete these wines?", isPresented: $confirmingDelete, titleVisibility: .visible) {
                 Button("Delete Wines", role: .destructive) {
@@ -354,14 +354,14 @@ extension CellarList {
                     }
                 }
             } label: {
-                Label("Place in a Rack", systemImage: "square.grid.3x3")
+                Label("Put in Storage", systemImage: "square.grid.3x3")
             }
             .disabled(picked.isEmpty || model.cellar.racks.isEmpty)
             Button {
                 model.unplace(picked)
                 endSelection()
             } label: {
-                Label("Take Out of Racks", systemImage: "tray.and.arrow.up")
+                Label("Take Out of Storage", systemImage: "tray.and.arrow.up")
             }
             .disabled(picked.isEmpty)
             Menu {
@@ -640,7 +640,7 @@ struct WineContextMenu: View {
         if let bottle = group.bottles.bottleToOpen {
             Button("Drink a Bottle", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }
             if bottle.slot != nil {
-                Button("Show in Rack", systemImage: "square.grid.3x3") { router?.showInRack(bottle, model: model) }
+                Button("Show in Storage", systemImage: "square.grid.3x3") { router?.showInRack(bottle, model: model) }
             }
             Button("Move…", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
                 router?.sheet = .moveBottle(bottleID: bottle.id)
@@ -768,7 +768,7 @@ struct EmptyCellarView: View {
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
+            Text("Example wines, storage and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
     }
 }

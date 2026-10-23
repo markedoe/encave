@@ -52,7 +52,7 @@
     <string name="sort_readiness">Maturité</string>
     <string name="sort_region">Région</string>
     <string name="count_times">×%1$d</string>
-    <string name="location_none">Pas dans un rangement</string>
+    <string name="location_none">Hors rangement</string>
     <string name="color_red">Rouge</string>
     <string name="color_white">Blanc</string>
     <string name="color_rose">Rosé</string>

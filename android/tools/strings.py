@@ -64,7 +64,7 @@ S = [
  ("sort_readiness", "Readiness", "Maturité"),
  ("sort_region", "Region", "Région"),
  ("count_times", "×%1$d", "×%1$d"),
- ("location_none", "Not in storage", "Pas dans un rangement"),
+ ("location_none", "Not in storage", "Hors rangement"),
 
  ("color_red", "Red", "Rouge"),
  ("color_white", "White", "Blanc"),
@@ -1552,6 +1552,25 @@ def render(lang):
     return "\n".join(lines) + "\n"
 
 
+# The words the lexicon replaced (CHANGELOG, "Racks are now Storage"): a position is a
+# "position", never an "emplacement" or a "place"; a fridge is a "cave à vin réfrigérée",
+# as "cave" alone is the whole collection.
+OLD_FRENCH = (
+    (re.compile(r"\bemplacements?\b", re.I), "“emplacement” (say “position” or “rangement”)"),
+    (re.compile(r"(?<!à )(?<!de )\b(?:une|la|les|des|cette|chaque|aucune|nouvelle|sa|ses|leur|leurs|par)\s+places?\b"
+                r"|\bplaces?\s+(?:libres?|\d|%)", re.I), "“place” for a position (say “position”)"),
+    (re.compile(r"\bcaves? à vin\b(?! réfrigérée)", re.I), "“cave à vin” for a fridge (say “cave à vin réfrigérée”)"),
+)
+
+
+def old_french_words(text):
+    return [why for pattern, why in OLD_FRENCH if pattern.search(text)]
+
+
+# Lists the CSV column names the import recognizes, "emplacement" among them.
+OLD_FRENCH_ALLOWED = {"help_data_other"}
+
+
 def check(res):
     problems = []
     for lang, folder in (("en", "values"), ("fr", "values-fr")):
@@ -1566,6 +1585,10 @@ def check(res):
             problems.append(f"plain space before a mark in French: {found!r} ({name})")
         for found in loose_guillemets(value):
             problems.append(f"« » without a narrow no-break space inside: {found!r} ({name})")
+    for name, value in french_texts:
+        if name not in OLD_FRENCH_ALLOWED:
+            for why in old_french_words(value):
+                problems.append(f"old word in French: {why}: {value[:60]!r} ({name})")
     # Help: every entry translated, and its bold words (buttons, settings, screens) found in
     # the other strings, in English and in French.
     helps = [row for row in S if row[0].startswith("help_")]

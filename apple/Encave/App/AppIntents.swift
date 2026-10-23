@@ -20,9 +20,9 @@ enum CellarAccess {
 
     static var year: Int { CellarYear.current }
 
-    /// "Main rack · B3", "Fridge · Shelf 2, place 3", or the storage note.
+    /// "Main rack · B3", "Cabinet · Shelf 2, position 3", or the storage note.
     static func location(of bottle: Bottle, in cellar: Cellar) -> String? {
-        // The place as the app shows it ("Main rack · B3, back").
+        // The position as the app shows it ("Main rack · B3, back").
         if let slot = bottle.slot, let rack = cellar.rack(slot.rackID) {
             return "\(rack.name) · \(rack.displayLabel(for: slot))"
         }
@@ -112,7 +112,7 @@ struct FindWineIntent: AppIntent {
         let cellar = CellarAccess.cellar()
         let places = cellar.bottles(of: wine.id).compactMap { CellarAccess.location(of: $0, in: cellar) }
         guard !places.isEmpty else {
-            return .result(dialog: "\(wine.name) has no place in a rack.")
+            return .result(dialog: "\(wine.name) has no position in your storage.")
         }
         let placeNames = ListFormatter.localizedString(byJoining: places)
         return .result(dialog: "\(wine.name): \(placeNames).")
@@ -213,7 +213,7 @@ struct WineDetailsIntent: AppIntent {
         }
         add("Maturity", row?.maturity)
         add("Bottles in the cellar", row.map { String($0.bottles) } ?? "0")
-        add("Places", row?.places.joined(separator: "; "))
+        add("Positions", row?.places.joined(separator: "; "))
         add("Kept for", row?.keptFor.joined(separator: ", "))
         add("Tags", (record.tags ?? []).joined(separator: ", "))
         add("Notes", record.notes)
