@@ -105,6 +105,8 @@ import app.encave.ui.cellar.DocumentCount
 import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.BottleEnd
+import app.encave.ui.components.icon
+import app.encave.core.styleMark
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
 import app.encave.ui.components.rememberRetained
@@ -650,10 +652,17 @@ private fun RackKey(rack: Rack, cellar: Cellar, focusWine: UUID?, onFocus: (UUID
                     onClick = { onFocus(if (isOn) null else wine.id) },
                     label = {
                         // A long name ends with an ellipsis; the style and the count always show.
-                        Row(Modifier.widthIn(max = 300.dp).clearAndSetSemantics { }) {
+                        Row(Modifier.widthIn(max = 300.dp).clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically) {
                             Text(wine.displayName, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            if (style != null) {
-                                Text(" · $style", color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                            val color = wine.color
+                            if (style != null && color != null) {
+                                // The style in words and by its symbol, as on the bottles.
+                                Text(" · ", color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                                Icon(
+                                    color.styleMark.icon, contentDescription = null, tint = scheme.onSurfaceVariant,
+                                    modifier = Modifier.size(14.dp).testTag("rack.key.style"),
+                                )
+                                Text(" $style", color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                             }
                             Text(" ×$count", color = if (isOn) scheme.onSurface else scheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                         }

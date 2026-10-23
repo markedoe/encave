@@ -2,15 +2,32 @@ package app.encave.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BubbleChart
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.WineBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.encave.core.WineColor
+import app.encave.core.WineStyleMark
+import app.encave.core.styleMark
 import app.encave.ui.theme.LocalWinePalette
 
 /** Bubbles on sparkling wine (x, y, radius as fractions of the size), so it differs from white by shape. */
@@ -24,8 +41,9 @@ private val bubbles = listOf(
  * same. Decorative: the style is always also given as text.
  */
 @Composable
-fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp) {
+fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp, showsStyle: Boolean = false) {
     val fill = LocalWinePalette.current[color]
+    val mark = styleMarkPainter(color, size, showsStyle)
     Canvas(modifier.size(size)) {
         val width = this.size.minDimension
         val radius = width / 2
@@ -51,6 +69,8 @@ fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp
                 drawCircle(Color.Black.copy(alpha = 0.35f), width * r - line / 2, center, style = Stroke(line))
             }
         }
+        // Above the vintage written in the middle.
+        if (mark != null && color != null) drawStyleMark(mark, color, width * 0.24f, Offset(width / 2, width * 0.21f))
     }
 }
 
@@ -60,8 +80,9 @@ fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp
  * base ([BottleEnd]); sparkling wine shows its wire cage.
  */
 @Composable
-fun BottleNeck(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 20.dp) {
+fun BottleNeck(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 20.dp, showsStyle: Boolean = false) {
     val fill = LocalWinePalette.current[color]
+    val mark = styleMarkPainter(color, size, showsStyle)
     Canvas(modifier.size(size)) {
         val width = this.size.minDimension
         val radius = width / 2
@@ -83,5 +104,45 @@ fun BottleNeck(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 20.d
             drawLine(wire, Offset(width * 0.3f, width * 0.5f), Offset(width * 0.7f, width * 0.5f), line)
             drawLine(wire, Offset(width * 0.5f, width * 0.3f), Offset(width * 0.5f, width * 0.7f), line)
         }
+        if (mark != null && color != null) drawStyleMark(mark, color, width * 0.26f, Offset(width / 2, width / 2))
+    }
+}
+
+/**
+ * The Material icon of a style's mark: the same choice as the SF Symbols on Apple platforms
+ * (see [WineStyleMark]), each differing by its shape.
+ */
+val WineStyleMark.icon: ImageVector
+    get() = when (this) {
+        WineStyleMark.Glass -> Icons.Filled.WineBar
+        WineStyleMark.Sun -> Icons.Filled.WbSunny
+        WineStyleMark.Heart -> Icons.Filled.Favorite
+        WineStyleMark.Leaf -> Icons.Filled.Eco
+        WineStyleMark.Bubbles -> Icons.Filled.BubbleChart
+        WineStyleMark.Drop -> Icons.Filled.WaterDrop
+        WineStyleMark.Shield -> Icons.Filled.Shield
+    }
+
+/** Bottle ends from this size show their style's symbol (when asked); smaller ones keep the style in words. */
+val StyleMarkMinimum = 28.dp
+
+/** Light wine colors need dark text and symbols on them; red and fortified need light ones. */
+val WineColor?.prefersDarkLabel: Boolean
+    get() = this != WineColor.Red && this != WineColor.Fortified
+
+/** The style's symbol for a bottle this large, or null (sparkling wine keeps its drawn bubbles or cage). */
+@Composable
+private fun styleMarkPainter(color: WineColor?, size: Dp, showsStyle: Boolean): Painter? =
+    if (showsStyle && color != null && color != WineColor.Sparkling && size >= StyleMarkMinimum) {
+        rememberVectorPainter(color.styleMark.icon)
+    } else {
+        null
+    }
+
+/** Draws [mark], [side] wide, centered on [center], in a color readable on the wine's tint. */
+private fun DrawScope.drawStyleMark(mark: Painter, color: WineColor, side: Float, center: Offset) {
+    val tint = if (color.prefersDarkLabel) Color.Black.copy(alpha = 0.78f) else Color.White
+    translate(center.x - side / 2, center.y - side / 2) {
+        with(mark) { draw(Size(side, side), colorFilter = ColorFilter.tint(tint)) }
     }
 }
