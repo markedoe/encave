@@ -68,7 +68,7 @@ public enum CellarExport {
 
     public static let csvColumns = [
         "name", "producer", "vintage", "color", "region", "country", "appellation", "grapes",
-        "drink_from", "drink_until", "status", "rack", "slot", "storage",
+        "drink_from", "drink_until", "status", "rack", "slot", "location", "storage",
         "purchase_date", "price", "currency", "purchase_place", "received_from", "size_ml",
         "rating", "tasted_on", "note", "expected_on", "tags", "reserved_for",
         "current_price", "current_price_currency", "current_price_date",
@@ -76,8 +76,12 @@ public enum CellarExport {
 
     /// One row per bottle, including bottles on order. Includes consumed and
     /// given-away bottles when `includeHistory` is true. Dates are days of `timeZone`,
-    /// the calendar day the user saw when entering them.
-    public static func csv(_ cellar: Cellar, includeHistory: Bool = true, timeZone: TimeZone = .current) -> String {
+    /// the calendar day the user saw when entering them. Next to the technical "slot"
+    /// ("B3-2"), "location" names the position for people, "Cabinet · Shelf 1, position 6":
+    /// `placeName` gives it in the person's language (English when nil). The import reads
+    /// the "rack" column before it, so "location" is ignored there.
+    public static func csv(_ cellar: Cellar, includeHistory: Bool = true, timeZone: TimeZone = .current,
+                           placeName: ((Rack, Slot) -> String)? = nil) -> String {
         let day = dayFormatter(timeZone: timeZone)
         let bottles = cellar.bottles.values
             .filter { includeHistory || $0.status == .inCellar || $0.status == .ordered }
@@ -94,7 +98,9 @@ public enum CellarExport {
                 wine.name, wine.producer, wine.vintage.map(String.init), wine.color?.rawValue,
                 wine.region, wine.country, wine.appellation, wine.grapes.joined(separator: "; "),
                 wine.drinkFrom.map(String.init), wine.drinkUntil.map(String.init), bottle.status.rawValue,
-                rack?.name, bottle.slot.flatMap { slot in rack?.label(for: slot) }, bottle.storageNote,
+                rack?.name, bottle.slot.flatMap { slot in rack?.label(for: slot) },
+                bottle.slot.flatMap { slot in rack.map { "\($0.name) · \(placeName?($0, slot) ?? $0.placeName(for: slot))" } },
+                bottle.storageNote,
                 bottle.purchaseDate.map(day.string(from:)), bottle.purchasePrice.map { "\($0)" }, bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, String(bottle.sizeML),
                 bottle.tasting?.rating.map(String.init), bottle.tasting.map { day.string(from: $0.date) },

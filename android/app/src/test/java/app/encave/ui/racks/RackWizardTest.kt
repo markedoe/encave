@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import app.encave.EncaveApplication
 import app.encave.MainActivity
+import app.encave.R
 import app.encave.core.RackKind
 import app.encave.core.SampleData
 import kotlinx.coroutines.runBlocking
@@ -71,8 +72,8 @@ class RackWizardTest {
         compose.onNodeWithTag("rack.menu.edit").assertExists()
         tap("rack.menu.delete")
         // The same confirmation as in the editor.
-        compose.onNodeWithText("Delete “${first.name}”?").assertExists()
-        compose.onNodeWithText("Delete rack").performClick()
+        compose.onNodeWithText(app.getString(R.string.rack_delete_title, first.name)).assertExists()
+        compose.onNodeWithText(app.getString(R.string.rack_delete)).performClick()
         compose.waitUntil(5_000) { cellar.racks.none { it.id == first.id } }
     }
 }

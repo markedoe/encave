@@ -56,7 +56,7 @@ it with.
   - Wines, bottles, racks and wines tasted elsewhere are objects keyed by UUID, each with a
     Lamport stamp: the latest change wins, deletions included.
   - A deterministic repair step fixes what a merge can leave inconsistent: two
-    bottles in one place, a bottle in a removed rack.
+    bottles in one position, a bottle in a removed storage.
   - Each bottle is its own object with a status, so two people drinking "the last
     bottle" never produce a wrong count.
 - **Photos and documents** are content-addressed (named after their SHA-256),
@@ -120,7 +120,7 @@ The full protocol is in [SYNC.md](SYNC.md).
 | iPhone and iPad (tab bar) | Mac (sidebar) | Android |
 |------------------|------------------------|---------|
 | **Cellar**: all bottles, searchable | Library: Cellar, Tonight, Journal | Navigation bar on phones, |
-| **Racks**: physical layout | Racks: one row per rack, and Add a Rack | navigation rail on tablets, |
+| **Storage**: physical layout | Storage: one row per rack, wine fridge or bins, and Add Storage | navigation rail on tablets, |
 | **Tonight**: ready to drink | | list-detail on foldables |
 | **Journal**: history and notes | | |
 
@@ -133,10 +133,10 @@ grouping ("Château X 2015 ×3").
 
 1. **Add a bottle by scanning the label:** live camera, automatic capture,
    on-device text recognition, optional AI refinement with your own key,
-   then one confirmation sheet (quantity, suggested place in a rack). Extra details
+   then one confirmation sheet (quantity, suggested position in a storage). Extra details
    are collapsed. Undo is always available.
-2. **Find a bottle:** search shows the rack position in each row; "Show in
-   rack" highlights its place. Drag and drop on iPad and Mac.
+2. **Find a bottle:** search shows the storage and position in each row; "Show in
+   Storage" highlights its position. Drag and drop on iPad and Mac.
 3. **Drink a bottle:** swipe or context menu, then a short sheet (rating,
    one-line note, occasion). A full tasting note can be added later.
 4. **What to drink tonight:** bottles grouped by maturity (at peak, drink
@@ -145,7 +145,7 @@ grouping ("Château X 2015 ×3").
 6. **Work offline:** everything is local. The label is read on the device;
    only the optional AI recognition and web search need the network.
 
-Also in v1: onboarding (create a rack or scan a first bottle, or join a
+Also in v1: onboarding (create a storage or scan a first bottle, or join a
 shared cellar), backups (a ZIP with the cellar as JSON), CSV export, import
 from a backup, CellarTracker, Vivino or a spreadsheet, App Intents /
 Siri Shortcuts ("What should I open tonight in Encave?"), Spotlight.
@@ -185,8 +185,8 @@ kept within the privacy rules: everything is worked out on the device.
 | Siri, Shortcuts, Spotlight | Done | App shortcuts and links done |
 | Barcode recognizes wines you already have (matched on the device) | Done | Done (CameraX + zxing-cpp) |
 | Select several wines: place, take out, delete | Done | Done |
-| Rack check (audit) | Done | Done |
-| Drag and drop in racks | iPad and Mac | Wide screens (tablets in landscape, unfolded foldables) |
+| Storage check (audit) | Done | Done |
+| Drag and drop in storage | iPad and Mac | Wide screens (tablets in landscape, unfolded foldables) |
 | Import CellarTracker and Vivino CSV exports | Done | Done |
 | Year in wine, drink-down plan | Done (year shared as an image) | Done |
 | Bottles on order (en primeur, deliveries) | Done | Done |

@@ -6,14 +6,14 @@ extension RackKind {
         switch self {
         case .grid: "Grid rack"
         case .staggered: "Honeycomb rack"
-        case .shelves: "Wine fridge or cabinet"
+        case .shelves: "Wine fridge"
         case .bins: "Bins or crates"
         }
     }
 
     var subtitle: LocalizedStringKey {
         switch self {
-        case .grid: "One bottle per cell, single or double depth"
+        case .grid: "One bottle per position, single or double depth"
         case .staggered: "Offset rows, like metal or terracotta racks, or bottles stacked on fridge shelves"
         case .shelves: "Shelves holding a row of bottles, one to three deep"
         case .bins: "Diamond bins or crates holding several bottles each"
@@ -90,44 +90,63 @@ extension Rack {
     /// The symbol of its type of storage; a honeycomb rack keeps its own.
     var systemImage: String { storageType == .rack ? kind.systemImage : storageType.systemImage }
 
-    /// "B3", "B3, back", "Shelf 2, place 3, front", "Shelf 1, top layer, place 3, back" or "Bin B3",
-    /// for people (not for files). A fridge drawn front and back names the band first, as it
-    /// is drawn: "Shelf 3, front, bottom layer, place 2".
+    /// "B3", "B3, back", "Shelf 2, back, position 3", "Shelf 1, top layer, position 3",
+    /// "Shelf 3, back, bottom layer, position 2" or "Bin B3", for people (not for files), in
+    /// the person's language. Always in the order shelf, side, layer, position, leaving out
+    /// what does not apply, as `placeName(for:)` does in English.
     func displayLabel(for slot: Slot) -> String {
-        if hasDepthBands, let place = shelfPlace(ofRow: slot.row) {
-            let shelf = place.shelf + 1, number = slot.column + 1, sideName = depthName(slot.depth)
-            if place.layers == 1 { return String(localized: "Shelf \(shelf), \(sideName), place \(number)") }
-            if place.layer == 0 { return String(localized: "Shelf \(shelf), \(sideName), bottom layer, place \(number)") }
-            if place.layer == place.layers - 1 { return String(localized: "Shelf \(shelf), \(sideName), top layer, place \(number)") }
-            return String(localized: "Shelf \(shelf), \(sideName), middle layer, place \(number)")
+        let sideName: String? = kind == .bins || positionsPerCell == 1 ? nil : depthName(slot.depth)
+        if let place = shelfPlace(ofRow: slot.row) {
+            return shelfLabel(shelf: place.shelf + 1, sideName: sideName, layer: place.layer, layers: place.layers,
+                              number: slot.column + 1)
         }
-        let cell = displayLabel(for: slot.cell)
-        guard kind != .bins, positionsPerCell > 1 else { return cell }
-        return "\(cell), \(depthName(slot.depth))"
+        switch kind {
+        case .grid, .staggered:
+            let code = label(for: slot.cell)
+            return sideName.map { "\(code), \($0)" } ?? code
+        case .shelves:
+            return shelfLabel(shelf: slot.row + 1, sideName: sideName, layer: 0, layers: 1, number: slot.column + 1)
+        case .bins:
+            return displayLabel(for: slot.cell)
+        }
     }
 
+    /// The whole position, without its side: "B3", "Shelf 2, position 3",
+    /// "Shelf 1, top layer, position 3" or "Bin B3".
     func displayLabel(for cell: RackCell) -> String {
         if let place = shelfPlace(ofRow: cell.row) {
-            // A fridge with bottles in layers: "Shelf 1, top layer, place 3".
-            let shelf = place.shelf + 1, number = cell.column + 1
-            if place.layers == 1 { return String(localized: "Shelf \(shelf), place \(number)") }
-            if place.layer == 0 { return String(localized: "Shelf \(shelf), bottom layer, place \(number)") }
-            if place.layer == place.layers - 1 { return String(localized: "Shelf \(shelf), top layer, place \(number)") }
-            return String(localized: "Shelf \(shelf), middle layer, place \(number)")
+            return shelfLabel(shelf: place.shelf + 1, sideName: nil, layer: place.layer, layers: place.layers, number: cell.column + 1)
         }
         switch kind {
         case .grid, .staggered:
             return label(for: cell)
         case .shelves:
             // Shelves are numbered from the top, as in layered fridges.
-            let shelf = cell.row + 1, number = cell.column + 1
-            return String(localized: "Shelf \(shelf), place \(number)")
+            return shelfLabel(shelf: cell.row + 1, sideName: nil, layer: 0, layers: 1, number: cell.column + 1)
         case .bins:
             return String(localized: "Bin \(label(for: cell))")
         }
     }
 
-    /// Front, middle or back of a cell.
+    /// "Shelf 2, back, bottom layer, position 3": the shelf, the side (nil on a shelf one bottle
+    /// deep), the layer (on a shelf with several) and the position along the shelf.
+    private func shelfLabel(shelf: Int, sideName: String?, layer: Int, layers: Int, number: Int) -> String {
+        let bottom = layers > 1 && layer == 0
+        let top = layers > 1 && layer > 0 && layer == layers - 1
+        let middle = layers > 1 && !bottom && !top
+        if let sideName {
+            if bottom { return String(localized: "Shelf \(shelf), \(sideName), bottom layer, position \(number)") }
+            if top { return String(localized: "Shelf \(shelf), \(sideName), top layer, position \(number)") }
+            if middle { return String(localized: "Shelf \(shelf), \(sideName), middle layer, position \(number)") }
+            return String(localized: "Shelf \(shelf), \(sideName), position \(number)")
+        }
+        if bottom { return String(localized: "Shelf \(shelf), bottom layer, position \(number)") }
+        if top { return String(localized: "Shelf \(shelf), top layer, position \(number)") }
+        if middle { return String(localized: "Shelf \(shelf), middle layer, position \(number)") }
+        return String(localized: "Shelf \(shelf), position \(number)")
+    }
+
+    /// Front, middle or back of a position.
     func depthName(_ depth: Int) -> String {
         if depth == 0 { return String(localized: "front") }
         if depth == positionsPerCell - 1 { return String(localized: "back") }
@@ -216,7 +235,7 @@ struct RackDeleteConfirmation: ViewModifier {
         content.confirmationDialog(Text("Delete “\(rackName)”?"), isPresented: Binding(
             get: { rack != nil }, set: { if !$0 { rackID = nil } }
         ), titleVisibility: .visible) {
-            Button("Delete Rack", role: .destructive) {
+            Button("Delete Storage", role: .destructive) {
                 if let rack { model.deleteRack(rack.id) }
                 rackID = nil
                 onDelete()
@@ -226,7 +245,7 @@ struct RackDeleteConfirmation: ViewModifier {
             if count == 0 {
                 Text("It holds no bottles.")
             } else {
-                Text("\(count) bottles stay in your cellar without a place.")
+                Text("\(count) bottles stay in your cellar without a position.")
             }
         }
     }

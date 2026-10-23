@@ -15,7 +15,6 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -36,7 +35,6 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -53,23 +51,63 @@ import androidx.compose.ui.test.assertCountEquals
  * in English and French. Saves a screenshot of each (build/screens, a CI artifact)
  * and checks the layout: action buttons have centered content, buttons side by side
  * have the same width, and every rack cell fits on screen at the default zoom.
+ *
+ * Files are named like the Apple tour: phone/en-01-cellar.png, tablet/fr-dark-28-rack-3.png,
+ * phone/xl-01-cellar.png (English at font scale 2.0). Navigation uses test tags and content
+ * descriptions only, never displayed text, so renamed strings don't break it.
+ *
+ * The full tour (-Dencave.tour=full: phone and tablet, English and French, light and dark,
+ * plus the phone at font scale 2.0) runs in CI on main and manual runs; other runs take
+ * the quicker set below, for the layout checks.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35])
-class ScreenTourTest(private val device: String, private val language: String) {
+class ScreenTourTest(private val device: String, private val variant: String) {
     companion object {
         private val devices = mapOf(
-            "phone" to "w411dp-h891dp-port-xxhdpi",
-            "tablet" to "w1280dp-h800dp-land-xhdpi",
-            // Dark theme, to check contrast; English only.
-            "phone-dark" to "w411dp-h891dp-port-night-xxhdpi",
+            "phone" to "w411dp-h891dp-port",
+            "tablet" to "w1280dp-h800dp-land",
         )
+        private val densities = mapOf("phone" to "xxhdpi", "tablet" to "xhdpi")
+
+        private val full = System.getProperty("encave.tour") == "full"
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
-        fun configurations() = listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } } +
-            listOf(arrayOf("phone-dark", "en"))
+        fun configurations(): List<Array<String>> = if (full) {
+            listOf("phone", "tablet").flatMap { d -> listOf("en", "fr", "en-dark", "fr-dark").map { arrayOf(d, it) } } +
+                listOf(arrayOf("phone", "xl"))
+        } else {
+            listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } } +
+                listOf(arrayOf("phone", "en-dark"))
+        }
+
+        /**
+         * The screens in tour order: a screenshot's number is its place here, so the files
+         * sort as a walk through the app. "rack-3" takes the number of "rack".
+         */
+        private val screens = listOf(
+            "cellar", "cellar-drink-soon", "cellar-tag", "cellar-occasion", "cellar-menu", "save-search",
+            "saved-search", "cellar-on-order", "cellar-select", "cellar-select-delete", "cellar-table",
+            "cellar-table-wine", "insights", "insights-drink-down",
+            "wine", "drink-sheet", "wine-on-order", "wine-occasion", "wine-explore", "wine-edit-window",
+            "wine-tags", "more-photos",
+            "add-bottle", "add-bottle-end", "add-bottle-on-order", "barcode-scanner", "barcode-match",
+            "racks", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
+            "rack-list-picked", "rack-head-to-tail", "rack-back-bottle", "rack-head-to-tail-zoomed",
+            "rack-check", "rack-check-missing", "rack-dragging", "rack-dropped", "rack-editor", "rack-editor-end",
+            "tonight", "journal", "journal-tasted-elsewhere", "journal-add-tasting", "tasted-elsewhere-editor",
+            "journal-which-bottle", "journal-open-a-bottle",
+            "settings", "help", "devices", "devices-invite", "devices-join", "settings-backup",
+            "previous-versions", "restore-preview", "restore-actions", "inventory-pdf",
+            "cellar-font-200", "tonight-font-200",
+        )
+
+        /** The tabs, by position in the navigation (their tags follow the destination's name, which may change). */
+        private const val RACKS = 1
+        private const val TONIGHT = 2
+        private const val JOURNAL = 3
 
         private const val DOUBLE_TAP_WAIT = 500L
 
@@ -81,11 +119,16 @@ class ScreenTourTest(private val device: String, private val language: String) {
     val compose = createEmptyComposeRule()
 
     private var scenario: ActivityScenario<MainActivity>? = null
-    private val outDir = File(System.getProperty("encave.screens") ?: "build/screens", "$device-$language")
+    private val outDir = File(System.getProperty("encave.screens") ?: "build/screens", device)
+    private val language = if (variant.startsWith("fr")) "fr" else "en"
+    private val dark = variant.endsWith("-dark")
+    private val largeText = variant == "xl"
 
     @Before
     fun launch() {
-        RuntimeEnvironment.setQualifiers("$language-${devices.getValue(device)}")
+        val night = if (dark) "night" else "notnight"
+        RuntimeEnvironment.setQualifiers("$language-${devices.getValue(device)}-$night-${densities.getValue(device)}")
+        if (largeText) RuntimeEnvironment.setFontScale(2f)
         Locale.setDefault(Locale.forLanguageTag(language))
         val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
         // The Encave colors, not the test device's wallpaper colors.
@@ -111,13 +154,23 @@ class ScreenTourTest(private val device: String, private val language: String) {
     private val density get() = RuntimeEnvironment.getApplication().resources.displayMetrics.density
 
     private fun tap(tag: String) {
+        // Not composed yet or cut off (below a lazy list's fold, as at font scale 2.0, where a
+        // floating button may cover it): scroll it into view first.
+        val node = compose.onAllNodesWithTag(tag).fetchSemanticsNodes().firstOrNull()
+        if (node == null || node.boundsInWindow.height < node.size.height - 1) {
+            val lists = compose.onAllNodes(hasScrollAction())
+            for (index in lists.fetchSemanticsNodes().indices) {
+                if (runCatching { lists[index].performScrollToNode(hasTestTag(tag)) }.isSuccess) break
+            }
+            compose.waitForIdle()
+        }
         compose.onAllNodesWithTag(tag).onFirst().performClick()
         // Rack cells also take double taps (zoom), so a single tap counts once the double-tap time has passed.
         if (tag.startsWith("cell.")) compose.mainClock.advanceTimeBy(DOUBLE_TAP_WAIT)
         compose.waitForIdle()
     }
 
-    private fun tab(name: String) = tap("nav.$name")
+    private fun tab(index: Int) = tap("nav.${app.encave.ui.navigation.TopLevel.entries[index].name}")
 
     private fun scrollTo(tag: String) {
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasTestTag(tag))
@@ -130,10 +183,18 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.waitForIdle()
     }
 
+    /** The file for a screen: en-01-cellar.png, fr-dark-28-rack-3.png, xl-45-journal.png. */
+    private fun screenFile(name: String): File {
+        val key = name.takeIf { it in screens } ?: name.substringBeforeLast('-').takeIf { it in screens }
+        requireNotNull(key) { "$name is not in the list of screens" }
+        outDir.mkdirs()
+        return File(outDir, "%s-%02d-%s.png".format(variant, screens.indexOf(key) + 1, name))
+    }
+
     /** Saves the top window (a sheet or dialog when one is open) and runs the layout checks. */
     private fun capture(name: String) {
         compose.waitForIdle()
-        outDir.mkdirs()
+        val file = screenFile(name)
         // Sheets and dialogs are separate windows: draw every window's views, in order, at their screen position.
         val views = android.view.inspector.WindowInspector.getGlobalWindowViews().filter { it.isShown && it.width > 0 }
         val metrics = RuntimeEnvironment.getApplication().resources.displayMetrics
@@ -147,9 +208,18 @@ class ScreenTourTest(private val device: String, private val language: String) {
             view.draw(canvas)
             canvas.restore()
         }
-        File(outDir, "$name.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        checkNotBlank(name, image)
+        file.outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
         checkActionButtons(name)
         checkPairs(name)
+    }
+
+    /** A screen drawn for real shows text and controls: many colors (antialiased text), not one or two. */
+    private fun checkNotBlank(screen: String, image: Bitmap) {
+        val pixels = IntArray(image.width * image.height)
+        image.getPixels(pixels, 0, image.width, 0, 0, image.width, image.height)
+        val colors = pixels.toHashSet().size
+        assertTrue("$device-$variant: $screen looks blank ($colors colors)", colors >= 8)
     }
 
     private fun tagOf(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.TestTag)
@@ -201,14 +271,22 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     @Test
     fun cellarWineDetailAndDrinkSheet() {
-        capture("01-cellar")
+        capture("cellar")
         tap("wine.row")
-        capture("02-wine-detail")
+        capture("wine")
         tap("action.drink")
-        capture("03-drink-sheet")
+        capture("drink-sheet")
     }
 
     private fun wineRows() = compose.onAllNodesWithTag("wine.row").fetchSemanticsNodes().size
+
+    /**
+     * Checks a count of the rows on screen. Skipped at font scale 2.0, where only a row or two
+     * fits on the phone: the other runs check the same filters.
+     */
+    private fun checkRows(message: String, condition: Boolean) {
+        if (!largeText) assertTrue("$device-$variant: $message", condition)
+    }
 
     @Test
     fun cellarFigures() {
@@ -217,56 +295,63 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("cellar.stat.soon")
         compose.onNodeWithTag("cellar.stat.soon").assertIsSelected()
         val soon = wineRows()
-        assertTrue("$device-$language: the list did not get shorter ($all to $soon)", soon in 1 until all)
-        capture("20-cellar-drink-soon")
+        checkRows("the list did not get shorter ($all to $soon)", soon in 1 until all)
+        capture("cellar-drink-soon")
         tap("cellar.stat.soon")
         compose.onNodeWithTag("cellar.stat.soon").assertIsNotSelected()
         // At least as many rows as before (the list may have composed one more ahead meanwhile).
         val again = wineRows()
-        assertTrue("$device-$language: the list is not back to its full length ($all to $again)", again >= all)
+        checkRows("the list is not back to its full length ($all to $again)", again >= all)
         // Bottles opens the cellar in figures.
         tap("cellar.stat.bottles")
-        val insights = RuntimeEnvironment.getApplication().getString(app.encave.R.string.action_insights)
-        compose.onAllNodesWithText(insights).onFirst().assertExists()
-        capture("21-insights")
+        compose.onNodeWithTag("insights.screen").assertExists()
+        capture("insights")
         scrollTo("insights.drinkdown.chart")
-        capture("29-insights-drink-down")
+        capture("insights-drink-down")
+    }
+
+    /** Switches to 200 % font scale, unless the whole run is at that scale (xl). Saves [name] only when it switches. */
+    private fun largestFontScale(name: String) {
+        if (largeText) return
+        RuntimeEnvironment.setFontScale(2f)
+        scenario?.recreate()
+        compose.waitForIdle()
+        capture(name)
     }
 
     /** The cellar at 200 % font scale on a phone: the summary tiles stack, one above the other. */
     @Test
     fun cellarAtLargestFontScale() {
-        if (device != "phone") return
-        RuntimeEnvironment.setFontScale(2f)
-        scenario?.recreate()
-        compose.waitForIdle()
-        capture("05-cellar-font-200")
+        if (device != "phone" || dark) return
+        largestFontScale("cellar-font-200")
         val bottles = compose.onNodeWithTag("cellar.stat.bottles").fetchSemanticsNode().boundsInRoot
         val wines = compose.onNodeWithTag("cellar.stat.wines").fetchSemanticsNode().boundsInRoot
-        assertTrue("$device-$language: the cellar tiles are not stacked at 200 %", wines.top >= bottles.bottom - 1f)
+        assertTrue("$device-$variant: the cellar tiles are not stacked at 200 %", wines.top >= bottles.bottom - 1f)
     }
 
     /** Tonight and the wine page at 200 % font scale on a phone: paired buttons stack, one above the other. */
     @Test
     fun pairedButtonsStackAtLargestFontScale() {
-        if (device != "phone") return
-        RuntimeEnvironment.setFontScale(2f)
-        scenario?.recreate()
-        compose.waitForIdle()
-        tab("Tonight")
-        capture("06-tonight-font-200")
+        if (device != "phone" || dark) return
+        if (!largeText) {
+            RuntimeEnvironment.setFontScale(2f)
+            scenario?.recreate()
+            compose.waitForIdle()
+        }
+        tab(TONIGHT)
+        if (!largeText) capture("tonight-font-200")
         val drink = bounds("action.surprise_drink")!!
         val next = bounds("action.surprise_next")!!
-        assertTrue("$device-$language: Tonight's buttons are not stacked at 200 %", next.top >= drink.bottom - 1f)
+        assertTrue("$device-$variant: Tonight's buttons are not stacked at 200 %", next.top >= drink.bottom - 1f)
     }
 
     @Test
     fun bottlesOnOrder() {
         scrollIn("cellar.list", "order.row")
-        capture("25-cellar-on-order")
+        capture("cellar-on-order")
         tap("order.row")
         scrollIn("wine.detail", "detail.orders")
-        capture("26-wine-on-order")
+        capture("wine-on-order")
     }
 
     @Test
@@ -275,8 +360,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.onAllNodesWithTag("filter.tag").onFirst().performScrollTo().performClick()
         compose.waitForIdle()
         val tagged = wineRows()
-        assertTrue("$device-$language: the tag did not filter the list ($all to $tagged)", tagged in 1 until all)
-        capture("27-cellar-tag")
+        checkRows("the tag did not filter the list ($all to $tagged)", tagged in 1 until all)
+        capture("cellar-tag")
     }
 
     @Test
@@ -286,7 +371,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("add.ordered")
         tap("add.expected")
         scrollTo("add.order.footer")
-        capture("28-add-bottle-on-order")
+        capture("add-bottle-on-order")
     }
 
     @Test
@@ -298,21 +383,21 @@ class ScreenTourTest(private val device: String, private val language: String) {
         rows[2].performClick()
         compose.waitForIdle()
         rows[0].assertIsOn()
-        capture("30-cellar-select")
+        capture("cellar-select")
         tap("cellar.select.delete")
-        capture("31-cellar-select-delete")
+        capture("cellar-select-delete")
     }
 
     @Test
     fun rackCheck() {
-        tab("Racks")
+        tab(RACKS)
         tap("rack.row.0")
         tap("rack.audit")
         tap("cell.0.0")
         tap("cell.0.1")
-        capture("32-rack-check")
+        capture("rack-check")
         tap("action.audit.finish")
-        capture("33-rack-check-missing")
+        capture("rack-check-missing")
         tap("audit.take_out")
         compose.onNodeWithTag("action.audit.finish").assertDoesNotExist()
     }
@@ -320,13 +405,14 @@ class ScreenTourTest(private val device: String, private val language: String) {
     /** The first page of the printed inventory, drawn as in the PDF (at twice the size). */
     @Test
     fun inventoryPdf() {
+        // Paper: the same in dark mode and at any font scale.
+        if (dark || largeText) return
         val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
         val image = Bitmap.createBitmap(595 * 2, 842 * 2, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(image)
         canvas.scale(2f, 2f)
         app.encave.ui.settings.InventoryPdf.drawPage(application.repository.cellar.value, application.resources, java.time.LocalDate.now().year, 0, canvas)
-        outDir.mkdirs()
-        File(outDir, "34-inventory-pdf.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        screenFile("inventory-pdf").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     @Test
@@ -341,11 +427,11 @@ class ScreenTourTest(private val device: String, private val language: String) {
         }
         tap("action.fab_add")
         tap("action.scan_barcode")
-        capture("35-barcode-scanner")
+        capture("barcode-scanner")
         compose.onNodeWithTag("barcode.field").performTextInput("5601234567897")
         tap("barcode.use")
         compose.onNodeWithTag("barcode.match").assertExists()
-        capture("36-barcode-match")
+        capture("barcode-match")
         tap("action.use_wine")
         compose.onNodeWithTag("barcode.match").assertDoesNotExist()
     }
@@ -357,9 +443,9 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("cellar.layout")
         compose.onNodeWithTag("cellar.table").assertExists()
         tap("table.header.Vintage")
-        capture("37-cellar-table")
+        capture("cellar-table")
         tap("table.row")
-        capture("37b-cellar-table-wine")
+        capture("cellar-table-wine")
         tap("cellar.layout")
         compose.onNodeWithTag("cellar.table").assertDoesNotExist()
     }
@@ -367,7 +453,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
     @Test
     fun rackDragAndDrop() {
         if (device != "tablet") return
-        tab("Racks")
+        tab(RACKS)
         tap("rack.row.0")
         // Let the rack settle (fitted to the screen) before measuring places.
         compose.mainClock.advanceTimeBy(2_000)
@@ -382,7 +468,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
         }
         compose.waitForIdle()
         compose.onNodeWithTag("rack.dragging").assertExists()
-        capture("38-rack-dragging")
+        capture("rack-dragging")
         compose.onNodeWithTag("cell.0.0").performTouchInput { up() }
         compose.waitForIdle()
         // The move is saved in the background: wait for it.
@@ -398,7 +484,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
             compose.waitForIdle()
         }
         assertTrue("the dragged bottle is in its new place", dropped())
-        capture("39-rack-dropped")
+        capture("rack-dropped")
     }
 
     @Test
@@ -409,12 +495,12 @@ class ScreenTourTest(private val device: String, private val language: String) {
         scrollIn("wine.detail", "detail.explore.country")
         tap("detail.explore.country")
         assertTrue(
-            "$device-$language: no other wine listed for the country",
+            "$device-$variant: no other wine listed for the country",
             compose.onAllNodesWithTag("explore.row").fetchSemanticsNodes().isNotEmpty(),
         )
         // The wine it was opened from comes first, and goes back to its page.
         compose.onAllNodesWithTag("explore.current").onFirst().assertExists()
-        capture("46-wine-explore")
+        capture("wine-explore")
         // A wine of the list opens its page.
         tap("explore.row")
         compose.onAllNodesWithTag("wine.detail").onFirst().assertExists()
@@ -425,9 +511,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("wine.row")
         scrollIn("wine.detail", "detail.edit.window")
         tap("detail.edit.window")
-        val title = RuntimeEnvironment.getApplication().getString(app.encave.R.string.edit_wine_title)
-        compose.onAllNodesWithText(title).onFirst().assertExists()
-        capture("47-wine-edit-window")
+        compose.onNodeWithTag("wine.edit").assertExists()
+        capture("wine-edit-window")
     }
 
     @Test
@@ -435,31 +520,33 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("wine.row")
         tap("action.edit_wine")
         scrollTo("field.tags")
-        capture("40-wine-tags")
+        capture("wine-tags")
     }
 
     @Test
     fun occasion() {
         compose.onAllNodesWithTag("filter.reservation").onFirst().performScrollTo().performClick()
         compose.waitForIdle()
-        assertEquals("$device-$language: one wine kept for the occasion", 1, wineRows())
-        capture("41-cellar-occasion")
+        val kept = wineRows()
+        checkRows("$kept wines kept for the occasion, not 1", kept == 1)
+        capture("cellar-occasion")
         tap("wine.row")
         scrollIn("wine.detail", "bottle.reserved")
-        capture("42-wine-occasion")
+        capture("wine-occasion")
     }
 
     @Test
     fun savedSearch() {
         tap("cellar.stat.soon")
         tap("cellar.sort")
+        capture("cellar-menu")
         tap("cellar.save_search")
         compose.onNodeWithTag("save_search.field").performTextInput("Soon")
-        capture("43-save-search")
+        capture("save-search")
         tap("save_search.save")
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("filter.saved").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("filter.saved").assertIsSelected()
-        capture("44-saved-search")
+        capture("saved-search")
     }
 
     @Test
@@ -482,7 +569,7 @@ class ScreenTourTest(private val device: String, private val language: String) {
         tap("wine.row")
         scrollIn("wine.detail", "wine.more_photos")
         scrollIn("wine.detail", "action.add_photo")
-        capture("45-more-photos")
+        capture("more-photos")
         tap("photo.thumb")
         compose.onNodeWithTag("photo.done").assertExists()
     }
@@ -490,19 +577,22 @@ class ScreenTourTest(private val device: String, private val language: String) {
     @Test
     fun addBottle() {
         tap("action.fab_add")
-        capture("04-add-bottle")
+        capture("add-bottle")
         scrollTo("action.add_confirm")
-        capture("04b-add-bottle-end")
+        capture("add-bottle-end")
     }
 
     @Test
     fun racks() {
-        tab("Racks")
-        capture("05-racks")
-        for (index in 0 until 8) {
+        tab(RACKS)
+        capture("racks")
+        // Every rack of the sample, including the head-to-tail fridge.
+        val count = ApplicationProvider.getApplicationContext<EncaveApplication>().repository.cellar.value.racks.size
+        assertTrue("the sample has racks", count >= 8)
+        for (index in 0 until count) {
             scrollTo("rack.row.$index")
             tap("rack.row.$index")
-            capture("06-rack-$index")
+            capture("rack-${index + 1}")
             checkRackFits("rack $index")
             scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             compose.waitForIdle()
@@ -512,27 +602,27 @@ class ScreenTourTest(private val device: String, private val language: String) {
     @Test
     fun rackCellSheet() {
         // A place holding two bottles opens the list of the place.
-        tab("Racks")
+        tab(RACKS)
         scrollTo("rack.row.3")
         tap("rack.row.3")
         tap("cell.0.0")
-        capture("07-rack-cell-sheet")
+        capture("rack-place-sheet")
     }
 
     @Test
     fun headToTailFridge() {
         // The sample's fridge two deep, head-to-tail: each shelf shows its front bottles, then the
         // ones behind (necks facing you). A back place is tapped directly and shows its bottle.
-        tab("Racks")
+        tab(RACKS)
         scrollTo("rack.row.7")
         tap("rack.row.7")
         compose.onAllNodesWithTag("rack.band.back").onFirst().assertExists()
         compose.onAllNodesWithTag("cell.1.0", useUnmergedTree = true).onFirst().assertExists()
-        capture("51-rack-head-to-tail")
+        capture("rack-head-to-tail")
         checkRackFits("head-to-tail fridge")
         tap("cell.1.0.back")
         compose.onNodeWithTag("rack.selection").assertExists()
-        capture("52-rack-back-bottle")
+        capture("rack-back-bottle")
         tap("rack.selection.close")
         // Pinch: the taller drawing still zooms.
         val before = widthOf("cell.1.0.back")
@@ -541,8 +631,8 @@ class ScreenTourTest(private val device: String, private val language: String) {
         }
         compose.waitForIdle()
         val after = widthOf("cell.1.0.back")
-        assertTrue("$device-$language: back places did not grow ($before to $after)", after > before * 1.5f)
-        capture("53-rack-head-to-tail-zoomed")
+        assertTrue("$device-$variant: back places did not grow ($before to $after)", after > before * 1.5f)
+        capture("rack-head-to-tail-zoomed")
     }
 
     /** Laid-out width, even when the cell is scrolled out of view. */
@@ -551,19 +641,19 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     @Test
     fun rackCardKeyZoomAndList() {
-        tab("Racks")
+        tab(RACKS)
         tap("rack.row.0")
         // One bottle per place: a tap shows it in a card above the key.
         tap("cell.0.0")
         compose.onNodeWithTag("rack.selection").assertExists()
-        capture("15-rack-card")
+        capture("rack-card")
         tap("rack.selection.close")
         compose.onNodeWithTag("rack.selection").assertDoesNotExist()
         // A wine in the key lights up its bottles.
         tap("rack.key.wine")
         val chip = if (language == "fr") "Clos des Tilleuls 2017, Rouge, 3 bouteilles" else "Clos des Tilleuls 2017, Red, 3 bottles"
         compose.onNodeWithContentDescription(chip).assertIsSelected()
-        capture("16-rack-key")
+        capture("rack-key")
         tap("rack.key.wine")
         // Pinch: the rack is drawn again with bigger cells.
         val before = widthOf("cell.0.0")
@@ -572,31 +662,31 @@ class ScreenTourTest(private val device: String, private val language: String) {
         }
         compose.waitForIdle()
         val after = widthOf("cell.0.0")
-        assertTrue("$device-$language: cells did not grow ($before to $after)", after > before * 1.5f)
-        capture("17-rack-zoomed")
+        assertTrue("$device-$variant: cells did not grow ($before to $after)", after > before * 1.5f)
+        capture("rack-zoomed")
         // The bottle list: picking a bottle closes it and selects the bottle.
         tap("action.bottle_list")
-        capture("18-rack-bottle-list")
+        capture("rack-bottle-list")
         tap("rack.list.row")
         compose.onNodeWithTag("rack.list").assertDoesNotExist()
         compose.onNodeWithTag("rack.selection").assertExists()
-        capture("19-rack-list-picked")
+        capture("rack-list-picked")
     }
 
     @Test
     fun rackEditor() {
-        tab("Racks")
+        tab(RACKS)
         tap("rack.row.0")
         compose.onNodeWithTag("action.edit_rack").performClick()
         compose.waitForIdle()
-        capture("08-rack-editor")
+        capture("rack-editor")
         scrollTo("action.delete_rack")
-        capture("08b-rack-editor-end")
+        capture("rack-editor-end")
     }
 
     @Test
     fun rackWizard() {
-        tab("Racks")
+        tab(RACKS)
         // A new storage, step by step: its type, its settings, its name.
         tap("racks.add")
         capture("08c-rack-wizard-1")
@@ -610,33 +700,33 @@ class ScreenTourTest(private val device: String, private val language: String) {
 
     @Test
     fun tonightAndJournal() {
-        tab("Tonight")
-        capture("09-tonight")
-        tab("Journal")
+        tab(TONIGHT)
+        capture("tonight")
+        tab(JOURNAL)
         // One diary: bottles from the cellar and wines tasted elsewhere together.
         compose.onAllNodesWithTag("journal.row.cellar").onFirst().assertExists()
         compose.onAllNodesWithTag("journal.row.elsewhere").onFirst().assertExists()
-        capture("10-journal")
+        capture("journal")
         tap("journal.filter.elsewhere")
         compose.onAllNodesWithTag("journal.row.cellar").assertCountEquals(0)
-        capture("11-journal-tasted-elsewhere")
+        capture("journal-tasted-elsewhere")
         tap("journal.filter.all")
         tap("action.add_tasting")
-        capture("12-journal-add-tasting")
+        capture("journal-add-tasting")
         tap("journal.add.elsewhere")
-        capture("12b-tasted-elsewhere")
+        capture("tasted-elsewhere-editor")
     }
 
     @Test
     fun journalOpenABottleFromTheCellar() {
-        tab("Journal")
+        tab(JOURNAL)
         tap("action.add_tasting")
         tap("journal.add.cellar")
         compose.onAllNodesWithTag("drink.pick.row").onFirst().assertExists()
-        capture("12c-journal-which-bottle")
+        capture("journal-which-bottle")
         tap("drink.pick.row")
         compose.onNodeWithTag("action.drink_confirm").assertExists()
-        capture("12d-journal-open-a-bottle")
+        capture("journal-open-a-bottle")
     }
 
     @Test
@@ -647,15 +737,15 @@ class ScreenTourTest(private val device: String, private val language: String) {
         compose.onNodeWithTag("devices.add").assertExists()
         compose.onNodeWithTag("devices.status_local").assertExists()
         compose.onNodeWithTag("devices.notify").assertExists()
-        capture("22-devices")
+        capture("devices")
         tap("devices.add")
         compose.onNodeWithTag("devices.code").assertExists()
         compose.onNodeWithTag("devices.qr").assertExists()
-        capture("23-add-device")
+        capture("devices-invite")
         tap("sheet.cancel")
         tap("devices.join")
         compose.onNodeWithTag("devices.codeField").assertExists()
-        capture("24-join-device")
+        capture("devices-join")
     }
 
     /** Settings › Your data › Previous versions, kept by saving the cellar on a new day, and a version's preview. */
@@ -671,24 +761,24 @@ class ScreenTourTest(private val device: String, private val language: String) {
         }
         tap("action.settings")
         scrollTo("settings.versions")
-        capture("48-settings-backup")
+        capture("settings-backup")
         tap("settings.versions")
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("versions.row").fetchSemanticsNodes().isNotEmpty() }
-        capture("49-previous-versions")
+        capture("previous-versions")
         tap("versions.row")
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("restore.preview").fetchSemanticsNodes().isNotEmpty() }
-        capture("50-restore-preview")
+        capture("restore-preview")
         compose.onNodeWithTag("restore.preview").performScrollToNode(hasTestTag("restore.replace"))
         compose.onNodeWithTag("restore.add").assertExists()
-        capture("51-restore-actions")
+        capture("restore-actions")
     }
 
     @Test
     fun settingsAndHelp() {
         tap("action.settings")
-        capture("13-settings")
+        capture("settings")
         scrollTo("settings.help")
         tap("settings.help")
-        capture("14-help")
+        capture("help")
     }
 }

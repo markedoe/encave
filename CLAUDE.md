@@ -16,7 +16,7 @@ sync between devices and users (see `docs/ROADMAP.md`):
 - Follow Apple's Human Interface Guidelines and Material 3. Prefer native
   components (List, Form, sheets, swipe actions, context menus, searchable)
   over custom UI.
-- Four sections: Cellar, Racks, Tonight, Journal. Talk about bottles; the
+- Four sections: Cellar, Storage (Rangements), Tonight, Journal. Talk about bottles; the
   "wine" record is an internal grouping.
 - Adding a bottle by scanning must take under 10 seconds.
 - Support light and dark mode, Dynamic Type / font scaling, VoiceOver /

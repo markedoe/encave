@@ -27,10 +27,10 @@ struct RackBottleList: View {
                 if bottles.isEmpty {
                     #if os(macOS)
                     ContentUnavailableView("Empty", systemImage: rack.systemImage,
-                                           description: Text("Click a place in the rack to add a bottle there."))
+                                           description: Text("Click a free position to add a bottle there."))
                     #else
                     ContentUnavailableView("Empty", systemImage: rack.systemImage,
-                                           description: Text("Tap a place in the rack to add a bottle there."))
+                                           description: Text("Tap a free position to add a bottle there."))
                     #endif
                 }
                 ForEach(groups.keys.sorted(), id: \.self) { key in
@@ -48,7 +48,7 @@ struct RackBottleList: View {
                 if let id, let slot = model.cellar.bottles[id]?.slot { model.highlightedSlot = slot }
             }
         } else {
-            ContentUnavailableView("Rack not found", systemImage: "questionmark")
+            ContentUnavailableView("Storage not found", systemImage: "questionmark")
         }
     }
 }

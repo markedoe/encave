@@ -22,17 +22,17 @@ class InventoryPdfTest {
         // Bottles on order are not in the cellar yet.
         assertEquals(cellar.groups().size, rows.size)
         val tilleuls = rows.single { it.wine == "Clos des Tilleuls 2017" }
-        // 3 in the main rack, 4 in front on the head-to-tail fridge's first shelf.
+        // 3 in the main rack, 4 in front on the head-to-tail cabinet's first shelf.
         assertEquals(7, tilleuls.bottles)
         assertEquals("Domaine Arnaud", tilleuls.producer)
         assertEquals("Pauillac, France", tilleuls.region)
         assertEquals(
             "Main rack · A1, Main rack · A2, Main rack · A3, " +
-                (1..4).joinToString(", ") { "Head-to-tail fridge · Shelf 1, front, bottom layer, place $it" },
+                (1..4).joinToString(", ") { "Head-to-tail cabinet · Shelf 1, front, bottom layer, position $it" },
             tilleuls.places,
         )
         assertEquals("€266", tilleuls.value)
-        assertEquals("Kitchen, Head-to-tail fridge · Shelf 1, back, top layer, place 2", rows.single { it.wine.startsWith("Rosé") }.places)
+        assertEquals("Kitchen, Head-to-tail cabinet · Shelf 1, back, top layer, position 2", rows.single { it.wine.startsWith("Rosé") }.places)
     }
 
     @Test

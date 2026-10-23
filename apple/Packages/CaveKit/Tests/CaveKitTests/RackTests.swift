@@ -38,7 +38,7 @@ import Testing
         #expect(grid.placeName(for: Slot(rackID: grid.id, row: 1, column: 2, depth: 1)) == "B3, back")
         let shelves = Rack(name: "S", kind: .shelves, rows: 4, columns: 6, depth: 2)
         #expect(shelves.emptyCaption(for: RackCell(rackID: shelves.id, row: 2, column: 5)) == "6")
-        #expect(shelves.placeName(for: Slot(rackID: shelves.id, row: 0, column: 5)) == "Shelf 1, place 6, front")
+        #expect(shelves.placeName(for: Slot(rackID: shelves.id, row: 0, column: 5)) == "Shelf 1, front, position 6")
         let bins = Rack(name: "B", kind: .bins, rows: 2, columns: 3, binCapacity: 6)
         #expect(bins.placeName(for: Slot(rackID: bins.id, row: 1, column: 2, depth: 3)) == "Bin B3")
         let honeycomb = Rack(name: "H", kind: .staggered, rows: 3, columns: 5)
@@ -51,22 +51,22 @@ import Testing
         // Row 1 is the bottom layer of shelf 1; row 2 the only layer of shelf 2.
         #expect(fridge.emptyCaption(for: RackCell(rackID: fridge.id, row: 2, column: 3)) == "4")
         #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 0, column: 2, depth: 1))
-            == "Shelf 1, back, top layer, place 3")
+            == "Shelf 1, back, top layer, position 3")
         #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 1, column: 0))
-            == "Shelf 1, front, bottom layer, place 1")
-        #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 2, column: 5, depth: 1)) == "Shelf 2, back, place 6")
+            == "Shelf 1, front, bottom layer, position 1")
+        #expect(fridge.placeName(for: Slot(rackID: fridge.id, row: 2, column: 5, depth: 1)) == "Shelf 2, back, position 6")
         let single = Rack(name: "F1", kind: .staggered, rows: 2, columns: 6, shelfLayers: [1, 1])
-        #expect(single.placeName(for: Slot(rackID: single.id, row: 1, column: 5)) == "Shelf 2, place 6")
+        #expect(single.placeName(for: Slot(rackID: single.id, row: 1, column: 5)) == "Shelf 2, position 6")
     }
 
     @Test func placeNamesEdgeCases() {
         // Three deep: front, middle, back.
         let deep = Rack(name: "D", kind: .shelves, rows: 2, columns: 4, depth: 3)
-        #expect(deep.placeName(for: Slot(rackID: deep.id, row: 1, column: 0, depth: 1)) == "Shelf 2, place 1, middle")
+        #expect(deep.placeName(for: Slot(rackID: deep.id, row: 1, column: 0, depth: 1)) == "Shelf 2, middle, position 1")
         // Three layers: the middle one; one deep, so no side.
         let layers = Rack(name: "L", kind: .staggered, rows: 3, columns: 6, shelfLayers: [3])
-        #expect(layers.placeName(for: Slot(rackID: layers.id, row: 1, column: 0)) == "Shelf 1, middle layer, place 1")
-        #expect(layers.placeName(for: Slot(rackID: layers.id, row: 0, column: 0)) == "Shelf 1, top layer, place 1")
+        #expect(layers.placeName(for: Slot(rackID: layers.id, row: 1, column: 0)) == "Shelf 1, middle layer, position 1")
+        #expect(layers.placeName(for: Slot(rackID: layers.id, row: 0, column: 0)) == "Shelf 1, top layer, position 1")
         // Beyond Z, grids keep two-letter codes; shelves of different lengths still number.
         let tall = Rack(name: "T", rows: 30, columns: 2)
         #expect(tall.emptyCaption(for: RackCell(rackID: tall.id, row: 27, column: 1)) == "AB2")
@@ -95,9 +95,9 @@ import Testing
         let back = Slot(rackID: fridge.id, row: 2, column: 2, depth: 1)
         _ = try cellar.addBottles(of: Wine(name: "W"), quantity: 1, slots: [back])
         let report = cellar.report(scope: .all, year: 2026)
-        #expect(report.rows.first?.places == ["Fridge · Shelf 3, place 3, back"])
-        let named = cellar.report(scope: .all, year: 2026, location: { _ in "Cave · Étagère 3" })
-        #expect(named.rows.first?.places == ["Cave · Étagère 3"])
+        #expect(report.rows.first?.places == ["Fridge · Shelf 3, back, position 3"])
+        let named = cellar.report(scope: .all, year: 2026, location: { _ in "Armoire · Étagère 3" })
+        #expect(named.rows.first?.places == ["Armoire · Étagère 3"])
     }
 
     @Test func binsFillOneBinBeforeTheNext() throws {
@@ -145,7 +145,7 @@ import Testing
         var cellar = Cellar()
         let fridge = Rack(name: "F", kind: .staggered, rows: 10, columns: 6, depth: 2, shelfLayers: [2, 2, 2, 2, 2])
         cellar.addRack(fridge)
-        // Shelf 3, bottom layer (its last row), place 3, back.
+        // Shelf 3, back, bottom layer (its last row), position 3.
         let bottle = try cellar.addBottles(of: Wine(name: "W"), slots: [Slot(rackID: fridge.id, row: 5, column: 2, depth: 1)])[0]
         // Shelf 1 duplicated: a new shelf 2, the old shelves 2 to 5 one lower.
         let edited = Rack(id: fridge.id, name: "F", kind: .staggered, rows: 12, columns: 6, depth: 2,
@@ -221,6 +221,28 @@ import Testing
         var target = Cellar(racks: original.racks)
         try target.importCSV(CellarExport.csv(original))
         #expect(Set(target.bottlesInCellar.compactMap(\.slot)) == Set(original.bottlesInCellar.compactMap(\.slot)))
+    }
+
+    /// Shared with the Kotlin RackTest: the readable "location" column, in English or in the
+    /// app's words, next to the technical slot; the import ignores it.
+    @Test func csvNamesTheLocationForPeople() throws {
+        var cellar = Cellar()
+        let fridge = Rack(name: "Cabinet", kind: .shelves, rows: 4, columns: 6, depth: 2)
+        cellar.addRack(fridge)
+        let slot = Slot(rackID: fridge.id, row: 0, column: 5, depth: 1)
+        _ = try cellar.addBottles(of: Wine(name: "Sancerre"), quantity: 1, slots: [slot])
+        let csv = CellarExport.csv(cellar)
+        let header = try #require(CSVParser.parse(csv).first)
+        let row = try #require(CSVParser.parse(csv).dropFirst().first)
+        let column = try #require(header.firstIndex(of: "location"))
+        #expect(header[column - 1] == "slot")
+        #expect(row[column - 1] == "A6-2")
+        #expect(row[column] == "Cabinet · Shelf 1, back, position 6")
+        let french = CellarExport.csv(cellar, placeName: { _, _ in "Étagère 1, fond, position 6" })
+        #expect(CSVParser.parse(french).dropFirst().first?[column] == "Cabinet · Étagère 1, fond, position 6")
+        var copy = Cellar(racks: cellar.racks)
+        try copy.importCSV(french)
+        #expect(copy.bottlesInCellar.map(\.slot) == [slot])
     }
 
     @Test func headToTailBacksOnlyOnTwoDeepFridgesWithLayers() throws {

@@ -83,7 +83,7 @@ struct RackEditor: View {
                         .font(.headline)
                         .fieldHelp("A name you will recognize: cellar left wall, kitchen fridge…")
                 } footer: {
-                    Text("Describe each place where you keep bottles: a rack, a wine fridge, a set of bins.")
+                    Text("Describe where you keep bottles: a rack, a wine fridge, a set of bins.")
                 }
 
                 if kinds.count > 1 {
@@ -117,11 +117,11 @@ struct RackEditor: View {
                         Stepper(value: $columns, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(columns)").monospacedDigit() } label: { Text(kind.columnTitle) }
                         }
-                        .fieldHelp("Counted from the left. Places are numbered 1, 2, 3…")
+                        .fieldHelp("Counted from the left. Positions are numbered 1, 2, 3…")
                     }
                     switch kind {
                     case .grid:
-                        Picker("Bottles per cell", selection: $depth) {
+                        Picker("Bottles per position", selection: $depth) {
                             Text("One").tag(1)
                             Text("Two, one behind the other").tag(2)
                         }
@@ -155,17 +155,17 @@ struct RackEditor: View {
                     Text("Size")
                 } footer: {
                     if layered, depth == 2 {
-                        Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.")
+                        Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, positions from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.")
                     } else if layered {
-                        Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
+                        Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, positions from the left.")
                     } else if kind == .shelves {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, places from the left.")
+                            Text("Holds \(preview.capacity) bottles. Shelves are numbered from the top, positions from the left.")
                             outsideWarning
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Holds \(preview.capacity) bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.")
+                            Text("Holds \(preview.capacity) bottles. Positions are named like B3; with two bottles in a position, “B3, back” is the one behind.")
                             outsideWarning
                         }
                     }
@@ -246,17 +246,17 @@ struct RackEditor: View {
 
                 if rackID != nil {
                     Section {
-                        Button("Delete Rack…", role: .destructive) { deletingRackID = rackID }
+                        Button("Delete Storage…", role: .destructive) { deletingRackID = rackID }
                     } footer: {
-                        Text("Bottles in this rack stay in your cellar without a place.")
+                        Text("Bottles in this storage stay in your cellar without a position.")
                     }
                 }
                 Section {
-                    HelpLink(topic: .racks, title: "Help with racks")
+                    HelpLink(topic: .racks, title: "Help with storage")
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle(rackID == nil ? Text("New Rack") : Text("Edit Rack"))
+            .navigationTitle(rackID == nil ? Text("New Storage") : Text("Edit Storage"))
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -274,12 +274,12 @@ struct RackEditor: View {
                 Button("Discard Changes", role: .destructive) { dismiss() }
                 Button("Keep Editing", role: .cancel) {}
             }
-            .confirmationDialog(Text("\(outsideCount) bottles are in places you removed"),
+            .confirmationDialog(Text("\(outsideCount) bottles are in positions you removed"),
                                 isPresented: $confirmingTakeOut, titleVisibility: .visible) {
                 Button("Take Them Out and Save", role: .destructive) { commit() }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("They stay in your cellar without a place.")
+                Text("They stay in your cellar without a position.")
             }
             .confirmsRackDeletion($deletingRackID) { dismiss() }
             .onAppear(perform: load)
@@ -346,7 +346,7 @@ struct RackEditor: View {
         let count = outsideCount
         if count > 0 {
             Label {
-                Text("\(count) bottles are in places you removed")
+                Text("\(count) bottles are in positions you removed")
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .symbolRenderingMode(.multicolor)
@@ -355,7 +355,7 @@ struct RackEditor: View {
     }
 
     private var depthHelp: LocalizedStringKey {
-        layered ? "Two rows, often head to tail." : "How many bottles fit one behind the other in each cell."
+        layered ? "Two rows, often head to tail." : "How many bottles fit one behind the other in each position."
     }
 
     private var layerCount: Int { shelves.reduce(0) { $0 + $1.layers } }
@@ -615,7 +615,7 @@ private struct ShelfRow: View {
                 .foregroundStyle(.secondary)
             if number > 1 {
                 Toggle("New zone from this shelf", isOn: $shelf.startsZone)
-                    .fieldHelp("For a fridge with two temperature zones: a divider is drawn above this shelf.")
+                    .fieldHelp("For a wine fridge with two temperature zones: a divider is drawn above this shelf.")
             }
         }
         .padding(.vertical, 4)
@@ -742,8 +742,8 @@ struct MoveBottleView: View {
             Group {
                 if let bottle = model.cellar.bottles[bottleID] {
                     VStack(spacing: 0) {
-                        Picker("Rack", selection: $rackID) {
-                            Text("No rack").tag(UUID?.none)
+                        Picker("Store in", selection: $rackID) {
+                            Text("No storage").tag(UUID?.none)
                             ForEach(model.cellar.racks) { Text($0.name).tag(UUID?.some($0.id)) }
                         }
                         .pickerStyle(.menu)
@@ -759,10 +759,10 @@ struct MoveBottleView: View {
                                         model.swap(from, place.firstSlot)
                                         dismiss()
                                     } else {
-                                        model.showToast(String(localized: "This place is full."))
+                                        model.showToast(String(localized: "This position is full."))
                                     }
                             }
-                            Text("Tap a place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.")
+                            Text("Tap a position. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .padding()
