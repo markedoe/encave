@@ -141,8 +141,8 @@ the app out of the Families programme.
   offer the sample cellar (**Load sample cellar** on the empty Cellar, or
   **Settings › Try Encave**). A store build (`ENCAVE_CHANNEL=store`,
   `ENCAVE_BETA=false`) does not, so the notes for it read: "Open the app and add
-  a bottle with + (scan a label or type a name), then add a rack in Racks and
-  place the bottle; Tonight and the Journal fill as bottles are added and
+  a bottle with + (scan a label or type a name), then add a storage in Storage and
+  put the bottle in it; Tonight and the Journal fill as bottles are added and
   opened. AI label recognition and web search are optional and need the
   reviewer's own key or server; sync needs a second device."
 - **Google Play: ads**: the app contains no ads.

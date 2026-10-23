@@ -91,7 +91,7 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val today = LocalDate.now()
 
     val exportCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
-        uri?.let { viewModel.exportCsv(resolver, it) }
+        uri?.let { viewModel.exportCsv(resolver, it, resources) }
     }
     val exportPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
         uri?.let { viewModel.exportPdf(resolver, it, resources) }

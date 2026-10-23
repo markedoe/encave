@@ -53,7 +53,7 @@ struct MacRoot: View {
                 wine = model.cellar.groups(filter: CellarFilter(), sort: .name, year: model.currentYear).first?.wine.id
             }
         }
-        // Menu commands and "Show in Rack" set the selected tab: follow them.
+        // Menu commands and "Show in Storage" set the selected tab: follow them.
         .onChange(of: router.selectedTab, initial: true) { _, tab in follow(tab) }
         .onChange(of: router.openWineRequest, initial: true) { _, id in
             guard let id else { return }
@@ -99,16 +99,16 @@ struct MacRoot: View {
                     .tag(MacDestination.journal)
                     .accessibilityIdentifier("section.journal")
             }
-            Section("Racks") {
+            Section("Storage") {
                 ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
                     Label(rack.name, systemImage: rack.systemImage)
                         .badge(model.cellar.occupancy(of: rack))
                         .tag(MacDestination.rack(rack.id))
                         .accessibilityIdentifier("rack.card.\(index)")
                         .contextMenu {
-                            Button("Edit Rack", systemImage: "pencil") { router.sheet = .editRack(rackID: rack.id) }
+                            Button("Edit Storage", systemImage: "pencil") { router.sheet = .editRack(rackID: rack.id) }
                             Divider()
-                            Button("Delete Rack…", systemImage: "trash", role: .destructive) {
+                            Button("Delete Storage…", systemImage: "trash", role: .destructive) {
                                 deletingRackID = rack.id
                             }
                         }
@@ -117,7 +117,7 @@ struct MacRoot: View {
                 Button {
                     router.sheet = .editRack(rackID: nil)
                 } label: {
-                    Label("Add a Rack", systemImage: "plus")
+                    Label("Add Storage", systemImage: "plus")
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
@@ -160,7 +160,7 @@ struct MacRoot: View {
             if model.cellar.rack(id) != nil {
                 RackDetailView(rackID: id)
             } else {
-                ContentUnavailableView("Select a rack", systemImage: "square.grid.3x3")
+                ContentUnavailableView("Select storage", systemImage: "square.grid.3x3")
             }
         }
     }

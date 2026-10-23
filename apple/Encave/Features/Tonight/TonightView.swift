@@ -182,7 +182,7 @@ private struct EmptyTonightView: View {
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
+            Text("Example wines, storage and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
     }
 }
@@ -294,7 +294,7 @@ private struct TonightPick: View {
             // The bottle Drink opens first: a free one, as in the drink sheet.
             if let bottle = group.bottles.bottleToOpen {
                 // Not in a rack and no storage note: said, as on Android.
-                let location = model.locationLabel(for: bottle) ?? String(localized: "Not placed in a rack")
+                let location = model.locationLabel(for: bottle) ?? String(localized: "Not in storage")
                 if bottle.slot != nil {
                     Button {
                         router?.showInRack(bottle, model: model)
@@ -303,7 +303,7 @@ private struct TonightPick: View {
                             .font(.subheadline)
                     }
                     .buttonStyle(.borderless)
-                    .accessibilityHint(Text("Show in Rack"))
+                    .accessibilityHint(Text("Show in Storage"))
                     .accessibilityIdentifier("action.tonight.showInRack")
                 } else {
                     Label(location, systemImage: model.locationIcon(for: bottle))

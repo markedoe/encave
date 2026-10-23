@@ -1,7 +1,7 @@
 # Encave
 
 A private wine cellar for iPhone, iPad, Mac and Android: know what you own,
-where each bottle sits in your racks, and when it is ready to drink.
+where each bottle sits in your storage, and when it is ready to drink.
 
 > **Status:** early development. The apps are built in the open and tested
 > through TestFlight (Apple) and CI builds (Android). See
@@ -9,7 +9,7 @@ where each bottle sits in your racks, and when it is ready to drink.
 
 ## What it does
 
-- **Cellar:** every bottle, searchable, with filters by style, maturity, rack and
+- **Cellar:** every bottle, searchable, with filters by style, maturity, storage and
   your own tags, as a list or (on Mac, iPad and Android tablets) a sortable
   table. Save the searches you use often.
   - Each wine shows its drinking window and why, serving temperature and
@@ -33,12 +33,12 @@ where each bottle sits in your racks, and when it is ready to drink.
   - **Search Pictures** finds a picture of the bottle with the same service;
     the one you choose is downloaded from its site and shown as the wine's
     picture. The label photo is always kept.
-- **Racks drawn as they look:** grids, honeycombs, wine fridges with depth or with
-  bottles stacked in layers on each shelf, diamond bins, irregular rows.
-  - See which bottle is where.
-  - Find a wine with the key under the rack.
+- **Storage drawn as it looks:** racks in grids or honeycombs, wine fridges with depth or with
+  bottles stacked in layers on each shelf, diamond bins and crates, irregular rows.
+  - See which bottle is in which position ("Shelf 2, back, bottom layer, position 3").
+  - Find a wine with the key under the drawing.
   - Pinch to zoom, and move bottles.
-  - Check a rack bottle by bottle.
+  - Check a storage bottle by bottle.
 - **Tonight:** what to open now, the most urgent first, and food pairings.
   - **Ask your cellar** ("something light for a ratatouille"), answered with
     your own bottles by the on-device model of Apple Intelligence; nothing is
