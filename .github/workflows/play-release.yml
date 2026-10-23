@@ -15,6 +15,10 @@ on:
         description: "Version code (empty: the one released on internal testing)"
         type: string
         default: ""
+      draft:
+        description: "Prepare the release as a draft, rolled out from the Play Console (needed while the app is a draft)"
+        type: boolean
+        default: false
       notes_en:
         description: "Release notes in English (empty: the build number)"
         type: string
@@ -57,6 +61,7 @@ jobs:
           VERSION_CODE: ${{ inputs.version_code }}
           NOTES_EN: ${{ inputs.notes_en }}
           NOTES_FR: ${{ inputs.notes_fr }}
+          RELEASE_STATUS: ${{ inputs.draft && 'draft' || '' }}
         run: |
           if [ -z "$VERSION_CODE" ]; then
             VERSION_CODE=$(python3 - <<'PY'

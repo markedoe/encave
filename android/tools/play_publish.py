@@ -36,6 +36,8 @@ Environment:
   RELEASE_NOTES_EN   release notes in English, at most 500 characters (default: the
   RELEASE_NOTES_FR   build number and the latest commit subjects, like the TestFlight
                      "What to Test" of apple.yml; in French with the same subjects)
+  RELEASE_STATUS     "draft": the release is prepared, and rolled out from the Play
+                     Console (needed while the app itself is still a draft)
   USER_FRACTION      staged rollout share, for example 0.1 (production only; not
                      used by the CI: public release stays off)
   LISTING_JSON       promote, listing: the listing texts (docs/store/play.json)
@@ -158,7 +160,10 @@ def notes(version_code):
 def release(version_code):
     entry = {"versionCodes": [str(version_code)], "status": "completed"}
     fraction = os.environ.get("USER_FRACTION", "").strip()
-    if fraction:
+    if os.environ.get("RELEASE_STATUS", "").strip() == "draft":
+        # A draft app (forms not finished) only takes draft releases: rolled out from the Console.
+        entry["status"] = "draft"
+    elif fraction:
         entry["status"] = "inProgress"
         entry["userFraction"] = float(fraction)
     release_notes = notes(version_code)
