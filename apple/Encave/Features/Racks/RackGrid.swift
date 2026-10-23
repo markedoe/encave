@@ -44,6 +44,9 @@ struct RackGrid: View {
     /// A bottle dragged onto a place (iPad, Mac): move it there.
     var onDrop: ((UUID, RackPlace) -> Bool)?
     var interaction = RackInteraction()
+    /// Drawn only (the overview of a rack that scrolls): no buttons, identifiers or
+    /// accessibility elements, so neither VoiceOver nor UI tests find its places twice.
+    var isPicture = false
     /// The smallest size of the fridge's captions (shelf numbers, front and back, zones),
     /// growing with Dynamic Type.
     @ScaledMetric(relativeTo: .caption2) private var captionFloor: CGFloat = 11
@@ -127,7 +130,8 @@ struct RackGrid: View {
                     rack: rack, place: place, bottles: bottles,
                     size: size, selectedCount: selectedByCell[place.cell]?.filter(place.contains).count ?? 0,
                     isHighlighted: highlighted.map(place.contains) == true || selectedPlace == place,
-                    focusWine: focusWine, onTap: onTap, onDrop: onDrop, interaction: interaction
+                    focusWine: focusWine, onTap: onTap, onDrop: onDrop, interaction: interaction,
+                    isPicture: isPicture
                 )
             }
         }
@@ -516,7 +520,7 @@ private struct RackOverview: View {
             let shown = CGSize(width: natural.width * scale, height: natural.height * scale)
             // Drawn as in the view, then scaled down, so the frame matches it exactly.
             RackGrid(rack: rack, cellSize: max(1, tracker.cellSize), selected: selected, highlighted: highlighted,
-                     focusWine: focusWine)
+                     focusWine: focusWine, isPicture: true)
                 .padding(FittedRackGrid.padding)
                 .fixedSize()
                 .onGeometryChange(for: CGSize.self) { $0.size } action: { natural = $0 }
@@ -535,6 +539,8 @@ private struct RackOverview: View {
                 .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .opacity(tracker.cellSize > 0 ? 1 : 0)
+        // One hidden element without children: none of the small places is exposed.
+        .accessibilityElement(children: .ignore)
         .accessibilityHidden(true)
     }
 }
@@ -593,6 +599,8 @@ struct RackCellView: View {
     var onTap: (RackPlace, [Bottle]) -> Void
     var onDrop: ((UUID, RackPlace) -> Bool)?
     var interaction = RackInteraction()
+    /// Drawn only, in an overview: no button, identifier or accessibility.
+    var isPicture = false
     @State private var isTargeted = false
 
     /// From this cell size the vintage is written on the bottle; from `nameSize`, the name below it.
@@ -624,16 +632,29 @@ struct RackCellView: View {
         interaction.mode == .auditing && selectedCount > 0 && selectedCount < bottles.count
     }
 
+    private var drawing: some View {
+        Group {
+            if rack.kind == .bins { bin } else if place.depth != nil { bandPlace } else { position }
+        }
+        .frame(width: size, height: cellHeight)
+        .contentShape(hitShape)
+        .opacity(isDimmed ? 0.25 : 1)
+    }
+
     var body: some View {
+        if isPicture {
+            drawing.accessibilityHidden(true)
+        } else {
+            interactive(drawing)
+        }
+    }
+
+    /// The drawing as a place to tap, drop on and reach with VoiceOver.
+    private func interactive(_ drawing: some View) -> some View {
         Button {
             onTap(place, bottles)
         } label: {
-            Group {
-                if rack.kind == .bins { bin } else if place.depth != nil { bandPlace } else { position }
-            }
-            .frame(width: size, height: cellHeight)
-            .contentShape(hitShape)
-            .opacity(isDimmed ? 0.25 : 1)
+            drawing
         }
         .buttonStyle(.plain)
         .pointerHighlight(hitShape)

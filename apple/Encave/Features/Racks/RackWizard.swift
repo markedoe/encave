@@ -62,7 +62,7 @@ struct RackWizard: View {
         Form {
             Section {
                 ScrollView([.horizontal, .vertical]) {
-                    RackGrid(rack: preview, cellSize: 18, showsHeaders: false)
+                    RackGrid(rack: preview, cellSize: 18, showsHeaders: false, isPicture: true)
                         .allowsHitTesting(false)
                         .padding(8)
                 }

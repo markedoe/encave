@@ -276,18 +276,16 @@ final class ScreenTourTests: XCTestCase {
         if layout.waitForExistence(timeout: 3), layout.buttons.count > 1 {
             layout.buttons.element(boundBy: 1).press()
         } else {
-            // iPad: in the Sort and Filter menu of the list. iPhone has no table.
-            guard !app.horizontalSizeClassIsCompact else { return }
+            // iPad: in the Sort and Filter menu of the list. iPhone has no table, in any
+            // orientation: the app decides by device, so does the tour (the app's frame can be
+            // misread right after a relaunch).
+            guard app.isPad else { return }
             let sort = element("cellar.sort")
             guard sort.exists, sort.isHittable else { return }
             // The menu item, by identifier or by its title (menus do not always carry identifiers);
             // the menu is opened again once if the first press came too early.
             func tableItem() -> XCUIElement? {
-                let byID = element("cellar.layout.table")
-                if byID.waitForExistence(timeout: 5) { return byID }
-                let byTitle = app.buttons.matching(NSPredicate(format: "label IN %@",
-                                                                ["Show as Table", "Afficher en tableau"])).firstMatch
-                return byTitle.waitForExistence(timeout: 2) ? byTitle : nil
+                menuItem("cellar.layout.table", titles: ["Show as Table", "Afficher en tableau"])
             }
             sort.press()
             var found = tableItem()
@@ -399,7 +397,16 @@ final class ScreenTourTests: XCTestCase {
             if more.waitForExistence(timeout: 2), more.isHittable {
                 more.press()
                 sleep(1)
-                XCTAssertTrue(element("cellar.select.delete").waitForExistence(timeout: 2), "cellar: More has no Delete")
+                // By identifier or title (menus do not always carry identifiers); opened again
+                // once if the first press came too early.
+                let titles = ["Delete Wines…", "Supprimer les vins…"]
+                var delete = menuItem("cellar.select.delete", titles: titles)
+                if delete == nil, more.exists, more.isHittable {
+                    more.press()
+                    sleep(1)
+                    delete = menuItem("cellar.select.delete", titles: titles)
+                }
+                XCTAssertNotNil(delete, "cellar: More has no Delete")
                 snapshot("cellar-select-more")
                 #if os(iOS)
                 // XCUITest on iOS leaves this menu over the screen after closing it
@@ -485,7 +492,7 @@ final class ScreenTourTests: XCTestCase {
             scrollIntoView(replace)
             // Down to the last button, so the capture shows both actions.
             #if os(iOS)
-            app.swipeUp()
+            swipeContentUp()
             #else
             app.scroll(byDeltaX: 0, deltaY: -300)
             #endif
@@ -601,8 +608,8 @@ final class ScreenTourTests: XCTestCase {
         }
 
         // Checking the rack: tap the bottles found.
-        let audit = element("rack.audit")
-        if audit.waitForExistence(timeout: 2), audit.isHittable {
+        // By identifier or title; a narrow toolbar may also move it into its overflow menu.
+        if let audit = toolbarAction("rack.audit", titles: ["Check This Storage", "Vérifier ce rangement"]) {
             audit.press()
             cell.press()
             snapshot("rack-audit")
@@ -676,6 +683,38 @@ final class ScreenTourTests: XCTestCase {
 
     private func element(_ identifier: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// A button of an open menu, by identifier or by title: menu items do not always carry
+    /// their identifier on iOS 26.
+    private func menuItem(_ identifier: String, titles: [String], timeout: TimeInterval = 5) -> XCUIElement? {
+        let byID = element(identifier)
+        if byID.waitForExistence(timeout: timeout) { return byID }
+        let byTitle = app.buttons.matching(NSPredicate(format: "label IN %@", titles)).firstMatch
+        return byTitle.waitForExistence(timeout: 2) ? byTitle : nil
+    }
+
+    /// A toolbar button that can be pressed, by identifier or title, or found in the toolbar's
+    /// overflow menu when the toolbar has no room for it.
+    private func toolbarAction(_ identifier: String, titles: [String]) -> XCUIElement? {
+        func hittable(_ item: XCUIElement?) -> XCUIElement? {
+            guard let item, item.exists, item.isHittable else { return nil }
+            return item
+        }
+        if let item = hittable(menuItem(identifier, titles: titles, timeout: 3)) { return item }
+        #if os(iOS)
+        let overflow = app.navigationBars.buttons.matching(NSPredicate(format: "label IN %@",
+                                                                       ["More", "Plus", "Plus d’options"])).firstMatch
+        if overflow.exists, overflow.isHittable {
+            overflow.press()
+            sleep(1)
+            if let item = hittable(menuItem(identifier, titles: titles, timeout: 3)) { return item }
+            dismissMenu()
+        }
+        #endif
+        // What the screen holds, to see where the button went.
+        print(app.debugDescription)
+        return nil
     }
 
     /// Tab titles as shown in each language.
@@ -787,11 +826,20 @@ final class ScreenTourTests: XCTestCase {
         sleep(1)
     }
 
+    #if os(iOS)
+    /// Scrolls the screen's content up: a drag between two points of the screen, as
+    /// swipeUp() on the app needs a hit point XCUITest sometimes cannot find for the app itself.
+    private func swipeContentUp() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+        start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35)))
+    }
+    #endif
+
     private func scrollIntoView(_ element: XCUIElement) {
         var tries = 0
         while !(element.exists && element.isHittable), tries < 6 {
             #if os(iOS)
-            app.swipeUp()
+            swipeContentUp()
             #else
             app.scroll(byDeltaX: 0, deltaY: -300)
             #endif
@@ -901,7 +949,9 @@ final class ScreenTourTests: XCTestCase {
     }
     #endif
 
-    /// At the default zoom, the whole rack is visible: no place is cut off by the screen edges.
+    /// At the default zoom, either the whole rack is in view (no place cut off by the screen
+    /// edges), or it scrolls: then it opens at its top-leading place and every place is at
+    /// least a touch target (44 pt).
     private func checkRackFits(screen: String) {
         let cells = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "rack.cell."))
         guard cells.count > 0 else {
@@ -909,14 +959,24 @@ final class ScreenTourTests: XCTestCase {
             return
         }
         let window = app.windows.firstMatch.frame
-        var outside: [String] = []
+        var outside: [String] = [], small: [String] = []
         for index in 0..<cells.count {
-            let frame = cells.element(boundBy: index).frame
+            let cell = cells.element(boundBy: index)
+            let frame = cell.frame
             if frame.minX < window.minX - 1 || frame.maxX > window.maxX + 1 {
-                outside.append(cells.element(boundBy: index).identifier)
+                outside.append(cell.identifier)
+            }
+            if min(frame.width, frame.height) < 44 - 0.5 {
+                small.append("\(cell.identifier) (\(Int(frame.width))×\(Int(frame.height)) pt)")
             }
         }
-        XCTAssertTrue(outside.isEmpty, "\(screen): \(outside.count) places are off screen, such as \(outside.prefix(3))")
+        guard !outside.isEmpty else { return }
+        // A rack that scrolls.
+        XCTAssertTrue(small.isEmpty, "\(screen): the rack scrolls but \(small.count) places are under 44 pt, such as \(small.prefix(3))")
+        let first = element("rack.cell.0-0").frame
+        XCTAssertTrue(first.minX >= window.minX - 1 && first.maxX <= window.maxX + 1
+                          && first.minY >= window.minY - 1 && first.maxY <= window.maxY + 1,
+                      "\(screen): the rack scrolls but does not open at its first place (\(first))")
     }
 }
 
@@ -936,6 +996,15 @@ private extension XCUIApplication {
     func typeKeyEscapeIfMac() {
         #if os(macOS)
         typeKey(.escape, modifierFlags: [])
+        #endif
+    }
+
+    /// An iPad (the app shows the cellar table there only).
+    var isPad: Bool {
+        #if os(iOS)
+        return UIDevice.current.userInterfaceIdiom == .pad
+        #else
+        return false
         #endif
     }
 

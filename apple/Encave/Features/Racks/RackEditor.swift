@@ -172,7 +172,7 @@ struct RackEditor: View {
 
                 Section("Preview") {
                     ScrollView([.horizontal, .vertical]) {
-                        RackGrid(rack: preview, cellSize: 26, showsHeaders: false)
+                        RackGrid(rack: preview, cellSize: 26, showsHeaders: false, isPicture: true)
                             .allowsHitTesting(false)
                             .padding(12)
                     }
