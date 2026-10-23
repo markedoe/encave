@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 /// How a storage is laid out on screen, the same on both platforms (`RackViewport.kt`):
 /// fitted when every place is at least a touch target, else at that size, scrolling, with
