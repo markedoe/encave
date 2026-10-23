@@ -49,7 +49,7 @@ class RackActionsTest {
     }
 
     private fun openRack(name: String) {
-        compose.onAllNodesWithText("Racks").onFirst().performClick()
+        compose.onAllNodesWithText("Storage").onFirst().performClick()
         compose.waitForIdle()
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText(name))
         compose.onNodeWithText(name).performClick()

@@ -41,12 +41,12 @@
         }
       }
     },
-    "%@ has no place in a rack.": {
+    "%@ has no position in your storage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ n’a pas d’emplacement dans un casier."
+            "value": "%@ n’a pas de position dans vos rangements."
           }
         }
       }
@@ -251,7 +251,7 @@
         }
       }
     },
-    "%lld bottles are in places you removed": {
+    "%lld bottles are in positions you removed": {
       "localizations": {
         "en": {
           "variations": {
@@ -259,13 +259,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bottle is in a place you removed"
+                  "value": "%lld bottle is in a position you removed"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bottles are in places you removed"
+                  "value": "%lld bottles are in positions you removed"
                 }
               }
             }
@@ -277,13 +277,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bouteille est dans un emplacement supprimé"
+                  "value": "%lld bouteille est dans une position supprimée"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bouteilles sont dans des emplacements supprimés"
+                  "value": "%lld bouteilles sont dans des positions supprimées"
                 }
               }
             }
@@ -451,7 +451,7 @@
         }
       }
     },
-    "%lld bottles stay in your cellar without a place.": {
+    "%lld bottles stay in your cellar without a position.": {
       "localizations": {
         "en": {
           "variations": {
@@ -459,13 +459,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bottle stays in your cellar without a place."
+                  "value": "%lld bottle stays in your cellar without a position."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bottles stay in your cellar without a place."
+                  "value": "%lld bottles stay in your cellar without a position."
                 }
               }
             }
@@ -477,13 +477,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bouteille reste dans votre cave sans emplacement."
+                  "value": "%lld bouteille reste dans votre cave sans position."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld bouteilles restent dans votre cave sans emplacement."
+                  "value": "%lld bouteilles restent dans votre cave sans position."
                 }
               }
             }
@@ -701,16 +701,6 @@
         }
       }
     },
-    "%lld of %lld positions used": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld sur %2$lld emplacements occupés"
-          }
-        }
-      }
-    },
     "%lld other changes": {
       "localizations": {
         "en": {
@@ -864,46 +854,6 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld photos ou documents n’y sont pas : un fichier ZIP contient au plus 4 Go. La cave elle-même est complète."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld positions": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld position"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld positions"
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld emplacement"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld emplacements"
                 }
               }
             }
@@ -1211,12 +1161,12 @@
         }
       }
     },
-    "**Erase all data** in **Settings › Reset** removes every bottle, wine, rack and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too. The previous versions and the weekly backups stay on this device, so the cellar can still be restored; on iPhone and iPad, removing Encave deletes them.": {
+    "**Erase all data** in **Settings › Reset** removes every bottle, wine, storage and Journal entry, with Undo right after; in a cellar shared with other devices, it erases it on them too. The previous versions and the weekly backups stay on this device, so the cellar can still be restored; on iPhone and iPad, removing Encave deletes them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, casiers et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux. Les versions précédentes et les sauvegardes hebdomadaires restent sur cet appareil, pour pouvoir encore restaurer la cave ; sur iPhone et iPad, supprimer Encave les supprime."
+            "value": "**Effacer toutes les données** dans **Réglages › Réinitialiser** supprime toutes les bouteilles, tous les vins, rangements et entrées du Journal, avec Annuler juste après ; dans une cave partagée avec d’autres appareils, elle l’efface aussi sur eux. Les versions précédentes et les sauvegardes hebdomadaires restent sur cet appareil, pour pouvoir encore restaurer la cave ; sur iPhone et iPad, supprimer Encave les supprime."
           }
         }
       }
@@ -1231,22 +1181,12 @@
         }
       }
     },
-    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. A CSV with at least a **name** column can be imported, including from another app.": {
+    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its position. Bottles on order, drunk or given away are included too, with their status and tasting notes.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec son emplacement. Un CSV avec au moins une colonne **name** peut être importé, y compris depuis une autre app."
-          }
-        }
-      }
-    },
-    "**Export Spreadsheet (CSV)** opens in Numbers or Excel, one line per bottle with its place. Bottles on order, drunk or given away are included too, with their status and tasting notes.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec sa place. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation."
+            "value": "**Exporter en tableur (CSV)** s’ouvre dans Numbers ou Excel, une ligne par bouteille avec sa position. Les bouteilles en commande, bues ou offertes y sont aussi, avec leur statut et leurs notes de dégustation."
           }
         }
       }
@@ -1271,12 +1211,12 @@
         }
       }
     },
-    "**Inventory for Printing (PDF)** lists every wine in your cellar with its number of bottles, places and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory.": {
+    "**Inventory for Printing (PDF)** lists every wine in your cellar with its number of bottles, positions and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find Current Price**) appear in Insights, not in the inventory.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses places et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
+            "value": "**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses positions et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire."
           }
         }
       }
@@ -1301,12 +1241,12 @@
         }
       }
     },
-    "**cellar.json** is your cellar itself: wines, bottles, racks, the Journal and settings, readable by other programs. **photos** and **documents** hold the files under readable names, such as “Château X 2015.jpg” or “Invoice.pdf”, and **files.json** says which is which. **README.txt** explains it in English and French. A backup made on an iPhone, an iPad, a Mac or an Android device restores on any of them.": {
+    "**cellar.json** is your cellar itself: wines, bottles, storage, the Journal and settings, readable by other programs. **photos** and **documents** hold the files under readable names, such as “Château X 2015.jpg” or “Invoice.pdf”, and **files.json** says which is which. **README.txt** explains it in English and French. A backup made on an iPhone, an iPad, a Mac or an Android device restores on any of them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, casiers, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
+            "value": "**cellar.json** est votre cave elle-même : vins, bouteilles, rangements, le Journal et les réglages, lisible par d’autres programmes. **photos** et **documents** contiennent les fichiers sous des noms lisibles, comme « Château X 2015.jpg » ou « Facture.pdf », et **files.json** indique lequel est lequel. **README.txt** l’explique en anglais et en français. Une sauvegarde faite sur un iPhone, un iPad, un Mac ou un appareil Android se restaure sur chacun d’eux."
           }
         }
       }
@@ -1391,22 +1331,22 @@
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent sur ce Mac (Afficher les sauvegardes hebdomadaires dans le Finder). Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent sur ce Mac (Afficher les sauvegardes hebdomadaires dans le Finder). Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses places et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -1466,7 +1406,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un losange d’environ 30 cm contient une dizaine de bouteilles standard."
+            "value": "Une case en losange d’environ 30 cm contient une dizaine de bouteilles standard."
           }
         }
       }
@@ -1506,7 +1446,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un casier nid d’abeille, ou les étagères d’une cave à vin portant des bouteilles empilées en quinconce."
+            "value": "Un casier nid d’abeille, ou les étagères d’une cave à vin réfrigérée portant des bouteilles empilées en quinconce."
           }
         }
       }
@@ -1516,7 +1456,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un nom que vous reconnaîtrez : mur gauche de la cave, cave de la cuisine…"
+            "value": "Un nom que vous reconnaîtrez : mur gauche du cellier, armoire de la cuisine…"
           }
         }
       }
@@ -1751,22 +1691,22 @@
         }
       }
     },
-    "Add Rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un casier"
-          }
-        }
-      }
-    },
     "Add Shelf": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une étagère"
+          }
+        }
+      }
+    },
+    "Add Storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un rangement"
           }
         }
       }
@@ -1781,22 +1721,22 @@
         }
       }
     },
-    "Add What Is Missing adds the wines, bottles, racks, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde ; vos réglages restent tels quels. Vous pouvez annuler juste après."
-          }
-        }
-      }
-    },
     "Add What Is Missing adds the wines, bottles, storage and Journal entries that are not in your cellar, and the saved searches whose name you do not have; nothing else changes, the currency included. Replace This Cellar makes your cellar exactly as in this backup, its settings (currency, saved searches) included. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter ce qui manque ajoute les vins, bouteilles, rangements et entrées du Journal absents de votre cave, et les recherches enregistrées dont vous n’avez pas le nom ; rien d’autre ne change, la devise non plus. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde, réglages compris (devise, recherches enregistrées). Vous pouvez annuler juste après."
+          }
+        }
+      }
+    },
+    "Add What Is Missing adds the wines, bottles, storage, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter ce qui manque ajoute les vins, bouteilles, rangements, entrées du Journal et recherches enregistrées absents de votre cave, sans rien changer d’autre. Remplacer cette cave rend votre cave exactement comme dans cette sauvegarde ; vos réglages restent tels quels. Vous pouvez annuler juste après."
           }
         }
       }
@@ -1826,7 +1766,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter une bouteille dans ce casier"
+            "value": "Ajouter une bouteille dans cette case"
           }
         }
       }
@@ -1871,16 +1811,6 @@
         }
       }
     },
-    "Add a Rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un casier"
-          }
-        }
-      }
-    },
     "Add a Tasting": {
       "localizations": {
         "fr": {
@@ -1897,16 +1827,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter un appareil"
-          }
-        }
-      }
-    },
-    "Add a rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un casier"
           }
         }
       }
@@ -1981,12 +1901,22 @@
         }
       }
     },
-    "Add several bottles at once, or a case of 6 or 12 in one tap. The bottles go to the rack you used last on this device (or the first one with room), in its first free places unless you pick them. Without a rack, write where they are (kitchen, box in the garage). Right after adding, **Undo** in the banner takes the bottles back.": {
+    "Add several bottles at once, or a case of 6 or 12 in one tap. The bottles go to the storage you used last on this device (or the first one with room), in its first free positions unless you pick them. Without storage, write where they are (kitchen, box in the garage). Right after adding, **Undo** in the banner takes the bottles back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez plusieurs bouteilles d’un coup, ou une caisse de 6 ou 12 en une touche. Les bouteilles vont dans le casier utilisé la dernière fois sur cet appareil (ou le premier qui a de la place), aux premières places libres sauf si vous les choisissez. Sans casier, indiquez où elles sont (cuisine, carton au garage). Juste après l’ajout, **Annuler** dans le bandeau retire les bouteilles."
+            "value": "Ajoutez plusieurs bouteilles d’un coup, ou une caisse de 6 ou 12 en une touche. Les bouteilles vont dans le rangement utilisé la dernière fois sur cet appareil (ou le premier qui a de la place), aux premières positions libres sauf si vous les choisissez. Sans rangement, indiquez où elles sont (cuisine, carton au garage). Juste après l’ajout, **Annuler** dans le bandeau retire les bouteilles."
+          }
+        }
+      }
+    },
+    "Add storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un rangement"
           }
         }
       }
@@ -2091,22 +2021,22 @@
         }
       }
     },
-    "Adding a rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un casier"
-          }
-        }
-      }
-    },
     "Adding bottles": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter des bouteilles"
+          }
+        }
+      }
+    },
+    "Adding storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un rangement"
           }
         }
       }
@@ -2581,12 +2511,12 @@
         }
       }
     },
-    "At the top, **Tonight, open…** suggests one wine to drink now, chosen for the day among those ready or to drink soon: it stays the same all day, even when you add bottles. Tap the card to open the wine. It says where the bottle is (tap to show it in its rack); **Drink** opens it and, when at least two wines can be suggested, **Another idea** picks another. Bottles kept for an occasion are not suggested; when nothing is ready or to drink soon, Tonight says which wine will be ready first. Below, the bottles to drink soon come first. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.": {
+    "At the top, **Tonight, open…** suggests one wine to drink now, chosen for the day among those ready or to drink soon: it stays the same all day, even when you add bottles. Tap the card to open the wine. It says where the bottle is (tap to show it in its storage); **Drink** opens it and, when at least two wines can be suggested, **Another idea** picks another. Bottles kept for an occasion are not suggested; when nothing is ready or to drink soon, Tonight says which wine will be ready first. Below, the bottles to drink soon come first. Choose a dish to see the wines from your cellar that go with it, and why; the best are marked **Great match**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En haut, **Ce soir, ouvrez…** propose un vin à boire maintenant, choisi pour la journée parmi ceux prêts ou à boire bientôt : il reste le même toute la journée, même quand vous ajoutez des bouteilles. Touchez la carte pour ouvrir le vin. Elle indique où est la bouteille (touchez pour la voir dans son casier) ; **Boire** l’ouvre et, quand au moins deux vins peuvent être proposés, **Autre idée** en propose un autre. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt ni à boire bientôt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**."
+            "value": "En haut, **Ce soir, ouvrez…** propose un vin à boire maintenant, choisi pour la journée parmi ceux prêts ou à boire bientôt : il reste le même toute la journée, même quand vous ajoutez des bouteilles. Touchez la carte pour ouvrir le vin. Elle indique où est la bouteille (touchez pour la voir dans son rangement) ; **Boire** l’ouvre et, quand au moins deux vins peuvent être proposés, **Autre idée** en propose un autre. Les bouteilles réservées pour une occasion ne sont pas suggérées ; quand rien n’est prêt ni à boire bientôt, Ce soir indique quel vin le sera en premier. En dessous, les bouteilles à boire bientôt passent en premier. Choisissez un plat pour voir les vins de votre cave qui s’y accordent, et pourquoi ; les meilleurs sont marqués **Excellent accord**."
           }
         }
       }
@@ -2776,7 +2706,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Casier %@"
+            "value": "Case %@"
           }
         }
       }
@@ -2786,7 +2716,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Casiers ou caisses"
+            "value": "Cases ou caisses"
           }
         }
       }
@@ -2796,7 +2726,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Casiers par rangée"
+            "value": "Cases par rangée"
           }
         }
       }
@@ -2921,12 +2851,12 @@
         }
       }
     },
-    "Bottle taken out of the rack": {
+    "Bottle taken out of storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteille sortie du casier"
+            "value": "Bouteille sortie du rangement"
           }
         }
       }
@@ -2971,12 +2901,12 @@
         }
       }
     },
-    "Bottles in this rack stay in your cellar without a place.": {
+    "Bottles in this storage stay in your cellar without a position.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les bouteilles de ce casier restent dans votre cave, sans emplacement."
+            "value": "Les bouteilles de ce rangement restent dans votre cave, sans position."
           }
         }
       }
@@ -3046,17 +2976,17 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles par casier"
+            "value": "Bouteilles par case"
           }
         }
       }
     },
-    "Bottles per cell": {
+    "Bottles per position": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles par case"
+            "value": "Bouteilles par position"
           }
         }
       }
@@ -3141,12 +3071,12 @@
         }
       }
     },
-    "Bottles taken out of their places: %lld": {
+    "Bottles taken out of their positions: %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bouteilles sorties de leur emplacement : %lld"
+            "value": "Bouteilles sorties de leur position : %lld"
           }
         }
       }
@@ -3221,12 +3151,12 @@
         }
       }
     },
-    "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right (**Received**), or touch and hold them and choose **Mark Received**. They then join the cellar without a place, ready to be put in a rack. An order that will not come: **Cancel Order** on the bottle, on the wine's page.": {
+    "Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right (**Received**), or touch and hold them and choose **Mark Received**. They then join the cellar without a position, ready to be put in storage. An order that will not come: **Cancel Order** on the bottle, on the wine's page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite (**Reçues**), ou touchées longuement pour choisir **Marquer comme reçu**. Elles rejoignent alors la cave sans place, prêtes à être rangées dans un casier. Une commande qui n’arrivera pas : **Annuler la commande** sur la bouteille, sur la fiche du vin."
+            "value": "Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite (**Reçues**), ou touchées longuement pour choisir **Marquer comme reçu**. Elles rejoignent alors la cave sans position, prêtes à être mises dans un rangement. Une commande qui n’arrivera pas : **Annuler la commande** sur la bouteille, sur la fiche du vin."
           }
         }
       }
@@ -3297,6 +3227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par millésime"
+          }
+        }
+      }
+    },
+    "Cabinet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Armoire"
           }
         }
       }
@@ -3401,12 +3341,12 @@
         }
       }
     },
-    "Cellar, Racks, Tonight, Journal": {
+    "Cellar, Storage, Tonight, Journal": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave, Casiers, Ce soir, Journal"
+            "value": "Cave, Rangements, Ce soir, Journal"
           }
         }
       }
@@ -3491,12 +3431,12 @@
         }
       }
     },
-    "Changing a rack": {
+    "Changing storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modifier un casier"
+            "value": "Modifier un rangement"
           }
         }
       }
@@ -3521,12 +3461,12 @@
         }
       }
     },
-    "Check This Rack": {
+    "Check This Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vérifier ce casier"
+            "value": "Vérifier ce rangement"
           }
         }
       }
@@ -3581,12 +3521,12 @@
         }
       }
     },
-    "Checking a rack": {
+    "Checking storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vérifier un casier"
+            "value": "Vérifier un rangement"
           }
         }
       }
@@ -3611,22 +3551,22 @@
         }
       }
     },
-    "Choose **Check This Rack**, tap each bottle you find, then **End Check**. Tapping a bin or a place with several bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a place shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of the Rack** (they stay in the cellar without a place) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
+    "Choose **Check This Storage**, tap each bottle you find, then **End Check**. Tapping a bin or a position with several bottles marks them all; to tick them one by one, touch and hold it and choose **Check One by One…** (a position shows **8/10** when some are found). For the bottles not found, choose **Take Them Out of Storage** (they stay in the cellar without a position) or **Mark Them as Gone** (they leave the cellar). **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Vérifier ce casier**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher un losange ou une place de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement et choisissez **Vérifier une par une…** (une place affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du casier** (elles restent dans la cave sans place) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
+            "value": "Choisissez **Vérifier ce rangement**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher une case ou une position de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement et choisissez **Vérifier une par une…** (une position affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du rangement** (elles restent dans la cave sans position) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place."
           }
         }
       }
     },
-    "Choose **Edit Rack** to change its name, kind or size. On a fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes places that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a place, and **Undo** puts them back. **Delete Rack** asks first, saying how many bottles it holds; they stay in your cellar without a place, and **Undo** brings the rack back.": {
+    "Choose **Edit Storage** to change its name, kind or size. On a wine fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a position, and **Undo** puts them back. **Delete Storage** asks first, saying how many bottles it holds; they stay in your cellar without a position, and **Undo** brings the storage back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Modifier le casier** pour changer son nom, son type ou sa taille. Sur une cave à vin aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des places occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans place, et **Annuler** les remet. **Supprimer le casier** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans place, et **Annuler** rétablit le casier."
+            "value": "Choisissez **Modifier le rangement** pour changer son nom, son type ou sa taille. Sur une cave à vin réfrigérée aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans position, et **Annuler** les remet. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans position, et **Annuler** rétablit le rangement."
           }
         }
       }
@@ -3681,22 +3621,22 @@
         }
       }
     },
-    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, racks, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after, unless the cellar changed since. A backup that was cut short, for example by a copy that did not finish, shows “This backup is damaged or incomplete.” and nothing is restored.": {
+    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, storage and Journal entries you no longer have, and the saved searches whose name you do not have, and changes nothing else, the currency included; a bottle whose position is taken comes back without a position. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted, and its settings, the currency and the saved searches, are restored too. You can undo right after, unless the cellar changed since. A backup that was cut short, for example by a copy that did not finish, shows “This backup is damaged or incomplete.” and nothing is restored.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, casiers, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis. Une sauvegarde tronquée, par exemple par une copie qui ne s’est pas terminée, affiche « Cette sauvegarde est abîmée ou incomplète. » et rien n’est restauré."
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, rangements et entrées du Journal que vous n’avez plus, et les recherches enregistrées dont vous n’avez pas le nom, sans rien changer d’autre, la devise non plus ; une bouteille dont la position est prise revient sans position. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé, et ses réglages, la devise et les recherches enregistrées, sont aussi restaurés. Vous pouvez annuler juste après, sauf si la cave a changé depuis. Une sauvegarde tronquée, par exemple par une copie qui ne s’est pas terminée, affiche « Cette sauvegarde est abîmée ou incomplète. » et rien n’est restauré."
           }
         }
       }
     },
-    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, storage and Journal entries you no longer have, and the saved searches whose name you do not have, and changes nothing else, the currency included; a bottle whose place is taken comes back without a place. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted, and its settings, the currency and the saved searches, are restored too. You can undo right after, unless the cellar changed since. A backup that was cut short, for example by a copy that did not finish, shows “This backup is damaged or incomplete.” and nothing is restored.": {
+    "Choose a previous version, or **Import…** and pick a backup (the ZIP file, or cellar.json alone). Encave first shows what it holds and how it differs from your cellar. **Add What Is Missing** adds the wines, bottles, storage, Journal entries and saved searches you no longer have and changes nothing else; a bottle whose position is taken comes back without a position. **Replace This Cellar** makes your cellar exactly as in the backup: what is not in it is deleted. Your settings, such as the currency, stay as they are. You can undo right after, unless the cellar changed since. A backup that was cut short, for example by a copy that did not finish, shows “This backup is damaged or incomplete.” and nothing is restored.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, rangements et entrées du Journal que vous n’avez plus, et les recherches enregistrées dont vous n’avez pas le nom, sans rien changer d’autre, la devise non plus ; une bouteille dont la place est prise revient sans place. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé, et ses réglages, la devise et les recherches enregistrées, sont aussi restaurés. Vous pouvez annuler juste après, sauf si la cave a changé depuis. Une sauvegarde tronquée, par exemple par une copie qui ne s’est pas terminée, affiche « Cette sauvegarde est abîmée ou incomplète. » et rien n’est restauré."
+            "value": "Choisissez une version précédente, ou **Importer…** et une sauvegarde (le fichier ZIP, ou cellar.json seul). Encave montre d’abord ce qu’elle contient et en quoi elle diffère de votre cave. **Ajouter ce qui manque** ajoute les vins, bouteilles, rangements, entrées du Journal et recherches enregistrées que vous n’avez plus, sans rien changer d’autre ; une bouteille dont la position est prise revient sans position. **Remplacer cette cave** rend votre cave exactement comme dans la sauvegarde : ce qui n’y est pas est supprimé. Vos réglages, comme la devise, restent tels quels. Vous pouvez annuler juste après, sauf si la cave a changé depuis. Une sauvegarde tronquée, par exemple par une copie qui ne s’est pas terminée, affiche « Cette sauvegarde est abîmée ou incomplète. » et rien n’est restauré."
           }
         }
       }
@@ -3707,16 +3647,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisir un fournisseur"
-          }
-        }
-      }
-    },
-    "Choose a rack to see exactly where the bottles are, or note where they are kept.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisissez un casier pour savoir exactement où sont les bouteilles, ou indiquez où elles sont rangées."
           }
         }
       }
@@ -3767,6 +3697,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez-le pour ajouter des bouteilles sans ressaisir le vin."
+          }
+        }
+      }
+    },
+    "Choose storage to see exactly where the bottles are, or note where they are kept.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un rangement pour savoir exactement où sont les bouteilles, ou indiquez où elles sont gardées."
           }
         }
       }
@@ -3841,12 +3781,12 @@
         }
       }
     },
-    "Click a place in the rack to add a bottle there.": {
+    "Click a free position to add a bottle there.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cliquez sur un emplacement du casier pour y ajouter une bouteille."
+            "value": "Cliquez sur une position libre pour y ajouter une bouteille."
           }
         }
       }
@@ -4051,12 +3991,12 @@
         }
       }
     },
-    "Counted from the left. Places are numbered 1, 2, 3…": {
+    "Counted from the left. Positions are numbered 1, 2, 3…": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comptées depuis la gauche. Les places sont numérotées 1, 2, 3…"
+            "value": "Comptées depuis la gauche. Les positions sont numérotées 1, 2, 3…"
           }
         }
       }
@@ -4271,32 +4211,32 @@
         }
       }
     },
-    "Delete Rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer le casier"
-          }
-        }
-      }
-    },
-    "Delete Rack…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer le casier…"
-          }
-        }
-      }
-    },
     "Delete Search": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer la recherche"
+          }
+        }
+      }
+    },
+    "Delete Storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le rangement"
+          }
+        }
+      }
+    },
+    "Delete Storage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le rangement…"
           }
         }
       }
@@ -4431,32 +4371,32 @@
         }
       }
     },
-    "Describe each place where you keep bottles: a rack, a wine fridge, a set of bins.": {
+    "Describe where you keep bottles: a rack, a wine fridge, a set of bins.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin, des casiers en losange."
+            "value": "Décrivez où vous rangez des bouteilles : un casier, une cave à vin réfrigérée, un ensemble de cases."
           }
         }
       }
     },
-    "Describe your racks to see exactly where each bottle is.": {
+    "Describe your storage so every bottle has a position.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Décrivez vos casiers pour voir exactement où se trouve chaque bouteille."
+            "value": "Décrivez vos rangements pour que chaque bouteille ait sa position."
           }
         }
       }
     },
-    "Describe your storage so every bottle has a place.": {
+    "Describe your storage to see exactly where each bottle is.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Décrivez vos rangements pour que chaque bouteille ait sa place."
+            "value": "Décrivez vos rangements pour voir exactement où se trouve chaque bouteille."
           }
         }
       }
@@ -4596,7 +4536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les casiers en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacun ; touchez-en un pour voir son contenu."
+            "value": "Les cases en losange ou les caisses contiennent plusieurs bouteilles empilées. Indiquez combien de bouteilles tiennent dans chacune ; touchez-en une pour voir son contenu."
           }
         }
       }
@@ -4606,7 +4546,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Casiers en losange ou caisses de plusieurs bouteilles"
+            "value": "Cases en losange ou caisses de plusieurs bouteilles"
           }
         }
       }
@@ -4616,17 +4556,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Losanges, 2 × 3 de 10"
-          }
-        }
-      }
-    },
-    "Diamond bins, 36": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Losanges, 36"
+            "value": "Casiers en losange, 2 × 3 de 10"
           }
         }
       }
@@ -4961,12 +4891,12 @@
         }
       }
     },
-    "Each bottle shows its vintage; in grid racks and wine fridges, its name too once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the rack to light up its bottles; tap it again to show all. On a wine's page, **Show in Rack** opens the rack with its bottles lit up.": {
+    "Each bottle shows its vintage; in grid racks and wine fridges, its name too once you zoom in. Tap a bottle to see what it is and where. Tap a wine in the key under the drawing to light up its bottles; tap it again to show all. On a wine's page, **Show in Storage** opens the storage with its bottles lit up.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le casier pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le casier** ouvre le casier en faisant ressortir ses bouteilles."
+            "value": "Chaque bouteille affiche son millésime ; dans les casiers classiques et les caves à vin réfrigérées, son nom aussi dès que vous zoomez. Touchez une bouteille pour voir ce que c’est et où elle est. Touchez un vin dans la légende sous le dessin pour faire ressortir ses bouteilles ; touchez-le à nouveau pour tout afficher. Sur la fiche d’un vin, **Voir dans le rangement** ouvre le rangement en faisant ressortir ses bouteilles."
           }
         }
       }
@@ -5041,12 +4971,12 @@
         }
       }
     },
-    "Edit Rack": {
+    "Edit Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modifier le casier"
+            "value": "Modifier le rangement"
           }
         }
       }
@@ -5386,7 +5316,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille est à sa place."
+            "value": "Chaque bouteille est bien là où elle doit être."
           }
         }
       }
@@ -5401,12 +5331,12 @@
         }
       }
     },
-    "Every bottle, wine, rack, Journal entry and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both before they synced, one version of it is kept as a whole, usually the later one. A deletion stays deleted, except that a wine comes back if one of its bottles or a tasting of it was added or changed meanwhile on another device, so nothing added is lost. If two bottles end up in the same place, the one moved there last keeps it; the other stays in the cellar without a place. Every device ends up with the same cellar, whatever the order of the syncs.": {
+    "Every bottle, wine, storage, Journal entry and saved search remembers when it last changed. Changes to different things on two devices are all kept. If the same thing was changed on both before they synced, one version of it is kept as a whole, usually the later one. A deletion stays deleted, except that a wine comes back if one of its bottles or a tasting of it was added or changed meanwhile on another device, so nothing added is lost. If two bottles end up in the same position, the one moved there last keeps it; the other stays in the cellar without a position. Every device ends up with the same cellar, whatever the order of the syncs.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chaque bouteille, vin, casier, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux avant de se synchroniser, une seule version est gardée en entier, en général la plus récente. Une suppression reste définitive, sauf qu’un vin revient si l’une de ses bouteilles ou une dégustation de ce vin a été ajoutée ou modifiée entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même place, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans place. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
+            "value": "Chaque bouteille, vin, rangement, entrée du Journal et recherche enregistrée garde la trace de sa dernière modification. Des modifications de choses différentes sur deux appareils sont toutes conservées. Si la même chose a été modifiée sur les deux avant de se synchroniser, une seule version est gardée en entier, en général la plus récente. Une suppression reste définitive, sauf qu’un vin revient si l’une de ses bouteilles ou une dégustation de ce vin a été ajoutée ou modifiée entre-temps sur un autre appareil : rien de ce qui a été ajouté n’est perdu. Si deux bouteilles se retrouvent à la même position, celle qui y a été déplacée en dernier la garde ; l’autre reste dans la cave, sans position. Tous les appareils finissent avec la même cave, quel que soit l’ordre des synchronisations."
           }
         }
       }
@@ -5441,22 +5371,22 @@
         }
       }
     },
-    "Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Des vins, casiers et dégustations d’exemple pour essayer Encave. Retirez-les quand vous voulez avec Retirer l’exemple en haut de la Cave."
-          }
-        }
-      }
-    },
     "Example wines, storage and tastings to explore every screen before adding your own bottles. **Remove Sample** at the top of the Cellar removes them, and only them, at any time.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Des vins, rangements et dégustations d’exemple pour découvrir chaque écran avant d’ajouter vos propres bouteilles. **Retirer l’exemple** en haut de la Cave les retire, eux seuls, quand vous voulez."
+          }
+        }
+      }
+    },
+    "Example wines, storage and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des vins, rangements et dégustations d’exemple pour essayer Encave. Retirez-les quand vous voulez avec Retirer l’exemple en haut de la Cave."
           }
         }
       }
@@ -5671,22 +5601,12 @@
         }
       }
     },
-    "For a bottle that left the cellar without being drunk by you (given away, sold or broken), swipe it to the left on the wine's page, or touch and hold it, and choose **No Longer in Cellar**. For one entered by mistake, choose **Delete Bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back; after deleting a wine, it stays a little longer. A bottle opened by mistake: touch and hold it in the Journal (or open its tasting) and choose **Put Back in the Cellar**. It returns without a place in a rack and its note is deleted; **Undo** restores it.": {
+    "For a bottle that left the cellar without being drunk by you (given away, sold or broken), swipe it to the left on the wine's page, or touch and hold it, and choose **No Longer in Cellar**. For one entered by mistake, choose **Delete Bottle**. Deleting a wine deletes its bottles and tastings too. **Undo** puts it all back; after deleting a wine, it stays a little longer. A bottle opened by mistake: touch and hold it in the Journal (or open its tasting) and choose **Put Back in the Cellar**. It returns without a position and its note is deleted; **Undo** restores it.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), balayez-la vers la gauche sur la fiche du vin, ou touchez-la longuement, et choisissez **Plus en cave**. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps. Une bouteille ouverte par erreur : touchez-la longuement dans le Journal (ou ouvrez sa dégustation) et choisissez **Remettre en cave**. Elle revient sans place dans un casier et sa note est supprimée ; **Annuler** la rétablit."
-          }
-        }
-      }
-    },
-    "For a fridge with two temperature zones: a divider is drawn above this shelf.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour une cave à deux zones de température : un séparateur est dessiné au-dessus de cette étagère."
+            "value": "Pour une bouteille sortie de la cave sans que vous l’ayez bue (donnée, vendue ou cassée), balayez-la vers la gauche sur la fiche du vin, ou touchez-la longuement, et choisissez **Plus en cave**. Pour une bouteille saisie par erreur, choisissez **Supprimer la bouteille**. Supprimer un vin supprime aussi ses bouteilles et ses dégustations. **Annuler** remet tout en place ; après la suppression d’un vin, il reste affiché un peu plus longtemps. Une bouteille ouverte par erreur : touchez-la longuement dans le Journal (ou ouvrez sa dégustation) et choisissez **Remettre en cave**. Elle revient sans position et sa note est supprimée ; **Annuler** la rétablit."
           }
         }
       }
@@ -5701,12 +5621,22 @@
         }
       }
     },
-    "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to All Shelves** (touch and hold it). Places are named by shelf, layer and number, like **Shelf 1, top layer, place 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone; **Wine fridge, 2 zones** is a ready-made start.": {
+    "For a wine fridge whose shelves hold bottles stacked in quincunx, choose **Honeycomb rack**, then **On shelves**. Each shelf holds one to three layers: for example 6 bottles at the bottom and 5 on top, resting in the gaps. Shelves can differ: set the layers and bottles of each one, or set one and choose **Apply to All Shelves** (touch and hold it). Positions are named by shelf, layer and number, like **Shelf 1, top layer, position 3**; each shelf fills from its bottom layer. For two temperature zones, turn on **New zone from this shelf** on the first shelf of the lower zone; **Wine fridge, 2 zones** is a ready-made start.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour une cave à vin dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les places sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, place 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin, 2 zones** est un point de départ tout prêt."
+            "value": "Pour une cave à vin réfrigérée dont les étagères portent des bouteilles empilées en quinconce, choisissez **Casier nid d’abeille**, puis **Sur étagères**. Chaque étagère porte une à trois couches : par exemple 6 bouteilles en bas et 5 au-dessus, posées dans les creux. Les étagères peuvent différer : réglez les couches et les bouteilles de chacune, ou réglez-en une et choisissez **Appliquer à toutes les étagères** (touchez-la longuement). Les positions sont nommées par étagère, couche et numéro, comme **Étagère 1, couche du haut, position 3** ; chaque étagère se remplit par sa couche du bas. Pour deux zones de température, activez **Nouvelle zone à partir de cette étagère** sur la première étagère de la zone basse ; **Cave à vin réfrigérée, 2 zones** est un point de départ tout prêt."
+          }
+        }
+      }
+    },
+    "For a wine fridge with two temperature zones: a divider is drawn above this shelf.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour une cave à vin réfrigérée à deux zones de température : un séparateur est dessiné au-dessus de cette étagère."
           }
         }
       }
@@ -5721,12 +5651,12 @@
         }
       }
     },
-    "For bottles that are not in a rack.": {
+    "For bottles that are not in storage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour les bouteilles qui ne sont pas dans un casier."
+            "value": "Pour les bouteilles qui ne sont pas dans un rangement."
           }
         }
       }
@@ -5811,22 +5741,12 @@
         }
       }
     },
-    "Fridge with bottles in layers": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cave à vin avec bouteilles en couches"
-          }
-        }
-      }
-    },
     "Fridge, 2 deep, 6 shelves of 7": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, 2 en profondeur, 6 étagères de 7"
+            "value": "Cave à vin réfrigérée, 2 en profondeur, 6 étagères de 7"
           }
         }
       }
@@ -5836,7 +5756,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, 6 étagères de 6"
+            "value": "Cave à vin réfrigérée, 6 étagères de 6"
           }
         }
       }
@@ -6121,12 +6041,12 @@
         }
       }
     },
-    "Head-to-tail fridge": {
+    "Head-to-tail cabinet": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave tête-bêche"
+            "value": "Armoire tête-bêche"
           }
         }
       }
@@ -6161,12 +6081,12 @@
         }
       }
     },
-    "Help with racks": {
+    "Help with storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aide sur les casiers"
+            "value": "Aide sur les rangements"
           }
         }
       }
@@ -6201,7 +6121,7 @@
         }
       }
     },
-    "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell.": {
+    "Holds %lld bottles. Positions are named like B3; with two bottles in a position, “B3, back” is the one behind.": {
       "localizations": {
         "en": {
           "variations": {
@@ -6209,13 +6129,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Holds %lld bottle. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."
+                  "value": "Holds %lld bottle. Positions are named like B3; with two bottles in a position, “B3, back” is the one behind."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Holds %lld bottles. Places are named by row letter and number, like B3; B3-2 is the second bottle in a cell."
+                  "value": "Holds %lld bottles. Positions are named like B3; with two bottles in a position, “B3, back” is the one behind."
                 }
               }
             }
@@ -6227,13 +6147,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                  "value": "Contient %lld bouteille. Les positions sont nommées comme B3 ; avec deux bouteilles par position, « B3, fond » est celle de derrière."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les emplacements sont nommés par lettre de rangée et numéro, comme B3 ; B3-2 est la deuxième bouteille d’une case."
+                  "value": "Contient %lld bouteilles. Les positions sont nommées comme B3 ; avec deux bouteilles par position, « B3, fond » est celle de derrière."
                 }
               }
             }
@@ -6241,7 +6161,7 @@
         }
       }
     },
-    "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind.": {
+    "Holds %lld bottles. Shelves are numbered from the top, positions from the left.": {
       "localizations": {
         "en": {
           "variations": {
@@ -6249,13 +6169,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Holds %lld bottle. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."
+                  "value": "Holds %lld bottle. Shelves are numbered from the top, positions from the left."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Holds %lld bottles. Places are named like B3; with two bottles in a place, “B3, back” is the one behind."
+                  "value": "Holds %lld bottles. Shelves are numbered from the top, positions from the left."
                 }
               }
             }
@@ -6267,13 +6187,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteille. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
+                  "value": "Contient %lld bouteille. Les étagères sont numérotées depuis le haut, les positions depuis la gauche."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Contient %lld bouteilles. Les places sont nommées comme B3 ; avec deux bouteilles par place, « B3, fond » est celle de derrière."
+                  "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les positions depuis la gauche."
                 }
               }
             }
@@ -6281,52 +6201,12 @@
         }
       }
     },
-    "Holds %lld bottles. Shelves are numbered from the top, places from the left.": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Holds %lld bottle. Shelves are numbered from the top, places from the left."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Holds %lld bottles. Shelves are numbered from the top, places from the left."
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Contient %lld bouteille. Les étagères sont numérotées depuis le haut, les places depuis la gauche."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "Holds %lld bottles. Shelves are numbered from the top, places from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.": {
+    "Holds %lld bottles. Shelves are numbered from the top, positions from the left. Each shelf shows its front bottles, then the ones behind; head-to-tail, their necks face you.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les places depuis la gauche. Chaque étagère montre ses bouteilles de devant, puis celles du fond ; tête-bêche, leur goulot est vers vous."
+            "value": "Contient %lld bouteilles. Les étagères sont numérotées depuis le haut, les positions depuis la gauche. Chaque étagère montre ses bouteilles de devant, puis celles du fond ; tête-bêche, leur goulot est vers vous."
           }
         }
       }
@@ -6371,12 +6251,12 @@
         }
       }
     },
-    "How many bottles fit one behind the other in each cell.": {
+    "How many bottles fit one behind the other in each position.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Combien de bouteilles tiennent l’une derrière l’autre dans chaque case."
+            "value": "Combien de bouteilles tiennent l’une derrière l’autre à chaque position."
           }
         }
       }
@@ -6561,6 +6441,16 @@
         }
       }
     },
+    "In Storage, touch and hold one and choose **Move Up** or **Move Down**; on the Mac, drag it in the sidebar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans Rangements, touchez-en un longuement et choisissez **Monter** ou **Descendre** ; sur Mac, faites-le glisser dans la barre latérale."
+          }
+        }
+      }
+    },
     "In This Backup": {
       "localizations": {
         "fr": {
@@ -6571,22 +6461,22 @@
         }
       }
     },
-    "In grids and honeycombs, rows are lettered from the top and places numbered from the left: **B3** is the second row, third place. With two bottles in a place, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and places along each shelf: **Shelf 2, place 3**, and the one behind it **Shelf 2, place 3, back**; an empty place shows only its number. In bins, places read like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
+    "In grids and honeycombs, rows are lettered from the top and positions numbered from the left: **B3** is the second row, third position. With two bottles in a position, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and positions along each shelf: **Shelf 2, position 3**, and the one behind it **Shelf 2, back, position 3**; an empty position shows only its number. In bins, positions read like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les places numérotées depuis la gauche : **B3** est la deuxième rangée, troisième place. Avec deux bouteilles par place, **B3, fond** est celle de derrière. Dans une cave à vin, les étagères sont numérotées depuis le haut et les places le long de chaque étagère : **Étagère 2, place 3**, et celle derrière **Étagère 2, place 3, fond** ; une place vide n’affiche que son numéro. Dans des losanges, les places se lisent comme **Casier B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
+            "value": "Dans les casiers en grille et nid d’abeille, les rangées sont nommées par lettre depuis le haut et les positions numérotées depuis la gauche : **B3** est la deuxième rangée, troisième position. Avec deux bouteilles par position, **B3, fond** est celle de derrière. Dans une cave à vin réfrigérée, les étagères sont numérotées depuis le haut et les positions le long de chaque étagère : **Étagère 2, position 3**, et celle derrière **Étagère 2, fond, position 3** ; une position vide n’affiche que son numéro. Dans des cases, les positions se lisent comme **Case B3**. Le même nom s’affiche sur la fiche du vin, dans la liste des bouteilles et pour Siri."
           }
         }
       }
     },
-    "In the Cellar list, tap **Select** in the toolbar (an icon on the iPad), or touch and hold a wine and choose **Select**, then tick the wines, or **Select All** for those the search and filters show. Then place them in a rack (bottles already in a rack stay where they are), take them out of their places or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them; **Done** ends the selection. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to place them, take them out or delete them. **Undo** puts everything back.": {
+    "In the Cellar list, tap **Select** in the toolbar (an icon on the iPad), or touch and hold a wine and choose **Select**, then tick the wines, or **Select All** for those the search and filters show. Then put them in storage (bottles already in storage stay where they are), take them out of their positions or, under **More**, keep their bottles for an occasion, mark them as no longer in the cellar or delete them; **Done** ends the selection. In the table on the Mac and the iPad, select several rows (⌘-click or ⇧-click) and right-click them to put them in storage, take them out or delete them. **Undo** puts everything back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans la liste de la Cave, touchez **Sélectionner** dans la barre d’outils (une icône sur iPad), ou touchez longuement un vin et choisissez **Sélectionner**, puis cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Rangez-les ensuite dans un casier (les bouteilles déjà rangées restent à leur place), sortez-les de leur place ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les ; **OK** termine la sélection. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
+            "value": "Dans la liste de la Cave, touchez **Sélectionner** dans la barre d’outils (une icône sur iPad), ou touchez longuement un vin et choisissez **Sélectionner**, puis cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Mettez-les ensuite dans un rangement (les bouteilles déjà rangées restent où elles sont), sortez-les de leur position ou, dans **Plus**, gardez leurs bouteilles pour une occasion, indiquez qu’elles ne sont plus en cave ou supprimez-les ; **OK** termine la sélection. Dans le tableau sur Mac et iPad, sélectionnez plusieurs lignes (⌘-clic ou ⇧-clic) et faites un clic droit pour les ranger, les sortir ou les supprimer. **Annuler** remet tout en place."
           }
         }
       }
@@ -6921,12 +6811,12 @@
         }
       }
     },
-    "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page and choose **Attach a Document…**, or tap it in a rack and use the paperclip; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": {
+    "Keep an invoice, a certificate of authenticity, a technical sheet or an article with a wine: **Add a Document…** (a PDF, an image, a text or an office file, up to 8 MB) or, on iPhone and iPad, **Scan a Document**, which makes a PDF. Add them while adding bottles, or later under **Documents** on the wine's page: they are for every bottle of the wine. For one bottle only (its certificate, its receipt), touch and hold the bottle on the wine's page and choose **Attach a Document…**, or tap it in its storage and use the paperclip; a paperclip shows how many it has. Tap a document to open it; touch and hold it to share, rename or delete it. Documents sync with your devices, encrypted, and are never sent to the AI service or the web search.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin et choisissez **Joindre un document…**, ou touchez-la dans un casier puis le trombone ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
+            "value": "Gardez une facture, un certificat d’authenticité, une fiche technique ou un article avec un vin : **Ajouter un document…** (un PDF, une image, un texte ou un fichier bureautique, jusqu’à 8 Mo) ou, sur iPhone et iPad, **Numériser un document**, qui en fait un PDF. Ajoutez-les en ajoutant des bouteilles, ou plus tard dans **Documents** sur la fiche du vin : ils valent pour toutes les bouteilles du vin. Pour une seule bouteille (son certificat, son ticket), touchez longuement la bouteille sur la fiche du vin et choisissez **Joindre un document…**, ou touchez-la dans son rangement puis le trombone ; un trombone indique combien elle en a. Touchez un document pour l’ouvrir ; touchez-le longuement pour le partager, le renommer ou le supprimer. Les documents se synchronisent avec vos appareils, chiffrés, et ne sont jamais envoyés au service d’IA ni à la recherche web."
           }
         }
       }
@@ -7051,16 +6941,6 @@
         }
       }
     },
-    "Kind of rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type de rangement"
-          }
-        }
-      }
-    },
     "Kind of storage": {
       "localizations": {
         "fr": {
@@ -7111,22 +6991,22 @@
         }
       }
     },
+    "Large cabinet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grande armoire"
+          }
+        }
+      }
+    },
     "Large cellar, 120": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Grande cave, 120"
-          }
-        }
-      }
-    },
-    "Large wine fridge": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Grande cave à vin"
           }
         }
       }
@@ -7406,7 +7286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Emplacement"
+            "value": "Rangement"
           }
         }
       }
@@ -7781,22 +7661,22 @@
         }
       }
     },
-    "New Rack": {
+    "New Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nouveau casier"
+            "value": "Nouveau rangement"
           }
         }
       }
     },
-    "New Rack…": {
+    "New Storage…": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nouveau casier…"
+            "value": "Nouveau rangement…"
           }
         }
       }
@@ -8021,12 +7901,12 @@
         }
       }
     },
-    "No free place in this rack for bottles without a place.": {
+    "No free position in this storage for bottles without a position.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun emplacement libre dans ce casier pour les bouteilles sans emplacement."
+            "value": "Aucune position libre dans ce rangement pour les bouteilles sans position."
           }
         }
       }
@@ -8036,7 +7916,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sans emplacement"
+            "value": "Sans rangement"
           }
         }
       }
@@ -8131,32 +8011,32 @@
         }
       }
     },
-    "No rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun casier"
-          }
-        }
-      }
-    },
-    "No racks yet": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun casier"
-          }
-        }
-      }
-    },
     "No rating": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Sans note"
+          }
+        }
+      }
+    },
+    "No storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun rangement"
+          }
+        }
+      }
+    },
+    "No storage yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun rangement"
           }
         }
       }
@@ -8271,6 +8151,16 @@
         }
       }
     },
+    "Not in storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors rangement"
+          }
+        }
+      }
+    },
     "Not in the cellar": {
       "localizations": {
         "fr": {
@@ -8307,16 +8197,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas encore sur cet appareil"
-          }
-        }
-      }
-    },
-    "Not placed in a rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas rangée dans un casier"
           }
         }
       }
@@ -8566,7 +8446,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rangées décalées, comme les casiers en métal ou en terre cuite, ou bouteilles empilées sur les étagères d’une cave à vin"
+            "value": "Rangées décalées, comme les casiers en métal ou en terre cuite, ou bouteilles empilées sur les étagères d’une cave à vin réfrigérée"
           }
         }
       }
@@ -8651,12 +8531,12 @@
         }
       }
     },
-    "On iPad and Mac, in racks with one bottle per place, drag a bottle to another place to move it, or onto another bottle of the same rack to swap them. **Undo** puts them back.": {
+    "On iPad and Mac, where each position holds one bottle, drag a bottle to another position to move it, or onto another bottle of the same storage to swap them. **Undo** puts them back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sur iPad et Mac, dans les casiers à une bouteille par place, faites glisser une bouteille vers une autre place pour la déplacer, ou sur une autre bouteille du même casier pour les échanger. **Annuler** les remet en place."
+            "value": "Sur iPad et Mac, là où chaque position tient une bouteille, faites glisser une bouteille vers une autre position pour la déplacer, ou sur une autre bouteille du même rangement pour les échanger. **Annuler** les remet en place."
           }
         }
       }
@@ -8861,22 +8741,22 @@
         }
       }
     },
-    "One bottle per cell, in rows and columns. For racks deep enough to hold one bottle behind the other, set **Bottles per cell** to **Two, one behind the other**.": {
+    "One bottle per position, in rows and columns. For racks deep enough to hold one bottle behind the other, set **Bottles per position** to **Two, one behind the other**.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une bouteille par case, en rangées et colonnes. Pour les casiers assez profonds pour tenir une bouteille derrière l’autre, réglez **Bouteilles par case** sur **Deux, l’une derrière l’autre**."
+            "value": "Une bouteille par position, en rangées et colonnes. Pour les casiers assez profonds pour tenir une bouteille derrière l’autre, réglez **Bouteilles par position** sur **Deux, l’une derrière l’autre**."
           }
         }
       }
     },
-    "One bottle per cell, single or double depth": {
+    "One bottle per position, single or double depth": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une bouteille par case, simple ou double profondeur"
+            "value": "Une bouteille par position, simple ou double profondeur"
           }
         }
       }
@@ -8891,7 +8771,7 @@
         }
       }
     },
-    "Only %lld free places: the other bottles will have no place.": {
+    "Only %lld free positions: the other bottles will have no position.": {
       "localizations": {
         "en": {
           "variations": {
@@ -8899,13 +8779,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Only %lld free place: the other bottles will have no place."
+                  "value": "Only %lld free position: the other bottles will have no position."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Only %lld free places: the other bottles will have no place."
+                  "value": "Only %lld free positions: the other bottles will have no position."
                 }
               }
             }
@@ -8917,13 +8797,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Seulement %lld place libre : les autres bouteilles n’auront pas de place."
+                  "value": "Seulement %lld position libre : les autres bouteilles n’auront pas de position."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Seulement %lld places libres : les autres bouteilles n’auront pas de place."
+                  "value": "Seulement %lld positions libres : les autres bouteilles n’auront pas de position."
                 }
               }
             }
@@ -9016,7 +8896,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos places ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos lieux ne sont jamais envoyés. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -9321,12 +9201,12 @@
         }
       }
     },
-    "Order of racks": {
+    "Order of storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ordre des casiers"
+            "value": "Ordre des rangements"
           }
         }
       }
@@ -9531,12 +9411,12 @@
         }
       }
     },
-    "Pinch to zoom in and out. On the Mac, and on the iPad in a wide window, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the rack place by place; on the Mac, the list is beside the rack.": {
+    "Pinch to zoom in and out. On the Mac, and on the iPad in a wide window, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the storage position by position; on the Mac, the list is beside the drawing.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pincez pour zoomer. Sur Mac, et sur iPad dans une fenêtre large, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du casier place par place ; sur Mac, la liste est à côté du casier."
+            "value": "Pincez pour zoomer. Sur Mac, et sur iPad dans une fenêtre large, les boutons de zoom en haut et ⌘+ et ⌘– fonctionnent aussi. Sur iPhone et iPad, **Liste des bouteilles** montre les bouteilles du rangement position par position ; sur Mac, la liste est à côté du dessin."
           }
         }
       }
@@ -9557,26 +9437,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lieu"
-          }
-        }
-      }
-    },
-    "Place in a Rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ranger dans un casier"
-          }
-        }
-      }
-    },
-    "Places": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Places"
           }
         }
       }
@@ -9616,7 +9476,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Emplacements"
+            "value": "Positions"
           }
         }
       }
@@ -9851,6 +9711,16 @@
         }
       }
     },
+    "Put in Storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre dans un rangement"
+          }
+        }
+      }
+    },
     "Puts the bottle here": {
       "localizations": {
         "fr": {
@@ -9886,7 +9756,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quantité, format et emplacement"
+            "value": "Quantité, format et rangement"
           }
         }
       }
@@ -9901,42 +9771,12 @@
         }
       }
     },
-    "Rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Casier"
-          }
-        }
-      }
-    },
-    "Rack not found": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Casier introuvable"
-          }
-        }
-      }
-    },
     "Rack, 48": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Casier, 48"
-          }
-        }
-      }
-    },
-    "Racks": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Casiers"
           }
         }
       }
@@ -10091,12 +9931,12 @@
         }
       }
     },
-    "Received bottles join the cellar without a place; move them to a rack from here.": {
+    "Received bottles join the cellar without a position; move them to storage from here.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les bouteilles reçues rejoignent la cave sans emplacement ; rangez-les dans un casier depuis cette page."
+            "value": "Les bouteilles reçues rejoignent la cave sans position ; mettez-les dans un rangement depuis cette page."
           }
         }
       }
@@ -10526,7 +10366,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Renvoie un vin de votre cave en texte : sa fiche, l’emplacement de ses bouteilles et vos notes de dégustation."
+            "value": "Renvoie un vin de votre cave en texte : sa fiche, où sont ses bouteilles et vos notes de dégustation."
           }
         }
       }
@@ -10596,7 +10436,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rangées de casiers"
+            "value": "Rangées de cases"
           }
         }
       }
@@ -11021,22 +10861,22 @@
         }
       }
     },
-    "Select a rack": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisissez un casier"
-          }
-        }
-      }
-    },
     "Select a wine": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un vin"
+          }
+        }
+      }
+    },
+    "Select storage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un rangement"
           }
         }
       }
@@ -11097,6 +10937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adresse du serveur"
+          }
+        }
+      }
+    },
+    "Service": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service"
           }
         }
       }
@@ -11211,42 +11061,42 @@
         }
       }
     },
-    "Shelf %lld, %@, bottom layer, place %lld": {
+    "Shelf %lld, %@, bottom layer, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, %@, couche du bas, place %lld"
+            "value": "Étagère %lld, %@, couche du bas, position %lld"
           }
         }
       }
     },
-    "Shelf %lld, %@, middle layer, place %lld": {
+    "Shelf %lld, %@, middle layer, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, %@, couche du milieu, place %lld"
+            "value": "Étagère %lld, %@, couche du milieu, position %lld"
           }
         }
       }
     },
-    "Shelf %lld, %@, place %lld": {
+    "Shelf %lld, %@, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, %@, place %lld"
+            "value": "Étagère %lld, %@, position %lld"
           }
         }
       }
     },
-    "Shelf %lld, %@, top layer, place %lld": {
+    "Shelf %lld, %@, top layer, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, %@, couche du haut, place %lld"
+            "value": "Étagère %lld, %@, couche du haut, position %lld"
           }
         }
       }
@@ -11261,42 +11111,42 @@
         }
       }
     },
-    "Shelf %lld, bottom layer, place %lld": {
+    "Shelf %lld, bottom layer, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, couche du bas, place %lld"
+            "value": "Étagère %lld, couche du bas, position %lld"
           }
         }
       }
     },
-    "Shelf %lld, middle layer, place %lld": {
+    "Shelf %lld, middle layer, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, couche du milieu, place %lld"
+            "value": "Étagère %lld, couche du milieu, position %lld"
           }
         }
       }
     },
-    "Shelf %lld, place %lld": {
+    "Shelf %lld, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, place %lld"
+            "value": "Étagère %lld, position %lld"
           }
         }
       }
     },
-    "Shelf %lld, top layer, place %lld": {
+    "Shelf %lld, top layer, position %lld": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étagère %lld, couche du haut, place %lld"
+            "value": "Étagère %lld, couche du haut, position %lld"
           }
         }
       }
@@ -11331,12 +11181,12 @@
         }
       }
     },
-    "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which places are filled, front first.": {
+    "Shelves holding a row of bottles, one to three deep. The dots under each bottle show which positions are filled, front first.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les places occupées, de l’avant vers l’arrière."
+            "value": "Des étagères d’une rangée de bouteilles, sur un à trois rangs. Les points sous chaque bouteille montrent les positions occupées, de l’avant vers l’arrière."
           }
         }
       }
@@ -11461,12 +11311,12 @@
         }
       }
     },
-    "Show in Rack": {
+    "Show in Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Voir dans le casier"
+            "value": "Voir dans le rangement"
           }
         }
       }
@@ -11681,12 +11531,12 @@
         }
       }
     },
-    "Shows where its bottles are in the rack.": {
+    "Shows where its bottles are in this storage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Montre où sont ses bouteilles dans le casier."
+            "value": "Montre où sont ses bouteilles dans ce rangement."
           }
         }
       }
@@ -11751,12 +11601,12 @@
         }
       }
     },
-    "Some bottles are in places you removed.": {
+    "Some bottles are in positions you removed.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Des bouteilles sont dans des emplacements supprimés."
+            "value": "Des bouteilles sont dans des positions supprimées."
           }
         }
       }
@@ -11966,7 +11816,17 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Stockage"
+            "value": "Rangements"
+          }
+        }
+      }
+    },
+    "Storage not found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rangement introuvable"
           }
         }
       }
@@ -11977,6 +11837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un stockage que vous avez déjà, pour tous les appareils. Seuls des fichiers chiffrés sont stockés dans ce dossier. Utilisez un mot de passe d’application si le serveur en propose ; il reste dans le trousseau de cet appareil. Par exemple : l’adresse WebDAV d’un NAS Synology ou QNAP, https://…/remote.php/dav/files/identifiant/Encave pour Nextcloud, https://webdav.pcloud.com/Encave pour pCloud."
+          }
+        }
+      }
+    },
+    "Store in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ranger dans"
           }
         }
       }
@@ -12071,12 +11941,12 @@
         }
       }
     },
-    "Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. When the wine is in several places, choose the bottle under **Which Bottle?**: free bottles come first, and those kept for an occasion say so. The bottle leaves the cellar and its place in the rack becomes free. **Undo** appears for a few seconds.": {
+    "Swipe a wine to the right, use **Drink** on its page, or tap **+** in the Journal and choose **A Bottle from My Cellar**. When the wine has bottles in several positions, choose the bottle under **Which Bottle?**: free bottles come first, and those kept for an occasion say so. The bottle leaves the cellar and its position becomes free. **Undo** appears for a few seconds.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin est à plusieurs endroits, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa place dans le casier se libère. **Annuler** reste affiché quelques secondes."
+            "value": "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin est à plusieurs endroits, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa position se libère. **Annuler** reste affiché quelques secondes."
           }
         }
       }
@@ -12211,12 +12081,12 @@
         }
       }
     },
-    "Synced: wines, bottles and their notes, racks, the Journal, saved searches, the currency, photos and documents. Stays on each device: its own keys, your AI and web search keys, your WebDAV login, backups and previous versions, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
+    "Synced: wines, bottles and their notes, storage, the Journal, saved searches, the currency, photos and documents. Stays on each device: its own keys, your AI and web search keys, your WebDAV login, backups and previous versions, the studio look and other display settings, how often to sync away from home, the notifications of changes, and the choice of storage away from home: devices that do not sync away from home yet take it up the next time they meet on the same Wi-Fi, but turning it off or changing it applies to one device only, so do the same on the others.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisés : vins, bouteilles et leurs notes, casiers, Journal, recherches enregistrées, devise, photos et documents. Restent sur chaque appareil : ses propres clés, vos clés d’IA et de recherche web, votre identifiant WebDAV, les sauvegardes et versions précédentes, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
+            "value": "Synchronisés : vins, bouteilles et leurs notes, rangements, Journal, recherches enregistrées, devise, photos et documents. Restent sur chaque appareil : ses propres clés, vos clés d’IA et de recherche web, votre identifiant WebDAV, les sauvegardes et versions précédentes, l’aspect studio et les autres réglages d’affichage, la fréquence de synchronisation à distance, les notifications de modifications, et le choix du stockage à distance : les appareils qui ne se synchronisent pas encore à distance le reprennent la prochaine fois qu’ils se retrouvent sur le même Wi-Fi, mais le désactiver ou le changer ne concerne qu’un appareil : faites de même sur les autres."
           }
         }
       }
@@ -12291,12 +12161,12 @@
         }
       }
     },
-    "Take Out of Racks": {
+    "Take Out of Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sortir des casiers"
+            "value": "Sortir des rangements"
           }
         }
       }
@@ -12311,22 +12181,22 @@
         }
       }
     },
-    "Take Them Out of the Rack": {
+    "Take Them Out of Storage": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les sortir du casier"
+            "value": "Les sortir du rangement"
           }
         }
       }
     },
-    "Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.": {
+    "Taken out, they stay in the cellar without a position. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sorties, elles restent dans la cave sans emplacement. Parties, elles quittent la cave (offertes, bues ailleurs, cassées). Vous pouvez annuler juste après."
+            "value": "Sorties, elles restent dans la cave sans position. Parties, elles quittent la cave (offertes, bues ailleurs, cassées). Vous pouvez annuler juste après."
           }
         }
       }
@@ -12351,12 +12221,12 @@
         }
       }
     },
-    "Tap **Add Rack**, choose the kind, then its size, or a ready-made size under **Quick start** (only when creating a rack). Free places fill row by row from the top, the front places before the back ones.": {
+    "Tap **Add Storage**, choose the kind, then its size, or a ready-made size under **Quick start** (only when creating storage). Free positions fill row by row from the top, the front positions before the back ones.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez **Ajouter un casier**, choisissez le type, puis la taille, ou une taille toute prête dans **Démarrage rapide** (seulement en créant un casier). Les places libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond."
+            "value": "Touchez **Ajouter un rangement**, choisissez le type, puis la taille, ou une taille toute prête dans **Démarrage rapide** (seulement en créant un rangement). Les positions libres se remplissent rangée par rangée depuis le haut, celles de devant avant celles du fond."
           }
         }
       }
@@ -12371,62 +12241,42 @@
         }
       }
     },
-    "Tap a bottle, then **Move**, then the new place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them. **Cancel** (or Esc) stops a move; right after, **Undo** in the banner puts the bottles back. To move a bottle to another rack, or out of the racks with a note on where it is (**No rack**), choose **Move…** on it in **Bottle List** or on the wine's page.": {
+    "Tap a bottle, then **Move**, then the new position. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them. **Cancel** (or Esc) stops a move; right after, **Undo** in the banner puts the bottles back. To move a bottle to another storage, or out of storage with a note on where it is (**No storage**), choose **Move…** on it in **Bottle List** or on the wine's page.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une bouteille, puis **Déplacer**, puis la nouvelle place. Une place libre prend la bouteille ; dans les casiers à une bouteille par place, toucher une autre bouteille les échange. Pour arrêter un déplacement, touchez **Annuler** (ou Échap) ; juste après, **Annuler** dans le bandeau remet les bouteilles en place. Pour mettre une bouteille dans un autre casier, ou hors des casiers avec une note sur l’endroit où elle est (**Aucun casier**), choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
+            "value": "Touchez une bouteille, puis **Déplacer**, puis la nouvelle position. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange. Pour arrêter un déplacement, touchez **Annuler** (ou Échap) ; juste après, **Annuler** dans le bandeau remet les bouteilles en place. Pour mettre une bouteille dans un autre rangement, ou hors des rangements avec une note sur l’endroit où elle est (**Aucun rangement**), choisissez **Déplacer…** sur elle dans **Liste des bouteilles** ou sur la fiche du vin."
           }
         }
       }
     },
-    "Tap a place in the rack to add a bottle there.": {
+    "Tap a free position to add a bottle there.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez un emplacement du casier pour y ajouter une bouteille."
+            "value": "Touchez une position libre pour y ajouter une bouteille."
           }
         }
       }
     },
-    "Tap a place. A place with room takes the bottle; in racks with one bottle per place, tapping another bottle swaps them.": {
+    "Tap a position. A position with room takes the bottle; where each position holds one bottle, tapping another bottle swaps them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez une place. Une place libre prend la bouteille ; dans les casiers à une bouteille par place, toucher une autre bouteille les échange."
+            "value": "Touchez une position. Une position libre prend la bouteille ; là où chaque position tient une bouteille, toucher une autre bouteille les échange."
           }
         }
       }
     },
-    "Tap a position. Tapping another bottle swaps them.": {
+    "Tap each bottle you find in this storage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez un emplacement. Toucher une autre bouteille les échange."
-          }
-        }
-      }
-    },
-    "Tap each bottle you find in the rack.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez chaque bouteille que vous trouvez dans le casier."
-          }
-        }
-      }
-    },
-    "Tap the new position": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez le nouvel emplacement"
+            "value": "Touchez chaque bouteille que vous trouvez dans ce rangement."
           }
         }
       }
@@ -12561,22 +12411,22 @@
         }
       }
     },
-    "That place is already taken.": {
+    "That position is already taken.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet emplacement est déjà occupé."
+            "value": "Cette position est déjà occupée."
           }
         }
       }
     },
-    "That place is outside the rack.": {
+    "That position is outside the storage.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet emplacement est hors du casier."
+            "value": "Cette position est hors du rangement."
           }
         }
       }
@@ -12691,12 +12541,12 @@
         }
       }
     },
-    "The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.": {
+    "The back label, the receipt, the bottle in its storage. They sync with your devices, encrypted.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La contre-étiquette, le ticket, la bouteille dans son casier. Elles se synchronisent avec vos appareils, chiffrées."
+            "value": "La contre-étiquette, le ticket, la bouteille dans son rangement. Elles se synchronisent avec vos appareils, chiffrées."
           }
         }
       }
@@ -12711,32 +12561,32 @@
         }
       }
     },
-    "The bottle stays in its place but is no longer suggested for tonight.": {
+    "The bottle stays where it is but is no longer suggested for tonight.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La bouteille reste à sa place mais n’est plus proposée pour ce soir."
+            "value": "La bouteille reste où elle est mais n’est plus proposée pour ce soir."
           }
         }
       }
     },
-    "The bottle you choose leaves your cellar, and its place in the rack becomes free.": {
+    "The bottle you choose leaves your cellar, and its position becomes free.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La bouteille choisie sort de votre cave et sa place dans le casier se libère."
+            "value": "La bouteille choisie sort de votre cave et sa position se libère."
           }
         }
       }
     },
-    "The bottles stay in their places but are no longer suggested for tonight.": {
+    "The bottles stay where they are but are no longer suggested for tonight.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les bouteilles restent à leur place mais ne sont plus proposées pour ce soir."
+            "value": "Les bouteilles restent où elles sont mais ne sont plus proposées pour ce soir."
           }
         }
       }
@@ -12871,22 +12721,12 @@
         }
       }
     },
-    "The first free places are used unless you choose them. Tap Places to pick them in the rack.": {
+    "The first free positions are used unless you choose them. Tap Positions to pick them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les premières places libres sont utilisées, sauf si vous les choisissez. Touchez Places pour les choisir dans le casier."
-          }
-        }
-      }
-    },
-    "The first free positions are used unless you choose them.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les premiers emplacements libres sont utilisés, sauf si vous les choisissez."
+            "value": "Les premières positions libres sont utilisées, sauf si vous les choisissez. Touchez Positions pour les choisir."
           }
         }
       }
@@ -12906,7 +12746,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et leur place ; cliquez sur l’une d’elles pour l’ouvrir. Activez **Afficher Ce soir dans la barre des menus** dans la barre d’outils de Ce soir ou dans les **Réglages**."
+            "value": "Le verre dans la barre des menus liste les bouteilles à ouvrir maintenant et où elles sont ; cliquez sur l’une d’elles pour l’ouvrir. Activez **Afficher Ce soir dans la barre des menus** dans la barre d’outils de Ce soir ou dans les **Réglages**."
           }
         }
       }
@@ -13321,12 +13161,12 @@
         }
       }
     },
-    "They stay in your cellar without a place.": {
+    "They stay in your cellar without a position.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Elles restent dans votre cave, sans emplacement."
+            "value": "Elles restent dans votre cave, sans position."
           }
         }
       }
@@ -13591,22 +13431,22 @@
         }
       }
     },
-    "This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
+    "This erases every bottle, wine, storage and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela efface toutes les bouteilles, vins, casiers et entrées du Journal sur cet appareil et sur les autres appareils synchronisés avec lui. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
+            "value": "Cela efface toutes les bouteilles, vins, rangements et entrées du Journal sur cet appareil et sur les autres appareils synchronisés avec lui. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
           }
         }
       }
     },
-    "This erases every bottle, wine, rack and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
+    "This erases every bottle, wine, storage and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela efface toutes les bouteilles, vins, casiers et entrées du Journal. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
+            "value": "Cela efface toutes les bouteilles, vins, rangements et entrées du Journal. Vos réglages, comme la devise et les recherches enregistrées, sont conservés. Vous pouvez annuler juste après."
           }
         }
       }
@@ -13661,12 +13501,12 @@
         }
       }
     },
-    "This place is full.": {
+    "This position is full.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet emplacement est plein."
+            "value": "Cette position est pleine."
           }
         }
       }
@@ -13821,12 +13661,12 @@
         }
       }
     },
-    "Touch and hold a bottle on a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays in its place, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back. To keep several wines at once, select them in the Cellar.": {
+    "Touch and hold a bottle on a wine’s page, choose **Keep for an Occasion…** and name it (a birthday, Christmas dinner). The bottle stays where it is, is no longer suggested in Tonight, and the Cellar shows a chip for the occasion to find its bottles. **Free This Bottle** gives it back. To keep several wines at once, select them in the Cellar.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez longuement une bouteille sur la fiche d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste à sa place, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible. Pour garder plusieurs vins d’un coup, sélectionnez-les dans la Cave."
+            "value": "Touchez longuement une bouteille sur la fiche d’un vin, choisissez **Garder pour une occasion…** et nommez-la (un anniversaire, le dîner de Noël). La bouteille reste où elle est, n’est plus proposée dans Ce soir, et la Cave affiche une pastille pour l’occasion afin de retrouver ses bouteilles. **Libérer cette bouteille** la rend disponible. Pour garder plusieurs vins d’un coup, sélectionnez-les dans la Cave."
           }
         }
       }
@@ -13837,16 +13677,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez longuement une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Balayez-la vers la droite pour ajouter des bouteilles, vers la gauche pour la remettre en cave. Dans la note, touchez le nom du vin pour l’ouvrir."
-          }
-        }
-      }
-    },
-    "Touch and hold a rack and choose **Move Up** or **Move Down**; on the Mac, drag it in the sidebar.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touchez longuement un casier et choisissez **Monter** ou **Descendre** ; sur Mac, faites-le glisser dans la barre latérale."
           }
         }
       }
@@ -14571,12 +14401,12 @@
         }
       }
     },
-    "When a fridge with bottles in layers (**Honeycomb rack**, **On shelves**) is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a place to the right, so each neck sits between two bases. Tap any place of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Places read like **Shelf 3, front, bottom layer, place 2**, and the one behind it **Shelf 3, back, bottom layer, place 2**. Other racks two deep show the dots described below.": {
+    "When a wine fridge with bottles in layers (**Honeycomb rack**, **On shelves**) is two deep, each shelf shows two bands: **Front**, the bottles whose base faces you, then **Back**, the bottles behind them, drawn smaller. Many wine fridges keep the back bottles head-to-tail, their necks facing you between the bases of the front ones: turn on **Back bottles head-to-tail** in the editor, and the back band shows their necks and capsules. Its layers are drawn half a position to the right, so each neck sits between two bases. Tap any position of either band to see, add or move its bottle; on iPad and Mac, drag bottles between them. Positions read like **Shelf 3, front, bottom layer, position 2**, and the one behind it **Shelf 3, back, bottom layer, position 2**. Other storage two deep shows the dots described below.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quand une cave à vin avec bouteilles en couches (**Casier nid d’abeille**, **Sur étagères**) a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-place plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle place de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les places se lisent comme **Étagère 3, devant, couche du bas, place 2**, et celle derrière **Étagère 3, fond, couche du bas, place 2**. Les autres casiers à deux rangs montrent les points décrits plus bas."
+            "value": "Quand une cave à vin réfrigérée avec bouteilles en couches (**Casier nid d’abeille**, **Sur étagères**) a deux rangs de profondeur, chaque étagère montre deux bandes : **Devant**, les bouteilles dont le culot est vers vous, puis **Fond**, les bouteilles derrière elles, dessinées plus petites. Beaucoup de caves à vin réfrigérées rangent les bouteilles du fond tête-bêche, le goulot vers vous entre les culots de celles de devant : activez **Bouteilles du fond tête-bêche** dans l’éditeur, et la bande du fond montre leurs goulots et leurs capsules. Ses couches sont dessinées une demi-position plus à droite, chaque goulot entre deux culots. Touchez n’importe quelle position de l’une ou l’autre bande pour voir, ajouter ou déplacer sa bouteille ; sur iPad et Mac, faites glisser les bouteilles de l’une à l’autre. Les positions se lisent comme **Étagère 3, devant, couche du bas, position 2**, et celle derrière **Étagère 3, fond, couche du bas, position 2**. Les autres rangements à deux rangs montrent les points décrits plus bas."
           }
         }
       }
@@ -14591,22 +14421,22 @@
         }
       }
     },
-    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, racks and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking. With Combine, the sample cellar is removed first: it is never sent to the other devices.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les casiers et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander. Avec Réunir, la cave d’exemple est d’abord supprimée : elle n’est jamais envoyée aux autres appareils."
-          }
-        }
-      }
-    },
     "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, storage and Journal are replaced, and its cellar as it was is saved first, to restore from **Settings › Your data › Previous Versions** if you need it. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking. With Combine, the sample cellar is removed first: it is never sent to the other devices.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les rangements et le Journal de cet appareil sont remplacés, et sa cave telle qu’elle était est d’abord enregistrée, à restaurer depuis **Réglages › Vos données › Versions précédentes** si besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander. Avec Réunir, la cave d’exemple est d’abord supprimée : elle n’est jamais envoyée aux autres appareils."
+          }
+        }
+      }
+    },
+    "When joining, choose **Combine with the other cellar** to put both cellars together, or **Replace with the other cellar** to keep only the other device's cellar, after you confirm: this device's bottles, storage and Journal are replaced, so make a backup first if you may need them. With Replace with the other cellar, the bottles stay on this device until the other cellar has arrived, and they are never sent to the other devices. Joining while this device already shares a cellar first makes it leave that cellar, once you confirm. If this device holds only the sample cellar, it is replaced without asking. With Combine, the sample cellar is removed first: it is never sent to the other devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En rejoignant, choisissez **Réunir avec l’autre cave** pour mettre les deux caves ensemble, ou **Remplacer par l’autre cave** pour ne garder que la cave de l’autre appareil, après confirmation : les bouteilles, les rangements et le Journal de cet appareil sont remplacés, faites donc d’abord une sauvegarde si vous pourriez en avoir besoin. Avec Remplacer par l’autre cave, les bouteilles restent sur cet appareil jusqu’à l’arrivée de l’autre cave, et ne sont jamais envoyées aux autres appareils. Rejoindre alors que cet appareil partage déjà une cave lui fait d’abord quitter cette cave, après confirmation. Si cet appareil n’a que la cave d’exemple, elle est remplacée sans rien demander. Avec Réunir, la cave d’exemple est d’abord supprimée : elle n’est jamais envoyée aux autres appareils."
           }
         }
       }
@@ -14776,17 +14606,17 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin"
+            "value": "Cave à vin réfrigérée"
           }
         }
       }
     },
-    "Wine fridge or cabinet": {
+    "Wine fridge with bottles in layers": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin ou armoire"
+            "value": "Cave à vin réfrigérée avec bouteilles en couches"
           }
         }
       }
@@ -14796,7 +14626,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, 2 zones"
+            "value": "Cave à vin réfrigérée, 2 zones"
           }
         }
       }
@@ -14806,7 +14636,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, 24"
+            "value": "Cave à vin réfrigérée, 24"
           }
         }
       }
@@ -14816,7 +14646,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, étagères en couches"
+            "value": "Cave à vin réfrigérée, étagères en couches"
           }
         }
       }
@@ -14826,7 +14656,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cave à vin, étagères en couches · deux rangs, tête-bêche"
+            "value": "Cave à vin réfrigérée, étagères en couches · deux rangs, tête-bêche"
           }
         }
       }
@@ -14901,12 +14731,12 @@
         }
       }
     },
-    "Wines tasted elsewhere are not counted as bottles in your cellar and do not appear in racks or Tonight.": {
+    "Wines tasted elsewhere are not counted as bottles in your cellar and do not appear in Storage or Tonight.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les vins goûtés ailleurs ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans les casiers ni dans Ce soir."
+            "value": "Les vins goûtés ailleurs ne comptent pas comme des bouteilles de votre cave et n’apparaissent ni dans Rangements ni dans Ce soir."
           }
         }
       }
@@ -14921,12 +14751,12 @@
         }
       }
     },
-    "Wines, bottles, racks and wines tasted elsewhere.": {
+    "Wines, bottles, storage and wines tasted elsewhere.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vins, bouteilles, casiers et vins goûtés ailleurs."
+            "value": "Vins, bouteilles, rangements et vins goûtés ailleurs."
           }
         }
       }
@@ -15271,22 +15101,22 @@
         }
       }
     },
-    "Your racks, wine fridges and bins drawn as they look, so you know exactly where each bottle is.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vos casiers, caves à vin et losanges dessinés tels qu’ils sont, pour savoir exactement où est chaque bouteille."
-          }
-        }
-      }
-    },
     "Your shopping list is empty": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Votre liste d’achats est vide"
+          }
+        }
+      }
+    },
+    "Your storage drawn as it looks, racks, wine fridges and bins, so you know exactly where each bottle is.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos rangements dessinés tels qu’ils sont, casiers, caves à vin réfrigérées et cases, pour savoir exactement où est chaque bouteille."
           }
         }
       }
@@ -15351,12 +15181,12 @@
         }
       }
     },
-    "Zoom a rack in and out": {
+    "Zoom storage in and out": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zoomer sur un casier"
+            "value": "Zoomer sur un rangement"
           }
         }
       }

@@ -26,7 +26,17 @@ import Testing
     @Test func newStringsAreTranslated() throws {
         let fr = try Self.french()
         #expect(fr["Opens the wine."] == "Ouvre le vin.")
-        #expect(fr["Not placed in a rack"]?.isEmpty == false)
+        #expect(fr["Not in storage"] == "Hors rangement")
         #expect(fr["%lld of %lld"]?.isEmpty == false)
+    }
+
+    /// The lexicon: the tab is Rangements, a fridge a cave à vin réfrigérée, a position a position.
+    @Test func storageWordsInFrench() throws {
+        let fr = try Self.french()
+        #expect(fr["Storage"] == "Rangements")
+        #expect(fr["Wine fridge"] == "Cave à vin réfrigérée")
+        #expect(fr["Shelf %lld, %@, bottom layer, position %lld"] == "Étagère %1$lld, %2$@, couche du bas, position %3$lld"
+                || fr["Shelf %lld, %@, bottom layer, position %lld"] == "Étagère %lld, %@, couche du bas, position %lld")
+        #expect(!fr.values.contains { $0.localizedCaseInsensitiveContains("emplacement") })
     }
 }

@@ -82,7 +82,7 @@ struct CellarCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Bottle…") { act(.present(.addBottle(AddBottleContext()))) }
                 .keyboardShortcut("n")
-            Button("New Rack…") { act(.present(.editRack(rackID: nil))) }
+            Button("New Storage…") { act(.present(.editRack(rackID: nil))) }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
             Button("Note a Wine Tasted Elsewhere…") { act(.present(.discovery(discoveryID: nil))) }
                 .keyboardShortcut("n", modifiers: [.command, .option])
@@ -106,7 +106,7 @@ struct CellarCommands: Commands {
             }
             .keyboardShortcut("d")
             .disabled(selectedWineID == nil)
-            Button("Show in Rack") {
+            Button("Show in Storage") {
                 withWine { wine in
                     guard let bottle = model.cellar.bottlesInCellar.first(where: { $0.wineID == wine.id && $0.slot != nil }) else { return }
                     if let router { router.showInRack(bottle, model: model) } else { model.showInRack(bottle) }
@@ -123,7 +123,7 @@ struct CellarCommands: Commands {
         }
         CommandMenu("Cellar") {
             Button("Cellar") { act(.show(.cellar)) }.keyboardShortcut("1")
-            Button("Racks") { act(.show(.racks)) }.keyboardShortcut("2")
+            Button("Storage") { act(.show(.racks)) }.keyboardShortcut("2")
             Button("Tonight") { act(.show(.tonight)) }.keyboardShortcut("3")
             Button("Journal") { act(.show(.journal)) }.keyboardShortcut("4")
             Divider()

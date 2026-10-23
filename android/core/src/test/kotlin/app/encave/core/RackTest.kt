@@ -40,6 +40,27 @@ class RackTest {
         assertEquals("4", custom.emptyCaption(RackCell(custom.id, 1, 3)))
     }
 
+    /** Shared with CaveKit's RackTests: shelf, side, layer, position, in that order. */
+    @Test
+    fun placeNamesFollowShelfSideLayerPosition() {
+        val grid = Rack(name = "G", rows = 3, columns = 4, depth = 2)
+        assertEquals("B3, back", grid.placeName(Slot(grid.id, 1, 2, 1)))
+        val shelves = Rack(name = "S", kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
+        assertEquals("Shelf 1, front, position 6", shelves.placeName(Slot(shelves.id, 0, 5)))
+        val bins = Rack(name = "B", kind = RackKind.Bins, rows = 2, columns = 3, binCapacity = 6)
+        assertEquals("Bin B3", bins.placeName(Slot(bins.id, 1, 2, 3)))
+        val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 3, columns = 6, depth = 2, shelfLayers = listOf(2, 1))
+        assertEquals("Shelf 1, back, top layer, position 3", fridge.placeName(Slot(fridge.id, 0, 2, 1)))
+        assertEquals("Shelf 1, front, bottom layer, position 1", fridge.placeName(Slot(fridge.id, 1, 0)))
+        assertEquals("Shelf 2, back, position 6", fridge.placeName(Slot(fridge.id, 2, 5, 1)))
+        val single = Rack(name = "F1", kind = RackKind.Staggered, rows = 2, columns = 6, shelfLayers = listOf(1, 1))
+        assertEquals("Shelf 2, position 6", single.placeName(Slot(single.id, 1, 5)))
+        val deep = Rack(name = "D", kind = RackKind.Shelves, rows = 2, columns = 4, depth = 3)
+        assertEquals("Shelf 2, middle, position 1", deep.placeName(Slot(deep.id, 1, 0, 1)))
+        val layers = Rack(name = "L", kind = RackKind.Staggered, rows = 3, columns = 6, shelfLayers = listOf(3))
+        assertEquals("Shelf 1, middle layer, position 1", layers.placeName(Slot(layers.id, 1, 0)))
+    }
+
     @Test
     fun honeycombOffsetRowsHoldOneFewer() {
         val rack = Rack(name = "H", kind = RackKind.Staggered, rows = 3, columns = 5, depth = 2)
@@ -264,6 +285,26 @@ class RackTest {
         val target = Cellar(racks = original.racks)
         target.importCsv(CellarExport.csv(original))
         assertEquals(original.bottlesInCellar.mapNotNull { it.slot }.toSet(), target.bottlesInCellar.mapNotNull { it.slot }.toSet())
+    }
+
+    /** Shared with CaveKit's RackTests: the readable "location" column; the import ignores it. */
+    @Test
+    fun csvNamesTheLocationForPeople() {
+        val fridge = Rack(name = "Cabinet", kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
+        val cellar = Cellar(racks = listOf(fridge))
+        val slot = Slot(fridge.id, 0, 5, 1)
+        cellar.addBottles(Wine(name = "Sancerre"), slots = listOf(slot))
+        val csv = CellarExport.csv(cellar)
+        val rows = CsvParser.parse(csv)
+        val column = rows[0].indexOf("location")
+        assertEquals("slot", rows[0][column - 1])
+        assertEquals("A6-2", rows[1][column - 1])
+        assertEquals("Cabinet · Shelf 1, back, position 6", rows[1][column])
+        val french = CellarExport.csv(cellar, placeName = { _, _ -> "Étagère 1, fond, position 6" })
+        assertEquals("Cabinet · Étagère 1, fond, position 6", CsvParser.parse(french)[1][column])
+        val copy = Cellar(racks = cellar.racks)
+        copy.importCsv(french)
+        assertEquals(listOf(slot), copy.bottlesInCellar.map { it.slot })
     }
 
     @Test

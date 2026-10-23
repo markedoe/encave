@@ -5,9 +5,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- Racks are now Storage (Rangements in French): a storage is a rack, a wine
+  fridge (Cave à vin réfrigérée) or bins and crates (a bin is a Case); "Cave"
+  now means only your whole cellar
+- Every position has one name, in the same order everywhere (app, VoiceOver
+  and TalkBack, Shortcuts, reports): "Shelf 2, back, bottom layer, position 3";
+  racks keep codes such as "B3"
+- CSV export adds a readable location column ("Cabinet · Shelf 1, position 6")
+  after the slot column; imports ignore it
+- The sample cellar's wine fridges are named Cabinet (Armoire)
+
 ### Fixed
-- Empty places in shelves and wine fridges show their number only, and places
-  read "Shelf 1, place 6" everywhere (Shortcuts and reports too); layered
+- Empty positions in shelves and wine fridges show their number only, and
+  positions read "Shelf 1, position 6" everywhere (Shortcuts and reports too); layered
   fridges are listed as wine fridges with the fridge icon
 - iPhone: Cellar selection actions no longer sit under the tab bar; Mac:
   Cmd-Delete in a text field no longer deletes the selected wine

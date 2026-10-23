@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
  * was added by hand (empty, as Swift writes it), and so was the empty "Large wine fridge"
  * rack (a honeycomb with `shelfLayers`). Regenerate both from Swift on a Mac to cover the
  * new fields, then drop the on-order and head-to-tail fridge exclusions in [decodesTheAppleBackup].
+ * The CSV's readable `location` column was written by CaveKit from this backup.
  */
 class InteropTest {
     private fun resource(name: String): String =
@@ -33,7 +34,8 @@ class InteropTest {
         val sample = SampleData.cellar(year = 2026)
         // The backup was made before the sample had its head-to-tail fridge.
         val newer = sample.racks.filter { it.isBackReversed }.map { it.id }.toSet()
-        assertEquals(sample.racks.filter { it.id !in newer }.map { it.name to it.kind }, cellar.racks.map { it.name to it.kind })
+        // By kind: the sample's fridges were renamed (Cabinet) after the backup was made.
+        assertEquals(sample.racks.filter { it.id !in newer }.map { it.kind }, cellar.racks.map { it.kind })
         // Nor bottles on order.
         val received = sample.bottles.values.filter { it.status != Bottle.Status.Ordered && it.slot?.rackId !in newer }
         assertEquals(received.size, cellar.bottles.size)

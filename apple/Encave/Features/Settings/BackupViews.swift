@@ -328,7 +328,7 @@ struct RestorePreviewView: View {
             Section("In This Backup") {
                 count("Wines", preview.wines)
                 count("Bottles in the cellar", preview.bottles)
-                count("Racks", preview.racks)
+                count("Storage", preview.racks)
                 count("Journal entries", preview.journalEntries)
                 count("Photos", preview.photos)
                 count("Documents", preview.documents)
@@ -344,7 +344,7 @@ struct RestorePreviewView: View {
             } header: {
                 Text("Compared with Your Cellar")
             } footer: {
-                Text("Wines, bottles, racks and wines tasted elsewhere.")
+                Text("Wines, bottles, storage and wines tasted elsewhere.")
             }
             if source.kind == .json, preview.photos + preview.documents > 0 {
                 Section {

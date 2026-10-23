@@ -63,7 +63,7 @@ class SmokeTest {
 
     @Test
     fun racksAndRackDetail() {
-        tab("Racks")
+        tab("Storage")
         compose.onNodeWithText("Main rack").performClick()
         compose.waitForIdle()
         compose.onNode(hasContentDescription("A1", substring = true)).assertExists()
@@ -165,7 +165,7 @@ class SmokeTest {
 
     @Test
     fun binsShowTheirBottles() {
-        tab("Racks")
+        tab("Storage")
         compose.onNodeWithText("Diamond bins").performClick()
         compose.waitForIdle()
         compose.onNode(hasContentDescription("Bin A1, 6 of 10 bottles", substring = true)).performClick()
@@ -178,11 +178,11 @@ class SmokeTest {
 
     @Test
     fun shelvesAndRackEditor() {
-        tab("Racks")
-        compose.onNodeWithText("Wine fridge").performClick()
+        tab("Storage")
+        compose.onNodeWithText("Cabinet").performClick()
         compose.waitForIdle()
-        compose.onNode(hasContentDescription("Shelf 1, place 1", substring = true)).assertExists()
-        compose.onNodeWithContentDescription("Edit rack").performClick()
+        compose.onNode(hasContentDescription("Shelf 1, position 1", substring = true)).assertExists()
+        compose.onNodeWithContentDescription("Edit storage").performClick()
         compose.waitForIdle()
         compose.onAllNodesWithText("Honeycomb rack").onFirst().performClick()
         compose.onNode(hasText("Holds", substring = true)).assertExists()
@@ -199,7 +199,7 @@ class SmokeTest {
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download LM Studio"))
         compose.onNodeWithContentDescription("Back").performClick()
-        compose.onAllNodesWithText("Describe your storage so every bottle has a place.").onFirst().assertExists()
+        compose.onAllNodesWithText("Describe your storage so every bottle has a position.").onFirst().assertExists()
     }
 
     @Test

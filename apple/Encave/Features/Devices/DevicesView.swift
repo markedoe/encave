@@ -419,7 +419,7 @@ struct RemoteSyncView: View {
                 Section {
                     switch storage {
                     case .iCloud:
-                        LabeledContent("Storage") { Text(verbatim: "iCloud") }
+                        LabeledContent("Service") { Text(verbatim: "iCloud") }
                     case .webDAV(let url):
                         LabeledContent("WebDAV folder") { Text(verbatim: url.host() ?? url.absoluteString) }
                     case .relay(let url):

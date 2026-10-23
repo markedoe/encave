@@ -46,14 +46,14 @@ class RackBandsTest {
     @Test
     fun placesAreNamedByShelfBandLayerAndNumber() {
         assertTrue(fridge.hasDepthBands && fridge.isBackReversed)
-        assertEquals("Shelf 1, front, top layer, place 2", fridge.displayLabel(slot(0, 1, 0), resources))
-        assertEquals("Shelf 1, back, bottom layer, place 4", fridge.displayLabel(slot(1, 3, 1), resources))
-        assertEquals("Shelf 2, front, place 3", fridge.displayLabel(slot(2, 2, 0), resources))
-        assertEquals("Shelf 2, back, place 7", fridge.displayLabel(slot(2, 6, 1), resources))
-        assertEquals("Shelf 3, front, bottom layer, place 6", fridge.displayLabel(slot(4, 5, 0), resources))
+        assertEquals("Shelf 1, front, top layer, position 2", fridge.displayLabel(slot(0, 1, 0), resources))
+        assertEquals("Shelf 1, back, bottom layer, position 4", fridge.displayLabel(slot(1, 3, 1), resources))
+        assertEquals("Shelf 2, front, position 3", fridge.displayLabel(slot(2, 2, 0), resources))
+        assertEquals("Shelf 2, back, position 7", fridge.displayLabel(slot(2, 6, 1), resources))
+        assertEquals("Shelf 3, front, bottom layer, position 6", fridge.displayLabel(slot(4, 5, 0), resources))
         // One deep: the usual names.
         val single = fridge.copy(depth = 1).normalized()
-        assertEquals("Shelf 2, place 3", single.displayLabel(Slot(single.id, 2, 2), resources))
+        assertEquals("Shelf 2, position 3", single.displayLabel(Slot(single.id, 2, 2), resources))
     }
 
     @Test

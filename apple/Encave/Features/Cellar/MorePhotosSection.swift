@@ -54,7 +54,7 @@ struct MorePhotosSection: View {
         } header: {
             Text("More photos")
         } footer: {
-            Text("The back label, the receipt, the bottle in its rack. They sync with your devices, encrypted.")
+            Text("The back label, the receipt, the bottle in its storage. They sync with your devices, encrypted.")
         }
     }
 

@@ -54,7 +54,7 @@ private struct BottleToOpenPicker: View {
                         }
                     }
                 } footer: {
-                    Text("The bottle you choose leaves your cellar, and its place in the rack becomes free.")
+                    Text("The bottle you choose leaves your cellar, and its position becomes free.")
                 }
             }
         }
@@ -189,7 +189,7 @@ private struct BottleChoiceLabel: View {
     let bottle: Bottle
 
     var body: some View {
-        let location = model.locationLabel(for: bottle) ?? String(localized: "Not placed in a rack")
+        let location = model.locationLabel(for: bottle) ?? String(localized: "Not in storage")
         if let occasionName = bottle.reservedFor {
             Label("\(location) · Kept for \(occasionName)", systemImage: "gift")
         } else {

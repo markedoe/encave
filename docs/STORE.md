@@ -146,8 +146,8 @@ the app out of the Families programme.
   tap Load sample cellar under Try with a sample cellar. It is offered only while
   the cellar is empty and no other device syncs with it. Remove Sample, at the
   top of the Cellar, removes it. Or start from scratch: add a bottle with +
-  (scan a label or type a name), then add a storage in Storage and place the
-  bottle; Tonight and the Journal fill as bottles are added and opened. AI label
+  (scan a label or type a name), then add a storage in Storage and put the
+  bottle in it; Tonight and the Journal fill as bottles are added and opened. AI label
   recognition and web search are optional and need the reviewer's own key or
   server; sync needs a second device." On Android the path is the same:
   Settings › Help › Getting started › Try with a sample cellar › Load sample

@@ -10,13 +10,13 @@ public enum SampleData {
     /// Labels are passed in so the app can localize them.
     public struct Labels: Sendable {
         public var mainRack = "Main rack"
-        public var wineFridge = "Wine fridge"
+        public var wineFridge = "Cabinet"
         public var bins = "Diamond bins"
         public var deepRack = "Double-depth rack"
         public var honeycomb = "Honeycomb rack"
         public var stairs = "Under the stairs"
-        public var largeFridge = "Large wine fridge"
-        public var headToTailFridge = "Head-to-tail fridge"
+        public var largeFridge = "Large cabinet"
+        public var headToTailFridge = "Head-to-tail cabinet"
         public var tastingNote = "Silky, red fruit, long finish."
         public var kitchen = "Kitchen"
         public var occasion = "Dinner with friends"

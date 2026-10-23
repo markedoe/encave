@@ -170,7 +170,7 @@ final class ScreenTourTests: XCTestCase {
             closeSheet()
         }
 
-        // Racks: the list, every rack, the editor.
+        // Storage: the list, every rack, fridge and set of bins, the editor.
         openSection(1, "racks")
         snapshot("racks")
         // The sample cellar has one rack of every kind: open each one.
@@ -187,7 +187,7 @@ final class ScreenTourTests: XCTestCase {
             if index == 0 { exploreMainRack() }
             if index == 7 { exploreHeadToTailFridge() }
             if index == 1 {
-                // The wine fridge holds two bottles per place: tapping one lists both.
+                // The cabinet holds two bottles per position: tapping one lists both.
                 let cell = element("rack.cell.0-0")
                 if cell.waitForExistence(timeout: 5) {
                     cell.press()
@@ -580,7 +580,7 @@ final class ScreenTourTests: XCTestCase {
             let cancel = element("sheet.cancel")
             if cancel.waitForExistence(timeout: 2) { cancel.press() }
         } else {
-            XCTFail("main rack: no Check This Rack button")
+            XCTFail("main rack: no Check This Storage button")
         }
 
         #if os(iOS)
@@ -652,8 +652,8 @@ final class ScreenTourTests: XCTestCase {
     /// Tab titles as shown in each language.
     private func title(of section: String) -> String {
         let titles: [String: [String: String]] = [
-            "en": ["cellar": "Cellar", "racks": "Racks", "tonight": "Tonight", "journal": "Journal"],
-            "fr": ["cellar": "Cave", "racks": "Casiers", "tonight": "Ce soir", "journal": "Journal"],
+            "en": ["cellar": "Cellar", "racks": "Storage", "tonight": "Tonight", "journal": "Journal"],
+            "fr": ["cellar": "Cave", "racks": "Rangements", "tonight": "Ce soir", "journal": "Journal"],
         ]
         // The large-text tours ("xl", "ax5") run in English.
         return titles[language == "fr" ? "fr" : "en"]?[section] ?? section
