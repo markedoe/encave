@@ -742,6 +742,9 @@ class AppViewModel(
                     cellar.updateWine(updated)
                     change = live to updated
                     twin = cellar.wine(matching = updated)?.takeIf { it.id != matchedBefore }
+                } else if (updated.labelFrame != live.labelFrame) {
+                    // Only where the label is: kept quietly for the studio picture.
+                    cellar.updateWine(live.copy(labelFrame = updated.labelFrame))
                 }
             }.onSuccess {
                 val (live, updated) = change ?: return@onSuccess post(UiText.Res(R.string.msg_ai_nothing))

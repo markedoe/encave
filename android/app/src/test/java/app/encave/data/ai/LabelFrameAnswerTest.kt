@@ -74,6 +74,17 @@ class LabelFrameAnswerTest {
     }
 
     @Test
+    fun anAnswerWithNothingNewStillGivesWhereTheLabelIs() {
+        val saved = Wine(name = "Clos", photoId = "sha256-a")
+        val analysis = LabelAnalysis(name = "Clos", photoId = "sha256-a", placement = AiLabelPlacement(0.1, 0.2, 0.6, 0.5, 0.0))
+        val completed = analysis.completing(saved)
+        // Not "completed by AI", but the studio picture gets the label's place.
+        assertNull(completed.aiCompletedAt)
+        assertEquals(WineLabelFrame("sha256-a", 0.1, 0.2, 0.6, 0.5, 0.0), completed.labelFrame)
+        assertTrue(completed.sameDetails(saved))
+    }
+
+    @Test
     fun aCompletionKeepsTheFrameOnlyForTheWinesPhoto() {
         val saved = Wine(name = "Clos", photoId = "sha256-a")
         val analysis = LabelAnalysis(region = "Bourgogne", placement = AiLabelPlacement(0.1, 0.2, 0.6, 0.5, 3.0))

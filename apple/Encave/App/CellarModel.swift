@@ -917,6 +917,14 @@ final class CellarModel {
 
     /// The AI answered after the wine was saved with nothing to add. The bottles'
     /// "Added" banner still shown stays: nothing changed.
+    /// Where the AI found the label on the wine's photo, kept quietly (no banner, no Undo)
+    /// for the studio picture, also when its answer completes nothing else.
+    func setLabelFrame(_ frame: WineLabelFrame, for wineID: UUID) {
+        guard var wine = cellar.wines[wineID], wine.photoID == frame.photoID, wine.labelFrame != frame else { return }
+        wine.labelFrame = frame
+        _ = update { try $0.updateWine(wine) }
+    }
+
     func aiFoundNothing(for wineID: UUID) {
         guard !isAddBannerShown(for: wineID) else { return }
         showToast(String(localized: "The AI found nothing to add"))

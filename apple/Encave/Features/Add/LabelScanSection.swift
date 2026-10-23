@@ -114,6 +114,8 @@ final class LabelScan {
                 let frame = analysis.labelFrame(forPhoto: photoID)
                 if let saved = savedDraft, let model = savedIn {
                     savedDraft = nil
+                    // Where the label is, kept even when the AI completes nothing else.
+                    if let frame { model.setLabelFrame(frame, for: saved.id) }
                     var completed = saved
                     if let frame { completed.labelFrame = frame }
                     var filled = autoFilled

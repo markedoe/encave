@@ -29,7 +29,8 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
         val window = if (drinkFrom > 1900 && drinkUntil >= drinkFrom) drinkFrom..drinkUntil else result.estimatedWindow()
         if (window != null) result = result.copy(drinkFrom = window.first, drinkUntil = window.last)
     }
-    return if (result.sameDetails(wine)) wine else result.copy(aiCompletedAt = ReferenceDates.now())
+    // Nothing else new: not "completed", but where the label is still counts (the studio picture).
+    return if (result.sameDetails(wine)) wine.copy(labelFrame = result.labelFrame) else result.copy(aiCompletedAt = ReferenceDates.now())
 }
 
 /** The same details as [other], whatever the AI's date and label frame: nothing was completed. */
