@@ -185,13 +185,14 @@ enum StudioPhoto {
         return photo.transformed(by: turn).cropped(to: inner)
     }
 
-    /// The largest thing that stands out, cut out with a softened edge (about a
-    /// pixel), and how much it leans when it is long like a bottle (degrees to turn
-    /// the photo by, counterclockwise; nil when upright or leaning too much to be
-    /// sure). The cut-out is nil when it is not clear: low confidence, nearly the
-    /// whole photo or a tiny part of it, or a ragged shape that fills little of its
-    /// frame (turned with it, so a leaning bottle counts); the lean is still given,
-    /// and the photo turned upright is tried again.
+    /// The largest thing that stands out, without the people in the photo (a hand
+    /// holding the bottle), cut out with a softened edge (about a pixel), and how
+    /// much it leans when it is long like a bottle (degrees to turn the photo by,
+    /// counterclockwise; nil when upright or leaning too much to be sure). The
+    /// cut-out is nil when it is not clear: low confidence, nearly the whole photo or
+    /// a tiny part of it, or a ragged shape that fills little of its frame (turned
+    /// with it, so a leaning bottle counts); the lean is still given, and the photo
+    /// turned upright is tried again.
     private static func liftedSubject(_ handler: VNImageRequestHandler, _ photo: CIImage) -> (cut: CIImage?, lean: Double?)? {
         let lift = VNGenerateForegroundInstanceMaskRequest()
         guard (try? handler.perform([lift])) != nil, let observation = lift.results?.first,
@@ -204,7 +205,15 @@ enum StudioPhoto {
               let buffer = try? observation.generateScaledMaskForImage(forInstances: IndexSet(integer: shape.instance),
                                                                        from: handler) else { return (nil, lean) }
         let extent = photo.extent
-        let mask = CIImage(cvPixelBuffer: buffer).applyingGaussianBlur(sigma: 1).cropped(to: extent)
+        var subject = CIImage(cvPixelBuffer: buffer)
+        // A hand holding the bottle is not part of it.
+        if let people = personMask(handler, extent: extent) {
+            let subtract = CIFilter.subtractBlendMode()
+            subtract.inputImage = people
+            subtract.backgroundImage = subject
+            subject = (subtract.outputImage ?? subject).applyingFilter("CIColorClamp")
+        }
+        let mask = subject.applyingGaussianBlur(sigma: 1).cropped(to: extent)
         let blend = CIFilter.blendWithRedMask()
         blend.inputImage = photo
         blend.backgroundImage = CIImage.empty()
@@ -214,6 +223,19 @@ enum StudioPhoto {
         let rect = CGRect(x: extent.minX + box.minX * extent.width, y: extent.minY + (1 - box.maxY) * extent.height,
                           width: box.width * extent.width, height: box.height * extent.height).integral
         return (cut.cropped(to: rect.intersection(extent)), lean)
+    }
+
+    /// Where people are (a hand holding the bottle), white, stretched over `extent`;
+    /// nil when Vision cannot tell.
+    private static func personMask(_ handler: VNImageRequestHandler, extent: CGRect) -> CIImage? {
+        let request = VNGeneratePersonSegmentationRequest()
+        request.qualityLevel = .balanced
+        request.outputPixelFormat = kCVPixelFormatType_OneComponent8
+        guard (try? handler.perform([request])) != nil, let buffer = request.results?.first?.pixelBuffer else { return nil }
+        let people = CIImage(cvPixelBuffer: buffer)
+        guard people.extent.width > 0, people.extent.height > 0 else { return nil }
+        return people.transformed(by: CGAffineTransform(translationX: extent.minX, y: extent.minY)
+            .scaledBy(x: extent.width / people.extent.width, y: extent.height / people.extent.height))
     }
 
     /// The instance covering the most pixels in Vision's low-resolution instance
