@@ -89,8 +89,9 @@ English then French), then Beta App Review.
   uploaded.
 - The tour runs as four jobs (iPhone and iPad, English and French), one
   simulator each, and merges the screenshots into the `screens` artifact.
-  "Re-run failed jobs" re-runs only the part that failed. The measured time
-  is in the `apple.yml` header.
+  "Re-run failed jobs" re-runs only the part that failed. Measured on
+  2026-10-23: 28 to 43 minutes per job (build, simulator and tour), against
+  80 to 85 minutes for the single job; a job may wait for a free macOS runner.
 
 ## One-time setup by hand (no API)
 
@@ -347,11 +348,11 @@ the Console (Publishing overview, Inbox).
 
 ## Work in progress
 
-1. Faster tour: four jobs, no second tour on `main` (branch `claude/faster-ci`).
+1. Faster tour: four jobs, no second tour on `main` (**done**).
 2. Groundwork: version from release tags; store builds of a given commit;
    feature switches on both platforms.
 3. App Store release tool and the train (Apple), then the urgent lane.
 4. Google Play: internal testing, the emulator smoke test, closed testing
-   and the store listing are built; closed testing waits for its testers list
-   (one-time setup, step 6); then production.
+   and the store listing are on (the first closed release, 3981, was sent for
+   Google's review on 2026-10-23); then production.
 5. Sync compatibility test against the last release; hardening.

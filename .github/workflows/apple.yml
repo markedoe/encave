@@ -87,7 +87,8 @@ jobs:
     runs-on: macos-latest
     # One simulator per job, four jobs side by side (with the apps job, the five macOS
     # runners a free account runs at once). Two simulators on one runner slow each other,
-    # and three fail to launch the app; one a runner runs at full speed.
+    # and three fail to launch the app; one a runner runs at full speed. Measured: 28 to
+    # 43 minutes a job, against 80 to 85 for one job with both simulators.
     timeout-minutes: 90
     strategy:
       fail-fast: false
