@@ -214,7 +214,8 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
 
     fun save() {
         if (saving) return
-        val chosen = existing ?: run {
+        // A wine of the cellar without a label photo takes this one, and the AI's label frame for it.
+        val chosen = existing?.let { if (it.photoId == null && form.newPhoto != null) it.copy(labelFrame = form.labelFrame) else it } ?: run {
             form.showErrors = true
             if (form.nameMissing || form.vintageInvalid) {
                 // The field in error may be off screen: go to it.

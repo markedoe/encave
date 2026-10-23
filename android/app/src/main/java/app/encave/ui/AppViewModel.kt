@@ -45,6 +45,7 @@ import app.encave.core.merge
 import app.encave.core.CellarVersion
 import app.encave.core.RestoreMode
 import app.encave.core.restoring
+import app.encave.core.sync.PhotoId
 import app.encave.data.BackupManager
 import app.encave.data.CellarRepository
 import app.encave.data.RestoreSource
@@ -699,7 +700,8 @@ class AppViewModel(
         readingJobs.remove(formId)?.cancel()
         readings.value = readings.value + (formId to LabelReading.Reading)
         readingJobs[formId] = viewModelScope.launch {
-            val result = analyzeLabel(jpeg)
+            // The photo's ID (its content's hash, as saved): the label frame is for it.
+            val result = analyzeLabel(jpeg).map { it.copy(photoId = PhotoId.make(jpeg)) }
             readingJobs.remove(formId)
             val saved = savedWhileReading.remove(formId)
             if (saved != null) {

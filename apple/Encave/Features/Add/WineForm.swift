@@ -24,6 +24,8 @@ struct WineDraft: Equatable {
     var coverPhotoID: String?
     /// When the AI last completed the details: set by Complete with AI, kept on save.
     var aiCompletedAt: Date?
+    /// Where the label is in the label photo, from Complete with AI; kept on save.
+    var labelFrame: WineLabelFrame?
     /// A tag being typed, kept on save.
     var pendingTag = ""
 
@@ -50,6 +52,7 @@ struct WineDraft: Equatable {
         extraPhotoIDs = wine.extraPhotoIDs
         coverPhotoID = wine.coverPhotoID
         aiCompletedAt = wine.aiCompletedAt
+        labelFrame = wine.labelFrame
     }
 
     var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -86,6 +89,7 @@ struct WineDraft: Equatable {
         wine.extraPhotoIDs = extraPhotoIDs
         wine.coverPhotoID = coverPhotoID
         wine.aiCompletedAt = aiCompletedAt
+        wine.labelFrame = labelFrame
         return wine
     }
 }
@@ -372,10 +376,18 @@ struct EditWineView: View {
         guard !analyzing, let photo = newPhoto ?? (photoRemoved ? nil : PhotoStore.data(for: draft.photoID)) else { return }
         analyzing = true
         aiProblem = nil
+        let isNewPhoto = newPhoto != nil
+        let storedPhotoID = draft.photoID
         Task {
             defer { analyzing = false }
             do {
                 let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                // The ID the photo read has, or will have once saved: the label frame is for it.
+                var photoID = storedPhotoID
+                if isNewPhoto {
+                    photoID = await Task.detached(priority: .userInitiated) { PhotoStore.id(for: photo) }.value
+                }
+                if let frame = analysis.labelFrame(forPhoto: photoID) { draft.labelFrame = frame }
                 var value = draft
                 var filled = WineDraft()
                 guard analysis.apply(to: &value, replacing: &filled) else {

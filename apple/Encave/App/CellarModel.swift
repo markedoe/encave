@@ -857,6 +857,7 @@ final class CellarModel {
             return
         }
         take(\.aiCompletedAt)
+        take(\.labelFrame)
         // A wine that already matched was kept apart on purpose in the form.
         let matchedBefore = cellar.wine(matching: live)?.id
         // The bottles' "Added" banner still shown: one banner, whose Undo takes both back.
@@ -875,6 +876,7 @@ final class CellarModel {
             restore(\.name); restore(\.producer); restore(\.vintage); restore(\.color); restore(\.appellation)
             restore(\.region); restore(\.country); restore(\.grapes); restore(\.drinkFrom); restore(\.drinkUntil)
             restore(\.aiCompletedAt)
+            restore(\.labelFrame)
             cellar.wines[id] = wine
         }
         // The AI renamed the new wine into one already in the cellar: offered to merge them.

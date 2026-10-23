@@ -204,6 +204,19 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     var grapes: [String]
     var drinkFrom: Int
     var drinkUntil: Int
+    /// Where the whole front label is in the photo ("label_box" and "label_angle"), checked
+    /// when the answer is read; nil when absent or invalid, which never fails the answer.
+    var placement: AILabelPlacement? = nil
+
+    private enum CodingKeys: String, CodingKey {
+        case name, producer, vintage, color, appellation, region, country, grapes, drinkFrom, drinkUntil
+    }
+
+    /// The label's frame for the studio picture, for the photo that was read.
+    func labelFrame(forPhoto photoID: String?) -> WineLabelFrame? {
+        guard let photoID else { return nil }
+        return placement?.frame(forPhoto: photoID)
+    }
 
     var wineColor: WineColor? { WineColor(rawValue: color) }
 
@@ -247,8 +260,9 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
         [
             "type": "object",
             "additionalProperties": false,
+            // Strict schemas want every key listed: the label's place is null when not found.
             "required": ["name", "producer", "vintage", "color", "appellation", "region", "country",
-                         "grapes", "drinkFrom", "drinkUntil"],
+                         "grapes", "drinkFrom", "drinkUntil", "label_box", "label_angle"],
             "properties": [
                 "name": ["type": "string"],
                 "producer": ["type": "string"],
@@ -260,6 +274,15 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
                 "grapes": ["type": "array", "items": ["type": "string"]] as JSONObject,
                 "drinkFrom": ["type": "integer"],
                 "drinkUntil": ["type": "integer"],
+                "label_box": ["anyOf": [
+                    ["type": "object",
+                     "additionalProperties": false,
+                     "required": ["x", "y", "w", "h"],
+                     "properties": ["x": ["type": "number"], "y": ["type": "number"],
+                                    "w": ["type": "number"], "h": ["type": "number"]] as JSONObject] as JSONObject,
+                    ["type": "null"],
+                ] as [JSONObject]] as JSONObject,
+                "label_angle": ["anyOf": [["type": "number"], ["type": "null"]] as [JSONObject]] as JSONObject,
             ] as JSONObject,
         ]
     }
@@ -273,6 +296,8 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     - appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.
     - grapes: the grape varieties if printed or typical of the appellation; [] if unsure.
     - drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.
+    - label_box: where the whole paper front label is in the photo, including its borders and any logo or picture printed on it, as {"x", "y", "w", "h"}: fractions from 0 to 1 of the photo's width and height, from its top-left corner; null if you cannot see it.
+    - label_angle: the label's slant in degrees, positive when its text runs uphill to the right, 0 when level; null if unknown.
     Use "" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.
     """
 }
@@ -582,9 +607,10 @@ enum AIService {
         if let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") {
             text = String(text[start...end])
         }
-        guard let analysis = try? JSONDecoder().decode(LabelAnalysis.self, from: Data(text.utf8)) else {
+        guard var analysis = try? JSONDecoder().decode(LabelAnalysis.self, from: Data(text.utf8)) else {
             throw AIServiceError.invalidResponse
         }
+        analysis.placement = AILabelPlacement.parse(Data(text.utf8))
         return analysis
     }
 }

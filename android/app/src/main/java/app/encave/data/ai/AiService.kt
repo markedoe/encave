@@ -1,6 +1,8 @@
 package app.encave.data.ai
 
 import android.util.Base64
+import app.encave.core.AiLabelPlacement
+import app.encave.core.WineLabelFrame
 import app.encave.core.sync.LocalAddress
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -11,6 +13,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -38,7 +41,17 @@ data class LabelAnalysis(
     val grapes: List<String> = emptyList(),
     val drinkFrom: Int = 0,
     val drinkUntil: Int = 0,
+    /**
+     * Where the whole front label is in the photo ("label_box" and "label_angle"), checked
+     * when the answer is read; null when absent or invalid, which never fails the answer.
+     */
+    @Transient val placement: AiLabelPlacement? = null,
+    /** The ID of the photo read (its content's hash, as [app.encave.data.PhotoStore] names it). */
+    @Transient val photoId: String? = null,
 ) {
+    /** The label's frame for the studio picture, for the photo read. */
+    val labelFrame: WineLabelFrame? get() = photoId?.let { id -> placement?.frame(id) }
+
     companion object {
         private val colors = listOf("red", "white", "rose", "sparkling", "dessert", "fortified", "orange")
 
@@ -46,8 +59,11 @@ data class LabelAnalysis(
             put("type", "object")
             put("additionalProperties", false)
             putJsonArray("required") {
-                listOf("name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil")
-                    .forEach { add(JsonPrimitive(it)) }
+                // Strict schemas want every key listed: the label's place is null when not found.
+                listOf(
+                    "name", "producer", "vintage", "color", "appellation", "region", "country", "grapes", "drinkFrom", "drinkUntil",
+                    "label_box", "label_angle",
+                ).forEach { add(JsonPrimitive(it)) }
             }
             putJsonObject("properties") {
                 listOf("name", "producer").forEach { putJsonObject(it) { put("type", "string") } }
@@ -63,6 +79,27 @@ data class LabelAnalysis(
                 }
                 putJsonObject("drinkFrom") { put("type", "integer") }
                 putJsonObject("drinkUntil") { put("type", "integer") }
+                putJsonObject("label_box") {
+                    putJsonArray("anyOf") {
+                        add(
+                            buildJsonObject {
+                                put("type", "object")
+                                put("additionalProperties", false)
+                                putJsonArray("required") { listOf("x", "y", "w", "h").forEach { add(JsonPrimitive(it)) } }
+                                putJsonObject("properties") {
+                                    listOf("x", "y", "w", "h").forEach { putJsonObject(it) { put("type", "number") } }
+                                }
+                            },
+                        )
+                        add(buildJsonObject { put("type", "null") })
+                    }
+                }
+                putJsonObject("label_angle") {
+                    putJsonArray("anyOf") {
+                        add(buildJsonObject { put("type", "number") })
+                        add(buildJsonObject { put("type", "null") })
+                    }
+                }
             }
         }
 
@@ -75,6 +112,8 @@ data class LabelAnalysis(
             - appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.
             - grapes: the grape varieties if printed or typical of the appellation; [] if unsure.
             - drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.
+            - label_box: where the whole paper front label is in the photo, including its borders and any logo or picture printed on it, as {"x", "y", "w", "h"}: fractions from 0 to 1 of the photo's width and height, from its top-left corner; null if you cannot see it.
+            - label_angle: the label's slant in degrees, positive when its text runs uphill to the right, 0 when level; null if unknown.
             Use "" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.
         """.trimIndent()
     }
@@ -392,6 +431,7 @@ object AiService {
         val start = trimmed.indexOf('{')
         val end = trimmed.lastIndexOf('}')
         if (start >= 0 && end > start) trimmed = trimmed.substring(start, end + 1)
-        return runCatching { json.decodeFromString(LabelAnalysis.serializer(), trimmed) }.getOrElse { throw AiError.InvalidResponse }
+        val analysis = runCatching { json.decodeFromString(LabelAnalysis.serializer(), trimmed) }.getOrElse { throw AiError.InvalidResponse }
+        return analysis.copy(placement = AiLabelPlacement.parse(trimmed))
     }
 }

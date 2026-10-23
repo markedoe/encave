@@ -66,14 +66,16 @@ enum StudioPhoto {
     private static let renderer = Renderer()
 
     /// The studio picture, from the cache or made now. Nil when the photo cannot be
-    /// read: it is then shown as taken.
-    static func picture(for photoID: String, maxPixelSize: Int) async -> Picture? {
-        let cached = await Task.detached(priority: .utility) { cachedData(for: photoID) }.value
+    /// read: it is then shown as taken. With the label frame the AI found for this
+    /// photo, the picture is framed on it, and made again when it arrives or changes.
+    static func picture(for photoID: String, labelFrame: WineLabelFrame? = nil, maxPixelSize: Int) async -> Picture? {
+        let key = cacheKey(photoID, labelFrame)
+        let cached = await Task.detached(priority: .utility) { cachedData(for: photoID, key: key) }.value
         let made: Stored?
         if let cached {
             made = cached
         } else {
-            made = await renderer.data(for: photoID)
+            made = await renderer.data(for: photoID, labelFrame: labelFrame)
         }
         guard let stored = made else { return nil }
         return await Task.detached(priority: .utility) {
@@ -87,34 +89,40 @@ enum StudioPhoto {
         var kind: Kind
     }
 
+    /// The cache's name for a picture: the photo's ID, and the label frame used, if any.
+    static func cacheKey(_ photoID: String, _ labelFrame: WineLabelFrame?) -> String {
+        labelFrame.map { "\(photoID).\($0.cacheTag)" } ?? photoID
+    }
+
     /// A photo filling the picture has no transparent parts: a JPEG, much smaller
     /// than a PNG. Cut-outs keep their transparency in a PNG.
-    private static func file(_ photoID: String, _ kind: Kind) -> URL? {
-        folder?.appendingPathComponent("\(photoID).\(kind.rawValue).\(kind == .photo ? "jpg" : "png")")
+    private static func file(_ key: String, _ kind: Kind) -> URL? {
+        folder?.appendingPathComponent("\(key).\(kind.rawValue).\(kind == .photo ? "jpg" : "png")")
     }
 
     /// The cached picture (`.some(nil)` when the photo gave nothing before), or nil when not made yet.
-    private static func cachedData(for photoID: String) -> Stored?? {
+    private static func cachedData(for photoID: String, key: String) -> Stored?? {
         guard PhotoStore.isSafe(photoID), let folder else { return .some(nil) }
         for kind in Kind.allCases {
-            if let url = file(photoID, kind), let data = try? Data(contentsOf: url) { return Stored(data: data, kind: kind) }
+            if let url = file(key, kind), let data = try? Data(contentsOf: url) { return Stored(data: data, kind: kind) }
         }
-        if FileManager.default.fileExists(atPath: folder.appendingPathComponent("\(photoID).none").path) { return .some(nil) }
+        if FileManager.default.fileExists(atPath: folder.appendingPathComponent("\(key).none").path) { return .some(nil) }
         return nil
     }
 
     /// The studio picture, made and cached now. A photo that cannot be read is
     /// remembered so it is not tried again.
-    private static func studioData(for photoID: String) -> Stored? {
-        if let cached = cachedData(for: photoID) { return cached }
+    private static func studioData(for photoID: String, labelFrame: WineLabelFrame?) -> Stored? {
+        let key = cacheKey(photoID, labelFrame)
+        if let cached = cachedData(for: photoID, key: key) { return cached }
         guard let folder, PhotoStore.exists(photoID) else { return nil }
         if let source = PhotoStore.data(for: photoID),
            let image = PhotoStore.cgImage(from: source, maxPixelSize: PhotoStore.maxPixelSize),
-           let rendered = render(image), let data = fileData(rendered) {
-            if let url = file(photoID, rendered.kind) { try? data.write(to: url, options: [.atomic]) }
+           let rendered = render(image, labelFrame: labelFrame), let data = fileData(rendered) {
+            if let url = file(key, rendered.kind) { try? data.write(to: url, options: [.atomic]) }
             return Stored(data: data, kind: rendered.kind)
         }
-        FileManager.default.createFile(atPath: folder.appendingPathComponent("\(photoID).none").path, contents: nil)
+        FileManager.default.createFile(atPath: folder.appendingPathComponent("\(key).none").path, contents: nil)
         return nil
     }
 
@@ -122,24 +130,30 @@ enum StudioPhoto {
         private var running: [String: Task<Stored?, Never>] = [:]
         private var last: Task<Stored?, Never>?
 
-        func data(for photoID: String) async -> Stored? {
-            if let task = running[photoID] { return await task.value }
+        func data(for photoID: String, labelFrame: WineLabelFrame?) async -> Stored? {
+            let key = StudioPhoto.cacheKey(photoID, labelFrame)
+            if let task = running[key] { return await task.value }
             let previous = last
             let task = Task.detached(priority: .utility) { () -> Stored? in
                 _ = await previous?.value
-                return StudioPhoto.studioData(for: photoID)
+                return StudioPhoto.studioData(for: photoID, labelFrame: labelFrame)
             }
-            running[photoID] = task
+            running[key] = task
             last = task
             let result = await task.value
-            running[photoID] = nil
+            running[key] = nil
             return result
         }
     }
 
     // MARK: Making the picture
 
-    private static func render(_ image: CGImage) -> Picture? {
+    private static func render(_ image: CGImage, labelFrame: WineLabelFrame? = nil) -> Picture? {
+        // The label the AI found in this photo: cut to it, turned level, shown whole on the backdrop.
+        if let labelFrame, let framed = LabelFrame.framed(CIImage(cgImage: image), on: labelFrame) {
+            let result = downscaled(framed)
+            if let output = context.createCGImage(result, from: result.extent) { return Picture(image: output, kind: .cutout) }
+        }
         var photo = CIImage(cgImage: image)
         var handler = VNImageRequestHandler(cgImage: image, options: [:])
         var lifted = liftedSubject(handler, photo)
@@ -497,6 +511,8 @@ struct LabelPhoto: View {
     var color: WineColor?
     /// The wine's identifier, for its backdrop.
     var seed: String
+    /// Where the AI found the label in this photo (`Wine.labelFrame(forPhoto:)`), if it did.
+    var labelFrame: WineLabelFrame?
     var maxPixelSize = 900
     /// Inner margin around a cut-out shown whole.
     var inset: CGFloat = 12
@@ -545,8 +561,8 @@ struct LabelPhoto: View {
                 WinePhoto(photoID: photoID, maxPixelSize: maxPixelSize)
             }
         }
-        .task(id: studio ? photoID : "") {
-            picture = studio ? await StudioPhoto.picture(for: photoID, maxPixelSize: maxPixelSize) : nil
+        .task(id: studio ? StudioPhoto.cacheKey(photoID, labelFrame) : "") {
+            picture = studio ? await StudioPhoto.picture(for: photoID, labelFrame: labelFrame, maxPixelSize: maxPixelSize) : nil
         }
     }
 }
@@ -737,7 +753,8 @@ struct WineImage: View {
                     .padding(inset / 2)
             }
         } else if let photoID = wine.photoID {
-            LabelPhoto(photoID: photoID, color: wine.color, seed: wine.id.uuidString, maxPixelSize: maxPixelSize, inset: inset)
+            LabelPhoto(photoID: photoID, color: wine.color, seed: wine.id.uuidString,
+                       labelFrame: wine.labelFrame(forPhoto: photoID), maxPixelSize: maxPixelSize, inset: inset)
         }
     }
 }

@@ -73,6 +73,12 @@ data class Wine(
     val attachments: List<Attachment>? = null,
     /** When the details were last completed by the AI from the label photo; null when never. Synced. */
     @Serializable(with = InstantSerializer::class) val aiCompletedAt: Instant? = null,
+    /**
+     * Where the whole front label is in the label photo, from the AI label recognition, to
+     * frame the studio picture. Used only while it names the current [photoId] (see
+     * [labelFrame]). Null when never found. Synced.
+     */
+    val labelFrame: WineLabelFrame? = null,
     /** Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1). Part of equality, so a merge that only brings them in is still saved. */
     @Transient val unknownKeys: JsonObject = NoUnknownKeys,
 ) {

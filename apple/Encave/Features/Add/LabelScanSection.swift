@@ -109,9 +109,13 @@ final class LabelScan {
             defer { isAnalyzing = false }
             do {
                 let analysis = try await AIService.analyzeLabel(jpeg: photo)
+                // The ID the photo will have once saved with the wine: the label frame is for it.
+                let photoID = await Task.detached(priority: .userInitiated) { PhotoStore.id(for: photo) }.value
+                let frame = analysis.labelFrame(forPhoto: photoID)
                 if let saved = savedDraft, let model = savedIn {
                     savedDraft = nil
                     var completed = saved
+                    if let frame { completed.labelFrame = frame }
                     var filled = autoFilled
                     guard analysis.apply(to: &completed, replacing: &filled) else {
                         model.aiFoundNothing(for: saved.id)
@@ -121,6 +125,7 @@ final class LabelScan {
                     model.completeWine(saved.id, from: saved.makeWine(), to: completed.makeWine())
                     return
                 }
+                if let frame { draft.wrappedValue.labelFrame = frame }
                 var value = draft.wrappedValue
                 guard analysis.apply(to: &value, replacing: &autoFilled) else {
                     aiNote = String(localized: "The AI found nothing to add")

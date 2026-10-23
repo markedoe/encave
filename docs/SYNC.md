@@ -74,6 +74,13 @@ implementations:
   are optional: the price of a bottle today, accepted by the user from a web
   search or typed. `wine.aiCompletedAt` is an optional date: when the details
   were last completed by the AI label recognition, shown by the apps.
+  `wine.labelFrame` is an optional object `{photoID, x, y, w, h, angle}`, left
+  out when absent: where the whole front label is in the label photo, as the
+  AI label recognition found it, to frame the studio picture made on each
+  device. `x`, `y`, `w` and `h` are fractions (0 to 1) of the photo's width and
+  height from its top-left corner, and `angle` is in degrees, positive when the
+  label's text runs uphill to the right. It is used only while `photoID` is
+  the wine's `photoID`: after a new label photo it is stale and ignored.
   `bottle.reservedFor` is an optional string (the occasion a bottle
   is kept for). `settings.savedSearches` is an optional array of
   `{id, name, query, colors, maturities, rackID?, tag?, reservation?, grape?}`, with
