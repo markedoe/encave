@@ -217,6 +217,7 @@ off without code changes:
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
 | `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`). Nothing is uploaded to Google Play |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
+| `play-listing.yml` | Manual, on `main`: publishes the Google Play store listing (texts in `docs/store/play.json`, icon, feature graphic, and phone and tablet screenshots made from the Android screen tour by `android/tools/play_listing_images.py`) and the Data safety form (`docs/store/play-data-safety.csv`), with `android/tools/play_publish.py`; unchanged texts and images are skipped |
 | `play-status.yml` | Manual, read-only, on `main`: checks that the repository reaches Google Play (Workload Identity Federation, variables `PLAY_WIF_PROVIDER` and `PLAY_SERVICE_ACCOUNT`) and lists the testing tracks, their releases and the store listing languages |
 | `testflight-status.yml` | Manual, read-only: the latest TestFlight builds, which external groups have them and where Beta App Review stands |
 | `testflight-external.yml` | Manual: gives a build already in TestFlight (its build number) to every external group and submits it to Beta App Review, with an optional "What to Test"; builds nothing |
