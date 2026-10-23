@@ -19,7 +19,7 @@ struct RackBottleList: View {
                     LabeledContent {
                         Text("\(bottles.count) of \(rack.capacity) bottles").monospacedDigit()
                     } label: {
-                        Label(rack.kindTitle, systemImage: rack.systemImage)
+                        Label(rack.storageSummary, systemImage: rack.systemImage)
                     }
                     ProgressView(value: Double(bottles.count), total: Double(max(1, rack.capacity)))
                         .tint(Color.accentColor)
