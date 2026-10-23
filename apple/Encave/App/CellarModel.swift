@@ -25,7 +25,7 @@ final class CellarModel {
     var successCount = 0
     /// Bumped when something is switched on or off (the shopping list), for a lighter haptic.
     var selectionCount = 0
-    /// Slot to highlight when jumping to a rack ("Show in rack").
+    /// Slot to highlight when jumping to a rack ("Show in Storage").
     var highlightedSlot: Slot?
     /// What the Journal shows; back to everything when a new entry would be hidden.
     var journalFilter: DiaryFilter = .all
@@ -562,7 +562,7 @@ final class CellarModel {
         var total = 0
         guard update({ total = try $0.place(wines: wineIDs, in: rackID) }) else { return }
         guard total > 0 else {
-            showToast(String(localized: "No free place in this rack for bottles without a place."))
+            showToast(String(localized: "No free position in this storage for bottles without a position."))
             return
         }
         successCount += 1
@@ -573,7 +573,7 @@ final class CellarModel {
         let snapshot = cellar
         var moved = 0
         guard update({ moved = $0.unplace(wines: wineIDs) }), moved > 0 else { return }
-        showToast(String(localized: "Bottles taken out of their places: \(moved)")) { [weak self] in
+        showToast(String(localized: "Bottles taken out of their positions: \(moved)")) { [weak self] in
             self?.update { $0 = snapshot }
         }
     }
@@ -582,7 +582,7 @@ final class CellarModel {
     func takeOut(_ bottleIDs: Set<UUID>) {
         let snapshot = cellar
         guard update({ cellar in bottleIDs.forEach { cellar.bottles[$0]?.slot = nil } }) else { return }
-        showToast(String(localized: "Bottles taken out of their places: \(bottleIDs.count)")) { [weak self] in
+        showToast(String(localized: "Bottles taken out of their positions: \(bottleIDs.count)")) { [weak self] in
             self?.update { $0 = snapshot }
         }
     }
@@ -737,7 +737,7 @@ final class CellarModel {
         }
         guard ok, before.slot != nil else { return }
         successCount += 1
-        showToast(String(localized: "Bottle taken out of the rack"), lasting: .afterChanges) { [weak self] in self?.moveBack(before) }
+        showToast(String(localized: "Bottle taken out of storage"), lasting: .afterChanges) { [weak self] in self?.moveBack(before) }
     }
 
     /// Puts a bottle back in the place and with the note it had (the Undo of a move).
@@ -768,7 +768,7 @@ final class CellarModel {
         guard update({ try $0.updateRack(rack, rowMap: rowMap, takingOut: count > 0) }) else { return false }
         if count > 0, let old {
             // Only this rack and its bottles come back, so the Undo can stay after other changes.
-            showToast(String(localized: "Bottles taken out of their places: \(count)"), lasting: .long) { [weak self] in
+            showToast(String(localized: "Bottles taken out of their positions: \(count)"), lasting: .long) { [weak self] in
                 self?.update { cellar in
                     guard cellar.rack(old.id) != nil else { return }
                     // Out of their places first, so the rack can take its old shape, then back in.
@@ -1191,9 +1191,9 @@ private final class BackgroundTask {
 extension CellarError {
     var localizedMessage: String {
         switch self {
-        case .slotTaken: String(localized: "That place is already taken.")
-        case .slotOutOfRange: String(localized: "That place is outside the rack.")
-        case .rackNotEmpty: String(localized: "Some bottles are in places you removed.")
+        case .slotTaken: String(localized: "That position is already taken.")
+        case .slotOutOfRange: String(localized: "That position is outside the storage.")
+        case .rackNotEmpty: String(localized: "Some bottles are in positions you removed.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
         case .notReceived: String(localized: "This bottle is on order: mark it received first.")
         case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")
@@ -1205,13 +1205,13 @@ extension SampleData.Labels {
     static var localized: Self {
         var labels = Self()
         labels.mainRack = String(localized: "Main rack")
-        labels.wineFridge = String(localized: "Wine fridge")
+        labels.wineFridge = String(localized: "Cabinet")
         labels.bins = String(localized: "Diamond bins")
         labels.deepRack = String(localized: "Double-depth rack")
         labels.honeycomb = String(localized: "Honeycomb rack")
         labels.stairs = String(localized: "Under the stairs")
-        labels.largeFridge = String(localized: "Large wine fridge")
-        labels.headToTailFridge = String(localized: "Head-to-tail fridge")
+        labels.largeFridge = String(localized: "Large cabinet")
+        labels.headToTailFridge = String(localized: "Head-to-tail cabinet")
         labels.tastingNote = String(localized: "Silky, red fruit, long finish.")
         labels.kitchen = String(localized: "Kitchen")
         labels.occasion = String(localized: "Dinner with friends")

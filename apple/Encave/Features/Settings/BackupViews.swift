@@ -321,7 +321,7 @@ struct RestorePreviewView: View {
             Section("In This Backup") {
                 count("Wines with bottles", preview.wines)
                 count("Bottles in the cellar", preview.bottles)
-                count("Racks", preview.racks)
+                count("Storage", preview.racks)
                 count("Journal entries", preview.journalEntries)
                 count("Photos", preview.photos)
                 count("Documents", preview.documents)
@@ -337,7 +337,7 @@ struct RestorePreviewView: View {
             } header: {
                 Text("Compared with Your Cellar")
             } footer: {
-                Text("Wines, bottles, racks and wines tasted elsewhere.")
+                Text("Wines, bottles, storage and wines tasted elsewhere.")
             }
             if source.kind == .json, preview.photos + preview.documents > 0 {
                 Section {
@@ -363,7 +363,7 @@ struct RestorePreviewView: View {
                 }
                 .accessibilityIdentifier("restore.replace")
             } footer: {
-                Text("Add What Is Missing adds the wines, bottles, racks, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.")
+                Text("Add What Is Missing adds the wines, bottles, storage, Journal entries and saved searches that are not in your cellar and changes nothing else. Replace This Cellar makes your cellar exactly as in this backup; your settings stay as they are. You can undo right after.")
             }
             .disabled(working)
         }

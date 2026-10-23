@@ -104,7 +104,7 @@ struct RootView: View {
         #else
         TabView(selection: $router.selectedTab) {
             Tab("Cellar", systemImage: "wineglass", value: AppTab.cellar) { CellarView() }
-            Tab("Racks", systemImage: "square.grid.3x3", value: AppTab.racks) { RacksView() }
+            Tab("Storage", systemImage: "square.grid.3x3", value: AppTab.racks) { RacksView() }
             Tab("Tonight", systemImage: "moon.stars", value: AppTab.tonight) { TonightView() }
             Tab("Journal", systemImage: "book.closed", value: AppTab.journal) { JournalView() }
         }

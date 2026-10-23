@@ -51,7 +51,7 @@ struct RackDetailView: View {
                     Text("Bottles not found: \(missing(rack).count)"),
                     isPresented: $confirmingAudit, titleVisibility: .visible
                 ) {
-                    Button("Take Them Out of the Rack") {
+                    Button("Take Them Out of Storage") {
                         model.takeOut(Set(missing(rack).map(\.id)))
                         withAnimation { auditing = false; checked = [] }
                     }
@@ -61,7 +61,7 @@ struct RackDetailView: View {
                     }
                     Button("Keep Checking", role: .cancel) {}
                 } message: {
-                    Text("Taken out, they stay in the cellar without a place. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.")
+                    Text("Taken out, they stay in the cellar without a position. Gone, they leave the cellar (given away, drunk elsewhere, broken). You can undo right after.")
                 }
                 .sheet(item: $openCell, onDismiss: {
                     if let afterCell { perform(afterCell) }
@@ -116,7 +116,7 @@ struct RackDetailView: View {
                     withAnimation { model.highlightedSlot = nil }
                 }
         } else {
-            ContentUnavailableView("Rack not found", systemImage: "questionmark")
+            ContentUnavailableView("Storage not found", systemImage: "questionmark")
         }
     }
 
@@ -218,11 +218,11 @@ struct RackDetailView: View {
                 checked = []
                 withAnimation { auditing = true }
             } label: {
-                Label("Check This Rack", systemImage: "checklist")
+                Label("Check This Storage", systemImage: "checklist")
             }
             .disabled(auditing)
             .accessibilityIdentifier("rack.audit")
-            Button { router?.sheet = .editRack(rackID: rackID) } label: { Label("Edit Rack", systemImage: "slider.horizontal.3") }
+            Button { router?.sheet = .editRack(rackID: rackID) } label: { Label("Edit Storage", systemImage: "slider.horizontal.3") }
         }
     }
 
@@ -291,7 +291,7 @@ struct RackDetailView: View {
         } else if place.holdsOne(in: rack), let from = bottle.slot, from.rackID == rack.id {
             model.swap(from, place.firstSlot)
         } else {
-            model.showToast(String(localized: "This place is full."))
+            model.showToast(String(localized: "This position is full."))
             return false
         }
         withAnimation(.snappy) { selectedPlace = place.holdsOne(in: rack) ? place : nil }
@@ -300,7 +300,7 @@ struct RackDetailView: View {
 
     private func tap(_ rack: Rack, _ place: RackPlace, _ bottles: [Bottle]) {
         if auditing {
-            // A tap says "the bottles of this place are here" (or undoes it).
+            // A tap says "the bottles of this position are here" (or undoes it).
             let slots = Set(bottles.compactMap(\.slot))
             guard !slots.isEmpty else { return }
             if slots.isSubset(of: checked) { checked.subtract(slots) } else { checked.formUnion(slots) }
@@ -314,7 +314,7 @@ struct RackDetailView: View {
             } else if place.holdsOne(in: rack) {
                 model.swap(from, place.firstSlot)
             } else {
-                model.showToast(String(localized: "This place is full."))
+                model.showToast(String(localized: "This position is full."))
             }
             return
         }
@@ -509,7 +509,7 @@ private struct RackKey: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Text(verbatim: [entry.wine.displayName, entry.wine.color?.name].compactMap { $0 }.joined(separator: ", "))
             + Text(verbatim: ", ") + Text("\(entry.count) bottles"))
-        .accessibilityHint(Text("Shows where its bottles are in the rack."))
+        .accessibilityHint(Text("Shows where its bottles are in this storage."))
         .accessibilityAddTraits(isOn ? .isSelected : [])
         .accessibilityIdentifier("rack.key.wine")
     }
@@ -643,7 +643,7 @@ private struct AuditBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Tap each bottle you find in the rack.", systemImage: "checklist")
+            Label("Tap each bottle you find in this storage.", systemImage: "checklist")
                 .font(.subheadline.weight(.medium))
             ProgressView(value: Double(checked), total: Double(max(total, 1)))
                 .tint(Color.accentColor)

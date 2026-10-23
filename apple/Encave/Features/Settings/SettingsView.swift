@@ -190,9 +190,9 @@ struct SettingsView: View {
                 Text("Your data")
             } footer: {
                 #if os(iOS)
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.")
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.")
                 #else
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its places and purchase value, for insurance or a move.")
+                Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.")
                 #endif
             }
 
@@ -283,15 +283,15 @@ struct SettingsView: View {
             Button("Erase all data", role: .destructive) { model.eraseAll() }
         } message: {
             if model.sync.otherDevices.isEmpty {
-                Text("This erases every bottle, wine, rack and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+                Text("This erases every bottle, wine, storage and Journal entry. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
             } else {
-                Text("This erases every bottle, wine, rack and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
+                Text("This erases every bottle, wine, storage and Journal entry on this device and on the other devices that sync with it. Your settings, such as the currency and saved searches, are kept. You can undo right after.")
             }
         }
         .confirmationDialog("Load the sample cellar?", isPresented: $confirmingSample, titleVisibility: .visible) {
             Button("Load sample cellar") { model.loadSample() }
         } message: {
-            Text("Example wines, racks and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
+            Text("Example wines, storage and tastings to try Encave. Remove them at any time with Remove Sample at the top of the Cellar.")
         }
         .confirmationDialog(
             "Delete this file?",
@@ -337,7 +337,9 @@ struct SettingsView: View {
 
     private func exportCSV() {
         let date = Date.now.formatted(.iso8601.year().month().day())
-        let data = Data(CellarExport.csv(model.cellar).utf8)
+        // The "location" column in the person's language, as the app shows it.
+        let csv = CellarExport.csv(model.cellar, placeName: { rack, slot in rack.displayLabel(for: slot) })
+        let data = Data(csv.utf8)
         exportDocument = ExportDocument(data: data, contentType: .commaSeparatedText, filename: "Encave \(date).csv")
     }
 
