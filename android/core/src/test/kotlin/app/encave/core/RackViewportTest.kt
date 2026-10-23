@@ -32,11 +32,31 @@ class RackViewportTest {
 
     @Test
     fun fitsWhenEveryPlaceReachesTheMinimumElseScrolls() {
-        assertFalse(RackViewport.scrolls(60.0, 44.0))
-        assertEquals(60.0, RackViewport.cellSize(60.0, 44.0))
-        assertFalse(RackViewport.scrolls(44.0, 44.0))
-        assertTrue(RackViewport.scrolls(30.0, 44.0))
-        assertEquals(44.0, RackViewport.cellSize(30.0, 44.0))
+        assertFalse(RackViewport.scrolls(60.0, 44.0, 40.0))
+        assertEquals(60.0, RackViewport.cellSize(60.0, 44.0, 40.0))
+        assertFalse(RackViewport.scrolls(44.0, 44.0, 40.0))
+        assertTrue(RackViewport.scrolls(30.0, 44.0, 40.0))
+        assertEquals(44.0, RackViewport.cellSize(30.0, 44.0, 40.0))
+    }
+
+    @Test
+    fun aStorageSlightlyTooLargeIsFittedRatherThanScrolledByAFewDp() {
+        // 8 cells of 48 in a little less: 7 % too wide at the minimum, places of 45: fitted.
+        assertFalse(RackViewport.scrolls(45.0, 48.0, 40.0))
+        assertEquals(45.0, RackViewport.cellSize(45.0, 48.0, 40.0))
+        // 10 % exactly: still fitted; more: scrolls.
+        assertFalse(RackViewport.scrolls(40.0, 44.0, 40.0))
+        assertTrue(RackViewport.scrolls(43.0, 48.0, 40.0))
+        // Places would be under 40: scrolls, however close.
+        assertTrue(RackViewport.scrolls(39.5, 42.0, 40.0))
+        assertEquals(42.0, RackViewport.cellSize(39.5, 42.0, 40.0))
+    }
+
+    @Test
+    fun aStorageThatScrollsOpensAtItsTopLeadingCorner() {
+        val offset = RackViewport.offsetCentering(RackViewport.start, 1000.0, 800.0, 300.0, 400.0)
+        assertEquals(ViewportPoint(0.0, 0.0), offset)
+        assertEquals(ViewportArea(0.0, 0.0, 0.3, 0.5), RackViewport.visibleArea(1000.0, 800.0, 300.0, 400.0, offset))
     }
 
     @Test

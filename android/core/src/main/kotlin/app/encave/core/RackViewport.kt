@@ -26,11 +26,29 @@ object RackViewport {
     fun minimumCellSize(rack: Rack, target: Double = MINIMUM_TARGET): Double =
         if (rack.hasDepthBands) target / BACK_PLACE_HEIGHT else target
 
-    /** Whether the storage scrolls: its places would be smaller than [minimum] when fitted. */
-    fun scrolls(fitted: Double, minimum: Double): Boolean = fitted < minimum
+    /**
+     * A storage only slightly larger than the space is fitted rather than scrolled by a few dp,
+     * as long as its places stay at least this large.
+     */
+    const val NEAR_FIT_TARGET = 40.0
 
-    /** The cell size to draw at: the fitted one when every place reaches the minimum, else the minimum. */
-    fun cellSize(fitted: Double, minimum: Double): Double = maxOf(fitted, minimum)
+    /** How much larger than the space a storage may be at the minimum and still be fitted. */
+    const val NEAR_FIT_MARGIN = 1.1
+
+    /** Where a storage that scrolls opens: its top-leading corner (fractions of the drawing). */
+    val start = ViewportPoint(0.0, 0.0)
+
+    /**
+     * Whether the storage scrolls: its places would be smaller than [minimum] when fitted, and it is
+     * more than 10 % larger than the space at the minimum, or its places would be smaller than
+     * [nearFit] (the cell size for [NEAR_FIT_TARGET]).
+     */
+    fun scrolls(fitted: Double, minimum: Double, nearFit: Double): Boolean =
+        fitted < minimum && !(fitted >= nearFit && minimum <= fitted * NEAR_FIT_MARGIN)
+
+    /** The cell size to draw at: the fitted one, unless the storage scrolls at the minimum. */
+    fun cellSize(fitted: Double, minimum: Double, nearFit: Double): Double =
+        if (scrolls(fitted, minimum, nearFit)) minimum else fitted
 
     /** The part of the drawing in view, as fractions of it; [offset] is the point of the drawing at the view's top left corner. */
     fun visibleArea(contentWidth: Double, contentHeight: Double, viewWidth: Double, viewHeight: Double, offset: ViewportPoint): ViewportArea {

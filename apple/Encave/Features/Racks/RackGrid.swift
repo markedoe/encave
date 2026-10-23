@@ -378,8 +378,9 @@ struct FittedRackGrid: View {
             let space = CGSize(width: proxy.size.width - padding * 2, height: proxy.size.height - padding * 2)
             let fitted = RackGrid.fittingCellSize(for: rack, in: space, floor: 0)
             let minimum = RackViewport.minimumCellSize(for: rack)
-            let scrolls = RackViewport.scrolls(fitted: fitted, minimum: minimum)
-            let base = RackViewport.cellSize(fitted: fitted, minimum: minimum)
+            let nearFit = RackViewport.minimumCellSize(for: rack, target: RackViewport.nearFitTarget)
+            let scrolls = RackViewport.scrolls(fitted: fitted, minimum: minimum, nearFit: nearFit)
+            let base = RackViewport.cellSize(fitted: fitted, minimum: minimum, nearFit: nearFit)
             VStack(spacing: 0) {
                 if scrolls {
                     RackOverview(rack: rack, tracker: tracker, selected: selected, highlighted: highlighted,
@@ -399,9 +400,9 @@ struct FittedRackGrid: View {
         #if os(iOS)
         ZoomableRack(rack: rack, baseCellSize: base, selected: selected, highlighted: highlighted,
                      selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
-                     zoomStep: zoomStep, interaction: interaction, tracker: tracker)
+                     zoomStep: zoomStep, interaction: interaction, tracker: tracker, alignsTop: scrolls)
         #else
-        let cellSize = max(RackViewport.minimumCellSize(for: rack), base * zoom)
+        let cellSize = max(min(base, RackViewport.minimumCellSize(for: rack)), base * zoom)
         GeometryReader { proxy in
             if !scrolls, cellSize <= base {
                 // The whole rack fits: no scroll view, whose bars (always shown without a
@@ -413,7 +414,8 @@ struct FittedRackGrid: View {
                 ScrollView([.horizontal, .vertical]) {
                     grid(cellSize)
                         .padding(Self.padding)
-                        .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
+                        // A rack that scrolls sits right under its overview, not centered below it.
+                        .frame(minWidth: proxy.size.width, minHeight: proxy.size.height, alignment: scrolls ? .top : .center)
                 }
                 .scrollPosition($position)
                 .defaultScrollAnchor(scrolls ? .topLeading : .center)
