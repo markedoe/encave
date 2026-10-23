@@ -121,9 +121,10 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
     }
     val pad = if (rack.isFramed) cell * 0.12f else 0.dp
     val header = if (showHeaders) maxOf(18.dp, cell * 0.42f) else 0.dp
+    // Head-to-tail, the back band is drawn half a place right of the front one.
     val width = (0 until rack.rows).maxOf { row ->
         val n = rack.columnsInRow(row)
-        val offset = if (rack.isOffset(row)) (size + spacing) / 2 else 0.dp
+        val offset = (size + spacing) * ((if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(1))
         header + offset + size * n + spacing * (n - 1)
     } + pad * 2
     val overlap = when (rack.kind) {
@@ -363,12 +364,12 @@ fun RackGrid(
         )
     }
 
-    /** The shelf under a shelf's layers, as wide as the widest of them. */
+    /** The shelf under a shelf's layers, as wide as the widest of them (head-to-tail, the back ones moved right). */
     @Composable
     fun ShelfUnder(shelf: Int) {
         val shelfWidth = rack.shelfRows[shelf].maxOf { layer ->
             val n = rack.columnsInRow(layer)
-            (if (rack.isOffset(layer)) (cellWidth + spacing) / 2 else 0.dp) + cellWidth * n + spacing * (n - 1)
+            (cellWidth + spacing) * ((if (rack.isOffset(layer)) 0.5f else 0f) + rack.bandShift(1)) + cellWidth * n + spacing * (n - 1)
         }
         Spacer(Modifier.height(cellSize * SHELF_BAR_GAP))
         Row {
@@ -438,7 +439,7 @@ fun RackGrid(
                 val backHeight = size * BACK_HEIGHT
                 val backOverlap = (backHeight + spacing) * 0.134f
                 val inset = if (showHeaders) headerWidth else 0.dp
-                val bandWidth = (cellWidth + spacing) * rack.maxColumns + (cellWidth + spacing) / 2
+                val bandWidth = (cellWidth + spacing) * (rack.maxColumns + 0.5f + rack.bandShift(1))
                 rack.shelfRows.forEachIndexed { shelf, rows ->
                     if (shelf > 0) Spacer(Modifier.height(cellSize * SHELF_GAP))
                     if (rack.zoneCount > 1 && (shelf == 0 || rack.zoneOfShelf(shelf) != rack.zoneOfShelf(shelf - 1))) {
@@ -465,7 +466,8 @@ fun RackGrid(
                             }
                         }
                     }
-                    // Behind: the same quincunx, smaller, on a tray; each place right under its front one.
+                    // Behind: the same quincunx, smaller, on a tray; each place under its front one, or
+                    // head-to-tail half a place right, each neck between two bases.
                     Spacer(Modifier.height(cellSize * BAND_GAP))
                     BandCaption(rack, shelf, back = true, inset, bandWidth)
                     Row {
@@ -477,7 +479,8 @@ fun RackGrid(
                         ) {
                             for (row in rows) {
                                 Row(if (row > rows.first) Modifier.overlapUp(backOverlap) else Modifier) {
-                                    if (rack.isOffset(row)) Spacer(Modifier.width((cellWidth + spacing) / 2))
+                                    val shift = (if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(1)
+                                    if (shift > 0f) Spacer(Modifier.width((cellWidth + spacing) * shift))
                                     Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
                                         for (column in 0 until rack.columnsInRow(row)) {
                                             Place(RackPlace(RackCell(rack.id, row, column), 1), backHeight)

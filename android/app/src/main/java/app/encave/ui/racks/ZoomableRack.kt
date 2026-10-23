@@ -46,10 +46,13 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-/** What changes the drawing's shape: kind, depth, cells per row, layers per shelf and zones. Zoom starts again when it changes. */
+/**
+ * What changes the drawing's shape: kind, depth, cells per row, layers per shelf, zones and head-to-tail
+ * backs (drawn half a place wider). Zoom starts again when it changes.
+ */
 val Rack.shape: String
     get() = "$kind $positionsPerCell " + (0 until rows).joinToString(",") { columnsInRow(it).toString() } +
-        " ${shelfLayers.orEmpty()} ${zoneBreaks.orEmpty()}"
+        " ${shelfLayers.orEmpty()} ${zoneBreaks.orEmpty()} $isBackReversed"
 
 /**
  * How far a rack is zoomed in (1 = the whole rack fits) and which spot of it is in the
@@ -78,10 +81,11 @@ class RackZoomState(level: Float = 1f, center: Offset = Offset(0.5f, 0.5f)) {
         live = 1f
     }
 
-    /** Brings a cell to the middle of the view when zoomed in. */
-    fun show(rack: Rack, cell: RackCell) {
+    /** Brings a cell to the middle of the view when zoomed in (head-to-tail, a back place half a place right). */
+    fun show(rack: Rack, cell: RackCell, depth: Int? = null) {
         if (effective <= 1.01f) return
-        center = Offset((cell.column + 0.5f) / rack.maxColumns.coerceAtLeast(1), (cell.row + 0.5f) / rack.rows.coerceAtLeast(1))
+        val x = (cell.column + 0.5f + rack.bandShift(depth)) / (rack.maxColumns + rack.bandShift(1)).coerceAtLeast(1f)
+        center = Offset(x, (cell.row + 0.5f) / rack.rows.coerceAtLeast(1))
     }
 
     companion object {

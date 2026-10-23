@@ -319,6 +319,27 @@ class RackTest {
     }
 
     @Test
+    fun headToTailBackLayersShiftHalfAPlace() {
+        // Each neck behind sits between two bases in front: the back band moves half a place right.
+        val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, shelfLayers = listOf(2), backReversed = true)
+        assertEquals(0f, fridge.bandShift(0))
+        assertEquals(0.5f, fridge.bandShift(1))
+        assertEquals(0f, fridge.bandShift(null))
+        // Not head-to-tail, one deep, a continuous honeycomb, a grid: never shifted.
+        val others = listOf(
+            Rack(name = "B", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, shelfLayers = listOf(2)),
+            Rack(name = "1", kind = RackKind.Staggered, rows = 2, columns = 4, shelfLayers = listOf(2), backReversed = true),
+            Rack(name = "H", kind = RackKind.Staggered, rows = 2, columns = 4, depth = 2, backReversed = true),
+            Rack(name = "G", rows = 2, columns = 4, depth = 2, backReversed = true),
+            Rack(name = "S", kind = RackKind.Shelves, rows = 2, columns = 4, depth = 2),
+        )
+        for (rack in others) {
+            assertEquals(0f, rack.bandShift(0), rack.name)
+            assertEquals(0f, rack.bandShift(1), rack.name)
+        }
+    }
+
+    @Test
     fun sampleHasAHeadToTailFridgeWithBottlesFrontAndBack() {
         val cellar = SampleData.cellar(year = 2026)
         val fridge = cellar.racks.firstOrNull { it.isBackReversed }

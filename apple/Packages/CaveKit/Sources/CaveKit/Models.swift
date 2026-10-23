@@ -412,6 +412,11 @@ public struct Rack: Identifiable, Codable, Hashable, Sendable {
     /// The back bottles of a fridge drawn in bands lie head-to-tail (see `backReversed`).
     public var isBackReversed: Bool { backReversed == true && hasDepthBands }
 
+    /// How far the layers of a band are drawn right of the same layers in front, in places:
+    /// head-to-tail, each neck behind sits between two front bases, half a place along.
+    /// Drawing only: places, numbering and counts stay the same.
+    public func bandShift(depth: Int?) -> Double { isBackReversed && depth == 1 ? 0.5 : 0 }
+
     /// The temperature zone of each shelf, 0 for the top one (only with shelf layers).
     public func zone(ofShelf shelf: Int) -> Int { (zoneBreaks ?? []).filter { $0 <= shelf }.count }
 

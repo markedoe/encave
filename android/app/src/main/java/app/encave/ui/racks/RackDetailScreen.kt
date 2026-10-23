@@ -180,7 +180,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     LaunchedEffect(highlighted, rack?.id) {
         if (highlighted == null || rack == null) return@LaunchedEffect
         RackPlace.of(highlighted, rack).takeIf { it.holdsOne(rack) }?.let { selectedKey = it.key() }
-        zoom?.show(rack, highlighted.cell)
+        zoom?.show(rack, highlighted.cell, highlighted.depth)
         delay(4000)
         highlightId = null
     }
