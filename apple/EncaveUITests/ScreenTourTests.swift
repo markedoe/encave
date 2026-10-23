@@ -263,12 +263,14 @@ final class ScreenTourTests: XCTestCase {
         if layout.waitForExistence(timeout: 3), layout.buttons.count > 1 {
             layout.buttons.element(boundBy: 1).press()
         } else {
-            // iPad: in the Sort and Filter menu of the list.
+            // iPad: in the Sort and Filter menu of the list. iPhone has no table.
+            guard !app.horizontalSizeClassIsCompact else { return }
             let sort = element("cellar.sort")
             guard sort.exists, sort.isHittable else { return }
             sort.press()
             let table = element("cellar.layout.table")
             guard table.waitForExistence(timeout: 3) else {
+                XCTFail("cellar: Show as Table is missing from the Sort and Filter menu")
                 dismissMenu()
                 return
             }

@@ -87,10 +87,9 @@ struct CellarList: View {
     @State private var namingSearch = false
     @State private var searchName = ""
     #if os(iOS)
-    @Environment(\.horizontalSizeClass) private var sizeClass
-    private var isWide: Bool { sizeClass == .regular }
-    #else
-    private let isWide = true
+    /// iPad, whatever the width of the column: the cellar list sits in the sidebar, whose
+    /// size class is compact even on a full-screen iPad.
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
     #endif
 
     /// Shared with the table, so switching between them keeps the search and the filters.
@@ -123,7 +122,7 @@ struct CellarList: View {
             #if os(iOS)
             // iPhone, like Mail and Files: the actions at the bottom take the tab bar's place.
             // Not by size class: the iPad sidebar column is compact, and its tabs stay.
-            .toolbar(isSelecting && UIDevice.current.userInterfaceIdiom == .phone ? .hidden : .visible, for: .tabBar)
+            .toolbar(isSelecting && !isPad ? .hidden : .visible, for: .tabBar)
             #endif
             .alert("Save This Search", isPresented: $namingSearch) {
                 TextField("Name", text: $searchName)
@@ -270,7 +269,7 @@ struct CellarList: View {
             // An icon on iPad, where the sidebar is narrow in portrait.
             Button { startSelection() } label: {
                 #if os(iOS)
-                if isWide {
+                if isPad {
                     Label("Select", systemImage: "checkmark.circle")
                 } else {
                     Text("Select")
@@ -283,7 +282,7 @@ struct CellarList: View {
             Menu {
                 #if os(iOS)
                 // iPad: the table is chosen here, the sidebar has no room for the switch.
-                if isWide {
+                if isPad {
                     Button("Show as Table", systemImage: "tablecells") { DefaultsFlag.cellarTable.isOn = true }
                         .accessibilityIdentifier("cellar.layout.table")
                 }
