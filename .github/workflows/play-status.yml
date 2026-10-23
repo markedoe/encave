@@ -1,0 +1,80 @@
+name: Google Play status
+
+# Run by hand, read-only: checks that this repository reaches Google Play (Workload
+# Identity Federation, docs/RELEASING.md) and lists the testing tracks, their releases
+# and the store listing languages. Opens an edit and deletes it: nothing is changed.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    name: Google Play status
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Google Play access
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.PLAY_WIF_PROVIDER }}
+          service_account: ${{ vars.PLAY_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          create_credentials_file: false
+
+      - name: Tracks and listing
+        env:
+          PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          PACKAGE_NAME: markeddoe.com.encave
+        run: |
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json, os, urllib.error, urllib.request
+          base = f"https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{os.environ['PACKAGE_NAME']}"
+          def call(method, path, body=None):
+              data = json.dumps(body).encode() if body is not None else None
+              request = urllib.request.Request(base + path, data=data, method=method, headers={
+                  "Authorization": "Bearer " + os.environ["PLAY_ACCESS_TOKEN"], "Content-Type": "application/json"})
+              try:
+                  with urllib.request.urlopen(request, timeout=60) as response:
+                      text = response.read().decode()
+                      return response.status, json.loads(text) if text else {}
+              except urllib.error.HTTPError as error:
+                  return error.code, {"error": error.read().decode()[:600]}
+          status, edit = call("POST", "/edits", {})
+          print(f"## Google Play ({os.environ['PACKAGE_NAME']})\n")
+          if status != 200:
+              print(f"- Access: **HTTP {status}** {edit.get('error', '')}")
+              raise SystemExit(1)
+          print("- Access: OK (an edit was opened, then deleted)")
+          edit_id = edit["id"]
+          status, tracks = call("GET", f"/edits/{edit_id}/tracks")
+          print("\n## Tracks\n")
+          for track in tracks.get("tracks", []) if status == 200 else []:
+              releases = track.get("releases", [])
+              shown = "; ".join(f"{r.get('name', '?')} {r.get('versionCodes', [])} {r.get('status')}" for r in releases) or "no release"
+              print(f"- **{track['track']}**: {shown}")
+          if status != 200:
+              print(f"- HTTP {status} {tracks.get('error', '')}")
+          status, listings = call("GET", f"/edits/{edit_id}/listings")
+          print("\n## Store listing\n")
+          if status == 200:
+              for listing in listings.get("listings", []) or []:
+                  print(f"- {listing.get('language')}: title {'set' if listing.get('title') else 'missing'}, "
+                        f"short description {'set' if listing.get('shortDescription') else 'missing'}, "
+                        f"full description {'set' if listing.get('fullDescription') else 'missing'}")
+              if not listings.get("listings"):
+                  print("- none yet")
+          else:
+              print(f"- HTTP {status} {listings.get('error', '')}")
+          status, details = call("GET", f"/edits/{edit_id}/details")
+          if status == 200:
+              print(f"\n- Default language: {details.get('defaultLanguage', '?')}; contact email {'set' if details.get('contactEmail') else 'missing'}")
+          call("DELETE", f"/edits/{edit_id}")
+          PY
