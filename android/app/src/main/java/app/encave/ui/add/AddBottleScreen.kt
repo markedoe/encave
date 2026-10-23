@@ -810,6 +810,7 @@ private fun EditWineForm(viewModel: AppViewModel, navigator: AppNavigator, wineI
         navigator.back()
     }
     Scaffold(
+        modifier = Modifier.testTag("wine.edit"),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.edit_wine_title)) },

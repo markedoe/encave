@@ -19,13 +19,13 @@ object SampleData {
     /** Labels are passed in so the app can localize them. */
     data class Labels(
         val mainRack: String = "Main rack",
-        val wineFridge: String = "Wine fridge",
+        val wineFridge: String = "Cabinet",
         val bins: String = "Diamond bins",
         val deepRack: String = "Double-depth rack",
         val honeycomb: String = "Honeycomb rack",
         val stairs: String = "Under the stairs",
-        val largeFridge: String = "Large wine fridge",
-        val headToTailFridge: String = "Head-to-tail fridge",
+        val largeFridge: String = "Large cabinet",
+        val headToTailFridge: String = "Head-to-tail cabinet",
         val tastingNote: String = "Silky, red fruit, long finish.",
         val kitchen: String = "Kitchen",
         val occasion: String = "Dinner with friends",

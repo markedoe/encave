@@ -9,7 +9,7 @@ that runs the action. Encave itself sends nothing over the network.
 |--------|---------|
 | Get Cellar Contents | The bottles as text (one line per wine) or JSON. Options: which bottles (all, to open now, to drink soon, ready, too young, past their peak, on order, kept for an occasion) and words to look for (name, producer, region, grape, tag). |
 | Get Wine Details | One wine as text: details, maturity, where its bottles are, tags, what they are kept for, notes and past tastings. |
-| What to Open Tonight | A short spoken answer naming up to three bottles at their best, with their places. |
+| What to Open Tonight | A short spoken answer naming up to three bottles at their best, with their positions. |
 | Find a Wine | Where the bottles of a wine are. |
 | Bottles to Drink Soon | How many bottles are in the last year of their drinking window. |
 | Add Bottles | Opens Encave on the label scanner. |
@@ -32,6 +32,11 @@ Encave cellar, 2026, all bottles: 2 wines, 4 bottles.
 Columns: wine | producer | style | origin | grapes | window | maturity | bottles | places | tags | kept for
 1. Chablis 1er Cru 2019 | Domaine A | white | Chablis, Burgundy, France | Chardonnay | 2022-2028 | ready | 2 | Main rack · B3; Main rack · B4 |  |
 ```
+
+Each position is named after its storage, then shelf, side, layer and
+position, leaving out what does not apply: `Main rack · B3`,
+`Cabinet · Shelf 2, back, bottom layer, position 3`, `Diamond bins · Bin B3`.
+The field is still called `places`.
 
 For bottles on order, the text adds an `expected` column with their delivery
 days.

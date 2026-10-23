@@ -116,6 +116,7 @@ fun InsightsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val cellar by viewModel.cellar.collectAsStateWithLifecycle()
     val stats = remember(cellar) { cellar.statistics(viewModel.year) }
     Scaffold(
+        modifier = Modifier.testTag("insights.screen"),
         snackbarHost = { androidx.compose.material3.SnackbarHost(app.encave.ui.components.LocalSnackbarHostState.current) },
         topBar = {
             TopAppBar(

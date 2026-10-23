@@ -207,11 +207,11 @@ class Cellar(
 
     fun rack(id: UUID): Rack? = rackList.firstOrNull { it.id == id }
 
-    /** "Cellar A · B3", the storage note, or null when the bottle has no location. */
+    /** "Main rack · B3", "Cabinet · Shelf 2, position 3", the storage note, or null when the bottle has no location. */
     fun locationLabel(bottle: Bottle): String? {
         val slot = bottle.slot
         val rack = slot?.let { rack(it.rackId) }
-        if (slot != null && rack != null) return "${rack.name} · ${rack.label(slot)}"
+        if (slot != null && rack != null) return "${rack.name} · ${rack.placeName(slot)}"
         val note = bottle.storageNote
         if (!note.isNullOrEmpty()) return note
         return null

@@ -48,7 +48,7 @@ class ListDetailPanesTest {
 
     @Test
     fun storageShowsTheRackBesideTheList() {
-        tab("Racks")
+        tab("Storage")
         compose.onNodeWithText("Select a storage to see its bottles.").assertIsDisplayed()
         compose.onAllNodes(hasText("Main rack") and inList).onFirst().performClick()
         compose.waitForIdle()

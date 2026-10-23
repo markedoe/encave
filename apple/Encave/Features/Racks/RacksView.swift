@@ -12,14 +12,14 @@ struct RacksView: View {
             Group {
                 if model.cellar.racks.isEmpty {
                     ContentUnavailableView {
-                        Label("No racks yet", systemImage: "square.grid.3x3")
+                        Label("No storage yet", systemImage: "square.grid.3x3")
                     } description: {
-                        Text("Describe your racks to see exactly where each bottle is.")
+                        Text("Describe your storage to see exactly where each bottle is.")
                     } actions: {
                         Button {
                             router?.sheet = .editRack(rackID: nil)
                         } label: {
-                            Text("Add a Rack").frame(minWidth: 200)
+                            Text("Add Storage").frame(minWidth: 200)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -34,13 +34,13 @@ struct RacksView: View {
                                 .accessibilityIdentifier("rack.card.\(index)")
                                 .buttonStyle(.plain)
                                 .contextMenu {
-                                    Button("Edit Rack", systemImage: "pencil") { router?.sheet = .editRack(rackID: rack.id) }
+                                    Button("Edit Storage", systemImage: "pencil") { router?.sheet = .editRack(rackID: rack.id) }
                                     Button("Move Up", systemImage: "arrow.up") { moveRack(at: index, by: -1) }
                                         .disabled(index == 0)
                                     Button("Move Down", systemImage: "arrow.down") { moveRack(at: index, by: 1) }
                                         .disabled(index == model.cellar.racks.count - 1)
                                     Divider()
-                                    Button("Delete Rack…", systemImage: "trash", role: .destructive) {
+                                    Button("Delete Storage…", systemImage: "trash", role: .destructive) {
                                         deletingRackID = rack.id
                                     }
                                 }
@@ -58,7 +58,7 @@ struct RacksView: View {
                     }
                 }
             }
-            .navigationTitle("Racks")
+            .navigationTitle("Storage")
             .confirmsRackDeletion($deletingRackID)
             .navigationDestination(for: UUID.self) { RackDetailView(rackID: $0) }
             .toolbar {
@@ -66,7 +66,7 @@ struct RacksView: View {
                     Button {
                         router?.sheet = .editRack(rackID: nil)
                     } label: {
-                        Label("Add Rack", systemImage: "plus")
+                        Label("Add Storage", systemImage: "plus")
                     }
                     .accessibilityIdentifier("racks.add")
                 }

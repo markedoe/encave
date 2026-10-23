@@ -98,6 +98,8 @@ android {
             it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
             // Screen tour screenshots (uploaded by CI, never committed).
             it.systemProperty("encave.screens", layout.buildDirectory.dir("screens").get().asFile.absolutePath)
+            // -Pencave.tour=full: every device, language, theme and the large text run (CI on main).
+            it.systemProperty("encave.tour", providers.gradleProperty("encave.tour").getOrElse("quick"))
             it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
         }
     }

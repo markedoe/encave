@@ -211,11 +211,11 @@
     {
       "about": "Encave's own columns: every status, prices, dates as days, tags, a reservation, the current price, and text a spreadsheet would run as a formula. Wine fields of a later row of the same wine are not read again.",
       "csv": [
-        "name,producer,vintage,color,region,country,appellation,grapes,drink_from,drink_until,status,rack,slot,storage,purchase_date,price,currency,purchase_place,received_from,size_ml,rating,tasted_on,note,expected_on,tags,reserved_for,current_price,current_price_currency,current_price_date",
-        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
-        "CHÂTEAU PALMER ,château palmer,2015,white,,,,,,,consumed,,,,,,,,,750,4,2026-05-01,\"Silky, long\",,,,,,",
-        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,",
-        "Muscadet,,,white,,,,,,,gone,,,,,,,,Paul,375,,,,,,,,,",
+        "name,producer,vintage,color,region,country,appellation,grapes,drink_from,drink_until,status,rack,slot,location,storage,purchase_date,price,currency,purchase_place,received_from,size_ml,rating,tasted_on,note,expected_on,tags,reserved_for,current_price,current_price_currency,current_price_date",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
+        "CHÂTEAU PALMER ,château palmer,2015,white,,,,,,,consumed,,,,,,,,,,750,4,2026-05-01,\"Silky, long\",,,,,,",
+        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,",
+        "Muscadet,,,white,,,,,,,gone,,,,,,,,,Paul,375,,,,,,,,,",
         "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar"
       ],
       "summary": {
@@ -319,11 +319,56 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,consumed,,,,,,EUR,,,750,4,2026-05-01,\"Silky, long\",,\"Gift; Summer\",,150,EUR,2026-09-01",
-        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
-        "Muscadet,,,white,,,,,,,gone,,,,,,EUR,,Paul,375,,,,,,,,,",
-        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,"
+        "\"'=HYPERLINK(\"\"x\"\")\",'-Sec,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,consumed,,,,,,,EUR,,,750,4,2026-05-01,\"Silky, long\",,\"Gift; Summer\",,150,EUR,2026-09-01",
+        "Château Palmer,Château Palmer,2015,red,Bordeaux,France,Margaux,\"Merlot; Cabernet Sauvignon\",2025,2045,inCellar,,,,Cave du bas,2024-03-10,120.5,EUR,Caviste,,750,,,,,\"Gift; Summer\",Wedding,150,EUR,2026-09-01",
+        "Muscadet,,,white,,,,,,,gone,,,,,,,EUR,,Paul,375,,,,,,,,,",
+        "Rully,Domaine Jacqueson,2020,white,Bourgogne,France,Rully,Chardonnay,,,ordered,,,,,,18,EUR,,,1500,,,,2026-11-15,,,,,"
+      ]
+    },
+    {
+      "about": "Encave's readable location column (\"Armoire · Étagère 1, position 6\") is ignored: the rack and slot columns before it are read. With no rack of that name, they become the storage note.",
+      "csv": [
+        "name,status,rack,slot,location,storage",
+        "Sancerre,inCellar,Armoire,A6,\"Armoire · Étagère 1, position 6\",",
+        "Chinon,inCellar,,,Kitchen shelf,"
+      ],
+      "summary": {
+        "winesAdded": 2,
+        "bottlesAdded": 2,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Chinon",
+          "grapes": []
+        },
+        {
+          "name": "Sancerre",
+          "grapes": []
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Chinon",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR"
+        },
+        {
+          "wine": "Sancerre",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "storage": "Armoire · A6"
+        }
+      ],
+      "roundTrip": true,
+      "exportLines": [
+        "Chinon,,,,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Sancerre,,,,,,,,,,inCellar,,,,Armoire · A6,,,EUR,,,750,,,,,,,,,"
       ]
     },
     {
@@ -420,16 +465,16 @@
       ],
       "roundTrip": true,
       "exportLines": [
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
-        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
-        "Rosé de Provence,,2023,rose,,,,,,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Sancerre,Domaine Vacheron,2022,white,,France,,Sauvignon Blanc,2024,2027,inCellar,,,,,24.5,EUR,,,750,,,,,,,,,"
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Crémant d'Alsace,,,sparkling,,France,,\"Pinot Blanc; Auxerrois\",,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
+        "La Landonne,E. Guigal,2012,red,,France,,Syrah,2025,2040,inCellar,,,,Cave du bas · B3,,95,EUR,,,750,,,,,,,,,",
+        "Rosé de Provence,,2023,rose,,,,,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Sancerre,Domaine Vacheron,2022,white,,France,,Sauvignon Blanc,2024,2027,inCellar,,,,,,24.5,EUR,,,750,,,,,,,,,"
       ]
     },
     {
@@ -515,10 +560,10 @@
       ],
       "roundTrip": false,
       "exportLines": [
-        "Barolo Cannubi,Brezza,2016,red,Piedmont,Italy,Barolo,Nebbiolo,2026,2040,inCellar,,,Cellar · A3,,55,USD,,,750,,,,,,,,,",
-        "Château d'Yquem,Château d'Yquem,2009,dessert,Bordeaux,France,Sauternes,Sémillon-Sauvignon Blanc Blend,,,inCellar,,,,,,EUR,,,750,,,,,,,,,",
-        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,Fridge,,180,EUR,,,750,,,,,,,,,",
-        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,Fridge,,180,EUR,,,750,,,,,,,,,"
+        "Barolo Cannubi,Brezza,2016,red,Piedmont,Italy,Barolo,Nebbiolo,2026,2040,inCellar,,,,Cellar · A3,,55,USD,,,750,,,,,,,,,",
+        "Château d'Yquem,Château d'Yquem,2009,dessert,Bordeaux,France,Sauternes,Sémillon-Sauvignon Blanc Blend,,,inCellar,,,,,,,EUR,,,750,,,,,,,,,",
+        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,,Fridge,,180,EUR,,,750,,,,,,,,,",
+        "Krug Grande Cuvée,Krug,,sparkling,Champagne,France,Champagne,Champagne Blend,2024,2034,inCellar,,,,Fridge,,180,EUR,,,750,,,,,,,,,"
       ]
     },
     {
