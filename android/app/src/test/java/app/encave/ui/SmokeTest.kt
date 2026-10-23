@@ -184,7 +184,9 @@ class SmokeTest {
         compose.onNode(hasContentDescription("Shelf 1, position 1", substring = true)).assertExists()
         compose.onNodeWithContentDescription("Edit storage").performClick()
         compose.waitForIdle()
-        compose.onAllNodesWithText("Honeycomb rack").onFirst().performClick()
+        // A wine fridge keeps its kind: only its own settings are shown.
+        compose.onAllNodesWithText("Honeycomb rack").assertCountEquals(0)
+        compose.onAllNodesWithText("Bottles per shelf").onFirst().assertExists()
         compose.onNode(hasText("Holds", substring = true)).assertExists()
     }
 

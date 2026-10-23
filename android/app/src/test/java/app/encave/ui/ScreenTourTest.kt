@@ -34,6 +34,8 @@ import app.encave.ui.components.sampleLabels
 import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.performSemanticsAction
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -97,6 +99,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "racks", "rack", "rack-place-sheet", "rack-card", "rack-key", "rack-zoomed", "rack-bottle-list",
             "rack-list-picked", "rack-head-to-tail", "rack-back-bottle", "rack-head-to-tail-zoomed",
             "rack-check", "rack-check-missing", "rack-dragging", "rack-dropped", "rack-editor", "rack-editor-end",
+            "rack-wizard",
             "tonight", "journal", "journal-tasted-elsewhere", "journal-add-tasting", "tasted-elsewhere-editor",
             "journal-which-bottle", "journal-open-a-bottle",
             "settings", "help", "devices", "devices-invite", "devices-join", "settings-backup",
@@ -591,7 +594,9 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         assertTrue("the sample has racks", count >= 8)
         for (index in 0 until count) {
             scrollTo("rack.row.$index")
-            tap("rack.row.$index")
+            // The row's own click: a touch at its center can land on the button floating above the list.
+            compose.onAllNodesWithTag("rack.row.$index").onFirst().performSemanticsAction(SemanticsActions.OnClick)
+            compose.waitForIdle()
             capture("rack-${index + 1}")
             checkRackFits("rack $index")
             scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
@@ -689,13 +694,13 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         tab(RACKS)
         // A new storage, step by step: its type, its settings, its name.
         tap("racks.add")
-        capture("08c-rack-wizard-1")
+        capture("rack-wizard-1")
         tap("wizard.type.winefridge")
         tap("wizard.next")
-        capture("08d-rack-wizard-2")
+        capture("rack-wizard-2")
         tap("wizard.next")
         compose.onNodeWithTag("wizard.create").assertExists()
-        capture("08e-rack-wizard-3")
+        capture("rack-wizard-3")
     }
 
     @Test
