@@ -47,7 +47,8 @@ jobs:
               a = group["attributes"]
               if a.get("isInternalGroup"):
                   testers = safe("GET", f"/betaGroups/{group['id']}/betaTesters", query={"limit": 200})["data"]
-                  print(f"- internal **{a['name']}**: {len(testers)} testers")
+                  every = "every build" if a.get("hasAccessToAllBuilds") else "only the builds added to it"
+                  print(f"- internal **{a['name']}**: {len(testers)} testers, gets {every}")
                   continue
               builds = safe("GET", f"/betaGroups/{group['id']}/builds", query={"limit": 50})["data"]
               testers = safe("GET", f"/betaGroups/{group['id']}/betaTesters", query={"limit": 200})["data"]
@@ -68,8 +69,8 @@ jobs:
                     f"feedback email {'set' if la.get('feedbackEmail') else 'MISSING'}")
 
           print("\n## Latest builds\n")
-          print("| Build | Platform | Uploaded (Apple time zone) | Processing | External state | Beta App Review | External groups |")
-          print("|---|---|---|---|---|---|---|")
+          print("| Build | Platform | Uploaded (Apple time zone) | Processing | Internal state | External state | Beta App Review | External groups |")
+          print("|---|---|---|---|---|---|---|---|")
           response = safe("GET", "/builds", query={
               "filter[app]": app_id, "sort": "-uploadedDate", "limit": 60,
               "include": "preReleaseVersion,buildBetaDetail,betaAppReviewSubmission"})
@@ -84,7 +85,7 @@ jobs:
               review = rel(build, "betaAppReviewSubmission")
               print(f"| {version.get('version', '?')} ({a['version']}) | {version.get('platform', '?')} "
                     f"| {a.get('uploadedDate', '')} | {a.get('processingState')} "
-                    f"| {beta.get('externalBuildState', '-')} | {review.get('betaReviewState', '-')} "
+                    f"| {beta.get('internalBuildState', '-')} | {beta.get('externalBuildState', '-')} | {review.get('betaReviewState', '-')} "
                     f"| {', '.join(in_group.get(build['id'], [])) or '-'} |")
           EOF
 
