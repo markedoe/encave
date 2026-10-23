@@ -452,6 +452,14 @@ FR = {
     'Their bottles and tastings are deleted too. You can undo right after.': 'Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après.',
     'No free place in this rack for bottles without a place.': 'Aucun emplacement libre dans ce casier pour les bouteilles sans emplacement.',
     'Bottles placed: %lld': 'Bouteilles rangées : %lld',
+    'Open in New Window': 'Ouvrir dans une nouvelle fenêtre',
+    'No free position': 'Aucune position libre',
+    'No bottle to place in this storage': 'Aucune bouteille à mettre dans ce rangement',
+    'Bottle placed: %@': 'Bouteille rangée : %@',
+    '⌥⌘O': '⌥⌘O',
+    'Open the selected wine in a new window (Mac and iPad)': 'Ouvrir le vin sélectionné dans une nouvelle fenêtre (Mac et iPad)',
+    'Drag to a storage (Mac)': 'Glisser vers un rangement (Mac)',
+    'Drag a wine from the Cellar, or a bottle from a wine’s page, onto a storage in the sidebar: one bottle goes to its first free position, with Undo. A full storage takes none.': 'Glissez un vin de la Cave, ou une bouteille depuis la page d’un vin, sur un rangement de la barre latérale : une bouteille va à sa première position libre, avec Annuler. Un rangement plein n’en prend aucune.',
     'Bottles taken out of their places: %lld': 'Bouteilles sorties de leur emplacement : %lld',
     'Wines deleted: %lld': 'Vins supprimés : %lld',
     'Barcodes': 'Codes-barres',
@@ -1572,6 +1580,7 @@ INFO_PLIST = {
     ),
     # A UTType description is looked up by its English text.
     "Encave bottle": ("Encave bottle", "Bouteille Encave"),
+    "Encave wine": ("Encave wine", "Vin Encave"),
 }
 
 # Siri and Shortcuts phrases ("${applicationName}" is the app's name).

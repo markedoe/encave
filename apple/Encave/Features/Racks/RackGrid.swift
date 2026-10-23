@@ -478,6 +478,7 @@ struct RackCellView: View {
             .opacity(isDimmed ? 0.25 : 1)
         }
         .buttonStyle(.plain)
+        .pointerHighlight(hitShape)
         .modifier(DragAndDrop(bottle: capacity == 1 ? bottles.first : nil, place: place,
                               onDrop: onDrop, isTargeted: $isTargeted))
         .overlay {

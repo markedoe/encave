@@ -60,6 +60,16 @@ extension View {
         help(Text(text))
     }
 
+    /// iPad pointer: a subtle highlight under the pointer, shaped like the item. The Mac
+    /// shows none on these, as in its own apps (List rows highlight natively on iPad).
+    func pointerHighlight<S: Shape>(_ shape: S) -> some View {
+        #if os(iOS)
+        return contentShape(.hoverEffect, shape).hoverEffect(.highlight)
+        #else
+        return self
+        #endif
+    }
+
     /// Half-height sheets are see-through on iOS 26: give forms an opaque background.
     func solidSheetBackground() -> some View {
         #if os(iOS)

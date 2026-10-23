@@ -45,6 +45,16 @@ struct EncaveApp: App {
         .commands {
             CellarCommands(model: model)
         }
+        // A wine in its own window: Open in New Window (Mac, and iPad with several windows).
+        WindowGroup("Wine", id: WineWindow.id, for: UUID.self) { $wineID in
+            WineWindow(wineID: wineID)
+                .environment(model)
+        }
+        // Links and notifications go to the main window, never to a wine's.
+        .handlesExternalEvents(matching: [])
+        #if os(macOS)
+        .defaultSize(width: 560, height: 720)
+        #endif
         #if os(macOS)
         Window("Encave Help", id: "help") {
             NavigationStack { HelpView() }
@@ -113,6 +123,9 @@ struct CellarCommands: Commands {
             }
             .disabled(selectedWineID == nil)
             Button("Add Bottles…") { withWine { act(.present(.addBottle(AddBottleContext(wine: $0)))) } }
+                .disabled(selectedWineID == nil)
+            Button("Open in New Window") { withWine { openWindow(id: WineWindow.id, value: $0.id) } }
+                .keyboardShortcut("o", modifiers: [.command, .option])
                 .disabled(selectedWineID == nil)
             Divider()
             // No ⌘⌫ here: text fields keep it. On the Mac, the Delete key deletes the
