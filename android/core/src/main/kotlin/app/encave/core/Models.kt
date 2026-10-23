@@ -287,6 +287,13 @@ data class Rack(
     /** The back bottles of a fridge drawn in bands lie head-to-tail (see [backReversed]). */
     val isBackReversed: Boolean get() = backReversed == true && hasDepthBands
 
+    /**
+     * How far the layers of a band are drawn right of the same layers in front, in places:
+     * head-to-tail, each neck behind sits between two front bases, half a place along.
+     * Drawing only: places, numbering and counts stay the same.
+     */
+    fun bandShift(depth: Int?): Float = if (isBackReversed && depth == 1) 0.5f else 0f
+
     /** The temperature zone of each shelf, 0 for the top one (only with shelf layers). */
     fun zoneOfShelf(shelf: Int): Int = zoneBreaks.orEmpty().count { it <= shelf }
 

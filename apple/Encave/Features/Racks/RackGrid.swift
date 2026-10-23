@@ -106,10 +106,17 @@ struct RackGrid: View {
         }
     }
 
+    /// The widest layer with its half-place nesting, and half a place more when the back
+    /// band of a head-to-tail fridge moves right.
+    private var bandsWidth: CGFloat {
+        (CGFloat(rack.maxColumns) + 0.5 + CGFloat(rack.bandShift(depth: 1))) * (size + spacing)
+    }
+
     private var headerWidth: CGFloat { max(18, cellSize * 0.42, rack.hasShelfLayers ? captionFloor * 1.7 : 0) }
 
     /// The places of one row, offset by half a place when the row nests into the one below.
-    /// `depth` draws only the front or the back places of a fridge drawn in bands.
+    /// `depth` draws only the front or the back places of a fridge drawn in bands; head-to-tail,
+    /// the back ones move half a place more, each neck between two bases.
     private func cells(ofRow row: Int, depth: Int? = nil, _ bottlesByCell: [RackCell: [Bottle]],
                        _ selectedByCell: [RackCell: [Slot]]) -> some View {
         HStack(spacing: spacing) {
@@ -124,7 +131,7 @@ struct RackGrid: View {
                 )
             }
         }
-        .padding(.leading, rack.isOffset(row: row) ? (size + spacing) / 2 : 0)
+        .padding(.leading, ((rack.isOffset(row: row) ? 0.5 : 0) + CGFloat(rack.bandShift(depth: depth))) * (size + spacing))
     }
 
     /// A fridge with bottles in layers: each shelf's layers nest into each other in
@@ -210,7 +217,7 @@ struct RackGrid: View {
             .lineLimit(2)
             .truncationMode(.tail)
             .fixedSize(horizontal: false, vertical: true)
-            .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2, alignment: .leading)
+            .frame(width: bandsWidth, alignment: .leading)
             .frame(minHeight: max(Self.bandCaptionMinHeight, cellSize * Self.bandCaptionHeight), alignment: .leading)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Shelf \(shelf + 1)") + Text(verbatim: ", ") + caption)
@@ -247,7 +254,7 @@ struct RackGrid: View {
                 .frame(height: zone == 0 ? 1 : max(3, cellSize * 0.07))
         }
         // As wide as the shelves (the line would otherwise take all the width offered).
-        .frame(width: CGFloat(rack.maxColumns) * (size + spacing) + (size + spacing) / 2, alignment: .leading)
+        .frame(width: bandsWidth, alignment: .leading)
         .frame(minHeight: max(Self.zoneLabelMinHeight, cellSize * Self.zoneLabelHeight), alignment: .leading)
         .padding(.leading, showsHeaders ? headerWidth : 0)
         .accessibilityElement(children: .combine)
@@ -301,7 +308,7 @@ extension RackGrid {
         case .staggered where rack.hasShelfLayers:
             // Each shelf: its first layer, the others nesting at 0.87 of a place, the shelf
             // bar, and a gap to the next shelf.
-            width = (columns + 0.5) * 1.04
+            width = (columns + 0.5 + CGFloat(rack.bandShift(depth: 1))) * 1.04
             height = rack.shelfRows.reduce(CGFloat(0)) { $0 + 1 + CGFloat($1.count - 1) * 0.87 + 0.15 }
                 + CGFloat(max(0, rack.shelfRows.count - 1)) * shelfGap
             if rack.hasDepthBands {

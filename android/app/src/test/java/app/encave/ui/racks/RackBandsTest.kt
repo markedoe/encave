@@ -86,7 +86,10 @@ class RackBandsTest {
         val label = 20.dp
         val (width, height) = rackGridSize(fridge, cell, showHeaders = true, labelHeight = label)
         val (flatWidth, flatHeight) = rackGridSize(fridge.copy(depth = 1).normalized(), cell, showHeaders = true, labelHeight = label)
-        assertEquals(flatWidth.value, width.value, 0.01f)
+        // Head-to-tail, the back band is drawn half a place (and a gap) to the right.
+        assertEquals((flatWidth + (cell + cell * 0.04f) / 2).value, width.value, 0.01f)
+        val (sideBySide, _) = rackGridSize(fridge.copy(backReversed = null), cell, showHeaders = true, labelHeight = label)
+        assertEquals(flatWidth.value, sideBySide.value, 0.01f)
         // Per shelf: two captions, a gap, the back layers (0.78 high, nesting) on a padded tray.
         val back = cell * 0.78f
         val nest = (back + cell * 0.04f) * 0.134f
@@ -98,32 +101,41 @@ class RackBandsTest {
     }
 
     @Test
-    fun eachBackPlaceSitsUnderItsFrontOneAndFitsTheDrawingSize() {
-        val cellar = Cellar(racks = listOf(fridge))
+    fun eachBackNeckSitsBetweenTwoFrontBasesAndFitsTheDrawingSize() = backPlacesAreDrawn(fridge, shift = 0.5f)
+
+    @Test
+    fun eachBackBaseSitsUnderItsFrontOneWhenNotHeadToTail() = backPlacesAreDrawn(fridge.copy(backReversed = null), shift = 0f)
+
+    /** Each back place of [rack] is drawn [shift] places right of its front one, below it, and within the drawing's size. */
+    private fun backPlacesAreDrawn(rack: Rack, shift: Float) {
+        val cellar = Cellar(racks = listOf(rack))
         val cell = 40.dp
         var size: Pair<Dp, Dp>? = null
         compose.setContent {
             EncaveTheme {
-                RackGrid(fridge, cellar, cellSize = cell, onCellClick = { _, _ -> })
+                RackGrid(rack, cellar, cellSize = cell, onCellClick = { _, _ -> })
             }
-            size = rackGridSize(fridge, cell, showHeaders = true, labelHeight = 20.dp)
+            size = rackGridSize(rack, cell, showHeaders = true, labelHeight = 20.dp)
         }
         compose.waitForIdle()
-        for (row in 0 until fridge.rows) {
-            for (column in 0 until fridge.columnsInRow(row)) {
+        var right = 0f
+        for (row in 0 until rack.rows) {
+            for (column in 0 until rack.columnsInRow(row)) {
                 val front = compose.onNodeWithTag("cell.$row.$column", useUnmergedTree = true).getBoundsInRoot()
                 val back = compose.onNodeWithTag("cell.$row.$column.back", useUnmergedTree = true).getBoundsInRoot()
-                assertEquals("row $row, place $column", front.left.value, back.left.value, 0.5f)
+                right = maxOf(right, back.right.value)
+                assertEquals("row $row, place $column", front.left.value + cell.value * 1.04f * shift, back.left.value, 0.5f)
                 assertEquals((front.right - front.left).value, (back.right - back.left).value, 0.5f)
                 assertTrue(abs((back.bottom - back.top).value - cell.value * 0.78f) < 0.5f)
                 assertTrue("back under front", back.top > front.bottom)
             }
         }
-        assertEquals(2 * fridge.shelfRows.size, compose.onAllNodesWithTag("rack.band.front").fetchSemanticsNodes().size +
+        assertEquals(2 * rack.shelfRows.size, compose.onAllNodesWithTag("rack.band.front").fetchSemanticsNodes().size +
             compose.onAllNodesWithTag("rack.band.back").fetchSemanticsNodes().size)
-        val bottom = (0 until fridge.columnsInRow(4)).maxOf {
+        val bottom = (0 until rack.columnsInRow(4)).maxOf {
             compose.onNodeWithTag("cell.4.$it.back", useUnmergedTree = true).getBoundsInRoot().bottom.value
         }
         assertTrue("drawn within its computed height ($bottom of ${size!!.second})", bottom <= size!!.second.value + 1f)
+        assertTrue("drawn within its computed width ($right of ${size!!.first})", right <= size!!.first.value + 1f)
     }
 }

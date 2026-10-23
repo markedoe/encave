@@ -249,6 +249,25 @@ import Testing
         #expect(decoded.backReversed == nil && !decoded.isBackReversed)
     }
 
+    @Test func headToTailBackLayersShiftHalfAPlace() {
+        // Each neck behind sits between two bases in front: the back band moves half a place right.
+        let fridge = Rack(name: "F", kind: .staggered, rows: 2, columns: 4, depth: 2, shelfLayers: [2], backReversed: true)
+        #expect(fridge.bandShift(depth: 0) == 0)
+        #expect(fridge.bandShift(depth: 1) == 0.5)
+        #expect(fridge.bandShift(depth: nil) == 0)
+        // Not head-to-tail, one deep, a continuous honeycomb, a grid: never shifted.
+        let others = [
+            Rack(name: "B", kind: .staggered, rows: 2, columns: 4, depth: 2, shelfLayers: [2]),
+            Rack(name: "1", kind: .staggered, rows: 2, columns: 4, shelfLayers: [2], backReversed: true),
+            Rack(name: "H", kind: .staggered, rows: 2, columns: 4, depth: 2, backReversed: true),
+            Rack(name: "G", rows: 2, columns: 4, depth: 2, backReversed: true),
+            Rack(name: "S", kind: .shelves, rows: 2, columns: 4, depth: 2),
+        ]
+        for rack in others {
+            #expect(rack.bandShift(depth: 0) == 0 && rack.bandShift(depth: 1) == 0)
+        }
+    }
+
     @Test func sampleHasAHeadToTailFridgeWithBottlesFrontAndBack() {
         let cellar = SampleData.cellar(year: 2026)
         let fridge = cellar.racks.first { $0.isBackReversed }
