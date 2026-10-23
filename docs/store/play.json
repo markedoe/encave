@@ -1,0 +1,35 @@
+{
+  "comment": "Google Play store listing, published by android/tools/play_publish.py (closed testing, on main). Images are made in CI from the screen tour (android/tools/play_listing_images.py).",
+  "defaultLanguage": "fr-FR",
+  "listings": {
+    "fr-FR": {
+      "title": "Encave\u00a0: cave à vin",
+      "shortDescription": "Votre cave à vin bien rangée\u00a0: vos bouteilles, vos casiers, quoi ouvrir ce soir.",
+      "fullDescription": "Encave tient votre cave à vin\u00a0: ce que vous avez, où c'est rangé et quand l'ouvrir.\n\nAJOUTER UNE BOUTEILLE\n• Scannez le code-barres\u00a0: un vin déjà en cave est reconnu, et vous ajoutez simplement des bouteilles.\n• Photo de l'étiquette, photos, documents (facture, fiche technique), bouteilles en commande et dates de livraison.\n• En option, une IA de votre choix lit l'étiquette et complète la fiche, avec votre propre clé ou un modèle sur votre ordinateur\u00a0: seule la photo de l'étiquette lui est envoyée.\n• En option, une recherche sur le web avec le service de votre choix\u00a0: seuls le nom, le domaine, l'appellation et le millésime sont envoyés, et vous les voyez avant.\n\nVOTRE CAVE, ET VOS RANGEMENTS\n• Recherche, filtres par couleur, maturité, cépage et étiquettes, recherches enregistrées.\n• Fenêtre de dégustation et maturité de chaque bouteille\u00a0: à boire bientôt, prête, à garder, après l'apogée.\n• Vos rangements tels qu'ils sont\u00a0: casier classique, double profondeur, casiers en losange, cave à vin réfrigérée avec étagères en quinconce. Retrouvez une bouteille d'un coup d'œil, à sa position, déplacez-la en la faisant glisser, vérifiez un rangement.\n\nCE SOIR\n• Les bouteilles à ouvrir maintenant, les plus urgentes d'abord, et une idée au hasard.\n• Accords mets-vins dans votre cave.\n\nJOURNAL\n• Vos dégustations et vos notes, les vins goûtés ailleurs, une liste de courses.\n• Votre cave en chiffres, votre année en vin et un plan pour boire chaque bouteille à temps.\n\nSUR TOUS VOS APPAREILS\n• Téléphones, tablettes et pliables, avec des widgets et des raccourcis.\n• Synchronisation chiffrée de bout en bout avec vos autres appareils, Android ou Apple\u00a0: directement sur le même Wi-Fi, ou hors de chez vous par un dossier WebDAV ou un relais que vous choisissez. Personne d'autre que vos appareils ne peut lire votre cave.\n• Sauvegardes lisibles, automatiques chaque semaine, export CSV et inventaire PDF, import depuis CellarTracker, Vivino ou un tableur.\n• Rappels du mois et des livraisons, calculés sur l'appareil.\n\nPRIVÉE PAR CONCEPTION\nPas de compte, pas de publicité, pas de suivi, aucun SDK tiers\u00a0: vos données restent sur vos appareils. Encave est open source.\n\nEn français et en anglais, avec TalkBack, la taille de police du système et le thème sombre.\n\nÀ consommer avec modération."
+    },
+    "en-US": {
+      "title": "Encave: wine cellar",
+      "shortDescription": "Your wine cellar, in order: your bottles, your racks, what to open tonight.",
+      "fullDescription": "Encave keeps track of your wine cellar: what you have, where it is and when to open it.\n\nADD A BOTTLE\n• Scan the barcode: a wine already in your cellar is recognized, and you just add bottles.\n• Label photo, photos, documents (invoice, technical sheet), bottles on order and delivery dates.\n• Optionally, an AI service of your choice reads the label and completes the details, with your own key or a model on your computer: only the label photo is sent to it.\n• Optionally, a web search with the service of your choice: only the name, producer, appellation and vintage are sent, and you see them first.\n\nYOUR CELLAR, AND YOUR STORAGE\n• Search, filters by color, maturity, grape and tags, saved searches.\n• Drinking window and maturity for every bottle: drink soon, ready, keep, past peak.\n• Your storage as it is: classic grid racks, double depth, diamond bins, wine fridges with staggered shelves. Find a bottle and its position at a glance, drag it to move it, check a storage.\n\nTONIGHT\n• The bottles to open now, the most urgent first, and a random idea.\n• Food pairing from your own cellar.\n\nJOURNAL\n• Your tastings and notes, wines tasted elsewhere, a shopping list.\n• Your cellar in figures, your year in wine and a plan to drink every bottle in time.\n\nON ALL YOUR DEVICES\n• Phones, tablets and foldables, with widgets and shortcuts.\n• End-to-end encrypted sync with your other devices, Android or Apple: directly on the same Wi-Fi, or away from home through a WebDAV folder or a relay you choose. Nobody but your devices can read your cellar.\n• Readable backups, automatic every week, CSV export and PDF inventory, import from CellarTracker, Vivino or a spreadsheet.\n• Monthly and delivery reminders, worked out on the device.\n\nPRIVATE BY DESIGN\nNo account, no ads, no tracking, no third-party SDK: your data stays on your devices. Encave is open source.\n\nIn English and French, with TalkBack, the system font size and a dark theme.\n\nPlease drink responsibly."
+    }
+  },
+  "screenshots": [
+    {"screen": "cellar", "fr-FR": "Toute votre cave, d'un coup d'œil", "en-US": "Your whole cellar at a glance"},
+    {"screen": "wine", "fr-FR": "Chaque bouteille, et où elle est", "en-US": "Every bottle, and where it is"},
+    {"screen": "rack", "fr-FR": "Vos casiers, tels qu'ils sont", "en-US": "Your racks, as they are"},
+    {"screen": "add-bottle", "fr-FR": "Ajoutez une bouteille en quelques secondes", "en-US": "Add a bottle in seconds"},
+    {"screen": "tonight", "fr-FR": "Quoi ouvrir ce soir", "en-US": "What to open tonight"},
+    {"screen": "journal", "fr-FR": "Vos dégustations et vos notes", "en-US": "Your tastings and notes"},
+    {"screen": "insights", "fr-FR": "Votre cave en chiffres", "en-US": "Your cellar in figures"}
+  ],
+  "featureGraphic": {
+    "fr-FR": [
+      "Votre cave à vin,",
+      "bien rangée."
+    ],
+    "en-US": [
+      "Your wine cellar,",
+      "in order."
+    ]
+  }
+}

@@ -3,9 +3,9 @@ name: Android app
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["android/**", "design/tokens.json", "relay/**", "fixtures/**", "licences/**", "LICENSE", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "design/generate_app_icon.py", "docs/store/play.json", "relay/**", "fixtures/**", "licences/**", "LICENSE", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", "design/tokens.json", "relay/**", "fixtures/**", "licences/**", "LICENSE", ".github/workflows/android.yml"]
+    paths: ["android/**", "design/tokens.json", "design/generate_app_icon.py", "docs/store/play.json", "relay/**", "fixtures/**", "licences/**", "LICENSE", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 permissions:
@@ -47,6 +47,22 @@ jobs:
 
       - name: App unit tests
         run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Google Play listing images
+        # From the quick tour of the unit tests: checks play_listing_images.py and docs/store/play.json
+        # (sizes and ratios Play takes) before main, where play-closed makes them from the full tour.
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends python3-pil fonts-inter
+          /usr/bin/python3 tools/play_listing_images.py app/build/screens "$RUNNER_TEMP/listing"
+
+      - name: Upload listing images
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: play-listing-preview
+          path: ${{ runner.temp }}/listing
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
@@ -321,11 +337,14 @@ jobs:
     name: Google Play closed testing
     # The same version code, already uploaded, to the closed testing track (the beta testers),
     # once the screen tour and the emulator smoke test of this run passed. Nothing is rebuilt.
-    # Off until the PLAY_CLOSED_TRACK variable names the track (the owner keeps internal only).
+    # The store listing (docs/store/play.json, images made from this run's screen tour) goes in
+    # the same edit, so Google reviews both together; unchanged texts and images are skipped.
+    # On by default, to the built-in closed track "alpha"; the PLAY_CLOSED_TRACK variable names
+    # another closed track, or turns closed testing off with "none".
     needs: [release, tour, smoke, play-internal]
-    if: ${{ needs.play-internal.outputs.released == 'true' && vars.PLAY_CLOSED_TRACK != '' }}
+    if: ${{ needs.play-internal.outputs.released == 'true' && vars.PLAY_CLOSED_TRACK != 'none' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write
@@ -333,6 +352,27 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 30
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: android-screens
+          path: ${{ runner.temp }}/screens
+
+      - name: Listing images
+        # Icon, feature graphic, framed phone screenshots and tablet screenshots, from the
+        # sample cellar of this run's tour (android/tools/play_listing_images.py).
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends python3-pil fonts-inter
+          /usr/bin/python3 android/tools/play_listing_images.py "$RUNNER_TEMP/screens" "$RUNNER_TEMP/listing"
+
+      - name: Upload listing images
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: play-listing
+          path: ${{ runner.temp }}/listing
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Google Cloud credentials
         id: auth
@@ -344,10 +384,12 @@ jobs:
           access_token_scopes: https://www.googleapis.com/auth/androidpublisher
           create_credentials_file: false
 
-      - name: Release to closed testing
+      - name: Store listing and closed testing
         env:
           PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           PACKAGE_NAME: markeddoe.com.encave
           VERSION_CODE: ${{ needs.release.outputs.version-code }}
-          TRACK: ${{ vars.PLAY_CLOSED_TRACK }}
+          TRACK: ${{ vars.PLAY_CLOSED_TRACK || 'alpha' }}
+          LISTING_JSON: docs/store/play.json
+          LISTING_IMAGES: ${{ runner.temp }}/listing
         run: python3 android/tools/play_publish.py promote

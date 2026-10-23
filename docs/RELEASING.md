@@ -27,7 +27,7 @@ yet (see "Work in progress").
 | Stage | Apple | Google | When |
 |---|---|---|---|
 | Internal testers | TestFlight group "Internal", gets every build (**done**) | Play internal testing, gets every signed build (**done**, once the one-time setup below is finished) | Every push to `main`, about 20 to 30 minutes after it (upload and processing) |
-| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing (testers list "Friends"), after the screen tour and the emulator smoke test (built, **off until the owner decides**: internal testing only for now) | Every push to `main` whose tour passed |
+| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing (track Alpha, testers list "Friends"), after the screen tour and the emulator smoke test, with the store listing, then Google's review (**done**, once the testers list below is set) | Every push to `main` whose tour passed |
 | Everyone | App Store, phased release over 7 days (*planned*) | Play production, staged rollout 10%, 50%, 100% (*planned*; `play_publish.py` can set a rollout share, no job uses it) | Release train, or the urgent lane |
 
 ## Release train *(planned)*
@@ -117,15 +117,48 @@ Google: see "Google Play: one-time setup" below.
    (`android/tools/emulator_smoke.py`; screenshots in the `android-smoke`
    artifact).
 4. `play-closed` releases the **same version code** to **closed testing**
-   (`play_publish.py promote`) once `tour` and `smoke` of the same run passed.
-   Nothing is rebuilt. **Off until the owner decides**: it runs only when the
-   `PLAY_CLOSED_TRACK` variable is set. For now builds stay in internal
-   testing.
+   (the built-in track `alpha`; `play_publish.py promote`) once `tour` and
+   `smoke` of the same run passed. Nothing is rebuilt. In the same edit it
+   updates the **store listing** (below), so Google reviews the release and
+   the listing together. On by default; the `PLAY_CLOSED_TRACK` variable
+   names another closed track, or `none` turns closed testing off.
 
 Release notes, in English and French: the build number and the latest commit
 subjects. Before the setup is finished (and on forks) `play-internal` ends with
 a notice and sends nothing; `play-closed` is skipped. Production is not
 automated: the apps stay in testing (see "Release train").
+
+Every release to closed testing goes through Google's review: the first one
+takes hours to a few days, later ones are usually faster. A release waiting
+for review does not stop the next one: the newer version code replaces it.
+
+### Store listing
+
+Kept in the repository and published by `play-closed`, before the release:
+
+- **Texts**, French (France, the default language) and English (United
+  States): title (at most 30 characters), short description (80) and full
+  description (4000), in `docs/store/play.json`. Adapted from the App Store
+  texts (`docs/store/appstore.json`) to what the Android app does. Edit them
+  there; `play_publish.py` checks the lengths.
+- **Images**, made in CI from the sample cellar of the same run's screen tour
+  by `android/tools/play_listing_images.py` (artifact `play-listing`), nothing
+  committed: the 512x512 icon (`design/generate_app_icon.py`), the 1024x500
+  feature graphic (the style of the App Store header images), 7 phone
+  screenshots per language (the screen in a frame under a caption, 1290x2580:
+  the raw capture is taller than the 2:1 Play takes), and the same screens on
+  the tablet (2560x1600) as 7-inch and 10-inch tablet screenshots. Which
+  screens, and their captions, are in `docs/store/play.json`. The branch
+  builds make the same images from the quick tour (artifact
+  `play-listing-preview`) to check them before `main`.
+
+Texts and images are compared with what Google Play has (the images by their
+SHA-256) and only what changed is replaced (`edits.listings.update`,
+`edits.images.deleteall` then upload). A video added in the Console is kept.
+Contact details, the app category and the default language are left as they
+are in the Console: the job warns when the contact email, which Google needs
+before a review, is missing. `play_publish.py listing` publishes the listing
+alone (`LISTING_JSON`, `LISTING_IMAGES`).
 
 Authentication: Workload Identity Federation. GitHub gives the job a
 short-lived OpenID Connect token; Google exchanges it for a one-hour token of
@@ -140,7 +173,7 @@ Repository settings (Settings › Secrets and variables › Actions):
 | `ENCAVE_KEYSTORE_BASE64`, `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS`, `ENCAVE_KEY_PASSWORD` | Secrets | The upload key (`docs/development.md`, "Android release") |
 | `PLAY_WIF_PROVIDER` | Variable | `projects/<project number>/locations/global/workloadIdentityPools/github/providers/encave` |
 | `PLAY_SERVICE_ACCOUNT` | Variable | `play-release@<project id>.iam.gserviceaccount.com` |
-| `PLAY_CLOSED_TRACK` | Variable, unset for now | The closed track (`alpha`, the closed track every app has); unset, nothing goes to closed testing |
+| `PLAY_CLOSED_TRACK` | Variable, optional | Unset: closed testing on the track `alpha` (the closed track every app has). Another closed track's name, or `none` to send nothing to closed testing |
 
 ### Google Play: one-time setup
 
@@ -161,10 +194,10 @@ placeholders: never commit the real ones.
    the Apple apps keep the bundle ID `app.encave`).
 4. **Forms** (Dashboard › Set up your app), answers in `docs/STORE.md`: App
    access, Ads, Content rating, Target audience (18 and over), Data safety,
-   Government apps, Financial features, Health, the privacy policy URL, and
-   the store listing (texts in French and English, icon, feature graphic,
-   phone screenshots from the `android-screens` artifact). The Console lists
-   what is still missing before a release can be rolled out.
+   Government apps, Financial features, Health, the privacy policy URL. The
+   store listing texts and images are published by the CI ("Store
+   listing"); its contact details and category are not (step 6). The
+   Console lists what is still missing before a release can be rolled out.
 5. **First bundle, by hand** (Google does not take the first one by API). Test
    and release › Testing › Internal testing › Testers: create an email list
    with your own address, save. Then Create new release: keep "Google-generated
@@ -172,14 +205,34 @@ placeholders: never commit the real ones.
    the upload key), upload `app-release.aab` from step 2, Next, Save, and
    **Roll out to internal testing** (a release left as a draft keeps the app a
    draft, and the API then refuses releases).
-6. **Closed testing (later, when the owner decides).** Test and release › Testing › Closed testing ›
-   Alpha › Testers: create an email list named "Friends" (or use a Google
-   Group), choose the countries, add a feedback email, save. Copy the opt-in
-   link and send it to the testers. A personal account created after November
-   2023 (the owner's) needs at least 12 testers opted in for 14 days in a row
-   before it can apply for production. Then set the `PLAY_CLOSED_TRACK`
-   variable to `alpha` (or the name of another closed track; a wrong name
-   makes the job list the track names).
+6. **Closed testing** (no API for these; once, before the first closed
+   release can go out):
+   - Grow users › Store presence › Store settings: **App category** Food
+     and drink (App), and **Store listing contact details**: an email
+     address (required; shown on the store), the website
+     `https://github.com/markedoe/encave` if wanted. Save.
+   - Test and release › Testing › Closed testing › **Alpha** › Manage track.
+     **Countries / regions** tab: Add countries / regions, tick the testers'
+     countries (for example France and Switzerland), Add.
+   - **Testers** tab: Email lists › Create email list, named "Friends", add
+     the testers' Google account addresses (or choose Google Groups and enter
+     the group's address), Save changes, tick the list. **Feedback URL or
+     email address**: an address of yours or
+     `https://github.com/markedoe/encave/issues`. Save.
+   - Copy the **opt-in link** (same tab, "How testers join your test") and
+     send it to the testers: each one accepts on the web, then installs from
+     the Play Store.
+   - Publishing overview: when **Managed publishing** is on, Google holds the
+     changes until you click **Send changes for review** (the job then warns
+     "Google Play kept these changes"). Leave it off to send each release
+     automatically.
+   - Policy and programs › App content: anything still marked "Start" or
+     "Action needed" (step 4) blocks the review.
+
+   A personal account created after November 2023 (the owner's) needs at
+   least 12 testers opted in for 14 days in a row before it can apply for
+   production. `PLAY_CLOSED_TRACK` stays unset (track `alpha`); a wrong name
+   makes the job list the track names.
 7. **Google Cloud** (console.cloud.google.com › Cloud Shell), the project,
    the service account and the Workload Identity Federation:
 
@@ -216,14 +269,18 @@ placeholders: never commit the real ones.
    permission is needed.
 9. **GitHub variables**: set `PLAY_WIF_PROVIDER` and `PLAY_SERVICE_ACCOUNT`
    to the two values printed in step 7 (Settings › Secrets and variables ›
-   Actions › Variables). Leave `PLAY_CLOSED_TRACK` unset (step 6, later).
+   Actions › Variables). Leave `PLAY_CLOSED_TRACK` unset (closed testing on
+   the track `alpha`).
 10. **Check**: Actions › Android app › Run workflow on `main`. `play-internal`
-   ends with "released to the Google Play track internal"; `play-closed` is
-   skipped. Once closed testing is on, its first release goes through
-   Google's review (usually hours to a few days); later ones are faster.
+   ends with "released to the Google Play track internal", `play-closed` with
+   "Google Play store listing updated" and "released to the Google Play track
+   alpha". The first closed release then waits for Google's review (usually
+   hours to a few days; the Console shows it under Publishing overview).
 
 If a job fails, its message says which step is missing (app unknown, no
-permission, app still a draft, unknown track).
+permission, app still a draft, unknown track). A closed release refused
+because the listing or App content is incomplete is reported by Google in
+the Console (Publishing overview, Inbox).
 
 ## Security
 
@@ -241,7 +298,7 @@ permission, app still a draft, unknown track).
 2. Groundwork: version from release tags; store builds of a given commit;
    feature switches on both platforms.
 3. App Store release tool and the train (Apple), then the urgent lane.
-4. Google Play: internal testing and the emulator smoke test are built and
-   wait for the one-time setup; closed testing is built and off; then
-   production, the listing and screenshots.
+4. Google Play: internal testing, the emulator smoke test, closed testing
+   and the store listing are built; closed testing waits for its testers list
+   (one-time setup, step 6); then production.
 5. Sync compatibility test against the last release; hardening.

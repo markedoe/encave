@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """Sends a release bundle to a Google Play testing track, after the CI built it.
 
-Two steps, run by android.yml on main:
+Steps, run by android.yml on main:
 
   upload   uploads the bundle (and its R8 mapping) and releases its version code
            to the internal testing track, in one edit;
   promote  releases the same version code, already uploaded, to another track
            (the closed testing track), once the screen tour and the emulator
-           smoke test passed. Nothing is rebuilt between the tracks.
+           smoke test passed. Nothing is rebuilt between the tracks. With
+           LISTING_JSON set, the store listing is updated in the same edit, so
+           Google reviews the release and the listing together;
+  listing  only the store listing (texts and images), for a run by hand.
+
+The listing: texts from docs/store/play.json (title, short and full description
+per language) and the images made by play_listing_images.py. Unchanged texts and
+images are left alone (compared with what Google Play has), so a run that changes
+nothing sends nothing for review.
 
 Standard library only. The access token comes from Workload Identity Federation
 (google-github-actions/auth in the workflow): no key is stored.
@@ -24,7 +32,12 @@ Environment:
                      "What to Test" of apple.yml; in French with the same subjects)
   USER_FRACTION      staged rollout share, for example 0.1 (production only; not
                      used by the CI: public release stays off)
+  LISTING_JSON       promote, listing: the listing texts (docs/store/play.json)
+  LISTING_IMAGES     promote, listing: the folder of play_listing_images.py,
+                     <language>/<imageType>/NN.png (optional: texts only without it)
 """
+
+import hashlib
 
 import json
 import os
@@ -42,6 +55,8 @@ UPLOAD = "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/app
 # side (5xx) or cannot be reached.
 RETRY_DELAYS = (5, 15, 30, 60, 120)
 NOTES_LIMIT = 500
+LISTING_LIMITS = {"title": 30, "shortDescription": 80, "fullDescription": 4000}
+IMAGE_TYPES = ("icon", "featureGraphic", "phoneScreenshots", "sevenInchScreenshots", "tenInchScreenshots")
 
 
 def notice(message):
@@ -144,7 +159,8 @@ def set_track(base, edit, track, version_code):
             tracks = call("GET", f"{base}/edits/{edit}/tracks").get("tracks", [])
             names = ", ".join(t["track"] for t in tracks) or "none"
             sys.exit(f"Google Play refused the track \"{track}\" ({error}). Tracks of the app: {names}. "
-                     "Set the PLAY_CLOSED_TRACK repository variable to one of them.")
+                     "Set the PLAY_CLOSED_TRACK repository variable to one of them (or to none: no closed "
+                     "testing).")
         raise
 
 
@@ -190,29 +206,132 @@ def upload(base, edit, package, version_code):
                 warn(f"The R8 mapping was not uploaded ({error}); it is in the encave-release-mapping artifact.")
 
 
+def read_listing(path):
+    with open(path, encoding="utf-8") as file:
+        data = json.load(file)
+    listings = data.get("listings", {})
+    if not listings:
+        sys.exit(f"{path} has no listings.")
+    for language, texts in listings.items():
+        for field, limit in LISTING_LIMITS.items():
+            text = texts.get(field, "")
+            if not text.strip():
+                sys.exit(f"{path}: {language} has no {field}.")
+            if len(text) > limit:
+                sys.exit(f"{path}: {language} {field} has {len(text)} characters, Google Play takes {limit}.")
+    return data
+
+
+def check_details(base, edit, default_language):
+    """Contact details are left as they are; says what Google needs before a review."""
+    details = call("GET", f"{base}/edits/{edit}/details")
+    if details.get("defaultLanguage") and details["defaultLanguage"] != default_language:
+        warn(f"The default store language is {details['defaultLanguage']} in the Play Console, "
+             f"{default_language} in docs/store/play.json: the listing of both languages is sent, "
+             "but check which one Google shows by default.")
+    if not details.get("contactEmail"):
+        warn("No contact email in the store listing: Google needs one before a review. Set it in the Play "
+             "Console: Grow users › Store presence › Store settings › Store listing contact details.")
+
+
+def update_texts(base, edit, language, texts):
+    try:
+        current = call("GET", f"{base}/edits/{edit}/listings/{language}")
+    except APIError as error:
+        if error.status != 404:
+            raise
+        current = {}
+    wanted = {field: texts[field] for field in LISTING_LIMITS}
+    if all(current.get(field, "") == value for field, value in wanted.items()):
+        print(f"{language}: texts unchanged.")
+        return False
+    body = {"language": language, **wanted}
+    if current.get("video"):
+        body["video"] = current["video"]  # listings.update replaces the listing: keep a video set by hand
+    call("PUT", f"{base}/edits/{edit}/listings/{language}", body)
+    print(f"{language}: texts updated.")
+    return True
+
+
+def update_images(base, edit, package, language, image_type, files):
+    url = f"{base}/edits/{edit}/listings/{language}/{image_type}"
+    blobs = []
+    for path in files:
+        with open(path, "rb") as file:
+            blobs.append(file.read())
+    wanted = [hashlib.sha256(blob).hexdigest() for blob in blobs]
+    current = [image.get("sha256", "") for image in call("GET", url).get("images", [])]
+    if current == wanted:
+        print(f"{language} {image_type}: {len(files)} unchanged.")
+        return False
+    call("DELETE", url)  # edits.images.deleteall
+    for blob in blobs:
+        call("POST", f"{UPLOAD}/{package}/edits/{edit}/listings/{language}/{image_type}",
+             query={"uploadType": "media"}, data=blob, content_type="image/png", timeout=300)
+    print(f"{language} {image_type}: {len(files)} uploaded (replacing {len(current)}).")
+    return True
+
+
+def update_listing(base, edit, package):
+    """The store listing in this edit; True when something changed."""
+    data = read_listing(os.environ["LISTING_JSON"])
+    check_details(base, edit, data.get("defaultLanguage", "fr-FR"))
+    changed = False
+    for language, texts in data["listings"].items():
+        changed |= update_texts(base, edit, language, texts)
+    images = os.environ.get("LISTING_IMAGES", "").strip()
+    if not images:
+        print("No LISTING_IMAGES: images left as they are.")
+        return changed
+    for language in data["listings"]:
+        for image_type in IMAGE_TYPES:
+            folder = os.path.join(images, language, image_type)
+            files = sorted(os.path.join(folder, name) for name in os.listdir(folder)
+                           if name.endswith(".png")) if os.path.isdir(folder) else []
+            if files:
+                changed |= update_images(base, edit, package, language, image_type, files)
+    return changed
+
+
 def main():
     step = sys.argv[1] if len(sys.argv) > 1 else ""
-    if step not in ("upload", "promote"):
-        sys.exit("Usage: play_publish.py upload|promote")
+    if step not in ("upload", "promote", "listing"):
+        sys.exit("Usage: play_publish.py upload|promote|listing")
     package = os.environ.get("PACKAGE_NAME", "markeddoe.com.encave")
-    version_code = int(os.environ["VERSION_CODE"])
-    track = os.environ.get("TRACK", "").strip() or ("internal" if step == "upload" else "")
-    if not track:
-        sys.exit("promote needs TRACK, the closed testing track (for example alpha).")
     base = f"{API}/{package}"
+    if step == "listing":
+        if not os.environ.get("LISTING_JSON"):
+            sys.exit("listing needs LISTING_JSON (docs/store/play.json).")
+        version_code, track = None, ""
+    else:
+        version_code = int(os.environ["VERSION_CODE"])
+        track = os.environ.get("TRACK", "").strip() or ("internal" if step == "upload" else "")
+        if not track:
+            sys.exit("promote needs TRACK, the closed testing track (for example alpha).")
 
     try:
         edit = call("POST", f"{base}/edits", {})["id"]
+        listing_changed = False
         if step == "upload":
             upload(base, edit, package, version_code)
-        set_track(base, edit, track, version_code)
+        if step != "upload" and os.environ.get("LISTING_JSON"):
+            listing_changed = update_listing(base, edit, package)
+        if step == "listing" and not listing_changed:
+            call("DELETE", f"{base}/edits/{edit}")
+            notice("The Google Play store listing is up to date: nothing sent.")
+            return
+        if track:
+            set_track(base, edit, track, version_code)
         commit(base, edit)
     except APIError as error:
         message = explain(error, package)
         if message:
             sys.exit(f"{message}\n{error}")
         raise
-    notice(f"Version code {version_code} released to the Google Play track \"{track}\".")
+    if listing_changed:
+        notice("Google Play store listing updated (texts and images of docs/store/play.json).")
+    if track:
+        notice(f"Version code {version_code} released to the Google Play track \"{track}\".")
 
 
 if __name__ == "__main__":
