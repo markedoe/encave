@@ -153,6 +153,16 @@ keytool -genkeypair -v -keystore encave-upload.jks -storetype PKCS12 \
 base64 -w0 encave-upload.jks   # value of ENCAVE_KEYSTORE_BASE64 (macOS: base64 -i encave-upload.jks)
 ```
 
+Without Java, OpenSSL (or the LibreSSL of macOS) makes the same PKCS12 keystore;
+it asks for the keystore password, which is also the key password:
+
+```bash
+openssl req -x509 -newkey rsa:4096 -sha256 -days 10000 -nodes \
+  -keyout upload-key.pem -out upload-cert.pem -subj "/CN=Encave upload"
+openssl pkcs12 -export -inkey upload-key.pem -in upload-cert.pem -name upload -out encave-upload.p12
+rm upload-key.pem upload-cert.pem   # the key is now only in encave-upload.p12
+```
+
 With Play App Signing (the default for new apps), Google keeps the app signing
 key and this keystore is only the upload key: if it is lost, the upload key can
 be reset from the Play Console. Build a signed bundle locally with:
