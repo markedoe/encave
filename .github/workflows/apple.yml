@@ -44,20 +44,69 @@ jobs:
       # The licences shown in Settings › About › Licences match Package.resolved.
       - run: python3 apple/tools/licences.py --check
 
+  tour-check:
+    name: Tour already passed on this commit?
+    # On main, a commit whose tour already passed (a branch fast-forwarded to main after
+    # its own tour) is not toured again: its build goes to the testers once uploaded.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      passed: ${{ steps.check.outputs.passed }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          passed=false
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/apple.yml/runs?head_sha=$GITHUB_SHA&status=completed&per_page=20" \
+              --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID) | .id")
+            for run in $runs; do
+              # Every tour job of that run's latest attempt passed (the same commit has the
+              # same workflow, so the same tour jobs).
+              ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?filter=latest&per_page=100" \
+                --jq '[.jobs[] | select(.name | startswith("Screen tour"))] | length > 0 and all(.conclusion == "success")')
+              if [ "$ok" = true ]; then
+                echo "The screen tour passed on this commit in run $run: not run again."
+                passed=true
+                break
+              fi
+            done
+          fi
+          echo "passed=$passed" >> "$GITHUB_OUTPUT"
+
   screens:
-    name: Screen tour (iPhone, iPad, Mac)
-    needs: [cavekit, l10n]
+    name: Screen tour (${{ matrix.device }}, ${{ matrix.language }})
+    needs: [cavekit, l10n, tour-check]
     # The full tour runs on main before each TestFlight build, on pull requests and on
     # manual runs. Pushes to other branches only build and run the Mac launch test, so
     # fixes reach main faster.
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    if: (github.event_name != 'push' || github.ref == 'refs/heads/main') && needs.tour-check.outputs.passed != 'true'
     runs-on: macos-latest
-    # Built once; the iPhone and the iPad run side by side: 65 to 90 minutes depending
-    # on the runner (measured: a runner runs an iPhone and an iPad together, but not two
-    # iPads, two iPhones or three simulators, and each new job pays about 20 minutes to
-    # start its simulators; the studio pictures of the sample cellar are made on the
-    # first launch).
-    timeout-minutes: 150
+    # One simulator per job, four jobs side by side (with the apps job, the five macOS
+    # runners a free account runs at once). Two simulators on one runner slow each other,
+    # and three fail to launch the app; one a runner runs at full speed.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: iPhone
+            language: English
+            tests: testTourInEnglish testLargeText testLargestText
+            mac: true
+          - device: iPhone
+            language: French
+            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
+          - device: iPad
+            language: English
+            tests: testTourInEnglish
+            model: true
+          - device: iPad
+            language: French
+            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
     defaults:
       run:
         working-directory: apple
@@ -83,69 +132,58 @@ jobs:
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO | xcbeautify --renderer github-actions
 
       - name: Model tests (macOS)
+        if: matrix.model
         run: swift test --package-path Packages/CaveKit
 
-      - name: Start the simulators
+      - name: Start the simulator
         if: ${{ !cancelled() }}
+        env:
+          DEVICE: ${{ matrix.device }}
         run: |
           set -e
-          sims="$RUNNER_TEMP/sims"
-          mkdir -p "$sims"
-          # The newest iPhone (not mini) and iPad. Booted first: a cold simulator can time
+          # The newest iPhone (not mini) or iPad. Booted first: a cold simulator can time
           # out launching the app under test. Nothing else runs meanwhile: a booting
           # simulator slows all else.
-          xcrun simctl list devices available -j > "$sims/devices.json"
-          python3 - "$sims/devices.json" > "$sims/plan" <<'PY'
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
+          udid=$(python3 - "$RUNNER_TEMP/devices.json" "$DEVICE" <<'PY'
           import json, sys
-          for prefix in ("iPhone", "iPad"):
-              found = []
-              for runtime, devices in json.load(open(sys.argv[1]))["devices"].items():
-                  if "iOS" not in runtime:
-                      continue
-                  for d in devices:
-                      if d["name"].startswith(prefix) and "mini" not in d["name"]:
-                          found.append((runtime, d["name"], d["udid"]))
-              found.sort()
-              runtime, name, udid = found[-1]
-              print(prefix, udid, name)
+          found = []
+          for runtime, devices in json.load(open(sys.argv[1]))["devices"].items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if d["name"].startswith(sys.argv[2]) and "mini" not in d["name"]:
+                      found.append((runtime, d["name"], d["udid"]))
+          found.sort()
+          runtime, name, udid = found[-1]
+          print(f"{name} ({runtime})", file=sys.stderr)
+          print(udid)
           PY
-          while read -r device udid name; do
-            echo "$device: $name ($udid)"
-            echo "$udid" > "$sims/$device"
-            xcrun simctl boot "$udid" || true
-          done < "$sims/plan"
-          for device in iPhone iPad; do
-            xcrun simctl bootstatus "$(cat "$sims/$device")" > /dev/null
-            echo "$device booted at $(date -u +%T)"
-          done
+          )
+          echo "SIM=$udid" >> "$GITHUB_ENV"
+          echo "Booting at $(date -u +%T)"
+          xcrun simctl boot "$udid" || true
+          xcrun simctl bootstatus "$udid" > /dev/null
+          echo "Booted at $(date -u +%T)"
 
-      - name: iPhone and iPad
+      - name: Tour
         if: ${{ !cancelled() }}
+        env:
+          DEVICE: ${{ matrix.device }}
+          TESTS: ${{ matrix.tests }}
+          LANGUAGE: ${{ matrix.language }}
         run: |
           set -o pipefail
-          sims="$RUNNER_TEMP/sims"
           xctestrun=$(find "$RUNNER_TEMP/dd/Build/Products" -name "*.xctestrun" | head -n 1)
-          tour=EncaveUITests/ScreenTourTests
-          run() {
-            device=$1; shift
-            # A one-off simulator timeout (a screenshot request) is retried once.
-            xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$(cat "$sims/$device")" \
-              -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$device.xcresult" "$@" 2>&1 \
-              | tee "$RUNNER_TEMP/$device.raw" | xcbeautify --renderer github-actions | tee "$RUNNER_TEMP/$device.log" \
-              | sed -u "s/^/[$device] /"
-          }
-          # English then French on each. The large text checks run on iPhone only (they
-          # stop at once on the iPad's regular width).
+          only=()
+          for test in $TESTS; do only+=("-only-testing:EncaveUITests/ScreenTourTests/$test"); done
+          name="$DEVICE-$LANGUAGE"
           echo "Started at $(date -u +%T)"
-          run iPhone & iphone=$!
-          run iPad "-skip-testing:$tour/testLargeText" "-skip-testing:$tour/testLargestText" & ipad=$!
-          status=0
-          wait "$iphone" || status=1
-          wait "$ipad" || status=1
-          # The failures again, as annotations, and when each part started its tests.
-          grep -h "^::" "$RUNNER_TEMP"/iP*.log || true
-          grep -h "Test Suite 'All tests' started\|elapsed --" "$RUNNER_TEMP"/iP*.raw | head -n 30 || true
-          exit $status
+          # A one-off simulator timeout (a screenshot request) is retried once.
+          xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$SIM" \
+            -retry-tests-on-failure -test-iterations 2 -resultBundlePath "$RUNNER_TEMP/$name.xcresult" "${only[@]}" 2>&1 \
+            | tee "$RUNNER_TEMP/$name.raw" | xcbeautify --renderer github-actions
+          echo "Finished at $(date -u +%T)"
 
       - name: Slowest steps of the tour
         if: ${{ !cancelled() }}
@@ -154,9 +192,9 @@ jobs:
           for result in "$RUNNER_TEMP"/iP*.xcresult; do
             [ -e "$result" ] || continue
             for test in testTourInEnglish testTourInFrench; do
-              echo "== $(basename "$result" .xcresult) $test"
               xcrun xcresulttool get test-results activities --path "$result" \
-                --test-id "ScreenTourTests/$test()" > "$RUNNER_TEMP/activities.json" || continue
+                --test-id "ScreenTourTests/$test()" > "$RUNNER_TEMP/activities.json" 2>/dev/null || continue
+              echo "== $(basename "$result" .xcresult) $test"
               python3 - "$RUNNER_TEMP/activities.json" <<'PY'
           import json, sys
           data = json.load(open(sys.argv[1]))
@@ -180,7 +218,7 @@ jobs:
           done
 
       - name: Mac
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.mac }}
         # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
         # failed); the Mac screenshots of the build job show each section.
         continue-on-error: true
@@ -231,9 +269,24 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: screens
+          name: screens-${{ matrix.device }}-${{ matrix.language }}
           path: ${{ runner.temp }}/screens
           retention-days: 7
+
+  screens-merge:
+    name: Screenshots in one artifact
+    needs: screens
+    if: ${{ !cancelled() && needs.screens.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # The four parts as one "screens" artifact, a folder per device (iPhone, iPad, Mac).
+      - uses: actions/upload-artifact/merge@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: screens
+          pattern: screens-*
+          retention-days: 7
+          delete-merged: true
 
   apps:
     name: Build, Mac launch test${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && ', TestFlight upload' || '' }}
@@ -441,13 +494,14 @@ jobs:
 
   testers:
     name: TestFlight external testers
-    needs: [apps, screens]
+    needs: [apps, screens, tour-check]
     # Every build of main goes to the external testers once the full screen tour has
-    # passed; a manual run from main does too when "external testers" is ticked. Also
+    # passed, in this run or in an earlier run of the same commit (tour-check); a manual
+    # run from main does too when "external testers" is ticked. Also
     # when one upload failed (the Mac one runs after the iPhone one): the uploaded build
     # still reaches the testers, and the apps job and the run stay failed, with a warning
     # below.
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.screens.result == 'success' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.external_testers)) && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.screens.result == 'success' || needs.tour-check.outputs.passed == 'true') && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.external_testers)) && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
     runs-on: ubuntu-latest
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60
