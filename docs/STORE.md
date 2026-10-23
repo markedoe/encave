@@ -153,6 +153,9 @@ the app out of the Families programme.
   Settings › Help › Getting started › Try with a sample cellar › Load sample
   cellar.
 - **Google Play: ads**: the app contains no ads.
+- **Google Play: advertising ID**: No (the app does not declare
+  `com.google.android.gms.permission.AD_ID` and uses no advertising library).
+- **Google Play: app category**: Food & Drink; no tags needed.
 - **Google Play: health apps, financial features, government apps, news**: No.
 
 ## App Store header and search results image
