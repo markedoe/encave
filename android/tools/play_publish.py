@@ -18,7 +18,7 @@ Environment:
   VERSION_CODE       the versionCode of the bundle (BUILD_NUMBER in CI)
   BUNDLE_PATH        upload: the signed .aab
   MAPPING_PATH       upload: R8 mapping.txt (optional)
-  TRACK              default "internal" for upload, "alpha" for promote
+  TRACK              default "internal" for upload; required for promote
   RELEASE_NOTES_EN   release notes in English, at most 500 characters (default: the
   RELEASE_NOTES_FR   build number and the latest commit subjects, like the TestFlight
                      "What to Test" of apple.yml; in French with the same subjects)
@@ -196,7 +196,9 @@ def main():
         sys.exit("Usage: play_publish.py upload|promote")
     package = os.environ.get("PACKAGE_NAME", "app.encave")
     version_code = int(os.environ["VERSION_CODE"])
-    track = os.environ.get("TRACK", "").strip() or ("internal" if step == "upload" else "alpha")
+    track = os.environ.get("TRACK", "").strip() or ("internal" if step == "upload" else "")
+    if not track:
+        sys.exit("promote needs TRACK, the closed testing track (for example alpha).")
     base = f"{API}/{package}"
 
     try:

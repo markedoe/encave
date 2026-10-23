@@ -27,7 +27,7 @@ yet (see "Work in progress").
 | Stage | Apple | Google | When |
 |---|---|---|---|
 | Internal testers | TestFlight group "Internal", gets every build (**done**) | Play internal testing, gets every signed build (**done**, once the one-time setup below is finished) | Every push to `main`, about 20 to 30 minutes after it (upload and processing) |
-| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing (testers list "Friends"), after the screen tour and the emulator smoke test (**done**, once set up), then Google's review of the first closed release | Every push to `main` whose tour passed |
+| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing (testers list "Friends"), after the screen tour and the emulator smoke test (built, **off until the owner decides**: internal testing only for now) | Every push to `main` whose tour passed |
 | Everyone | App Store, phased release over 7 days (*planned*) | Play production, staged rollout 10%, 50%, 100% (*planned*; `play_publish.py` can set a rollout share, no job uses it) | Release train, or the urgent lane |
 
 ## Release train *(planned)*
@@ -118,7 +118,9 @@ Google: see "Google Play: one-time setup" below.
    artifact).
 4. `play-closed` releases the **same version code** to **closed testing**
    (`play_publish.py promote`) once `tour` and `smoke` of the same run passed.
-   Nothing is rebuilt.
+   Nothing is rebuilt. **Off until the owner decides**: it runs only when the
+   `PLAY_CLOSED_TRACK` variable is set. For now builds stay in internal
+   testing.
 
 Release notes, in English and French: the build number and the latest commit
 subjects. Before the setup is finished (and on forks) `play-internal` ends with
@@ -138,7 +140,7 @@ Repository settings (Settings › Secrets and variables › Actions):
 | `ENCAVE_KEYSTORE_BASE64`, `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS`, `ENCAVE_KEY_PASSWORD` | Secrets | The upload key (`docs/development.md`, "Android release") |
 | `PLAY_WIF_PROVIDER` | Variable | `projects/<project number>/locations/global/workloadIdentityPools/github/providers/encave` |
 | `PLAY_SERVICE_ACCOUNT` | Variable | `play-release@<project id>.iam.gserviceaccount.com` |
-| `PLAY_CLOSED_TRACK` | Variable, optional | The closed track; default `alpha`, the closed track every app has |
+| `PLAY_CLOSED_TRACK` | Variable, unset for now | The closed track (`alpha`, the closed track every app has); unset, nothing goes to closed testing |
 
 ### Google Play: one-time setup
 
@@ -167,12 +169,14 @@ placeholders: never commit the real ones.
    the upload key), upload `app-release.aab` from step 2, Next, Save, and
    **Roll out to internal testing** (a release left as a draft keeps the app a
    draft, and the API then refuses releases).
-6. **Closed testing.** Test and release › Testing › Closed testing ›
+6. **Closed testing (later, when the owner decides).** Test and release › Testing › Closed testing ›
    Alpha › Testers: create an email list named "Friends" (or use a Google
    Group), choose the countries, add a feedback email, save. Copy the opt-in
    link and send it to the testers. A personal account created after November
    2023 (the owner's) needs at least 12 testers opted in for 14 days in a row
-   before it can apply for production.
+   before it can apply for production. Then set the `PLAY_CLOSED_TRACK`
+   variable to `alpha` (or the name of another closed track; a wrong name
+   makes the job list the track names).
 7. **Google Cloud** (console.cloud.google.com › Cloud Shell), the project,
    the service account and the Workload Identity Federation:
 
@@ -209,14 +213,11 @@ placeholders: never commit the real ones.
    permission is needed.
 9. **GitHub variables**: set `PLAY_WIF_PROVIDER` and `PLAY_SERVICE_ACCOUNT`
    to the two values printed in step 7 (Settings › Secrets and variables ›
-   Actions › Variables). Only if you use another closed track than Alpha, set
-   `PLAY_CLOSED_TRACK` to its name (a wrong name makes the job list the
-   track names).
+   Actions › Variables). Leave `PLAY_CLOSED_TRACK` unset (step 6, later).
 10. **Check**: Actions › Android app › Run workflow on `main`. `play-internal`
-   ends with "released to the Google Play track internal", and `play-closed`
-   with "track alpha" once the tour and the smoke test passed. The first
-   closed release goes through Google's review (usually hours to a few days);
-   later ones are faster.
+   ends with "released to the Google Play track internal"; `play-closed` is
+   skipped. Once closed testing is on, its first release goes through
+   Google's review (usually hours to a few days); later ones are faster.
 
 If a job fails, its message says which step is missing (app unknown, no
 permission, app still a draft, unknown track).
@@ -237,7 +238,7 @@ permission, app still a draft, unknown track).
 2. Groundwork: version from release tags; store builds of a given commit;
    feature switches on both platforms.
 3. App Store release tool and the train (Apple), then the urgent lane.
-4. Google Play: internal and closed testing and the emulator smoke test are
-   built (branch `claude/play`) and wait for the one-time setup; then
+4. Google Play: internal testing and the emulator smoke test are built and
+   wait for the one-time setup; closed testing is built and off; then
    production, the listing and screenshots.
 5. Sync compatibility test against the last release; hardening.

@@ -321,8 +321,9 @@ jobs:
     name: Google Play closed testing
     # The same version code, already uploaded, to the closed testing track (the beta testers),
     # once the screen tour and the emulator smoke test of this run passed. Nothing is rebuilt.
+    # Off until the PLAY_CLOSED_TRACK variable names the track (the owner keeps internal only).
     needs: [release, tour, smoke, play-internal]
-    if: ${{ needs.play-internal.outputs.released == 'true' }}
+    if: ${{ needs.play-internal.outputs.released == 'true' && vars.PLAY_CLOSED_TRACK != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -348,5 +349,5 @@ jobs:
           PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           PACKAGE_NAME: app.encave
           VERSION_CODE: ${{ needs.release.outputs.version-code }}
-          TRACK: ${{ vars.PLAY_CLOSED_TRACK || 'alpha' }}
+          TRACK: ${{ vars.PLAY_CLOSED_TRACK }}
         run: python3 android/tools/play_publish.py promote
