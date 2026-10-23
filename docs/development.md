@@ -217,6 +217,7 @@ off without code changes:
 | `relay.yml` | Relay tests (Node server and Cloudflare Worker), and two simulated devices syncing through a running relay |
 | `android.yml` | Core and app unit tests, lint, debug APK (artifacts `encave-debug-apk`, `android-screens`); on a push to main (or a manual run), release lint and bundle, signed when the secrets are set (artifacts `encave-release-aab`, `encave-release-mapping`). Nothing is uploaded to Google Play |
 | `security.yml` | Weekly full-history secret and public-safety scan, CodeQL on the workflows |
+| `play-status.yml` | Manual, read-only, on `main`: checks that the repository reaches Google Play (Workload Identity Federation, variables `PLAY_WIF_PROVIDER` and `PLAY_SERVICE_ACCOUNT`) and lists the testing tracks, their releases and the store listing languages |
 | `testflight-status.yml` | Manual, read-only: the latest TestFlight builds, which external groups have them and where Beta App Review stands |
 | `testflight-external.yml` | Manual: gives a build already in TestFlight (its build number) to every external group and submits it to Beta App Review, with an optional "What to Test"; builds nothing |
 | `appstore-assets.yml` | Manual "App Store header image": `inspect` reads App Store Connect; `upload` places `docs/store/header-*.png` as the product page header and the search results asset of the version being prepared, in French and English (see [STORE.md](STORE.md)) |
