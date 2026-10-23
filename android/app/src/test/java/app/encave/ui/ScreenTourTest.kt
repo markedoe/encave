@@ -205,11 +205,12 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         checkPairs(name)
     }
 
-    /** A screen drawn for real shows text and controls: many colors on a grid of points, not one or two. */
+    /** A screen drawn for real shows text and controls: many colors (antialiased text), not one or two. */
     private fun checkNotBlank(screen: String, image: Bitmap) {
-        val colors = HashSet<Int>()
-        for (x in 0 until 40) for (y in 0 until 80) colors += image.getPixel(x * image.width / 40, y * image.height / 80)
-        assertTrue("$device-$variant: $screen looks blank (${colors.size} colors)", colors.size >= 8)
+        val pixels = IntArray(image.width * image.height)
+        image.getPixels(pixels, 0, image.width, 0, 0, image.width, image.height)
+        val colors = pixels.toHashSet().size
+        assertTrue("$device-$variant: $screen looks blank ($colors colors)", colors >= 8)
     }
 
     private fun tagOf(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.TestTag)
