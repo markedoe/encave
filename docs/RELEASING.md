@@ -132,6 +132,13 @@ Every release to closed testing goes through Google's review: the first one
 takes hours to a few days, later ones are usually faster. A release waiting
 for review does not stop the next one: the newer version code replaces it.
 
+While the app itself is still a draft in Google Play (App content forms not
+finished), Google takes only draft releases: `play-internal` and
+`play-closed` then save the release as a draft of its track and end with a
+warning; roll it out from the Play Console (Test and release › the track ›
+Edit release › Review › Roll out). Once the forms are finished, releases go
+out by themselves.
+
 ### Store listing
 
 Kept in the repository and published by `play-closed`, before the release:

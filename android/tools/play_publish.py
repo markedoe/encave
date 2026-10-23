@@ -157,10 +157,10 @@ def notes(version_code):
     return released
 
 
-def release(version_code):
+def release(version_code, draft=False):
     entry = {"versionCodes": [str(version_code)], "status": "completed"}
     fraction = os.environ.get("USER_FRACTION", "").strip()
-    if os.environ.get("RELEASE_STATUS", "").strip() == "draft":
+    if draft or os.environ.get("RELEASE_STATUS", "").strip() == "draft":
         # A draft app (forms not finished) only takes draft releases: rolled out from the Console.
         entry["status"] = "draft"
     elif fraction:
@@ -172,10 +172,18 @@ def release(version_code):
     return entry
 
 
-def set_track(base, edit, track, version_code):
+def draft_only(error):
+    """Google's answer while the app itself is a draft (App content not finished)."""
+    return error.status == 400 and "status draft" in error.body.lower()
+
+
+def set_track(base, edit, track, version_code, draft=False):
     try:
-        call("PUT", f"{base}/edits/{edit}/tracks/{track}", {"track": track, "releases": [release(version_code)]})
+        call("PUT", f"{base}/edits/{edit}/tracks/{track}",
+             {"track": track, "releases": [release(version_code, draft)]})
     except APIError as error:
+        if draft_only(error):
+            raise
         if error.status in (400, 404) and "track" in error.body.lower():
             tracks = call("GET", f"{base}/edits/{edit}/tracks").get("tracks", [])
             names = ", ".join(t["track"] for t in tracks) or "none"
@@ -355,7 +363,7 @@ def main():
 
     try:
         edit = call("POST", f"{base}/edits", {})["id"]
-        listing_changed = False
+        listing_changed = drafted = False
         if step == "upload":
             upload(base, edit, package, version_code)
         if step != "upload" and os.environ.get("LISTING_JSON"):
@@ -367,8 +375,23 @@ def main():
         if track:
             global doing
             doing = "tracks"
-            set_track(base, edit, track, version_code)
-        commit(base, edit)
+            try:
+                set_track(base, edit, track, version_code)
+                commit(base, edit)
+            except APIError as error:
+                if not draft_only(error):
+                    raise
+                # The app is still a draft: it only takes draft releases, rolled out by hand.
+                set_track(base, edit, track, version_code, draft=True)
+                commit(base, edit)
+                warn(f"The app is still a draft in Google Play, so version code {version_code} was saved as a "
+                     f"draft release of the track \"{track}\": roll it out from the Play Console (Test and "
+                     "release › the track › Edit release › Review › Roll out). Finish the App content forms "
+                     "(Policy and programs › App content) to end the draft state; later releases then go out "
+                     "by themselves.")
+                drafted = True
+        else:
+            commit(base, edit)
     except APIError as error:
         message = explain(error, package)
         if message:
@@ -376,7 +399,7 @@ def main():
         raise
     if listing_changed:
         notice("Google Play store listing updated (texts and images of docs/store/play.json).")
-    if track:
+    if track and not drafted:
         notice(f"Version code {version_code} released to the Google Play track \"{track}\".")
 
 
