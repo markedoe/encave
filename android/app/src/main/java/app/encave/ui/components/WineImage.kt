@@ -1,6 +1,8 @@
 package app.encave.ui.components
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Matrix
 import android.util.LruCache
 import androidx.compose.foundation.Image
@@ -31,6 +33,8 @@ import app.encave.core.AutoLevels
 import app.encave.core.LabelCrop
 import app.encave.core.LabelTilt
 import app.encave.core.Wine
+import app.encave.core.WineLabelFrame
+import app.encave.core.labelFrame
 import app.encave.data.PhotoStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -68,9 +72,11 @@ fun WineImage(
     val cover = wine.coverPhotoId?.takeIf { photos.exists(it) }
     val id = cover ?: wine.photoId?.takeIf { photos.exists(it) } ?: return
     val enhance = studio && cover == null
-    val picture by produceState<StudioPicture?>(null, id, enhance, maxPixelSize) {
+    // Where the AI found the label in this photo, if it did: the picture is framed on it.
+    val labelFrame = if (enhance) wine.labelFrame(id) else null
+    val picture by produceState<StudioPicture?>(null, id, enhance, maxPixelSize, labelFrame) {
         value = withContext(Dispatchers.Default) {
-            if (enhance) StudioBitmaps.get(photos, id, maxPixelSize) else photos.load(id, maxPixelSize)?.let { StudioPicture(it, framed = false) }
+            if (enhance) StudioBitmaps.get(photos, id, maxPixelSize, labelFrame) else photos.load(id, maxPixelSize)?.let { StudioPicture(it, framed = false) }
         }
     }
     val shape = RoundedCornerShape(corner)
@@ -124,12 +130,16 @@ internal object StudioBitmaps {
         override fun sizeOf(key: String, value: StudioPicture): Int = value.bitmap.byteCount / 1024
     }
 
-    fun get(photos: PhotoStore, id: String, maxPixelSize: Int): StudioPicture? {
-        val key = "$id@$maxPixelSize"
+    /** The cache's name for a picture: the photo, its size, and the label frame used, if any. */
+    fun key(id: String, maxPixelSize: Int, labelFrame: WineLabelFrame?): String =
+        "$id@$maxPixelSize" + (labelFrame?.let { "#${it.cacheTag}" } ?: "")
+
+    fun get(photos: PhotoStore, id: String, maxPixelSize: Int, labelFrame: WineLabelFrame? = null): StudioPicture? {
+        val key = key(id, maxPixelSize, labelFrame)
         cache.get(key)?.let { return it }
         // Framed from a larger copy than shown, so the label keeps its detail.
         val source = photos.load(id, minOf(1200, maxPixelSize * 3).coerceAtLeast(maxPixelSize)) ?: return null
-        val result = studio(source, maxPixelSize)
+        val result = studio(source, maxPixelSize, labelFrame)
         cache.put(key, result)
         return result
     }
@@ -137,8 +147,10 @@ internal object StudioBitmaps {
     /**
      * The photo turned so its text lines are level, framed on its label (or
      * whole, see [LabelCrop.studioFrame]), light evened out, at most [maxPixelSize] on its longest side.
+     * With the label frame the AI found, cut to that label, turned level, instead.
      */
-    fun studio(photo: Bitmap, maxPixelSize: Int): StudioPicture {
+    fun studio(photo: Bitmap, maxPixelSize: Int, labelFrame: WineLabelFrame? = null): StudioPicture {
+        labelFrame?.let { framed(photo, it) }?.let { return finish(it, maxPixelSize, framed = true) }
         var pixels = IntArray(photo.width * photo.height)
         photo.getPixels(pixels, 0, photo.width, 0, 0, photo.width, photo.height)
         val source = upright(photo, pixels)
@@ -158,6 +170,41 @@ internal object StudioBitmaps {
             bitmap = Bitmap.createScaledBitmap(bitmap, (width * scale).toInt().coerceAtLeast(1), (height * scale).toInt().coerceAtLeast(1), true)
         }
         return StudioPicture(bitmap, framed = box != null)
+    }
+
+    /**
+     * The photo cut to the label the AI found in it, turned so its text is level (about
+     * its centre), with a margin around it. Null when too small to use.
+     */
+    private fun framed(photo: Bitmap, frame: WineLabelFrame): Bitmap? {
+        val crop = frame.crop(photo.width.toDouble(), photo.height.toDouble())
+        val width = crop.width.toInt()
+        val height = crop.height.toInt()
+        if (width < 8 || height < 8) return null
+        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        Canvas(result).apply {
+            translate(width / 2f, height / 2f)
+            // Text running uphill is turned clockwise to be level, as Android turns.
+            rotate(frame.angle.toFloat())
+            translate(-crop.centerX.toFloat(), -crop.centerY.toFloat())
+            drawBitmap(photo, 0f, 0f, Paint(Paint.FILTER_BITMAP_FLAG))
+        }
+        return result
+    }
+
+    /** Light evened out, at most [maxPixelSize] on its longest side. */
+    private fun finish(picture: Bitmap, maxPixelSize: Int, framed: Boolean): StudioPicture {
+        val width = picture.width
+        val height = picture.height
+        val part = IntArray(width * height)
+        picture.getPixels(part, 0, width, 0, 0, width, height)
+        var bitmap = Bitmap.createBitmap(AutoLevels.apply(part), width, height, Bitmap.Config.ARGB_8888)
+        val longest = maxOf(width, height)
+        if (longest > maxPixelSize) {
+            val scale = maxPixelSize.toFloat() / longest
+            bitmap = Bitmap.createScaledBitmap(bitmap, (width * scale).toInt().coerceAtLeast(1), (height * scale).toInt().coerceAtLeast(1), true)
+        }
+        return StudioPicture(bitmap, framed = framed)
     }
 
     /** The photo turned so its text lines are level, without the empty corners; the photo itself when level. */

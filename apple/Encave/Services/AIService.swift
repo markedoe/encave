@@ -204,6 +204,19 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
     var grapes: [String]
     var drinkFrom: Int
     var drinkUntil: Int
+    /// Where the whole front label is in the photo ("label_box" and "label_angle"), checked
+    /// when the answer is read; nil when absent or invalid, which never fails the answer.
+    var placement: AILabelPlacement? = nil
+
+    private enum CodingKeys: String, CodingKey {
+        case name, producer, vintage, color, appellation, region, country, grapes, drinkFrom, drinkUntil
+    }
+
+    /// The label's frame for the studio picture, for the photo that was read.
+    func labelFrame(forPhoto photoID: String?) -> WineLabelFrame? {
+        guard let photoID else { return nil }
+        return placement?.frame(forPhoto: photoID)
+    }
 
     var wineColor: WineColor? { WineColor(rawValue: color) }
 
@@ -242,39 +255,6 @@ struct LabelAnalysis: Codable, Equatable, Sendable {
         }
         return draft != before
     }
-
-    static var schema: JSONObject {
-        [
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["name", "producer", "vintage", "color", "appellation", "region", "country",
-                         "grapes", "drinkFrom", "drinkUntil"],
-            "properties": [
-                "name": ["type": "string"],
-                "producer": ["type": "string"],
-                "vintage": ["type": "integer"],
-                "color": ["type": "string", "enum": [""] + WineColor.allCases.map(\.rawValue)] as JSONObject,
-                "appellation": ["type": "string"],
-                "region": ["type": "string"],
-                "country": ["type": "string"],
-                "grapes": ["type": "array", "items": ["type": "string"]] as JSONObject,
-                "drinkFrom": ["type": "integer"],
-                "drinkUntil": ["type": "integer"],
-            ] as JSONObject,
-        ]
-    }
-
-    static let prompt = """
-    This is a photo of a wine label. Read it and return the wine's details.
-    - name: the wine or cuvée name as printed (for example the château or domaine and cuvée), without the vintage.
-    - producer: the estate, domaine or house, if different from the name; otherwise "".
-    - vintage: the year on the label, or 0 for a non-vintage wine.
-    - color: one of red, white, rose, sparkling, dessert, fortified, orange; "" if you cannot tell.
-    - appellation, region, country: from the label, or from your knowledge of the appellation. Country in English.
-    - grapes: the grape varieties if printed or typical of the appellation; [] if unsure.
-    - drinkFrom and drinkUntil: a realistic drinking window in years for this wine and vintage, or 0 if unknown.
-    Use "" or 0 for anything you cannot determine. Do not invent a producer or vintage that is not visible.
-    """
 }
 
 typealias JSONObject = [String: Any]
@@ -305,19 +285,29 @@ enum AIServiceError: LocalizedError {
 }
 
 enum AIService {
-    /// Sends the label photo (a resized JPEG) to the configured provider.
-    static func analyzeLabel(jpeg: Data, settings: AISettings = .load()) async throws -> LabelAnalysis {
+    /// The studio look is on (the default): the same request also asks where the label is.
+    static var findsLabel: Bool {
+        UserDefaults.standard.object(forKey: StudioPhoto.settingKey) as? Bool ?? true
+    }
+
+    /// Sends the label photo (a resized JPEG) to the configured provider, in one request.
+    static func analyzeLabel(jpeg: Data, settings: AISettings = .load(),
+                             request: LabelRequest = LabelRequest(findsLabel: findsLabel)) async throws -> LabelAnalysis {
         let apiKey = settings.apiKey
         guard settings.isEnabled else { throw AIServiceError.notConfigured }
         if settings.provider.requiresKey, (apiKey ?? "").isEmpty { throw AIServiceError.missingKey }
         guard !settings.effectiveModel.isEmpty else { throw AIServiceError.noModel }
+        var analysis: LabelAnalysis
         if settings.provider.usesAnthropicAPI {
-            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey ?? "")
+            analysis = try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey ?? "", request: request)
+        } else if settings.provider.usesOllamaAPI {
+            analysis = try await ollama(jpeg: jpeg, settings: settings, request: request)
+        } else {
+            analysis = try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey, request: request)
         }
-        if settings.provider.usesOllamaAPI {
-            return try await ollama(jpeg: jpeg, settings: settings)
-        }
-        return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey)
+        // Not asked for: an answer that gives it anyway is not used.
+        if !request.findsLabel { analysis.placement = nil }
+        return analysis
     }
 
     /// Local models can take a while, especially the first time they load.
@@ -367,18 +357,19 @@ enum AIService {
     static func supportsEffort(_ model: String) -> Bool { effortModelPrefixes.contains { model.hasPrefix($0) } }
     static func supportsFallbacks(_ model: String) -> Bool { fallbackModels.contains(model) }
 
-    private static func claude(jpeg: Data, settings: AISettings, apiKey: String) async throws -> LabelAnalysis {
+    private static func claude(jpeg: Data, settings: AISettings, apiKey: String,
+                               request label: LabelRequest) async throws -> LabelAnalysis {
         let model = settings.effectiveModel
         let options = supportsEffort(model) || supportsFallbacks(model)
         do {
-            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey, withOptions: options)
+            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey, request: label, withOptions: options)
         } catch AIServiceError.server(let status, _) where status == 400 && options {
             // A model or server that does not take these options yet: once more without them.
-            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey, withOptions: false)
+            return try await claude(jpeg: jpeg, settings: settings, apiKey: apiKey, request: label, withOptions: false)
         }
     }
 
-    private static func claude(jpeg: Data, settings: AISettings, apiKey: String,
+    private static func claude(jpeg: Data, settings: AISettings, apiKey: String, request label: LabelRequest,
                                withOptions: Bool) async throws -> LabelAnalysis {
         let model = settings.effectiveModel
         guard let url = URL(string: settings.effectiveBaseURL + "/messages") else { throw AIServiceError.notConfigured }
@@ -388,7 +379,7 @@ enum AIService {
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
-        var output: JSONObject = ["format": ["type": "json_schema", "schema": LabelAnalysis.schema] as JSONObject]
+        var output: JSONObject = ["format": ["type": "json_schema", "schema": label.schema] as JSONObject]
         var body: JSONObject = [
             "model": model,
             "max_tokens": 8000,
@@ -397,7 +388,7 @@ enum AIService {
                 "content": [
                     ["type": "image",
                      "source": ["type": "base64", "media_type": "image/jpeg", "data": jpeg.base64EncodedString()]] as JSONObject,
-                    ["type": "text", "text": LabelAnalysis.prompt],
+                    ["type": "text", "text": label.prompt],
                 ] as [JSONObject],
             ] as JSONObject],
         ]
@@ -424,18 +415,19 @@ enum AIService {
 
     // MARK: OpenAI-compatible (Chat Completions)
 
-    private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?) async throws -> LabelAnalysis {
+    private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?,
+                                         request label: LabelRequest) async throws -> LabelAnalysis {
         // Not every service supports a JSON schema: fall back to plain JSON, then to no format.
         let formats: [JSONObject?] = [
             ["type": "json_schema",
-             "json_schema": ["name": "wine_label", "strict": true, "schema": LabelAnalysis.schema] as JSONObject],
+             "json_schema": ["name": "wine_label", "strict": true, "schema": label.schema] as JSONObject],
             ["type": "json_object"],
             nil,
         ]
         var lastError: Error = AIServiceError.invalidResponse
         for format in formats {
             do {
-                return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey, format: format)
+                return try await openAICompatible(jpeg: jpeg, settings: settings, apiKey: apiKey, request: label, format: format)
             } catch AIServiceError.server(let status, let message) where status == 400 || status == 422 {
                 lastError = AIServiceError.server(status: status, message: message)
             }
@@ -443,7 +435,8 @@ enum AIService {
         throw lastError
     }
 
-    private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?, format: JSONObject?) async throws -> LabelAnalysis {
+    private static func openAICompatible(jpeg: Data, settings: AISettings, apiKey: String?, request label: LabelRequest,
+                                         format: JSONObject?) async throws -> LabelAnalysis {
         guard let url = URL(string: settings.effectiveBaseURL + "/chat/completions") else {
             throw AIServiceError.notConfigured
         }
@@ -459,7 +452,7 @@ enum AIService {
             "messages": [[
                 "role": "user",
                 "content": [
-                    ["type": "text", "text": LabelAnalysis.prompt],
+                    ["type": "text", "text": label.prompt],
                     ["type": "image_url",
                      "image_url": ["url": "data:image/jpeg;base64,\(jpeg.base64EncodedString())"]] as JSONObject,
                 ] as [JSONObject],
@@ -486,7 +479,7 @@ enum AIService {
     }
 
     /// Structured output with the label's JSON schema, and the photo in "images".
-    private static func ollama(jpeg: Data, settings: AISettings) async throws -> LabelAnalysis {
+    private static func ollama(jpeg: Data, settings: AISettings, request label: LabelRequest) async throws -> LabelAnalysis {
         guard let url = URL(string: ollamaBase(settings) + "/api/chat") else { throw AIServiceError.notConfigured }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -495,12 +488,12 @@ enum AIService {
         let body: JSONObject = [
             "model": settings.effectiveModel,
             "stream": false,
-            "format": LabelAnalysis.schema,
+            "format": label.schema,
             // A photo needs more room than Ollama's default context.
             "options": ["temperature": 0, "num_ctx": 8192] as JSONObject,
             "messages": [[
                 "role": "user",
-                "content": LabelAnalysis.prompt,
+                "content": label.prompt,
                 "images": [jpeg.base64EncodedString()],
             ] as JSONObject],
         ]
@@ -582,9 +575,10 @@ enum AIService {
         if let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") {
             text = String(text[start...end])
         }
-        guard let analysis = try? JSONDecoder().decode(LabelAnalysis.self, from: Data(text.utf8)) else {
+        guard var analysis = try? JSONDecoder().decode(LabelAnalysis.self, from: Data(text.utf8)) else {
             throw AIServiceError.invalidResponse
         }
+        analysis.placement = AILabelPlacement.parse(Data(text.utf8))
         return analysis
     }
 }

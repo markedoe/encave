@@ -50,6 +50,10 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     /// When the details were last completed by the AI from the label photo, so the app
     /// can say so. Nil when never.
     public var aiCompletedAt: Date?
+    /// Where the whole front label is in the label photo, from the AI label recognition,
+    /// to frame the studio picture. Used only while it names the current `photoID`
+    /// (see `labelFrame(forPhoto:)`). Nil when never found.
+    public var labelFrame: WineLabelFrame?
     /// Keys written by a newer version, kept and written back unchanged (docs/SYNC.md §1).
     /// Part of equality, so a merge that only brings them in is still saved.
     public var unknownFields = UnknownFields()
@@ -57,7 +61,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
     private enum CodingKeys: String, CodingKey, CaseIterable {
         case id, name, producer, vintage, color, region, country, appellation, grapes, drinkFrom, drinkUntil, notes
         case photoID, barcodes, tags, extraPhotoIDs, currentPrice, currentPriceCurrency, currentPriceDate
-        case coverPhotoID, attachments, aiCompletedAt
+        case coverPhotoID, attachments, aiCompletedAt, labelFrame
     }
 
     public init(
@@ -101,6 +105,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         coverPhotoID = try c.decodeIfPresent(String.self, forKey: .coverPhotoID)
         attachments = Attachment.unique(try c.decodeIfPresent([Attachment].self, forKey: .attachments))
         aiCompletedAt = try c.decodeIfPresent(Date.self, forKey: .aiCompletedAt)
+        labelFrame = try c.decodeIfPresent(WineLabelFrame.self, forKey: .labelFrame)
         unknownFields = try UnknownFields(from: decoder, known: CodingKeys.self)
     }
 
@@ -128,6 +133,7 @@ public struct Wine: Identifiable, Codable, Hashable, Sendable {
         try c.encodeIfPresent(coverPhotoID, forKey: .coverPhotoID)
         try c.encodeIfPresent(attachments, forKey: .attachments)
         try c.encodeIfPresent(aiCompletedAt, forKey: .aiCompletedAt)
+        try c.encodeIfPresent(labelFrame, forKey: .labelFrame)
         try unknownFields.encode(to: encoder, known: CodingKeys.self)
     }
 

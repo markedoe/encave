@@ -35,6 +35,7 @@ enum InteropFixture {
         wine.currentPriceDate = date(790_000_000.5)
         wine.coverPhotoID = cover
         wine.aiCompletedAt = date(790_100_000.25)
+        wine.labelFrame = WineLabelFrame(photoID: label, x: 0.25, y: 0.125, w: 0.5, h: 0.625, angle: -3.5)
         wine.attachments = [
             Attachment(id: invoice, name: "Facture n°12 – Cave du coin.pdf", contentType: "application/pdf",
                        byteCount: 245_760, addedAt: date(782_000_000.75)),

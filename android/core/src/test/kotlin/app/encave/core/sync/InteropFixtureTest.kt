@@ -1,6 +1,7 @@
 package app.encave.core.sync
 
 import app.encave.core.Attachment
+import app.encave.core.WineLabelFrame
 import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.CellarArchive
@@ -69,6 +70,7 @@ object InteropFixture {
                 Attachment(back, "Back label.jpg", "image/jpeg", 4, date(-12.5)),
             ),
             aiCompletedAt = date(790_100_000.25),
+            labelFrame = WineLabelFrame(label, 0.25, 0.125, 0.5, 0.625, -3.5),
         )
         val plain = Wine(id = plainWine, name = "Vin de table")
         val bottles = listOf(

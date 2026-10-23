@@ -45,6 +45,7 @@ import app.encave.core.merge
 import app.encave.core.CellarVersion
 import app.encave.core.RestoreMode
 import app.encave.core.restoring
+import app.encave.core.sync.PhotoId
 import app.encave.data.BackupManager
 import app.encave.data.CellarRepository
 import app.encave.data.RestoreSource
@@ -699,7 +700,8 @@ class AppViewModel(
         readingJobs.remove(formId)?.cancel()
         readings.value = readings.value + (formId to LabelReading.Reading)
         readingJobs[formId] = viewModelScope.launch {
-            val result = analyzeLabel(jpeg)
+            // The photo's ID (its content's hash, as saved): the label frame is for it.
+            val result = analyzeLabel(jpeg).map { it.copy(photoId = PhotoId.make(jpeg)) }
             readingJobs.remove(formId)
             val saved = savedWhileReading.remove(formId)
             if (saved != null) {
@@ -785,11 +787,15 @@ class AppViewModel(
         }) { it.mergeWine(source, target) }
     }
 
-    /** Sends only the label photo to the provider set in Settings. */
+    /**
+     * Sends only the label photo to the provider set in Settings. With the studio look on,
+     * the same request also asks where the label is, to frame the studio picture on it.
+     */
     suspend fun analyzeLabel(jpeg: ByteArray): Result<LabelAnalysis> {
         val settings = ai.settings.value
         val key = withContext(Dispatchers.IO) { ai.apiKey(settings.provider) }
-        return runCatching { AiService.analyzeLabel(jpeg, settings, key) }
+        val findsLabel = preferences.studioLook.value
+        return runCatching { AiService.analyzeLabel(jpeg, settings, key, findsLabel) }
     }
 
     fun aiErrorText(error: Throwable): UiText = when (error) {

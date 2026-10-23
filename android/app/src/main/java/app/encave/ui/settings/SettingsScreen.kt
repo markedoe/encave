@@ -8,9 +8,11 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -174,7 +176,12 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                 modifier = Modifier.toggleable(studioLook, role = Role.Switch) { viewModel.setStudioLook(it) },
                 leadingContent = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.settings_studio_look)) },
-                supportingContent = { Text(stringResource(R.string.settings_studio_look_body)) },
+                supportingContent = {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(stringResource(R.string.settings_studio_look_body))
+                        Text(stringResource(R.string.settings_studio_look_ai))
+                    }
+                },
                 trailingContent = { Switch(checked = studioLook, onCheckedChange = null) },
             )
 

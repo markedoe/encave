@@ -217,6 +217,14 @@
           "Gamay"
         ],
         "id": "00000000-0000-4000-8000-000000000011",
+        "labelFrame": {
+          "angle": -3.5,
+          "h": 0.625,
+          "photoID": "sha256-1aca80e8b55c802f7b43740da2990e1b5735bbb323d93eb5ebda8395b04025e2",
+          "w": 0.5,
+          "x": 0.25,
+          "y": 0.125
+        },
         "name": "Château Test",
         "notes": "1/2 bottle, \"quoted\"\nsecond line",
         "photoID": "sha256-1aca80e8b55c802f7b43740da2990e1b5735bbb323d93eb5ebda8395b04025e2",

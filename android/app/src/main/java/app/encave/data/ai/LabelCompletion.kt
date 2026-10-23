@@ -21,6 +21,8 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
         region = fill(wine.region, region),
         country = fill(wine.country, country),
         grapes = wine.grapes.ifEmpty { grapes.map { it.trim() }.filter { it.isNotEmpty() } },
+        // Where the label is, when the photo read is the wine's label photo.
+        labelFrame = labelFrame?.takeIf { it.photoId == wine.photoId } ?: wine.labelFrame,
     )
     val wasEstimate = wine.drinkFrom == null || wine.drinkUntil == null || wine.windowSource is WindowSource.Estimated
     if (wasEstimate) {
@@ -30,8 +32,8 @@ fun LabelAnalysis.completing(wine: Wine): Wine {
     return if (result.sameDetails(wine)) wine else result.copy(aiCompletedAt = ReferenceDates.now())
 }
 
-/** The same details as [other], whatever the AI's date: nothing was completed. */
-fun Wine.sameDetails(other: Wine): Boolean = copy(aiCompletedAt = other.aiCompletedAt) == other
+/** The same details as [other], whatever the AI's date and label frame: nothing was completed. */
+fun Wine.sameDetails(other: Wine): Boolean = copy(aiCompletedAt = other.aiCompletedAt, labelFrame = other.labelFrame) == other
 
 /**
  * This wine with the fields of [to] where it still holds the value of [from]: what was
@@ -49,4 +51,5 @@ fun Wine.completed(from: Wine, to: Wine): Wine = copy(
     drinkFrom = if (drinkFrom == from.drinkFrom) to.drinkFrom else drinkFrom,
     drinkUntil = if (drinkUntil == from.drinkUntil) to.drinkUntil else drinkUntil,
     aiCompletedAt = if (aiCompletedAt == from.aiCompletedAt) to.aiCompletedAt else aiCompletedAt,
+    labelFrame = if (labelFrame == from.labelFrame) to.labelFrame else labelFrame,
 )

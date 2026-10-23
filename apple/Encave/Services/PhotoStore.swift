@@ -55,6 +55,12 @@ enum PhotoStore {
         }
     }
 
+    /// The identifier `save` gives this photo, without saving it: the photo the AI read
+    /// is named before the wine is saved, so its label frame can go with it.
+    static func id(for data: Data) -> String? {
+        jpegData(from: data).map { PhotoID.make(for: $0) }
+    }
+
     /// False when a wine refers to a photo that is not on this device (after importing a backup).
     static func exists(_ id: String?) -> Bool {
         guard let id else { return false }

@@ -98,6 +98,9 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
     /** When the AI last completed the details: set by [apply], kept on save. */
     var aiCompletedAt by mutableStateOf(initial?.aiCompletedAt)
 
+    /** Where the label is in the label photo, from the AI: set by [apply], kept on save. */
+    var labelFrame by mutableStateOf(initial?.labelFrame)
+
     /** Values filled automatically from the label; those may be replaced again, typed ones never. */
     private val autoFilled = mutableMapOf<String, Any>()
 
@@ -129,6 +132,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
      * False when the AI had nothing to add.
      */
     fun apply(analysis: LabelAnalysis): Boolean {
+        analysis.labelFrame?.let { labelFrame = it }
         val before = snapshot()
         fun fill(key: String, current: String, value: String, set: (String) -> Unit) {
             val clean = value.trim()
@@ -208,6 +212,7 @@ class WineFormState(private val initial: Wine?, private val year: Int) {
             photoId = if (photoRemoved) null else storedPhotoId,
             tags = tags.toList().ifEmpty { null },
             aiCompletedAt = aiCompletedAt,
+            labelFrame = labelFrame,
         )
     }
 }

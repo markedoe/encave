@@ -401,6 +401,8 @@ struct AddBottleView: View {
             draft.barcodes.forEach { wine.addBarcode($0) }
             if wine.photoID == nil, let labelPhoto = scan.photo {
                 wine.photoID = PhotoStore.save(labelPhoto)
+                // The AI's label frame, for the photo just saved.
+                if let frame = draft.labelFrame, frame.photoID == wine.photoID { wine.labelFrame = frame }
             }
         } else {
             wine = draft.makeWine()
