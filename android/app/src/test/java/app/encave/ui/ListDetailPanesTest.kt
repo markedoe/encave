@@ -56,6 +56,11 @@ class ListDetailPanesTest {
         compose.onAllNodes(hasContentDescription("A1", substring = true) and inDetail).onFirst().assertExists()
         compose.onAllNodes(hasText("Main rack") and inList).onFirst().assertIsDisplayed()
         compose.onAllNodesWithText("Select a storage to see its bottles.").assertCountEquals(0)
+        // Back closes the rack and stays in Storage.
+        compose.activity.onBackPressedDispatcher.onBackPressed()
+        compose.waitForIdle()
+        compose.onNodeWithText("Select a storage to see its bottles.").assertIsDisplayed()
+        compose.onAllNodes(hasText("Main rack") and inList).onFirst().assertIsDisplayed()
     }
 
     @Test

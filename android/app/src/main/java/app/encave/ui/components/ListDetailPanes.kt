@@ -10,6 +10,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
@@ -60,7 +61,7 @@ fun ListDetailPanes(
     val selected = panes.currentDestination?.contentKey
     val twoPane = panes.scaffoldValue[ListDetailPaneScaffoldRole.List] == PaneAdaptedValue.Expanded &&
         panes.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Expanded
-    val paneNavigator = remember(navigator) { navigator.inPane { scope.launch { panes.navigateBack() } } }
+    val paneNavigator = remember(navigator) { navigator.inPane { scope.launch { panes.navigateBack(BackNavigationBehavior.PopUntilContentChange) } } }
     // The list shows the messages; the detail beside it has its own host, so none shows twice.
     val detailMessages = remember { SnackbarHostState() }
     // A detail closed (Back) is left for good, as a screen popped off the stack.
@@ -69,6 +70,9 @@ fun ListDetailPanes(
 
     NavigableListDetailPaneScaffold(
         navigator = panes,
+        // Back closes the detail shown, then leaves the section: both panes always show here,
+        // so popping until the layout changes would leave the section at once.
+        defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
         listPane = {
             AnimatedPane(Modifier.testTag("panes.list")) {
                 list({ key -> scope.launch { panes.navigateTo(ListDetailPaneScaffoldRole.Detail, key) } }, if (twoPane) selected else null)
