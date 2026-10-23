@@ -62,7 +62,7 @@ class EncaveApplication : Application() {
     val webSearch: WebSearchPreferences by lazy { WebSearchPreferences(this) }
 
     /** Pairing and sync with the user's other devices (off until a device is added). */
-    val sync: SyncManager by lazy { SyncManager(this, repository, SyncFiles(photos, documents), preferences, scope) }
+    val sync: SyncManager by lazy { SyncManager(this, repository, SyncFiles(photos, documents), preferences, scope, versions) }
 
     /** The home screen widgets' summary of the cellar (`files/widget-snapshot.json`). */
     val widgetSnapshots: WidgetSnapshotStore by lazy { WidgetSnapshotStore(File(filesDir, WidgetSnapshot.FILE_NAME)) }

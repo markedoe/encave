@@ -2,6 +2,7 @@ package app.encave.sync
 
 import android.content.Context
 import app.encave.core.Cellar
+import app.encave.core.CellarVersionFolder
 import app.encave.core.containsSample
 import app.encave.core.removingSample
 import app.encave.core.sync.CellarChangeSummary
@@ -78,6 +79,8 @@ class SyncManager(
     private val files: FileAccess,
     private val preferences: Preferences,
     private val scope: CoroutineScope,
+    /** Previous versions: the cellar is saved there before it is replaced by another device's. */
+    private val versions: CellarVersionFolder? = null,
 ) {
     /** What the Devices screens show. */
     data class Status(
@@ -515,6 +518,11 @@ class SyncManager(
                 )
             }
             runCatching { storage.peerUsesICloud = false }
+        }
+        // Replace: the cellar as it is now can be restored from Previous versions.
+        if (replace) {
+            val current = repository.read { it.copy() }
+            withContext(Dispatchers.IO) { versions?.keepBeforeReplacing(current) }
         }
         // Replace: this device's bottles stay until the other cellar has arrived (a first sync
         // that fails loses nothing); meanwhile only what changes here is sent.

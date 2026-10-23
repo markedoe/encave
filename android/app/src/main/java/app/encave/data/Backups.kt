@@ -19,6 +19,7 @@ import app.encave.core.Cellar
 import app.encave.core.CellarArchive
 import app.encave.core.CellarExport
 import app.encave.core.CellarVersion
+import app.encave.core.CellarVersionFolder
 import app.encave.core.CellarVersionSource
 import app.encave.core.FileKind
 import app.encave.core.FileRef
@@ -59,6 +60,9 @@ interface ArchiveDestination {
     /** Writes a new archive named [name]; returns an ID to find or delete it later, or null on failure. */
     fun write(name: String, content: (OutputStream) -> Unit): String?
     fun delete(id: String)
+
+    /** Erase all data with the backups: deletes every file Encave wrote here itself, and nothing else. */
+    fun deleteOwn() {}
 }
 
 /**
@@ -69,6 +73,7 @@ interface ArchiveDestination {
  */
 class DownloadsDestination(context: Context) : ArchiveDestination {
     private val resolver: ContentResolver = context.contentResolver
+    private val packageName: String = context.packageName
 
     override fun write(name: String, content: (OutputStream) -> Unit): String? {
         val values = ContentValues().apply {
@@ -90,6 +95,21 @@ class DownloadsDestination(context: Context) : ArchiveDestination {
 
     override fun delete(id: String) {
         runCatching { resolver.delete(Uri.parse(id), null, null) }
+    }
+
+    /**
+     * The entries of Download/Encave that this installation of Encave owns (the weekly archives
+     * it wrote, kept or not). Files of an earlier installation, and files the user saved there,
+     * are not its own and stay.
+     */
+    override fun deleteOwn() {
+        runCatching {
+            resolver.delete(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ? AND ${MediaStore.MediaColumns.OWNER_PACKAGE_NAME} = ?",
+                arrayOf("${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/%", packageName),
+            )
+        }
     }
 
     companion object {
@@ -239,6 +259,28 @@ class BackupManager(
                 busy.value = false
             }
         }
+    }
+
+    /**
+     * Erase all data with the backups: removes the previous versions, the weekly archives (and
+     * any other file Encave itself wrote in Download/Encave) and the archives being written. Files
+     * the user exported or saved elsewhere are never touched. The weekly backup stays on, and
+     * starts again once there is a cellar to keep.
+     */
+    suspend fun eraseBackups() = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            (versions as? CellarVersionFolder)?.removeAll()
+            automaticIds().forEach { destination.delete(it) }
+            destination.deleteOwn()
+            temporaryFolder.deleteRecursively()
+        }
+        prefs.edit {
+            remove(KEY_AUTOMATIC_FILES)
+            remove(KEY_LAST_AUTOMATIC)
+            remove(KEY_LAST)
+        }
+        last.value = null
+        lastAutomaticFailure = null
     }
 
     /** The weekly archives written (IDs of the destination), oldest first. */

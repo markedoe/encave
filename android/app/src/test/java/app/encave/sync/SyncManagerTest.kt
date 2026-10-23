@@ -3,6 +3,7 @@ package app.encave.sync
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import app.encave.core.Cellar
+import app.encave.core.CellarVersionFolder
 import app.encave.core.JsonFileCellarStore
 import app.encave.core.SampleData
 import app.encave.core.Wine
@@ -50,13 +51,15 @@ class SyncManagerTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var repository: CellarRepository
     private lateinit var sync: SyncManager
+    private lateinit var versions: CellarVersionFolder
 
     @Before
     fun setUp() = runBlocking {
         val file = File(context.filesDir, "cellar-test.json").apply { delete() }
         repository = CellarRepository(JsonFileCellarStore(file), scope)
         repository.loaded.first { it }
-        sync = SyncManager(context, repository, FileAccess.NONE, Preferences(context), scope)
+        versions = CellarVersionFolder(File(context.filesDir, "versions-test").apply { deleteRecursively() })
+        sync = SyncManager(context, repository, FileAccess.NONE, Preferences(context), scope, versions)
         sync.awaitStarted()
     }
 
@@ -222,6 +225,30 @@ class SyncManagerTest {
         assertFalse(sync.isReplacePending)
         assertEquals(setOf("Theirs"), repository.cellar.value.wines.values.map { it.name }.toSet())
         assertEquals(2, repository.cellar.value.bottles.size)
+    }
+
+    @Test
+    fun replaceAndJoinSavesAPreviousVersionFirst() = runBlocking {
+        repository.update { it.addBottles(Wine(name = "Mine"), 4) }.getOrThrow()
+        val before = repository.cellar.value.copy()
+        val (host, _) = DeviceIdentity.generate()
+        val (members, _) = Membership().adding(Member(host.id, "iPad", host.publicKey, "ipados"), 0, host.id)
+
+        sync.adoptCellar(members, replace = true)
+        // The cellar as it was, to restore from Settings › Your data › Previous versions.
+        val kept = versions.versions().single()
+        assertTrue(kept.isBeforeReplacing)
+        assertEquals(before, versions.cellar(kept))
+    }
+
+    @Test
+    fun combiningSavesNoVersion() = runBlocking {
+        repository.update { it.addBottles(Wine(name = "Mine"), 2) }.getOrThrow()
+        val (host, _) = DeviceIdentity.generate()
+        val (members, _) = Membership().adding(Member(host.id, "iPad", host.publicKey, "ipados"), 0, host.id)
+
+        sync.adoptCellar(members, replace = false)
+        assertTrue(versions.versions().isEmpty())
     }
 
     @Test

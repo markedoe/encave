@@ -983,12 +983,18 @@ class AppViewModel(
 
     fun setStudioLook(enabled: Boolean) = preferences.setStudioLook(enabled)
 
-    /** The sample is offered only on an empty cellar that no other device shares, in beta builds. */
-    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = BuildConfig.BETA && cellar.isEmpty && !shared
+    /** The sample can be loaded only into an empty cellar that no other device shares. */
+    fun sampleAllowed(cellar: Cellar, shared: Boolean): Boolean = cellar.isEmpty && !shared
+
+    /**
+     * Offered on the empty screens and in Settings in beta builds only; store builds offer it in
+     * Help only (Getting started › Try with a sample cellar).
+     */
+    fun canLoadSample(cellar: Cellar, shared: Boolean): Boolean = BuildConfig.BETA && sampleAllowed(cellar, shared)
 
     /** Fills an empty cellar with the sample (never replaces bottles, nor reaches other devices); Undo removes it. */
     fun loadSample(labels: SampleData.Labels) {
-        if (!canLoadSample(cellar.value, sharedWithDevices.value)) return
+        if (!sampleAllowed(cellar.value, sharedWithDevices.value)) return
         change<Boolean>({ loaded -> if (loaded) post(UiText.Res(R.string.msg_sample_loaded)) { removeSample(announce = false) } }) { c ->
             val empty = c.isEmpty
             if (empty) c.merge(SampleData.cellar(year, labels))
@@ -1012,13 +1018,21 @@ class AppViewModel(
 
     /**
      * Erases the bottles, wines, racks, tastings and discoveries (on the other devices too,
-     * when they sync with this one); the settings are kept. Undo puts them back.
+     * when they sync with this one); the settings are kept. Undo puts them back. [alsoBackups]:
+     * once the empty cellar is saved, the previous versions, the weekly archives and the cellar
+     * files kept aside go too ([BackupManager.eraseBackups]).
      */
-    fun eraseAll() {
+    fun eraseAll(alsoBackups: Boolean = false) {
         viewModelScope.launch {
             val before = cellar.value.copy()
             repository.replace(Cellar(settings = before.settings))
-                .onSuccess { post(UiText.Res(R.string.msg_erased)) { change<Unit> { c -> c.merge(before) } } }
+                .onSuccess {
+                    if (alsoBackups) {
+                        backups.eraseBackups()
+                        withContext(Dispatchers.IO) { repository.keptAside().forEach { it.delete() } }
+                    }
+                    post(UiText.Res(R.string.msg_erased)) { change<Unit> { c -> c.merge(before) } }
+                }
                 .onFailure { fail(it) }
         }
     }

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import app.encave.core.CellarArchive
 import app.encave.core.CellarExport
+import app.encave.core.CellarVersionFolder
 import app.encave.core.FileKind
 import app.encave.core.FileRef
 import app.encave.core.ImportError
@@ -67,6 +68,34 @@ class BackupManagerTest {
         assertEquals(2, manager.automaticIds().size)
         // A real archive, with the cellar in it.
         ZipFile(File(folder, names.last())).use { assertNotNull(it.getEntry("cellar.json")) }
+    }
+
+    @Test
+    fun erasingTheBackupsRemovesTheVersionsAndTheWeeklyArchivesOnly() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = CellarRepository(InMemoryCellarStore(SampleData.cellar(year = 2026)), TestScope(dispatcher), dispatcher)
+        advanceUntilIdle()
+        val folder = File(context.cacheDir, "weekly-${System.nanoTime()}")
+        val versions = CellarVersionFolder(File(context.cacheDir, "versions-${System.nanoTime()}"))
+        val manager = BackupManager(
+            repository, PhotoStore(context), DocumentStore(context), versions,
+            context.getSharedPreferences("backups-${System.nanoTime()}", Context.MODE_PRIVATE),
+            FolderDestination(folder), File(context.cacheDir, "backup-work"), clock = { now },
+        )
+        val mine = app.encave.core.Cellar().apply { addBottles(app.encave.core.Wine(name = "Mine"), 2) }
+        assertNotNull(versions.keepBeforeReplacing(mine, now))
+        assertTrue(manager.runAutomaticIfDue())
+        // A file the user saved in the same folder.
+        val theirs = File(folder, "Saved by me.zip").apply { writeText("mine") }
+
+        manager.eraseBackups()
+        assertTrue(versions.versions().isEmpty())
+        assertTrue(manager.automaticIds().isEmpty())
+        assertEquals(listOf(theirs.name), folder.list().orEmpty().toList())
+        assertEquals(null, manager.lastBackup.value)
+        // The weekly backup stays on and starts again.
+        assertTrue(manager.weeklyEnabled.value)
+        assertTrue(manager.runAutomaticIfDue())
     }
 
     @Test

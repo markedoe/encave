@@ -177,7 +177,10 @@ fun PreviousVersionsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                         leadingContent = { Icon(Icons.Outlined.History, contentDescription = null) },
                         headlineContent = { Text(formatDate(version.date)) },
                         supportingContent = {
-                            Text(pluralStringResource(R.plurals.bottle_count, bottles, bottles))
+                            Column {
+                                Text(pluralStringResource(R.plurals.bottle_count, bottles, bottles))
+                                if (version.isBeforeReplacing) Text(stringResource(R.string.versions_before_replacing))
+                            }
                         },
                     )
                 }
@@ -281,7 +284,7 @@ fun RestorePreviewScreen(viewModel: AppViewModel, navigator: AppNavigator) {
                     Text(stringResource(R.string.restore_replace), Modifier.padding(start = Dimens.s))
                 }
             }
-            Note(stringResource(R.string.restore_footer))
+            Note(stringResource(R.string.restore_footer_settings))
         }
     }
     if (confirmReplace) {

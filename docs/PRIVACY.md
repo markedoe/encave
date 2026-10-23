@@ -104,8 +104,10 @@ Encave is about wine and is not meant for children.
 The developer holds no data about you: there is nothing to access, correct or
 delete on the developer's side. You can export, delete and restore your data at
 any time in the app. **Erase all data** empties the cellar (on your other
-devices too, if they sync with this one) but keeps the earlier versions and the
-weekly backups on the device, so it can still be restored. On iPhone, iPad and
+devices too, if they sync with this one) and, unless you turn off **Also erase
+previous versions and backups**, the earlier versions and the weekly backups
+Encave made on the device (on Android, the files it wrote itself in
+Download/Encave); files you exported or saved elsewhere are never touched. On iPhone, iPad and
 Android, removing the app deletes what Encave keeps in its own storage, but not
 the weekly backups in Android's Download/Encave folder: delete them in the
 Files app. On a Mac, the app's container stays until you delete it. Backups you

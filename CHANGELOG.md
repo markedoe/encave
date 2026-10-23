@@ -52,6 +52,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Deleting a rack asks first, naming it and how many bottles it holds; they
   stay in the cellar without a place, and Undo brings the rack back
 - Combining with another device's cellar removes the sample cellar first
+- Erase All Data also erases the previous versions and the weekly backups
+  Encave made (a choice, on by default); exported files are never touched
+- Replace and Join saves the cellar as a previous version first; Restore with
+  Replace brings back the backup's currency and saved searches too
+- Store builds offer the sample cellar in Help (Try with a sample cellar)
 - Studio look framed on the label: Apple turns a leaning bottle upright,
   cuts it out and frames it on its label (about 80% of the picture,
   the glass running off its edges), straightens a close-up of a label, and

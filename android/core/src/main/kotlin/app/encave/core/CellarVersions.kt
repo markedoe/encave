@@ -12,7 +12,10 @@ import java.util.Locale
 import java.util.UUID
 
 /** An earlier state of the cellar kept on the device: [id] is its file name, [date] when it was saved. */
-data class CellarVersion(val id: String, val date: Instant)
+data class CellarVersion(val id: String, val date: Instant) {
+    /** Saved on purpose before the cellar was replaced by another device's (Replace and join). */
+    val isBeforeReplacing: Boolean get() = CellarVersionFolder.isBeforeReplacing(id)
+}
 
 /** Where earlier versions of the cellar are read from: the folder next to the cellar, or sample ones. */
 interface CellarVersionSource {
@@ -30,6 +33,10 @@ interface CellarVersionSource {
  *
  * Only the cellar file is copied: photos and documents are named after their content and
  * kept while a version refers to them ([fileRefs]).
+ *
+ * A version is also saved before the cellar is replaced by another device's
+ * ([keepBeforeReplacing]): those are kept apart from the daily and weekly ones, the last 3 of
+ * them, so the next day's copy never takes their place.
  */
 class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.systemDefault()) : CellarVersionSource {
     /**
@@ -57,6 +64,31 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
         }
     }
 
+    /**
+     * Saves [cellar] as a version now, before it is replaced by another device's cellar
+     * (Replace and join), so it can be restored from Previous versions. Nothing is saved for an
+     * empty cellar or one that holds only the sample. Returns the version saved.
+     */
+    fun keepBeforeReplacing(cellar: Cellar, now: Instant = Instant.now()): CellarVersion? = runCatching<CellarVersion?> {
+        if (cellar.isEmpty || cellar.isOnlySample) return null
+        val target = File(folder, beforeReplacingName(now))
+        folder.mkdirs()
+        val temp = File(folder, "${target.name}.${UUID.randomUUID()}.tmp")
+        temp.writeText(CellarJson.encode(cellar), Charsets.UTF_8)
+        target.delete()
+        if (!temp.renameTo(target)) {
+            temp.delete()
+            return null
+        }
+        prune()
+        date(target.name)?.let { CellarVersion(target.name, it) }
+    }.getOrNull()
+
+    /** Erase all data: removes every version. */
+    fun removeAll() {
+        folder.deleteRecursively()
+    }
+
     override fun versions(): List<CellarVersion> =
         folder.listFiles().orEmpty().mapNotNull { file -> date(file.name)?.let { CellarVersion(file.name, it) } }
             .sortedByDescending { it.date }
@@ -72,8 +104,11 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
     /** Removes the versions no longer kept. */
     fun prune() {
         val all = versions()
-        val kept = kept(all.map { it.date }, zone)
-        all.filter { it.date !in kept }.forEach { File(folder, it.id).delete() }
+        val automatic = all.filter { !it.isBeforeReplacing }
+        val keptDates = kept(automatic.map { it.date }, zone)
+        val kept = automatic.filter { it.date in keptDates }.map { it.id }.toSet() +
+            all.filter { it.isBeforeReplacing }.take(BEFORE_REPLACING_COUNT).map { it.id }
+        all.filter { it.id !in kept }.forEach { File(folder, it.id).delete() }
     }
 
     private fun day(instant: Instant): LocalDate = instant.atZone(zone).toLocalDate()
@@ -81,8 +116,14 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
     companion object {
         const val DAILY_COUNT = 7
         const val WEEKLY_COUNT = 4
+
+        /** Versions saved before replacing the cellar that are kept. */
+        const val BEFORE_REPLACING_COUNT = 3
         private const val PREFIX = "cellar-"
         private const val SUFFIX = ".json"
+
+        /** "cellar-20261020-221430-before-replace.json" */
+        private const val BEFORE_REPLACING_MARK = "-before-replace"
         private val formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss", Locale.ROOT)
 
         /**
@@ -112,10 +153,15 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
         /** "cellar-20261020-221430.json": the date in UTC, to the second. */
         internal fun name(date: Instant): String = PREFIX + formatter.format(LocalDateTime.ofInstant(date, ZoneOffset.UTC)) + SUFFIX
 
+        internal fun beforeReplacingName(date: Instant): String = name(date).removeSuffix(SUFFIX) + BEFORE_REPLACING_MARK + SUFFIX
+
+        internal fun isBeforeReplacing(name: String): Boolean = name.endsWith(BEFORE_REPLACING_MARK + SUFFIX) && date(name) != null
+
         internal fun date(name: String): Instant? {
             if (!name.startsWith(PREFIX) || !name.endsWith(SUFFIX)) return null
             return runCatching {
-                LocalDateTime.parse(name.removePrefix(PREFIX).removeSuffix(SUFFIX), formatter).toInstant(ZoneOffset.UTC)
+                LocalDateTime.parse(name.removePrefix(PREFIX).removeSuffix(SUFFIX).removeSuffix(BEFORE_REPLACING_MARK), formatter)
+                    .toInstant(ZoneOffset.UTC)
             }.getOrNull()
         }
     }
@@ -134,13 +180,16 @@ class InMemoryCellarVersions(items: List<Pair<Instant, Cellar>>) : CellarVersion
 
 /** How a backup or an earlier version is put back. */
 enum class RestoreMode {
-    /** Adds the wines, bottles, racks, Journal entries and saved searches that are not in the cellar (by ID); nothing already there changes. */
+    /**
+     * Adds the wines, bottles, racks and Journal entries that are not in the cellar (by ID), and
+     * the saved searches whose name is not there (ignoring case); nothing already there changes,
+     * the currency included.
+     */
     AddMissing,
 
     /**
-     * The cellar becomes the backup: what is not in it is deleted, what differs is put back as
-     * it was. The settings (currency, saved searches) stay as they are: they are preferences,
-     * not the cellar, and an older JSON backup may hold none. Applied as a change made on this
+     * The cellar becomes the backup, its settings (currency, saved searches) included: what is
+     * not in it is deleted, what differs is put back as it was. Applied as a change made on this
      * device, so sync takes it to the other devices (docs/SYNC.md).
      */
     Replace,
@@ -207,5 +256,5 @@ data class RestorePreview(
 /** The cellar after restoring [backup] (a new instance; this one is not changed). */
 fun Cellar.restoring(backup: Cellar, mode: RestoreMode): Cellar = when (mode) {
     RestoreMode.AddMissing -> copy().also { it.merge(backup) }
-    RestoreMode.Replace -> backup.copy().also { it.settings = settings }
+    RestoreMode.Replace -> backup.copy()
 }

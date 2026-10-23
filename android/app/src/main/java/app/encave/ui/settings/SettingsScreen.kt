@@ -10,6 +10,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
@@ -358,14 +365,50 @@ fun SettingsScreen(viewModel: AppViewModel, navigator: AppNavigator) {
         )
     }
     if (confirmErase) {
-        ConfirmDialog(
-            title = stringResource(R.string.settings_erase_title),
-            body = stringResource(if (shared) R.string.settings_erase_body_devices else R.string.settings_erase_body),
-            confirm = stringResource(R.string.settings_erase),
-            onConfirm = { viewModel.eraseAll() },
+        EraseAllDialog(
+            shared = shared,
+            onConfirm = { alsoBackups -> viewModel.eraseAll(alsoBackups) },
             onDismiss = { confirmErase = false },
         )
     }
+}
+
+/**
+ * Erase all data, confirmed with the choice to erase the previous versions and backups too
+ * (on by default). Files the user exported elsewhere are never touched.
+ */
+@Composable
+private fun EraseAllDialog(shared: Boolean, onConfirm: (alsoBackups: Boolean) -> Unit, onDismiss: () -> Unit) {
+    var alsoBackups by rememberSaveable { mutableStateOf(true) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_erase_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                Text(stringResource(if (shared) R.string.settings_erase_body_devices else R.string.settings_erase_body))
+                Row(
+                    Modifier.fillMaxWidth()
+                        .toggleable(alsoBackups, role = Role.Checkbox) { alsoBackups = it }
+                        .testTag("settings.erase_backups"),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(checked = alsoBackups, onCheckedChange = null)
+                    Text(stringResource(R.string.settings_erase_backups), Modifier.padding(start = Dimens.s))
+                }
+                Text(
+                    stringResource(if (alsoBackups) R.string.settings_erase_backups_on else R.string.settings_erase_backups_off),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onDismiss(); onConfirm(alsoBackups) }, modifier = Modifier.testTag("settings.erase_confirm")) {
+                Text(stringResource(R.string.settings_erase), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
 
 /** Monthly and delivery reminders, worked out on the device. Asks for the notification permission when turned on. */
