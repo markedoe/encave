@@ -27,7 +27,7 @@ yet (see "Work in progress").
 | Stage | Apple | Google | When |
 |---|---|---|---|
 | Internal testers | TestFlight group "Internal", gets every build (**done**) | Play internal testing (*planned*) | Every push to `main`, about 20 to 30 minutes after it (upload and processing) |
-| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing "Friends" (*planned*) | Every push to `main` whose tour passed |
+| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing "Friends" (*planned*, off: the owner keeps Android in internal testing for now) | Every push to `main` whose tour passed |
 | Everyone | App Store, phased release over 7 days (*planned*) | Play production, staged rollout 10%, 50%, 100% (*planned*) | Release train, or the urgent lane |
 
 ## Release train *(planned)*
