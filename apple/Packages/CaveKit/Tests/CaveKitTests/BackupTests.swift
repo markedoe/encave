@@ -16,10 +16,18 @@ final class TemporaryFolder {
     func file(_ name: String) -> URL { url.appendingPathComponent(name) }
 }
 
-/// Runs `unzip -t` on an archive, when the tool is there (Linux CI, macOS): nil otherwise.
-func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
-    let tool = ["/usr/bin/unzip", "/bin/unzip"].first { FileManager.default.isExecutableFile(atPath: $0) }
-    guard let tool else { return nil }
+/// The `unzip` tool, when it is installed (macOS has it; a Linux container may not).
+let unzipTool: String? = ["/usr/bin/unzip", "/bin/unzip"].first { FileManager.default.isExecutableFile(atPath: $0) }
+
+extension Trait where Self == ConditionTrait {
+    /// Runs the test only where `unzip` is installed: elsewhere it is reported as skipped,
+    /// rather than passing without the check.
+    static var requiresUnzip: Self { .enabled(if: unzipTool != nil, "unzip is not installed") }
+}
+
+/// Runs `unzip -t` on an archive, in a test marked `.requiresUnzip`.
+func unzipTest(_ url: URL) throws -> (status: Int32, output: String) {
+    let tool = try #require(unzipTool, "unzip is not installed")
     let process = Process()
     process.executableURL = URL(fileURLWithPath: tool)
     process.arguments = ["-t", url.path]
@@ -46,8 +54,8 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(crc.value == 0xCBF4_3926)
     }
 
-    @Test func writesAndReadsEntriesFromDataAndFiles() throws {
-        let folder = try TemporaryFolder()
+    /// A ZIP file of three entries, written from data and from a file: the URL and the large entry.
+    static func writeThreeEntries(in folder: TemporaryFolder) throws -> (url: URL, big: Data) {
         let big = Data((0..<700_000).map { UInt8(truncatingIfNeeded: $0 &* 31) })
         try big.write(to: folder.file("big.bin"))
         let zipURL = folder.file("test.zip")
@@ -56,6 +64,12 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         try writer.add(name: "photos/Château été 2015.jpg", contentsOf: folder.file("big.bin"))
         try writer.add(name: "empty", data: Data())
         try writer.finish()
+        return (zipURL, big)
+    }
+
+    @Test func writesAndReadsEntriesFromDataAndFiles() throws {
+        let folder = try TemporaryFolder()
+        let (zipURL, big) = try Self.writeThreeEntries(in: folder)
 
         let reader = try ZipReader(url: zipURL)
         #expect(reader.entries.map(\.name) == ["README.txt", "photos/Château été 2015.jpg", "empty"])
@@ -64,11 +78,13 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(try Data(contentsOf: folder.file("out.bin")) == big)
         #expect(try reader.data(of: reader.entries[2], maxSize: 0).isEmpty)
         #expect(throws: ZipError.tooLarge) { try reader.data(of: reader.entries[1], maxSize: 1000) }
+    }
 
-        if let result = try unzipTest(zipURL) {
-            #expect(result.status == 0, "unzip -t: \(result.output)")
-            #expect(result.output.contains("No errors detected"))
-        }
+    @Test(.requiresUnzip) func unzipAcceptsTheEntries() throws {
+        let folder = try TemporaryFolder()
+        let result = try unzipTest(Self.writeThreeEntries(in: folder).url)
+        #expect(result.status == 0, "unzip -t: \(result.output)")
+        #expect(result.output.contains("No errors detected"))
     }
 
     @Test func aDamagedEntryFailsItsCheck() throws {
@@ -239,7 +255,6 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         // cellar.json is the JSON backup itself.
         #expect(try reader.data(of: reader.entry(named: "cellar.json")!, maxSize: 10_000_000)
                 == CellarExport.json(cellar, exportedAt: exportedAt))
-        if let result = try unzipTest(zipURL) { #expect(result.status == 0, "unzip -t: \(result.output)") }
 
         let work = folder.file("work")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
@@ -250,6 +265,15 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(Set(contents.files.keys) == Set(urls.keys))
         for (ref, url) in contents.files { #expect(try Data(contentsOf: url) == Data(contentsOf: urls[ref]!)) }
         #expect(contents.skipped == 0)
+    }
+
+    @Test(.requiresUnzip) func unzipAcceptsTheArchive() throws {
+        let folder = try TemporaryFolder()
+        let (cellar, urls) = try sample(in: folder)
+        let zipURL = folder.file("backup.zip")
+        try CellarArchive.write(cellar, exportedAt: Date(timeIntervalSince1970: 1_790_000_000), to: zipURL, fileURL: { urls[$0] })
+        let result = try unzipTest(zipURL)
+        #expect(result.status == 0, "unzip -t: \(result.output)")
     }
 
     @Test func missingFilesAreLeftOut() throws {

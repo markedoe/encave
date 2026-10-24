@@ -1,49 +1,48 @@
 package app.encave.core
 
+import java.io.File
 import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Fixtures written by the Swift CaveKit (`CellarExport.json` and `CellarExport.csv`
- * of `SampleData.cellar(year: 2026)`), so both apps read each other's files.
- *
- * They predate the sample's bottles on order, tags, reservations and the newer fields
- * (`reservedFor`, `savedSearches`, `extraPhotoIDs`); only the `reserved_for` CSV column
- * was added by hand (empty, as Swift writes it), and so was the empty "Large wine fridge"
- * rack (a honeycomb with `shelfLayers`). Regenerate both from Swift on a Mac to cover the
- * new fields, then drop the on-order and head-to-tail fridge exclusions in [decodesTheAppleBackup].
- * The CSV's readable `location` column was written by CaveKit from this backup.
+ * The sample cellar as CaveKit exports it (`fixtures/interop/swift-sample-backup.json` and
+ * `swift-sample-export.csv`, written by CaveKit's SampleInteropTests from
+ * `SampleData.cellar(year: 2026, now:)` with fixed dates), so both apps read each other's
+ * backups and spreadsheets: every kind of storage, a head-to-tail fridge, bottles on order,
+ * tags, reservations and tastings. CaveKit checks that the files are up to date.
  */
 class InteropTest {
-    private fun resource(name: String): String =
-        requireNotNull(javaClass.classLoader.getResource(name)) { "missing $name" }.readText(Charsets.UTF_8)
+    /** Tests run in android/core. */
+    private fun swift(name: String): String = File("../../fixtures/interop/swift-$name").readText()
 
-    private val appleBackup = resource("apple-backup.json")
+    private val now = Instant.ofEpochSecond(1_790_000_000)
+    private val sample = SampleData.cellar(year = 2026, now = now)
+    private val appleBackup = swift("sample-backup.json")
+    private val appleCsv = swift("sample-export.csv")
+
+    /** The header, then the rows in a fixed order: bottles of a wine added at the same instant have no defined order. */
+    private fun rows(text: String) = text.lines().take(1) + text.lines().drop(1).sorted()
 
     @Test
     fun decodesTheAppleBackup() {
         val backup = CellarExport.backupFromJson(appleBackup)
         assertEquals("encave", backup.format)
         assertEquals(2, backup.version)
-        assertEquals(Instant.ofEpochSecond(1_790_000_000), backup.exportedAt)
+        assertEquals(now, backup.exportedAt)
         val cellar = backup.cellar
-        val sample = SampleData.cellar(year = 2026)
-        // The backup was made before the sample had its head-to-tail fridge.
-        val newer = sample.racks.filter { it.isBackReversed }.map { it.id }.toSet()
-        // By kind: the sample's fridges were renamed (Cabinet) after the backup was made.
-        assertEquals(sample.racks.filter { it.id !in newer }.map { it.kind }, cellar.racks.map { it.kind })
-        // Nor bottles on order.
-        val received = sample.bottles.values.filter { it.status != Bottle.Status.Ordered && it.slot?.rackId !in newer }
-        assertEquals(received.size, cellar.bottles.size)
-        val onOrderOnly = sample.bottlesOnOrder.map { it.wineId }.toSet() - received.map { it.wineId }.toSet()
-        assertEquals(
-            sample.wines.values.filter { it.id !in onOrderOnly }.map { it.displayName }.toSet(),
-            cellar.wines.values.map { it.displayName }.toSet(),
-        )
+        // The same sample on both platforms, to the last field.
+        assertEquals(sample, cellar)
+        val fridge = cellar.racks.single { it.isBackReversed }
+        assertNotNull(cellar.bottleAt(Slot(fridge.id, 1, 3, 1)))
+        assertEquals(6, cellar.bottlesOnOrder.size)
+        assertEquals(listOf("Christmas dinner"), cellar.reservations)
+        assertTrue(cellar.wines.values.any { !it.tags.isNullOrEmpty() })
         assertEquals(2, cellar.consumedBottles.size)
         assertEquals(2, cellar.discoveries.size)
         assertEquals(2, cellar.shoppingListCount)
@@ -72,20 +71,19 @@ class InteropTest {
     @Test
     fun exportsTheSameCsvAsSwift() {
         val cellar = CellarExport.backupFromJson(appleBackup).cellar
-        val ours = CellarExport.csv(cellar)
-        val theirs = resource("apple-export.csv")
-        // Bottles of one wine added at the same instant have no defined order.
-        assertEquals(theirs.lines().first(), ours.lines().first())
-        assertEquals(theirs.lines().sorted(), ours.lines().sorted())
+        assertEquals(rows(appleCsv), rows(CellarExport.csv(cellar, zone = ZoneOffset.UTC)))
+        assertEquals(rows(appleCsv), rows(CellarExport.csv(sample, zone = ZoneOffset.UTC)))
     }
 
     @Test
     fun importsTheAppleCsv() {
         val apple = CellarExport.backupFromJson(appleBackup).cellar
         val target = Cellar(racks = apple.racks)
-        val summary = target.importCsv(resource("apple-export.csv"))
+        val summary = target.importCsv(appleCsv, now = now, zone = ZoneOffset.UTC)
         assertEquals(apple.bottles.size, summary.bottlesAdded)
         assertEquals(apple.bottles.values.map { it.wineId }.toSet().size, summary.winesAdded)
         assertEquals(apple.bottlesInCellar.mapNotNull { it.slot }.toSet(), target.bottlesInCellar.mapNotNull { it.slot }.toSet())
+        assertEquals(apple.bottlesOnOrder.size, target.bottlesOnOrder.size)
+        assertEquals(apple.bottlesInCellar.count { it.reservedFor != null }, target.bottlesInCellar.count { it.reservedFor != null })
     }
 }

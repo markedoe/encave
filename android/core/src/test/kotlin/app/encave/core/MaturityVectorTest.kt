@@ -25,7 +25,8 @@ class MaturityVectorTest {
     /** Tests run in android/core. */
     private val root: JsonObject = Json.parseToJsonElement(File("../../fixtures/maturity-vectors.json").readText()).jsonObject
 
-    private fun list(key: String) = root.getValue(key).jsonArray.map { it.jsonObject }
+    /** The vectors of one table; an empty one would let its test pass without checking anything. */
+    private fun list(key: String) = root.getValue(key).jsonArray.map { it.jsonObject }.also { assertTrue(it.isNotEmpty(), "no $key") }
     private fun JsonObject.int(key: String): Int? = this[key]?.jsonPrimitive?.intOrNull
     private fun JsonObject.text(key: String): String? = (this[key] as? kotlinx.serialization.json.JsonPrimitive)
         ?.takeIf { it.isString }?.content

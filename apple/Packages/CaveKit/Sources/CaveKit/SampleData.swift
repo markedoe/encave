@@ -40,9 +40,11 @@ public enum SampleData {
     public static let twoZoneFridgeLayers = [1, 2, 1, 1, 1, 2, 2, 2, 1, 1]
     public static let twoZoneFridgeRows = [6, 5, 6, 6, 6, 6, 4, 5, 4, 5, 4, 5, 6, 6]
 
+    /// Dates are counted back (and on, for bottles on order) from `now`, as on Android.
     public static func cellar(
         year: Int = CellarYear.current,
-        labels: Labels = Labels()
+        labels: Labels = Labels(),
+        now: Date = .now
     ) -> Cellar {
         var cellar = Cellar()
         var ids = IDs()
@@ -97,30 +99,31 @@ public enum SampleData {
 
         let day: TimeInterval = 86_400
         let prices: [Decimal] = [38, 54, 16, 24, 14, 36, 29, 62, 27, 22, 48]
+        var barolo: [Bottle] = []
         for (index, (wine, quantity, rack)) in entries.enumerated() {
             let slots = rack.map { Array(cellar.freeSlots(in: $0).prefix(quantity)) } ?? []
+            let date = now - Double(30 * (index + 1)) * day
             let purchase = PurchaseInfo(
-                date: .now - Double(30 * (index + 1)) * day, price: prices[index % prices.count],
+                date: date, price: prices[index % prices.count],
                 currency: cellar.settings.currency, storageNote: rack == nil ? labels.kitchen : nil
             )
             if let added = try? cellar.addBottles(of: wine, quantity: quantity, slots: slots, purchase: purchase,
-                                                  addedAt: .now - Double(30 * (index + 1)) * day) {
-                ids.rekey(added, in: &cellar)
+                                                  addedAt: date) {
+                let stored = ids.rekey(added, in: &cellar)
+                if wine.name == "Riserva Vigna Alta" { barolo = stored }
             }
         }
 
-        // Two bottles kept for an occasion.
-        if let barolo = cellar.wines.values.first(where: { $0.name == "Riserva Vigna Alta" }) {
-            try? cellar.reserve(Array(cellar.bottles(of: barolo.id).prefix(2).map(\.id)), for: labels.occasion2)
-        }
+        // Two bottles kept for an occasion: the first two placed (they were all added at once), as on Android.
+        try? cellar.reserve(Array(barolo.prefix(2).map(\.id)), for: labels.occasion2)
 
         // Last year's vintage bought en primeur, not delivered yet.
         let primeur = Wine(id: ids.next(.wine), name: "Clos des Tilleuls", producer: "Domaine Arnaud", vintage: year - 1, color: .red,
                            region: "Bordeaux", country: "France", appellation: "Pauillac",
                            grapes: ["Cabernet Sauvignon", "Merlot"], drinkFrom: year + 6, drinkUntil: year + 20)
         if let added = try? cellar.addBottles(of: primeur, quantity: 6, purchase: PurchaseInfo(
-            date: .now - 60 * day, price: 41, currency: cellar.settings.currency, place: labels.merchant,
-            isOrdered: true, expectedAt: .now + 75 * day)) {
+            date: now - 60 * day, price: 41, currency: cellar.settings.currency, place: labels.merchant,
+            isOrdered: true, expectedAt: now + 75 * day), addedAt: now) {
             ids.rekey(added, in: &cellar)
         }
 
@@ -128,23 +131,23 @@ public enum SampleData {
         let tasted = Wine(id: ids.next(.wine), name: "Vieilles Vignes", producer: "Domaine Arnaud", vintage: year - 7, color: .red,
                           region: "Bourgogne", country: "France", appellation: "Gevrey-Chambertin", grapes: ["Pinot Noir"],
                           drinkFrom: year - 3, drinkUntil: year + 4)
-        if let added = try? cellar.addBottles(of: tasted, quantity: 2) {
+        if let added = try? cellar.addBottles(of: tasted, quantity: 2, addedAt: now) {
             let bottles = ids.rekey(added, in: &cellar)
-            try? cellar.drink(bottles[0].id, tasting: Tasting(date: .now - 12 * day, rating: 5,
+            try? cellar.drink(bottles[0].id, tasting: Tasting(date: now - 12 * day, rating: 5,
                 note: labels.tastingNote, occasion: labels.occasion, nose: labels.nose,
                 palate: labels.palate, foodPairing: labels.pairing))
-            try? cellar.drink(bottles[1].id, tasting: Tasting(date: .now - 40 * day, rating: 4))
+            try? cellar.drink(bottles[1].id, tasting: Tasting(date: now - 40 * day, rating: 4))
         }
 
         // Wines found elsewhere, one of them on the shopping list.
         let atFriends = Wine(id: ids.next(.wine), name: "Coteaux du Layon", producer: "Domaine des Sablons", vintage: year - 6,
                              color: .dessert, region: "Loire", country: "France", grapes: ["Chenin Blanc"])
-        cellar.addDiscovery(Discovery(id: ids.next(.discovery), wineID: atFriends.id, date: .now - 9 * day, setting: .friends,
+        cellar.addDiscovery(Discovery(id: ids.next(.discovery), wineID: atFriends.id, date: now - 9 * day, setting: .friends,
                                       place: labels.friendsPlace, rating: 4, note: labels.friendsNote,
                                       tags: [labels.tagGift], wantsToBuy: true), wine: atFriends)
         let onTrip = Wine(id: ids.next(.wine), name: "Alvarinho Reserva", producer: "Quinta do Mar", vintage: year - 2, color: .white,
                           region: "Vinho Verde", country: "Portugal", grapes: ["Alvarinho"])
-        cellar.addDiscovery(Discovery(id: ids.next(.discovery), wineID: onTrip.id, date: .now - 25 * day, setting: .restaurant,
+        cellar.addDiscovery(Discovery(id: ids.next(.discovery), wineID: onTrip.id, date: now - 25 * day, setting: .restaurant,
                                       place: labels.restaurantPlace, rating: 5, note: labels.restaurantNote,
                                       tags: [labels.tagToBuy], price: 32, currency: cellar.settings.currency,
                                       wantsToBuy: true), wine: onTrip)
@@ -170,7 +173,7 @@ public enum SampleData {
             (5, places(2, 1..<3, depth: 1)),
         ]
         for (index, (entry, slots)) in fridgeBottles.enumerated() {
-            let date = Date.now - Double(20 * (index + 1)) * day
+            let date = now - Double(20 * (index + 1)) * day
             let purchase = PurchaseInfo(date: date, price: prices[entry % prices.count], currency: cellar.settings.currency)
             if let added = try? cellar.addBottles(of: entries[entry].0, quantity: slots.count, slots: slots,
                                                   purchase: purchase, addedAt: date) {
