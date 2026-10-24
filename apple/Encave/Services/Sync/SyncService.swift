@@ -288,6 +288,9 @@ final class SyncService {
     /// Removes another device: it can no longer sync with any device of the cellar.
     func remove(_ device: UUID) {
         guard var members = membership, var state else { return }
+        // A key from a build before keys listed removals: noted before this removal, so
+        // the next round rotates for it.
+        if let key = remoteKey, key.removed == nil { storeRemoteKey(key) }
         members.remove(device, clock: &state.clock, by: identity.id)
         membership = members
         self.state = state
@@ -330,34 +333,57 @@ final class SyncService {
                 pendingRotation = PendingRotation(key: CellarKey.random(cellarID: key.cellarID, epoch: key.epoch + 1))
             }
         }
+        // A key from a build before keys listed removals: it leaves out the removals known now.
+        if key.removed == nil {
+            storeRemoteKey(key)
+            key = remoteKey ?? key
+        }
+        // A finished rotation whose grant failed for some devices: try them again.
+        if var owed = pendingRotation, owed.key.key == key.key {
+            await RemoteSync.grantMissing(&owed, store: store, identity: identity, local: local,
+                                          storage: remoteStorage?.string)
+            guard round == generation else { return key }
+            pendingRotation = owed.failed.isEmpty ? nil : owed
+        }
         guard var next = try RemoteSync.nextRotation(key: key, pending: pendingRotation, membership: local.membership,
                                                      device: identity.id)
-        else { return key }
+        else { return doneWithRotation(key) }
         // A key granted meanwhile (another device rotated too): rotate from it, so the new key
         // is above it. Unless it moves the files elsewhere: the round follows it first.
         if let grant = try await RemoteSync.receiveGrant(store: store, identity: identity,
                                                          membership: local.membership, current: key) {
             guard round == generation else { return key }
             if let moved = grant.storage, let here = remoteStorage?.string, moved != here { return key }
-            key = grant.cellarKey
-            storeRemoteKey(key)
+            storeRemoteKey(grant.cellarKey)
+            key = remoteKey ?? grant.cellarKey
             guard let again = try RemoteSync.nextRotation(key: key, pending: pendingRotation,
                                                           membership: local.membership, device: identity.id)
-            else { return key }
+            else { return doneWithRotation(key) }
             next = again
         }
         pendingRotation = next
         do {
             try await RemoteSync.rotate(store: store, identity: identity, from: key, to: &next, local: local,
-                                        storage: remoteStorage?.string)
+                                        storage: remoteStorage?.string) { [weak self] progress in
+                await MainActor.run {
+                    if let self, self.generation == round { self.pendingRotation = progress }
+                }
+            }
         } catch {
             if round == generation { pendingRotation = next }
             throw error
         }
         guard round == generation else { return key }
         storeRemoteKey(next.key)
-        pendingRotation = nil
+        // Devices whose grant failed are tried again in later rounds.
+        pendingRotation = next.failed.isEmpty ? nil : next
         return next.key
+    }
+
+    /// No rotation is needed with `key`: a kept one for an older key is done with.
+    private func doneWithRotation(_ key: CellarKey) -> CellarKey {
+        if let kept = pendingRotation, kept.key.key != key.key { pendingRotation = nil }
+        return key
     }
 
     /// Stops syncing on this device. The cellar stays here as it is. The other devices
@@ -826,6 +852,11 @@ final class SyncService {
         generation += 1
         stopRemoteLoop()
         remoteStorage = storage
+        // Grants left on the old storage are not on this one.
+        if var kept = pendingRotation {
+            kept.storageChanged()
+            pendingRotation = kept.key.key == remoteKey?.key ? nil : kept
+        }
         keep(nil, in: \.remoteSentThrough, key: Self.remoteSentKey)
         if let storage {
             UserDefaults.standard.set(storage.string, forKey: Self.storageKey)
@@ -859,7 +890,7 @@ final class SyncService {
     /// A key and storage received from a device on the network.
     func adoptRemote(_ info: RemoteInfo?) {
         guard let info, let membership, info.key.cellarID == membership.cellarID else { return }
-        if info.key.supersedes(remoteKey) { storeRemoteKey(info.key) }
+        if info.key.supersedes(remoteKey) || info.key.key == remoteKey?.key { storeRemoteKey(info.key) }
         // Only a storage this device can use: an HTTPS relay or WebDAV folder, or iCloud in a
         // build that has it. A WebDAV folder then asks for this device's own login.
         // Not after the user turned it off here.
@@ -1078,8 +1109,11 @@ final class SyncService {
     }
 
     private func storeRemoteKey(_ key: CellarKey?) {
+        // The same key bytes keep both lists of removals; a key without one leaves out
+        // the removals known now (docs/SYNC.md §8).
+        let key = key.map { RemoteSync.settled($0, previous: remoteKey, membership: membership) }
         // Progress belongs to a mailbox: a different key starts afresh.
-        if key != remoteKey {
+        if key?.key != remoteKey?.key || key?.cellarID != remoteKey?.cellarID {
             remoteProgress = RemoteProgress()
             files?.saveRemoteProgress(remoteProgress)
         }

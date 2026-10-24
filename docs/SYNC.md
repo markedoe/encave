@@ -517,8 +517,12 @@ A **cellar key** `{cellarID, epoch (UInt32), key (32 random bytes), removed?}`
 is shared by the devices of a cellar. A received key whose `key` is not 32 bytes,
 or whose epoch is not a UInt32, fails decoding. `removed` lists (uppercase UUIDs,
 sorted) the devices removed by another device before the key was made: it was
-given to none of them. Keys from earlier versions have no `removed` (none known);
-earlier versions ignore it. JSON:
+given to none of them; at most the 64 most recent removals (by stamp counter),
+so a grant stays well under 4 KiB. Earlier versions ignore `removed` and drop it
+when they pass a key on. A key without it (from an earlier version) is taken to
+leave out the removals the device knows when it first keeps the key, which it
+then lists: earlier versions rotate after their own removals. A device that
+receives the key bytes it already has keeps the union of both lists. JSON:
 `{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes,"removed":[UUID]?}`.
 From the key (HKDF-SHA256, empty salt):
 
@@ -673,8 +677,8 @@ refresh task, no sooner than 15 minutes, when iOS decides.
 Any device that holds the key and runs rounds, not only the one that removed a
 device (it may have no storage, and the removal may reach the others over the
 local network), rotates the key before a round when its membership has a
-device removed by another device that the key's `removed` does not list. A
-device that left removed itself and forgot the key (section 2): it calls for no
+device removed by another device (the 64 most recent) that the key's
+`removed` does not list. A device that left removed itself and forgot the key (section 2): it calls for no
 rotation. A device that finds itself removed never rotates.
 
 Before rotating, the device reads its inbox and adopts a superseding key (unless
@@ -685,7 +689,10 @@ refuses to rotate and says so. Its `removed` is the union of the removals in the
 membership and the current key's `removed`, and no device in it gets a grant.
 The device keeps the new key, and the devices it has given it to, until the
 rotation is done, so a retry after a failure reuses the same key and leaves no
-second grant for them.
+second grant for them. A device whose grant fails (its inbox is full, its record
+is damaged) does not stop the rotation: the device notes it and tries again in
+each later round until the grant is left. Moving to another storage forgets
+which devices were given the kept key.
 It leaves a grant in each remaining member's inbox, writes to the **old**
 mailbox a snapshot with an empty cellar, no object stamps, its clock and the
 updated membership (so devices that have not switched yet learn about the
@@ -693,9 +700,12 @@ removal, while the removed device, which can still read the old mailbox, learns
 nothing else), and writes the cellar to the **new** mailbox. The removed device
 cannot find the new mailbox (its ID comes from the new key) and its files in
 the old one are ignored, because it is no longer a member. If, before the
-rotation is done, the device receives a key of the same or a later epoch, or a
-device the kept key was given to is removed meanwhile, it replaces the kept key
-with a new one above every epoch seen.
+rotation is done, the device receives a key that supersedes the kept one, or one
+of the same or a later epoch while it has given the kept key to nobody, it drops
+the kept key, and rotates only if the received key does not list a removal. If
+it has given the kept key to some devices and the received key does not
+supersede it, or a device the kept key was given to is removed meanwhile, it
+replaces the kept key with a new one above every epoch seen.
 
 Two devices that remove different devices at the same time may both rotate to
 the same epoch; the supersedes rule then picks one key, which may have been
@@ -703,9 +713,10 @@ given to the device the other one removed. The other device then sees a removal
 the key does not list and rotates again, so the cellar settles on a key that
 neither removed device has.
 
-A key from an earlier version lists no removals, so in a cellar that has
-removed a device, the devices rotate once after updating. A grant holds about
-90 removed devices before reaching 4 KiB.
+A device on an earlier version rotates only after its own removals and leaves
+keys without `removed`; a device on this version takes such a key as leaving out
+the removals it knows, so devices updating at different times do not rotate
+again for removals made before.
 
 ### Turning it on
 

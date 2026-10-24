@@ -401,6 +401,9 @@ class SyncManager(
 
     /** Removes another device: it can no longer sync with any device of the cellar. */
     fun remove(device: UUID) {
+        // A key from a build before keys listed removals: noted before this removal, so the
+        // next round rotates for it.
+        storage.remoteKey?.let { if (it.removed == null) storeRemoteKey(it) }
         val membership = synchronized(this) {
             val state = syncState ?: return
             val members = status.value.membership ?: return
@@ -1000,7 +1003,7 @@ class SyncManager(
     fun adoptRemote(info: RemoteInfo?) {
         val membership = status.value.membership ?: return
         if (info == null || info.key.cellarId != membership.cellarId) return
-        if (info.key.supersedes(storage.remoteKey)) storeRemoteKey(info.key)
+        if (info.key.supersedes(storage.remoteKey) || storage.remoteKey?.key?.contentEquals(info.key.key) == true) storeRemoteKey(info.key)
         // iCloud is Apple-only: Devices explains it rather than just saying "Off".
         val iCloud = info.storage == "icloud"
         if (iCloud != status.value.peerUsesICloud) {
@@ -1224,28 +1227,51 @@ class SyncManager(
                 storage.pendingRotation = PendingRotation(CellarKey.random(key.cellarId, key.epoch + 1))
             }
         }
-        var next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return key
+        // A key from a build before keys listed removals: it leaves out the removals known now.
+        if (key.removed == null) {
+            storeRemoteKey(key)
+            key = storage.remoteKey ?: key
+        }
+        // A finished rotation whose grant failed for some devices: try them again.
+        val owed = storage.pendingRotation
+        if (owed != null && owed.key.key.contentEquals(key.key)) {
+            val done = RemoteSync.grantMissing(owed, store, identity, local, url)
+            if (round != generation) return key
+            storage.pendingRotation = done.takeIf { it.failed.isNotEmpty() }
+        }
+        var next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return doneWithRotation(key)
         // A key granted meanwhile (another device rotated too): rotate from it, so the new key is
         // above it. Unless it moves the files elsewhere: the round follows it first.
         val grant = RemoteSync.receiveGrant(store, identity, local.membership, key)
         if (grant != null) {
             if (round != generation) return key
             if (grant.storage.let { it != null && it != url }) return key
-            key = grant.cellarKey
-            storeRemoteKey(key)
-            next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return key
+            storeRemoteKey(grant.cellarKey)
+            key = storage.remoteKey ?: grant.cellarKey
+            next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return doneWithRotation(key)
         }
         storage.pendingRotation = next
         val done = RemoteSync.rotate(store, identity, key, next, local, url) { if (round == generation) storage.pendingRotation = it }
         if (round != generation) return key
         storeRemoteKey(done.key)
-        storage.pendingRotation = null
+        // Devices whose grant failed are tried again in later rounds.
+        storage.pendingRotation = done.takeIf { it.failed.isNotEmpty() }
         return done.key
     }
 
-    private fun storeRemoteKey(key: CellarKey?) {
+    /** No rotation is needed with [key]: a kept one for an older key is done with. */
+    private fun doneWithRotation(key: CellarKey): CellarKey {
+        if (storage.pendingRotation?.key?.key?.contentEquals(key.key) == false) storage.pendingRotation = null
+        return key
+    }
+
+    private fun storeRemoteKey(new: CellarKey?) {
+        // The same key bytes keep both lists of removals; a key without one leaves out the
+        // removals known now (docs/SYNC.md §8).
+        val previous = storage.remoteKey
+        val key = new?.let { RemoteSync.settled(it, previous, status.value.membership) }
         // Progress belongs to a mailbox: a different key starts afresh.
-        if (key != storage.remoteKey) {
+        if (key?.cellarId != previous?.cellarId || key?.key?.contentEquals(previous?.key) != true) {
             synchronized(this) { progress = RemoteProgress() }
             runCatching { storage.saveRemoteProgress(RemoteProgress()) }
         }

@@ -250,9 +250,27 @@ public struct PendingRotation: Codable, Equatable, Sendable {
     public var key: CellarKey
     /// Devices already given `key`.
     public var granted: Set<UUID>
+    /// Devices whose grant failed: the rotation went on without them, and they are
+    /// tried again in later rounds (`RemoteSync.grantMissing`).
+    public var failed: Set<UUID>
 
-    public init(key: CellarKey, granted: Set<UUID> = []) {
-        self.key = key; self.granted = granted
+    public init(key: CellarKey, granted: Set<UUID> = [], failed: Set<UUID> = []) {
+        self.key = key; self.granted = granted; self.failed = failed
+    }
+
+    /// The device moved to another storage: grants left on the old one do not count there.
+    public mutating func storageChanged() {
+        granted = []
+        failed = []
+    }
+
+    private enum CodingKeys: String, CodingKey { case key, granted, failed }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        key = try c.decode(CellarKey.self, forKey: .key)
+        granted = try c.decode(Set<UUID>.self, forKey: .granted)
+        failed = try c.decodeIfPresent(Set<UUID>.self, forKey: .failed) ?? []
     }
 }
 
@@ -461,32 +479,74 @@ public enum RemoteSync {
         return membership.stamps[sender]?.deleted == true
     }
 
-    /// Devices a key must not have been given to: those removed by another device. A
+    /// At most this many removals are listed in a key, so a grant stays well under 4 KiB.
+    public static let maxRemoved = 64
+
+    /// Devices a key must not have been given to: those removed by another device, the
+    /// newest `maxRemoved` of them (older ones were left out by earlier rotations). A
     /// device that left removed itself and forgot the key (docs/SYNC.md §2).
     public static func shutOut(_ membership: Membership) -> Set<UUID> {
-        Set(membership.stamps.filter { $0.value.deleted && $0.value.device != $0.key }.keys)
+        let removals = membership.stamps.filter { $0.value.deleted && $0.value.device != $0.key }
+            .sorted { ($0.value.counter, $0.key.lowercased) > ($1.value.counter, $1.key.lowercased) }
+        return Set(removals.prefix(maxRemoved).map(\.key))
+    }
+
+    /// The `removed` list of a key made now: `shutOut` first, then the others, at most `maxRemoved`.
+    static func removedList(_ shut: Set<UUID>, _ others: [UUID]?) -> [UUID] {
+        let rest = (others ?? []).filter { !shut.contains($0) }
+        return Array((Array(shut) + Set(rest)).prefix(maxRemoved)).sorted { $0.uuidString < $1.uuidString }
+    }
+
+    /// The key to keep when `key` arrives (a grant, the local network) or is loaded:
+    /// with the same key bytes as `previous`, the union of both `removed` lists (a build
+    /// before the list drops it). A key without a list (from such a build) is taken to
+    /// leave out the removals known now: those builds rotate after their own removals.
+    public static func settled(_ key: CellarKey, previous: CellarKey?, membership: Membership?) -> CellarKey {
+        var key = key
+        if let previous, previous.cellarID == key.cellarID, previous.key == key.key,
+           let listed = previous.removed {
+            key.removed = removedList([], listed + (key.removed ?? []))
+        }
+        if key.removed == nil, let membership, membership.cellarID == key.cellarID {
+            key.removed = removedList(shutOut(membership), nil)
+        }
+        return key
     }
 
     /// The rotation to run before this round, if any (docs/SYNC.md §8, Removing a
     /// device): one already started, or a new one when the membership has a removal
     /// the key does not list, so it may have been given to that device. Every key
     /// holder that runs rounds checks this, not only the device that removed another.
-    /// Keep the result before rotating, so a retry uses the same key.
+    /// Keep the result before rotating, so a retry uses the same key. Nil: nothing to
+    /// do, and a kept rotation other than one of `key` itself (grants still owed,
+    /// `grantMissing`) is done with.
     ///
-    /// A started rotation gets a new key above every epoch seen when the cellar moved
-    /// on meanwhile, or when it was given to a device removed since. `device` is this
-    /// device: once removed itself, it never rotates.
+    /// A started rotation is dropped when `key` supersedes it, or when `key` is on its
+    /// epoch or later and it was given to nobody. It gets a new key above every epoch
+    /// seen when, given to some devices, it could win against `key` on the same epoch,
+    /// or when it was given to a device removed since. `device` is this device: once
+    /// removed itself, it never rotates. A key without a `removed` list leaves out the
+    /// removals known now.
     public static func nextRotation(key: CellarKey, pending: PendingRotation?, membership: Membership,
                                     device: UUID) throws -> PendingRotation? {
         guard membership.members[device] != nil else { return nil }
-        var pending = pending.flatMap { $0.key.cellarID == key.cellarID ? $0 : nil }
+        var pending = pending.flatMap { $0.key.cellarID == key.cellarID && $0.key.key != key.key ? $0 : nil }
         let removed = shutOut(membership)
-        let excluded = removed.union(key.removed ?? [])
-        guard pending != nil || !removed.isSubset(of: key.removed ?? []) else { return nil }
+        let listed = key.removed.map { Set($0) } ?? removed
+        let excluded = removed.union(listed)
         let top = max(key.epoch, pending?.key.epoch ?? 0)
-        if let started = pending, started.key.epoch <= key.epoch || !started.granted.isDisjoint(with: excluded) {
-            pending = nil
+        var force = false
+        if let started = pending {
+            if key.supersedes(started.key) || (started.key.epoch <= key.epoch && started.granted.isEmpty) {
+                // Nobody keeps the started key: those given it move to `key` too.
+                pending = nil
+            } else if started.key.epoch <= key.epoch || !started.granted.isDisjoint(with: excluded) {
+                // Devices given the started key could stay on it, or a removed device has it.
+                pending = nil
+                force = true
+            }
         }
+        guard pending != nil || force || !removed.isSubset(of: listed) else { return nil }
         var next: PendingRotation
         if let pending {
             next = pending
@@ -495,7 +555,7 @@ public enum RemoteSync {
             guard top < UInt32.max else { throw RemoteSyncError.corrupted("epoch") }
             next = PendingRotation(key: CellarKey.random(cellarID: key.cellarID, epoch: top + 1))
         }
-        next.key.removed = excluded.union(next.key.removed ?? []).sorted { $0.uuidString < $1.uuidString }
+        next.key.removed = removedList(removed, Array(listed) + (next.key.removed ?? []))
         return next
     }
 
@@ -515,22 +575,51 @@ public enum RemoteSync {
     }
 
     /// The same, noting in `pending` each device given the key, so a retry after a
-    /// failure leaves no second grant for it. Devices in the key's `removed` get nothing.
+    /// failure leaves no second grant for it, and calling `progress` after each one.
+    /// Devices in the key's `removed` get nothing. A device whose grant fails (its inbox
+    /// is full, its record is damaged) does not stop the rotation: it is noted in
+    /// `failed`, and `grantMissing` tries again in later rounds.
     public static func rotate(store: MailboxStore, identity: DeviceIdentity, from oldKey: CellarKey,
-                              to pending: inout PendingRotation, local: SyncSnapshot, storage: String?) async throws {
+                              to pending: inout PendingRotation, local: SyncSnapshot, storage: String?,
+                              progress: @Sendable (PendingRotation) async -> Void = { _ in }) async throws {
         let newKey = pending.key
         let removed = Set(newKey.removed ?? [])
         for member in local.membership.active
         where member.id != identity.id && !removed.contains(member.id) && !pending.granted.contains(member.id)
             && member.inbox.map({ RelayPath.isValidMailbox($0) && $0.hasPrefix("i") }) == true {
-            try await grant(newKey, to: [member], store: store, identity: identity, storage: storage)
-            pending.granted.insert(member.id)
+            do {
+                try await grant(newKey, to: [member], store: store, identity: identity, storage: storage)
+                pending.granted.insert(member.id)
+                pending.failed.remove(member.id)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                pending.failed.insert(member.id)
+            }
+            await progress(pending)
         }
         var notice = local
         notice.cellar = Cellar()
         notice.state.stamps = [:]
         try await write(notice, to: store.mailbox(id: oldKey.mailboxID, token: oldKey.token), key: oldKey, device: identity.id)
         try await write(local, to: store.mailbox(id: newKey.mailboxID, token: newKey.token), key: newKey, device: identity.id)
+    }
+
+    /// After a rotation: tries again to give its key to the devices whose grant failed.
+    /// Devices no longer members are dropped from `failed`.
+    public static func grantMissing(_ pending: inout PendingRotation, store: MailboxStore, identity: DeviceIdentity,
+                                    local: SyncSnapshot, storage: String?) async {
+        let removed = Set(pending.key.removed ?? [])
+        for id in pending.failed.sorted(by: { $0.uuidString < $1.uuidString }) {
+            guard let member = local.membership.members[id], !removed.contains(id) else {
+                pending.failed.remove(id)
+                continue
+            }
+            if (try? await grant(pending.key, to: [member], store: store, identity: identity, storage: storage)) != nil {
+                pending.failed.remove(id)
+                pending.granted.insert(id)
+            }
+        }
     }
 
     /// Gives the current key to devices that may not have it (a device that joined

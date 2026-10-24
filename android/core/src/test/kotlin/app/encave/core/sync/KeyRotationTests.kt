@@ -11,29 +11,54 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
+/** Keeps a key as the apps do (`storeRemoteKey`): settled against the current one, afresh only when the key bytes change. */
+internal fun RemoteDevice.keep(new: CellarKey) {
+    val settled = RemoteSync.settled(new, key, snapshot.membership)
+    if (key?.key?.contentEquals(settled.key) != true) progress = RemoteProgress()
+    key = settled
+}
+
 /**
- * A round as the apps run it (SyncService, SyncManager): first a key rotation if a removal
- * calls for it, reading the inbox before rotating, then [RemoteDevice.sync].
+ * A round as the apps run it (SyncService, SyncManager): grants still owed, then a key
+ * rotation if a removal calls for it, reading the inbox before rotating, then [RemoteDevice.sync].
  */
 internal suspend fun RemoteDevice.round(store: MailboxStore): RemoteSync.Result? {
-    var current = key ?: return sync(store)
-    var next = RemoteSync.nextRotation(current, pending, snapshot.membership, identity.id) ?: return sync(store)
-    val grant = RemoteSync.receiveGrant(store, identity, snapshot.membership, current)
-    if (grant != null) {
-        current = grant.cellarKey
-        key = current
-        progress = RemoteProgress()
-        next = RemoteSync.nextRotation(current, pending, snapshot.membership, identity.id) ?: return sync(store)
+    var current = key
+    if (current != null) {
+        if (current.removed == null) {
+            keep(current)
+            current = key!!
+        }
+        val owed = pending
+        if (owed != null && owed.key.key.contentEquals(current.key)) {
+            val done = RemoteSync.grantMissing(owed, store, identity, snapshot, null)
+            pending = done.takeIf { it.failed.isNotEmpty() }
+        }
+        var next = RemoteSync.nextRotation(current, pending, snapshot.membership, identity.id)
+        if (next != null) {
+            val grant = RemoteSync.receiveGrant(store, identity, snapshot.membership, current)
+            if (grant != null) {
+                keep(grant.cellarKey)
+                current = key!!
+                next = RemoteSync.nextRotation(current, pending, snapshot.membership, identity.id)
+            }
+        }
+        if (next != null) {
+            pending = next
+            val done = RemoteSync.rotate(store, identity, current, next, snapshot, null) { pending = it }
+            keep(done.key)
+            pending = done.takeIf { it.failed.isNotEmpty() }
+        } else if (pending?.key?.key?.contentEquals(current.key) == false) {
+            pending = null
+        }
     }
-    pending = next
-    val done = RemoteSync.rotate(store, identity, current, next, snapshot, null) { pending = it }
-    key = done.key
-    progress = RemoteProgress()
-    pending = null
-    return sync(store)
+    val result = sync(store)
+    key?.let { keep(it) }
+    return result
 }
 
 internal fun RemoteDevice.remove(other: RemoteDevice) {
+    key?.let { if (it.removed == null) keep(it) }
     val (membership, clock) = snapshot.membership.removing(other.identity.id, snapshot.state.clock, identity.id)
     snapshot = snapshot.copy(membership = membership, state = snapshot.state.copy(clock = clock))
 }
@@ -64,6 +89,23 @@ internal class FullMailboxStore : MailboxStore {
             override suspend fun create(path: String, data: ByteArray): Boolean {
                 if (full) throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
                 return mailbox.create(path, data)
+            }
+        }
+    }
+}
+
+/** Storage where the inboxes in [refused] are full; everything else works. */
+internal class RefusingInboxStore : MailboxStore {
+    val base = MemoryMailboxStore()
+
+    @Volatile var refused: Set<String> = emptySet()
+    override fun mailbox(id: String, token: String): Mailbox = base.mailbox(id, token)
+    override fun inbox(id: String, token: String): Mailbox {
+        val inbox = base.inbox(id, token)
+        return object : Mailbox by inbox {
+            override suspend fun create(path: String, data: ByteArray): Boolean {
+                if (id in refused) throw RemoteSyncException(RemoteSyncError.QuotaExceeded)
+                return inbox.create(path, data)
             }
         }
     }
@@ -193,11 +235,154 @@ class KeyRotationTests {
     }
 
     @Test
+    fun aStartedRotationLosingToTheAdoptedKeyIsDropped() = runBlocking {
+        val store = MemoryMailboxStore()
+        val (a, b, d) = start(3, store)
+        val start = b.key!!
+        a.remove(d)
+        b.meet(a)
+        // A rotates; B had started its own rotation, given to A only, and failed.
+        a.round(store)
+        val winner = a.key!!
+        var losing = CellarKey.random(start.cellarId, 2)
+        while (!winner.supersedes(losing)) losing = CellarKey.random(start.cellarId, 2)
+        b.pending = PendingRotation(losing, granted = setOf(a.identity.id))
+        // B adopts A's key, which leaves D out: no second rotation.
+        b.round(store)
+        assertEquals(winner, b.key)
+        assertNull(b.pending)
+        a.round(store)
+        assertEquals(winner, a.key)
+    }
+
+    @Test
+    fun aStartedRotationGivenToNobodyIsDroppedOnTheSameEpoch() {
+        val (a, _, c) = household(3)
+        a.remove(c)
+        val key = CellarKey(a.snapshot.membership.cellarId, 2, ByteArray(32) { 1 }, listOf(c.identity.id))
+        repeat(8) {
+            val started = PendingRotation(CellarKey.random(key.cellarId, 2))
+            assertNull(RemoteSync.nextRotation(key, started, a.snapshot.membership, a.identity.id))
+        }
+    }
+
+    @Test
+    fun keysFromAnEarlierBuildCallForNoRotation() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household(4)
+        val (a, b, c, d) = devices
+        // A removed D before the update (and rotated then); the key lists no removals.
+        val (membership, clock) = a.snapshot.membership.removing(d.identity.id, a.snapshot.state.clock, a.identity.id)
+        a.snapshot = a.snapshot.copy(membership = membership, state = a.snapshot.state.copy(clock = clock))
+        b.meet(a)
+        c.meet(a)
+        grantAll(devices, store, null)
+        val first = a.key!!
+        assertNull(first.removed)
+        repeat(3) { for (device in listOf(a, b, c)) device.round(store) }
+        for (device in listOf(a, b, c)) {
+            assertTrue(device.key!!.key.contentEquals(first.key))
+            assertEquals(listOf(d.identity.id), device.key?.removed)
+        }
+        // A build before the list sends the same key back without it: the list stays.
+        val kept = RemoteSync.settled(first.copy(removed = null), b.key, b.snapshot.membership)
+        assertEquals(listOf(d.identity.id), kept.removed)
+        // Two lists for the same key bytes join.
+        val joined = RemoteSync.settled(first.copy(removed = listOf(c.identity.id)), b.key, null)
+        assertEquals(setOf(c.identity.id, d.identity.id), joined.removed?.toSet())
+    }
+
+    @Test
+    fun anEarlierBuildRotatingDoesNotStartAStorm() = runBlocking {
+        val store = MemoryMailboxStore()
+        val (o, n, m, x) = start(4, store)
+        val start = o.key!!
+        // O (an earlier build) removes X and rotates the earlier way: a key without a list,
+        // given to N, then it fails before M.
+        val (membership, clock) = o.snapshot.membership.removing(x.identity.id, o.snapshot.state.clock, o.identity.id)
+        o.snapshot = o.snapshot.copy(membership = membership, state = o.snapshot.state.copy(clock = clock))
+        val old = CellarKey.random(start.cellarId, 2)
+        RemoteSync.grant(old, listOf(o.snapshot.membership.members.getValue(n.identity.id)), store, o.identity, null)
+        n.meet(o)
+        n.round(store)
+        assertTrue(n.key!!.key.contentEquals(old.key))
+        assertEquals(listOf(x.identity.id), n.key?.removed)
+        // O retries and finishes the earlier way; N and M settle on its key.
+        RemoteSync.rotate(store, o.identity, start, old, o.snapshot, null)
+        o.key = old
+        repeat(3) { for (device in listOf(n, m)) device.round(store) }
+        assertTrue(n.key!!.key.contentEquals(old.key))
+        assertTrue(m.key!!.key.contentEquals(old.key))
+        assertEquals(2L, m.key?.epoch)
+    }
+
+    @Test
+    fun aDeviceWhoseGrantFailsDoesNotStopTheRotation() = runBlocking {
+        val store = RefusingInboxStore()
+        val (a, b, c, d) = start(4, store)
+        a.remove(d)
+        store.refused = setOf(c.identity.inboxId)
+        a.edit { it.addBottles(Wine(name = "After removal"), 1) }
+        a.round(store)
+        val newKey = a.key!!
+        assertEquals(2L, newKey.epoch)
+        assertEquals(setOf(c.identity.id), a.pending?.failed)
+        // B moves on and syncs; C is tried again once its inbox has room.
+        b.round(store)
+        assertEquals(newKey, b.key)
+        assertTrue(b.snapshot.cellar.wines.values.any { it.name == "After removal" })
+        store.refused = emptySet()
+        a.round(store)
+        assertNull(a.pending)
+        c.round(store)
+        assertEquals(newKey, c.key)
+    }
+
+    @Test
+    fun eachGrantIsReportedAsTheRotationGoes() = runBlocking {
+        val store = MemoryMailboxStore()
+        val (a, b, c) = start(3, store)
+        a.remove(c)
+        val next = RemoteSync.nextRotation(a.key!!, null, a.snapshot.membership, a.identity.id)!!
+        val log = mutableListOf<PendingRotation>()
+        val done = RemoteSync.rotate(store, a.identity, a.key!!, next, a.snapshot, null) { log += it }
+        assertEquals(listOf(setOf(b.identity.id)), log.map { it.granted })
+        assertEquals(setOf(b.identity.id), done.granted)
+    }
+
+    @Test
+    fun aStorageChangeForgetsWhoWasGiven() {
+        val pending = PendingRotation(CellarKey.random(UUID.randomUUID(), 2), setOf(UUID.randomUUID()), setOf(UUID.randomUUID()))
+        val moved = pending.storageChanged()
+        assertTrue(moved.granted.isEmpty() && moved.failed.isEmpty())
+        // A rotation kept before `failed` existed still reads.
+        val older = """{"key":${SyncJson.encode(CellarKey.serializer(), pending.key).decodeToString()},"granted":[]}"""
+        assertEquals(pending.key, SyncJson.decode(PendingRotation.serializer(), older.toByteArray()).key)
+    }
+
+    @Test
+    fun theRemovedListHasAtMost64Devices() {
+        var membership = Membership()
+        var clock = 0L
+        val me = UUID.randomUUID()
+        repeat(70) {
+            val (m, c) = membership.removing(UUID.randomUUID(), clock, me)
+            membership = m
+            clock = c
+        }
+        val shut = RemoteSync.shutOut(membership)
+        assertEquals(RemoteSync.MAX_REMOVED, shut.size)
+        val list = RemoteSync.removedList(shut, List(20) { UUID.randomUUID() })
+        assertEquals(RemoteSync.MAX_REMOVED, list.size)
+        assertTrue(list.containsAll(shut))
+    }
+
+    @Test
     fun aRemovedDeviceNeverRotates() {
         val (a, _, c) = household(3)
         a.remove(c)
         c.meet(a)
-        val key = CellarKey.random(a.snapshot.membership.cellarId)
+        val key = CellarKey(a.snapshot.membership.cellarId, 1, ByteArray(32) { 1 }, emptyList())
         assertNull(RemoteSync.nextRotation(key, null, c.snapshot.membership, c.identity.id))
         assertNotNull(RemoteSync.nextRotation(key, null, a.snapshot.membership, a.identity.id))
     }
@@ -206,7 +391,7 @@ class KeyRotationTests {
     fun noRotationPastTheLastEpoch() {
         val (a, _, c) = household(3)
         a.remove(c)
-        val last = CellarKey.random(a.snapshot.membership.cellarId, CellarKey.MAX_EPOCH)
+        val last = CellarKey(a.snapshot.membership.cellarId, CellarKey.MAX_EPOCH, ByteArray(32) { 1 }, emptyList())
         val error = assertThrows<RemoteSyncException> { RemoteSync.nextRotation(last, null, a.snapshot.membership, a.identity.id) }
         assertEquals(RemoteSyncError.Corrupted("epoch"), error.error)
     }
