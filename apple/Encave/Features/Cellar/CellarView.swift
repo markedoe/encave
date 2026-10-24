@@ -492,7 +492,7 @@ private struct CellarStats: View {
             .buttonStyle(.plain)
             .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .accessibilityIdentifier("cellar.stats.compact")
+            // No identifier on this container: SwiftUI would give it to each figure, hiding theirs.
         } else {
             HStack(alignment: .top, spacing: 10) {
                 Button(action: onBottles) {
