@@ -283,6 +283,14 @@ class BackupManager(
         lastAutomaticFailure = null
     }
 
+    /**
+     * Before a Replace (restoring a backup, Erase all data that keeps the versions): the cellar
+     * as it is now is saved as a previous version. False when it could not be saved: then the
+     * cellar must not be replaced.
+     */
+    suspend fun keepBeforeReplacing(cellar: Cellar): Boolean =
+        withContext(Dispatchers.IO) { (versions as? CellarVersionFolder)?.keepBeforeReplacingIfNeeded(cellar) ?: true }
+
     /** The weekly archives written (IDs of the destination), oldest first. */
     fun automaticIds(): List<String> = prefs.getString(KEY_AUTOMATIC_FILES, null).orEmpty().split("\n").filter { it.isNotBlank() }
 

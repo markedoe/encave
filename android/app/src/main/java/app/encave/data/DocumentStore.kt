@@ -64,6 +64,9 @@ class DocumentStore(context: Context) {
     fun removeOrphans(keeping: Set<String>, now: Instant = Instant.now()) =
         OrphanFiles.remove(folder, EXTENSION, keeping, now)
 
+    /** Erase all data with the backups: the documents nothing refers to are due at once. */
+    fun expireOrphans(keeping: Set<String>) = OrphanFiles.expire(folder, EXTENSION, keeping)
+
     /** Why a document could not be added. */
     enum class Problem { TooLarge, Unreadable }
 

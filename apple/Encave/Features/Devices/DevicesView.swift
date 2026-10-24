@@ -799,8 +799,10 @@ struct QRCodeView: View {
 struct JoinDeviceView: View {
     @Environment(CellarModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    /// The code field's text.
     @State private var digits: String
-    @State private var commitment: Data?
+    /// The code to join, with the QR code's commitment while it is the code scanned.
+    @State private var entry: PairingEntry
     @State private var replace = false
     @State private var scanning = false
     @State private var confirmingLeave = false
@@ -816,10 +818,10 @@ struct JoinDeviceView: View {
     /// `code` and `commitment`: from a pairing link (the QR code scanned with the camera).
     init(code: String = "", commitment: Data? = nil) {
         _digits = State(initialValue: code)
-        _commitment = State(initialValue: commitment)
+        _entry = State(initialValue: PairingEntry(digits: code, commitment: commitment))
     }
 
-    private var code: PairingCode { PairingCode(digits: digits) }
+    private var code: PairingCode { entry.code }
     private var hasOwnBottles: Bool { !model.cellar.bottles.isEmpty }
     /// Only the sample cellar here: the other device's cellar replaces it, never joins it.
     private var replacesSample: Bool { model.cellar.isOnlySample }
@@ -832,7 +834,7 @@ struct JoinDeviceView: View {
                     PairingProgress(session: session) {
                         self.session = nil
                         digits = ""
-                        commitment = nil
+                        entry = PairingEntry()
                     } waiting: {
                         VStack(spacing: 14) {
                             ProgressView()
@@ -860,8 +862,8 @@ struct JoinDeviceView: View {
                 QRScannerView { payload in
                     scanning = false
                     if let parsed = PairingCode.parse(qr: payload) {
-                        digits = parsed.code.digits
-                        commitment = parsed.commitment
+                        entry = PairingEntry(digits: parsed.code.digits, commitment: parsed.commitment)
+                        digits = entry.digits
                         start()
                     }
                 }
@@ -922,9 +924,9 @@ struct JoinDeviceView: View {
                     .digitsKeyboard()
                     .focused($codeFocused)
                     .onChange(of: digits) { _, new in
-                        let clean = String(new.filter(\.isNumber).prefix(6))
-                        if clean != new { digits = clean }
-                        commitment = nil
+                        // Also told when a scan sets the field: the same digits keep the commitment.
+                        entry.type(new)
+                        if entry.digits != new { digits = entry.digits }
                     }
                     .accessibilityIdentifier("devices.codeField")
             } header: {
@@ -997,7 +999,7 @@ struct JoinDeviceView: View {
 
     private func join() {
         // Only the sample here: replaced without asking (the picker is not shown).
-        session = PairingSession.join(code: code, commitment: commitment,
+        session = PairingSession.join(code: code, commitment: entry.commitment,
                                       replace: (replace && hasOwnBottles) || replacesSample, using: model.sync)
     }
 

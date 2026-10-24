@@ -432,8 +432,10 @@ class Cellar(
     fun move(bottleId: UUID, slot: Slot?) {
         val bottle = bottleMap[bottleId] ?: throw CellarException(CellarError.UnknownBottle)
         if (slot != null) {
-            // A bottle on order has no place until it is received, as in Swift.
+            // A bottle on order has no place until it is received, as in Swift; one opened or
+            // gone meanwhile (by sync) never takes one.
             if (bottle.status == Bottle.Status.Ordered) throw CellarException(CellarError.NotReceived)
+            if (bottle.status != Bottle.Status.InCellar) throw CellarException(CellarError.NotInCellar)
             val occupant = bottleAt(slot)
             if (occupant != null && occupant.id != bottleId) throw CellarException(CellarError.SlotTaken)
             validateInRange(slot)
@@ -449,6 +451,61 @@ class Cellar(
         val second = bottleAt(b)
         if (first != null) bottleMap[first.id] = first.copy(slot = b)
         if (second != null) bottleMap[second.id] = second.copy(slot = a)
+    }
+
+    /**
+     * The Undo of [swap] (a, b) that found [first] at a and [second] at b: swaps them back only
+     * if both are still where the swap put them, so a bottle put in one of the places since
+     * never moves. Returns whether it swapped them back.
+     */
+    fun undoSwap(a: Slot, b: Slot, first: UUID?, second: UUID?): Boolean {
+        if (first == null && second == null) return false
+        if (bottleAt(b)?.id != first || bottleAt(a)?.id != second) return false
+        return runCatching { swap(a, b) }.isSuccess
+    }
+
+    /**
+     * The Undo of [updateRack] with takingOut on the rack [old]: the rack takes its old shape
+     * back. The bottles in it now go back with their rows (the inverse of [rowMap]), so one
+     * placed since stays on its shelf; a bottle in a row the old shape did not have loses its
+     * place. The bottles taken out ([takenOut], as they were before) go back to their place only
+     * if they still have none and it is free. Bottles moved elsewhere or opened since keep what
+     * they have now.
+     */
+    fun undoRackUpdate(old: Rack, rowMap: Map<Int, Int?>, takenOut: List<Bottle>) {
+        val index = rackList.indexOfFirst { it.id == old.id }
+        if (index < 0) return
+        val restored = old.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(rackList[index].unknownKeys)) }
+        // A row the edit moved away from and nothing moved into is a new row: no old place.
+        val inverse = HashMap<Int, Int?>()
+        rowMap.keys.forEach { inverse[it] = null }
+        rowMap.forEach { (from, to) -> if (to != null) inverse[to] = from }
+        bottlesInCellar.forEach { bottle ->
+            val slot = bottle.slot ?: return@forEach
+            if (slot.rackId != restored.id) return@forEach
+            bottleMap[bottle.id] = bottle.copy(slot = Rack.moved(slot, inverse)?.takeIf { restored.contains(it) })
+        }
+        rackList[index] = restored
+        takenOut.forEach { bottle ->
+            val slot = bottle.slot ?: return@forEach
+            val now = bottleMap[bottle.id] ?: return@forEach
+            if (now.status == Bottle.Status.InCellar && now.slot == null && bottleAt(slot) == null && restored.contains(slot)) {
+                bottleMap[bottle.id] = now.copy(slot = slot)
+            }
+        }
+    }
+
+    /**
+     * Bottles of a rack not found while checking it: those still in it whose ID is not in
+     * [found], so a bottle seen and then moved within the rack stays found.
+     */
+    fun missingBottles(rackId: UUID, found: Set<UUID>): List<Bottle> =
+        bottlesInCellar.filter { it.slot?.rackId == rackId && it.id !in found }
+
+    /** Whether [reserve] with these bottles and [occasion] would change anything. */
+    fun changesReservation(bottleIds: List<UUID>, occasion: String?): Boolean {
+        val name = occasion?.trim()?.ifEmpty { null }
+        return bottleIds.any { id -> bottleMap[id]?.let { it.reservedFor != name } ?: false }
     }
 
     fun updateWine(wine: Wine) {
@@ -708,6 +765,9 @@ enum class CellarError {
 
     /** The bottle is on order: receive it before placing or drinking it. */
     NotReceived,
+
+    /** The bottle was opened or is gone: it has no place any more. */
+    NotInCellar,
 }
 
 class CellarException(val error: CellarError) : Exception(error.name)

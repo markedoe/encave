@@ -639,6 +639,11 @@ struct MoveBottleView: View {
                         .padding()
                         if let rack = rackID.flatMap({ model.cellar.rack($0) }) {
                             FittedRackGrid(rack: rack, highlighted: bottle.slot) { place, _ in
+                                    // As it is now: opened meanwhile (sync, another window), it takes no place.
+                                    guard let bottle = model.cellar.bottles[bottleID], bottle.status == .inCellar else {
+                                        dismiss()
+                                        return
+                                    }
                                     if bottle.slot.map(place.contains) == true {
                                         dismiss()
                                     } else if let free = model.cellar.freeSlot(at: place) {

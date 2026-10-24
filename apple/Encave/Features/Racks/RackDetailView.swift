@@ -29,9 +29,10 @@ struct RackDetailView: View {
     @State private var afterList: AppSheet?
     /// Chosen in the place's sheet: done once that sheet is gone, so a sheet it opens is not lost.
     @State private var afterCell: CellAction?
-    /// Checking the rack: places whose bottles were found.
+    /// Checking the rack: the bottles found (by ID, so a bottle found and then moved within
+    /// the rack stays found).
     @State private var auditing = false
-    @State private var checked: Set<Slot> = []
+    @State private var checked: Set<UUID> = []
     @State private var confirmingAudit = false
     /// Checking a place's bottles one by one.
     @State private var checkingCell: OpenCell?
@@ -124,11 +125,12 @@ struct RackDetailView: View {
     private func canvas(_ rack: Rack) -> some View {
         let grid = FittedRackGrid(
             rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
-            selected: auditing ? checked : (moving?.slot.map { [$0] } ?? []),
+            selected: auditing ? foundSlots(rack) : (moving?.slot.map { [$0] } ?? []),
             highlighted: model.highlightedSlot,
             selectedPlace: selectedPlace, focusWine: focusWine,
             onTap: { place, bottles in tap(rack, place, bottles) },
-            onDrop: { bottleID, place in drop(bottleID, on: place, rack) },
+            // Nothing moves while checking: a bottle found must stay where it was seen.
+            onDrop: auditing ? nil : { bottleID, place in drop(bottleID, on: place, rack) },
             zoomStep: zoomStep,
             interaction: interaction
         )
@@ -149,7 +151,7 @@ struct RackDetailView: View {
     private func bottomBar(_ rack: Rack) -> some View {
         VStack(spacing: 0) {
             if auditing {
-                AuditBar(checked: checked.count, total: auditTotal(rack)) {
+                AuditBar(checked: auditTotal(rack) - missing(rack).count, total: auditTotal(rack)) {
                     finishAudit(rack)
                 } cancel: {
                     withAnimation { auditing = false; checked = [] }
@@ -270,7 +272,12 @@ struct RackDetailView: View {
     }
 
     private func missing(_ rack: Rack) -> [Bottle] {
-        model.bottlesInCellar.filter { $0.slot?.rackID == rack.id && !checked.contains($0.slot!) }
+        model.cellar.missingBottles(in: rack.id, found: checked)
+    }
+
+    /// Where the bottles found are now.
+    private func foundSlots(_ rack: Rack) -> Set<Slot> {
+        Set(model.bottlesInCellar.compactMap { checked.contains($0.id) && $0.slot?.rackID == rack.id ? $0.slot : nil })
     }
 
     private func finishAudit(_ rack: Rack) {
@@ -301,14 +308,16 @@ struct RackDetailView: View {
     private func tap(_ rack: Rack, _ place: RackPlace, _ bottles: [Bottle]) {
         if auditing {
             // A tap says "the bottles of this position are here" (or undoes it).
-            let slots = Set(bottles.compactMap(\.slot))
-            guard !slots.isEmpty else { return }
-            if slots.isSubset(of: checked) { checked.subtract(slots) } else { checked.formUnion(slots) }
+            let ids = Set(bottles.map(\.id))
+            guard !ids.isEmpty else { return }
+            if ids.isSubset(of: checked) { checked.subtract(ids) } else { checked.formUnion(ids) }
             return
         }
-        if let bottle = moving {
+        if let chosen = moving {
             moving = nil
-            guard let from = bottle.slot, !place.contains(from) else { return }
+            // As it is now: opened or moved meanwhile (sync, another window), it stays as it is.
+            guard let bottle = model.cellar.bottles[chosen.id], bottle.status == .inCellar, bottle.slot == chosen.slot,
+                  let from = bottle.slot, !place.contains(from) else { return }
             if let free = model.cellar.freeSlot(at: place) {
                 model.move(bottle.id, to: free)
             } else if place.holdsOne(in: rack) {
@@ -689,25 +698,25 @@ private struct CheckPlaceSheet: View {
     @Environment(\.dismiss) private var dismiss
     let rack: Rack
     let cell: RackCell
-    @Binding var checked: Set<Slot>
+    @Binding var checked: Set<UUID>
 
     var body: some View {
         let bottles = model.cellar.bottles(in: cell)
-        let slots = bottles.compactMap(\.slot)
+        let ids = bottles.map(\.id)
         NavigationStack {
             List {
                 Section {
                     ForEach(bottles) { bottle in
                         if let slot = bottle.slot {
-                            Toggle(isOn: found(slot)) { row(bottle, slot) }
+                            Toggle(isOn: found(bottle.id)) { row(bottle, slot) }
                         }
                     }
                 }
                 Section {
                     Button("All Here", systemImage: "checkmark.circle") {
-                        checked.formUnion(slots)
+                        checked.formUnion(ids)
                     }
-                    .disabled(slots.allSatisfy { checked.contains($0) })
+                    .disabled(ids.allSatisfy { checked.contains($0) })
                 }
             }
             .navigationTitle(rack.displayLabel(for: cell))
@@ -722,11 +731,11 @@ private struct CheckPlaceSheet: View {
         .macSheetFrame(width: 440, height: 460)
     }
 
-    private func found(_ slot: Slot) -> Binding<Bool> {
+    private func found(_ id: UUID) -> Binding<Bool> {
         Binding(
-            get: { checked.contains(slot) },
+            get: { checked.contains(id) },
             set: { isFound in
-                if isFound { checked.insert(slot) } else { checked.remove(slot) }
+                if isFound { checked.insert(id) } else { checked.remove(id) }
             }
         )
     }

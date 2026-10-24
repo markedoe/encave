@@ -22,7 +22,9 @@ import app.encave.core.CellarException
 import app.encave.core.CellarExport
 import app.encave.core.CellarFilter
 import app.encave.core.CellarSort
+import app.encave.core.CellarVersionFolder
 import app.encave.core.Discovery
+import app.encave.core.FileKind
 import app.encave.core.addDiscovery
 import app.encave.core.deleteDiscovery
 import app.encave.core.markBought
@@ -105,6 +107,8 @@ data class UiMessage(
     val long: Boolean = false,
     /** Set when a later message may take this one's place while it is waiting or shown. */
     val slot: MessageSlot? = null,
+    /** Told when the Undo can no longer run: the message went without it. */
+    val undoGone: (() -> Unit)? = null,
 )
 
 /**
@@ -223,6 +227,7 @@ class AppViewModel(
                 CellarError.RackNotEmpty -> R.string.err_rack_not_empty
                 CellarError.AlreadyConsumed -> R.string.err_already_consumed
                 CellarError.NotReceived -> R.string.err_not_received
+                CellarError.NotInCellar -> R.string.err_already_consumed
                 else -> R.string.err_generic
             }
             is ImportException -> when (error.error) {
@@ -412,7 +417,8 @@ class AppViewModel(
     /** Keeps bottles for an occasion, or frees them (null or blank), with Undo. */
     fun reserve(bottleIds: List<UUID>, occasion: String?) {
         val before = bottleIds.mapNotNull { cellar.value.bottles[it] }
-        if (before.isEmpty()) return
+        // Nothing to change (an empty name for a bottle never kept): no message.
+        if (before.isEmpty() || !cellar.value.changesReservation(bottleIds, occasion)) return
         val name = occasion?.trim().orEmpty()
         change<Unit>({
             val text = if (name.isEmpty()) UiText.Res(R.string.msg_reservation_removed) else UiText.Res(R.string.reserved_for, listOf(name))
@@ -522,8 +528,15 @@ class AppViewModel(
         c.bottles[before.id]?.let { c.updateBottle(it.copy(storageNote = before.storageNote)) }
     }
 
-    /** Swaps the contents of two places; Undo swaps them again. */
-    fun swap(a: Slot, b: Slot) = change<Unit>({ confirm(); post(UiText.Res(R.string.msg_swapped)) { change<Unit> { it.swap(a, b) } } }) { it.swap(a, b) }
+    /**
+     * Swaps the contents of two places. Undo swaps them back while both are still where the swap
+     * put them, so a bottle put in one of the places since never moves.
+     */
+    fun swap(a: Slot, b: Slot) {
+        val first = cellar.value.bottleAt(a)?.id
+        val second = cellar.value.bottleAt(b)?.id
+        change<Unit>({ confirm(); post(UiText.Res(R.string.msg_swapped)) { change<Unit> { it.undoSwap(a, b, first, second) } } }) { it.swap(a, b) }
+    }
 
     fun updateTasting(bottleId: UUID, tasting: Tasting) =
         change<Unit>({ post(UiText.Res(R.string.msg_saved)) }) { it.updateTasting(bottleId, tasting) }
@@ -928,15 +941,9 @@ class AppViewModel(
             onDone()
             if (takingOut && displaced > 0 && old != null) {
                 post(UiText.Res(R.string.msg_bottles_taken_out, listOf(displaced)), long = true) {
-                    change<Unit> { c ->
-                        // Out of their places first, so the rack can take its old shape, then back in.
-                        bottles.forEach { b -> if (c.bottles[b.id]?.status == Bottle.Status.InCellar) c.move(b.id, null) }
-                        c.updateRack(old, takingOut = true)
-                        bottles.forEach { b ->
-                            val slot = b.slot ?: return@forEach
-                            if (c.bottles[b.id]?.status == Bottle.Status.InCellar && c.bottleAt(slot) == null) c.move(b.id, slot)
-                        }
-                    }
+                    // The bottles in the rack now go back with their rows, those taken out to their
+                    // place if still free: what was placed, moved or opened since stays.
+                    change<Unit> { c -> c.undoRackUpdate(old, rowMap, bottles) }
                 }
             }
         }) { it.updateRack(rack, rowMap, takingOut) }
@@ -1024,16 +1031,45 @@ class AppViewModel(
      */
     fun eraseAll(alsoBackups: Boolean = false) {
         viewModelScope.launch {
+            // The previous versions stay: the cellar as it is now is one of them first, as before
+            // any Replace, or nothing is erased.
+            if (!alsoBackups && !backups.keepBeforeReplacing(cellar.value.copy())) {
+                post(UiText.Res(R.string.err_version_not_kept))
+                return@launch
+            }
             val before = cellar.value.copy()
             repository.replace(Cellar(settings = before.settings))
                 .onSuccess {
                     if (alsoBackups) {
                         backups.eraseBackups()
-                        withContext(Dispatchers.IO) { repository.keptAside().forEach { it.delete() } }
+                        // The photos and documents go too, once the Undo is gone (or at the next launch).
+                        val refs = cellar.value.fileRefs
+                        withContext(Dispatchers.IO) {
+                            repository.keptAside().forEach { it.delete() }
+                            photos.expireOrphans(refs.filter { it.kind == FileKind.Photo }.map { it.id }.toSet())
+                            documents.expireOrphans(refs.filter { it.kind == FileKind.Document }.map { it.id }.toSet())
+                        }
                     }
-                    post(UiText.Res(R.string.msg_erased)) { change<Unit> { c -> c.merge(before) } }
+                    val undo = {
+                        // Their files are referred to again: no longer due.
+                        change<Unit>({ if (alsoBackups) removeUnreferencedFiles() }) { c -> c.merge(before) }
+                    }
+                    messageChannel.trySend(UiMessage(UiText.Res(R.string.msg_erased), undo, undoGone = if (alsoBackups) ::removeUnreferencedFiles else null))
                 }
                 .onFailure { fail(it) }
+        }
+    }
+
+    /**
+     * Removes the photo and document files nothing has referred to for a while, or made due by
+     * Erase all data; those of the previous versions are kept too.
+     */
+    private fun removeUnreferencedFiles() {
+        val refs = cellar.value.fileRefs
+        viewModelScope.launch(Dispatchers.IO) {
+            val kept = refs + ((backups.versions as? CellarVersionFolder)?.fileRefs() ?: emptySet())
+            photos.removeOrphans(kept.filter { it.kind == FileKind.Photo }.map { it.id }.toSet())
+            documents.removeOrphans(kept.filter { it.kind == FileKind.Document }.map { it.id }.toSet())
         }
     }
 
@@ -1141,6 +1177,12 @@ class AppViewModel(
         val source = restoreState.value ?: return
         viewModelScope.launch {
             withContext(Dispatchers.IO) { backups.install(source.files) }
+            // Replace: the cellar as it is now is a previous version first, or it is not replaced.
+            if (mode == RestoreMode.Replace && !backups.keepBeforeReplacing(cellar.value.copy())) {
+                post(UiText.Res(R.string.err_version_not_kept))
+                onDone(false)
+                return@launch
+            }
             // Under the repository lock: a sync that lands meanwhile is kept, not reverted.
             repository.replaceWith { current -> current.restoring(source.cellar, mode) }
                 .onSuccess { (before, restored) ->

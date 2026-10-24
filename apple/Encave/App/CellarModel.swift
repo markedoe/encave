@@ -146,6 +146,11 @@ final class CellarModel {
     func restore(_ source: RestoreSource, mode: RestoreMode) async -> Bool {
         let files = source.files
         if !files.isEmpty { await Task.detached(priority: .userInitiated) { BackupCenter.install(files) }.value }
+        // Replace: the cellar as it is now is a previous version first, or it is not replaced.
+        if mode == .replace, await !keepVersion(beforeReplacing: cellar) {
+            errorMessage = Self.versionNotKeptMessage
+            return false
+        }
         let snapshot = cellar
         var merged = cellar
         let summary = merged.merge(source.cellar)
@@ -276,12 +281,7 @@ final class CellarModel {
             // (PhotoStore), and those of the previous versions are kept too; not while a
             // cellar file that could not be read is kept, as its files may be needed.
             if model.errorMessage == nil, store.unreadableFiles().isEmpty {
-                let refs = model.cellar.fileRefs, versions = store.versions
-                Task.detached(priority: .background) {
-                    let kept = refs.union(versions?.fileRefs() ?? [])
-                    PhotoStore.removeOrphans(keeping: Set(kept.filter { $0.kind == .photo }.map(\.id)))
-                    DocumentStore.removeOrphans(keeping: Set(kept.filter { $0.kind == .document }.map(\.id)))
-                }
+                model.removeUnreferencedFiles(priority: .background)
             }
             DocumentStore.removeTemporaryCopies()
             BackupCenter.removeTemporaryFiles()
@@ -471,7 +471,8 @@ final class CellarModel {
     /// Keeps bottles for an occasion (or frees them with nil), with Undo.
     func reserve(_ bottleIDs: [UUID], for occasion: String?) {
         let previous = bottleIDs.compactMap { cellar.bottles[$0] }
-        guard !previous.isEmpty, update({ try $0.reserve(bottleIDs, for: occasion) }) else { return }
+        // Nothing to change (an empty name for a bottle never kept): no banner.
+        guard !previous.isEmpty, cellar.changesReservation(bottleIDs, for: occasion), update({ try $0.reserve(bottleIDs, for: occasion) }) else { return }
         let name = occasion?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         showToast(name.isEmpty ? String(localized: "Reservation removed")
                                : String(localized: "Kept for \(name)")) { [weak self] in
@@ -750,12 +751,14 @@ final class CellarModel {
         }
     }
 
-    /// Swaps the bottles of two places, with Undo (swapping them again).
+    /// Swaps the bottles of two places, with Undo: swapped back while both are still where
+    /// the swap put them, so a bottle put in one of the places since never moves.
     func swap(_ a: Slot, _ b: Slot) {
+        let first = cellar.bottle(at: a)?.id, second = cellar.bottle(at: b)?.id
         guard update({ try $0.swap(a, b) }) else { return }
         successCount += 1
         showToast(String(localized: "Bottles swapped"), lasting: .afterChanges) { [weak self] in
-            self?.update { try $0.swap(a, b) }
+            self?.update { _ = $0.undoSwap(a, b, first: first, second: second) }
         }
     }
 
@@ -769,15 +772,9 @@ final class CellarModel {
         if count > 0, let old {
             // Only this rack and its bottles come back, so the Undo can stay after other changes.
             showToast(String(localized: "Bottles taken out of their positions: \(count)"), lasting: .long) { [weak self] in
-                self?.update { cellar in
-                    guard cellar.rack(old.id) != nil else { return }
-                    // Out of their places first, so the rack can take its old shape, then back in.
-                    for bottle in inRack where cellar.bottles[bottle.id]?.status == .inCellar {
-                        cellar.bottles[bottle.id]?.slot = nil
-                    }
-                    try cellar.updateRack(old, takingOut: true)
-                    CellarModel.putBack(inRack, in: &cellar)
-                }
+                // The bottles in the rack now go back with their rows, those taken out to their
+                // place if still free: what was placed, moved or opened since stays.
+                self?.update { $0.undoRackUpdate(back: old, rowMap: rowMap, takenOut: inRack) }
             }
         }
         return true
@@ -852,23 +849,54 @@ final class CellarModel {
     /// Erases the cellar but keeps the settings (currency, saved searches). Synced
     /// like any change: the other devices of the cellar erase it too. `alsoBackups`: the
     /// previous versions and backups Encave kept on this device go too (`eraseBackups`).
-    func eraseAll(alsoBackups: Bool = false) {
+    /// The previous versions stay: the cellar as it is now is one of them first, as before
+    /// any Replace, or nothing is erased. With `alsoBackups`, the photos and documents go
+    /// too, once the Undo is gone (or at the next launch).
+    func eraseAll(alsoBackups: Bool = false) async {
+        if !alsoBackups, await !keepVersion(beforeReplacing: cellar) {
+            errorMessage = Self.versionNotKeptMessage
+            return
+        }
         let snapshot = cellar
         guard update({ $0 = Cellar(settings: snapshot.settings) }) else { return }
         if alsoBackups { eraseBackups() }
-        showToast(String(localized: "All data erased")) { [weak self] in
+        let removeFiles: (@MainActor () -> Void)? = alsoBackups ? { [weak self] in self?.removeUnreferencedFiles(priority: .utility) } : nil
+        showToast(String(localized: "All data erased"), undoGone: removeFiles) { [weak self] in
             self?.update { $0 = snapshot }
+            // Their files are referred to again: no longer due.
+            if alsoBackups { self?.removeUnreferencedFiles(priority: .utility) }
         }
+    }
+
+    private static var versionNotKeptMessage: String {
+        String(localized: "Your cellar could not be saved as a previous version first, so it was left as it is. Check the space left on this device.")
     }
 
     /// Replace and Join: the cellar as it is now is saved as a previous version first, to
     /// restore from Settings › Your data › Previous Versions.
     func keepVersionBeforeReplacing() {
-        guard let versions = (store as? JSONFileCellarStore)?.versions else { return }
         let current = cellar
-        Task {
-            _ = await Task.detached(priority: .userInitiated) { versions.keepBeforeReplacing(current) }.value
-            backups.noteVersionsChanged()
+        Task { await keepVersion(beforeReplacing: current) }
+    }
+
+    /// Before a Replace: saves `current` as a previous version. False when it could not be
+    /// saved (true when there was nothing to keep, or no versions are kept here).
+    @discardableResult
+    private func keepVersion(beforeReplacing current: Cellar) async -> Bool {
+        guard let versions = (store as? JSONFileCellarStore)?.versions else { return true }
+        let kept = await Task.detached(priority: .userInitiated) { versions.keepBeforeReplacingIfNeeded(current) }.value
+        backups.noteVersionsChanged()
+        return kept
+    }
+
+    /// Removes the photo and document files nothing has referred to for a while, or made due
+    /// by Erase All Data (`OrphanFiles`); those of the previous versions are kept too.
+    func removeUnreferencedFiles(priority: TaskPriority) {
+        let refs = cellar.fileRefs, versions = (store as? JSONFileCellarStore)?.versions
+        Task.detached(priority: priority) {
+            let kept = refs.union(versions?.fileRefs() ?? [])
+            PhotoStore.removeOrphans(keeping: Set(kept.filter { $0.kind == .photo }.map(\.id)))
+            DocumentStore.removeOrphans(keeping: Set(kept.filter { $0.kind == .document }.map(\.id)))
         }
     }
 
@@ -888,6 +916,12 @@ final class CellarModel {
             backups.eraseArchives()
             unreadableFile = nil
             unreadableFilesVersion += 1
+            // The photos and documents go as soon as the Undo is gone (`eraseAll`).
+            let refs = cellar.fileRefs
+            await Task.detached(priority: .utility) {
+                PhotoStore.expireOrphans(keeping: Set(refs.filter { $0.kind == .photo }.map(\.id)))
+                DocumentStore.expireOrphans(keeping: Set(refs.filter { $0.kind == .document }.map(\.id)))
+            }.value
         }
     }
 
@@ -1015,8 +1049,9 @@ final class CellarModel {
         }
     }
 
+    /// `undoGone`: told when the Undo can no longer run (cancelled, or dropped after a change).
     func showToast(_ message: String, lasting: Toast.Lasting = .standard, action: ToastAction? = nil,
-                   undo: (@MainActor () -> Void)? = nil) {
+                   undoGone: (@MainActor () -> Void)? = nil, undo: (@MainActor () -> Void)? = nil) {
         var toast = Toast(message: message, lasting: lasting)
         toast.action = action
         if let undo {
@@ -1027,6 +1062,7 @@ final class CellarModel {
                 self?.undoing = false
                 if self?.toast?.id == id { self?.toast = nil }
             }
+            toastUndo.onCancel = undoGone
             toast.undo = toastUndo
             liveUndos.removeAll { !$0.undo.isPending }
             liveUndos.append((undo: toastUndo, lasting: lasting))
@@ -1174,16 +1210,24 @@ final class ToastUndo: NSObject {
     /// Still to be run.
     var isPending: Bool { action != nil }
 
+    /// Told once when it is cancelled before running.
+    var onCancel: (@MainActor () -> Void)?
+
     @objc func run() {
         let action = self.action
         self.action = nil
+        onCancel = nil
         unregister()
         action?()
     }
 
     func cancel() {
+        let wasPending = isPending
         action = nil
         unregister()
+        let onCancel = self.onCancel
+        self.onCancel = nil
+        if wasPending { onCancel?() }
     }
 
     /// The window's Undo (⌘Z, Edit ▸ Undo, shake) runs it, also after the banner is gone,
@@ -1232,6 +1276,7 @@ extension CellarError {
         case .rackNotEmpty: String(localized: "Some bottles are in positions you removed.")
         case .alreadyConsumed: String(localized: "This bottle has already been opened.")
         case .notReceived: String(localized: "This bottle is on order: mark it received first.")
+        case .notInCellar: String(localized: "This bottle is no longer in the cellar.")
         case .unknownWine, .unknownBottle, .unknownRack, .unknownDiscovery: String(localized: "This item no longer exists.")
         }
     }

@@ -590,6 +590,7 @@ struct BottleRow: View {
         .alert("Keep for an Occasion", isPresented: $reserving) {
             TextField("Occasion", text: $occasion)
             Button("Keep Bottle") { model.reserve([bottle.id], for: occasion) }
+                .disabled(occasion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("The bottle stays where it is but is no longer suggested for tonight.")

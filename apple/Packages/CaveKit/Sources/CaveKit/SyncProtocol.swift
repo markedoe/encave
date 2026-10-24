@@ -371,6 +371,28 @@ public struct PairingCode: Sendable, Equatable {
     }
 }
 
+/// The code being entered to join a cellar. The QR code's commitment (its protection
+/// against a device in the middle) stays with the digits it came with: only typing other
+/// digits drops it, so a confirmation asked before joining never loses it.
+public struct PairingEntry: Equatable, Sendable {
+    public private(set) var digits: String
+    public private(set) var commitment: Data?
+
+    public init(digits: String = "", commitment: Data? = nil) {
+        self.digits = digits
+        self.commitment = commitment
+    }
+
+    /// What the code field holds now: digits only, 6 at most.
+    public mutating func type(_ text: String) {
+        let clean = String(text.filter(\.isNumber).prefix(6))
+        if clean != digits { commitment = nil }
+        digits = clean
+    }
+
+    public var code: PairingCode { PairingCode(digits: digits) }
+}
+
 /// Who a device is, as told during pairing.
 public struct PeerInfo: Sendable, Equatable {
     public var device: UUID

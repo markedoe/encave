@@ -47,6 +47,12 @@ enum DocumentStore {
         PhotoStore.removeOrphans(in: folder, pathExtension: fileExtension, keeping: ids, now: now)
     }
 
+    /// Erase All Data with the backups: the document files nothing refers to are due at once.
+    static func expireOrphans(keeping ids: Set<String>) {
+        guard let folder else { return }
+        OrphanFiles.expire(in: folder, pathExtension: fileExtension, keeping: ids)
+    }
+
     // MARK: Adding
 
     enum AddError: Error {

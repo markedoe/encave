@@ -111,6 +111,14 @@ public struct CellarVersionFolder: CellarVersionSource {
         return Self.date(fromName: name).map { CellarVersion(id: name, date: $0) }
     }
 
+    /// Before Replace (restoring a backup, Replace and Join, Erase All Data that keeps the
+    /// versions): saves `cellar` as a version. True when it was saved or there was nothing
+    /// to keep (an empty cellar, or only the sample); false when it could not be saved, and
+    /// then the cellar must not be replaced.
+    public func keepBeforeReplacingIfNeeded(_ cellar: Cellar, now: Date = .now) -> Bool {
+        cellar.isEmpty || cellar.isOnlySample || keepBeforeReplacing(cellar, now: now) != nil
+    }
+
     /// Erase All Data: removes every version.
     public func removeAll() {
         try? FileManager.default.removeItem(at: folder)
