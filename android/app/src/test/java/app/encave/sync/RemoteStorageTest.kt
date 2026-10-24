@@ -10,7 +10,9 @@ class RemoteStorageTest {
     fun webDavFoldersFromPeersAreNormalized() {
         assertEquals("webdav:https://nas.example.com/encave/", SyncManager.acceptedFromPeer("webdav:https://nas.example.com/encave"))
         assertEquals("webdav:http://nas.local:5005/encave/", SyncManager.acceptedFromPeer("webdav:http://nas.local:5005/encave/"))
-        assertNull(SyncManager.acceptedFromPeer("webdav:http://webdav.example.com/encave/"))
+        // A name over http is checked before each request (LocalName); an outside address now.
+        assertEquals("webdav:http://nas.lan:5005/encave/", SyncManager.acceptedFromPeer("webdav:http://nas.lan:5005/encave/"))
+        assertNull(SyncManager.acceptedFromPeer("webdav:http://203.0.113.7/encave/"))
         assertNull(SyncManager.acceptedFromPeer("webdav:https://jean:secret@nas.example.com/"))
         assertNull(SyncManager.acceptedFromPeer("webdav:"))
     }
