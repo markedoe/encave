@@ -233,7 +233,8 @@ class InteropFixtureTest {
         assertEquals(expected.keys, contents.files.keys)
         for ((ref, data) in contents.files) assertEquals(expected.getValue(ref).toList(), data.readBytes().toList())
         assertEquals(0, contents.skipped)
-        unzipTest(file)?.let { (status, output) -> assertEquals(0, status, output) }
+        val (status, output) = unzipTest(file)
+        assertEquals(0, status, output)
     }
 
     @Test

@@ -15,14 +15,19 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 
-/** Runs `unzip -t` on an archive when the tool is there; null otherwise. */
-internal fun unzipTest(file: File): Pair<Int, String>? {
-    val tool = listOf("/usr/bin/unzip", "/bin/unzip").map(::File).firstOrNull { it.canExecute() } ?: return null
-    val process = ProcessBuilder(tool.path, "-t", file.path).redirectErrorStream(true).start()
+/**
+ * Runs `unzip -t` on an archive. Without the tool the rest of the test is skipped, and
+ * reported as such: call it last.
+ */
+internal fun unzipTest(file: File): Pair<Int, String> {
+    val tool = listOf("/usr/bin/unzip", "/bin/unzip").map(::File).firstOrNull { it.canExecute() }
+    assumeTrue(tool != null, "unzip is not installed")
+    val process = ProcessBuilder(tool!!.path, "-t", file.path).redirectErrorStream(true).start()
     val output = process.inputStream.readBytes().decodeToString()
     return process.waitFor() to output
 }
@@ -116,7 +121,6 @@ class CellarArchiveTest {
             assertEquals(CellarExport.json(cellar, exportedAt), archive.getInputStream(archive.getEntry("cellar.json")).readBytes().decodeToString())
             assertTrue(archive.entries().toList().all { it.method == java.util.zip.ZipEntry.STORED })
         }
-        unzipTest(zip)?.let { (status, output) -> assertEquals(0, status, output) }
 
         val contents = zip.inputStream().use { CellarArchive.read(it, work()) }
         // Backups keep whole seconds.
@@ -125,6 +129,8 @@ class CellarArchiveTest {
         assertEquals(files.keys, contents.files.keys)
         for ((ref, file) in contents.files) assertEquals(files.getValue(ref).readText(), file.readText())
         assertEquals(0, contents.skipped)
+        val (status, output) = unzipTest(zip)
+        assertEquals(0, status, output)
     }
 
     @Test

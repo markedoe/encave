@@ -220,7 +220,11 @@ enum InteropFixture {
         #expect(Set(contents.files.keys) == Set(InteropFixture.archiveFiles.keys))
         for (ref, file) in contents.files { #expect(try Data(contentsOf: file) == InteropFixture.archiveFiles[ref]) }
         #expect(contents.skipped == 0)
-        if let result = try unzipTest(url) { #expect(result.status == 0, "unzip -t: \(result.output)") }
+    }
+
+    @Test(.requiresUnzip) func unzipAcceptsTheArchiveKotlinWrites() throws {
+        let result = try unzipTest(InteropFixture.folder.appendingPathComponent("kotlin-archive.zip"))
+        #expect(result.status == 0, "unzip -t: \(result.output)")
     }
 
     @Test func readsWhatKotlinWrites() throws {

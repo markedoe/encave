@@ -118,7 +118,9 @@ import Testing
     }
 
     @Test func estimatedWindowPerStyle() throws {
-        for item in try Self.vectors().estimatedWindow {
+        let items = try Self.vectors().estimatedWindow
+        #expect(!items.isEmpty)
+        for item in items {
             let wine = Wine(name: "W", vintage: item.vintage, color: Self.color(item.color))
             let window = wine.estimatedWindow()
             #expect(window?.from == item.from && window?.until == item.until, "\(String(describing: item.color))")
@@ -126,7 +128,9 @@ import Testing
     }
 
     @Test func whereTheWindowComesFrom() throws {
-        for item in try Self.vectors().windowSource {
+        let items = try Self.vectors().windowSource
+        #expect(!items.isEmpty)
+        for item in items {
             let wine = Wine(name: "W", vintage: item.vintage, color: Self.color(item.color),
                             drinkFrom: item.from, drinkUntil: item.until)
             let source: String = switch wine.windowSource {
@@ -139,7 +143,9 @@ import Testing
     }
 
     @Test func movingTheEndOfTheWindow() throws {
-        for item in try Self.vectors().movingWindowEnd {
+        let items = try Self.vectors().movingWindowEnd
+        #expect(!items.isEmpty)
+        for item in items {
             let wine = Wine(name: "W", drinkFrom: item.from, drinkUntil: item.until)
             let moved = wine.movingWindowEnd(by: item.by)
             #expect(moved.drinkUntil == item.untilAfter, "\(item)")

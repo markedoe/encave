@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -23,7 +24,8 @@ class WineLookupVectorTest {
 
     private fun JsonObject.text(key: String): String? = this[key]?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
     private fun JsonObject.int(key: String): Int? = this[key]?.takeUnless { it is JsonNull }?.jsonPrimitive?.intOrNull
-    private fun list(key: String) = root.getValue(key).jsonArray.map { it.jsonObject }
+    /** The vectors of one table; an empty one would let its test pass without checking anything. */
+    private fun list(key: String) = root.getValue(key).jsonArray.map { it.jsonObject }.also { assertTrue(it.isNotEmpty(), "no $key") }
 
     private fun cellar(): Cellar {
         val cellar = Cellar()
