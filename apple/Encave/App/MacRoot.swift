@@ -29,14 +29,14 @@ struct MacRoot: View {
                 // in an inspector.
                 NavigationSplitView(columnVisibility: $columns) {
                     sidebar
-                        .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 300)
+                        .navigationSplitViewColumnWidth(min: 190, ideal: 240, max: 300)
                 } detail: {
                     NavigationStack { CellarTable(selection: $wine) }
                 }
             } else {
                 NavigationSplitView(columnVisibility: $columns) {
                     sidebar
-                        .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 300)
+                        .navigationSplitViewColumnWidth(min: 190, ideal: 240, max: 300)
                 } content: {
                     middle
                         .navigationSplitViewColumnWidth(min: 300, ideal: 360, max: 520)
@@ -102,6 +102,7 @@ struct MacRoot: View {
             Section("Storage") {
                 ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
                     Label(rack.name, systemImage: rack.systemImage)
+                        .help(rack.name)
                         .badge(model.cellar.occupancy(of: rack))
                         .tag(MacDestination.rack(rack.id))
                         .accessibilityIdentifier("rack.card.\(index)")

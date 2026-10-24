@@ -67,7 +67,16 @@ enum InventoryPDF {
                 .sorted { ($0.row, $0.column, $0.depth) < ($1.row, $1.column, $1.depth) }
             guard !slots.isEmpty else { continue }
             let rackName = rack.name
-            let labels = slots.map { rack.displayLabel(for: $0) }.joined(separator: ", ")
+            // The same place once, with its count ("Bin A1 ×2"), as on Android.
+            var order: [String] = []
+            var counts: [String: Int] = [:]
+            for label in slots.map({ rack.displayLabel(for: $0) }) {
+                if counts[label] == nil { order.append(label) }
+                counts[label, default: 0] += 1
+            }
+            let counted = order.map { label in counts[label, default: 1] > 1 ? "\(label) ×\(counts[label, default: 1])" : label }
+            // A fridge's places have commas of their own.
+            let labels = counted.joined(separator: counted.contains { $0.contains(",") } ? "; " : ", ")
             lines.append(String(localized: "\(rackName): \(labels)"))
         }
         let elsewhere = bottles.filter { bottle in bottle.slot.flatMap { cellar.rack($0.rackID) } == nil }

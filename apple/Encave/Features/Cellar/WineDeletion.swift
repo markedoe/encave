@@ -32,7 +32,7 @@ struct WineDeletionConfirmation: ViewModifier {
         let ids = wineIDs.filter { model.cellar.wines[$0] != nil }
         let bottles = model.cellar.bottleRecordCount(ofWines: ids)
         let single = ids.count == 1 ? ids.first.flatMap { model.cellar.wines[$0] } : nil
-        content.alert(title(single: single, count: ids.count), isPresented: Binding(
+        content.alert(title(single: single, count: ids.count, bottles: bottles), isPresented: Binding(
             get: { !ids.isEmpty }, set: { if !$0 { wineIDs = [] } }
         )) {
             Button(role: .destructive) {
@@ -40,21 +40,36 @@ struct WineDeletionConfirmation: ViewModifier {
                 wineIDs = []
                 onDelete()
             } label: {
-                if single != nil { Text("Delete Wine") } else { Text("Delete Wines") }
+                if single != nil {
+                    Text("Delete Wine")
+                } else if bottles > 0 {
+                    Text("Delete Bottles")
+                } else {
+                    Text("Delete Wines")
+                }
             }
             .accessibilityIdentifier("wine.delete.confirm")
             Button("Cancel", role: .cancel) { wineIDs = [] }
         } message: {
-            Text("\(bottles) bottles and their tastings are deleted too. You can undo right after.")
+            if single == nil, bottles > 0 {
+                Text("Their bottles and tastings are deleted too. You can undo right after.")
+            } else {
+                Text("\(bottles) bottles and their tastings are deleted too. You can undo right after.")
+            }
         }
     }
 
-    private func title(single: Wine?, count: Int) -> Text {
+    /// Several wines: counted in bottles first, "Delete 15 bottles (2 wines)?", as on Android.
+    private func title(single: Wine?, count: Int, bottles: Int) -> Text {
         if let single {
             let wineName = single.displayName
             return Text("Delete “\(wineName)”?")
         }
-        return Text("Delete \(count) wines?")
+        guard bottles > 0 else { return Text("Delete \(count) wines?") }
+        let bottlesText = String(localized: "\(bottles) bottles")
+        let winesText = String(localized: "\(count) wines")
+        // A format key: the parentheses would confuse apple/tools/l10n.py's reading of an interpolation.
+        return Text(verbatim: String(format: String(localized: "Delete %@ (%@)?"), bottlesText, winesText))
     }
 }
 

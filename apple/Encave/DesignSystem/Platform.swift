@@ -1,10 +1,20 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 extension View {
     /// Gives sheets a comfortable size on the Mac; no effect on iPhone and iPad.
+    /// The size is an ideal, capped by the window, so a sheet in a small window still
+    /// shows its buttons and scrolls its content.
     func macSheetFrame(width: CGFloat = 460, height: CGFloat = 620) -> some View {
         #if os(macOS)
-        return frame(minWidth: width, idealWidth: width, minHeight: height, idealHeight: height)
+        // Sheets never become the main window: this is the window the sheet attaches to.
+        let room = NSApp.mainWindow?.contentLayoutRect.size
+        let idealWidth = min(width, max(360, (room?.width ?? width) - 40))
+        let idealHeight = min(height, max(360, (room?.height ?? height) - 24))
+        return frame(minWidth: min(width, 360), idealWidth: idealWidth,
+                     minHeight: 360, idealHeight: idealHeight)
         #else
         return self
         #endif
@@ -71,9 +81,10 @@ extension View {
     }
 
     /// Half-height sheets are see-through on iOS 26: give forms an opaque background.
-    func solidSheetBackground() -> some View {
+    /// Off: the system's own sheet background, for a full-height list with a search field.
+    func solidSheetBackground(_ isOn: Bool = true) -> some View {
         #if os(iOS)
-        return presentationBackground(Color(uiColor: .systemGroupedBackground))
+        return presentationBackground(isOn ? AnyShapeStyle(Color(uiColor: .systemGroupedBackground)) : AnyShapeStyle(.background))
         #else
         return self
         #endif

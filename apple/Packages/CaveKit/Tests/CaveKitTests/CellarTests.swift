@@ -11,6 +11,35 @@ import Testing
         return cellar
     }
 
+    @Test func bottlesAreListedAsTheirPlacesRead() {
+        let grid = Rack(name: "Grid", rows: 2, columns: 3, depth: 2)
+        let fridge = Rack(name: "Fridge", kind: .staggered, rows: 1, columns: 6, depth: 2, shelfLayers: [2, 1])
+        let cellar = Cellar(racks: [grid, fridge])
+        let wineID = UUID()
+        let day = Date(timeIntervalSince1970: 1_000_000)
+        func bottle(_ rack: Rack?, _ row: Int = 0, _ column: Int = 0, depth: Int = 0, note: String? = nil,
+                    added: TimeInterval = 0) -> Bottle {
+            Bottle(wineID: wineID, slot: rack.map { Slot(rackID: $0.id, row: row, column: column, depth: depth) },
+                   storageNote: note, addedAt: day.addingTimeInterval(added))
+        }
+        let expected = [
+            bottle(grid, 0, 2), bottle(grid, 0, 0, depth: 1), bottle(grid, 1, 0),
+            // Fridge: shelf 1 front (bottom layer B, then top layer A), shelf 1 back, then shelf 2.
+            bottle(fridge, 1, 4), bottle(fridge, 0, 0), bottle(fridge, 1, 0, depth: 1), bottle(fridge, 2, 0),
+            bottle(nil, note: "Garage", added: -10), bottle(nil, note: "Garage", added: 5),
+        ]
+        // Whatever order the bottles come in, newest first included, the order is the same.
+        let shuffled = [expected[8], expected[4], expected[1], expected[7], expected[6], expected[0],
+                        expected[5], expected[3], expected[2]]
+        #expect(cellar.inPlaceOrder(shuffled).map(\.id) == expected.map(\.id))
+        #expect(cellar.inPlaceOrder(expected.reversed()).map(\.id) == expected.map(\.id))
+        // Two bottles alike but for their id: by id.
+        let twins = [bottle(nil, added: 1), bottle(nil, added: 1)]
+        let byID = twins.sorted { $0.id.uuidString < $1.id.uuidString }.map(\.id)
+        #expect(cellar.inPlaceOrder(twins).map(\.id) == byID)
+        #expect(cellar.inPlaceOrder(twins.reversed()).map(\.id) == byID)
+    }
+
     @Test func journalSearchLooksInTheWineAndTheTasting() throws {
         var cellar = cellarWithRack()
         let wine = Wine(name: "Clos Test", producer: "Domaine Été", grapes: ["Gamay"])

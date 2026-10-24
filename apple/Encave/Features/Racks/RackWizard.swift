@@ -122,12 +122,12 @@ struct RackWizard: View {
         }
         countSection("Rows", value: $settings.rows, footer: "Counted from the top. Rows are lettered A, B, C…")
         countSection(settings.layout == .diamond ? "Bins per row" : settings.layout == .honeycomb ? "Bottles in the widest row" : "Bottles per row",
-                     value: $settings.columns, footer: "Counted from the left. Places are numbered 1, 2, 3…")
+                     value: $settings.columns, footer: "Counted from the left. Positions are numbered 1, 2, 3…")
         if settings.layout == .diamond {
             countSection("Bottles per bin", value: $settings.bottlesPerBin, range: 2...StorageSettings.maxCount,
                          footer: "A diamond bin of about 30 cm holds around 10 standard bottles.")
         } else {
-            depthSection(footer: "How many bottles fit one behind the other in each cell.")
+            depthSection(footer: "How many bottles fit one behind the other in each position.")
         }
     }
 
@@ -274,12 +274,13 @@ private struct TypeRow: View {
                 .frame(minWidth: 36)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
+                // Plain colours: in a Form button, .primary would take the accent tint.
                 Text(type.name)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.primary)
                 Text(type.subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)

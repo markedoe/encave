@@ -55,7 +55,7 @@ struct WineDetailView: View {
                     .sorted { ($0.expectedAt ?? .distantFuture) < ($1.expectedAt ?? .distantFuture) }
                 if !bottles.isEmpty || orders.isEmpty {
                     Section {
-                        ForEach(bottles) { bottle in
+                        ForEach(model.cellar.inPlaceOrder(bottles)) { bottle in
                             BottleRow(bottle: bottle)
                                 // Onto a storage in the sidebar: to its first free position.
                                 .sidebarDraggable(BottleDrag(bottleID: bottle.id, name: model.cellar.wines[bottle.wineID]?.displayName ?? ""))

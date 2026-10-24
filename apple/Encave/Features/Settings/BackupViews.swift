@@ -323,7 +323,7 @@ struct RestorePreviewView: View {
                     LabeledContent("Made On", value: date)
                 }
             }
-            Section("In This Backup") {
+            Section("In this backup") {
                 count("Wines with bottles", preview.wines)
                 count("Bottles in the cellar", preview.bottles)
                 count("Storage", preview.racks)
@@ -340,7 +340,7 @@ struct RestorePreviewView: View {
                     count("Different", preview.changed)
                 }
             } header: {
-                Text("Compared with Your Cellar")
+                Text("Compared with your cellar")
             } footer: {
                 Text("Wines, bottles, storage and wines tasted elsewhere.")
             }
@@ -367,6 +367,16 @@ struct RestorePreviewView: View {
                     Label("Replace This Cellar", systemImage: "arrow.counterclockwise")
                 }
                 .accessibilityIdentifier("restore.replace")
+                // On the button, so the iPad popover points at it.
+                .confirmationDialog("Replace this cellar?", isPresented: $confirmingReplace, titleVisibility: .visible) {
+                    Button("Replace This Cellar", role: .destructive) { run(.replace) }
+                } message: {
+                    if model.sync.otherDevices.isEmpty {
+                        Text("Your cellar becomes exactly as in this backup: what is not in it is deleted. You can undo right after.")
+                    } else {
+                        Text("Your cellar becomes exactly as in this backup, on this device and on the other devices that sync with it: what is not in it is deleted there too. You can undo right after.")
+                    }
+                }
             } footer: {
                 Text("Add What Is Missing adds the wines, bottles, storage and Journal entries that are not in your cellar, and the saved searches whose name you do not have; nothing else changes, the currency included. Replace This Cellar makes your cellar exactly as in this backup, its settings (currency, saved searches) included. You can undo right after.")
             }
@@ -387,15 +397,6 @@ struct RestorePreviewView: View {
                     Button("Cancel") { dismiss() }
                         .disabled(working)
                 }
-            }
-        }
-        .confirmationDialog("Replace this cellar?", isPresented: $confirmingReplace, titleVisibility: .visible) {
-            Button("Replace This Cellar", role: .destructive) { run(.replace) }
-        } message: {
-            if model.sync.otherDevices.isEmpty {
-                Text("Your cellar becomes exactly as in this backup: what is not in it is deleted. You can undo right after.")
-            } else {
-                Text("Your cellar becomes exactly as in this backup, on this device and on the other devices that sync with it: what is not in it is deleted there too. You can undo right after.")
             }
         }
     }

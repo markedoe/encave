@@ -30,11 +30,11 @@ class InventoryPdfTest {
         // One line per storage, the storage named once.
         assertEquals(
             "Main rack: A1, A2, A3\n" +
-                "Head-to-tail cabinet: " + (1..4).joinToString("; ") { "Shelf 1, front, bottom layer, position $it" },
+                "Head-to-tail cabinet: " + (1..4).joinToString("; ") { "Shelf\u00A01, front, bottom layer, position\u00A0$it" },
             tilleuls.places,
         )
         assertEquals("€266", tilleuls.value)
-        assertEquals("Head-to-tail cabinet: Shelf 1, back, top layer, position 2\nKitchen", rows.single { it.wine.startsWith("Rosé") }.places)
+        assertEquals("Head-to-tail cabinet: Shelf\u00A01, back, top layer, position\u00A02\nKitchen", rows.single { it.wine.startsWith("Rosé") }.places)
     }
 
     @Test

@@ -1286,6 +1286,11 @@ extension SampleData.Labels {
         labels.merchant = String(localized: "Wine merchant")
         labels.tagBirthYear = String(localized: "Birth year")
         labels.occasion2 = String(localized: "Christmas dinner")
+        labels.piedmont = String(localized: "Piedmont")
+        labels.kakheti = String(localized: "Kakheti")
+        labels.italy = String(localized: "Italy")
+        labels.switzerland = String(localized: "Switzerland")
+        labels.georgia = String(localized: "Georgia")
         return labels
     }
 }

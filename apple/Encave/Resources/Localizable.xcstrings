@@ -411,6 +411,46 @@
         }
       }
     },
+    "%lld bottles kept for an occasion are not suggested.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottle kept for an occasion is not suggested."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bottles kept for an occasion are not suggested."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteille réservée pour une occasion n’est pas suggérée."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bouteilles réservées pour une occasion ne sont pas suggérées."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld bottles on order": {
       "localizations": {
         "en": {
@@ -1471,12 +1511,22 @@
         }
       }
     },
-    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.": {
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPad › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement."
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPad › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement."
+          }
+        }
+      }
+    },
+    "A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement."
           }
         }
       }
@@ -3071,16 +3121,6 @@
         }
       }
     },
-    "Bottles kept for an occasion are not suggested: %lld": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bouteilles réservées pour une occasion, non suggérées : %lld"
-          }
-        }
-      }
-    },
     "Bottles not found: %lld": {
       "localizations": {
         "fr": {
@@ -4041,7 +4081,7 @@
         }
       }
     },
-    "Compared with Your Cellar": {
+    "Compared with your cellar": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -4351,6 +4391,16 @@
         }
       }
     },
+    "Delete %@ (%@)?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer %@ (%@) ?"
+          }
+        }
+      }
+    },
     "Delete %lld wines?": {
       "localizations": {
         "en": {
@@ -4397,6 +4447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer la bouteille"
+          }
+        }
+      }
+    },
+    "Delete Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les bouteilles"
           }
         }
       }
@@ -6061,6 +6121,16 @@
         }
       }
     },
+    "Georgia": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Géorgie"
+          }
+        }
+      }
+    },
     "Get Cellar Contents": {
       "localizations": {
         "fr": {
@@ -6086,7 +6156,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recevoir un rappel le 1er de chaque mois de ce qu’il faut boire ?"
+            "value": "Recevoir un rappel le 1ᵉʳ de chaque mois de ce qu’il faut boire ?"
           }
         }
       }
@@ -6661,16 +6731,6 @@
         }
       }
     },
-    "In This Backup": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dans cette sauvegarde"
-          }
-        }
-      }
-    },
     "In grids and honeycombs, rows are lettered from the top and positions numbered from the left: **B3** is the second row, third position. With two bottles in a position, **B3, back** is the one behind. In a wine fridge, shelves are numbered from the top and positions along each shelf: **Shelf 2, position 3**, and the one behind it **Shelf 2, back, position 3**; an empty position shows only its number. In bins, positions read like **Bin B3**. The same name shows on the wine's page, in the bottle list and for Siri.": {
       "localizations": {
         "fr": {
@@ -6697,6 +6757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En arrière-plan, quand iOS le permet"
+          }
+        }
+      }
+    },
+    "In this backup": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans cette sauvegarde"
           }
         }
       }
@@ -6841,6 +6911,16 @@
         }
       }
     },
+    "Italy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Italie"
+          }
+        }
+      }
+    },
     "Its bottles, drinking window and tastings appear here.": {
       "localizations": {
         "fr": {
@@ -6947,6 +7027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Entrées du Journal"
+          }
+        }
+      }
+    },
+    "Kakheti": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kakhétie"
           }
         }
       }
@@ -8311,6 +8401,16 @@
         }
       }
     },
+    "None": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun"
+          }
+        }
+      }
+    },
     "Nose": {
       "localizations": {
         "fr": {
@@ -9657,6 +9757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Images"
+          }
+        }
+      }
+    },
+    "Piedmont": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piémont"
           }
         }
       }
@@ -12221,6 +12331,16 @@
         }
       }
     },
+    "Switzerland": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suisse"
+          }
+        }
+      }
+    },
     "Sync Away from Home": {
       "localizations": {
         "fr": {
@@ -14056,7 +14176,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer."
+            "value": "Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1ᵉʳ), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer."
           }
         }
       }

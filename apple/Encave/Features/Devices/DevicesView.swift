@@ -140,16 +140,23 @@ struct DevicesView: View {
             }
 
             Section {
-                Label("Encrypted from end to end", systemImage: "lock.shield")
-                Group {
-                    if sync.remoteStorage != nil {
-                        Text("Each device proves it belongs to the cellar with its own key, and everything is encrypted. On your network, devices talk directly. Away from home, the storage only holds encrypted files.")
-                    } else {
-                        Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.")
+                // Title and text in one row, with no empty band between them.
+                Label {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Encrypted from end to end")
+                        Group {
+                            if sync.remoteStorage != nil {
+                                Text("Each device proves it belongs to the cellar with its own key, and everything is encrypted. On your network, devices talk directly. Away from home, the storage only holds encrypted files.")
+                            } else {
+                                Text("Devices talk directly on your network. Each one proves it belongs to the cellar with its own key, and everything they exchange is encrypted. No server is involved.")
+                            }
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     }
+                } icon: {
+                    Image(systemName: "lock.shield")
                 }
-                .font(.footnote)
-                .foregroundStyle(.secondary)
                 HelpLink(topic: .devices, title: "Help with devices")
             }
 

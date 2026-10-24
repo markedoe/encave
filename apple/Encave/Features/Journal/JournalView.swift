@@ -36,13 +36,15 @@ struct JournalView: View {
                     NavigationLink {
                         InsightsView()
                     } label: {
-                        Label {
+                        // The icon beside the title; wrapped lines stay aligned with the text.
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            Image(systemName: "chart.pie")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Insights").font(.headline)
                                 Text("Your cellar in figures").font(.subheadline).foregroundStyle(.secondary)
                             }
-                        } icon: {
-                            Image(systemName: "chart.pie").foregroundStyle(Color.accentColor)
                         }
                     }
                 }
@@ -330,21 +332,18 @@ struct TastingRow: View {
                         .labelStyle(CompactLabelStyle())
                 }
                 // The same order as a wine tasted elsewhere: details, rating, note.
-                HStack(spacing: 10) {
-                    // The style in words, not only by the bottle's color.
-                    if showsWine, let style = wine?.color?.name {
-                        Text(style)
-                    }
-                    if let occasion = tasting?.occasion {
-                        Label(occasion, systemImage: "person.2")
-                    }
-                    if tasting?.isDetailed == true {
-                        Label("Full note", systemImage: "text.alignleft")
-                    }
+                // One line of text that wraps between words, never inside a detail.
+                // The style in words, not only by the bottle's color.
+                let details = [
+                    showsWine ? wine?.color?.name : nil,
+                    tasting?.occasion,
+                    tasting?.isDetailed == true ? String(localized: "Full note") : nil,
+                ].compactMap { $0 }.filter { !$0.isEmpty }
+                if !details.isEmpty {
+                    Text(verbatim: details.joined(separator: " · "))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .labelStyle(CompactLabelStyle())
                 if let rating = tasting?.rating {
                     RatingView(rating: rating)
                 }

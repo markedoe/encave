@@ -1069,7 +1069,7 @@ S = [
  ("reminders_start_with", "Start with %1$s.", "Commencez par %1$s."),
  ("reminders_delivery_title", "Delivery expected today", "Livraison prévue aujourd’hui"),
  ("help_tonight_reminders", "Turn on **Reminders** in Settings, or with **Turn on** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open settings** takes you to the system settings to turn them on.",
-  "Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer."),
+  "Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1ᵉʳ), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer."),
 
  # App shortcuts
  ("shortcut_scan", "Scan a bottle", "Scanner une bouteille"),
@@ -1417,7 +1417,7 @@ S = [
  ("tonight_reserved_left_out", "Bottles kept for an occasion are not suggested: %1$d", "Bouteilles réservées pour une occasion, non suggérées : %1$d"),
  ("tonight_nothing_ready", "Nothing is at its peak right now", "Rien n’est à son apogée en ce moment"),
  ("tonight_ready_from", "Ready from %1$s: %2$s", "Prêt à partir de %1$s : %2$s"),
- ("tonight_reminders_offer", "Get a reminder on the 1st of each month of what to drink?", "Recevoir un rappel le 1er de chaque mois de ce qu’il faut boire ?"),
+ ("tonight_reminders_offer", "Get a reminder on the 1st of each month of what to drink?", "Recevoir un rappel le 1ᵉʳ de chaque mois de ce qu’il faut boire ?"),
  ("reminders_turned_on", "Reminders on", "Rappels activés"),
  ("discovery_removed_from_list", "Removed from your shopping list", "Retiré de votre liste d’achats"),
  ("insights_empty_title", "No figures yet", "Pas encore de chiffres"),

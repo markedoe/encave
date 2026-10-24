@@ -329,6 +329,14 @@ struct CellarList: View {
 }
 
 extension CellarList {
+    private var isShortSelectAll: Bool {
+        #if os(iOS)
+        return isPad
+        #else
+        return false
+        #endif
+    }
+
     @ToolbarContentBuilder
     func selectionToolbar(_ groups: [WineGroup]) -> some ToolbarContent {
         ToolbarItem(placement: .confirmationAction) {
@@ -338,9 +346,14 @@ extension CellarList {
         ToolbarItem(placement: Self.selectAllPlacement) {
             let all = Set(groups.map(\.wine.id))
             let allPicked = !all.isEmpty && all.isSubset(of: picked)
-            Button(allPicked ? "Deselect All" : "Select All") {
+            let full: LocalizedStringKey = allPicked ? "Deselect All" : "Select All"
+            Button {
                 picked = allPicked ? [] : all
+            } label: {
+                // iPad sidebar: short, so the count between the buttons is not cut.
+                Text(isShortSelectAll ? (allPicked ? LocalizedStringKey("None") : LocalizedStringKey("All")) : full)
             }
+            .accessibilityLabel(Text(full))
             .disabled(all.isEmpty)
             .accessibilityIdentifier("cellar.select.all")
         }
@@ -481,7 +494,7 @@ private struct CellarStats: View {
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .accessibilityIdentifier("cellar.stats.compact")
         } else {
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
                 Button(action: onBottles) {
                     StatTile(count: counts.bottles, caption: .count("bottles", counts.bottles), systemImage: "wineglass", opens: true)
                 }
@@ -501,6 +514,8 @@ private struct CellarStats: View {
                 .accessibilityIdentifier("cellar.stat.soon")
             }
             .buttonStyle(.plain)
+            // As tall as the tallest tile, each tile filling it.
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 

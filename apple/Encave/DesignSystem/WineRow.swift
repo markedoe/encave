@@ -8,13 +8,16 @@ struct WineRow: View {
 
     private var subtitle: String { group.wine.styleLine }
 
+    /// The bottles as their places read, so "A1 and 6 more" names the same place every time.
+    private var placed: [Bottle] { model.cellar.inPlaceOrder(group.bottles) }
+
     private var location: String? {
-        Self.places(group.bottles.compactMap { model.locationLabel(for: $0) })
+        Self.places(placed.compactMap { model.locationLabel(for: $0) })
     }
 
     /// The symbol of the first placed bottle's rack.
     private var locationIcon: String {
-        group.bottles.first { $0.slot != nil }.map(model.locationIcon(for:)) ?? RackKind.grid.systemImage
+        placed.first { $0.slot != nil }.map(model.locationIcon(for:)) ?? RackKind.grid.systemImage
     }
 
     /// "A1", or "A1 and 2 more" when the bottles are in several places (each place counted once).
@@ -58,13 +61,17 @@ struct WineRow: View {
                         ArrivalLabel(date: group.bottles.first?.expectedAt)
                     }
                     if maturity != .unknown {
+                        // Kept on one line: the location gives way first.
                         MaturityLabel(maturity: maturity, short: true)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     if let location {
                         Label(location, systemImage: locationIcon)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
+                            .layoutPriority(-1)
                     }
                 }
                 .font(.caption)

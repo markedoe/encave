@@ -59,7 +59,8 @@ struct StatTile: View {
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Fills the row's height, so tiles side by side match and their figures line up.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .overlay(alignment: .topTrailing) {
             if opens {
                 Image(systemName: "chevron.right")

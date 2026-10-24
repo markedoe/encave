@@ -20,7 +20,9 @@ struct DrinkSheet: View {
             }
         }
         .presentationDetents(bottleID == nil ? [.large] : [.medium, .large])
-        .solidSheetBackground()
+        // Choosing the bottle: full height, with the standard background, so the search
+        // field's placeholder keeps its usual contrast.
+        .solidSheetBackground(bottleID != nil)
         .macSheetFrame(width: 480, height: 600)
     }
 }
@@ -193,7 +195,7 @@ private struct BottleChoiceLabel: View {
         if let occasionName = bottle.reservedFor {
             Label("\(location) · Kept for \(occasionName)", systemImage: "gift")
         } else {
-            Label(location, systemImage: "square.grid.3x3")
+            Label(location, systemImage: model.locationIcon(for: bottle))
         }
     }
 }
