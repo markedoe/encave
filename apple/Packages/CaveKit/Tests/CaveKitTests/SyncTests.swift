@@ -179,6 +179,13 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         syncBoth(&a, &b)
         #expect(a.cellar == b.cellar)
         #expect(a.cellar.bottles.values.allSatisfy { a.cellar.wines[$0.wineID] != nil })
+        // A stamped the wine, then each bottle as deleted (3 changes), B made 1: A's deletion
+        // of that bottle is later in Lamport order, so the wine does not come back.
+        #expect(a.cellar.wines.isEmpty && a.cellar.bottles.isEmpty)
+        let deletion = try #require(a.state.stamps[SyncKey(.bottle, bottle.id).string])
+        #expect(deletion.deleted && deletion.device == a.state.device)
+        #expect(a.state.stamps[SyncKey(.wine, wine.id).string]?.deleted == true)
+        #expect(a.state.stamps == b.state.stamps)
     }
 
     @Test func theSameBottleDrunkOnBothDevicesStaysOneBottle() throws {
@@ -216,6 +223,24 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(a.cellar == b.cellar)
         #expect(a.cellar.racks.isEmpty)
         #expect(a.cellar.bottles.values.allSatisfy { $0.slot == nil })
+    }
+
+    @Test func aBottlePlacedInARowRemovedElsewhereLosesItsPlace() throws {
+        let (cellar, _, rack) = try sample()
+        var (a, b) = pair(cellar)
+        var smaller = rack
+        smaller.rows = 1
+        try a.edit { try $0.updateRack(smaller) }
+        // B puts a bottle in the second row meanwhile.
+        let loose = try #require(cellar.bottles.values.first { $0.slot == nil })
+        try b.edit { try $0.move(loose.id, to: Slot(rackID: rack.id, row: 1, column: 1)) }
+        syncBoth(&a, &b)
+        #expect(a.cellar == b.cellar)
+        #expect(a.state.stamps == b.state.stamps)
+        #expect(a.cellar.racks.map(\.rows) == [1])
+        #expect(a.cellar.bottles[loose.id]?.status == .inCellar)
+        #expect(a.cellar.bottles[loose.id]?.slot == nil)
+        #expect(a.cellar.bottles.values.filter { $0.slot != nil }.count == 1, "the bottle in the first row keeps its place")
     }
 
     @Test func rackOrderAndSettingsFollowTheLaterChange() throws {
@@ -401,6 +426,46 @@ private func syncBoth(_ a: inout Device, _ b: inout Device) {
         #expect(onA.stamps == onB.stamps)
         #expect(onA.cellar.wines[wine.id] != nil)
         #expect(onA.cellar.bottles.count == 1)
+
+        // Two more rounds both ways change nothing: the same cellars, the same stamps.
+        cellarA = onA.cellar; stateA.stamps = onA.stamps; stateA.clock = onA.clock
+        cellarB = onB.cellar; stateB.stamps = onB.stamps; stateB.clock = onB.clock
+        for _ in 0..<2 {
+            let nextA = CellarMerge.merge(local: cellarA, stateA, remote: cellarB, stateB)
+            let nextB = CellarMerge.merge(local: cellarB, stateB, remote: cellarA, stateA)
+            #expect(nextA.cellar == onA.cellar && nextB.cellar == onA.cellar)
+            #expect(nextA.stamps == onA.stamps && nextB.stamps == onA.stamps)
+            cellarA = nextA.cellar; stateA.stamps = nextA.stamps; stateA.clock = nextA.clock
+            cellarB = nextB.cellar; stateB.stamps = nextB.stamps; stateB.clock = nextB.clock
+        }
+    }
+
+    @Test func aDiscoveryAddedAfterItsWineWasDeletedRevivesIt() throws {
+        let wine = Wine(name: "Shared")
+        var cellar = Cellar()
+        try cellar.addBottles(of: wine, quantity: 1)
+        let deviceA = UUID(), deviceB = UUID()
+        var stateA = SyncState.starting(with: cellar, device: deviceA)
+        var stateB = stateA
+        stateB.device = deviceB
+        // A deletes the wine; B, later in Lamport order, notes a discovery of it in the Journal.
+        var cellarA = cellar, cellarB = cellar
+        let beforeA = cellarA
+        cellarA.deleteWine(wine.id)
+        stateA.record(from: beforeA, to: cellarA)
+        stateB.clock += 5
+        let beforeB = cellarB
+        let discovery = cellarB.addDiscovery(Discovery(wineID: wine.id, rating: 4), wine: wine)
+        stateB.record(from: beforeB, to: cellarB)
+        let onA = CellarMerge.merge(local: cellarA, stateA, remote: cellarB, stateB)
+        let onB = CellarMerge.merge(local: cellarB, stateB, remote: cellarA, stateA)
+        #expect(onA.cellar == onB.cellar)
+        #expect(onA.stamps == onB.stamps)
+        #expect(onA.cellar.wines[wine.id] == wine)
+        #expect(onA.cellar.discoveries[discovery.id] == discovery)
+        #expect(onA.cellar.bottles.isEmpty, "the bottle deleted with the wine stays deleted")
+        let discoveryStamp = try #require(onA.stamps[SyncKey(.discovery, discovery.id).string])
+        #expect(onA.stamps[SyncKey(.wine, wine.id).string] == Stamp(counter: discoveryStamp.counter, device: deviceB))
     }
 }
 

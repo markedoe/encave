@@ -46,6 +46,8 @@ final class SyncService {
     /// bottles stay here but are never sent (`CellarMerge.onlyStamped`), and are replaced
     /// once the first sync goes through (docs/SYNC.md §5).
     private(set) var pendingReplace = UserDefaults.standard.bool(forKey: SyncService.pendingReplaceKey)
+    /// The stamps that merges replaced while their cellar is not saved yet.
+    @ObservationIgnored private var unsavedMerges = UnsavedMerges()
 
     /// Away from home: where the encrypted files are (iCloud, a WebDAV folder or a relay), if anywhere.
     private(set) var remoteStorage: RemoteStorage?
@@ -143,6 +145,7 @@ final class SyncService {
         remoteSentThrough = UserDefaults.standard.object(forKey: Self.remoteSentKey) as? Date
         model.onLocalChange = { [weak self] old, new in self?.recordLocalChange(from: old, to: new) }
         model.onSaveReverted = { [weak self] shown, saved in self?.recordRevert(from: shown, to: saved) }
+        model.onSaved = { [weak self] number in self?.unsavedMerges.saved(through: number) }
         if identityUnavailable {
             // Changes are still stamped (with the device ID kept in the sync state); only
             // the network stays off.
@@ -479,6 +482,7 @@ final class SyncService {
         generation += 1
         membership = nil
         state = nil
+        unsavedMerges = UnsavedMerges()
         lastSync = [:]
         wasRemoved = false
         localFailedAt = nil
@@ -533,6 +537,8 @@ final class SyncService {
     private func recordRevert(from shown: Cellar, to saved: Cellar) {
         guard isSetUp, var state else { return }
         state.recordRevert(from: shown, to: saved)
+        // What sessions merged in went back too: their stamps go back, so it is taken in again.
+        unsavedMerges.revert(&state)
         guard state != self.state else { return }
         self.state = state
         try? files?.syncState.save(state)
@@ -558,10 +564,12 @@ final class SyncService {
 
     /// Takes in the result of a session. The cellar may have changed during it, so the
     /// result is merged again with what is here now: no local edit is lost.
-    func apply(_ result: SyncSnapshot, from peer: UUID?) {
+    /// Returns false if nothing was taken in (the session was for another cellar).
+    @discardableResult
+    func apply(_ result: SyncSnapshot, from peer: UUID?) -> Bool {
         // A session that started before this device left or joined another cellar
         // brings nothing into the cellar it has now.
-        guard let model, let state, let membership, result.membership.cellarID == membership.cellarID else { return }
+        guard let model, let state, let membership, result.membership.cellarID == membership.cellarID else { return false }
         // Joined with Replace: the merge starts from what this device shares, so its own
         // bottles give way to the other cellar now that it has arrived.
         let before = sharedCellar(model.cellar, state)
@@ -570,7 +578,11 @@ final class SyncService {
         newState.stamps = merge.stamps
         newState.clock = max(merge.clock, newState.clock)
         self.state = newState
-        model.applySynced(merge.cellar)
+        // The stamps are used at once, so a later session merges against them; they go
+        // back if the merged cellar cannot be saved (`recordRevert`).
+        if let number = model.applySynced(merge.cellar) {
+            unsavedMerges.add(before: state.stamps, after: merge.stamps, generation: number)
+        }
         if pendingReplace { setPendingReplace(false) }
         let members = membership.merged(with: result.membership)
         self.membership = members
@@ -593,6 +605,7 @@ final class SyncService {
             let summary = CellarChangeSummary.between(before, model.cellar, stamps: merge.stamps, localDevice: identity.id)
             if let task = ChangeNotifications.announce(summary, membership: members, model: model) { announcing = task }
         }
+        return true
     }
 
     /// One session with a device on the network, this device starting it. A failure is
@@ -1018,9 +1031,13 @@ final class SyncService {
             // The device left or joined another cellar meanwhile: drop the result.
             guard round == generation else { return }
             if let newKey = result.newKey { storeRemoteKey(newKey) }
+            // What was read is taken in first; the progress moves on only once it is saved,
+            // so changes that could not be saved are read again next round.
+            if let snapshot = result.snapshot {
+                guard apply(snapshot, from: nil), await model?.waitUntilSaved() ?? false, round == generation else { return }
+            }
             remoteProgress = result.progress
             files?.saveRemoteProgress(remoteProgress)
-            if let snapshot = result.snapshot { apply(snapshot, from: nil) }
             if var state, result.clock > state.clock {
                 state.clock = result.clock
                 self.state = state
@@ -1225,6 +1242,7 @@ final class SyncService {
             // The stamps start over; the bottles here stay until the other cellar has
             // arrived, and are never sent (`pendingReplace`).
             state = SyncState(device: identity.id, clock: state?.clock ?? 0)
+            unsavedMerges = UnsavedMerges()
         } else {
             // Combining: the sample cellar is removed first, never sent to the other devices.
             removeSampleUnshared()

@@ -68,6 +68,39 @@ final class RefusingStore: MailboxStore, @unchecked Sendable {
     }
 }
 
+/// Storage whose `failAt`th photo upload fails (the network dropped), keeping the size of each one sent.
+final class DroppingStore: MailboxStore, @unchecked Sendable {
+    let base = MemoryMailboxStore()
+    private let lock = NSLock()
+    private var _sent: [(path: String, size: Int)] = []
+    let failAt: Int
+    init(failAt: Int) { self.failAt = failAt }
+    var sent: [(path: String, size: Int)] { lock.withLock { _sent } }
+
+    func mailbox(id: String, token: String) -> Mailbox { Box(store: self, base: base.mailbox(id: id, token: token)) }
+    func inbox(id: String, token: String) -> Mailbox { base.inbox(id: id, token: token) }
+
+    /// Records a photo upload; true if it is the one that fails.
+    func record(_ path: String, _ size: Int) -> Bool {
+        lock.withLock {
+            _sent.append((path, size))
+            return _sent.count == failAt
+        }
+    }
+
+    struct Box: Mailbox {
+        let store: DroppingStore
+        let base: Mailbox
+        func list(prefix: String) async throws -> [String] { try await base.list(prefix: prefix) }
+        func get(_ path: String) async throws -> Data? { try await base.get(path) }
+        func create(_ path: String, data: Data) async throws -> Bool {
+            if path.hasPrefix("photo/"), store.record(path, data.count) { throw RemoteSyncError.unavailable("dropped") }
+            return try await base.create(path, data: data)
+        }
+        func delete(_ path: String) async throws { try await base.delete(path) }
+    }
+}
+
 /// Devices A, B and C of one cellar, A holding the first key.
 func household(_ count: Int = 3) -> [RemoteDevice] {
     let identities = (0..<count).map { _ in DeviceIdentity.generate().identity }
@@ -328,6 +361,33 @@ func household(_ count: Int = 3) -> [RemoteDevice] {
         refused.refusedFiles = ["b"]
         refused.storageFull = true
         #expect(try JSONDecoder().decode(RemoteProgress.self, from: JSONEncoder().encode(refused)) == refused)
+    }
+
+    @Test func photosSentBeforeAFailedRoundAreNotSentAgain() async throws {
+        let store = DroppingStore(failAt: 4)
+        var devices = household(2)
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        let labels = (0..<5).map { Data(repeating: UInt8($0), count: 10_000) }
+        for (index, label) in labels.enumerated() {
+            let id = PhotoID.make(for: label)
+            devices[0].photos.access.save(id, .photo, label)
+            try devices[0].edit { try $0.addBottles(of: Wine(name: "Wine \(index)", photoID: id), quantity: 1) }
+        }
+        // The fourth photo fails: the round fails, the next one sends only what is left.
+        var failed = false
+        do { try await devices[0].sync(store) } catch is RemoteSyncError { failed = true }
+        #expect(failed)
+        try await devices[0].sync(store)
+        // Each photo sent once, and the one that failed once more.
+        let sent = store.sent
+        #expect(sent.count == labels.count + 1)
+        let once = Dictionary(sent.map { ($0.path, $0.size) }, uniquingKeysWith: { $1 }).values.reduce(0, +)
+        let total = sent.map(\.size).reduce(0, +)
+        #expect(total == once + sent[3].size)
+        #expect(total < labels.map(\.count).reduce(0, +) * 3 / 2)
+        try await devices[1].sync(store)
+        for label in labels { #expect(devices[1].photos.stored[PhotoID.make(for: label)] == label) }
     }
 
     @Test func extraPhotosTravelToo() async throws {

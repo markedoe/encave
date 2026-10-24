@@ -10,7 +10,9 @@ writes `/` as `\/`, Kotlin does not): readers accept both, and no JSON text is
 hashed or authenticated as such. The test vectors at the end are checked by
 `ProtocolVectorTests` on both platforms, and the JSON and ZIP files in
 `fixtures/interop` are written by each platform and read by the other
-(`InteropFixtureTests.swift`, `InteropFixtureTest.kt`).
+(`InteropFixtureTests.swift`, `InteropFixtureTest.kt`). Merge conflicts (equal
+stamps, a revived wine, places lost) are pinned by `fixtures/sync/merge-vectors.json`,
+run both ways on both platforms (`MergeVectorTests.swift`, `MergeVectorTest.kt`).
 
 - **Local network (this document, sections 1–7):** devices on the same network
   find each other with Bonjour/mDNS and talk directly over TCP. No server.
@@ -600,7 +602,8 @@ Each storage keeps the files of a mailbox or inbox under its ID:
   (`relay/README.md`). One exception: anyone may create a `grant/…` file in an
   inbox without a token (that is how a device receives a key); listing,
   reading and deleting need the inbox's token. Every file created in an inbox
-  is at most 4 KiB. A device leaving a grant sends no token.
+  is at most 4 KiB. A device leaving a grant sends no token. Redirects are not
+  followed (an error), so a token is never sent to another address.
 - **iCloud:** one CloudKit zone per mailbox and per inbox in the user's private
   database, named after its ID, so only devices on the same Apple Account meet
   there. Each file is a record of type `EncaveFile` whose record name is the
@@ -650,14 +653,15 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    stamp: a merge on the local network can change the cellar without moving
    the clock), or the key is new: upload the files it has not uploaded yet in
    this epoch (once each, even if a file is both a photo and a document; files
-   fetched in step 3 count as uploaded), then a snapshot of the merged state,
-   then delete its older snapshots. If the clock is not above both the last
-   uploaded clock and the newest of this device's own snapshots listed in step
-   2, it is first set to one more than the greater of them, so readers see a
-   newer snapshot. A file the storage refuses as too large (413) is left out;
-   when the storage is full (507), the remaining files are left out for this
-   round too. The snapshot is still written; the device says so and tries the
-   files again with its next snapshot.
+   fetched in step 3, and those `photo/` already lists, count as uploaded),
+   then a snapshot of the merged state, then delete its older snapshots. If
+   the clock is not above both the last uploaded clock and the newest of this
+   device's own snapshots listed in step 2, it is first set to one more than
+   the greater of them, so readers see a newer snapshot. A file the storage
+   refuses as too large (413, or CloudKit's `limitExceeded`) is left out; when
+   the storage is full (507, or `quotaExceeded`), the remaining files are left
+   out for this round too. The snapshot is still written; the device says so
+   and tries the files again with its next snapshot.
 
 After a local change, a device waits 2 seconds without further changes, syncs
 with the devices on the network, then runs a round 3 seconds later. Rounds also

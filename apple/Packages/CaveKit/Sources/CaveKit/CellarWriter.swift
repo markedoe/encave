@@ -11,9 +11,12 @@ import Foundation
 public actor CellarWriter {
     /// The last cellar saved, and why the write failed. Returns the caller's newest generation.
     public typealias FailureHandler = @Sendable (_ lastSaved: Cellar, _ error: any Error) async -> Int
+    /// Told the generation of each cellar saved, before the next write starts.
+    public typealias SavedHandler = @Sendable (_ generation: Int) async -> Void
 
     private let store: any CellarStore
     private let onFailure: FailureHandler
+    private let onSaved: SavedHandler?
     private var pending: (cellar: Cellar, generation: Int)?
     /// Newest generation received (or dropped after a failure).
     private var newest: Int
@@ -26,9 +29,11 @@ public actor CellarWriter {
     public private(set) var writeCount = 0
 
     /// `saved`: the cellar as loaded from the store, numbered `generation`.
-    public init(store: any CellarStore, saved: Cellar, generation: Int = 0, onFailure: @escaping FailureHandler) {
+    public init(store: any CellarStore, saved: Cellar, generation: Int = 0, onSaved: SavedHandler? = nil,
+                onFailure: @escaping FailureHandler) {
         self.store = store
         self.onFailure = onFailure
+        self.onSaved = onSaved
         lastSaved = saved
         newest = generation
         savedGeneration = generation
@@ -61,6 +66,7 @@ public actor CellarWriter {
                 writeCount += 1
                 lastSaved = next.cellar
                 savedGeneration = next.generation
+                await onSaved?(next.generation)
             } catch {
                 // Later changes were built on the one that failed.
                 pending = nil

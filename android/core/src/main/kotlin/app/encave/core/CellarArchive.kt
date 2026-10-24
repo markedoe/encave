@@ -311,11 +311,13 @@ object CellarArchive {
         val files = LinkedHashMap<FileRef, File>()
         for (item in extracted) {
             val kind = kinds[item.name]?.ref?.kind ?: if (item.name.startsWith(PHOTOS)) FileKind.Photo else FileKind.Document
-            val ref = FileRef(item.id, kind)
+            val expected = kinds[item.name]?.id ?: item.id
+            // A photo taken before sync existed has an ID that is not its hash: kept under it.
+            val id = if (!expected.startsWith("sha256-") && PhotoId.isValid(expected)) expected else item.id
+            val ref = FileRef(id, kind)
             // A file whose content is not the one the manifest names, that the cellar does not
             // refer to, or that is there twice is not kept.
-            val expected = kinds[item.name]?.id ?: item.id
-            if (expected != item.id || ref !in referenced || ref in files) {
+            if (expected != id || ref !in referenced || ref in files) {
                 item.file.delete()
                 skipped++
             } else {

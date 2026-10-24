@@ -24,6 +24,8 @@ runs anywhere Swift 6 runs (macOS or Linux):
 swift test --package-path apple/Packages/CaveKit
 ```
 
+Timing checks, which depend on the machine, run only with `ENCAVE_PERF=1`.
+
 ### Colors and icon
 
 Colors come from `design/tokens.json`. After editing tokens or the icon:

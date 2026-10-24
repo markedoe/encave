@@ -222,6 +222,27 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(contents.skipped == 0)
     }
 
+    @Test func roundTripKeepsAPhotoFromBeforeSync() throws {
+        let folder = try TemporaryFolder()
+        // A photo taken before sync existed: its ID is a UUID, not its hash.
+        let photo = FileRef(id: UUID().uuidString, kind: .photo)
+        let source = folder.file("old-photo")
+        try Data("old label".utf8).write(to: source)
+        var cellar = SampleData.cellar(year: 2026)
+        var wine = cellar.wines.values.sorted { $0.id.uuidString < $1.id.uuidString }[0]
+        wine.photoID = photo.id
+        cellar.wines[wine.id] = wine
+        let zipURL = folder.file("backup.zip")
+        let result = try CellarArchive.write(cellar, exportedAt: .now, to: zipURL, fileURL: { $0 == photo ? source : nil })
+        #expect(result.included == 1)
+        let work = folder.file("work")
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let contents = try CellarArchive.read(zipURL, workingFolder: work)
+        #expect(Set(contents.files.keys) == [photo])
+        #expect(try contents.files[photo].map { try Data(contentsOf: $0) } == Data("old label".utf8))
+        #expect(contents.skipped == 0)
+    }
+
     @Test func missingFilesAreLeftOut() throws {
         let folder = try TemporaryFolder()
         let (cellar, urls) = try sample(in: folder)

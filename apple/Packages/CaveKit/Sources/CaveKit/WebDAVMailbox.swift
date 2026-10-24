@@ -36,14 +36,7 @@ public struct WebDAVMailboxStore: MailboxStore {
 
     /// Requests never follow redirects: one to another host, or to plain HTTP,
     /// would carry the password there.
-    public static let session: URLSession = {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.httpShouldSetCookies = false
-        configuration.urlCredentialStorage = nil
-        configuration.urlCache = nil
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
-    }()
+    public static let session = NoRedirects.session()
 
     // MARK: Addresses
 
@@ -142,6 +135,15 @@ public struct WebDAVMailboxStore: MailboxStore {
 
 /// Refuses every redirect (see `WebDAVMailboxStore.session`).
 final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    /// A session that follows no redirect and keeps no cookies, cache or credentials.
+    static func session(_ configuration: URLSessionConfiguration = .ephemeral) -> URLSession {
+        configuration.httpShouldSetCookies = false
+        configuration.urlCredentialStorage = nil
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
+    }
+
     #if canImport(Darwin)
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest) async -> URLRequest? {
