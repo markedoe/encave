@@ -60,7 +60,7 @@ data class Discovery(
         /** Trimmed, without empty or duplicate tags (ignoring case), in the order given. */
         fun normalized(tags: List<String>): List<String> {
             val seen = HashSet<String>()
-            return tags.map { it.trim() }.filter { it.isNotEmpty() && seen.add(it.lowercase(Locale.ROOT)) }
+            return tags.map(WhiteSpace::trim).filter { it.isNotEmpty() && seen.add(it.lowercase(Locale.ROOT)) }
         }
     }
 }

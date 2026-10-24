@@ -1,6 +1,11 @@
 package app.encave.core
 
+import java.io.File
 import java.util.UUID
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -9,6 +14,20 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class DiscoveryTest {
+    /** The vectors shared with CaveKit, in `fixtures/tag-vectors.json` (tests run in android/core). */
+    @Test
+    fun tagsAreTrimmedOfUnicodeWhiteSpaceOnly() {
+        val root = Json.parseToJsonElement(File("../../fixtures/tag-vectors.json").readText()).jsonObject
+        val vectors = root.getValue("vectors").jsonArray.map { it.jsonObject }
+        assertTrue(vectors.isNotEmpty())
+        for (vector in vectors) {
+            val tags = vector.getValue("tags").jsonArray.map { it.jsonPrimitive.content }
+            val expected = vector.getValue("normalized").jsonArray.map { it.jsonPrimitive.content }
+            assertEquals(expected, Discovery.normalized(tags), tags.toString())
+            assertEquals(expected.ifEmpty { null }, Wine(name = "W", tags = tags).normalized().tags, tags.toString())
+        }
+    }
+
     @Test
     fun discoveredWineIsNotABottleInTheCellar() {
         val cellar = Cellar()

@@ -92,6 +92,24 @@ class CellarFilterVectorTest {
     }
 
     @Test
+    fun chipOrder() {
+        val cases = root.getValue("chipOrder").jsonArray.map { it.jsonObject }
+        assertTrue(cases.isNotEmpty())
+        for (case in cases) {
+            val cellar = Cellar()
+            val tagLists = case.getValue("tags").jsonArray.map { list -> list.jsonArray.map { it.jsonPrimitive.content } }
+            assertTrue(tagLists.isNotEmpty())
+            tagLists.forEachIndexed { index, tags -> cellar.addBottles(Wine(name = "Wine $index", tags = tags)) }
+            val occasions = case.strings("reservedFor").orEmpty()
+            assertTrue(occasions.isNotEmpty())
+            val kept = cellar.addBottles(Wine(name = "Kept"), occasions.size)
+            kept.zip(occasions).forEach { (bottle, occasion) -> cellar.reserve(listOf(bottle.id), occasion) }
+            assertEquals(case.strings("expectedTags"), cellar.wineTags, case.text("about"))
+            assertEquals(case.strings("expectedReservations"), cellar.reservations, case.text("about"))
+        }
+    }
+
+    @Test
     fun savedSearches() {
         for (element: JsonElement in root.getValue("savedSearches").jsonArray) {
             val saved = element.jsonObject

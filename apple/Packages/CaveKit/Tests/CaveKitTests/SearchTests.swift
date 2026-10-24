@@ -21,11 +21,16 @@ import Testing
             var query: String
             var matches: [String]
         }
+        struct Suggestion: Decodable {
+            var query: String
+            var names: [String]
+        }
         var wines: [WineFields]
         var searches: [Search]
+        var suggestions: [Suggestion]
     }
 
-    static func vectors() throws -> (wines: [Wine], searches: [Vectors.Search]) {
+    static func vectors() throws -> (wines: [Wine], searches: [Vectors.Search], suggestions: [Vectors.Suggestion]) {
         let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent() // CaveKitTests
             .deletingLastPathComponent().deletingLastPathComponent() // CaveKit
             .deletingLastPathComponent().deletingLastPathComponent() // apple
@@ -35,15 +40,25 @@ import Testing
             Wine(name: $0.name, producer: $0.producer, vintage: $0.vintage, region: $0.region, country: $0.country,
                  appellation: $0.appellation, grapes: $0.grapes ?? [], barcodes: $0.barcodes, tags: $0.tags)
         }
-        return (wines, vectors.searches)
+        return (wines, vectors.searches, vectors.suggestions)
     }
 
     @Test func everyWordIsFoundInSomeField() throws {
-        let (wines, searches) = try Self.vectors()
+        let (wines, searches, _) = try Self.vectors()
         #expect(!searches.isEmpty)
         for search in searches {
-            let found = wines.filter { $0.matches(search.query) }.map(\.name).sorted()
-            #expect(found == search.matches.sorted(), "\(search.query)")
+            let found = wines.filter { $0.matches(search.query) }.sorted { Cellar.nameOrder($0, $1) }.map(\.name)
+            #expect(found == search.matches, "\(search.query)")
+        }
+    }
+
+    @Test func suggestionsComeInNameOrder() throws {
+        let (wines, _, suggestions) = try Self.vectors()
+        var cellar = Cellar()
+        for wine in wines { try cellar.addBottles(of: wine) }
+        #expect(!suggestions.isEmpty)
+        for suggestion in suggestions {
+            #expect(cellar.wineSuggestions(matching: suggestion.query).map(\.name) == suggestion.names, "\(suggestion.query)")
         }
     }
 

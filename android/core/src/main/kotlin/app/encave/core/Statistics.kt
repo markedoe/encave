@@ -84,7 +84,8 @@ fun Cellar.statistics(year: Int, now: Instant = Instant.now(), zone: ZoneId = Zo
 
     val byColor = winesInCellar.groupingBy { it.color }.eachCount()
         .map { CellarStatistics.ColorSlice(it.key, it.value) }
-        .sortedByDescending { it.count }
+        // Ties in a fixed order (styles as listed, unknown last), so the chart does not reshuffle (as in CaveKit).
+        .sortedWith(compareByDescending<CellarStatistics.ColorSlice> { it.count }.thenBy { it.color?.ordinal ?: WineColor.entries.size })
 
     val byDecade = winesInCellar
         .map { wine -> wine.vintage?.let { "${it / 10 * 10}s" } ?: CellarStatistics.NON_VINTAGE }

@@ -57,7 +57,15 @@ import Testing
         var lists: [List]
         var tags: [String]
         var grapes: [String]
+        struct ChipCase: Decodable {
+            var about: String
+            var tags: [[String]]
+            var reservedFor: [String]
+            var expectedTags: [String]
+            var expectedReservations: [String]
+        }
         var reservations: [String]
+        var chipOrder: [ChipCase]
         var savedSearches: [Saved]
     }
 
@@ -123,6 +131,22 @@ import Testing
         #expect(cellar.wineTags == vectors.tags)
         #expect(cellar.wineGrapes == vectors.grapes)
         #expect(cellar.reservations == vectors.reservations)
+    }
+
+    @Test func chipOrder() throws {
+        let vectors = try Self.vectors()
+        #expect(!vectors.chipOrder.isEmpty)
+        for item in vectors.chipOrder {
+            var cellar = Cellar()
+            #expect(!item.tags.isEmpty && !item.reservedFor.isEmpty)
+            for (index, tags) in item.tags.enumerated() {
+                try cellar.addBottles(of: Wine(name: "Wine \(index)", tags: tags))
+            }
+            let kept = try cellar.addBottles(of: Wine(name: "Kept"), quantity: item.reservedFor.count)
+            for (bottle, occasion) in zip(kept, item.reservedFor) { try cellar.reserve([bottle.id], for: occasion) }
+            #expect(cellar.wineTags == item.expectedTags, "\(item.about)")
+            #expect(cellar.reservations == item.expectedReservations, "\(item.about)")
+        }
     }
 
     @Test func savedSearches() throws {
