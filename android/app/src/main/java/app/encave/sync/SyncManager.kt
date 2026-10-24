@@ -13,6 +13,7 @@ import app.encave.core.sync.FileAccess
 import app.encave.core.sync.MailboxStore
 import app.encave.core.sync.Member
 import app.encave.core.sync.Membership
+import app.encave.core.sync.PendingRotation
 import app.encave.core.sync.RelayMailboxStore
 import app.encave.core.sync.RemoteInfo
 import app.encave.core.sync.RemoteProgress
@@ -410,16 +411,9 @@ class SyncManager(
         status.update { it.copy(membership = membership, lastSync = it.lastSync - device) }
         save()
         syncNow()
-        // Away from home: a new key, so the removed device cannot read anything new. It is
-        // kept until the rotation is done, in case the storage cannot be reached now: a retry
-        // uses the same key, so grants already left stay valid.
-        val key = storage.remoteKey
-        if (key != null) {
-            if (storage.pendingKey.let { it == null || it.epoch <= key.epoch }) {
-                storage.pendingKey = CellarKey.random(key.cellarId, key.epoch + 1)
-            }
-            scope.launch { remoteRound() }
-        }
+        // Away from home: the next round gives the others a new key, so the removed device
+        // cannot read anything new ([rotateIfNeeded]). Any device holding the key does it.
+        if (storage.remoteKey != null) scope.launch { remoteRound() }
     }
 
     /**
@@ -1119,7 +1113,7 @@ class SyncManager(
             }
             if (key == null || key.cellarId != local.membership.cellarId) return
             key = try {
-                rotateIfNeeded(store, key, local, url)
+                rotateIfNeeded(store, key, local, url, round)
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
@@ -1220,23 +1214,33 @@ class SyncManager(
         }
     }
 
-    /** Rotates the remote key if a removal is waiting for it, and returns the key to use. */
-    private suspend fun rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot, url: String): CellarKey {
+    /** Rotates the remote key if a removal calls for it (docs/SYNC.md §8), and returns the key to use. */
+    private suspend fun rotateIfNeeded(store: MailboxStore, current: CellarKey, local: SyncSnapshot, url: String, round: Int): CellarKey {
+        var key = current
         // Builds before this one kept only a flag.
         if (storage.hadRotationFlag) {
             storage.clearRotationFlag()
-            if (storage.pendingKey == null) storage.pendingKey = CellarKey.random(key.cellarId, key.epoch + 1)
+            if (storage.pendingRotation == null && key.epoch < CellarKey.MAX_EPOCH) {
+                storage.pendingRotation = PendingRotation(CellarKey.random(key.cellarId, key.epoch + 1))
+            }
         }
-        var next = storage.pendingKey?.takeIf { it.cellarId == key.cellarId } ?: return key
-        // Another device moved on meanwhile: rotate from where the cellar is now.
-        if (next.epoch <= key.epoch) {
-            next = CellarKey.random(key.cellarId, key.epoch + 1)
-            storage.pendingKey = next
+        var next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return key
+        // A key granted meanwhile (another device rotated too): rotate from it, so the new key is
+        // above it. Unless it moves the files elsewhere: the round follows it first.
+        val grant = RemoteSync.receiveGrant(store, identity, local.membership, key)
+        if (grant != null) {
+            if (round != generation) return key
+            if (grant.storage.let { it != null && it != url }) return key
+            key = grant.cellarKey
+            storeRemoteKey(key)
+            next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return key
         }
-        RemoteSync.rotate(store, identity, key, next, local, url)
-        storeRemoteKey(next)
-        storage.pendingKey = null
-        return next
+        storage.pendingRotation = next
+        val done = RemoteSync.rotate(store, identity, key, next, local, url) { if (round == generation) storage.pendingRotation = it }
+        if (round != generation) return key
+        storeRemoteKey(done.key)
+        storage.pendingRotation = null
+        return done.key
     }
 
     private fun storeRemoteKey(key: CellarKey?) {

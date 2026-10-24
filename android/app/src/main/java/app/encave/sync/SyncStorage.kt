@@ -8,6 +8,7 @@ import androidx.core.content.edit
 import app.encave.core.sync.CellarKey
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.Membership
+import app.encave.core.sync.PendingRotation
 import app.encave.core.sync.RemoteProgress
 import app.encave.core.sync.SyncJson
 import app.encave.core.sync.SyncState
@@ -88,13 +89,19 @@ class SyncStorage(private val context: Context) {
         set(value) = prefs.edit { if (value) putBoolean(KEY_REMOTE_OFF, true) else remove(KEY_REMOTE_OFF) }
 
     /**
-     * The next cellar key, made when a device is removed and kept until the rotation is
-     * done, so a retry after a failure uses the same key (grants already left stay valid).
+     * The next cellar key and the devices already given it, kept until the rotation is done,
+     * so a retry after a failure uses the same key and leaves no second grant. Builds before
+     * this one kept only the key.
      */
-    var pendingKey: CellarKey?
-        get() = runCatching { secrets.get(KEY_PENDING_KEY)?.let { SyncJson.decode(CellarKey.serializer(), it.toByteArray()) } }.getOrNull()
+    var pendingRotation: PendingRotation?
+        get() = runCatching {
+            secrets.get(KEY_PENDING_KEY)?.let { text ->
+                runCatching { SyncJson.decode(PendingRotation.serializer(), text.toByteArray()) }.getOrNull()
+                    ?: PendingRotation(SyncJson.decode(CellarKey.serializer(), text.toByteArray()))
+            }
+        }.getOrNull()
         set(value) {
-            runCatching { secrets.set(KEY_PENDING_KEY, value?.let { SyncJson.encode(CellarKey.serializer(), it).decodeToString() }) }
+            runCatching { secrets.set(KEY_PENDING_KEY, value?.let { SyncJson.encode(PendingRotation.serializer(), it).decodeToString() }) }
         }
 
     /** The login for a WebDAV folder, on this device only: other devices sign in with their own. */
@@ -197,7 +204,7 @@ class SyncStorage(private val context: Context) {
      */
     fun resetRemote() {
         remoteKey = null
-        pendingKey = null
+        pendingRotation = null
         firstKey = null
         webDavLogin = null
         file(REMOTE).delete()

@@ -294,20 +294,20 @@ final class SyncService {
         lastSync[device] = nil
         save()
         syncNow()
-        // Away from home: a new key, so the removed device cannot read anything new.
-        // The new key is kept until the rotation is done, in case the storage cannot
-        // be reached now: a retry uses the same key, so grants already left stay valid.
-        if let key = remoteKey {
-            if pendingKey.map({ $0.epoch <= key.epoch }) ?? true {
-                pendingKey = CellarKey.random(cellarID: key.cellarID, epoch: key.epoch + 1)
-            }
-            Task { await remoteRound() }
-        }
+        // Away from home: the next round gives the others a new key, so the removed device
+        // cannot read anything new (`rotateIfNeeded`). Any device holding the key does it.
+        if remoteKey != nil { Task { await remoteRound() } }
     }
 
-    /// The next key, made when a device is removed and kept until the rotation is done.
-    private var pendingKey: CellarKey? {
-        get { Keychain.getData(Self.pendingKeyAccount).flatMap { try? JSONDecoder().decode(CellarKey.self, from: $0) } }
+    /// The next key and the devices already given it, kept until the rotation is done, in
+    /// case the storage cannot be reached now: a retry uses the same key and leaves no
+    /// second grant. Builds before this one kept only the key.
+    private var pendingRotation: PendingRotation? {
+        get {
+            guard let data = Keychain.getData(Self.pendingKeyAccount) else { return nil }
+            if let pending = try? JSONDecoder().decode(PendingRotation.self, from: data) { return pending }
+            return (try? JSONDecoder().decode(CellarKey.self, from: data)).map { PendingRotation(key: $0) }
+        }
         set { Keychain.setData(newValue.flatMap { try? JSONEncoder().encode($0) }, for: Self.pendingKeyAccount) }
     }
 
@@ -319,25 +319,45 @@ final class SyncService {
         set { Keychain.setData(newValue.flatMap { try? JSONEncoder().encode($0) }, for: Self.firstKeyAccount) }
     }
 
-    /// Rotates the remote key if a removal is waiting for it, and returns the key to use.
-    private func rotateIfNeeded(store: MailboxStore, key: CellarKey, local: SyncSnapshot, round: Int) async throws -> CellarKey {
+    /// Rotates the remote key if a removal calls for it (docs/SYNC.md §8), and returns the key to use.
+    private func rotateIfNeeded(store: MailboxStore, key current: CellarKey, local: SyncSnapshot,
+                                round: Int) async throws -> CellarKey {
+        var key = current
         // Builds before this one kept only a flag.
         if UserDefaults.standard.bool(forKey: Self.rotationKey) {
             UserDefaults.standard.removeObject(forKey: Self.rotationKey)
-            if pendingKey == nil { pendingKey = CellarKey.random(cellarID: key.cellarID, epoch: key.epoch + 1) }
+            if pendingRotation == nil, key.epoch < .max {
+                pendingRotation = PendingRotation(key: CellarKey.random(cellarID: key.cellarID, epoch: key.epoch + 1))
+            }
         }
-        guard var next = pendingKey, next.cellarID == key.cellarID else { return key }
-        // Another device moved on meanwhile: rotate from where the cellar is now.
-        if next.epoch <= key.epoch {
-            next = CellarKey.random(cellarID: key.cellarID, epoch: key.epoch + 1)
-            pendingKey = next
+        guard var next = try RemoteSync.nextRotation(key: key, pending: pendingRotation, membership: local.membership,
+                                                     device: identity.id)
+        else { return key }
+        // A key granted meanwhile (another device rotated too): rotate from it, so the new key
+        // is above it. Unless it moves the files elsewhere: the round follows it first.
+        if let grant = try await RemoteSync.receiveGrant(store: store, identity: identity,
+                                                         membership: local.membership, current: key) {
+            guard round == generation else { return key }
+            if let moved = grant.storage, let here = remoteStorage?.string, moved != here { return key }
+            key = grant.cellarKey
+            storeRemoteKey(key)
+            guard let again = try RemoteSync.nextRotation(key: key, pending: pendingRotation,
+                                                          membership: local.membership, device: identity.id)
+            else { return key }
+            next = again
         }
-        try await RemoteSync.rotate(store: store, identity: identity, from: key, to: next, local: local,
-                                    storage: remoteStorage?.string)
+        pendingRotation = next
+        do {
+            try await RemoteSync.rotate(store: store, identity: identity, from: key, to: &next, local: local,
+                                        storage: remoteStorage?.string)
+        } catch {
+            if round == generation { pendingRotation = next }
+            throw error
+        }
         guard round == generation else { return key }
-        storeRemoteKey(next)
-        pendingKey = nil
-        return next
+        storeRemoteKey(next.key)
+        pendingRotation = nil
+        return next.key
     }
 
     /// Stops syncing on this device. The cellar stays here as it is. The other devices
@@ -452,7 +472,7 @@ final class SyncService {
         keep(nil, in: \.lastRemoteSync, key: Self.lastRemoteSyncKey)
         UserDefaults.standard.removeObject(forKey: Self.rotationKey)
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
-        pendingKey = nil
+        pendingRotation = nil
         firstKey = nil
         storeRemoteKey(nil)
         storeWebDAVLogin(nil)
