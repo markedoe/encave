@@ -375,6 +375,9 @@ struct FittedRackGrid: View {
     static let padding: CGFloat = 16
     /// Height of the overview above a rack that scrolls.
     static let overviewHeight: CGFloat = 56
+    /// Narrower than this (a tall wine fridge), the overview cannot be read: it is left out.
+    static let overviewMinWidth: CGFloat = 48
+    @State private var overviewReadable = true
 
     var body: some View {
         GeometryReader { proxy in
@@ -388,11 +391,12 @@ struct FittedRackGrid: View {
             VStack(spacing: 0) {
                 if scrolls {
                     RackOverview(rack: rack, tracker: tracker, selected: selected, highlighted: highlighted,
-                                 focusWine: focusWine)
-                        .frame(height: Self.overviewHeight)
+                                 focusWine: focusWine) { overviewReadable = $0 }
+                        .frame(height: overviewReadable ? Self.overviewHeight : 0)
+                        .opacity(overviewReadable ? 1 : 0)
                         .padding(.horizontal, padding)
-                        .padding(.vertical, 6)
-                    Divider()
+                        .padding(.vertical, overviewReadable ? 6 : 0)
+                    if overviewReadable { Divider() }
                 }
                 drawing(base: base, scrolls: scrolls)
             }
@@ -510,6 +514,8 @@ private struct RackOverview: View {
     var selected: Set<Slot> = []
     var highlighted: Slot?
     var focusWine: UUID?
+    /// Whether the rack, scaled to the overview's height, is wide enough to be read.
+    var onReadable: (Bool) -> Void = { _ in }
     /// The rack's own size, before scaling it down.
     @State private var natural: CGSize = .zero
 
@@ -523,7 +529,11 @@ private struct RackOverview: View {
                      focusWine: focusWine, isPicture: true)
                 .padding(FittedRackGrid.padding)
                 .fixedSize()
-                .onGeometryChange(for: CGSize.self) { $0.size } action: { natural = $0 }
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { size in
+                    natural = size
+                    guard size.height > 0 else { return }
+                    onReadable(size.width / size.height * FittedRackGrid.overviewHeight >= FittedRackGrid.overviewMinWidth)
+                }
                 .scaleEffect(scale, anchor: .topLeading)
                 .frame(width: shown.width, height: shown.height, alignment: .topLeading)
                 .allowsHitTesting(false)
@@ -736,7 +746,9 @@ struct RackCellView: View {
                     .font(.system(size: max(9, size * 0.15), weight: .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                    .frame(width: size * 0.96)
+                    // Inside the cell's rounded border, which is 2 pt when highlighted.
+                    .frame(width: size * 0.8)
+                    .padding(.bottom, size * 0.05)
                     .foregroundStyle(isFocused ? Color.accentColor : Color.primary)
             }
         }

@@ -996,7 +996,7 @@
     <string name="reminders_now_ready">Désormais prêtes : %1$d</string>
     <string name="reminders_start_with">Commencez par %1$s.</string>
     <string name="reminders_delivery_title">Livraison prévue aujourd’hui</string>
-    <string name="help_tonight_reminders">Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer.</string>
+    <string name="help_tonight_reminders">Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1ᵉʳ), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer.</string>
     <string name="shortcut_scan">Scanner une bouteille</string>
     <string name="shortcut_tonight">Que boire ce soir</string>
     <string name="action_select_wines">Sélectionner des vins</string>
@@ -1311,7 +1311,7 @@
     <string name="tonight_reserved_left_out">Bouteilles réservées pour une occasion, non suggérées : %1$d</string>
     <string name="tonight_nothing_ready">Rien n’est à son apogée en ce moment</string>
     <string name="tonight_ready_from">Prêt à partir de %1$s : %2$s</string>
-    <string name="tonight_reminders_offer">Recevoir un rappel le 1er de chaque mois de ce qu’il faut boire ?</string>
+    <string name="tonight_reminders_offer">Recevoir un rappel le 1ᵉʳ de chaque mois de ce qu’il faut boire ?</string>
     <string name="reminders_turned_on">Rappels activés</string>
     <string name="discovery_removed_from_list">Retiré de votre liste d’achats</string>
     <string name="insights_empty_title">Pas encore de chiffres</string>

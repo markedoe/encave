@@ -263,8 +263,8 @@ final class ScreenTourTests: XCTestCase {
             sleep(1)
             snapshot("ask-answer")
         } else {
+            // No shot: it would show "No answer this time" or a spinner, not the feature.
             print("ask your cellar: no answer within 60 s")
-            snapshot("ask-waiting")
         }
         goBack()
     }

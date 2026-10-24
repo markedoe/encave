@@ -95,6 +95,15 @@ extension Rack {
     /// the person's language. Always in the order shelf, side, layer, position, leaving out
     /// what does not apply, as `placeName(for:)` does in English.
     func displayLabel(for slot: Slot) -> String {
+        Self.keepingNumbersAttached(slotLabel(for: slot))
+    }
+
+    /// A no-break space before each number ("position 5"), so a number never starts a line alone.
+    static func keepingNumbersAttached(_ label: String) -> String {
+        label.replacing(#/ (?=\d)/#, with: "\u{00A0}")
+    }
+
+    private func slotLabel(for slot: Slot) -> String {
         let sideName: String? = kind == .bins || positionsPerCell == 1 ? nil : depthName(slot.depth)
         if let place = shelfPlace(ofRow: slot.row) {
             return shelfLabel(shelf: place.shelf + 1, sideName: sideName, layer: place.layer, layers: place.layers,
@@ -114,6 +123,10 @@ extension Rack {
     /// The whole position, without its side: "B3", "Shelf 2, position 3",
     /// "Shelf 1, top layer, position 3" or "Bin B3".
     func displayLabel(for cell: RackCell) -> String {
+        Self.keepingNumbersAttached(cellLabel(for: cell))
+    }
+
+    private func cellLabel(for cell: RackCell) -> String {
         if let place = shelfPlace(ofRow: cell.row) {
             return shelfLabel(shelf: place.shelf + 1, sideName: nil, layer: place.layer, layers: place.layers, number: cell.column + 1)
         }

@@ -101,8 +101,8 @@ struct TonightView: View {
             }
         } footer: {
             if reserved > 0, !sections.isEmpty {
-                // Wraps rather than cutting the count off (a narrow Mac column).
-                Text("Bottles kept for an occasion are not suggested: \(reserved)")
+                // The count first, so a narrow Mac column never cuts it off.
+                Text("\(reserved) bottles kept for an occasion are not suggested.")
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -357,6 +357,7 @@ private struct TonightPick: View {
                 }
                 MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
                     .font(.footnote.weight(.medium))
+                    .labelStyle(CompactLabelStyle())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

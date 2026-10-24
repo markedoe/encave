@@ -181,7 +181,7 @@ class SmokeTest {
         tab("Storage")
         compose.onNodeWithText("Cabinet").performClick()
         compose.waitForIdle()
-        compose.onNode(hasContentDescription("Shelf 1, position 1", substring = true)).assertExists()
+        compose.onNode(hasContentDescription("Shelf\u00A01, position\u00A01", substring = true)).assertExists()
         compose.onNodeWithContentDescription("Edit storage").performClick()
         compose.waitForIdle()
         // A wine fridge keeps its kind: only its own settings are shown.

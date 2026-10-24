@@ -28,11 +28,11 @@ class InventoryPdfTest {
         assertEquals("Pauillac, France", tilleuls.region)
         assertEquals(
             "Main rack · A1, Main rack · A2, Main rack · A3, " +
-                (1..4).joinToString(", ") { "Head-to-tail cabinet · Shelf 1, front, bottom layer, position $it" },
+                (1..4).joinToString(", ") { "Head-to-tail cabinet · Shelf\u00A01, front, bottom layer, position\u00A0$it" },
             tilleuls.places,
         )
         assertEquals("€266", tilleuls.value)
-        assertEquals("Kitchen, Head-to-tail cabinet · Shelf 1, back, top layer, position 2", rows.single { it.wine.startsWith("Rosé") }.places)
+        assertEquals("Kitchen, Head-to-tail cabinet · Shelf\u00A01, back, top layer, position\u00A02", rows.single { it.wine.startsWith("Rosé") }.places)
     }
 
     @Test

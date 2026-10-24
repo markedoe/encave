@@ -4,6 +4,7 @@ import SwiftUI
 /// inside a List, Label icons are tinted with the accent color, which makes them
 /// invisible on filled (prominent) buttons and pushes the title off center.
 struct ActionLabel: View {
+    @Environment(\.actionLabelIcon) private var iconChoice
     let title: LocalizedStringKey
     let systemImage: String
 
@@ -14,16 +15,27 @@ struct ActionLabel: View {
 
     /// On one line with the icon if it fits, else on one line without it (a narrow
     /// iPhone, a long French title), else wrapped (the largest text sizes).
+    /// In an `ActionButtonRow`, the row decides once for all its buttons.
     var body: some View {
-        ViewThatFits(in: .horizontal) {
+        switch iconChoice {
+        case .shown:
             HStack(spacing: 6) {
                 icon
                 Text(title).lineLimit(1)
             }
+        case .hidden:
             Text(title).lineLimit(1)
-            HStack(spacing: 6) {
-                icon
-                Text(title).multilineTextAlignment(.center)
+        case .fitting:
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 6) {
+                    icon
+                    Text(title).lineLimit(1)
+                }
+                Text(title).lineLimit(1)
+                HStack(spacing: 6) {
+                    icon
+                    Text(title).multilineTextAlignment(.center)
+                }
             }
         }
     }
@@ -32,6 +44,15 @@ struct ActionLabel: View {
         Image(systemName: systemImage)
             .accessibilityHidden(true)
     }
+}
+
+/// Whether `ActionLabel` shows its icon: chosen by each label, or once for a row.
+enum ActionLabelIcon {
+    case fitting, shown, hidden
+}
+
+extension EnvironmentValues {
+    @Entry var actionLabelIcon = ActionLabelIcon.fitting
 }
 
 /// Action buttons side by side, or one above the other at the accessibility text sizes so
@@ -46,6 +67,12 @@ struct ActionButtonRow<Content: View>: View {
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: spacing))
             : AnyLayout(HStackLayout(spacing: spacing))
-        layout { content }
+        // Every button with its icon if they all fit on one line, else none of them, so
+        // two buttons side by side never differ.
+        ViewThatFits(in: .horizontal) {
+            layout { content }.environment(\.actionLabelIcon, .shown)
+            layout { content }.environment(\.actionLabelIcon, .hidden)
+            layout { content }
+        }
     }
 }

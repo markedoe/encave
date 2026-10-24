@@ -21,6 +21,8 @@ struct CellarTable: View {
     @State private var showsInspector = true
     /// Columns shown, their order and widths, remembered per window.
     @SceneStorage("cellar.table.columns") private var columns = TableColumnCustomization<CellarTableRow>()
+    /// The table's width, to leave out wide columns beside the inspector (iPad in portrait).
+    @State private var tableWidth: CGFloat = .infinity
 
     /// Shared with the list, so switching between them keeps the search and the filters.
     private var filter: Binding<CellarFilter> {
@@ -32,6 +34,7 @@ struct CellarTable: View {
             .map { CellarTableRow(group: $0, model: model) }
             .sorted(using: sortOrder)
         table(rows)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { tableWidth = $0 }
             .onChange(of: picked) { _, ids in
                 selection = ids.count == 1 ? ids.first : nil
             }
@@ -51,6 +54,16 @@ struct CellarTable: View {
                     .inspectorColumnWidth(min: 300, ideal: 360, max: 480)
             }
             .toolbar { toolbar }
+    }
+
+    /// iPad: too narrow for every column beside the inspector; Producer, Region and Location
+    /// are left out so Wine stays in view without scrolling sideways.
+    private var isNarrow: Bool {
+        #if os(iOS)
+        return showsInspector && tableWidth < 760
+        #else
+        return false
+        #endif
     }
 
     private func table(_ rows: [CellarTableRow]) -> some View {
@@ -74,17 +87,21 @@ struct CellarTable: View {
             }
             .width(min: 60, ideal: 80)
             .customizationID("vintage")
-            TableColumn("Producer", value: \.producer)
-                .width(min: 100, ideal: 160)
-                .customizationID("producer")
+            if !isNarrow {
+                TableColumn("Producer", value: \.producer)
+                    .width(min: 100, ideal: 160)
+                    .customizationID("producer")
+            }
             TableColumn("Style", value: \.styleOrder) { row in
                 if let color = row.wine.color { Text(color.title) }
             }
             .width(min: 60, ideal: 90)
             .customizationID("style")
-            TableColumn("Region", value: \.region)
-                .width(min: 90, ideal: 140)
-                .customizationID("region")
+            if !isNarrow {
+                TableColumn("Region", value: \.region)
+                    .width(min: 90, ideal: 140)
+                    .customizationID("region")
+            }
             TableColumn("When to drink", value: \.maturity) { row in
                 if row.maturity != .unknown { MaturityLabel(maturity: row.maturity) }
             }
@@ -95,11 +112,13 @@ struct CellarTable: View {
             }
             .width(min: 50, ideal: 60)
             .customizationID("bottles")
-            TableColumn("Location", value: \.location) { row in
-                Text(row.location).foregroundStyle(.secondary)
+            if !isNarrow {
+                TableColumn("Location", value: \.location) { row in
+                    Text(row.location).foregroundStyle(.secondary)
+                }
+                .width(min: 120, ideal: 200)
+                .customizationID("location")
             }
-            .width(min: 120, ideal: 200)
-            .customizationID("location")
             // Hidden at first; shown from the column header's menu.
             TableColumn("Tags", value: \.tags) { row in
                 Text(verbatim: row.tags).foregroundStyle(.secondary)

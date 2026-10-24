@@ -436,7 +436,7 @@ FR = {
     'Order cancelled': 'Commande annulée',
     'Received': 'Reçues',
     'Received bottles join the cellar without a position; move them to storage from here.': 'Les bouteilles reçues rejoignent la cave sans position ; mettez-les dans un rangement depuis cette page.',
-    'Turn on **Reminders** in Settings, or with **Turn On** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open Settings** takes you to the system settings to turn them on.': 'Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer.',
+    'Turn on **Reminders** in Settings, or with **Turn On** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open Settings** takes you to the system settings to turn them on.': 'Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1ᵉʳ), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer.',
     'Wine merchant': 'Caviste',
     'Coming from another app': 'Venir d’une autre app',
     'Export your cellar as CSV from CellarTracker, a spreadsheet or another app, then choose **Import…**. Columns are recognized by their name in English or French (wine, producer, vintage, color, quantity, location, bin, price, drinking window…). A Vivino history becomes wines tasted elsewhere in the Journal, with your ratings and notes. The file is read on this device.': 'Exportez votre cave en CSV depuis CellarTracker, un tableur ou une autre app, puis choisissez **Importer…**. Les colonnes sont reconnues par leur nom en français ou en anglais (vin, producteur, millésime, couleur, quantité, casier, case, prix…). Un historique Vivino devient des vins goûtés ailleurs dans le Journal, avec vos notes et commentaires. Le fichier est lu sur cet appareil.',
@@ -1242,6 +1242,7 @@ FR = {
     "Month": "Mois",
     # The Journal's diary
     "All": "Tout",
+    "None": "Aucun",
     "From my cellar": "De ma cave",
     "Tasted elsewhere": "Goûté ailleurs",
     "Tasted elsewhere · %@": "Goûté ailleurs · %@",
@@ -1308,11 +1309,11 @@ FR = {
     'Backup': 'Sauvegarde',
     'Saved On': 'Enregistrée le',
     'Made On': 'Faite le',
-    'In This Backup': 'Dans cette sauvegarde',
+    'In this backup': 'Dans cette sauvegarde',
     'Wines': 'Vins',
     'Bottles in the cellar': 'Bouteilles en cave',
     'Journal entries': 'Entrées du Journal',
-    'Compared with Your Cellar': 'Par rapport à votre cave',
+    'Compared with your cellar': 'Par rapport à votre cave',
     'Same as your cellar': 'Identique à votre cave',
     'Not in your cellar': 'Absents de votre cave',
     'In your cellar only': 'Seulement dans votre cave',
@@ -1332,7 +1333,8 @@ FR = {
     'This ZIP file was not made by Encave, or another app changed it. Import the archive as Encave made it, or the cellar.json file it holds.': 'Ce fichier ZIP n’a pas été fait par Encave, ou une autre app l’a modifié. Importez l’archive telle qu’Encave l’a faite, ou le fichier cellar.json qu’elle contient.',
     'This backup is damaged or incomplete.': 'Cette sauvegarde est abîmée ou incomplète.',
     'The server refused access to this folder. Check that this account may read and write it.': 'Le serveur a refusé l’accès à ce dossier. Vérifiez que ce compte peut y lire et y écrire.',
-    'A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.': 'Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone (ou Sur mon iPad) › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement.',
+    'A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.': 'Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPhone › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement.',
+    'A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPad › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.': 'Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : iPhone, iPad, Mac ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent dans l’app Fichiers, sous Sur mon iPad › Encave. Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement.',
     'A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.': 'Une sauvegarde est un fichier ZIP non chiffré avec toute votre cave, ses photos et ses documents ; importez-la sur n’importe quel appareil : Mac, iPhone, iPad ou Android. La sauvegarde hebdomadaire est activée au départ : les deux dernières restent sur ce Mac (Afficher les sauvegardes hebdomadaires dans le Finder). Le CSV s’ouvre dans Numbers ou Excel. Le PDF liste chaque vin de votre cave avec ses positions et sa valeur d’achat, pour l’assurance ou un déménagement.',
     'Sync is not a backup': 'La synchronisation n’est pas une sauvegarde',
     'Sync keeps the same cellar on your devices: a bottle deleted by mistake, or **Erase all data**, is deleted on all of them. Keep backups too: they hold your cellar as it was.': 'La synchronisation garde la même cave sur vos appareils : une bouteille supprimée par erreur, ou **Effacer toutes les données**, est supprimée sur tous. Gardez aussi des sauvegardes : elles contiennent votre cave telle qu’elle était.',
@@ -1443,14 +1445,13 @@ FR = {
     'All your bottles are kept for an occasion': 'Toutes vos bouteilles sont réservées pour une occasion',
     'Back': 'Retour',
     'Based on %lld of %lld wines: the closest matches and the most urgent.': 'D’après %lld de vos %lld vins : les plus proches de la question et les plus urgents.',
-    'Bottles kept for an occasion are not suggested: %lld': 'Bouteilles réservées pour une occasion, non suggérées : %lld',
     'By maturity': 'Par maturité',
     'By region': 'Par région',
     'Discard': 'Abandonner',
     'Opens the wine.': 'Ouvre le vin.',
     'Discard this note?': 'Abandonner les modifications ?',
     'Edit Note': 'Modifier la note',
-    'Get a reminder on the 1st of each month of what to drink?': 'Recevoir un rappel le 1er de chaque mois de ce qu’il faut boire ?',
+    'Get a reminder on the 1st of each month of what to drink?': 'Recevoir un rappel le 1ᵉʳ de chaque mois de ce qu’il faut boire ?',
     'Great match': 'Excellent accord',
     'No figures yet': 'Pas encore de chiffres',
     'Not in storage': 'Hors rangement',
@@ -1496,6 +1497,10 @@ FR = {
 
 # Keys with plural forms: English one/other and French one/other.
 PLURALS = {
+    "%lld bottles kept for an occasion are not suggested.": (
+        ("%lld bottle kept for an occasion is not suggested.", "%lld bottles kept for an occasion are not suggested."),
+        ("%lld bouteille réservée pour une occasion n’est pas suggérée.",
+         "%lld bouteilles réservées pour une occasion ne sont pas suggérées.")),
     "Delete %lld wines?": (("Delete %lld wine?", "Delete %lld wines?"), ("Supprimer %lld vin ?", "Supprimer %lld vins ?")),
     "%lld bottles and their tastings are deleted too. You can undo right after.": (
         ("%lld bottle and its tasting are deleted too. You can undo right after.",
@@ -1609,7 +1614,7 @@ APP_SHORTCUTS = {
 UI_CALL = re.compile(r'(?<![A-Za-z0-9_])(?:Text|Label|Button|Section|LabeledContent|navigationTitle|Toggle|TextField|Picker|Stepper|'
                      r'DisclosureGroup|SecureField|LabeledField|ActionLabel|fieldHelp|title:|body:|summary:|ContentUnavailableView|Tab|ChoiceChip\(title:|RackPreset\(title:|caption:|ChartCard\(title:|DatePicker|'
                      r'String\(localized:|alert|confirmationDialog|Link|prompt: Text|LocalizedStringResource =|TypeDisplayRepresentation =|'
-                     r'IntentDescription|dialog:|shortTitle:|TableColumn)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
+                     r'IntentDescription|dialog:|shortTitle:|TableColumn|footer:|header:)\s*\(?\s*"((?:[^"\\]|\\.)*)"')
 CASE_STRING = re.compile(r'case \.[a-zA-Z]+: "((?:[^"\\]|\\.)*)"')
 
 

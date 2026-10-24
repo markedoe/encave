@@ -180,7 +180,12 @@ val RackKind.columnsRes: Int
  * "B3", "B3, back", "Shelf 2, back, position 3", "Shelf 1, back, top layer, position 3" or
  * "Bin B3", for people (files use "B3-2"). One order everywhere: shelf, side, layer, position.
  */
-fun Rack.displayLabel(slot: Slot, resources: Resources): String {
+/** A no-break space before each number ("position 5"), so a number never starts a line alone. */
+internal fun keepNumbersAttached(label: String): String = label.replace(Regex(" (?=\\d)"), "\u00A0")
+
+fun Rack.displayLabel(slot: Slot, resources: Resources): String = keepNumbersAttached(slotLabel(slot, resources))
+
+private fun Rack.slotLabel(slot: Slot, resources: Resources): String {
     if (kind == RackKind.Bins || positionsPerCell <= 1) return displayLabel(slot.cell, resources)
     val side = depthName(slot.depth, resources)
     // A fridge with bottles in layers names the side before the layer: "Shelf 3, front, bottom layer, position 2".
@@ -207,7 +212,9 @@ fun Rack.depthName(depth: Int, resources: Resources): String = resources.getStri
     },
 )
 
-fun Rack.displayLabel(cell: RackCell, resources: Resources): String {
+fun Rack.displayLabel(cell: RackCell, resources: Resources): String = keepNumbersAttached(cellLabel(cell, resources))
+
+private fun Rack.cellLabel(cell: RackCell, resources: Resources): String {
     // A fridge with bottles in layers: "Shelf 1, top layer, position 3".
     shelfPlace(cell.row)?.let { place ->
         val res = when {

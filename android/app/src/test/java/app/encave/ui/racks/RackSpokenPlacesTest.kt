@@ -104,8 +104,8 @@ class RackSpokenPlacesTest {
         val rack = Rack(name = "Fridge", kind = RackKind.Shelves, rows = 4, columns = 6, depth = 2)
         cellar.addRack(rack)
         val cell = RackCell(rack.id, 1, 2)
-        assertEquals("Shelf 2, back, position 3, empty", cellDescription(rack, cell, emptyList(), cellar, resources, depth = 1))
-        assertEquals("Shelf 2, position 3, empty", cellDescription(rack, cell, emptyList(), cellar, resources))
+        assertEquals("Shelf\u00A02, back, position\u00A03, empty", cellDescription(rack, cell, emptyList(), cellar, resources, depth = 1))
+        assertEquals("Shelf\u00A02, position\u00A03, empty", cellDescription(rack, cell, emptyList(), cellar, resources))
     }
 
     @Test

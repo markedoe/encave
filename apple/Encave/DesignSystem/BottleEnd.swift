@@ -34,7 +34,15 @@ struct BottleEnd: View {
                 Circle()
                     .strokeBorder(.white.opacity(0.18), lineWidth: max(0.5, size * 0.03))
                     .padding(size * 0.3)
-                if color == .sparkling { Bubbles(size: size) }
+                if color == .sparkling {
+                    if showsStyle, StyleMark.fits(size) {
+                        // In the style mark's slot, clear of the vintage written in the middle.
+                        Bubbles(size: size * 0.36)
+                            .offset(y: -size * 0.27)
+                    } else {
+                        Bubbles(size: size)
+                    }
+                }
                 if showsStyle, let color, StyleMark.fits(size) {
                     // Above the vintage written in the middle.
                     StyleMark(color: color, size: size * 0.24)

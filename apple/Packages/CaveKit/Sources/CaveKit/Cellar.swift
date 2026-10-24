@@ -272,6 +272,29 @@ public extension Cellar {
         bottlesInCellar.filter { $0.wineID == wineID }.sorted { $0.addedAt < $1.addedAt }
     }
 
+    /// Bottles as their places read: storage in its order, then shelf or row, depth (front
+    /// first), layer, position, then id; bottles without a position last, oldest first.
+    /// A total order, so lists and "A1 and 6 more" do not change between launches.
+    func inPlaceOrder(_ bottles: [Bottle]) -> [Bottle] {
+        let rackIndex = Dictionary(racks.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+        func key(_ bottle: Bottle) -> [Int]? {
+            guard let slot = bottle.slot, let index = rackIndex[slot.rackID] else { return nil }
+            if let place = racks[index].shelfPlace(ofRow: slot.row) {
+                return [index, place.shelf, slot.depth, place.layer, slot.column]
+            }
+            return [index, slot.row, slot.depth, 0, slot.column]
+        }
+        return bottles.map { (key($0), $0) }.sorted { a, b in
+            switch (a.0, b.0) {
+            case let (ka?, kb?) where ka != kb: return ka.lexicographicallyPrecedes(kb)
+            case (.some, nil): return true
+            case (nil, .some): return false
+            case (nil, nil) where a.1.addedAt != b.1.addedAt: return a.1.addedAt < b.1.addedAt
+            default: return a.1.id.uuidString < b.1.id.uuidString
+            }
+        }.map(\.1)
+    }
+
     /// Opened bottles whose wine (name, producer, origin, grapes, tags) and tasting
     /// (note, occasion, full note, food) contain every word of `query`, most recent first.
     func tastings(matching query: String) -> [Bottle] {

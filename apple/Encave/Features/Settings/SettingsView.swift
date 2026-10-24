@@ -190,7 +190,12 @@ struct SettingsView: View {
                 Text("Your data")
             } footer: {
                 #if os(iOS)
-                Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone (or On My iPad) › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.")
+                // The Files app names the folder after the device.
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPad › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.")
+                } else {
+                    Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: iPhone, iPad, Mac or Android. The weekly backup is on at first: the last two stay in the Files app, under On My iPhone › Encave. CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.")
+                }
                 #else
                 Text("A backup is a ZIP file with your whole cellar, its photos and documents, not encrypted; import it on any device: Mac, iPhone, iPad or Android. The weekly backup is on at first: the last two stay on this Mac (Show Weekly Backups in Finder). CSV opens in Numbers or Excel. The PDF lists every wine in your cellar with its positions and purchase value, for insurance or a move.")
                 #endif

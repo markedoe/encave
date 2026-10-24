@@ -212,18 +212,30 @@ struct RackDetailView: View {
             Button { listSelection = nil; showsList = true } label: { Label("Bottle List", systemImage: "list.bullet") }
                 .accessibilityIdentifier("rack.list")
             #endif
-            Button {
-                selectedPlace = nil
-                moving = nil
-                checked = []
-                withAnimation { auditing = true }
-            } label: {
-                Label("Check This Storage", systemImage: "checklist")
-            }
-            .disabled(auditing)
-            .accessibilityIdentifier("rack.audit")
-            Button { router?.sheet = .editRack(rackID: rackID) } label: { Label("Edit Storage", systemImage: "slider.horizontal.3") }
+            #if os(macOS)
+            storageActions
+            #else
+            // In one menu on every width and in both languages, so the storage's name stays
+            // readable between the buttons.
+            Menu { storageActions } label: { Label("More", systemImage: "ellipsis.circle") }
+                .accessibilityIdentifier("rack.more")
+            #endif
         }
+    }
+
+    @ViewBuilder
+    private var storageActions: some View {
+        Button {
+            selectedPlace = nil
+            moving = nil
+            checked = []
+            withAnimation { auditing = true }
+        } label: {
+            Label("Check This Storage", systemImage: "checklist")
+        }
+        .disabled(auditing)
+        .accessibilityIdentifier("rack.audit")
+        Button { router?.sheet = .editRack(rackID: rackID) } label: { Label("Edit Storage", systemImage: "slider.horizontal.3") }
     }
 
     private func perform(_ action: CellAction) {
@@ -362,6 +374,7 @@ private struct SelectedBottleCard: View {
                         }
                         if let wine {
                             MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                                .labelStyle(CompactLabelStyle())
                         }
                     }
                     .font(.caption)
@@ -617,6 +630,7 @@ private struct BottleInCellRow: View {
                     if let wine {
                         MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
                             .font(.caption)
+                            .labelStyle(CompactLabelStyle())
                     }
                 }
                 if let documents = bottle.attachments?.count {
@@ -664,22 +678,43 @@ private struct AuditBar: View {
                 .font(.subheadline.weight(.medium))
             ProgressView(value: Double(checked), total: Double(max(total, 1)))
                 .tint(Color.accentColor)
-            HStack {
-                Text("Found: \(checked) of \(total)")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Cancel", action: cancel)
-                    .accessibilityIdentifier("sheet.cancel")
-                Button(action: finish) { ActionLabel("End Check", systemImage: "checkmark") }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("action.audit.finish")
+            // The count beside the buttons when all fit on one line, else above them.
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    count
+                    Spacer()
+                    buttons
+                }
+                .environment(\.actionLabelIcon, .shown)
+                VStack(alignment: .leading, spacing: 8) {
+                    count
+                    HStack {
+                        Spacer()
+                        buttons
+                    }
+                }
             }
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .padding()
         .accessibilityElement(children: .contain)
+    }
+
+    private var count: some View {
+        Text("Found: \(checked) of \(total)")
+            .font(.subheadline.monospacedDigit())
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+    }
+
+    @ViewBuilder
+    private var buttons: some View {
+        Button("Cancel", action: cancel)
+            .accessibilityIdentifier("sheet.cancel")
+        Button(action: finish) { ActionLabel("End Check", systemImage: "checkmark") }
+            .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("action.audit.finish")
     }
 }
 
