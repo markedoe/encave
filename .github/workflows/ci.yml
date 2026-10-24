@@ -69,6 +69,11 @@ jobs:
           printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" > "$RUNNER_TEMP/pr.txt"
           scripts/check-commit-message.sh --text-only "$RUNNER_TEMP/pr.txt"
 
+      - name: Release secrets only for code from main
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || pip install --quiet pyyaml
+          scripts/check-workflow-secrets.py
+
       - name: Public-safety check
         env:
           CHECK_COMMIT_RANGE: ${{ steps.range.outputs.range }}

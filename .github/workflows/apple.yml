@@ -127,10 +127,11 @@ jobs:
           xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
           sudo xcode-select -s "$xcode"
 
+      - name: XcodeGen and xcbeautify (pinned, checksums checked)
+        run: tools/install-build-tools.sh
+
       - name: Generate project
-        run: |
-          brew install xcodegen xcbeautify
-          xcodegen generate
+        run: xcodegen generate
 
       - name: Build for testing
         id: build
@@ -312,9 +313,10 @@ jobs:
       run:
         working-directory: apple
     env:
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      # Release secrets reach code from main only (other branches build unsigned).
+      APPLE_TEAM_ID: ${{ github.ref == 'refs/heads/main' && secrets.APPLE_TEAM_ID || '' }}
+      ASC_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.ASC_KEY_ID || '' }}
+      ASC_ISSUER_ID: ${{ github.ref == 'refs/heads/main' && secrets.ASC_ISSUER_ID || '' }}
       # Uploads on a push to main or a manual run on main, only when the secrets are
       # available (never on forks). Other branches, manual runs on them included, only
       # build: their builds never reach the testers.
@@ -330,10 +332,11 @@ jobs:
           sudo xcode-select -s "$xcode"
           xcodebuild -version
 
+      - name: XcodeGen and xcbeautify (pinned, checksums checked)
+        run: tools/install-build-tools.sh
+
       - name: Generate project
-        run: |
-          brew install xcodegen xcbeautify
-          xcodegen generate
+        run: xcodegen generate
 
       - name: Build the Mac app (Release, signed to run locally)
         if: env.UPLOAD != 'true'
@@ -357,7 +360,7 @@ jobs:
         id: key
         if: env.UPLOAD == 'true'
         env:
-          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_PRIVATE_KEY: ${{ github.ref == 'refs/heads/main' && secrets.ASC_PRIVATE_KEY || '' }}
         run: |
           key="$RUNNER_TEMP/AuthKey.p8"
           python3 tools/asc_key.py "$key"

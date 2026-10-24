@@ -18,6 +18,8 @@ permissions:
 jobs:
   listing:
     name: Listing
+    # The App Store Connect key is given to code from main only.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

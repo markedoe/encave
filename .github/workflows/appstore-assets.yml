@@ -23,6 +23,8 @@ permissions:
 jobs:
   assets:
     name: Header and search results
+    # The App Store Connect key is given to code from main only.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

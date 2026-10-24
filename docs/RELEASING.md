@@ -242,7 +242,8 @@ app need no declaration form.
 
 Authentication: Workload Identity Federation. GitHub gives the job a
 short-lived OpenID Connect token; Google exchanges it for a one-hour token of
-the service account, only for this repository and `refs/heads/main`. No key is
+the service account, only for this repository (by its numeric ID and its
+owner's, which survive a rename) and `refs/heads/main`. No key is
 stored. Only the jobs that talk to Google Play may request the token
 (`id-token: write`): `play-internal` and `play-closed` in `android.yml`, and
 the hand-run `play-release.yml`, `play-status.yml` and `play-listing.yml`
@@ -320,6 +321,9 @@ placeholders: never commit the real ones.
 
    ```bash
    PROJECT_ID="encave-release-$RANDOM"   # new and globally unique; note the printed values
+   # The repository and its owner by number: a name can be reused after a rename or deletion.
+   REPO_ID=$(curl -fsS https://api.github.com/repos/markedoe/encave | jq .id)
+   OWNER_ID=$(curl -fsS https://api.github.com/repos/markedoe/encave | jq .owner.id)
    gcloud projects create "$PROJECT_ID" --name="Encave release"
    gcloud config set project "$PROJECT_ID"
    gcloud services enable androidpublisher.googleapis.com iam.googleapis.com \
@@ -330,19 +334,42 @@ placeholders: never commit the real ones.
    gcloud iam workload-identity-pools providers create-oidc encave --location=global \
      --workload-identity-pool=github --display-name="markedoe/encave main" \
      --issuer-uri="https://token.actions.githubusercontent.com" \
-     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
-     --attribute-condition="assertion.repository == 'markedoe/encave' && assertion.ref == 'refs/heads/main'"
+     --attribute-mapping="google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.repository_owner_id=assertion.repository_owner_id,attribute.ref=assertion.ref" \
+     --attribute-condition="assertion.repository_id == '$REPO_ID' && assertion.repository_owner_id == '$OWNER_ID' && assertion.ref == 'refs/heads/main'"
    PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
    gcloud iam service-accounts add-iam-policy-binding \
      "play-release@$PROJECT_ID.iam.gserviceaccount.com" \
      --role=roles/iam.workloadIdentityUser \
-     --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/markedoe/encave"
+     --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository_id/$REPO_ID"
    echo "PLAY_WIF_PROVIDER=projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/providers/encave"
    echo "PLAY_SERVICE_ACCOUNT=play-release@$PROJECT_ID.iam.gserviceaccount.com"
    ```
 
    The service account has no key and no role in the project: it can only
    be impersonated by runs on `main` of this repository.
+
+   **Already set up by repository name** (before 2026-10-24)? Switch the
+   existing provider and binding to the IDs, in Cloud Shell, once:
+
+   ```bash
+   gcloud config set project <project id>
+   PROJECT_NUMBER=$(gcloud projects describe <project id> --format='value(projectNumber)')
+   REPO_ID=$(curl -fsS https://api.github.com/repos/markedoe/encave | jq .id)
+   OWNER_ID=$(curl -fsS https://api.github.com/repos/markedoe/encave | jq .owner.id)
+   gcloud iam workload-identity-pools providers update-oidc encave --location=global \
+     --workload-identity-pool=github \
+     --attribute-mapping="google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.repository_owner_id=assertion.repository_owner_id,attribute.ref=assertion.ref" \
+     --attribute-condition="assertion.repository_id == '$REPO_ID' && assertion.repository_owner_id == '$OWNER_ID' && assertion.ref == 'refs/heads/main'"
+   SA="play-release@<project id>.iam.gserviceaccount.com"
+   POOL="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github"
+   gcloud iam service-accounts add-iam-policy-binding "$SA" --role=roles/iam.workloadIdentityUser \
+     --member="$POOL/attribute.repository_id/$REPO_ID"
+   gcloud iam service-accounts remove-iam-policy-binding "$SA" --role=roles/iam.workloadIdentityUser \
+     --member="$POOL/attribute.repository/markedoe/encave"
+   ```
+
+   Then run Actions › Google Play status on `main` to check the token still
+   comes.
 8. **Invite the service account** in the Play Console: Users and
    permissions › Invite new users; email: the `PLAY_SERVICE_ACCOUNT` value;
    App permissions › Add app › Encave; tick **Release apps to testing
@@ -372,13 +399,29 @@ the Console (Publishing overview, Inbox).
 
 - Apple builds are signed in the cloud by App Store Connect: no certificate is
   stored. The App Store Connect API key is a repository secret.
+- **Release secrets go only to code from `main`** (**done**). A manual run
+  can start any workflow on any branch, with that branch's code: every job or
+  step that reads `ASC_*`, `ENCAVE_KEY*` or `APPLE_TEAM_ID` has a
+  `github.ref == 'refs/heads/main'` condition, so a branch run builds
+  unsigned and uploads nothing. `scripts/check-workflow-secrets.py` (CI,
+  `secrets` job) fails on a use without one.
+- *Recommended, by the owner:* a GitHub Environment `release` (Settings ›
+  Environments › New environment; Deployment branches and tags: Selected,
+  `main` only) holding the release secrets, as a second lock. The workflows
+  do not depend on it yet: moving the secrets there also needs
+  `environment: release` on the jobs that read them.
+- CI tools are pinned: actions by commit SHA (Dependabot, one grouped pull
+  request a month), XcodeGen and xcbeautify by version and SHA-256
+  (`apple/tools/install-build-tools.sh`), the Gradle distribution by its
+  SHA-256 (`distributionSha256Sum`). Release bundles and R8 mappings are kept
+  7 days as artifacts (Google Play keeps both).
 - Google keeps the app signing key (Play App Signing); the upload key is a
   repository secret, used only by the `release` job; the Play API is reached
   through Workload Identity Federation, without a stored key, only from `main`.
-- Dependabot keeps the pinned actions (one grouped pull request a month) and
-  the Gradle dependencies up to date (**done**, `.github/dependabot.yml`).
-- *(planned)* Release secrets only for runs on `main`; build provenance
-  attestations for the uploaded bundles.
+- Dependabot keeps the pinned actions (one grouped pull request a month), the
+  Swift packages of CaveKit and the Gradle dependencies up to date (**done**,
+  `.github/dependabot.yml`).
+- *(planned)* Build provenance attestations for the uploaded bundles.
 
 ## Work in progress
 

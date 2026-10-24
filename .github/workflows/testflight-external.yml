@@ -26,6 +26,8 @@ permissions:
 jobs:
   give:
     name: Give the build to the external testers
+    # The App Store Connect key is given to code from main only.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

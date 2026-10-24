@@ -48,8 +48,10 @@ jobs:
         # A local relay (relay/server.mjs) for the remote sync integration test.
         run: |
           mkdir -p "$RUNNER_TEMP/relay"
-          (cd .. && PORT=8787 DATA_DIR="$RUNNER_TEMP/relay" node relay/server.mjs &)
-          for i in $(seq 1 50); do curl -fs http://localhost:8787/v1/health && break; sleep 0.2; done
+          (cd .. && PORT=8787 DATA_DIR="$RUNNER_TEMP/relay" node relay/server.mjs > "$RUNNER_TEMP/relay.log" 2>&1 &)
+          up=""
+          for i in $(seq 1 50); do curl -fs http://localhost:8787/v1/health && { up=1; break; }; sleep 0.2; done
+          [ -n "$up" ] || { echo "::error::The local relay did not start in 10 s."; cat "$RUNNER_TEMP/relay.log"; exit 1; }
           ENCAVE_RELAY_URL=http://localhost:8787 ./gradlew :core:test --stacktrace
 
       - name: App unit tests
@@ -161,7 +163,9 @@ jobs:
         run: echo "BUILD_NUMBER=$(( 1000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT ))" >> "$GITHUB_ENV"
 
       - name: Upload keystore
-        # Only when the secret is set (never on forks); the bundle is unsigned otherwise.
+        # Only on main and when the secret is set (never on forks or other branches, whose
+        # code must not get the upload key); the bundle is unsigned otherwise.
+        if: github.ref == 'refs/heads/main'
         env:
           ENCAVE_KEYSTORE_BASE64: ${{ secrets.ENCAVE_KEYSTORE_BASE64 }}
         run: |
@@ -175,11 +179,11 @@ jobs:
           echo "ENCAVE_KEYSTORE_PATH=$keystore" >> "$GITHUB_ENV"
 
       - name: Release lint and bundle
-        # Gradle signs only when the keystore path and the three secrets are all set.
+        # Gradle signs only when the keystore path and the three secrets are all set (main only).
         env:
-          ENCAVE_KEYSTORE_PASSWORD: ${{ secrets.ENCAVE_KEYSTORE_PASSWORD }}
-          ENCAVE_KEY_ALIAS: ${{ secrets.ENCAVE_KEY_ALIAS }}
-          ENCAVE_KEY_PASSWORD: ${{ secrets.ENCAVE_KEY_PASSWORD }}
+          ENCAVE_KEYSTORE_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.ENCAVE_KEYSTORE_PASSWORD || '' }}
+          ENCAVE_KEY_ALIAS: ${{ github.ref == 'refs/heads/main' && secrets.ENCAVE_KEY_ALIAS || '' }}
+          ENCAVE_KEY_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.ENCAVE_KEY_PASSWORD || '' }}
         run: ./gradlew :app:lintRelease :app:bundleRelease --stacktrace
 
       - name: Remove the keystore
@@ -203,7 +207,8 @@ jobs:
           name: encave-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
-          retention-days: 30
+          # Google Play keeps the uploaded bundle.
+          retention-days: 7
 
       - name: Upload R8 mapping
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -211,7 +216,8 @@ jobs:
           name: encave-release-mapping
           path: android/app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: error
-          retention-days: 90
+          # Google Play keeps the mapping (readable stack traces in Android vitals).
+          retention-days: 7
 
   smoke:
     name: Emulator smoke test
@@ -356,7 +362,7 @@ jobs:
     # On by default, to the built-in closed track "alpha"; the PLAY_CLOSED_TRACK variable names
     # another closed track, or turns closed testing off with "none".
     needs: [build, release, tour, smoke, play-internal]
-    if: ${{ needs.play-internal.outputs.released == 'true' && vars.PLAY_CLOSED_TRACK != 'none' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.play-internal.outputs.released == 'true' && vars.PLAY_CLOSED_TRACK != 'none' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

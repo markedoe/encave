@@ -145,11 +145,12 @@ The release build is shrunk and obfuscated with R8 (keep rules in
 - **CI:** the `release` job of `android.yml` (pushes to `main` and manual runs)
   runs `:app:lintRelease :app:bundleRelease` and uploads the bundle
   (`encave-release-aab`) and the R8 mapping (`encave-release-mapping`, needed
-  to read crash stack traces). It signs when these repository secrets are set:
-  `ENCAVE_KEYSTORE_BASE64`, `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS` and
-  `ENCAVE_KEY_PASSWORD`. On `main`, the signed bundle then goes to Google Play
-  internal testing, and (off for now) to closed testing once the screen tour and
-  the emulator smoke test passed (`android/tools/play_publish.py`; setup in
+  to read crash stack traces; both kept 7 days). It signs, on `main` only, when
+  these repository secrets are set: `ENCAVE_KEYSTORE_BASE64`,
+  `ENCAVE_KEYSTORE_PASSWORD`, `ENCAVE_KEY_ALIAS` and `ENCAVE_KEY_PASSWORD` (a
+  manual run on another branch builds unsigned). On `main`, once the tests
+  passed, the signed bundle then goes to Google Play internal testing, and to
+  closed testing once the screen tour and the emulator smoke test passed (`android/tools/play_publish.py`; setup in
   [RELEASING.md](RELEASING.md), "Google Play").
 
 Create the upload keystore once, outside the repository, and keep it and its

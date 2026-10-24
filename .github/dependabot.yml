@@ -7,6 +7,9 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+  - package-ecosystem: swift
+    directory: /apple/Packages/CaveKit
+    schedule: { interval: monthly }
   - package-ecosystem: gradle
     directory: /android
     schedule: { interval: monthly }

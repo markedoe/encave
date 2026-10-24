@@ -69,6 +69,7 @@ These rules are enforced by:
 | `gitleaks` with `.gitleaks.toml` | pre-commit, CI (`secrets` job) and weekly on the whole history |
 | `scripts/check-public-safety.sh` | pre-commit, CI (`secrets` job) and weekly on the whole history |
 | `scripts/check-commit-message.sh` | commit-msg hook and CI (`secrets` job) |
+| `scripts/check-workflow-secrets.py`: release secrets go only to code from `main` | CI (`secrets` job) |
 | GitHub secret scanning + push protection | repository settings |
 
 The `secrets` job runs on pull requests and on pushes to `main` and `claude/**`.
