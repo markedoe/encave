@@ -101,12 +101,12 @@ public enum CellarExport {
                 rack?.name, bottle.slot.flatMap { slot in rack?.label(for: slot) },
                 bottle.slot.flatMap { slot in rack.map { "\($0.name) · \(placeName?($0, slot) ?? $0.placeName(for: slot))" } },
                 bottle.storageNote,
-                bottle.purchaseDate.map(day.string(from:)), bottle.purchasePrice.map { "\($0)" }, bottle.currency,
+                bottle.purchaseDate.map(day.string(from:)), bottle.purchasePrice.map(price), bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, String(bottle.sizeML),
                 bottle.tasting?.rating.map(String.init), bottle.tasting.map { day.string(from: $0.date) },
                 bottle.tasting?.note, bottle.expectedAt.map(day.string(from:)), wine.tags?.joined(separator: "; "),
                 bottle.reservedFor,
-                wine.currentPrice.map { "\($0)" }, wine.currentPrice == nil ? nil : wine.currentPriceCurrency,
+                wine.currentPrice.map(price), wine.currentPrice == nil ? nil : wine.currentPriceCurrency,
                 wine.currentPrice == nil ? nil : wine.currentPriceDate.map(day.string(from:)),
             ]
             lines.append(fields.map { escape($0 ?? "") }.joined(separator: ","))
@@ -119,8 +119,32 @@ public enum CellarExport {
         // text (from any device of the cellar) is written after a quote mark, which the
         // import removes. Encave writes no negative numbers.
         let field = field.first.map { "=+-@".contains($0) } == true ? "'" + field : field
-        guard field.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" || $0 == ";" }) else { return field }
+        // Scalars, not Characters: "\r\n" is one Character, neither "\r" nor "\n".
+        guard field.unicodeScalars.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" || $0 == ";" })
+        else { return field }
         return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+    }
+
+    /// A price rounded to the cent, as the CSV export writes and reads it ("8.333" is 8.33).
+    public static func rounded(_ price: Decimal) -> Decimal {
+        var value = price, result = Decimal()
+        NSDecimalRound(&result, &value, 2, .plain)
+        // Without trailing zeros (10, not 10.00), as the Kotlin core keeps it.
+        return Decimal(string: withoutTrailingZeros("\(result)"), locale: Locale(identifier: "en_US_POSIX")) ?? result
+    }
+
+    /// "8.33", "120.5", "18".
+    static func price(_ value: Decimal) -> String {
+        withoutTrailingZeros("\(rounded(value))")
+    }
+
+    /// "10.00" → "10", "8.50" → "8.5".
+    private static func withoutTrailingZeros(_ number: String) -> String {
+        guard number.contains(".") else { return number }
+        var text = number
+        while text.hasSuffix("0") { text.removeLast() }
+        if text.hasSuffix(".") { text.removeLast() }
+        return text
     }
 
     static func dayFormatter(timeZone: TimeZone = .current) -> DateFormatter {
@@ -177,8 +201,15 @@ public extension Cellar {
         guard let nameIndex = columns.firstIndex(of: "name") else { throw ImportError.missingNameColumn }
         let day = CellarExport.dayFormatter(timeZone: timeZone)
         if columns.contains("scan_date"), !columns.contains("quantity") {
-            return importDiscoveries(rows: rows, columns: columns, nameIndex: nameIndex, now: now, day: day)
+            return importDiscoveries(rows: rows, columns: columns, nameIndex: nameIndex, now: now, day: day,
+                                     timeZone: timeZone)
         }
+        // Encave's own columns ("price", not "Prix") hold plain numbers: "8.333" is not 8,333.
+        func own(_ column: String) -> Bool {
+            guard let index = columns.firstIndex(of: column) else { return false }
+            return header[index].trimmingCharacters(in: .whitespaces) == column
+        }
+        let plainPrice = own("price"), plainCurrentPrice = own("current_price")
         var winesByKey = Dictionary(wines.values.map { ($0.identityKey, $0) }, uniquingKeysWith: { a, _ in a })
         var summary = ImportSummary(winesAdded: 0, bottlesAdded: 0, rowsSkipped: 0)
 
@@ -191,7 +222,7 @@ public extension Cellar {
                 if row.contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) { summary.rowsSkipped += 1 }
                 continue
             }
-            var wine = CSVColumns.wine(name: name, value: value, day: day)
+            var wine = CSVColumns.wine(name: name, value: value, day: day, plainPrice: plainCurrentPrice)
             if let existing = winesByKey[wine.identityKey] {
                 wine = existing
             } else {
@@ -205,7 +236,7 @@ public extension Cellar {
                 var bottle = Bottle(
                     wineID: wine.id, storageNote: value("storage"), addedAt: now,
                     purchaseDate: value("purchase_date").flatMap { CSVColumns.day($0, day) },
-                    purchasePrice: value("price").flatMap(PriceExtractor.decimal),
+                    purchasePrice: value("price").flatMap { CSVColumns.price($0, plain: plainPrice) },
                     currency: value("currency") ?? settings.currency, purchasePlace: value("purchase_place"),
                     receivedFrom: value("received_from"), sizeML: value("size_ml").flatMap(CSVColumns.size) ?? 750
                 )
@@ -240,7 +271,7 @@ public extension Cellar {
 extension Cellar {
     /// Rows of a tasting history: each becomes a discovery of the wine.
     mutating func importDiscoveries(rows: [[String]], columns: [String], nameIndex: Int, now: Date,
-                                    day: DateFormatter) -> ImportSummary {
+                                    day: DateFormatter, timeZone: TimeZone) -> ImportSummary {
         var summary = ImportSummary(winesAdded: 0, bottlesAdded: 0, rowsSkipped: 0)
         for row in rows.dropFirst() {
             func value(_ column: String) -> String? {
@@ -254,9 +285,9 @@ extension Cellar {
             let wine = CSVColumns.wine(name: name, value: value, day: day)
             let known = wines.values.contains { $0.identityKey == wine.identityKey }
             let discovery = Discovery(
-                wineID: wine.id, date: value("scan_date").flatMap(CSVColumns.date) ?? now, place: value("place"),
-                rating: value("rating").flatMap(CSVColumns.rating), note: value("note"),
-                price: value("price").flatMap(PriceExtractor.decimal),
+                wineID: wine.id, date: value("scan_date").flatMap { CSVColumns.date($0, timeZone: timeZone) } ?? now,
+                place: value("place"), rating: value("rating").flatMap(CSVColumns.rating), note: value("note"),
+                price: value("price").flatMap { CSVColumns.price($0, plain: false) },
                 currency: value("currency") ?? settings.currency
             )
             addDiscovery(discovery, wine: wine)
@@ -329,7 +360,7 @@ enum CSVColumns {
         Int(exactly: value.rounded())
     }
 
-    static func wine(name: String, value: (String) -> String?, day: DateFormatter) -> Wine {
+    static func wine(name: String, value: (String) -> String?, day: DateFormatter, plainPrice: Bool = false) -> Wine {
         var from = value("drink_from").flatMap(year), until = value("drink_until").flatMap(year)
         if from == nil, until == nil, let window = value("drinking_window") {
             let years = window.split { !$0.isNumber }.compactMap { Int($0) }.filter { (1900...2200).contains($0) }
@@ -344,7 +375,7 @@ enum CSVColumns {
             drinkFrom: from, drinkUntil: until,
             tags: value("tags")?.split(whereSeparator: { $0 == ";" || $0 == "," }).map(String.init)
         )
-        if let price = value("current_price").flatMap(PriceExtractor.decimal), price > 0 {
+        if let price = value("current_price").flatMap({ CSVColumns.price($0, plain: plainPrice) }), price > 0 {
             wine.currentPrice = price
             wine.currentPriceCurrency = value("current_price_currency") ?? value("currency")
             wine.currentPriceDate = value("current_price_date").flatMap { CSVColumns.day($0, day) }
@@ -356,6 +387,14 @@ enum CSVColumns {
     static func year(_ text: String) -> Int? {
         guard let value = number(text).flatMap(integer), (1800...2200).contains(value) else { return nil }
         return value
+    }
+
+    /// A price rounded to the cent. In Encave's own columns (`plain`), "8.333" is 8.33; elsewhere
+    /// a three-digit tail is thousands ("1.234" is 1234), as on a web page.
+    static func price(_ text: String, plain: Bool) -> Decimal? {
+        let isPlain = plain && text.range(of: #"^[0-9]+(\.[0-9]+)?$"#, options: .regularExpression) != nil
+        let value = isPlain ? Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")) : PriceExtractor.decimal(text)
+        return value.map(CellarExport.rounded)
     }
 
     static func number(_ text: String) -> Double? {
@@ -383,13 +422,18 @@ enum CSVColumns {
     /// "2024-03-10" as Encave writes it, or a date with a time or in another order
     /// ("10/03/2024"), as other apps write them.
     static func day(_ text: String, _ formatter: DateFormatter) -> Date? {
-        formatter.date(from: text) ?? date(text)
+        formatter.date(from: text) ?? date(text, timeZone: formatter.timeZone)
     }
 
-    static func date(_ text: String) -> Date? {
-        for format in ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy"] {
+    /// Other apps' dates in `timeZone`: "2025-07-14 19:30:00", "2024-3-5", "10/03/2024" (day
+    /// first, else month first); nil for a day that does not exist ("2024-02-30").
+    static func date(_ text: String, timeZone: TimeZone) -> Date? {
+        for format in ["yyyy-MM-dd HH:mm:ss", "yyyy-M-d", "d/M/yyyy", "M/d/yyyy"] {
             let formatter = DateFormatter()
+            formatter.calendar = Calendar(identifier: .gregorian)
             formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = timeZone
+            formatter.isLenient = false
             formatter.dateFormat = format
             if let date = formatter.date(from: text) { return date }
         }
@@ -422,6 +466,74 @@ public extension Rack {
         let slot = Slot(rackID: id, row: row - 1, column: column - 1, depth: depth)
         guard contains(slot) else { return nil }
         return slot
+    }
+}
+
+/// The text of a CSV file: UTF-8 with or without a byte order mark, UTF-16 with one, else
+/// Windows-1252 (French Excel's "CSV (point-virgule)", CellarTracker). The five bytes
+/// Windows-1252 leaves undefined (0x81, 0x8D, 0x8F, 0x90, 0x9D) become the same code point,
+/// as in Latin-1. A byte order mark is removed. The Kotlin core decodes the same way.
+public enum CSVText {
+    public static func decode(_ data: Data) -> String {
+        let bytes = [UInt8](data)
+        if bytes.starts(with: [0xFF, 0xFE]) { return utf16(bytes, littleEndian: true) }
+        if bytes.starts(with: [0xFE, 0xFF]) { return utf16(bytes, littleEndian: false) }
+        let body = bytes.starts(with: [0xEF, 0xBB, 0xBF]) ? bytes[3...] : bytes[...]
+        return utf8(body) ?? windows1252(body)
+    }
+
+    /// Strict: nil unless every byte is part of a valid UTF-8 sequence.
+    static func utf8(_ bytes: ArraySlice<UInt8>) -> String? {
+        var scalars = String.UnicodeScalarView()
+        var iterator = bytes.makeIterator()
+        var decoder = UTF8()
+        while true {
+            switch decoder.decode(&iterator) {
+            case let .scalarValue(scalar): scalars.append(scalar)
+            case .emptyInput: return String(scalars)
+            case .error: return nil
+            }
+        }
+    }
+
+    /// After the byte order mark; an unpaired surrogate or a last odd byte is U+FFFD.
+    static func utf16(_ bytes: [UInt8], littleEndian: Bool) -> String {
+        let count = (bytes.count - 2) / 2
+        func unit(_ index: Int) -> UInt32 {
+            let first = UInt32(bytes[2 + 2 * index]), second = UInt32(bytes[3 + 2 * index])
+            return littleEndian ? first | second << 8 : first << 8 | second
+        }
+        let replacement: Unicode.Scalar = "\u{FFFD}"
+        var scalars = String.UnicodeScalarView()
+        var index = 0
+        while index < count {
+            let high = unit(index)
+            if (0xD800...0xDBFF).contains(high), index + 1 < count, (0xDC00...0xDFFF).contains(unit(index + 1)) {
+                let value = 0x10000 + ((high - 0xD800) << 10) + (unit(index + 1) - 0xDC00)
+                scalars.append(Unicode.Scalar(value) ?? replacement)
+                index += 2
+            } else {
+                scalars.append(Unicode.Scalar(high) ?? replacement)
+                index += 1
+            }
+        }
+        if (bytes.count - 2) % 2 == 1 { scalars.append(replacement) }
+        return String(scalars)
+    }
+
+    /// Code points of 0x80 to 0x9F; the other bytes are their own code point.
+    static let high: [UInt32] = [
+        0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008D, 0x017D, 0x008F,
+        0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x009D, 0x017E, 0x0178,
+    ]
+
+    static func windows1252(_ bytes: ArraySlice<UInt8>) -> String {
+        var scalars = String.UnicodeScalarView()
+        for byte in bytes {
+            let value = (0x80...0x9F).contains(byte) ? high[Int(byte) - 0x80] : UInt32(byte)
+            if let scalar = Unicode.Scalar(value) { scalars.append(scalar) }
+        }
+        return String(scalars)
     }
 }
 

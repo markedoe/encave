@@ -376,7 +376,8 @@ struct SettingsView: View {
         var imported = model.cellar
         let summary: ImportSummary
         do {
-            summary = try imported.importCSV(String(decoding: data, as: UTF8.self))
+            // Excel's and CellarTracker's files are often Windows-1252, not UTF-8.
+            summary = try imported.importCSV(CSVText.decode(data))
         } catch {
             importMessage = String(localized: "This file is not an Encave backup or a CSV with a name column.")
             return

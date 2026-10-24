@@ -1,10 +1,17 @@
 package app.encave.core
 
 import app.encave.core.search.PriceExtractor
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.CodingErrorAction
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.util.Locale
 
 enum class ImportError {
@@ -75,12 +82,12 @@ object CellarExport {
                 rack?.name, bottle.slot?.let { rack?.label(it) },
                 bottle.slot?.let { slot -> rack?.let { "${it.name} · ${placeName?.invoke(it, slot) ?: it.placeName(slot)}" } },
                 bottle.storageNote,
-                bottle.purchaseDate?.let(day), bottle.purchasePrice?.let(DecimalSerializer::plain), bottle.currency,
+                bottle.purchaseDate?.let(day), bottle.purchasePrice?.let(::price), bottle.currency,
                 bottle.purchasePlace, bottle.receivedFrom, bottle.sizeML.toString(),
                 bottle.tasting?.rating?.toString(), bottle.tasting?.let { day(it.date) },
                 bottle.tasting?.note, bottle.expectedAt?.let(day), wine.tags.orEmpty().joinToString("; "),
                 bottle.reservedFor,
-                wine.currentPrice?.let(DecimalSerializer::plain),
+                wine.currentPrice?.let(::price),
                 if (wine.currentPrice == null) null else wine.currentPriceCurrency,
                 if (wine.currentPrice == null) null else wine.currentPriceDate?.let(day),
             )
@@ -88,6 +95,12 @@ object CellarExport {
         }
         return lines.joinToString("\n") + "\n"
     }
+
+    /** A price rounded to the cent, as the CSV export writes and reads it ("8.333" is 8.33). */
+    fun roundedPrice(value: BigDecimal): BigDecimal = value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros()
+
+    /** "8.33", "120.5", "18". */
+    internal fun price(value: BigDecimal): String = DecimalSerializer.plain(roundedPrice(value))
 
     internal fun escape(text: String): String {
         // A spreadsheet runs a cell that starts with "=", "+", "-" or "@" as a formula: such
@@ -159,8 +172,12 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: Zo
     if (nameIndex < 0) throw ImportException(ImportError.MissingNameColumn)
     // Dates ("2024-03-10") are days of [zone], as the export writes them; other apps' dates
     // (with a time, or "10/03/2024") are read too.
-    val day = { text: String -> CellarExport.parseDay(text, zone) ?: CsvColumns.date(text) }
-    if ("scan_date" in columns && "quantity" !in columns) return importDiscoveries(rows, columns, nameIndex, now, day)
+    val day = { text: String -> CellarExport.parseDay(text, zone) ?: CsvColumns.date(text, zone) }
+    if ("scan_date" in columns && "quantity" !in columns) return importDiscoveries(rows, columns, nameIndex, now, zone, day)
+    // Encave's own columns ("price", not "Prix") hold plain numbers: "8.333" is not 8,333.
+    fun own(column: String): Boolean = columns.indexOf(column).let { it >= 0 && header[it].trim() == column }
+    val plainPrice = own("price")
+    val plainCurrentPrice = own("current_price")
     val winesByKey = HashMap<String, Wine>()
     wines.values.forEach { winesByKey.putIfAbsent(it.identityKey, it) }
     var winesAdded = 0
@@ -178,7 +195,7 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: Zo
             if (row.any { it.isNotBlank() }) rowsSkipped++
             continue
         }
-        var wine = CsvColumns.wine(name, ::value, day)
+        var wine = CsvColumns.wine(name, ::value, day, plainCurrentPrice)
         val existing = winesByKey[wine.identityKey]
         if (existing != null) {
             wine = existing
@@ -193,7 +210,7 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: Zo
             var bottle = Bottle(
                 wineId = wine.id, storageNote = value("storage"), addedAt = now,
                 purchaseDate = value("purchase_date")?.let(day),
-                purchasePrice = value("price")?.let(PriceExtractor::decimal),
+                purchasePrice = value("price")?.let { CsvColumns.price(it, plainPrice) },
                 currency = value("currency") ?: settings.currency, purchasePlace = value("purchase_place"),
                 receivedFrom = value("received_from"), sizeML = value("size_ml")?.let(CsvColumns::size) ?: 750,
                 reservedFor = value("reserved_for"),
@@ -233,7 +250,7 @@ fun Cellar.importCsv(text: String, now: Instant = ReferenceDates.now(), zone: Zo
 
 /** Rows of a tasting history (Vivino): each becomes a discovery of the wine. */
 internal fun Cellar.importDiscoveries(
-    rows: List<List<String>>, columns: List<String>, nameIndex: Int, now: Instant, day: (String) -> Instant?,
+    rows: List<List<String>>, columns: List<String>, nameIndex: Int, now: Instant, zone: ZoneId, day: (String) -> Instant?,
 ): ImportSummary {
     var winesAdded = 0
     var rowsSkipped = 0
@@ -252,9 +269,9 @@ internal fun Cellar.importDiscoveries(
         val wine = CsvColumns.wine(name, ::value, day)
         val known = wines.values.any { it.identityKey == wine.identityKey }
         val discovery = Discovery(
-            wineId = wine.id, date = value("scan_date")?.let(CsvColumns::date) ?: now, place = value("place"),
+            wineId = wine.id, date = value("scan_date")?.let { CsvColumns.date(it, zone) } ?: now, place = value("place"),
             rating = value("rating")?.let(CsvColumns::rating), note = value("note"),
-            price = value("price")?.let(PriceExtractor::decimal),
+            price = value("price")?.let { CsvColumns.price(it, plain = false) },
             currency = value("currency") ?: settings.currency,
         )
         addDiscovery(discovery, wine)
@@ -330,7 +347,7 @@ internal object CsvColumns {
         return if (nearest >= Int.MIN_VALUE && nearest <= Int.MAX_VALUE) nearest.toInt() else null
     }
 
-    fun wine(name: String, value: (String) -> String?, day: (String) -> Instant?): Wine {
+    fun wine(name: String, value: (String) -> String?, day: (String) -> Instant?, plainPrice: Boolean = false): Wine {
         var from = value("drink_from")?.let(::year)
         var until = value("drink_until")?.let(::year)
         if (from == null && until == null) {
@@ -348,13 +365,24 @@ internal object CsvColumns {
             drinkFrom = from, drinkUntil = until,
             tags = Wine.normalizedTags(value("tags")?.split(';', ',')),
         ).let { wine ->
-            val price = value("current_price")?.let(PriceExtractor::decimal)?.takeIf { it.signum() > 0 } ?: return@let wine
+            val price = value("current_price")?.let { CsvColumns.price(it, plainPrice) }?.takeIf { it.signum() > 0 } ?: return@let wine
             wine.copy(
                 currentPrice = price,
                 currentPriceCurrency = value("current_price_currency") ?: value("currency"),
                 currentPriceDate = value("current_price_date")?.let(day),
             )
         }
+    }
+
+    private val plainNumber = Regex("[0-9]+(\\.[0-9]+)?")
+
+    /**
+     * A price rounded to the cent. In Encave's own columns ([plain]), "8.333" is 8.33; elsewhere
+     * a three-digit tail is thousands ("1.234" is 1234), as on a web page.
+     */
+    fun price(text: String, plain: Boolean): BigDecimal? {
+        val value = if (plain && plainNumber.matches(text)) BigDecimal(text) else PriceExtractor.decimal(text)
+        return value?.let(CellarExport::roundedPrice)
     }
 
     /** "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage). */
@@ -382,14 +410,82 @@ internal object CsvColumns {
         return table.firstOrNull { folded.contains(it.first) }?.second
     }
 
-    fun date(text: String): Instant? {
-        val zone = java.time.ZoneId.systemDefault()
-        for (pattern in listOf("yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy")) {
-            val formatter = DateTimeFormatter.ofPattern(pattern, Locale.ROOT)
-            runCatching { return java.time.LocalDateTime.parse(text, formatter).atZone(zone).toInstant() }
-            runCatching { return LocalDate.parse(text, formatter).atStartOfDay(zone).toInstant() }
-        }
+    private fun strict(pattern: String) = DateTimeFormatter.ofPattern(pattern, Locale.ROOT).withResolverStyle(ResolverStyle.STRICT)
+    private val dateTimeFormat = strict("uuuu-M-d H:mm:ss")
+    private val dateFormats = listOf("uuuu-M-d", "d/M/uuuu", "M/d/uuuu").map(::strict)
+
+    /**
+     * Other apps' dates in [zone]: "2025-07-14 19:30:00", "2024-3-5", "10/03/2024" (day first,
+     * else month first); null for a day that does not exist ("2024-02-30").
+     */
+    fun date(text: String, zone: ZoneId): Instant? {
+        runCatching { return LocalDateTime.parse(text, dateTimeFormat).atZone(zone).toInstant() }
+        for (formatter in dateFormats) runCatching { return LocalDate.parse(text, formatter).atStartOfDay(zone).toInstant() }
         return null
+    }
+}
+
+/**
+ * The text of a CSV file: UTF-8 with or without a byte order mark, UTF-16 with one, else
+ * Windows-1252 (French Excel's "CSV (point-virgule)", CellarTracker). The five bytes
+ * Windows-1252 leaves undefined (0x81, 0x8D, 0x8F, 0x90, 0x9D) become the same code point,
+ * as in Latin-1. A byte order mark is removed.
+ */
+object CsvText {
+    fun decode(bytes: ByteArray): String {
+        fun startsWith(vararg prefix: Int) = bytes.size >= prefix.size && prefix.indices.all { bytes[it] == prefix[it].toByte() }
+        if (startsWith(0xFF, 0xFE)) return utf16(bytes, littleEndian = true)
+        if (startsWith(0xFE, 0xFF)) return utf16(bytes, littleEndian = false)
+        val start = if (startsWith(0xEF, 0xBB, 0xBF)) 3 else 0
+        return utf8(bytes, start) ?: windows1252(bytes, start)
+    }
+
+    private fun utf8(bytes: ByteArray, start: Int): String? = try {
+        Charsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(bytes, start, bytes.size - start)).toString()
+    } catch (_: CharacterCodingException) {
+        null
+    }
+
+    /** After the byte order mark; an unpaired surrogate or a last odd byte is U+FFFD. */
+    private fun utf16(bytes: ByteArray, littleEndian: Boolean): String {
+        val count = (bytes.size - 2) / 2
+        fun unit(index: Int): Int {
+            val first = bytes[2 + 2 * index].toInt() and 0xFF
+            val second = bytes[3 + 2 * index].toInt() and 0xFF
+            return if (littleEndian) first or (second shl 8) else (first shl 8) or second
+        }
+        val text = StringBuilder(count)
+        var index = 0
+        while (index < count) {
+            val unit = unit(index)
+            if (unit in 0xD800..0xDBFF && index + 1 < count && unit(index + 1) in 0xDC00..0xDFFF) {
+                text.append(unit.toChar()).append(unit(index + 1).toChar())
+                index += 2
+            } else {
+                text.append(if (unit in 0xD800..0xDFFF) '\uFFFD' else unit.toChar())
+                index++
+            }
+        }
+        if ((bytes.size - 2) % 2 == 1) text.append('\uFFFD')
+        return text.toString()
+    }
+
+    /** Code points of 0x80 to 0x9F; the other bytes are their own code point. */
+    private val high = intArrayOf(
+        0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008D, 0x017D, 0x008F,
+        0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x009D, 0x017E, 0x0178,
+    )
+
+    private fun windows1252(bytes: ByteArray, start: Int): String {
+        val text = StringBuilder(bytes.size - start)
+        for (index in start until bytes.size) {
+            val byte = bytes[index].toInt() and 0xFF
+            text.append((if (byte in 0x80..0x9F) high[byte - 0x80] else byte).toChar())
+        }
+        return text.toString()
     }
 }
 
