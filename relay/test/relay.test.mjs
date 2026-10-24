@@ -1,56 +1,41 @@
 // Tests the relay through HTTP: node --test relay/test
-import { test, before, after } from "node:test";
+import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
 import { request as httpRequest } from "node:http";
-import { mkdir, mkdtemp, readdir, rm, utimes, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, readdir, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { clientKey, mailboxFor } from "../protocol.mjs";
-
-const servers = [];
-
-/// Starts a relay on its own port and data folder; returns its base URL.
-async function startRelay(env = {}, prepare = async () => {}) {
-  const port = 18000 + Math.floor(Math.random() * 20000);
-  const dataDir = await mkdtemp(join(tmpdir(), "encave-relay-"));
-  await prepare(dataDir);
-  const server = spawn(process.execPath, [new URL("../server.mjs", import.meta.url).pathname],
-                       { env: { ...process.env, PORT: String(port), DATA_DIR: dataDir, ...env }, stdio: "pipe" });
-  servers.push({ server, dataDir });
-  const url = `http://localhost:${port}`;
-  const headers = env.RELAY_ACCESS_KEY ? { "x-relay-key": env.RELAY_ACCESS_KEY } : {};
-  for (let i = 0; i < 50; i++) {
-    try { if ((await fetch(`${url}/v1/health`, { headers })).ok) return { url, dataDir }; } catch {}
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  throw new Error("relay did not start");
-}
+import { startRelay, stopRelays } from "./support.mjs";
+import { checkStored } from "./check-stored.mjs";
 
 let base, dataDir;
 before(async () => { ({ url: base, dataDir } = await startRelay()); });
+after(stopRelays);
 
-after(async () => {
-  for (const { server, dataDir } of servers) {
-    server.kill();
-    await rm(dataDir, { recursive: true, force: true });
-  }
+// Every test has its own cellar and inbox, so none depends on another.
+let serial = 0;
+let token, inboxToken, mailbox, inbox;
+beforeEach(async () => {
+  serial += 1;
+  token = `token-of-the-cellar-${serial}-0123456789`;
+  inboxToken = `inbox-owner-token-${serial}-0123456789`;
+  mailbox = await mailboxFor("c", token);
+  inbox = await mailboxFor("i", inboxToken);
 });
-
-const token = "token-of-the-cellar-0123456789";
-const inboxToken = "inbox-owner-token-0123456789";
-const mailbox = await mailboxFor("c", token);
-const inbox = await mailboxFor("i", inboxToken);
 const auth = (t = token) => ({ authorization: `Bearer ${t}` });
 
-/// A raw request that sends `first` and then waits: resolves with the status as
+/// A raw request that sends `chunks` and then waits: resolves with the status as
 /// soon as the relay answers, even though the body never ends.
-function answerBeforeBody(url, headers, first) {
+function answerBeforeBody(url, headers, ...chunks) {
   return new Promise((resolve, reject) => {
-    const req = httpRequest(url, { method: "PUT", headers }, (res) => { resolve(res.statusCode); req.destroy(); });
+    const timer = setTimeout(() => { reject(new Error("no answer before the end of the body")); req.destroy(); }, 3000);
+    const req = httpRequest(url, { method: "PUT", headers }, (res) => {
+      clearTimeout(timer);
+      resolve(res.statusCode);
+      req.destroy();
+    });
     req.on("error", () => {});
-    req.write(first);
-    setTimeout(() => { reject(new Error("no answer before the end of the body")); req.destroy(); }, 3000);
+    for (const chunk of chunks) req.write(chunk);
   });
 }
 
@@ -96,7 +81,7 @@ test("a path under an existing file is a conflict, not an error", async () => {
   assert.deepEqual(leftovers, []);
 });
 
-test("listing pages through files with a prefix", async () => {
+test("listing pages through files with a prefix, and deleting a file", async () => {
   for (let i = 0; i < 3; i++) {
     await fetch(`${base}/v1/m/${mailbox}/snap/b/${i}`, { method: "PUT", headers: auth(), body: "y" });
   }
@@ -104,9 +89,6 @@ test("listing pages through files with a prefix", async () => {
   assert.deepEqual(page.files, ["snap/b/0", "snap/b/1", "snap/b/2"]);
   const later = await (await fetch(`${base}/v1/m/${mailbox}?prefix=snap/b/&after=snap/b/0`, { headers: auth() })).json();
   assert.deepEqual(later.files, ["snap/b/1", "snap/b/2"]);
-});
-
-test("deleting a file", async () => {
   assert.equal((await fetch(`${base}/v1/m/${mailbox}/snap/b/0`, { method: "DELETE", headers: auth() })).status, 204);
   assert.equal((await fetch(`${base}/v1/m/${mailbox}/snap/b/0`, { headers: auth() })).status, 404);
 });
@@ -130,6 +112,7 @@ test("grants are small, even without a declared length", async () => {
 });
 
 test("bad names and big files are refused", async () => {
+  assert.equal((await fetch(`${base}/v1/m/${mailbox}/a`, { method: "PUT", headers: auth(), body: "z" })).status, 201);
   assert.equal((await fetch(`${base}/v1/m/${mailbox}/..%2Fescape`, { method: "PUT", headers: auth(), body: "z" })).status, 400);
   assert.equal((await fetch(`${base}/v1/m/${mailbox}/UPPER`, { method: "PUT", headers: auth(), body: "z" })).status, 400);
   assert.equal((await fetch(`${base}/v1/m/not-a-mailbox/x`, { headers: auth() })).status, 404);
@@ -158,7 +141,7 @@ test("the relay as a whole has a mailbox and storage limit", async () => {
   const { url } = await startRelay({ MAX_MAILBOXES: "1", MAX_STORAGE_MB: "0.001" });
   const other = await mailboxFor("i", "second-inbox-token-0123456789");
   assert.equal((await fetch(`${url}/v1/m/${inbox}/grant/a`, { method: "PUT", body: "g" })).status, 201);
-  // A second mailbox is refused, files in the first still fit until the storage limit.
+  // A second unclaimed inbox is refused, files in the first still fit until the storage limit.
   assert.equal((await fetch(`${url}/v1/m/${other}/grant/a`, { method: "PUT", body: "g" })).status, 507);
   assert.equal((await fetch(`${url}/v1/m/${inbox}/grant/b`, { method: "PUT", body: "g" })).status, 201);
   assert.equal((await fetch(`${url}/v1/m/${inbox}/grant/c`, { method: "PUT", body: new Uint8Array(1100) })).status, 507);
@@ -174,6 +157,22 @@ test("each client has a daily upload budget, counted behind a proxy by the last 
   // A third file would pass 4 KB today for 203.0.113.9, whatever the first entry says.
   assert.equal((await put("3", "198.51.100.3, 203.0.113.9")).status, 429);
   assert.equal((await put("3", "203.0.113.10")).status, 201);
+});
+
+test("each client has a rate limit per minute", async () => {
+  const { url } = await startRelay({ RATE_PER_MINUTE: "3" });
+  const statuses = [];
+  for (let i = 0; i < 4; i++) statuses.push((await fetch(`${url}/v1/health`)).status);
+  assert.deepEqual(statuses, [200, 200, 200, 429]);
+});
+
+test("a chunked upload is cut off when the daily budget runs out, and nothing is stored", async () => {
+  const { url, dataDir } = await startRelay({ DAILY_UPLOAD_MB: "0.004" });
+  // No Content-Length: the budget is counted as the chunks arrive.
+  const chunk = "x".repeat(2000);
+  assert.equal(await answerBeforeBody(`${url}/v1/m/${mailbox}/b/1`, auth(), chunk, chunk, chunk), 429);
+  assert.equal((await fetch(`${url}/v1/m/${mailbox}/b/1`, { headers: auth() })).status, 404);
+  assert.ok(!(await readdir(dataDir)).includes(mailbox), "no mailbox created");
 });
 
 test("the clean-up deletes only old mailboxes, and never on an empty marker", async () => {
@@ -193,4 +192,41 @@ test("the clean-up deletes only old mailboxes, and never on an empty marker", as
   });
   const left = (await readdir(dataDir)).sort();
   assert.deepEqual(left, [blank, fresh, "lost+found"].sort());
+});
+
+test("inboxes only others wrote to go after 90 days; listed ones are kept like cellars", async () => {
+  const old = Date.now() - 100 * 86400_000;
+  const unclaimed = await mailboxFor("i", "unclaimed-inbox-token-0123456789");
+  const claimed = await mailboxFor("i", "claimed-inbox-token-0123456789");
+  const { url, dataDir } = await startRelay({}, async (dir) => {
+    for (const id of [unclaimed, claimed]) {
+      await mkdir(join(dir, id, "files", "grant"), { recursive: true });
+      await writeFile(join(dir, id, "files", "grant", "g"), "g");
+      await writeFile(join(dir, id, "touched"), String(old));
+    }
+    await writeFile(join(dir, claimed, "owner"), "");
+  });
+  assert.deepEqual((await readdir(dataDir)).sort(), [claimed]);
+  // A drop does not keep an inbox: the marker keeps the time of the first one.
+  const fresh = await mailboxFor("i", "fresh-inbox-token-0123456789");
+  assert.equal((await fetch(`${url}/v1/m/${fresh}/grant/a`, { method: "PUT", body: "g" })).status, 201);
+  const first = await readFile(join(dataDir, fresh, "touched"), "utf8");
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal((await fetch(`${url}/v1/m/${fresh}/grant/b`, { method: "PUT", body: "g" })).status, 201);
+  assert.equal(await readFile(join(dataDir, fresh, "touched"), "utf8"), first);
+  // Its owner listing it claims it.
+  assert.equal((await fetch(`${url}/v1/m/${fresh}?prefix=grant/`, { headers: auth("fresh-inbox-token-0123456789") })).status, 200);
+  assert.ok((await readdir(join(dataDir, fresh))).includes("owner"));
+});
+
+test("the stored-data check accepts envelopes and grants only", async () => {
+  const { url, dataDir } = await startRelay();
+  const envelope = Buffer.concat([Buffer.from("ENCV\x01\x02", "latin1"), Buffer.alloc(40, 7)]);
+  const grant = Buffer.concat([Buffer.alloc(32, 9), envelope]);
+  assert.equal((await fetch(`${url}/v1/m/${mailbox}/snap/a/1`, { method: "PUT", headers: auth(), body: envelope })).status, 201);
+  assert.equal((await fetch(`${url}/v1/m/${inbox}/grant/a`, { method: "PUT", body: grant })).status, 201);
+  assert.deepEqual(await checkStored(dataDir), { files: 2, problems: [] });
+  assert.equal((await fetch(`${url}/v1/m/${mailbox}/snap/a/2`, { method: "PUT", headers: auth(), body: "Through the relay" })).status, 201);
+  const { problems } = await checkStored(dataDir);
+  assert.equal(problems.length, 2, problems.join("; "));
 });

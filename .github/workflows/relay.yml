@@ -40,10 +40,12 @@ jobs:
           tar -xzf "$archive" -C /opt
           echo "/opt/node-v${NODE_VERSION}-linux-x64/bin" >> "$GITHUB_PATH"
       - name: Relay tests
-        run: node --test relay/test/relay.test.mjs relay/test/worker.test.mjs relay/test/handler.test.mjs
+        run: node --test relay/test/relay.test.mjs relay/test/worker.test.mjs relay/test/handler.test.mjs relay/test/conformance.mjs
       - name: Remote sync through the relay
         run: |
           mkdir -p "$RUNNER_TEMP/relay"
           PORT=8787 DATA_DIR="$RUNNER_TEMP/relay" node relay/server.mjs &
           for i in $(seq 1 50); do curl -fs http://localhost:8787/v1/health && break; sleep 0.2; done
           ENCAVE_RELAY_URL=http://localhost:8787 swift test --package-path apple/Packages/CaveKit --filter RemoteSyncTests
+          # The relay stored ciphertext and grants only.
+          node relay/test/check-stored.mjs "$RUNNER_TEMP/relay"

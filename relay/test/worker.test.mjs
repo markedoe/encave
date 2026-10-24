@@ -3,47 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import worker from "../cloudflare/worker.mjs";
 import { mailboxFor } from "../protocol.mjs";
-
-/// Like R2: sorted keys, startAfter and delimiter, and like the Free plan, at most
-/// 50 calls per invocation (reset with `invocation()`).
-class MemoryBucket {
-  constructor() { this.objects = new Map(); this.calls = 0; this.maxCalls = 50; }
-  invocation() { this.calls = 0; }
-  count() { if (++this.calls > this.maxCalls) throw new Error("too many subrequests"); }
-  async head(key) { this.count(); return this.objects.has(key) ? { key } : null; }
-  async get(key) {
-    this.count();
-    const value = this.objects.get(key);
-    if (value === undefined) return null;
-    return { text: async () => new TextDecoder().decode(value), arrayBuffer: async () => value.slice().buffer };
-  }
-  async put(key, value, options = {}) {
-    this.count();
-    const onlyIfAbsent = options.onlyIf?.get?.("If-None-Match") === "*";
-    if (onlyIfAbsent && this.objects.has(key)) return null;
-    const bytes = typeof value === "string" ? new TextEncoder().encode(value) : new Uint8Array(value);
-    this.objects.set(key, bytes);
-    return { key };
-  }
-  async delete(keys) { this.count(); for (const key of [keys].flat()) this.objects.delete(key); }
-  async list({ prefix = "", delimiter, startAfter, cursor, limit = 1000 } = {}) {
-    this.count();
-    const from = cursor ?? startAfter;
-    const keys = [...this.objects.keys()].filter((k) => k.startsWith(prefix) && (!from || k > from)).sort();
-    if (delimiter) {
-      const prefixes = [...new Set(keys.map((k) => {
-        const end = k.indexOf(delimiter, prefix.length);
-        return end < 0 ? null : k.slice(0, end + 1);
-      }).filter(Boolean))];
-      const page = prefixes.slice(0, limit);
-      return { objects: [], delimitedPrefixes: page, truncated: prefixes.length > limit,
-               cursor: page.length ? page[page.length - 1] + "￿" : undefined };
-    }
-    const page = keys.slice(0, limit);
-    return { objects: page.map((key) => ({ key, size: this.objects.get(key).length })), truncated: keys.length > limit,
-             cursor: page.length ? page[page.length - 1] : undefined };
-  }
-}
+import { MemoryBucket } from "./support.mjs";
 
 const env = (bucket, extra = {}) => ({ FILES: bucket, ...extra });
 const token = "token-of-the-cellar-0123456789";
@@ -95,7 +55,9 @@ test("the clean-up of a large relay stays under 50 calls a run and gets through 
   for (const id of expired) assert.ok(![...bucket.objects.keys()].some((k) => k.startsWith(id)), `${id} deleted`);
   for (const id of kept) assert.ok(bucket.objects.has(`${id}/f/snap/0`), `${id} kept`);
   const stats = JSON.parse(new TextDecoder().decode(bucket.objects.get("_relay/stats")));
-  assert.equal(stats.mailboxes, kept.length);
+  // Inboxes without an owner mark are unclaimed; cellars always have an owner.
+  assert.equal(stats.mailboxes, kept.filter((id) => id.startsWith("c")).length);
+  assert.equal(stats.mailboxes + stats.unclaimed, kept.length);
   assert.equal(stats.bytes, (kept.length - 1) * 2);
 });
 
@@ -129,4 +91,49 @@ test("the access key, the rate limiter and its failures", async () => {
   assert.equal((await health({ RELAY_ACCESS_KEY: "private-key-for-tests" }, { "x-relay-key": "private-key-for-tests" })).status, 200);
   assert.equal((await health({ RATE_LIMITER: { limit: async () => ({ success: false }) } })).status, 429);
   assert.equal((await health({ RATE_LIMITER: { limit: async () => { throw new Error("down"); } } })).status, 500);
+});
+
+test("before the first clean-up pass: an empty bucket starts at zero, else only small writes", async () => {
+  const own = "unknown-totals-token-0123456789";
+  const mailbox = await mailboxFor("c", own);
+  const put = (bucket, path, size, extra = {}) => worker.fetch(new Request(`http://relay/v1/m/${mailbox}/${path}`, {
+    method: "PUT", headers: { authorization: `Bearer ${own}` }, body: new Uint8Array(size),
+  }), env(bucket, extra)).then((response) => response.status);
+  // Empty: nothing to count, so the totals start now and every write adds to them.
+  const fresh = new MemoryBucket();
+  fresh.maxCalls = Infinity;
+  assert.equal(await put(fresh, "a", 1000, { MAX_STORAGE_MB: "0.001" }), 201);
+  assert.deepEqual(JSON.parse(new TextDecoder().decode(fresh.objects.get("_relay/stats"))).bytes, 1000);
+  assert.equal(await put(fresh, "b", 100, { MAX_STORAGE_MB: "0.001" }), 507);
+  // Files there but no totals yet (lost, or a pass not finished): large writes wait.
+  const unknown = new MemoryBucket();
+  unknown.maxCalls = Infinity;
+  unknown.objects.set(`c${"0".repeat(32)}/f/snap/1`, encode("x".repeat(5000)));
+  assert.equal(await put(unknown, "big", 5000), 503);
+  assert.equal(await put(unknown, "small", 100), 201);
+  while (!unknown.objects.has("_relay/stats")) await scheduled(unknown);
+  assert.equal(await put(unknown, "big", 5000), 201);
+});
+
+test("a write stays well under 50 R2 calls, and the counters hold no address", async () => {
+  const bucket = new MemoryBucket();
+  const own = "deep-path-token-0123456789";
+  const mailbox = await mailboxFor("c", own);
+  const headers = { authorization: `Bearer ${own}`, "cf-connecting-ip": "203.0.113.7" };
+  for (const path of ["snap/a/b/c/1", "snap/a/b/c/2"]) {
+    bucket.invocation();
+    const response = await worker.fetch(new Request(`http://relay/v1/m/${mailbox}/${path}`, { method: "PUT", headers, body: "x" }), env(bucket));
+    assert.equal(response.status, 201);
+    assert.ok(bucket.calls <= 20, `${bucket.calls} calls`);
+  }
+  const counters = [...bucket.objects.keys()].filter((key) => key.startsWith("_relay/clients/"));
+  assert.ok(counters.length >= 2, "a salt and a counter");
+  for (const key of counters) {
+    assert.ok(!key.includes("203.0.113") && !new TextDecoder().decode(bucket.objects.get(key)).includes("203.0.113"), key);
+  }
+  // A past day's counters are deleted by the clean-up.
+  bucket.objects.set("_relay/clients/2000-01-01/abc", encode({ bytes: 1, mailboxes: 1 }));
+  await scheduled(bucket);
+  assert.ok(!bucket.objects.has("_relay/clients/2000-01-01/abc"));
+  assert.ok(counters.every((key) => bucket.objects.has(key)), "today's are kept");
 });

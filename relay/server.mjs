@@ -4,30 +4,33 @@
 //
 //   PORT=8787 DATA_DIR=/var/lib/encave-relay node relay/server.mjs
 //
-// It keeps no logs of requests or IP addresses. Mailboxes not written to for
-// TTL_DAYS (default 365) are deleted. See relay/README.md for the other settings.
+// It keeps no logs of requests or IP addresses. Mailboxes not written to by
+// their owner for TTL_DAYS (default 365) are deleted, inboxes only others wrote
+// to after 90 days. See relay/README.md for the other settings.
 
 import { createServer } from "node:http";
 import { link, mkdir, readFile, readdir, rename, rm, stat, statfs, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { LIMITS, MAILBOX, clientKey, handle, settings } from "./protocol.mjs";
+import { LIMITS, MAILBOX, MemoryClients, clientKey, handle, settings } from "./protocol.mjs";
 
 const port = Number(process.env.PORT || 8787);
 const dataDir = process.env.DATA_DIR || "./data";
 const ttlDays = Number(process.env.TTL_DAYS || 365);
 const ratePerMinute = Number(process.env.RATE_PER_MINUTE || 300);
-const dailyUploadBytes = Number(process.env.DAILY_UPLOAD_MB || 2048) * 1048576;
 const minFreeBytes = Number(process.env.MIN_FREE_MB || 1024) * 1048576;
 // Behind a reverse proxy, the client's address is in X-Forwarded-For (set TRUST_PROXY=1).
 const trustProxy = process.env.TRUST_PROXY === "1";
 const options = settings(process.env);
+const dailyUploadBytes = options.dailyUploadBytes;
 const drainBytes = LIMITS.maxFileBytes + 1024 * 1024;
 
 class FileStorage {
   constructor(root) {
     this.root = root;
-    this.usages = new Map(); // mailbox -> {files, bytes}: counted by each sweep, kept up to date
+    // mailbox -> {files, bytes, owned}: counted by each sweep, kept up to date.
+    // owned: a cellar, or an inbox its owner has listed (marked by an "owner" file).
+    this.usages = new Map();
     this.locks = new Map();
     this.free = { at: 0, bytes: Infinity };
   }
@@ -85,7 +88,7 @@ class FileStorage {
     try { return await readFile(this.file(mailbox, path)); } catch { return null; }
   }
 
-  async create(mailbox, path, bytes) {
+  async create(mailbox, path, bytes, { owner = true } = {}) {
     const target = this.file(mailbox, path);
     try {
       await mkdir(join(target, ".."), { recursive: true });
@@ -101,14 +104,27 @@ class FileStorage {
       await writeFile(temporary, bytes);
       await link(temporary, target);
     } catch (error) {
-      if (error.code === "EEXIST") return false;
+      if (error.code === "EEXIST") {
+        // The path is a folder (it has files under it): it cannot be a file too.
+        if ((await stat(target).catch(() => null))?.isDirectory()) throw Object.assign(new Error("conflict"), { code: "conflict" });
+        return false;
+      }
       throw error;
     } finally {
       await unlink(temporary).catch(() => {});
     }
-    const usage = this.usages.get(mailbox) || { files: 0, bytes: 0 };
-    this.usages.set(mailbox, { files: usage.files + 1, bytes: usage.bytes + bytes.length });
-    // Written to a temporary file and renamed, so it is never seen empty.
+    const usage = this.usages.get(mailbox);
+    const owned = mailbox.startsWith("c") || usage?.owned || owner;
+    this.usages.set(mailbox, { files: (usage?.files ?? 0) + 1, bytes: (usage?.bytes ?? 0) + bytes.length, owned });
+    if (owned && !usage?.owned && mailbox.startsWith("i")) await writeFile(join(this.dir(mailbox), "owner"), "");
+    // Only the owner's writes keep a mailbox; a drop by someone else dates a new inbox.
+    if (owner || !usage) await this.touch(mailbox);
+    return true;
+  }
+
+  /// Notes the time of the owner's last write, written to a temporary file and
+  /// renamed so it is never seen empty.
+  async touch(mailbox) {
     const touched = join(this.dir(mailbox), `touched.${randomUUID()}.tmp`);
     try {
       await writeFile(touched, String(Date.now()));
@@ -116,7 +132,21 @@ class FileStorage {
     } finally {
       await unlink(touched).catch(() => {});
     }
-    return true;
+  }
+
+  /// The owner lists its inbox: claimed if `mayClaim()` allows, and kept (the
+  /// marker refreshed at most once a day). Nothing is created for an unknown inbox.
+  async claim(mailbox, mayClaim) {
+    const usage = this.usages.get(mailbox);
+    if (!usage) return;
+    if (usage.owned) {
+      if (Date.now() - (await this.lastWrite(mailbox)) > 86400_000) await this.touch(mailbox);
+      return;
+    }
+    if (!(await mayClaim())) return;
+    await writeFile(join(this.dir(mailbox), "owner"), "");
+    usage.owned = true;
+    await this.touch(mailbox);
   }
 
   async delete(mailbox, path) {
@@ -132,16 +162,20 @@ class FileStorage {
       throw error;
     }
     const usage = this.usages.get(mailbox);
-    if (usage) this.usages.set(mailbox, { files: Math.max(0, usage.files - 1), bytes: Math.max(0, usage.bytes - size) });
+    if (usage) this.usages.set(mailbox, { ...usage, files: Math.max(0, usage.files - 1), bytes: Math.max(0, usage.bytes - size) });
   }
 
   async usage(mailbox) {
-    return this.usages.get(mailbox) || { files: 0, bytes: 0 };
+    const usage = this.usages.get(mailbox);
+    return usage ? { ...usage, exists: true } : { files: 0, bytes: 0, exists: false, owned: false };
   }
 
   async totals() {
-    let bytes = 0;
-    for (const usage of this.usages.values()) bytes += usage.bytes;
+    let bytes = 0, unclaimed = 0;
+    for (const usage of this.usages.values()) {
+      bytes += usage.bytes;
+      if (!usage.owned) unclaimed += 1;
+    }
     // Free disk space, checked at most once a minute.
     if (Date.now() - this.free.at > 60_000) {
       try {
@@ -151,7 +185,7 @@ class FileStorage {
         this.free = { at: Date.now(), bytes: Infinity };
       }
     }
-    return { bytes, mailboxes: this.usages.size, full: this.free.bytes < minFreeBytes };
+    return { bytes, mailboxes: this.usages.size - unclaimed, unclaimed, full: this.free.bytes < minFreeBytes };
   }
 
   /// When the mailbox was last written to; the current time when unknown, so a
@@ -168,17 +202,20 @@ class FileStorage {
     return Date.now();
   }
 
-  /// Deletes mailboxes not written to for `ttlDays`, and recounts the others.
+  /// Deletes mailboxes not written to for `ttlDays` (unclaimed inboxes: 90 days
+  /// at most), and recounts the others.
   async sweep() {
     const limit = Date.now() - ttlDays * 86400_000;
+    const unclaimedLimit = Date.now() - Math.min(ttlDays, LIMITS.unclaimedInboxDays) * 86400_000;
     for (const mailbox of await this.mailboxes()) {
       try {
         await this.exclusive(mailbox, async () => {
-          if ((await this.lastWrite(mailbox)) < limit) {
+          const owned = mailbox.startsWith("c") || (await stat(join(this.dir(mailbox), "owner")).then(() => true, () => false));
+          if ((await this.lastWrite(mailbox)) < (owned ? limit : unclaimedLimit)) {
             await rm(this.dir(mailbox), { recursive: true, force: true });
             this.usages.delete(mailbox);
           } else {
-            this.usages.set(mailbox, await this.count(mailbox));
+            this.usages.set(mailbox, { ...(await this.count(mailbox)), owned });
           }
         });
       } catch {
@@ -188,28 +225,22 @@ class FileStorage {
   }
 }
 
-// Requests per minute and bytes uploaded per day, per client, in memory only.
+// Per client, in memory only: requests in the minute since the client's first
+// one, and bytes uploaded and mailboxes created in 24 hours.
 const buckets = new Map();
 function allowed(client) {
-  const minute = Math.floor(Date.now() / 60_000);
+  const now = Date.now();
   const bucket = buckets.get(client);
-  if (!bucket || bucket.minute !== minute) { buckets.set(client, { minute, count: 1 }); return true; }
+  if (!bucket || now - bucket.start >= 60_000) { buckets.set(client, { start: now, count: 1 }); return true; }
   bucket.count += 1;
   return bucket.count <= ratePerMinute;
 }
-setInterval(() => buckets.clear(), 10 * 60_000).unref();
-
-const uploads = new Map();
-function uploaded(client) {
-  const day = Math.floor(Date.now() / 86400_000);
-  let entry = uploads.get(client);
-  if (!entry || entry.day !== day) { entry = { day, bytes: 0 }; uploads.set(client, entry); }
-  return entry;
-}
 setInterval(() => {
-  const day = Math.floor(Date.now() / 86400_000);
-  for (const [client, entry] of uploads) if (entry.day !== day) uploads.delete(client);
-}, 3600_000).unref();
+  for (const [client, bucket] of buckets) if (Date.now() - bucket.start >= 60_000) buckets.delete(client);
+}, 10 * 60_000).unref();
+
+const clients = new MemoryClients(options);
+setInterval(() => clients.prune(), 3600_000).unref();
 
 function clientOf(req) {
   if (trustProxy) {
@@ -264,7 +295,7 @@ const server = createServer(async (req, res) => {
     const hasBody = !["GET", "HEAD", "DELETE"].includes(req.method);
     let body;
     if (hasBody) {
-      const budget = uploaded(client);
+      const budget = clients.entry(client);
       const declared = Number(req.headers["content-length"] || "0");
       if (budget.bytes + (Number.isFinite(declared) ? declared : 0) > dailyUploadBytes) { finish(429); return; }
       body = bodyOf(req, budget);
@@ -272,7 +303,7 @@ const server = createServer(async (req, res) => {
     const request = new Request(`http://relay${req.url}`, {
       method: req.method, headers: req.headers, body, duplex: hasBody ? "half" : undefined,
     });
-    const response = await handle(request, storage, options);
+    const response = await handle(request, storage, options, clients.for(client, { uploads: false }));
     finish(response.status, Object.fromEntries(response.headers), Buffer.from(await response.arrayBuffer()));
   } catch (error) {
     if (!res.headersSent) finish(error?.status || 500);
@@ -280,6 +311,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// PORT=0 picks a free port; the line below names it.
 server.listen(port, () => {
-  console.log(`Encave relay listening on port ${port}`);
+  console.log(`Encave relay listening on port ${server.address().port}`);
 });
