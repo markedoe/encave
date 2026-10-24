@@ -14,7 +14,8 @@
 // the SHA-256 of its token, so the relay checks a token without storing anything,
 // and nobody can claim a mailbox before its owner. In an inbox, anyone may create
 // small grant/… files without a token; reading, listing and deleting need the
-// owner's token.
+// owner's token. An inbox only others have written to is "unclaimed": it has its
+// own cap and is deleted after 90 days, until its owner lists it with the token.
 //
 // A private relay can also require an access key (RELAY_ACCESS_KEY) in the
 // "X-Relay-Key" header of every request, health included; without it: 403.
@@ -30,6 +31,12 @@ export const LIMITS = {
   // Whole relay, unless the operator sets MAX_STORAGE_MB / MAX_MAILBOXES.
   maxStorageBytes: 10 * 1024 * 1024 * 1024,
   maxMailboxes: 1000,
+  // Per client, in any 24 hours (UTC day on Cloudflare), unless the operator sets
+  // NEW_MAILBOXES_PER_DAY / DAILY_UPLOAD_MB.
+  newMailboxesPerDay: 50,
+  dailyUploadBytes: 2048 * 1024 * 1024,
+  // An inbox nobody has listed with its token is deleted after this many days.
+  unclaimedInboxDays: 90,
 };
 
 export const MAILBOX = /^[ci][0-9a-f]{32}$/;
@@ -54,7 +61,46 @@ export function settings(env = {}) {
     accessKey: env.RELAY_ACCESS_KEY || "",
     maxStorageBytes: positive(env.MAX_STORAGE_MB, LIMITS.maxStorageBytes / 1048576) * 1048576,
     maxMailboxes: positive(env.MAX_MAILBOXES, LIMITS.maxMailboxes),
+    newMailboxesPerDay: positive(env.NEW_MAILBOXES_PER_DAY, LIMITS.newMailboxesPerDay),
+    dailyUploadBytes: positive(env.DAILY_UPLOAD_MB, LIMITS.dailyUploadBytes / 1048576) * 1048576,
   };
+}
+
+/// Per-client counters kept in memory (the Node server, tests): new mailboxes and
+/// uploaded bytes in the 24 hours since the client's first counted request.
+/// `uploads: false` leaves the bytes to the caller (the Node server counts them
+/// as the body arrives).
+export class MemoryClients {
+  constructor(options = settings(), now = () => Date.now()) {
+    this.options = options;
+    this.now = now;
+    this.entries = new Map();
+  }
+  entry(key) {
+    let entry = this.entries.get(key);
+    if (!entry || this.now() - entry.start >= 86400_000) {
+      entry = { start: this.now(), bytes: 0, mailboxes: 0 };
+      this.entries.set(key, entry);
+    }
+    return entry;
+  }
+  /// Forgets clients whose 24 hours are over.
+  prune() {
+    for (const [key, entry] of this.entries) if (this.now() - entry.start >= 86400_000) this.entries.delete(key);
+  }
+  for(key, { uploads = true } = {}) {
+    const limits = this.options;
+    const client = {
+      mayCreateMailbox: async () => this.entry(key).mailboxes < limits.newMailboxesPerDay,
+      created: async ({ bytes, mailbox }) => {
+        const entry = this.entry(key);
+        if (uploads) entry.bytes += bytes;
+        if (mailbox) entry.mailboxes += 1;
+      },
+    };
+    if (uploads) client.mayUpload = async (bytes) => this.entry(key).bytes + bytes <= limits.dailyUploadBytes;
+    return client;
+  }
 }
 
 /// The key that rate limits count against: the IPv4 address, or the /64 of an
@@ -80,8 +126,8 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
 
-function empty(status) {
-  return new Response(null, { status });
+function empty(status, headers) {
+  return new Response(null, { status, headers });
 }
 
 function bearer(request) {
@@ -141,17 +187,23 @@ async function readBody(request, maxBytes) {
  * Handles one request. `storage` provides:
  *   list(mailbox, prefix, after, limit) -> {files, next},
  *   get(mailbox, path) -> Uint8Array | null,
- *   create(mailbox, path, bytes) -> boolean (false if it exists; throws an
- *     error with code "conflict" if the path cannot exist, e.g. a parent is a file),
- *   delete(mailbox, path), usage(mailbox) -> {files, bytes},
- * and optionally totals() -> {bytes, mailboxes, full?} for the whole relay and
- * exclusive(mailbox, fn) to run fn alone for that mailbox.
- * `options` comes from settings().
+ *   create(mailbox, path, bytes, {owner}) -> boolean (false if it exists; throws
+ *     an error with code "conflict" if the path cannot exist: a folder on its way
+ *     is a file, or it is a folder); `owner`: written with the mailbox's token,
+ *   delete(mailbox, path),
+ *   usage(mailbox) -> {files, bytes, exists?, owned?} (exists: the mailbox is
+ *     kept, even empty, default files > 0; owned: false for an unclaimed inbox),
+ * and optionally totals() -> {bytes, mailboxes, unclaimed?, full?, unknown?} for
+ * the whole relay (mailboxes: those used by their owner; unknown: not counted
+ * yet), claim(mailbox, mayClaim) to mark an inbox as used by its owner (and keep
+ * it), and exclusive(mailbox, fn) to run fn alone for that mailbox.
+ * `options` comes from settings(). `client` optionally counts this client's
+ * writes: mayCreateMailbox(), mayUpload(bytes), created({bytes, mailbox}).
  *
  * Everything that can refuse a request (access key, token, declared size) is
  * checked before the body is read.
  */
-export async function handle(request, storage, options = settings()) {
+export async function handle(request, storage, options = settings(), client = null) {
   if (options.accessKey && !(await hasAccessKey(request, options.accessKey))) return empty(403);
   const url = new URL(request.url);
   const parts = url.pathname.split("/").filter(Boolean);
@@ -169,17 +221,30 @@ export async function handle(request, storage, options = settings()) {
 
   // Dropping a key grant in someone's inbox needs no token.
   const openDrop = isInbox && request.method === "PUT" && path.startsWith("grant/");
-  if (!openDrop && !(await authorized(mailbox, token))) return empty(401);
+  const owner = await authorized(mailbox, token);
+  if (!openDrop && !owner) return empty(401);
+  const alone = (fn) => (storage.exclusive ? storage.exclusive(mailbox, fn) : fn());
+  const totals = async () => {
+    const value = storage.totals ? await storage.totals() : null;
+    return value && !value.unknown ? value : null;
+  };
 
   if (path === "") {
     if (request.method !== "GET") return empty(405);
     const prefix = url.searchParams.get("prefix") || "";
     const after = url.searchParams.get("after") || "";
     if ((prefix && !/^[a-z0-9_/-]*$/.test(prefix)) || (after && !isValidPath(after))) return empty(400);
+    // The owner listing its inbox claims it: it is then kept like a cellar, and
+    // counts toward the relay's mailboxes, if there is room.
+    if (isInbox && storage.claim) {
+      await alone(() => storage.claim(mailbox, async () => {
+        const relay = await totals();
+        return !relay || relay.mailboxes < options.maxMailboxes;
+      }));
+    }
     return json(await storage.list(mailbox, prefix, after, LIMITS.listPage));
   }
   if (!isValidPath(path)) return empty(400);
-  const alone = (fn) => (storage.exclusive ? storage.exclusive(mailbox, fn) : fn());
 
   switch (request.method) {
     case "GET": {
@@ -190,24 +255,40 @@ export async function handle(request, storage, options = settings()) {
       const maxBytes = isInbox ? LIMITS.maxGrantBytes : LIMITS.maxFileBytes;
       const declared = Number(request.headers.get("content-length") || "0");
       if (!(declared <= maxBytes)) return empty(413);
+      if (client?.mayUpload && !(await client.mayUpload(declared))) return empty(429);
       const bytes = await readBody(request, maxBytes);
       if (!bytes) return empty(413);
+      if (client?.mayUpload && !(await client.mayUpload(bytes.length))) return empty(429);
       return alone(async () => {
         const usage = await storage.usage(mailbox);
+        const exists = usage.exists ?? usage.files > 0;
+        const owned = usage.owned ?? true;
         const maxFiles = isInbox ? LIMITS.maxInboxFiles : LIMITS.maxMailboxFiles;
         const maxTotal = isInbox ? LIMITS.maxInboxBytes : LIMITS.maxMailboxBytes;
         if (usage.files >= maxFiles || usage.bytes + bytes.length > maxTotal) return empty(507);
-        const totals = storage.totals ? await storage.totals() : null;
-        if (totals) {
-          if (totals.full || totals.bytes + bytes.length > options.maxStorageBytes) return empty(507);
-          if (usage.files === 0 && totals.mailboxes >= options.maxMailboxes) return empty(507);
+        const all = storage.totals ? await storage.totals() : null;
+        // Totals not counted yet (a Worker before its first pass): small files only.
+        if (all?.unknown && bytes.length > LIMITS.maxGrantBytes) return empty(503, { "retry-after": "900" });
+        const relay = all && !all.unknown ? all : null;
+        // Mailboxes their owner uses, and inboxes only others wrote to, have a
+        // cap each: anonymous drops never take the room cellars need.
+        const room = (mine) => !relay || (mine ? relay.mailboxes : relay.unclaimed ?? 0) < options.maxMailboxes;
+        if (relay && (relay.full || relay.bytes + bytes.length > options.maxStorageBytes)) return empty(507);
+        if (!exists) {
+          if (client?.mayCreateMailbox && !(await client.mayCreateMailbox())) return empty(429);
+          if (!room(owner)) return empty(507);
         }
+        const claims = owner && (!exists || owned || room(true));
+        let created;
         try {
-          return (await storage.create(mailbox, path, bytes)) ? empty(201) : empty(412);
+          created = await storage.create(mailbox, path, bytes, { owner: claims });
         } catch (error) {
           if (error?.code === "conflict") return empty(409);
           throw error;
         }
+        if (!created) return empty(412);
+        await client?.created?.({ bytes: bytes.length, mailbox: !exists });
+        return empty(201);
       });
     }
     case "DELETE":

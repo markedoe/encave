@@ -595,14 +595,22 @@ Authorization: Bearer <token derived from the cellar key>  (relay stores only a 
 WebSocket fan-out (hibernation API); **R2** for blob bodies over a few KB.
 
 > **As built (October 2026), see [relay/README.md](../relay/README.md):**
-> - an existing file gives 412, not 409 (409 means a folder on the path is a file);
+> - an existing file gives 412, not 409 (409 means a folder on the path is a
+>   file, or the path is a folder; the Node server and the Worker agree, see
+>   `relay/test/conformance.mjs`);
 > - no Durable Objects: the Worker lists and stores everything in R2;
 > - no WebSocket watch: devices poll;
 > - no rendezvous endpoint yet (remote pairing is planned);
-> - mailboxes not written to for 365 days are deleted, not after 30 days;
+> - mailboxes not written to by their owner for 365 days are deleted, not after
+>   30 days; an inbox only others wrote to (unclaimed) is deleted 90 days after
+>   the first drop, has a cap of its own and never takes a cellar's room; the
+>   owner listing it claims it (the apps need no change: they list their inbox
+>   every round, and drops into an inbox not seen yet still work);
 > - the mailbox ID is derived from its token, so the relay stores no hash;
-> - limits per file, mailbox, inbox and for the whole relay, per-client rate
->   limits, and an optional access key for private relays.
+> - limits per file, mailbox, inbox and for the whole relay, per-client limits
+>   (requests a minute, bytes uploaded and new mailboxes a day, 429), and an
+>   optional access key for private relays;
+> - a Cloudflare relay without totals yet answers 503 for files over 4 KB.
 >
 > The costs in section 7.2 assume Durable Objects and do not apply as such:
 > the relay as built uses Workers requests and R2 only.
