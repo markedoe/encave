@@ -588,7 +588,8 @@ Each storage keeps the files of a mailbox or inbox under its ID:
   (`relay/README.md`). One exception: anyone may create a `grant/…` file in an
   inbox without a token (that is how a device receives a key); listing,
   reading and deleting need the inbox's token. Every file created in an inbox
-  is at most 4 KiB. A device leaving a grant sends no token.
+  is at most 4 KiB. A device leaving a grant sends no token. Redirects are not
+  followed (an error), so a token is never sent to another address.
 - **iCloud:** one CloudKit zone per mailbox and per inbox in the user's private
   database, named after its ID, so only devices on the same Apple Account meet
   there. Each file is a record of type `EncaveFile` whose record name is the
@@ -642,8 +643,9 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    then delete its older snapshots. If the clock is not above both the last
    uploaded clock and the newest of this device's own snapshots listed in step
    2, it is first set to one more than the greater of them, so readers see a
-   newer snapshot. A file the storage refuses as too large (413) is left out;
-   when the storage is full (507), the remaining files are left out for this
+   newer snapshot. A file the storage refuses as too large (413, or CloudKit's
+   `limitExceeded`) is left out; when the storage is full (507, or
+   `quotaExceeded`), the remaining files are left out for this
    round too. The snapshot is still written; the device says so and tries the
    files again with its next snapshot.
 
