@@ -350,6 +350,12 @@ extension RackGrid {
     }
 }
 
+/// Mac: the smallest zoom that still changes the drawing (`RackZoom.minimum`), for Zoom Out.
+struct RackMinimumZoomKey: PreferenceKey {
+    static let defaultValue: CGFloat = RackZoom.lowest
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
 /// A rack drawn as large as the space allows, but never with places under 44 pt: a larger
 /// rack is drawn at that size, scrolls both ways under an overview of the whole rack, and
 /// zooms in from there. Pinch to zoom; on the Mac, trackpad pinch and the zoom buttons set `zoom`.
@@ -396,6 +402,9 @@ struct FittedRackGrid: View {
                 }
                 drawing(base: base, scrolls: scrolls)
             }
+            #if os(macOS)
+            .preference(key: RackMinimumZoomKey.self, value: RackZoom.minimum(base: base, minimum: minimum))
+            #endif
         }
     }
 
@@ -406,7 +415,8 @@ struct FittedRackGrid: View {
                      selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
                      zoomStep: zoomStep, interaction: interaction, tracker: tracker, alignsTop: scrolls)
         #else
-        let cellSize = max(min(base, RackViewport.minimumCellSize(for: rack)), base * zoom)
+        let minimum = RackViewport.minimumCellSize(for: rack)
+        let cellSize = RackZoom.cellSize(base: base, minimum: minimum, zoom: zoom)
         GeometryReader { proxy in
             if !scrolls, cellSize <= base {
                 // The whole rack fits: no scroll view, whose bars (always shown without a
@@ -1126,11 +1136,7 @@ struct RackThumbnail: View {
     }
 
     /// The shelves that fit in the card: up to eight layers.
-    private var shownShelves: [Range<Int>] {
-        var shown: [Range<Int>] = []
-        for rows in rack.shelfRows where (shown.last?.upperBound ?? 0) + rows.count <= 8 { shown.append(rows) }
-        return shown.isEmpty ? Array(rack.shelfRows.prefix(1)) : shown
-    }
+    private var shownShelves: [Range<Int>] { rack.thumbnailShelves(layers: 8) }
 
     private func places(_ row: Int, _ byCell: [RackCell: [Bottle]]) -> some View {
         HStack(spacing: 3) {

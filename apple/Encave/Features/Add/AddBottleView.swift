@@ -155,7 +155,7 @@ struct AddBottleView: View {
                         .fieldHelp("For bottles that are not in storage.")
                 }
             } header: {
-                Text("Location")
+                Text("Storage")
             } footer: {
                 if selectedRack != nil, chosenSlots.isEmpty {
                     Text("The first free positions are used unless you choose them. Tap Positions to pick them.")

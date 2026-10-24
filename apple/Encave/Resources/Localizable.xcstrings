@@ -7121,6 +7121,16 @@
         }
       }
     },
+    "Kept with the wine and used for the estimated value of your cellar in Insights.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardé avec le vin et utilisé pour la valeur estimée de votre cave dans les Statistiques."
+          }
+        }
+      }
+    },
     "Kept with the wine and used for the estimated value of your cellar in Insights. Web prices vary: check them on the sites.": {
       "localizations": {
         "fr": {
@@ -7477,16 +7487,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Serveur local : installer Ollama"
-          }
-        }
-      }
-    },
-    "Location": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rangement"
           }
         }
       }
@@ -8137,16 +8137,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune position libre dans ce rangement pour les bouteilles sans position."
-          }
-        }
-      }
-    },
-    "No location": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sans rangement"
           }
         }
       }
@@ -10011,7 +10001,7 @@
         }
       }
     },
-    "Quantity, size and location": {
+    "Quantity, size and storage": {
       "localizations": {
         "fr": {
           "stringUnit": {

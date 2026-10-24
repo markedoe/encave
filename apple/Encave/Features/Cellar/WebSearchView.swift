@@ -28,6 +28,10 @@ struct WebSearchView: View {
     @State private var suggestions: [WineDetailSuggestion] = []
     @State private var accepted: Set<WineDetailField> = []
     @State private var suggestionProblem: String?
+    /// Reading the results: a new search cancels it, and a late answer about the
+    /// previous results is ignored.
+    @State private var suggestTask: Task<Void, Never>?
+    @State private var suggestToken = RequestToken()
 
     init(terms: String, current: WineDetails, vintage: Int?, fields: Set<WineDetailField> = Set(WineDetailField.allCases),
          onApply: @escaping (WineDetails, Set<WineDetailField>) -> Void) {
@@ -56,7 +60,7 @@ struct WebSearchView: View {
                             Label("Search", systemImage: "magnifyingglass")
                         }
                     }
-                    .disabled(searching || trimmedQuery.isEmpty || !settings.isEnabled)
+                    .disabled(searching || suggesting || trimmedQuery.isEmpty || !settings.isEnabled)
                 } header: {
                     Text("Search terms")
                 } footer: {
@@ -165,6 +169,11 @@ struct WebSearchView: View {
     private func search() {
         let terms = trimmedQuery
         guard !terms.isEmpty, !searching, settings.isEnabled else { return }
+        // The suggestions were about the previous results.
+        suggestToken.next()
+        suggestTask?.cancel()
+        suggestTask = nil
+        suggesting = false
         searching = true
         problem = nil
         proposed = nil
@@ -191,10 +200,12 @@ struct WebSearchView: View {
         let terms = searchedTerms ?? trimmedQuery
         let results = results
         let year = CellarYear.current
-        Task {
-            defer { suggesting = false }
+        let token = suggestToken.next()
+        suggestTask = Task {
+            defer { if suggestToken.isCurrent(token) { suggesting = false } }
             do {
                 let raw = try await DetailSuggester.suggest(terms: terms, results: results)
+                guard suggestToken.isCurrent(token), !Task.isCancelled else { return }
                 var details = WebSearchSuggestions.cleaned(raw, vintage: vintage, currentYear: year)
                 // Fields that cannot be used here keep their current value, so they are not suggested.
                 for field in WineDetailField.allCases where !fields.contains(field) {
@@ -203,6 +214,8 @@ struct WebSearchView: View {
                 proposed = details
                 suggestions = WebSearchSuggestions.suggestions(current: current, proposed: details)
                 accepted = []
+            } catch _ where !suggestToken.isCurrent(token) || Task.isCancelled {
+                return
             } catch CellarAssistant.Failure.refused {
                 suggestionProblem = String(localized: "These results cannot be read on this device. Try other search terms.")
             } catch CellarAssistant.Failure.tooLarge {

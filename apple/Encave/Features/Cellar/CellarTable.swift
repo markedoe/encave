@@ -100,7 +100,7 @@ struct CellarTable: View {
             }
             .width(min: 50, ideal: 60)
             .customizationID("bottles")
-            TableColumn("Location", value: \.location) { row in
+            TableColumn("Storage", value: \.location) { row in
                 Text(row.location).foregroundStyle(.secondary)
             }
             .width(min: 120, ideal: 200)
