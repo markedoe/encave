@@ -128,6 +128,23 @@ class CellarArchiveTest {
     }
 
     @Test
+    fun roundTripKeepsAPhotoFromBeforeSync() {
+        // A photo taken before sync existed: its ID is a UUID, not its hash.
+        val photo = FileRef(UUID.randomUUID().toString().uppercase(), FileKind.Photo)
+        val source = File(folder, "old-photo").apply { writeText("old label") }
+        val cellar = SampleData.cellar(year = 2026)
+        val wine = cellar.wines.values.minBy { it.id.toString().uppercase() }
+        cellar.updateWine(wine.copy(photoId = photo.id))
+        val zip = File(folder, "backup.zip")
+        val result = zip.outputStream().use { CellarArchive.write(cellar, Instant.now(), it, { ref -> if (ref == photo) source else null }) }
+        assertEquals(1, result.included)
+        val contents = zip.inputStream().use { CellarArchive.read(it, work()) }
+        assertEquals(setOf(photo), contents.files.keys)
+        assertEquals("old label", contents.files.getValue(photo).readText())
+        assertEquals(0, contents.skipped)
+    }
+
+    @Test
     fun missingFilesAreLeftOut() {
         val (cellar, files) = sample()
         val photo = files.keys.first { it.kind == FileKind.Photo }

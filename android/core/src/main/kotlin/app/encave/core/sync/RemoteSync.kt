@@ -367,8 +367,18 @@ object RemoteSync {
                 merged = merged.copy(state = merged.state.copy(clock = last + 1))
             }
             var full = false
-            for (id in referenced) {
-                if (full || !PhotoId.isValid(id) || id in uploaded) continue
+            val toSend = referenced.filter { PhotoId.isValid(it) && it !in uploaded }
+            // Files already there (from a round that failed later, or another device): not sent again.
+            if (toSend.isNotEmpty()) {
+                val stored = mailbox.list("photo/").toHashSet()
+                for (id in toSend) {
+                    if (photoPath(id) !in stored) continue
+                    uploaded += id
+                    refused -= id
+                }
+            }
+            for (id in toSend) {
+                if (full || id in uploaded) continue
                 val data = files.data(id, refs) ?: continue
                 val path = photoPath(id)
                 // A file the storage refuses (a large document) must not stop the cellar from syncing.

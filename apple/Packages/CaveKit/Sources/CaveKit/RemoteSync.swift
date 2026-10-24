@@ -367,7 +367,16 @@ public enum RemoteSync {
                 merged.state.clock = written + 1
             }
             var full = false
-            for id in Set(refs.map(\.id)).sorted() where PhotoID.isValid(id) && !progress.uploadedPhotos.contains(id) {
+            let toSend = Set(refs.map(\.id)).sorted().filter { PhotoID.isValid($0) && !progress.uploadedPhotos.contains($0) }
+            // Files already there (from a round that failed later, or another device): not sent again.
+            if !toSend.isEmpty {
+                let stored = Set(try await mailbox.list(prefix: "photo/"))
+                for id in toSend where stored.contains(photoPath(id)) {
+                    progress.uploadedPhotos.insert(id)
+                    progress.refusedFiles.remove(id)
+                }
+            }
+            for id in toSend where !progress.uploadedPhotos.contains(id) {
                 guard !full, let data = files.data(id, in: refs) else { continue }
                 let path = photoPath(id)
                 // A file the storage refuses (a large document) must not stop the cellar from syncing.

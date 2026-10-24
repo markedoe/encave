@@ -638,11 +638,11 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    stamp: a merge on the local network can change the cellar without moving
    the clock), or the key is new: upload the files it has not uploaded yet in
    this epoch (once each, even if a file is both a photo and a document; files
-   fetched in step 3 count as uploaded), then a snapshot of the merged state,
-   then delete its older snapshots. If the clock is not above both the last
-   uploaded clock and the newest of this device's own snapshots listed in step
-   2, it is first set to one more than the greater of them, so readers see a
-   newer snapshot. A file the storage refuses as too large (413) is left out;
+   fetched in step 3, and those `photo/` already lists, count as uploaded),
+   then a snapshot of the merged state, then delete its older snapshots. If
+   the clock is not above both the last uploaded clock and the newest of this
+   device's own snapshots listed in step 2, it is first set to one more than
+   the greater of them, so readers see a newer snapshot. A file the storage refuses as too large (413) is left out;
    when the storage is full (507), the remaining files are left out for this
    round too. The snapshot is still written; the device says so and tries the
    files again with its next snapshot.
