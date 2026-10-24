@@ -62,7 +62,8 @@ import Testing
         try cellar.swap(a, b)
         let third = try cellar.addBottles(of: Wine(name: "X"), slots: [a])[0]
 
-        #expect(!cellar.undoSwap(a, b, first: first.id, second: nil))
+        let undone = cellar.undoSwap(a, b, first: first.id, second: nil)
+        #expect(!undone)
         #expect(cellar.bottles[third.id]?.slot == a, "the third bottle did not move")
         #expect(cellar.bottles[first.id]?.slot == b)
     }
@@ -74,7 +75,8 @@ import Testing
         let a = Slot(rackID: rack.id, row: 0, column: 0), b = Slot(rackID: rack.id, row: 0, column: 1)
         let bottles = try cellar.addBottles(of: Wine(name: "W"), quantity: 2, slots: [a, b])
         try cellar.swap(a, b)
-        #expect(cellar.undoSwap(a, b, first: bottles[0].id, second: bottles[1].id))
+        let undone = cellar.undoSwap(a, b, first: bottles[0].id, second: bottles[1].id)
+        #expect(undone)
         #expect(cellar.bottles[bottles[0].id]?.slot == a)
         #expect(cellar.bottles[bottles[1].id]?.slot == b)
     }
