@@ -967,6 +967,7 @@
     <string name="add_order_footer">Bottles on order are listed apart and are not suggested for tonight until they arrive.</string>
     <string name="detail_orders_footer">Received bottles join the cellar without a position; move them to storage from here.</string>
     <string name="err_not_received">This bottle is on order: mark it received first.</string>
+    <string name="err_version_not_kept">Your cellar could not be saved as a previous version first, so it was left as it is. Check the space left on this device.</string>
     <string name="help_adding_orders_title">Bottles on order</string>
     <string name="help_adding_orders">Bought bottles that have not arrived yet, or wines bought en primeur? Turn on **Not delivered yet** and, if you know it, the expected delivery date. They are listed under **On order** in the Cellar and are not counted or suggested until you swipe them to the right, or touch and hold them and choose **Mark received**. They then join the cellar without a position, ready to be put in storage. An order that will not come: **Cancel order** in the bottle’s menu, on the wine’s page.</string>
     <string name="field_tags">Tags</string>

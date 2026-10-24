@@ -81,28 +81,16 @@ enum PhotoStore {
         removeOrphans(in: folder, pathExtension: "jpg", keeping: ids, now: now)
     }
 
+    /// Erase All Data with the backups: the photo files no wine refers to are due at once
+    /// (removed by the next `removeOrphans`).
+    static func expireOrphans(keeping ids: Set<String>) {
+        guard let folder else { return }
+        OrphanFiles.expire(in: folder, pathExtension: "jpg", keeping: ids)
+    }
+
     /// The same for any folder of files named after their ID (the documents too).
     static func removeOrphans(in folder: URL, pathExtension: String, keeping ids: Set<String>, now: Date) {
-        guard let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
-        else { return }
-        let listURL = folder.appendingPathComponent("unreferenced.json")
-        let seen = (try? JSONDecoder().decode([String: Date].self, from: Data(contentsOf: listURL))) ?? [:]
-        var unreferenced: [String: Date] = [:]
-        for file in files where file.pathExtension == pathExtension {
-            let id = file.deletingPathExtension().lastPathComponent
-            guard !ids.contains(id) else { continue }
-            let since = seen[id] ?? now
-            if now.timeIntervalSince(since) >= orphanGracePeriod {
-                try? FileManager.default.removeItem(at: file)
-            } else {
-                unreferenced[id] = since
-            }
-        }
-        if unreferenced.isEmpty {
-            try? FileManager.default.removeItem(at: listURL)
-        } else if unreferenced != seen, let data = try? JSONEncoder().encode(unreferenced) {
-            try? data.write(to: listURL, options: [.atomic])
-        }
+        OrphanFiles.remove(in: folder, pathExtension: pathExtension, keeping: ids, now: now, gracePeriod: orphanGracePeriod)
     }
 
     /// Saves a photo received from another device, as is.

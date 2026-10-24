@@ -84,6 +84,15 @@ class CellarVersionFolder(val folder: File, private val zone: ZoneId = ZoneId.sy
         date(target.name)?.let { CellarVersion(target.name, it) }
     }.getOrNull()
 
+    /**
+     * Before a Replace (restoring a backup, Replace and join, Erase all data that keeps the
+     * versions): saves [cellar] as a version. True when it was saved or there was nothing to keep
+     * (an empty cellar, or only the sample); false when it could not be saved, and then the
+     * cellar must not be replaced.
+     */
+    fun keepBeforeReplacingIfNeeded(cellar: Cellar, now: Instant = Instant.now()): Boolean =
+        cellar.isEmpty || cellar.isOnlySample || keepBeforeReplacing(cellar, now) != null
+
     /** Erase all data: removes every version. */
     fun removeAll() {
         folder.deleteRecursively()

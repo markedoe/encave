@@ -49,6 +49,28 @@ class PhotoStoreTest {
     }
 
     @Test
+    fun afterEraseAllWithBackupsThePhotosAndDocumentsGoAtOnce() {
+        val photos = PhotoStore(context)
+        val documents = DocumentStore(context)
+        val photo = photos.save(byteArrayOf(5))!!
+        val back = photos.save(byteArrayOf(6))!!
+        val document = PhotoId.make(byteArrayOf(7))
+        assertTrue(documents.store(document, byteArrayOf(7)))
+        val now = Instant.now()
+        photos.expireOrphans(emptySet())
+        documents.expireOrphans(emptySet())
+        // The Undo is gone; the erase was undone for "back" (referred to again).
+        photos.removeOrphans(setOf(back), now)
+        documents.removeOrphans(emptySet(), now)
+        assertFalse(photos.exists(photo))
+        assertFalse(documents.exists(document))
+        assertTrue(photos.exists(back))
+        // No longer due: unreferenced again, it gets the whole grace period.
+        photos.removeOrphans(emptySet(), now)
+        assertTrue(photos.exists(back))
+    }
+
+    @Test
     fun idsThatAreNotSafeFileNamesAreRefused() {
         val store = PhotoStore(context)
         assertNull(store.file("../cellar"))

@@ -444,7 +444,8 @@ private struct EraseAllView: View {
                 }
                 Section {
                     Button("Erase all data", role: .destructive) {
-                        model.eraseAll(alsoBackups: alsoBackups)
+                        let alsoBackups = alsoBackups
+                        Task { await model.eraseAll(alsoBackups: alsoBackups) }
                         dismiss()
                     }
                     .accessibilityIdentifier("settings.eraseConfirm")

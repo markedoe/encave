@@ -173,7 +173,7 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
             }
             watch?.cancel()
             slot?.finished = true
-            if (result == SnackbarResult.ActionPerformed && slot?.replaced?.value != true) message.undo?.invoke()
+            if (result == SnackbarResult.ActionPerformed && slot?.replaced?.value != true) message.undo?.invoke() else message.undoGone?.invoke()
         }
     }
 

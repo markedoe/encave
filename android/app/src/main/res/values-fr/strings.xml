@@ -966,6 +966,7 @@
     <string name="add_order_footer">Les bouteilles en commande sont listées à part et ne sont pas proposées pour ce soir avant leur arrivée.</string>
     <string name="detail_orders_footer">Les bouteilles reçues rejoignent la cave sans position ; mettez-les dans un rangement depuis cette page.</string>
     <string name="err_not_received">Cette bouteille est en commande : marquez-la d’abord comme reçue.</string>
+    <string name="err_version_not_kept">Votre cave n’a pas pu être d’abord enregistrée comme version précédente : elle est restée telle quelle. Vérifiez l’espace libre sur cet appareil.</string>
     <string name="help_adding_orders_title">Bouteilles en commande</string>
     <string name="help_adding_orders">Des bouteilles achetées mais pas encore arrivées, ou des vins achetés en primeur ? Activez **Pas encore livrées** et, si vous la connaissez, la date de livraison prévue. Elles apparaissent sous **En commande** dans la Cave et ne sont ni comptées ni proposées tant que vous ne les avez pas balayées vers la droite, ou maintenues appuyées pour choisir **Marquer comme reçu**. Elles rejoignent alors la cave sans position, prêtes à être mises dans un rangement. Une commande qui n’arrivera pas : **Annuler la commande** dans le menu de la bouteille, sur la fiche du vin.</string>
     <string name="field_tags">Tags</string>

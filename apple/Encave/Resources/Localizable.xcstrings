@@ -13651,6 +13651,16 @@
         }
       }
     },
+    "This bottle is no longer in the cellar.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette bouteille n’est plus en cave."
+          }
+        }
+      }
+    },
     "This bottle is on order: mark it received first.": {
       "localizations": {
         "fr": {
@@ -15247,6 +15257,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible de charger votre cave. Rien n’est enregistré avant la prochaine ouverture d’Encave."
+          }
+        }
+      }
+    },
+    "Your cellar could not be saved as a previous version first, so it was left as it is. Check the space left on this device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre cave n’a pas pu être d’abord enregistrée comme version précédente : elle est restée telle quelle. Vérifiez l’espace libre sur cet appareil."
           }
         }
       }

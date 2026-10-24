@@ -96,7 +96,6 @@ import app.encave.core.Maturity
 import app.encave.core.Rack
 import app.encave.core.RackCell
 import app.encave.core.RackKind
-import app.encave.core.Slot
 import app.encave.core.Wine
 import app.encave.ui.AppNavigator
 import app.encave.ui.AppViewModel
@@ -156,9 +155,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     var drinking by rememberDrinking()
     /** A bottle whose documents are shown, and whether the file picker opens at once. */
     var bottleDocuments by remember { mutableStateOf<Pair<UUID, Boolean>?>(null) }
-    // Checking the rack: the places whose bottles were found.
+    // Checking the rack: the bottles found (by ID, so a bottle found and then moved stays found).
     var auditing by rememberSaveable { mutableStateOf(false) }
-    var checked by rememberRetained("rack.audit.checked") { mutableStateOf(setOf<Slot>()) }
+    var checked by rememberRetained("rack.audit.checked") { mutableStateOf(setOf<UUID>()) }
     var confirmingAudit by remember { mutableStateOf(false) }
     fun endAudit() {
         auditing = false
@@ -170,7 +169,9 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     androidx.activity.compose.BackHandler(enabled = movingId != null && !auditing) { movingId = null }
     androidx.activity.compose.BackHandler(enabled = selectedKey != null && movingId == null && !auditing) { selectedKey = null }
     val inRack = remember(cellar, rack) { rack?.let { r -> cellar.bottlesInCellar.filter { it.slot?.rackId == r.id } }.orEmpty() }
-    val missing = remember(inRack, checked) { inRack.filter { it.slot !in checked } }
+    val missing = remember(cellar, rack, checked) { rack?.let { cellar.missingBottles(it.id, checked) }.orEmpty() }
+    // Where the bottles found are now.
+    val foundSlots = remember(inRack, checked) { inRack.filter { it.id in checked }.mapNotNull { it.slot }.toSet() }
     val moving = movingId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id } }
     val highlighted = highlightId?.let { id -> cellar.bottlesInCellar.firstOrNull { it.id.toString() == id }?.slot }
         ?.takeIf { it.rackId == rack?.id }
@@ -286,7 +287,7 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                     cellar = cellar,
                     cellSize = cellSize,
                     highlighted = highlighted,
-                    selected = if (auditing) checked else setOfNotNull(moving?.slot),
+                    selected = if (auditing) foundSlots else setOfNotNull(moving?.slot),
                     selectedPlace = selectedPlace.takeIf { moving == null && !auditing },
                     focusWine = focusWine.takeIf { moving == null && !auditing },
                     countsFound = auditing,
@@ -303,8 +304,8 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                         when {
                             // A tap says "the bottles of this place are here" (or undoes it).
                             auditing -> {
-                                val slots = bottles.mapNotNull { it.slot }.toSet()
-                                if (slots.isNotEmpty()) checked = if (checked.containsAll(slots)) checked - slots else checked + slots
+                                val ids = bottles.map { it.id }.toSet()
+                                if (ids.isNotEmpty()) checked = if (checked.containsAll(ids)) checked - ids else checked + ids
                             }
                             source != null -> {
                                 movingId = null
@@ -891,25 +892,25 @@ private fun CheckOneByOneSheet(
     rack: Rack,
     cell: RackCell,
     cellar: Cellar,
-    checked: Set<Slot>,
-    onChange: (Set<Slot>) -> Unit,
+    checked: Set<UUID>,
+    onChange: (Set<UUID>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val resources = LocalResources.current
     val bottles = cellar.bottlesIn(cell)
-    val slots = bottles.mapNotNull { it.slot }
+    val ids = bottles.filter { it.slot != null }.map { it.id }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding().padding(bottom = Dimens.l).testTag("rack.check.sheet")) {
             ListItem(
                 headlineContent = {
                     Text(rack.displayLabel(cell, resources), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
                 },
-                supportingContent = { Text(stringResource(R.string.audit_found, slots.count { it in checked }, slots.size)) },
+                supportingContent = { Text(stringResource(R.string.audit_found, ids.count { it in checked }, ids.size)) },
             )
             bottles.forEachIndexed { index, bottle ->
                 val slot = bottle.slot ?: return@forEachIndexed
                 val wine = cellar.wines[bottle.wineId]
-                val found = slot in checked
+                val found = bottle.id in checked
                 ListItem(
                     leadingContent = { BottleEnd(wine?.color, size = 28.dp) },
                     headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
@@ -919,7 +920,7 @@ private fun CheckOneByOneSheet(
                         )
                     },
                     trailingContent = { Switch(checked = found, onCheckedChange = null) },
-                    modifier = Modifier.toggleable(found, role = Role.Switch) { onChange(if (it) checked + slot else checked - slot) }
+                    modifier = Modifier.toggleable(found, role = Role.Switch) { onChange(if (it) checked + bottle.id else checked - bottle.id) }
                         .testTag("rack.check.bottle"),
                 )
             }
@@ -927,7 +928,7 @@ private fun CheckOneByOneSheet(
                 Modifier.fillMaxWidth().padding(horizontal = Dimens.l),
                 horizontalArrangement = Arrangement.spacedBy(Dimens.s, Alignment.End),
             ) {
-                TextButton(onClick = { onChange(checked + slots) }, modifier = Modifier.testTag("rack.check.all")) {
+                TextButton(onClick = { onChange(checked + ids) }, modifier = Modifier.testTag("rack.check.all")) {
                     Text(stringResource(R.string.rack_check_all_here))
                 }
                 androidx.compose.material3.Button(onClick = onDismiss) { Text(stringResource(R.string.action_done)) }

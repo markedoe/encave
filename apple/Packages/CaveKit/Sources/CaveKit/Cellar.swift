@@ -478,6 +478,8 @@ public enum CellarError: Error, Equatable {
     case unknownWine, unknownBottle, unknownRack, unknownDiscovery, slotTaken, slotOutOfRange, alreadyConsumed, rackNotEmpty
     /// The bottle is on order: receive it before placing or drinking it.
     case notReceived
+    /// The bottle was opened or is gone: it has no place any more.
+    case notInCellar
 }
 
 /// Purchase details applied to every bottle added in one go.
@@ -614,7 +616,10 @@ public extension Cellar {
     mutating func move(_ bottleID: UUID, to slot: Slot?) throws {
         guard var bottle = bottles[bottleID] else { throw CellarError.unknownBottle }
         if let slot {
+            // Only a bottle in the cellar takes a place (one opened meanwhile, by sync or
+            // in another window, never does).
             guard bottle.status != .ordered else { throw CellarError.notReceived }
+            guard bottle.status == .inCellar else { throw CellarError.notInCellar }
             if let occupant = self.bottle(at: slot), occupant.id != bottleID { throw CellarError.slotTaken }
             try validateInRange(slot)
         }
@@ -629,6 +634,57 @@ public extension Cellar {
         let first = bottle(at: a), second = bottle(at: b)
         if let first { bottles[first.id]?.slot = b }
         if let second { bottles[second.id]?.slot = a }
+    }
+
+    /// The Undo of `swap(a, b)` that found `first` at `a` and `second` at `b`: swaps them
+    /// back only if both are still where the swap put them, so a bottle put in one of the
+    /// positions since never moves. Returns whether it swapped them back.
+    @discardableResult
+    mutating func undoSwap(_ a: Slot, _ b: Slot, first: UUID?, second: UUID?) -> Bool {
+        guard first != nil || second != nil,
+              bottle(at: b)?.id == first, bottle(at: a)?.id == second,
+              (try? swap(a, b)) != nil else { return false }
+        return true
+    }
+
+    /// The Undo of `updateRack(rack, rowMap:, takingOut: true)` on the rack `old`: the rack
+    /// takes its old shape back. The bottles in it now go back with their rows (the inverse
+    /// of `rowMap`), so one placed since stays on its shelf; a bottle in a row the old shape
+    /// did not have loses its place. The bottles taken out (`takenOut`, as they were before)
+    /// go back to their place only if they still have none and it is free. Bottles moved to
+    /// another storage or opened since keep what they have now.
+    mutating func undoRackUpdate(back old: Rack, rowMap: [Int: Int?], takenOut: [Bottle]) {
+        guard let index = racks.firstIndex(where: { $0.id == old.id }) else { return }
+        var inverse: [Int: Int?] = [:]
+        // A row the edit moved away from and nothing moved into is a new row: no old place.
+        for from in rowMap.keys { inverse[from] = .some(nil) }
+        for (from, to) in rowMap { if let to { inverse[to] = .some(from) } }
+        for bottle in bottlesInCellar {
+            guard let slot = bottle.slot, slot.rackID == old.id else { continue }
+            let back = Rack.moved(slot, rowMap: inverse)
+            bottles[bottle.id]?.slot = back.flatMap { old.contains($0) ? $0 : nil }
+        }
+        var rack = old
+        rack.unknownFields = rack.unknownFields.orKept(racks[index].unknownFields)
+        racks[index] = rack
+        for bottle in takenOut {
+            guard let slot = bottle.slot, let now = bottles[bottle.id], now.status == .inCellar,
+                  now.slot == nil, self.bottle(at: slot) == nil, old.contains(slot) else { continue }
+            bottles[bottle.id]?.slot = slot
+        }
+    }
+
+    /// Bottles of a storage not found while checking it: those still in it whose ID is not
+    /// in `found`, so a bottle seen and then moved within the storage stays found.
+    func missingBottles(in rackID: UUID, found: Set<UUID>) -> [Bottle] {
+        bottlesInCellar.filter { $0.slot?.rackID == rackID && !found.contains($0.id) }
+    }
+
+    /// Whether `reserve(bottleIDs, for: occasion)` would change anything.
+    func changesReservation(_ bottleIDs: [UUID], for occasion: String?) -> Bool {
+        let name = occasion?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let reservedFor = name.isEmpty ? nil : name
+        return bottleIDs.contains { bottles[$0].map { $0.reservedFor != reservedFor } ?? false }
     }
 
     mutating func updateWine(_ wine: Wine) throws {

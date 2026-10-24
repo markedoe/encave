@@ -114,6 +114,9 @@ class PhotoStore(context: Context) {
      */
     fun removeOrphans(keeping: Set<String>, now: Instant = Instant.now()) = OrphanFiles.remove(folder, "jpg", keeping, now)
 
+    /** Erase all data with the backups: the photos no wine refers to are due at once (removed by the next [removeOrphans]). */
+    fun expireOrphans(keeping: Set<String>) = OrphanFiles.expire(folder, "jpg", keeping)
+
     /** A downscaled bitmap for display. */
     fun load(id: String, maxPixelSize: Int = 900): Bitmap? = decode(file(id)?.takeIf { it.exists() }?.readBytes(), maxPixelSize)
 
@@ -144,10 +147,7 @@ internal object OrphanFiles {
     private const val UNREFERENCED = "unreferenced.json"
 
     fun remove(folder: File, extension: String, keeping: Set<String>, now: Instant) {
-        val list = File(folder, UNREFERENCED)
-        val seen = runCatching {
-            Json.decodeFromString(MapSerializer(String.serializer(), Long.serializer()), list.readText())
-        }.getOrDefault(emptyMap())
+        val seen = read(folder)
         val unreferenced = HashMap<String, Long>()
         val grace = Duration.ofDays(PhotoStore.ORPHAN_GRACE_DAYS)
         folder.listFiles().orEmpty().forEach { file ->
@@ -160,13 +160,33 @@ internal object OrphanFiles {
                 }
             }
         }
+        if (unreferenced != seen || unreferenced.isEmpty()) write(folder, unreferenced)
+    }
+
+    /**
+     * Erase all data with the previous versions and backups: every file not in [keeping] is due
+     * at once, removed by the next [remove] (once the Undo is gone, or at the next launch).
+     */
+    fun expire(folder: File, extension: String, keeping: Set<String>) {
+        val due = HashMap(read(folder))
+        folder.listFiles().orEmpty().forEach { file ->
+            if (file.extension == extension && file.nameWithoutExtension !in keeping) due[file.nameWithoutExtension] = 0L
+        }
+        write(folder, due)
+    }
+
+    private fun read(folder: File): Map<String, Long> = runCatching {
+        Json.decodeFromString(MapSerializer(String.serializer(), Long.serializer()), File(folder, UNREFERENCED).readText())
+    }.getOrDefault(emptyMap())
+
+    private fun write(folder: File, list: Map<String, Long>) {
         runCatching {
-            if (unreferenced.isEmpty()) {
-                list.delete()
-            } else if (unreferenced != seen) {
+            if (list.isEmpty()) {
+                File(folder, UNREFERENCED).delete()
+            } else {
                 val temp = File(folder, "$UNREFERENCED.${UUID.randomUUID()}.tmp")
-                temp.writeText(Json.encodeToString(MapSerializer(String.serializer(), Long.serializer()), unreferenced))
-                if (!temp.renameTo(list)) temp.delete()
+                temp.writeText(Json.encodeToString(MapSerializer(String.serializer(), Long.serializer()), list))
+                if (!temp.renameTo(File(folder, UNREFERENCED))) temp.delete()
             }
         }
     }

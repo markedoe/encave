@@ -398,6 +398,8 @@ FR = {
     'Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.': 'Un autre appareil a refusé de synchroniser et indique que cet appareil a été retiré de la cave. Si c’est le cas, arrêtez la synchronisation sur cet appareil.',
     'Changes from another device could not be read. Update Encave on all your devices.': 'Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.',
     'This bottle is on order: mark it received first.': 'Cette bouteille est en commande : marquez-la d’abord comme reçue.',
+    'Your cellar could not be saved as a previous version first, so it was left as it is. Check the space left on this device.': 'Votre cave n’a pas pu être d’abord enregistrée comme version précédente : elle est restée telle quelle. Vérifiez l’espace libre sur cet appareil.',
+    'This bottle is no longer in the cellar.': 'Cette bouteille n’est plus en cave.',
     'Group wines your own way (gift, birth year, for a friend) in the **Tags** of a wine. The Cellar shows a chip for each tag among the filter chips, after the styles: tap it to see only those wines. Search finds tags too.': 'Regroupez les vins à votre façon (cadeau, année de naissance, pour un ami) dans les **Tags** d’un vin. La Cave affiche une pastille par tag parmi les pastilles de filtre, après les styles : touchez-la pour ne voir que ces vins. La recherche trouve aussi les tags.',
     'Your own groups, such as gift, birth year or for a friend. Filter the Cellar by tag.': 'Vos propres groupes, comme cadeau, année de naissance ou pour un ami. Filtrez la Cave par tag.',
     'Birth year': 'Année de naissance',
