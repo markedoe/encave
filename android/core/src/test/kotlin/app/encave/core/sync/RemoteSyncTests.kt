@@ -21,6 +21,9 @@ import org.junit.jupiter.api.assertThrows
 /** A device for remote sync tests: its cellar, identity and remote state. Mirrors CaveKit's RemoteSyncTests. */
 internal class RemoteDevice(val identity: DeviceIdentity, var snapshot: SyncSnapshot, var key: CellarKey?) {
     var progress = RemoteProgress()
+
+    /** A key rotation not done yet ([round], in KeyRotationTests). */
+    var pending: PendingRotation? = null
     val photos = PhotoBox()
 
     fun edit(change: (Cellar) -> Unit) {

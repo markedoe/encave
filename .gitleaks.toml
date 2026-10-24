@@ -31,6 +31,7 @@ paths = [
   '''(^|/)package-lock\.json$''',
   # Published sync protocol test vectors (docs/SYNC.md): derived from fixed, public inputs.
   '''(^|/)ProtocolVectorTests\.(swift|kt)$''',
+  '''(^|/)fixtures/sync/protocol-vectors\.json$''',
 ]
 regexes = [
   '''(?i)(change[-_]?(this|me)|your[_-]|example|placeholder|dummy|sk-ant-\.\.\.|<[^>]+>|\$\{)''',
@@ -39,6 +40,8 @@ regexes = [
   # Remote sync test vectors in docs/SYNC.md §10 (derived from fixed, public inputs).
   '''zyJIksEyVCrPawgL8q0UGr5GMi1KewaCGSzwHGOLFno''',
   '''K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8''',
+  # The epoch 2 cellar key of §10 (bytes 30 31 … 4f), in the grant plaintext vector.
+  '''MDEyMzQ1Njc4OTo7PD0\+P0BBQkNERUZHSElKS0xNTk8=''',
   # Type names in code, not keys.
   '''Curve25519\.(KeyAgreement|Signing)\.PrivateKey''',
 ]

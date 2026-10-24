@@ -462,7 +462,8 @@ neither side waits on a full buffer.
    remote sync key and storage this device uses (section
    8), so turning remote sync on reaches the other devices. `RemoteInfo` is
    `{"key":CellarKey,"storage":string?}` and `CellarKey` is
-   `{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes}`. A key for
+   `{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes,"removed":[UUID]?}`
+   (section 8). A key for
    another cellar is ignored; a device adopts a key that supersedes its own
    (section 8). This key is never written into a snapshot.
 
@@ -512,9 +513,14 @@ Implementation: `RemoteSync.swift`,
 
 ### Keys
 
-A **cellar key** `{cellarID, epoch (UInt32), key (32 random bytes)}` is shared
-by the devices of a cellar. A received key whose `key` is not 32 bytes fails
-decoding. From it (HKDF-SHA256, empty salt):
+A **cellar key** `{cellarID, epoch (UInt32), key (32 random bytes), removed?}`
+is shared by the devices of a cellar. A received key whose `key` is not 32 bytes,
+or whose epoch is not a UInt32, fails decoding. `removed` lists (uppercase UUIDs,
+sorted) the devices removed by another device before the key was made: it was
+given to none of them. Keys from earlier versions have no `removed` (none known);
+earlier versions ignore it. JSON:
+`{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes,"removed":[UUID]?}`.
+From the key (HKDF-SHA256, empty salt):
 
 | Name | Info | Use |
 |---|---|---|
@@ -576,8 +582,10 @@ so is a grant that cannot be opened, except one from a device of this cellar not
 up to 8 of those are kept for a later round (in name order), the others are
 deleted. Grants from removed devices are deleted. The recipient also checks
 that the grant's name gives the same cellar, epoch and sender as its content.
-It uses a grant only if its key supersedes the current one, and it deletes the
-grants of its cellar with an older epoch than the key it keeps.
+It uses a grant only if its key supersedes the current one. It deletes the
+other grants it opened (the current key again, or a key that loses to the one
+kept: a rotation retried after a failure may have left several) and the grants
+of its cellar with an older epoch than the key it keeps.
 
 ### Storages
 
@@ -662,8 +670,22 @@ refresh task, no sooner than 15 minutes, when iOS decides.
 
 ### Removing a device
 
-The device that removes another creates a new cellar key (epoch + 1) and keeps
-it until the rotation is done, so a retry after a failure reuses the same key.
+Any device that holds the key and runs rounds, not only the one that removed a
+device (it may have no storage, and the removal may reach the others over the
+local network), rotates the key before a round when its membership has a
+device removed by another device that the key's `removed` does not list. A
+device that left removed itself and forgot the key (section 2): it calls for no
+rotation. A device that finds itself removed never rotates.
+
+Before rotating, the device reads its inbox and adopts a superseding key (unless
+the grant names another storage: the round follows it first, and rotates
+there). The new key's epoch is one more than the greatest epoch seen (the
+current key, a key granted, the kept key); at epoch 4,294,967,295 the device
+refuses to rotate and says so. Its `removed` is the union of the removals in the
+membership and the current key's `removed`, and no device in it gets a grant.
+The device keeps the new key, and the devices it has given it to, until the
+rotation is done, so a retry after a failure reuses the same key and leaves no
+second grant for them.
 It leaves a grant in each remaining member's inbox, writes to the **old**
 mailbox a snapshot with an empty cellar, no object stamps, its clock and the
 updated membership (so devices that have not switched yet learn about the
@@ -671,8 +693,19 @@ removal, while the removed device, which can still read the old mailbox, learns
 nothing else), and writes the cellar to the **new** mailbox. The removed device
 cannot find the new mailbox (its ID comes from the new key) and its files in
 the old one are ignored, because it is no longer a member. If, before the
-rotation is done, the device receives a key of the same or a later epoch, it
-replaces the kept key with a new one at that epoch + 1.
+rotation is done, the device receives a key of the same or a later epoch, or a
+device the kept key was given to is removed meanwhile, it replaces the kept key
+with a new one above every epoch seen.
+
+Two devices that remove different devices at the same time may both rotate to
+the same epoch; the supersedes rule then picks one key, which may have been
+given to the device the other one removed. The other device then sees a removal
+the key does not list and rotates again, so the cellar settles on a key that
+neither removed device has.
+
+A key from an earlier version lists no removals, so in a cellar that has
+removed a device, the devices rotate once after updating. A grant holds about
+90 removed devices before reaching 4 KiB.
 
 ### Turning it on
 
@@ -756,8 +789,10 @@ sign in to it, and syncs through it once they have.
 
 ## 10. Test vectors
 
-Both `ProtocolVectorTests.swift` and `ProtocolVectorTests.kt` check these
-values. Inputs (all keys are X25519 private keys given as 32 raw bytes):
+The inputs and values are in `fixtures/sync/protocol-vectors.json`.
+`ProtocolVectorTests.swift` and `ProtocolVectorTests.kt` read that file, check
+the values, and check that the tables below give the same ones. Inputs (all
+keys are X25519 private keys given as 32 raw bytes):
 
 - host ephemeral private key: bytes `01 02 03 … 20`; joiner ephemeral: `41 42 … 60`
 - host nonce: 32 × `a0`; joiner nonce: 32 × `b0`
@@ -766,7 +801,10 @@ values. Inputs (all keys are X25519 private keys given as 32 raw bytes):
 - sync session: initiator = host (ephemeral and nonce as above, identity
   private key `81 82 … a0`), responder = joiner (identity private key
   `c1 c2 … e0`)
-- first frame: `{"type":"photos-end"}` sent by the initiator (counter 0)
+- first frame: `{"type":"photos-end"}` sent by the initiator (counter 0),
+  with the initiator to responder key
+- frame 5 from the responder: `{"type":"photos-end"}` sent by the responder
+  (counter 5), with the responder to initiator key
 
 | Value | Expected |
 |---|---|
@@ -780,6 +818,7 @@ values. Inputs (all keys are X25519 private keys given as 32 raw bytes):
 | sync initiator to responder | `bfe9c2c7723bdc71a54ed30da89382476a1f8abd8b90e6447767f4428bd56dfc` |
 | sync responder to initiator | `718fd5b20b9fed4805c0fa0f6efe235c7f476228f10741211a3a8acc0245ba5f` |
 | first frame (ciphertext ‖ tag) | `8f7553c327cfefd5e3c77017246680dc74a070adfcdf6b09a06a2a8bf7c21dd2bbe39db85c` |
+| frame 5 from the responder (ciphertext ‖ tag) | `76a6de13dc5fb6410280aa6bb34ad4dcc318628c2e465dde6ab3dc7fc32139fbcadbbda024` |
 | rendezvous of `123456` | `2bc4802d60f2f128` |
 | network tag of the cellar | `aedcc6a68baa` |
 
@@ -788,7 +827,13 @@ bytes 10 11 … 2f}`; device identity private key `81 82 … a0` (the host devic
 above); for the envelope, plaintext `hello`, kind 2 (photo), path `photo/x`,
 nonce 12 × `07`; for the grant, path `grant/<cellar>-00000002-<host device>-0a1b2c3d`
 (lowercase UUIDs), ephemeral private key `01 02 … 20`, recipient identity
-private key `c1 c2 … e0`, sender identity `81 82 … a0`.
+private key `c1 c2 … e0`, sender identity `81 82 … a0`. A second cellar key
+`{cellar above, epoch 2, key bytes 30 31 … 4f}`: the epoch does not enter the
+derived values, only the key bytes do. The grant file holds that key, from the
+host device, with storage `icloud`, sealed with the grant key above and
+envelope nonce 12 × `09`. Its plaintext is the JSON both platforms write (keys
+sorted, no spaces). Swift writes a `/` in a string (a URL, or Base64) as `\/`,
+so such a grant's bytes differ between platforms; both read either form.
 
 | Value | Expected |
 |---|---|
@@ -799,3 +844,19 @@ private key `c1 c2 … e0`, sender identity `81 82 … a0`.
 | inbox ID | `i2a17946aea22c15127c53bac03a59f8a` |
 | envelope (whole file) | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` |
 | grant key | `b2ecfff6ab54c6b39ae9edbdd44abffc2dbc361e2faa6571cd4abc5fba9d517d` |
+| epoch 2 relay token | `VoGlMN7nVFG_rC-Hdqw0T-IRpc515349SBrXDlKS-x0` |
+| epoch 2 mailbox ID | `caf53d3e721c812253477388b93c90a43` |
+| epoch 2 data key | `45577e756346781b26cf7b9adace1841dfa975ae81cc9f0e6cb3d9920debeb6b` |
+| grant plaintext | `{"cellarKey":{"cellarID":"33333333-3333-4333-8333-333333333333","epoch":2,"key":"MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk8="},"from":"11111111-1111-4111-8111-111111111111","storage":"icloud"}` |
+| grant (whole file) | `07a37cbc142093c8b755dc1b10e86cb426374ad16aa853ed0bdfc0b2b86d1c7c454e435601030909090909090909090909095edd6e9494612397862e23735344dda3b9793decc01e1e8f615c322ca83d9cf473cd9c8a832575eaee4ed82d148c4d3af3c9a1f1f38d5ea43d407a38389d62b2d25cf3ffb2ddc73be54b9ef928b21b14b745a9c9920158e2b5f1ade54c1938dd538debb4c5bad930356440eb24070a2f4ce652aa6506ae789de5688e2d48f31106c4548d5fa0eaf9e1483fd955c61ba891e1734e14a9aa7f1200c390af3a21ced0c670cc87f94aa035594f8c54bcf7125f50260c531b8e298cb6c2a43a7cfbe5e8c0f11eb6d38fdbb4cd87177b716092e4` |
+
+**Files that must be refused.** Each is opened with the data key of the epoch 1
+key above. Only the first opens; a device must refuse the others.
+
+| Case | Kind | Path | File | Expected |
+|---|---|---|---|---|
+| the envelope above | 2 | `photo/x` | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` | `hello` |
+| opened as a snapshot | 1 | `photo/x` | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` | refused |
+| kind byte changed to snapshot | 1 | `photo/x` | `454e435601010707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` | refused |
+| moved to another path | 2 | `photo/y` | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf` | refused |
+| last tag byte flipped | 2 | `photo/x` | `454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbe` | refused |

@@ -8,6 +8,8 @@ struct RemoteDevice {
     var snapshot: SyncSnapshot
     var key: CellarKey?
     var progress = RemoteProgress()
+    /// A key rotation not done yet (`round`, in KeyRotationTests).
+    var pending: PendingRotation?
     let photos = PhotoBox([:])
 
     mutating func edit(_ change: (inout Cellar) throws -> Void) rethrows {

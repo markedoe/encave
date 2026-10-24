@@ -3,109 +3,211 @@ import Foundation
 import Testing
 @testable import CaveKit
 
-/// Fixed inputs and their expected outputs, published in docs/SYNC.md so other
-/// implementations (the Android app) can check they compute the same values.
+/// Fixed inputs and their expected outputs, in `fixtures/sync/protocol-vectors.json` and
+/// published in docs/SYNC.md §10. The Android app's ProtocolVectorTests.kt reads the same
+/// file, so the two platforms compute the same values.
 @Suite struct ProtocolVectorTests {
-    static func bytes(_ start: UInt8) -> Data { Data((0..<32).map { start &+ UInt8($0) }) }
-    static func key(_ start: UInt8) throws -> Curve25519.KeyAgreement.PrivateKey {
-        try .init(rawRepresentation: bytes(start))
+    struct Vectors: Decodable {
+        struct Key: Decodable { var epoch: UInt32; var key: String }
+        struct EnvelopeInput: Decodable { var plaintext: String; var kind: UInt8; var path: String; var nonce: String }
+        struct GrantInput: Decodable {
+            var path: String, ephemeral: String, recipient: String, sender: String, storage: String, nonce: String
+        }
+        struct Inputs: Decodable {
+            var hostDevice: UUID, joinerDevice: UUID, cellar: UUID
+            var hostEphemeral: String, joinerEphemeral: String, hostNonce: String, joinerNonce: String
+            var initiatorIdentity: String, responderIdentity: String, rendezvousCode: String
+            var cellarKey: Key, epoch2CellarKey: Key
+            var envelope: EnvelopeInput
+            var grant: GrantInput
+        }
+        struct Frame: Decodable {
+            var name: String, direction: String, counter: UInt64, plaintext: String, expected: String
+        }
+        struct EnvelopeCase: Decodable {
+            var name: String, file: String, kind: UInt8, path: String, outcome: String
+        }
+        var inputs: Inputs
+        var pairing: [String: String]
+        var frames: [Frame]
+        var remote: [String: String]
+        var envelopes: [EnvelopeCase]
+    }
+
+    static let repository = URL(fileURLWithPath: #filePath).deletingLastPathComponent() // CaveKitTests
+        .deletingLastPathComponent().deletingLastPathComponent() // CaveKit
+        .deletingLastPathComponent().deletingLastPathComponent() // apple
+        .deletingLastPathComponent()
+
+    static func load() throws -> Vectors {
+        let file = repository.appendingPathComponent("fixtures/sync/protocol-vectors.json")
+        return try JSONDecoder().decode(Vectors.self, from: Data(contentsOf: file))
+    }
+
+    static func unhex(_ text: String) -> Data {
+        var data = Data()
+        var index = text.startIndex
+        while index < text.endIndex {
+            let next = text.index(index, offsetBy: 2)
+            data.append(UInt8(text[index..<next], radix: 16)!)
+            index = next
+        }
+        return data
+    }
+
+    static func privateKey(_ hex: String) throws -> Curve25519.KeyAgreement.PrivateKey {
+        try .init(rawRepresentation: unhex(hex))
     }
     static func hex(_ data: Data) -> String { data.map { String(format: "%02x", $0) }.joined() }
     static func hex(_ key: SymmetricKey) -> String { hex(KeySchedule.bytes(key)) }
-
-    static let hostDevice = UUID(uuidString: "11111111-1111-4111-8111-111111111111")!
-    static let joinerDevice = UUID(uuidString: "22222222-2222-4222-8222-222222222222")!
-    static let cellar = UUID(uuidString: "33333333-3333-4333-8333-333333333333")!
+    static func cellarKey(_ key: Vectors.Key, cellar: UUID) -> CellarKey {
+        CellarKey(cellarID: cellar, epoch: key.epoch, key: unhex(key.key))
+    }
 
     @Test func vectors() throws {
-        let hostEphemeral = try Self.key(0x01), joinerEphemeral = try Self.key(0x41)
-        let hostNonce = Data(repeating: 0xA0, count: 32), joinerNonce = Data(repeating: 0xB0, count: 32)
+        let vectors = try Self.load(), inputs = vectors.inputs
+        let hostEphemeral = try Self.privateKey(inputs.hostEphemeral)
+        let joinerEphemeral = try Self.privateKey(inputs.joinerEphemeral)
+        let hostNonce = Self.unhex(inputs.hostNonce), joinerNonce = Self.unhex(inputs.joinerNonce)
         let hostKey = hostEphemeral.publicKey.rawRepresentation, joinerKey = joinerEphemeral.publicKey.rawRepresentation
         let commitment = KeySchedule.hash("encave-pair-commit-v1", [hostKey, hostNonce])
         let pairing = try PairingCrypto.keys(
             ephemeral: hostEphemeral, otherKey: joinerKey, hostKey: hostKey, joinerKey: joinerKey,
             hostNonce: hostNonce, joinerNonce: joinerNonce,
-            host: PeerInfo(device: Self.hostDevice, name: "", platform: ""),
-            joiner: PeerInfo(device: Self.joinerDevice, name: "", platform: ""))
-        let initiatorIdentity = try Self.key(0x81), responderIdentity = try Self.key(0xC1)
+            host: PeerInfo(device: inputs.hostDevice, name: "", platform: ""),
+            joiner: PeerInfo(device: inputs.joinerDevice, name: "", platform: ""))
+        let initiatorIdentity = try Self.privateKey(inputs.initiatorIdentity)
+        let responderIdentity = try Self.privateKey(inputs.responderIdentity)
         let session = try SyncHandshake.sessionKeys(
-            initiator: Self.hostDevice, responder: Self.joinerDevice, initiatorKey: hostKey, responderKey: joinerKey,
-            initiatorNonce: hostNonce, responderNonce: joinerNonce, cellar: Self.cellar,
+            initiator: inputs.hostDevice, responder: inputs.joinerDevice, initiatorKey: hostKey, responderKey: joinerKey,
+            initiatorNonce: hostNonce, responderNonce: joinerNonce, cellar: inputs.cellar,
             ee: KeySchedule.dh(hostEphemeral, joinerKey),
             es: KeySchedule.dh(hostEphemeral, responderIdentity.publicKey.rawRepresentation),
             se: KeySchedule.dh(initiatorIdentity, joinerKey))
-        let frame = try ChaChaPoly.seal(Data(#"{"type":"photos-end"}"#.utf8), using: session.i2r, nonce: SecureChannel.nonce(0))
 
-        let values: [(String, String)] = [
-            ("host ephemeral public", Self.hex(hostKey)),
-            ("joiner ephemeral public", Self.hex(joinerKey)),
-            ("commitment", Self.hex(commitment)),
-            ("confirmation code", pairing.code),
-            ("pair host to joiner", Self.hex(pairing.h2j)),
-            ("pair joiner to host", Self.hex(pairing.j2h)),
-            ("sync auth", Self.hex(session.auth)),
-            ("sync initiator to responder", Self.hex(session.i2r)),
-            ("sync responder to initiator", Self.hex(session.r2i)),
-            ("first frame", Self.hex(frame.ciphertext + frame.tag)),
-            ("rendezvous 123456", PairingCode(digits: "123456").rendezvous),
-            ("network tag", Membership(cellarID: Self.cellar).networkTag),
+        let values: [String: String] = [
+            "host ephemeral public": Self.hex(hostKey),
+            "joiner ephemeral public": Self.hex(joinerKey),
+            "commitment": Self.hex(commitment),
+            "confirmation code": pairing.code,
+            "pair host to joiner": Self.hex(pairing.h2j),
+            "pair joiner to host": Self.hex(pairing.j2h),
+            "sync auth": Self.hex(session.auth),
+            "sync initiator to responder": Self.hex(session.i2r),
+            "sync responder to initiator": Self.hex(session.r2i),
+            "rendezvous of 123456": PairingCode(digits: inputs.rendezvousCode).rendezvous,
+            "network tag of the cellar": Membership(cellarID: inputs.cellar).networkTag,
         ]
-        for (name, value) in values {
-            #expect(Self.expected[name] == value, "\(name)")
+        #expect(values == vectors.pairing)
+
+        // Frames: the nonce is the counter, each direction has its key.
+        for frame in vectors.frames {
+            let key = frame.direction == "i2r" ? session.i2r : session.r2i
+            let box = try ChaChaPoly.seal(Data(frame.plaintext.utf8), using: key, nonce: SecureChannel.nonce(frame.counter))
+            #expect(Self.hex(box.ciphertext + box.tag) == frame.expected, "\(frame.name)")
         }
+        #expect(try WireMessage(type: "photos-end").encoded() == Data(#"{"type":"photos-end"}"#.utf8))
     }
 
-    /// Remote sync (SYNC.md §8): mailbox and inbox IDs, tokens, the data key, an
-    /// envelope with a fixed nonce, and a grant key with a fixed ephemeral.
+    /// Remote sync (SYNC.md §8): mailbox and inbox IDs, tokens, data keys, an envelope and a grant.
     @Test func remoteVectors() throws {
-        let cellarKey = CellarKey(cellarID: Self.cellar, epoch: 1, key: Self.bytes(0x10))
-        let sender = try DeviceIdentity(id: Self.hostDevice, privateKeyData: Self.bytes(0x81))
-        let recipient = try Self.key(0xC1)
-        let envelope = try Envelope.seal(Data("hello".utf8), kind: .photo, path: "photo/x", key: cellarKey.dataKey,
-                                         nonce: ChaChaPoly.Nonce(data: Data(repeating: 0x07, count: 12)))
-        let ephemeral = try Self.key(0x01)
-        let grantPath = "grant/\(Self.cellar.uuidString.lowercased())-00000002-\(Self.hostDevice.uuidString.lowercased())-0a1b2c3d"
+        let vectors = try Self.load(), inputs = vectors.inputs
+        let cellarKey = Self.cellarKey(inputs.cellarKey, cellar: inputs.cellar)
+        let epoch2 = Self.cellarKey(inputs.epoch2CellarKey, cellar: inputs.cellar)
+        let sender = try DeviceIdentity(id: inputs.hostDevice, privateKeyData: Self.unhex(inputs.grant.sender))
+        let envelopeInput = inputs.envelope
+        let envelope = try Envelope.seal(Data(envelopeInput.plaintext.utf8), kind: try #require(Envelope.Kind(rawValue: envelopeInput.kind)),
+                                         path: envelopeInput.path, key: cellarKey.dataKey,
+                                         nonce: ChaChaPoly.Nonce(data: Self.unhex(envelopeInput.nonce)))
+
+        let grantInput = inputs.grant
+        let grantPath = grantInput.path
+        #expect(grantPath == "grant/\(inputs.cellar.uuidString.lowercased())-00000002-\(inputs.hostDevice.uuidString.lowercased())-0a1b2c3d")
+        let ephemeral = try Self.privateKey(grantInput.ephemeral)
+        let recipient = try DeviceIdentity(id: inputs.joinerDevice, privateKeyData: Self.unhex(grantInput.recipient))
         let grantKey = try KeyGrant.key(
-            path: grantPath, ephemeralPublic: ephemeral.publicKey.rawRepresentation,
-            recipient: recipient.publicKey.rawRepresentation,
-            ee: KeySchedule.dh(ephemeral, recipient.publicKey.rawRepresentation),
-            se: KeySchedule.dh(sender.privateKey, recipient.publicKey.rawRepresentation))
-        let values: [(String, String)] = [
-            ("relay token", cellarKey.token),
-            ("mailbox", cellarKey.mailboxID),
-            ("data key", Self.hex(cellarKey.dataKey)),
-            ("inbox token", sender.inboxToken),
-            ("inbox", sender.inboxID),
-            ("envelope", Self.hex(envelope)),
-            ("grant key", Self.hex(grantKey)),
+            path: grantPath, ephemeralPublic: ephemeral.publicKey.rawRepresentation, recipient: recipient.publicKey,
+            ee: KeySchedule.dh(ephemeral, recipient.publicKey), se: KeySchedule.dh(sender.privateKey, recipient.publicKey))
+        // Built as KeyGrant.sealed does, with a fixed ephemeral key and envelope nonce.
+        let grant = KeyGrant(cellarKey: epoch2, from: inputs.hostDevice, storage: grantInput.storage)
+        let plaintext = try JSONEncoder.sync.encode(grant)
+        let body = try Envelope.seal(plaintext, kind: .grant, path: grantPath, key: grantKey,
+                                     nonce: ChaChaPoly.Nonce(data: Self.unhex(grantInput.nonce)))
+        let grantFile = ephemeral.publicKey.rawRepresentation + body
+
+        let values: [String: String] = [
+            "relay token": cellarKey.token,
+            "mailbox ID": cellarKey.mailboxID,
+            "data key": Self.hex(cellarKey.dataKey),
+            "inbox token": sender.inboxToken,
+            "inbox ID": sender.inboxID,
+            "envelope (whole file)": Self.hex(envelope),
+            "grant key": Self.hex(grantKey),
+            "epoch 2 relay token": epoch2.token,
+            "epoch 2 mailbox ID": epoch2.mailboxID,
+            "epoch 2 data key": Self.hex(epoch2.dataKey),
+            "grant plaintext": String(decoding: plaintext, as: UTF8.self),
+            "grant (whole file)": Self.hex(grantFile),
         ]
-        for (name, value) in values {
-            #expect(Self.remoteExpected[name] == value, "\(name): \(value)")
+        for (name, value) in values.sorted(by: { $0.key < $1.key }) {
+            #expect(vectors.remote[name] == value, "\(name): \(value)")
+        }
+        #expect(Set(values.keys) == Set(vectors.remote.keys))
+
+        // The published files open: the envelope to its plaintext, the grant for a
+        // recipient that knows the sender.
+        let published = Self.unhex(try #require(vectors.remote["envelope (whole file)"]))
+        #expect(try Envelope.open(published, kind: .photo, path: envelopeInput.path, key: cellarKey.dataKey)
+                == Data(envelopeInput.plaintext.utf8))
+        let members = Membership(cellarID: inputs.cellar, members: [
+            inputs.hostDevice: Member(id: inputs.hostDevice, name: "Host", publicKey: sender.publicKey, platform: "ios"),
+        ])
+        let publishedGrant = Self.unhex(try #require(vectors.remote["grant (whole file)"]))
+        #expect(try KeyGrant.open(publishedGrant, path: grantPath, recipient: recipient, members: members) == grant)
+    }
+
+    /// Envelopes that open, and ones a device must refuse (another kind, another path, a damaged tag).
+    @Test func envelopeVectors() throws {
+        let vectors = try Self.load()
+        let key = Self.cellarKey(vectors.inputs.cellarKey, cellar: vectors.inputs.cellar).dataKey
+        #expect(vectors.envelopes.filter { $0.outcome == "refused" }.count >= 4)
+        for vector in vectors.envelopes {
+            let kind = try #require(Envelope.Kind(rawValue: vector.kind))
+            let file = Self.unhex(vector.file)
+            if vector.outcome == "refused" {
+                #expect(throws: RemoteSyncError.corrupted(vector.path), "\(vector.name)") {
+                    _ = try Envelope.open(file, kind: kind, path: vector.path, key: key)
+                }
+            } else {
+                #expect(try Envelope.open(file, kind: kind, path: vector.path, key: key) == Data(vector.outcome.utf8),
+                        "\(vector.name)")
+            }
         }
     }
 
-    static let remoteExpected: [String: String] = [
-        "relay token": "zyJIksEyVCrPawgL8q0UGr5GMi1KewaCGSzwHGOLFno",
-        "mailbox": "cace8487402ad2a081f417653a8443def",
-        "data key": "d9bdb64332f3da0ef2e703d1cbdf3be079c75095ce76a6818f07fdfa2b802f54",
-        "inbox token": "K9Ij7YuyprGlxKKF0rXF1bTbBNHtk2czQHE87LzJvx8",
-        "inbox": "i2a17946aea22c15127c53bac03a59f8a",
-        "envelope": "454e435601020707070707070707070707078f6f64053663e6ba095fca5586e637cebda8c6dfbf",
-        "grant key": "b2ecfff6ab54c6b39ae9edbdd44abffc2dbc361e2faa6571cd4abc5fba9d517d",
-    ]
+    /// The tables of docs/SYNC.md §10 give the values of the fixture, and all of them.
+    @Test func theDocumentationMatchesTheFixture() throws {
+        let vectors = try Self.load()
+        let text = try String(contentsOf: Self.repository.appendingPathComponent("docs/SYNC.md"), encoding: .utf8)
+        let start = try #require(text.range(of: "\n## 10. Test vectors\n"))
+        var section = String(text[start.upperBound...])
+        if let end = section.range(of: "\n## ") { section = String(section[..<end.lowerBound]) }
+        let rows: [[String]] = section.components(separatedBy: "\n")
+            .filter { $0.hasPrefix("| ") && !$0.hasPrefix("| Value |") && !$0.hasPrefix("| Case |") }
+            .map { line in
+                let body = line.trimmingCharacters(in: .whitespaces).dropFirst().dropLast()
+                return body.components(separatedBy: " | ").map {
+                    $0.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "`", with: "")
+                }
+            }
 
-    static let expected: [String: String] = [
-        "host ephemeral public": "07a37cbc142093c8b755dc1b10e86cb426374ad16aa853ed0bdfc0b2b86d1c7c",
-        "joiner ephemeral public": "64b101b1d0be5a8704bd078f9895001fc03e8e9f9522f188dd128d9846d48466",
-        "commitment": "0096fb81cae546de04c7851836d2c4f8e5e9b9c97a1eb42b2a4b01cb32a9b5e2",
-        "confirmation code": "141 953",
-        "pair host to joiner": "a79c1d1f93a7699a239e54c6a62a9321e53b3e81a8cb3710c505c3f2c61fb354",
-        "pair joiner to host": "47c1553f86cbcc6389e5a2562434f866f113a6b8268138ca5a9321e0bcb21019",
-        "sync auth": "b37137f432db51fbb80805e75d49ab80cd1e3bb990f3c559a8decf54c14c62de",
-        "sync initiator to responder": "bfe9c2c7723bdc71a54ed30da89382476a1f8abd8b90e6447767f4428bd56dfc",
-        "sync responder to initiator": "718fd5b20b9fed4805c0fa0f6efe235c7f476228f10741211a3a8acc0245ba5f",
-        "first frame": "8f7553c327cfefd5e3c77017246680dc74a070adfcdf6b09a06a2a8bf7c21dd2bbe39db85c",
-        "rendezvous 123456": "2bc4802d60f2f128",
-        "network tag": "aedcc6a68baa",
-    ]
+        var expected = vectors.pairing.merging(vectors.remote) { first, _ in first }
+        for frame in vectors.frames { expected[frame.name] = frame.expected }
+        let pairs = rows.filter { $0.count == 2 }
+        #expect(Dictionary(pairs.map { ($0[0], $0[1]) }, uniquingKeysWith: { first, _ in first }) == expected)
+
+        let envelopes = vectors.envelopes.map { [$0.name, String($0.kind), $0.path, $0.file, $0.outcome] }
+        #expect(rows.filter { $0.count == 5 } == envelopes)
+        #expect(rows.count == pairs.count + envelopes.count, "every row of §10 is a value or an envelope")
+    }
 }

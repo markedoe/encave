@@ -49,12 +49,15 @@ public struct CellarKey: Codable, Equatable, Sendable {
     public var cellarID: UUID
     public var epoch: UInt32
     public var key: Data
+    /// Devices removed by another device before this key was made: it was given to
+    /// none of them. Nil for keys made before this list existed (none known).
+    public var removed: [UUID]?
 
-    public init(cellarID: UUID, epoch: UInt32, key: Data) {
-        self.cellarID = cellarID; self.epoch = epoch; self.key = key
+    public init(cellarID: UUID, epoch: UInt32, key: Data, removed: [UUID]? = nil) {
+        self.cellarID = cellarID; self.epoch = epoch; self.key = key; self.removed = removed
     }
 
-    private enum CodingKeys: String, CodingKey { case cellarID, epoch, key }
+    private enum CodingKeys: String, CodingKey { case cellarID, epoch, key, removed }
 
     /// A key received from another device must be 32 bytes, like the ones devices make.
     public init(from decoder: Decoder) throws {
@@ -62,6 +65,7 @@ public struct CellarKey: Codable, Equatable, Sendable {
         cellarID = try c.decode(UUID.self, forKey: .cellarID)
         epoch = try c.decode(UInt32.self, forKey: .epoch)
         key = try c.decode(Data.self, forKey: .key)
+        removed = try c.decodeIfPresent([UUID].self, forKey: .removed)
         guard key.count == 32 else {
             throw DecodingError.dataCorruptedError(forKey: .key, in: c, debugDescription: "A cellar key is 32 bytes")
         }
@@ -240,6 +244,18 @@ public struct RemoteProgress: Codable, Equatable, Sendable {
     }
 }
 
+/// A key rotation not done yet, kept on the device only, so a retry after a failure
+/// gives the same key and leaves no second grant for the devices that have one.
+public struct PendingRotation: Codable, Equatable, Sendable {
+    public var key: CellarKey
+    /// Devices already given `key`.
+    public var granted: Set<UUID>
+
+    public init(key: CellarKey, granted: Set<UUID> = []) {
+        self.key = key; self.granted = granted
+    }
+}
+
 public enum RemoteSync {
     /// Snapshots kept per device: the newest two (a reader may be fetching the previous one).
     static let keptSnapshots = 2
@@ -400,7 +416,8 @@ public enum RemoteSync {
                                     current: CellarKey?) async throws -> KeyGrant? {
         let epoch = current?.epoch ?? 0
         let inbox = store.inbox(id: identity.inboxID, token: identity.inboxToken)
-        var best: KeyGrant?
+        var best: (grant: KeyGrant, path: String)?
+        var opened: [String] = []
         var waiting = 0
         for path in try await inbox.list(prefix: "grant/") {
             guard let data = try await inbox.get(path) else { continue }
@@ -418,17 +435,21 @@ public enum RemoteSync {
                 try? await inbox.delete(path)
                 continue
             }
-            if grant.cellarKey.supersedes(best?.cellarKey ?? current) { best = grant }
+            opened.append(path)
+            if grant.cellarKey.supersedes(best?.grant.cellarKey ?? current) { best = (grant, path) }
         }
+        // Every other grant opened is done with: the current key, or one that loses to
+        // the key kept (such as duplicates left by a rotation retried after a failure).
+        for path in opened where path != best?.path { try? await inbox.delete(path) }
         // Grants up to the one kept are done with.
-        if let kept = best?.cellarKey.epoch ?? (epoch > 0 ? epoch : nil) {
+        if let kept = best?.grant.cellarKey.epoch ?? (epoch > 0 ? epoch : nil) {
             for path in try await inbox.list(prefix: "grant/\(membership.cellarID.lowercased)-") {
                 if let name = GrantPath(path), name.cellarID == membership.cellarID, name.epoch < kept {
                     try? await inbox.delete(path)
                 }
             }
         }
-        return best
+        return best?.grant
     }
 
     /// Grants from devices not known yet that an inbox keeps; the others are deleted.
@@ -438,6 +459,44 @@ public enum RemoteSync {
     static func isFromRemovedDevice(_ path: String, _ membership: Membership) -> Bool {
         guard let sender = GrantPath(path)?.sender else { return true }
         return membership.stamps[sender]?.deleted == true
+    }
+
+    /// Devices a key must not have been given to: those removed by another device. A
+    /// device that left removed itself and forgot the key (docs/SYNC.md §2).
+    public static func shutOut(_ membership: Membership) -> Set<UUID> {
+        Set(membership.stamps.filter { $0.value.deleted && $0.value.device != $0.key }.keys)
+    }
+
+    /// The rotation to run before this round, if any (docs/SYNC.md §8, Removing a
+    /// device): one already started, or a new one when the membership has a removal
+    /// the key does not list, so it may have been given to that device. Every key
+    /// holder that runs rounds checks this, not only the device that removed another.
+    /// Keep the result before rotating, so a retry uses the same key.
+    ///
+    /// A started rotation gets a new key above every epoch seen when the cellar moved
+    /// on meanwhile, or when it was given to a device removed since. `device` is this
+    /// device: once removed itself, it never rotates.
+    public static func nextRotation(key: CellarKey, pending: PendingRotation?, membership: Membership,
+                                    device: UUID) throws -> PendingRotation? {
+        guard membership.members[device] != nil else { return nil }
+        var pending = pending.flatMap { $0.key.cellarID == key.cellarID ? $0 : nil }
+        let removed = shutOut(membership)
+        let excluded = removed.union(key.removed ?? [])
+        guard pending != nil || !removed.isSubset(of: key.removed ?? []) else { return nil }
+        let top = max(key.epoch, pending?.key.epoch ?? 0)
+        if let started = pending, started.key.epoch <= key.epoch || !started.granted.isDisjoint(with: excluded) {
+            pending = nil
+        }
+        var next: PendingRotation
+        if let pending {
+            next = pending
+        } else {
+            // Only a misbehaving device sends a key at the last epoch: refuse rather than wrap.
+            guard top < UInt32.max else { throw RemoteSyncError.corrupted("epoch") }
+            next = PendingRotation(key: CellarKey.random(cellarID: key.cellarID, epoch: top + 1))
+        }
+        next.key.removed = excluded.union(next.key.removed ?? []).sorted { $0.uuidString < $1.uuidString }
+        return next
     }
 
     /// After removing devices: a new key for the remaining ones. The new key is left in
@@ -451,7 +510,22 @@ public enum RemoteSync {
     /// the removed device can still read that mailbox.
     public static func rotate(store: MailboxStore, identity: DeviceIdentity, from oldKey: CellarKey, to newKey: CellarKey,
                               local: SyncSnapshot, storage: String?) async throws {
-        try await grant(newKey, to: local.membership.active, store: store, identity: identity, storage: storage)
+        var pending = PendingRotation(key: newKey)
+        try await rotate(store: store, identity: identity, from: oldKey, to: &pending, local: local, storage: storage)
+    }
+
+    /// The same, noting in `pending` each device given the key, so a retry after a
+    /// failure leaves no second grant for it. Devices in the key's `removed` get nothing.
+    public static func rotate(store: MailboxStore, identity: DeviceIdentity, from oldKey: CellarKey,
+                              to pending: inout PendingRotation, local: SyncSnapshot, storage: String?) async throws {
+        let newKey = pending.key
+        let removed = Set(newKey.removed ?? [])
+        for member in local.membership.active
+        where member.id != identity.id && !removed.contains(member.id) && !pending.granted.contains(member.id)
+            && member.inbox.map({ RelayPath.isValidMailbox($0) && $0.hasPrefix("i") }) == true {
+            try await grant(newKey, to: [member], store: store, identity: identity, storage: storage)
+            pending.granted.insert(member.id)
+        }
         var notice = local
         notice.cellar = Cellar()
         notice.state.stamps = [:]
@@ -464,7 +538,8 @@ public enum RemoteSync {
     /// record has no inbox yet are skipped: they get the key on the local network.
     public static func grant(_ key: CellarKey, to members: [Member], store: MailboxStore,
                              identity: DeviceIdentity, storage: String?) async throws {
-        for member in members where member.id != identity.id {
+        let removed = Set(key.removed ?? [])
+        for member in members where member.id != identity.id && !removed.contains(member.id) {
             guard let inbox = member.inbox, RelayPath.isValidMailbox(inbox), inbox.hasPrefix("i") else { continue }
             let sealed = try KeyGrant(cellarKey: key, from: identity.id, storage: storage)
                 .sealed(by: identity, for: member.publicKey)

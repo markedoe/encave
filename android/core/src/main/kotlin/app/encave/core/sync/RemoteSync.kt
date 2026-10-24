@@ -67,10 +67,17 @@ data class CellarKey(
     /** UInt32 on the wire. */
     val epoch: Long,
     @Serializable(with = Base64Serializer::class) val key: ByteArray,
+    /**
+     * Devices removed by another device before this key was made: it was given to none of
+     * them. Null for keys made before this list existed (none known).
+     */
+    val removed: List<@Serializable(with = UuidSerializer::class) UUID>? = null,
 ) {
     init {
         // A key received from another device must be 32 bytes, like the ones devices make.
         require(key.size == 32) { "A cellar key is 32 bytes" }
+        // A UInt32, as Swift decodes it: a larger or negative epoch would supersede every real key.
+        require(epoch in 0..MAX_EPOCH) { "A cellar key's epoch is a UInt32" }
     }
 
     internal fun derive(info: String, count: Int = 32): ByteArray = KeySchedule.derive(key, ByteArray(0), info, count)
@@ -98,11 +105,15 @@ data class CellarKey(
     internal val dataKey: ByteArray get() = derive("encave/v1/data")
 
     override fun equals(other: Any?): Boolean =
-        other is CellarKey && cellarId == other.cellarId && epoch == other.epoch && key.contentEquals(other.key)
+        other is CellarKey && cellarId == other.cellarId && epoch == other.epoch && key.contentEquals(other.key) &&
+            removed == other.removed
 
-    override fun hashCode(): Int = listOf(cellarId, epoch, key.contentHashCode()).hashCode()
+    override fun hashCode(): Int = listOf(cellarId, epoch, key.contentHashCode(), removed).hashCode()
 
     companion object {
+        /** The last epoch (UInt32 max): no rotation goes past it. */
+        const val MAX_EPOCH = 0xFFFF_FFFFL
+
         fun random(cellarId: UUID, epoch: Long = 1): CellarKey = CellarKey(cellarId, epoch, KeySchedule.randomNonce())
     }
 }
@@ -228,6 +239,17 @@ data class RemoteProgress(
     val storageFull: Boolean = false,
     /** Epoch the progress refers to; a new epoch starts afresh. */
     val epoch: Long = 0,
+)
+
+/**
+ * A key rotation not done yet, kept on the device only, so a retry after a failure gives
+ * the same key and leaves no second grant for the devices that have one.
+ */
+@Serializable
+data class PendingRotation(
+    val key: CellarKey,
+    /** Devices already given [key]. */
+    val granted: Set<@Serializable(with = UuidSerializer::class) UUID> = emptySet(),
 )
 
 object RemoteSync {
@@ -430,6 +452,8 @@ object RemoteSync {
         val inbox = store.inbox(identity.inboxId, identity.inboxToken)
         val ownPrefix = "grant/${membership.cellarId.lower}-"
         var best: KeyGrant? = null
+        var bestPath: String? = null
+        val opened = mutableListOf<String>()
         var waiting = 0
         for (path in inbox.list("grant/")) {
             val data = inbox.get(path) ?: continue
@@ -453,8 +477,15 @@ object RemoteSync {
                 deleteQuietly(inbox, path)
                 continue
             }
-            if (grant.cellarKey.supersedes(best?.cellarKey ?: current)) best = grant
+            opened += path
+            if (grant.cellarKey.supersedes(best?.cellarKey ?: current)) {
+                best = grant
+                bestPath = path
+            }
         }
+        // Every other grant opened is done with: the current key, or one that loses to the
+        // key kept (such as duplicates left by a rotation retried after a failure).
+        for (path in opened) if (path != bestPath) deleteQuietly(inbox, path)
         // Grants up to the one kept are done with.
         val kept = best?.cellarKey?.epoch ?: newerThan.takeIf { it > 0 }
         if (kept != null) {
@@ -486,6 +517,41 @@ object RemoteSync {
     }
 
     /**
+     * Devices a key must not have been given to: those removed by another device. A device
+     * that left removed itself and forgot the key (docs/SYNC.md §2).
+     */
+    fun shutOut(membership: Membership): Set<UUID> =
+        membership.stamps.filter { (id, stamp) -> stamp.deleted && stamp.device != id }.keys
+
+    /**
+     * The rotation to run before this round, if any (docs/SYNC.md §8, Removing a device): one
+     * already started, or a new one when the membership has a removal the key does not list,
+     * so it may have been given to that device. Every key holder that runs rounds checks this,
+     * not only the device that removed another. Keep the result before rotating, so a retry
+     * uses the same key.
+     *
+     * A started rotation gets a new key above every epoch seen when the cellar moved on
+     * meanwhile, or when it was given to a device removed since. [device] is this device: once
+     * removed itself, it never rotates.
+     */
+    fun nextRotation(key: CellarKey, pending: PendingRotation?, membership: Membership, device: UUID): PendingRotation? {
+        if (membership.members[device] == null) return null
+        var started = pending?.takeIf { it.key.cellarId == key.cellarId }
+        val removed = shutOut(membership)
+        val excluded = removed + key.removed.orEmpty()
+        if (started == null && key.removed.orEmpty().containsAll(removed)) return null
+        val top = maxOf(key.epoch, started?.key?.epoch ?: 0)
+        if (started != null && (started.key.epoch <= key.epoch || started.granted.any { it in excluded })) started = null
+        val next = started ?: run {
+            // Only a misbehaving device sends a key at the last epoch: refuse rather than go past it.
+            if (top >= CellarKey.MAX_EPOCH) throw RemoteSyncException(RemoteSyncError.Corrupted("epoch"))
+            PendingRotation(CellarKey.random(key.cellarId, top + 1))
+        }
+        val list = (excluded + next.key.removed.orEmpty()).sortedBy { it.toString().uppercase(Locale.ROOT) }
+        return next.copy(key = next.key.copy(removed = list))
+    }
+
+    /**
      * After removing devices: a new key for the remaining ones. The new key is left in
      * each remaining device's inbox, the updated list of devices is written to the
      * old mailbox too (for devices that have not switched yet), and the cellar to the
@@ -495,11 +561,33 @@ object RemoteSync {
      * after a failure gives the same key: grants already left stay valid.
      */
     suspend fun rotate(store: MailboxStore, identity: DeviceIdentity, oldKey: CellarKey, newKey: CellarKey, local: SyncSnapshot, storage: String?) {
-        grant(newKey, local.membership.active, store, identity, storage)
+        rotate(store, identity, oldKey, PendingRotation(newKey), local, storage)
+    }
+
+    /**
+     * The same, calling [granted] with [pending] updated after each device given the key, so
+     * a retry after a failure leaves no second grant for it. Devices in the key's `removed`
+     * get nothing. Returns the rotation as it ends.
+     */
+    suspend fun rotate(
+        store: MailboxStore, identity: DeviceIdentity, oldKey: CellarKey, pending: PendingRotation, local: SyncSnapshot,
+        storage: String?, granted: (PendingRotation) -> Unit = {},
+    ): PendingRotation {
+        val newKey = pending.key
+        val removed = newKey.removed.orEmpty().toSet()
+        var done = pending
+        for (member in local.membership.active) {
+            if (member.id == identity.id || member.id in removed || member.id in done.granted) continue
+            if (member.inbox?.let { RelayPath.isValidMailbox(it) && it.startsWith("i") } != true) continue
+            grant(newKey, listOf(member), store, identity, storage)
+            done = done.copy(granted = done.granted + member.id)
+            granted(done)
+        }
         // The removed device can still read the old mailbox: only the devices and the clock go there.
         val notice = local.copy(cellar = app.encave.core.Cellar(), state = local.state.copy(stamps = emptyMap()))
         write(notice, store.mailbox(oldKey.mailboxId, oldKey.token), oldKey, identity.id)
         write(local, store.mailbox(newKey.mailboxId, newKey.token), newKey, identity.id)
+        return done
     }
 
     /**
@@ -508,8 +596,9 @@ object RemoteSync {
      * has no inbox yet are skipped: they get the key on the local network.
      */
     suspend fun grant(key: CellarKey, members: List<Member>, store: MailboxStore, identity: DeviceIdentity, storage: String?) {
+        val removed = key.removed.orEmpty().toSet()
         for (member in members) {
-            if (member.id == identity.id) continue
+            if (member.id == identity.id || member.id in removed) continue
             // Devices whose record has no inbox yet get the key on the local network.
             val inbox = member.inbox?.takeIf { RelayPath.isValidMailbox(it) && it.startsWith("i") } ?: continue
             val (path, data) = KeyGrant(key, identity.id, storage).sealed(identity, member.publicKey)
