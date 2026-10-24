@@ -40,6 +40,7 @@ import app.encave.core.removingSample
 import app.encave.core.Slot
 import app.encave.core.Tasting
 import app.encave.core.Wine
+import app.encave.core.CsvText
 import app.encave.core.importCsv
 import app.encave.core.merge
 import app.encave.core.CellarVersion
@@ -1232,7 +1233,8 @@ class AppViewModel(
                 return@launch
             }
             val text = withContext(Dispatchers.IO) {
-                runCatching { requireNotNull(resolver.openInputStream(uri)).use { it.readBytes().toString(Charsets.UTF_8) } }
+                // Excel's and CellarTracker's files are often Windows-1252, not UTF-8.
+                runCatching { requireNotNull(resolver.openInputStream(uri)).use { CsvText.decode(it.readBytes()) } }
             }.getOrElse {
                 post(UiText.Res(R.string.err_generic))
                 return@launch

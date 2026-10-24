@@ -1,5 +1,5 @@
 {
-  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty.",
+  "about": "CSV import and export, shared by CaveKit (CSVVectorTests.swift) and the Kotlin core (CsvVectorTest.kt). Dates are days in the device's time zone, which the tests use for both import and comparison; 'now' is the import's own date. Prices are compared as numbers. Omitted bottle and wine fields are empty. An import with a 'zone' imports and compares in that time zone; 'racks' exist in the cellar before the import (and before reading the export back); 'encoded' is the file's bytes (base64), which decode to the csv lines.",
   "headers": {
     "name": "name",
     "Wine Name": "name",
@@ -132,7 +132,9 @@
     "+1": "'+1",
     "@x": "'@x",
     "=a,b": "\"'=a,b\"",
-    "": ""
+    "": "",
+    "two\r\nlines": "\"two\r\nlines\"",
+    "a\rb": "\"a\rb\""
   },
   "parsed": [
     {
@@ -630,6 +632,379 @@
       ],
       "roundTrip": false,
       "exportLines": []
+    },
+    {
+      "about": "A French Excel \"CSV (point-virgule)\" file in Windows-1252: accented headers (Millésime, Quantité, Cépages), a price with a space and a comma, an en dash and a euro sign in a note.",
+      "lineEnding": "\r\n",
+      "encoded": "Tm9tO0RvbWFpbmU7TWlsbOlzaW1lO0NvdWxldXI7Q+lwYWdlcztRdWFudGl06TtQcml4O0RldmlzZTtDb21tZW50YWlyZQ0KQ2jidGVhdSBQ6XRydXM7UOl0cnVzOzIwMTU7Um91Z2U7TWVybG90OzI7MyA1MDAsMDA7RVVSO1Ry6HMgYm9uIJYgMTWADQpD9HRlLVL0dGllO0d1aWdhbDsyMDE4O1JvdWdlO1N5cmFoLCBWaW9nbmllcjszOzQ1LDU7RVVSOw0K",
+      "csv": [
+        "Nom;Domaine;Millésime;Couleur;Cépages;Quantité;Prix;Devise;Commentaire",
+        "Château Pétrus;Pétrus;2015;Rouge;Merlot;2;3 500,00;EUR;Très bon – 15€",
+        "Côte-Rôtie;Guigal;2018;Rouge;Syrah, Viognier;3;45,5;EUR;"
+      ],
+      "summary": {
+        "winesAdded": 2,
+        "bottlesAdded": 5,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Château Pétrus",
+          "producer": "Pétrus",
+          "vintage": 2015,
+          "color": "red",
+          "grapes": [
+            "Merlot"
+          ]
+        },
+        {
+          "name": "Côte-Rôtie",
+          "producer": "Guigal",
+          "vintage": 2018,
+          "color": "red",
+          "grapes": [
+            "Syrah",
+            "Viognier"
+          ]
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Château Pétrus",
+          "status": "inCellar",
+          "count": 2,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "3500"
+        },
+        {
+          "wine": "Côte-Rôtie",
+          "status": "inCellar",
+          "count": 3,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "45.5"
+        }
+      ],
+      "roundTrip": true
+    },
+    {
+      "about": "Encave's own price columns hold plain numbers, rounded to the cent: 8.333 is 8.33, not 8,333.",
+      "csv": [
+        "name,price,current_price,current_price_currency",
+        "Saumur,8.333,12.345,EUR"
+      ],
+      "summary": {
+        "winesAdded": 1,
+        "bottlesAdded": 1,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Saumur",
+          "currentPrice": "12.35",
+          "currentPriceCurrency": "EUR",
+          "grapes": []
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Saumur",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "price": "8.33"
+        }
+      ],
+      "roundTrip": true,
+      "exportLines": [
+        "Saumur,,,,,,,,,,inCellar,,,,,,8.33,EUR,,,750,,,,,,,12.35,EUR,"
+      ]
+    },
+    {
+      "about": "Other apps' dates are days of the import's time zone, not the device's: here the farthest ahead, UTC+14.",
+      "zone": "Pacific/Kiritimati",
+      "csv": [
+        "Name,Purchase date,Status,Tasted on",
+        "Chinon,10/03/2024,consumed,2026-05-02 20:15:00",
+        "Bourgueil,2024-3-5,,"
+      ],
+      "summary": {
+        "winesAdded": 2,
+        "bottlesAdded": 2,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Bourgueil",
+          "grapes": []
+        },
+        {
+          "name": "Chinon",
+          "grapes": []
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Bourgueil",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "purchaseDate": "2024-03-05"
+        },
+        {
+          "wine": "Chinon",
+          "status": "consumed",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "purchaseDate": "2024-03-10",
+          "tastedOn": "2026-05-02"
+        }
+      ],
+      "roundTrip": true
+    },
+    {
+      "about": "A Vivino scan date is a time of the import's time zone.",
+      "zone": "Pacific/Kiritimati",
+      "csv": [
+        "Winery,Wine name,Scan date",
+        "Domaine Tempier,Bandol Rosé,2025-07-14 19:30:00"
+      ],
+      "summary": {
+        "winesAdded": 1,
+        "bottlesAdded": 0,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Bandol Rosé",
+          "producer": "Domaine Tempier",
+          "grapes": []
+        }
+      ],
+      "bottles": [],
+      "discoveries": [
+        {
+          "wine": "Bandol Rosé",
+          "date": "2025-07-14",
+          "currency": "EUR"
+        }
+      ],
+      "roundTrip": false,
+      "exportLines": []
+    },
+    {
+      "about": "Rack and slot columns place bottles in a rack of the cellar (its name in any case): a taken place uses the next free one of the cell; a full cell, an unknown place or rack become the storage note. An ordered bottle has no place.",
+      "racks": [
+        {
+          "name": "Cave",
+          "rows": 3,
+          "columns": 4,
+          "depth": 2
+        }
+      ],
+      "csv": [
+        "name,status,rack,slot",
+        "Margaux,inCellar,Cave,B3",
+        "Margaux,inCellar,cave,B3",
+        "Margaux,inCellar,Cave,B3",
+        "Pauillac,inCellar,Cave,A1-2",
+        "Pauillac,inCellar,Cave,Z9",
+        "Graves,inCellar,Garage,A1",
+        "Graves,ordered,Cave,C1"
+      ],
+      "summary": {
+        "winesAdded": 3,
+        "bottlesAdded": 7,
+        "rowsSkipped": 0
+      },
+      "wines": [
+        {
+          "name": "Graves",
+          "grapes": []
+        },
+        {
+          "name": "Margaux",
+          "grapes": []
+        },
+        {
+          "name": "Pauillac",
+          "grapes": []
+        }
+      ],
+      "bottles": [
+        {
+          "wine": "Graves",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "storage": "Garage · A1"
+        },
+        {
+          "wine": "Graves",
+          "status": "ordered",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR"
+        },
+        {
+          "wine": "Margaux",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "place": "Cave B3-1"
+        },
+        {
+          "wine": "Margaux",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "place": "Cave B3-2"
+        },
+        {
+          "wine": "Margaux",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "storage": "Cave · B3"
+        },
+        {
+          "wine": "Pauillac",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "place": "Cave A1-2"
+        },
+        {
+          "wine": "Pauillac",
+          "status": "inCellar",
+          "count": 1,
+          "sizeML": 750,
+          "currency": "EUR",
+          "storage": "Cave · Z9"
+        }
+      ],
+      "roundTrip": true,
+      "exportLines": [
+        "Graves,,,,,,,,,,inCellar,,,,Garage · A1,,,EUR,,,750,,,,,,,,,",
+        "Graves,,,,,,,,,,ordered,,,,,,,EUR,,,750,,,,,,,,,",
+        "Margaux,,,,,,,,,,inCellar,Cave,B3-1,\"Cave · B3, front\",,,,EUR,,,750,,,,,,,,,",
+        "Margaux,,,,,,,,,,inCellar,Cave,B3-2,\"Cave · B3, back\",,,,EUR,,,750,,,,,,,,,",
+        "Margaux,,,,,,,,,,inCellar,,,,Cave · B3,,,EUR,,,750,,,,,,,,,",
+        "Pauillac,,,,,,,,,,inCellar,Cave,A1-2,\"Cave · A1, back\",,,,EUR,,,750,,,,,,,,,",
+        "Pauillac,,,,,,,,,,inCellar,,,,Cave · Z9,,,EUR,,,750,,,,,,,,,"
+      ]
     }
-  ]
+  ],
+  "decoded": [
+    {
+      "about": "Windows-1252 (French Excel), with the euro sign, curly quotes and dashes of 0x80 to 0x9F",
+      "base64": "TWlsbOlzaW1lO1F1YW50aXTpO1ByaXgNCjIwMTU7MzsxMiw1MCCADQqRVHLoc5IgliCcDQo=",
+      "text": "Millésime;Quantité;Prix\r\n2015;3;12,50 €\r\n‘Très’ – œ\r\n"
+    },
+    {
+      "about": "Windows-1252 leaves 0x81, 0x8D, 0x8F, 0x90 and 0x9D undefined: they are the same code point, as in Latin-1",
+      "base64": "Um9z6SCBjY+QnQ==",
+      "text": "Rosé "
+    },
+    {
+      "about": "Text that is not UTF-8 throughout is read as Windows-1252",
+      "base64": "Y2Fm6SDDqQ==",
+      "text": "café Ã©"
+    },
+    {
+      "about": "UTF-8 without a byte order mark",
+      "base64": "TWlsbMOpc2ltZTtDw6lwYWdlcwoyMDE1O01vdXJ2w6hkcmUK",
+      "text": "Millésime;Cépages\n2015;Mourvèdre\n"
+    },
+    {
+      "about": "UTF-8 with a byte order mark, which is removed",
+      "base64": "77u/TWlsbMOpc2ltZSDwn423Cg==",
+      "text": "Millésime 🍷\n"
+    },
+    {
+      "about": "A byte order mark and then bytes that are not UTF-8: Windows-1252 after the mark",
+      "base64": "77u/TWlsbOlzaW1l",
+      "text": "Millésime"
+    },
+    {
+      "about": "UTF-16 little-endian with a byte order mark, with a character outside the BMP",
+      "base64": "//5NAGkAbABsAOkAcwBpAG0AZQA7AFAAcgBpAHgAIACsIAoAPNh33woA",
+      "text": "Millésime;Prix €\n🍷\n"
+    },
+    {
+      "about": "UTF-16 big-endian with a byte order mark",
+      "base64": "/v8AUQB1AGEAbgB0AGkAdADpAAo=",
+      "text": "Quantité\n"
+    },
+    {
+      "about": "UTF-16: an unpaired surrogate and a last odd byte become U+FFFD",
+      "base64": "//5hAADYYgBj",
+      "text": "a�b�"
+    },
+    {
+      "about": "An empty file",
+      "base64": "",
+      "text": ""
+    }
+  ],
+  "ownPrices": {
+    "8.333": "8.33",
+    "8.335": "8.34",
+    "9.995": "10",
+    "12.345": "12.35",
+    "120.5": "120.5",
+    "18": "18",
+    "150.00": "150",
+    "0.004": "0",
+    "95,00": "95",
+    "1 234,50": "1234.5",
+    "abc": null
+  },
+  "otherPrices": {
+    "8.333": "8333",
+    "8,333": "8333",
+    "8.33": "8.33",
+    "24,5": "24.5",
+    "95,00": "95",
+    "1 234,50": "1234.5",
+    "abc": null,
+    "3 500,00": "3500"
+  },
+  "exportedPrices": {
+    "8.333": "8.33",
+    "8.335": "8.34",
+    "0.999": "1",
+    "120.5": "120.5",
+    "18": "18",
+    "150.00": "150"
+  },
+  "dates": {
+    "about": "Other apps' dates, read in the import's time zone (not the device's): a day is its start in that zone. Day first, else month first; a day that does not exist is not read.",
+    "zone": "Pacific/Kiritimati",
+    "values": {
+      "10/03/2024": "2024-03-09T10:00:00Z",
+      "2026-05-02 20:15:00": "2026-05-02T06:15:00Z",
+      "2024-03-10": "2024-03-09T10:00:00Z",
+      "2024-3-5": "2024-03-04T10:00:00Z",
+      "1/5/2024": "2024-04-30T10:00:00Z",
+      "03/25/2024": "2024-03-24T10:00:00Z",
+      "2024-02-29": "2024-02-28T10:00:00Z",
+      "2024-02-30": null,
+      "2023-02-29": null,
+      "30/02/2024": null,
+      "13/25/2024": null,
+      "2024-13-01": null,
+      "abc": null,
+      "": null
+    }
+  }
 }
