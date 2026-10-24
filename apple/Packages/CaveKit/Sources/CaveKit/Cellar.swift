@@ -66,6 +66,14 @@ public struct WineGroup: Identifiable, Hashable, Sendable {
     public var count: Int { bottles.count }
 }
 
+public extension Collection where Element == WineGroup {
+    /// The picked wines still shown: a search or a filter that hides a wine also unpicks
+    /// it, so the selection's actions never act on wines out of sight.
+    func visible(_ picked: Set<UUID>) -> Set<UUID> {
+        picked.intersection(map(\.wine.id))
+    }
+}
+
 public extension Collection where Element == Bottle {
     /// The bottle a quick "Drink" opens: one not kept for an occasion when there is one.
     var bottleToOpen: Bottle? { first { $0.reservedFor == nil } ?? first }

@@ -27,6 +27,9 @@ final class SceneRouter {
     /// Asked while a sheet was open: done once it closes, so a form being filled in is
     /// never closed to show something else.
     @ObservationIgnored private var deferred: SceneAction?
+    /// A window without sections (a wine's window) shows them in the main window instead,
+    /// the Cellar too: setting `selectedTab` to the tab it already has would do nothing.
+    @ObservationIgnored var showsSectionElsewhere: ((AppTab) -> Void)?
 
     func perform(_ action: SceneAction) {
         if sheet != nil {
@@ -38,7 +41,7 @@ final class SceneRouter {
             selectedTab = .cellar
             openWineRequest = id
         case .show(let tab):
-            selectedTab = tab
+            if let showsSectionElsewhere { showsSectionElsewhere(tab) } else { selectedTab = tab }
         case .present(let sheet):
             self.sheet = sheet
         }

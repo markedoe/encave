@@ -229,7 +229,7 @@ private struct InventoryPage: View {
             Text("Wine").frame(width: InventoryPDF.wineWidth, alignment: .leading)
             Text("Region").frame(width: InventoryPDF.regionWidth, alignment: .leading)
             Text("Bottles").frame(width: InventoryPDF.bottlesWidth, alignment: .trailing)
-            Text("Location").frame(width: InventoryPDF.placesWidth, alignment: .leading)
+            Text("Storage").frame(width: InventoryPDF.placesWidth, alignment: .leading)
             Text("Purchase value").frame(width: InventoryPDF.valueWidth, alignment: .trailing)
         }
         .font(.system(size: 8.5, weight: .semibold))

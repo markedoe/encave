@@ -34,7 +34,7 @@ struct WineDetailView: View {
                         } label: {
                             ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                         .accessibilityIdentifier("action.wine.drink")
                         .disabled(bottles.isEmpty)
                         Button {
@@ -470,7 +470,7 @@ private struct WineHeader: View {
         .padding(.horizontal)
         .background(
             LinearGradient(
-                colors: [(wine.color?.studioTint ?? .gray).opacity(0.22), .clear],
+                colors: [(wine.color?.studioTint ?? Color.neutral).opacity(0.22), .clear],
                 startPoint: .top, endPoint: .bottom
             ),
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -498,7 +498,7 @@ struct BottleRow: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.locationLabel(for: bottle) ?? String(localized: "No location"))
+                Text(model.locationLabel(for: bottle) ?? String(localized: "Not in storage"))
                     .font(.body)
                 Text(details)
                     .font(.caption)
@@ -545,19 +545,19 @@ struct BottleRow: View {
             } label: {
                 Label("No Longer in Cellar", systemImage: "minus.circle")
             }
-            .tint(.red)
+            .tint(Color.destructive)
             Button {
                 router?.sheet = .moveBottle(bottleID: bottle.id)
             } label: {
                 Label("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
             }
-            .tint(.indigo)
+            .tint(Color.action)
             Button {
                 router?.sheet = .bottleDocuments(bottleID: bottle.id, importing: bottle.attachments == nil)
             } label: {
                 Label("Documents", systemImage: "paperclip")
             }
-            .tint(.gray)
+            .tint(Color.neutral)
         }
         .contextMenu {
             Button("Drink", systemImage: "wineglass") { router?.sheet = .drink(bottleID: bottle.id) }

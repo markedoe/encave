@@ -366,6 +366,8 @@ struct FittedRackGrid: View {
     /// iPhone and iPad: a zoom step asked by a button.
     var zoomStep = RackZoomStep()
     var interaction = RackInteraction()
+    /// Mac: told the smallest zoom that still changes the drawing (`RackZoom.minimum`), for Zoom Out.
+    var onMinimumZoom: ((CGFloat) -> Void)?
 
     @State private var tracker = RackViewportTracker()
     #if os(macOS)
@@ -396,6 +398,11 @@ struct FittedRackGrid: View {
                 }
                 drawing(base: base, scrolls: scrolls)
             }
+            #if os(macOS)
+            .onChange(of: RackZoom.minimum(base: base, minimum: minimum), initial: true) { _, value in
+                onMinimumZoom?(value)
+            }
+            #endif
         }
     }
 
@@ -406,7 +413,8 @@ struct FittedRackGrid: View {
                      selectedPlace: selectedPlace, focusWine: focusWine, onTap: onTap, onDrop: onDrop,
                      zoomStep: zoomStep, interaction: interaction, tracker: tracker, alignsTop: scrolls)
         #else
-        let cellSize = max(min(base, RackViewport.minimumCellSize(for: rack)), base * zoom)
+        let minimum = RackViewport.minimumCellSize(for: rack)
+        let cellSize = RackZoom.cellSize(base: base, minimum: minimum, zoom: zoom)
         GeometryReader { proxy in
             if !scrolls, cellSize <= base {
                 // The whole rack fits: no scroll view, whose bars (always shown without a
@@ -838,7 +846,7 @@ struct RackCellView: View {
         .minimumScaleFactor(0.5)
         .lineLimit(1)
         .frame(width: diameter * 0.82)
-        .foregroundStyle(dark ? Color.black.opacity(0.78) : Color.white)
+        .foregroundStyle(dark ? Color.inkOnLight : Color.inkOnDark)
         .accessibilityHidden(true)
     }
 
@@ -848,7 +856,7 @@ struct RackCellView: View {
             ForEach(0..<rack.positionsPerCell, id: \.self) { depth in
                 let bottle = bottles.first { $0.slot?.depth == depth }
                 Circle()
-                    .fill(bottle.map { color($0)?.tint ?? .gray } ?? Color.clear)
+                    .fill(bottle.map { color($0)?.tint ?? Color.neutral } ?? Color.clear)
                     .overlay(Circle().strokeBorder(Color.secondary.opacity(0.6), lineWidth: 0.75))
                     .frame(width: max(4, size * 0.1), height: max(4, size * 0.1))
             }
@@ -910,7 +918,7 @@ struct RackCellView: View {
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: "checkmark")
                         .font(.system(size: badge * 0.55, weight: .heavy))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.onTint)
                         .frame(width: badge, height: badge)
                         .background(Color.accentColor, in: Circle())
                         .overlay(Circle().strokeBorder(.background, lineWidth: max(1.5, badge * 0.12)))
@@ -1126,11 +1134,7 @@ struct RackThumbnail: View {
     }
 
     /// The shelves that fit in the card: up to eight layers.
-    private var shownShelves: [Range<Int>] {
-        var shown: [Range<Int>] = []
-        for rows in rack.shelfRows where (shown.last?.upperBound ?? 0) + rows.count <= 8 { shown.append(rows) }
-        return shown.isEmpty ? Array(rack.shelfRows.prefix(1)) : shown
-    }
+    private var shownShelves: [Range<Int>] { rack.thumbnailShelves(layers: 8) }
 
     private func places(_ row: Int, _ byCell: [RackCell: [Bottle]]) -> some View {
         HStack(spacing: 3) {
@@ -1140,12 +1144,12 @@ struct RackThumbnail: View {
                 Group {
                     if rack.kind == .bins {
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
+                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? Color.neutral))
                             .rotationEffect(.degrees(45))
                             .scaleEffect(0.75)
                     } else {
                         Circle()
-                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
+                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? Color.neutral))
                     }
                 }
                 .frame(width: 9, height: 9)

@@ -57,7 +57,7 @@ struct JournalView: View {
                         Text("Add a Tasting").frame(minWidth: 200)
                     }
                     .menuStyle(.button)
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
                     .controlSize(.large)
                     .accessibilityIdentifier("journal.empty.add")
                 }
@@ -278,7 +278,7 @@ struct OpenedBottleActions: ViewModifier {
                     .tint(.accentColor)
                 }
             }
-            .swipeActions(edge: .trailing) {
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button(role: .destructive) {
                     model.putBack(bottle.id)
                 } label: {

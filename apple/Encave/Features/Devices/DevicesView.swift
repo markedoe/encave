@@ -25,7 +25,7 @@ struct DevicesView: View {
             if let problem = sync.problem, sync.localFailedAt == nil {
                 Section {
                     Label(problem, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.warning)
                     if sync.localNetworkDenied {
                         Button("Open Settings") { SystemSettings.openForLocalNetwork() }
                             .accessibilityIdentifier("devices.openSettings")
@@ -114,7 +114,7 @@ struct DevicesView: View {
                             RemoteSyncView()
                         } label: {
                             Label("Sign in to this WebDAV folder", systemImage: "person.badge.key")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.warning)
                         }
                         .accessibilityIdentifier("devices.webdavSignIn")
                     }
@@ -280,7 +280,7 @@ private struct SyncStatusSection: View {
                     FailureRow(failureLabel: failureLabel, date: date)
                 } else if let problem = sync.remoteProblem {
                     Label(problem, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.warning)
                 }
                 if sync.hasUnsentChanges {
                     Label("Changes on this device not sent yet", systemImage: "arrow.up.circle")
@@ -355,7 +355,7 @@ private struct FailureRow: View {
             }
         } icon: {
             Image(systemName: "exclamationmark.triangle")
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.warning)
         }
         .accessibilityElement(children: .combine)
     }
@@ -429,7 +429,7 @@ struct RemoteSyncView: View {
                         if sync.isSyncingRemotely {
                             Text("Syncing…")
                         } else if let problem = sync.remoteProblem {
-                            Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                            Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(Color.warning)
                         } else if let date = sync.lastRemoteSync {
                             Ticking { Text("Synced \(date.formatted(.relative(presentation: .named)))") }
                         } else {
@@ -487,7 +487,7 @@ struct RemoteSyncView: View {
                     }
                     if let error {
                         Section {
-                            Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                            Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Color.warning)
                         }
                     }
                 }
@@ -533,7 +533,7 @@ struct RemoteSyncView: View {
                 if !androidDevices.isEmpty { iCloudSection }
                 if let error {
                     Section {
-                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Color.warning)
                     }
                 }
             }
@@ -737,7 +737,7 @@ private struct CodeCard: View {
                 QRCodeView(payload: session.qrPayload)
                     .frame(width: 210, height: 210)
                     .padding(14)
-                    // QR codes need a light quiet zone to scan, in dark mode too.
+                    // fixed color: QR codes need a light quiet zone to scan, in dark mode too.
                     .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .accessibilityLabel(Text("QR code to scan with the other device"))
                 VStack(spacing: 6) {
@@ -964,7 +964,7 @@ struct JoinDeviceView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .controlSize(.large)
                 .disabled(!code.isValid || leaving)
                 .listRowBackground(Color.clear)
@@ -1051,7 +1051,7 @@ private struct PairingProgress<Waiting: View>: View {
                 } label: {
                     Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .accessibilityIdentifier("devices.pairSyncNow")
             }
             .accessibilityIdentifier("devices.addedNotSynced")
@@ -1063,14 +1063,14 @@ private struct PairingProgress<Waiting: View>: View {
                     Button("Try Again", action: retry)
                         .buttonStyle(.bordered)
                     Button("Open Settings") { SystemSettings.openForLocalNetwork() }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                 }
             }
         case .failed(let message):
             VStack(spacing: 18) {
                 StatusView(systemImage: "xmark.octagon", title: Text("Not added"), message: Text(message), showsProgress: false)
                 Button("Try Again", action: retry)
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
             }
         }
     }
@@ -1111,7 +1111,7 @@ private struct ConfirmCodeView: View {
                     ActionLabel("They Match", systemImage: "checkmark")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .accessibilityIdentifier("action.pair.accept")
             }
             .controlSize(.large)

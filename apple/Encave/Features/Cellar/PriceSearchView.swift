@@ -39,30 +39,33 @@ struct PriceSearchView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Search terms", text: $query)
-                        .autocorrectionDisabled()
-                        .submitLabel(.search)
-                        .onSubmit(search)
-                    Button(action: search) {
-                        if searching {
-                            HStack { ProgressView(); Text("Searching…") }
-                        } else {
-                            Label("Search", systemImage: "magnifyingglass")
-                        }
-                    }
-                    .disabled(searching || trimmedQuery.isEmpty || !settings.isEnabled)
-                } header: {
-                    Text("Search terms")
-                } footer: {
-                    let serviceName = settings.service.name
-                    Text("Only these words are sent, to \(serviceName), when you tap Search. Change them if you like. Nothing else about this wine or your cellar is sent.")
-                }
-
-                if let problem {
+                // Web search off: only the price to type, nothing to search or send.
+                if settings.isEnabled {
                     Section {
-                        Label(problem, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.secondary)
+                        TextField("Search terms", text: $query)
+                            .autocorrectionDisabled()
+                            .submitLabel(.search)
+                            .onSubmit(search)
+                        Button(action: search) {
+                            if searching {
+                                HStack { ProgressView(); Text("Searching…") }
+                            } else {
+                                Label("Search", systemImage: "magnifyingglass")
+                            }
+                        }
+                        .disabled(searching || trimmedQuery.isEmpty || !settings.isEnabled)
+                    } header: {
+                        Text("Search terms")
+                    } footer: {
+                        let serviceName = settings.service.name
+                        Text("Only these words are sent, to \(serviceName), when you tap Search. Change them if you like. Nothing else about this wine or your cellar is sent.")
+                    }
+
+                    if let problem {
+                        Section {
+                            Label(problem, systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
 
@@ -113,10 +116,14 @@ struct PriceSearchView: View {
                 } header: {
                     Text("Price today")
                 } footer: {
-                    Text("Kept with the wine and used for the estimated value of your cellar in Insights. Web prices vary: check them on the sites.")
+                    if settings.isEnabled {
+                        Text("Kept with the wine and used for the estimated value of your cellar in Insights. Web prices vary: check them on the sites.")
+                    } else {
+                        Text("Kept with the wine and used for the estimated value of your cellar in Insights.")
+                    }
                 }
 
-                if searchedTerms != nil, !searching, problem == nil {
+                if settings.isEnabled, searchedTerms != nil, !searching, problem == nil {
                     Section {
                         if prices.isEmpty {
                             Text("No prices in these results. Try other words, or open a result below.")
@@ -135,7 +142,7 @@ struct PriceSearchView: View {
                     }
                 }
 
-                if !results.isEmpty {
+                if settings.isEnabled, !results.isEmpty {
                     Section {
                         ForEach(results) { result in
                             WebResultRow(result: result)
@@ -148,7 +155,7 @@ struct PriceSearchView: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("Find Current Price")
+            .navigationTitle(settings.isEnabled ? Text("Find Current Price") : Text("Price today"))
             .inlineTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

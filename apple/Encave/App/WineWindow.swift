@@ -35,6 +35,15 @@ struct WineWindow: View {
             router.selectedTab = .cellar
             showInMainWindow(.show(tab))
         }
+        // ⌘1 included: this window's router is already on the Cellar.
+        .onAppear {
+            router.showsSectionElsewhere = { [model, openWindow] tab in
+                model.request(.show(tab))
+                #if os(macOS)
+                MainWindow.show(openWindow)
+                #endif
+            }
+        }
         .onChange(of: router.openWineRequest) { _, id in
             guard let id else { return }
             router.openWineRequest = nil

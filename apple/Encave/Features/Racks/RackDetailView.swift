@@ -14,6 +14,8 @@ struct RackDetailView: View {
     @Environment(SceneRouter.self) private var router: SceneRouter?
     let rackID: UUID
     @State private var zoom: CGFloat = 1
+    /// Mac: below this zoom the drawing no longer changes (`RackZoom.minimum`).
+    @State private var minimumZoom = RackZoom.lowest
     /// iPad: the zoom buttons ask the native zooming view for a step in or out.
     @State private var zoomStep = RackZoomStep()
     #if os(iOS)
@@ -123,14 +125,18 @@ struct RackDetailView: View {
     @ViewBuilder
     private func canvas(_ rack: Rack) -> some View {
         let grid = FittedRackGrid(
-            rack: rack, zoom: min(3, max(0.6, zoom * pinch)),
+            rack: rack, zoom: RackZoom.clamped(zoom * pinch, minimum: minimumZoom),
             selected: auditing ? checked : (moving?.slot.map { [$0] } ?? []),
             highlighted: model.highlightedSlot,
             selectedPlace: selectedPlace, focusWine: focusWine,
             onTap: { place, bottles in tap(rack, place, bottles) },
             onDrop: { bottleID, place in drop(bottleID, on: place, rack) },
             zoomStep: zoomStep,
-            interaction: interaction
+            interaction: interaction,
+            onMinimumZoom: { value in
+                minimumZoom = value
+                zoom = RackZoom.clamped(zoom, minimum: value)
+            }
         )
         #if os(macOS)
         grid
@@ -138,10 +144,12 @@ struct RackDetailView: View {
             .gesture(
                 MagnifyGesture()
                     .updating($pinch) { value, state, _ in state = value.magnification }
-                    .onEnded { value in zoom = min(3, max(0.6, zoom * value.magnification)) }
+                    .onEnded { value in zoom = RackZoom.clamped(zoom * value.magnification, minimum: minimumZoom) }
             )
+            .background { zoomInEqualsShortcut }
         #else
         grid
+            .background { if sizeClass == .regular { zoomInEqualsShortcut } }
         #endif
     }
 
@@ -185,25 +193,45 @@ struct RackDetailView: View {
         }
     }
 
+    private func zoomIn() {
+        #if os(macOS)
+        zoom = RackZoom.clamped(zoom + RackZoom.step, minimum: minimumZoom)
+        #else
+        zoomStep = zoomStep.next(factor: 1.5)
+        #endif
+    }
+
+    /// ⌘= zooms in too, as in other apps: "+" needs Shift on most keyboards.
+    private var zoomInEqualsShortcut: some View {
+        Button("Zoom In", action: zoomIn)
+            .keyboardShortcut("=")
+            .disabled(zoom >= RackZoom.maximum)
+            .opacity(0)
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true)
+    }
+
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
             #if os(macOS)
-            Button { zoom = max(0.6, zoom - 0.25) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
-                .keyboardShortcut("-")
-                .disabled(zoom <= 0.6)
-            Button { zoom = min(3, zoom + 0.25) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
+            Button { zoom = RackZoom.clamped(zoom - RackZoom.step, minimum: minimumZoom) } label: {
+                Label("Zoom Out", systemImage: "minus.magnifyingglass")
+            }
+            .keyboardShortcut("-")
+            .disabled(zoom <= minimumZoom)
+            Button(action: zoomIn) { Label("Zoom In", systemImage: "plus.magnifyingglass") }
                 .keyboardShortcut("+")
-                .disabled(zoom >= 3)
+                .disabled(zoom >= RackZoom.maximum)
             #else
             if sizeClass == .regular {
-                // Besides pinching: buttons, and ⌘– / ⌘+ with a keyboard.
+                // Besides pinching: buttons, and ⌘– / ⌘+ (or ⌘=) with a keyboard.
                 Button { zoomStep = zoomStep.next(factor: 1 / 1.5) } label: {
                     Label("Zoom Out", systemImage: "minus.magnifyingglass")
                 }
                 .keyboardShortcut("-")
                 .accessibilityIdentifier("rack.zoom.out")
-                Button { zoomStep = zoomStep.next(factor: 1.5) } label: {
+                Button(action: zoomIn) {
                     Label("Zoom In", systemImage: "plus.magnifyingglass")
                 }
                 .keyboardShortcut("+")
@@ -385,7 +413,7 @@ private struct SelectedBottleCard: View {
             HStack(spacing: 10) {
                 ActionButtonRow(spacing: 10) {
                     Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                         .accessibilityIdentifier("action.rack.drink")
                     Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
                         .buttonStyle(.bordered)
@@ -627,7 +655,7 @@ private struct BottleInCellRow: View {
             HStack(spacing: 10) {
                 ActionButtonRow(spacing: 10) {
                     Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                     Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
                         .buttonStyle(.bordered)
                 }
@@ -672,7 +700,7 @@ private struct AuditBar: View {
                 Button("Cancel", action: cancel)
                     .accessibilityIdentifier("sheet.cancel")
                 Button(action: finish) { ActionLabel("End Check", systemImage: "checkmark") }
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
                     .accessibilityIdentifier("action.audit.finish")
             }
         }

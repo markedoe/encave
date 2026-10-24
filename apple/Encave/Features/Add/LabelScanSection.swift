@@ -18,6 +18,10 @@ final class LabelScan {
     /// completes the saved wine (see `completeLater`).
     private var savedDraft: WineDraft?
     private weak var savedIn: CellarModel?
+    /// The AI request for the current photo; a new scan cancels it, and its answer is
+    /// applied only while its photo is still the current one.
+    private var aiTask: Task<Void, Never>?
+    private var photoToken = RequestToken()
     var aiError: String?
     /// The AI answered but had nothing to add to what is filled already.
     var aiNote: String?
@@ -35,13 +39,32 @@ final class LabelScan {
         if let barcode = result.barcode { draft.wrappedValue.barcodes.appendIfNew(Wine.normalizedBarcode(barcode)) }
         apply(result, to: draft)
         withAnimation { scanned = true }
+        // A new photo: the answer for the previous one must not fill this wine.
+        let token = photoToken.next()
+        cancelAI()
         guard let image else { return }
         preparingPhoto = true
         Task {
-            photo = await PhotoStore.resized(image)
+            let resized = await PhotoStore.resized(image)
+            guard photoToken.isCurrent(token) else { return }
+            photo = resized
             preparingPhoto = false
             if aiEnabled, photo != nil { completeWithAI(draft: draft) }
         }
+    }
+
+    /// Remove Photo: forget it, and the AI answer about it.
+    func removePhoto() {
+        photoToken.next()
+        cancelAI()
+        preparingPhoto = false
+        photo = nil
+    }
+
+    private func cancelAI() {
+        aiTask?.cancel()
+        aiTask = nil
+        isAnalyzing = false
     }
 
     /// "Another Vintage" in the scanner: a new wine like `wine` (a barcode shared by its
@@ -105,12 +128,15 @@ final class LabelScan {
         isAnalyzing = true
         aiError = nil
         aiNote = nil
-        Task {
-            defer { isAnalyzing = false }
+        let token = photoToken.current
+        aiTask = Task {
             do {
                 let analysis = try await AIService.analyzeLabel(jpeg: photo)
                 // The ID the photo will have once saved with the wine: the label frame is for it.
                 let photoID = await Task.detached(priority: .userInitiated) { PhotoStore.id(for: photo) }.value
+                // Another photo was taken (or this one removed) meanwhile: not about this wine.
+                guard photoToken.isCurrent(token), !Task.isCancelled else { return }
+                defer { finishAI() }
                 let frame = analysis.labelFrame(forPhoto: photoID)
                 if let saved = savedDraft, let model = savedIn {
                     savedDraft = nil
@@ -136,6 +162,8 @@ final class LabelScan {
                 value.aiCompletedAt = Date()
                 withAnimation { draft.wrappedValue = value }
             } catch {
+                guard photoToken.isCurrent(token), !Task.isCancelled else { return }
+                defer { finishAI() }
                 // The bottles were added meanwhile: the form is gone, so a banner says it.
                 if let saved = savedDraft, let model = savedIn {
                     savedDraft = nil
@@ -145,6 +173,11 @@ final class LabelScan {
                 aiError = error.localizedDescription
             }
         }
+    }
+
+    private func finishAI() {
+        isAnalyzing = false
+        aiTask = nil
     }
 }
 
@@ -209,7 +242,7 @@ struct LabelScanSection: View {
                 }
                 if let photo = scan.photo {
                     LabelPhotoRow(photo: photo, isAnalyzing: scan.isAnalyzing,
-                                  remove: { withAnimation { scan.photo = nil } })
+                                  remove: { withAnimation { scan.removePhoto() } })
                     // A row of its own: next to the photo, the button was too narrow
                     // and its title broke in the middle of words.
                     if scan.aiEnabled {

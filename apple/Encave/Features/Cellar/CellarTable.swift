@@ -35,6 +35,11 @@ struct CellarTable: View {
             .onChange(of: picked) { _, ids in
                 selection = ids.count == 1 ? ids.first : nil
             }
+            // Rows hidden by the search or a filter leave the selection (and the Delete key).
+            .onChange(of: rows.map(\.id)) {
+                let visible = picked.intersection(rows.map(\.id))
+                if visible != picked { picked = visible }
+            }
             .onChange(of: selection, initial: true) { _, id in
                 // Opened from elsewhere (Spotlight, a notification), or replaced after a deletion.
                 if let id, picked != [id] { picked = [id] }
@@ -95,7 +100,7 @@ struct CellarTable: View {
             }
             .width(min: 50, ideal: 60)
             .customizationID("bottles")
-            TableColumn("Location", value: \.location) { row in
+            TableColumn("Storage", value: \.location) { row in
                 Text(row.location).foregroundStyle(.secondary)
             }
             .width(min: 120, ideal: 200)
@@ -187,18 +192,27 @@ private struct TableCommands: ViewModifier {
     func body(content: Content) -> some View {
         content
             #if os(macOS)
-            .onDeleteCommand {
-                // One wine with a single bottle goes with Undo; the others are confirmed.
-                guard !picked.isEmpty else { return }
-                if model.cellar.deletionGuard(ofWines: picked) == .confirm {
-                    confirmingDelete = picked
-                } else if let id = picked.first {
-                    model.deleteWine(id)
-                    picked = []
-                }
+            .onDeleteCommand { deletePicked() }
+            #else
+            // iPad with a keyboard: the same Delete key as on the Mac.
+            .onKeyPress(keys: [.delete, .deleteForward]) { _ in
+                guard !picked.isEmpty else { return .ignored }
+                deletePicked()
+                return .handled
             }
             #endif
             .confirmsWineDeletion($confirmingDelete) { picked = [] }
+    }
+
+    /// One wine with a single bottle goes with Undo; the others are confirmed.
+    private func deletePicked() {
+        guard !picked.isEmpty else { return }
+        if model.cellar.deletionGuard(ofWines: picked) == .confirm {
+            confirmingDelete = picked
+        } else if let id = picked.first {
+            model.deleteWine(id)
+            picked = []
+        }
     }
 }
 

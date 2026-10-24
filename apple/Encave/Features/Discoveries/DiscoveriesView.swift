@@ -41,7 +41,7 @@ struct ElsewhereActions: ViewModifier {
                 } label: {
                     toBuyLabel
                 }
-                .tint(.indigo)
+                .tint(Color.action)
             }
             .contextMenu {
                 Button("Edit", systemImage: "pencil") { router?.sheet = .discovery(discoveryID: discovery.id) }

@@ -37,7 +37,7 @@ struct SyncHealthLabel: View {
                 text
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.warning)
             }
         }
     }
@@ -55,7 +55,7 @@ struct SettingsButtonLabel: View {
                         if health.needsAttention {
                             Image(systemName: "exclamationmark.circle.fill")
                                 .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .orange)
+                                .foregroundStyle(Color.onTint, Color.warning)
                                 .font(.caption2.weight(.bold))
                                 .offset(x: 6, y: -6)
                                 .accessibilityHidden(true)
@@ -80,7 +80,7 @@ struct SyncAttentionFooter: View {
                             health.statusText?.font(.caption).foregroundStyle(.secondary)
                         }
                     } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.warning)
                     }
                 }
                 .buttonStyle(.borderless)

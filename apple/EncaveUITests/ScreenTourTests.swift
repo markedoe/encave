@@ -38,8 +38,9 @@ final class ScreenTourTests: XCTestCase {
         guard app.horizontalSizeClassIsCompact else { return }
         openSection(0, "cellar")
         snapshot("cellar")
-        if element("wine.row").waitForExistence(timeout: 10) {
-            element("wine.row").press()
+        if let row = require("wine.row", "large text: no wine in the cellar list", timeout: 10) {
+            row.press()
+            XCTAssertTrue(wineAnchor.waitForExistence(timeout: 5), "large text: the wine page did not open")
             snapshot("wine")
             goBack()
         }
@@ -65,7 +66,10 @@ final class ScreenTourTests: XCTestCase {
         openSection(0, "cellar")
         snapshot("cellar")
         let bottles = element("cellar.stat.bottles"), keep = element("cellar.stat.keep"), soon = element("cellar.stat.soon")
-        if bottles.waitForExistence(timeout: 10), keep.exists, soon.exists {
+        XCTAssertTrue(bottles.waitForExistence(timeout: 10), "AX5: no bottles figure")
+        XCTAssertTrue(keep.exists, "AX5: no \"to keep\" figure")
+        XCTAssertTrue(soon.exists, "AX5: no \"to drink soon\" figure")
+        if bottles.exists, keep.exists, soon.exists {
             XCTAssertGreaterThanOrEqual(keep.frame.minY, bottles.frame.maxY - 1, "The cellar figures are a list at AX5")
             // One short line a figure: the wines still start on the first screen.
             XCTAssertLessThan(soon.frame.maxY - bottles.frame.minY, app.frame.height / 2, "The cellar figures fill the screen at AX5")
@@ -99,14 +103,20 @@ final class ScreenTourTests: XCTestCase {
         sleep(8)
         snapshot("cellar")
         let rows = app.descendants(matching: .any).matching(identifier: "wine.row")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "studio: no wine in the cellar list")
+        var opened = 0
         for index in 0..<4 {
             let row = rows.element(boundBy: index)
             guard row.waitForExistence(timeout: 5), row.isHittable else { break }
             row.press()
+            XCTAssertTrue(wineAnchor.waitForExistence(timeout: 5), "studio: wine \(index + 1) did not open")
+            opened += 1
+            // Time for the wine's studio picture to be drawn.
             sleep(3)
             snapshot("wine-\(index + 1)")
             goBack()
         }
+        XCTAssertGreaterThan(opened, 0, "studio: no wine page opened")
     }
     #endif
 
@@ -143,7 +153,7 @@ final class ScreenTourTests: XCTestCase {
         // The swipe actions on a wine ("Drink" on the leading edge). iPhone only: on iPad
         // the revealed action can cover the narrow list column.
         if app.horizontalSizeClassIsCompact,
-           element("wine.row").waitForExistence(timeout: 10), element("wine.row").isHittable {
+           require("wine.row", "cellar: no wine to swipe", timeout: 10) != nil, element("wine.row").isHittable {
             element("wine.row").swipeRight()
             snapshot("cellar-swipe")
             // Close the actions again; the revealed button can cover the row on iPad.
@@ -156,8 +166,8 @@ final class ScreenTourTests: XCTestCase {
             element("wine.row").press()
             snapshot("wine")
             checkPair("action.wine.drink", "action.wine.add")
-            if element("action.wine.drink").exists {
-                element("action.wine.drink").press()
+            if let drink = require("action.wine.drink", "wine: no Drink button") {
+                drink.press()
                 snapshot("drink-sheet")
                 closeSheet()
             }
@@ -166,8 +176,8 @@ final class ScreenTourTests: XCTestCase {
         } else {
             XCTFail("No wine in the sample cellar list")
         }
-        if element("cellar.add").exists {
-            element("cellar.add").press()
+        if let add = requireControl("cellar.add", titles: ["Add Bottle", "Ajouter une bouteille"], "cellar: no Add button") {
+            add.press()
             snapshot("add-bottle")
             closeSheet()
         }
@@ -199,9 +209,9 @@ final class ScreenTourTests: XCTestCase {
             }
             goBack()
         }
-        if element("racks.add").exists {
+        if let add = requireControl("racks.add", titles: ["Add Storage", "Ajouter un rangement"], "storage: no Add button") {
             // A new storage, step by step: its type, its settings, its name.
-            element("racks.add").press()
+            add.press()
             snapshot("rack-wizard-1")
             for step in 2...3 {
                 let next = element("wizard.next")
@@ -230,11 +240,11 @@ final class ScreenTourTests: XCTestCase {
         #if os(iOS)
         // Settings and help (on the Mac they are in the app menu and the Help menu).
         openSection(0, "cellar")
-        if element("cellar.settings").exists {
-            element("cellar.settings").press()
+        if let settings = requireControl("cellar.settings", titles: ["Settings", "Réglages"], "cellar: no Settings button") {
+            settings.press()
             snapshot("settings")
-            if element("settings.help").exists {
-                element("settings.help").press()
+            if let help = require("settings.help", "settings: no Help entry") {
+                help.press()
                 snapshot("help")
                 goBack()
             }
@@ -312,7 +322,7 @@ final class ScreenTourTests: XCTestCase {
         } else {
             XCTFail("cellar table: the List/Table switch is missing in the table")
         }
-        sleep(1)
+        XCTAssertTrue(element("wine.row").waitForExistence(timeout: 5), "cellar: the list did not come back after the table")
     }
 
     // MARK: Journal
@@ -326,11 +336,10 @@ final class ScreenTourTests: XCTestCase {
             XCTFail("journal: no filter chips")
         } else if elsewhere.isHittable {
             elsewhere.press()
-            sleep(1)
+            XCTAssertTrue(waitUntil { !element("journal.row.cellar").exists }, "journal: the filter still shows bottles from the cellar")
             snapshot("journal-tasted-elsewhere")
-            XCTAssertFalse(element("journal.row.cellar").exists, "journal: the filter still shows bottles from the cellar")
             element("journal.filter.all").press()
-            sleep(1)
+            XCTAssertTrue(element("journal.row.cellar").waitForExistence(timeout: 5), "journal: All did not bring back the bottles from the cellar")
         } else {
             // The chips scroll sideways: at large sizes this one can be off screen.
             print("journal: the Tasted elsewhere chip is off screen")
@@ -532,12 +541,10 @@ final class ScreenTourTests: XCTestCase {
         }
         let all = rows.count
         soon.press()
-        sleep(1)
-        XCTAssertLessThan(rows.count, all, "cellar: \"to drink soon\" did not filter the list")
+        XCTAssertTrue(waitUntil { rows.count < all }, "cellar: \"to drink soon\" did not filter the list")
         snapshot("cellar-drink-soon")
         soon.press()
-        sleep(1)
-        XCTAssertEqual(rows.count, all, "cellar: tapping \"to drink soon\" again did not show all wines")
+        XCTAssertTrue(waitUntil { rows.count == all }, "cellar: tapping \"to drink soon\" again did not show all wines")
 
         let bottles = element("cellar.stat.bottles")
         if bottles.isHittable {
@@ -685,6 +692,59 @@ final class ScreenTourTests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
+    /// Waits for a condition the app reaches by itself (a list filtered, a row gone), instead
+    /// of a fixed delay; false if it is still not met after `timeout`.
+    private func waitUntil(timeout: TimeInterval = 5, _ condition: () -> Bool) -> Bool {
+        let end = Date().addingTimeInterval(timeout)
+        while !condition() {
+            if Date() > end { return false }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return true
+    }
+
+    /// The first element with one of these identifiers.
+    private func anyElement(_ identifiers: [String]) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "identifier IN %@", identifiers)).firstMatch
+    }
+
+    /// A wine's page is open: its Drink or Add Bottles button.
+    private var wineAnchor: XCUIElement { anyElement(["action.wine.drink", "action.wine.add"]) }
+
+    /// What a step needs: a missing element fails the tour instead of skipping the step.
+    @discardableResult
+    private func require(_ identifier: String, _ message: String, timeout: TimeInterval = 5) -> XCUIElement? {
+        let item = element(identifier)
+        guard item.waitForExistence(timeout: timeout) else {
+            XCTFail(message)
+            return nil
+        }
+        return item
+    }
+
+    /// A toolbar control a step needs, by identifier or by title (a menu in a toolbar does
+    /// not always carry its identifier); missing, it fails the tour.
+    private func requireControl(_ identifier: String, titles: [String], _ message: String) -> XCUIElement? {
+        let byID = element(identifier)
+        if byID.waitForExistence(timeout: 5) { return byID }
+        let byTitle = app.descendants(matching: .any).matching(NSPredicate(format: "label IN %@", titles)).firstMatch
+        if byTitle.waitForExistence(timeout: 2) { return byTitle }
+        XCTFail(message)
+        print(app.debugDescription)
+        return nil
+    }
+
+    /// Something each section always shows with the sample cellar, to know it is open.
+    private func sectionAnchor(_ name: String) -> XCUIElement {
+        let identifiers: [String: [String]] = [
+            "cellar": ["wine.row", "cellar.select"],
+            "racks": ["rack.card.0", "racks.add"],
+            "tonight": ["action.tonight.drink", "tonight.ask"],
+            "journal": ["journal.add", "journal.row.cellar"],
+        ]
+        return anyElement(identifiers[name] ?? [])
+    }
+
     /// A button of an open menu, by identifier or by title: menu items do not always carry
     /// their identifier on iOS 26.
     private func menuItem(_ identifier: String, titles: [String], timeout: TimeInterval = 5) -> XCUIElement? {
@@ -750,7 +810,8 @@ final class ScreenTourTests: XCTestCase {
             }
         }
         #endif
-        sleep(1)
+        // Shown once its content is there, rather than after a fixed delay.
+        XCTAssertTrue(sectionAnchor(name).waitForExistence(timeout: 10), "The \(name) section shows nothing")
     }
 
     private func goBack() {
