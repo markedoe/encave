@@ -1,0 +1,24 @@
+{
+  "about": "Plain http to a server named on the home network, shared by CaveKit (LocalNameTests.swift) and the Kotlin core (LocalNameTest.kt). For an http URL whose host LocalAddress does not already know as local, the name is resolved (here: addresses) and accepted only if every address is local; the request then goes to that address (IPv4 first), same scheme, port, path and query. https and known local hosts are never resolved. error: notLocal (use https or a local address) or notFound. allow: marks private addresses for scripts/check-public-safety.sh.",
+  "resolve": [
+    {"url": "http://searxng.home:8888/search?q=wine&format=json", "addresses": ["192.168.1.20"], "expect": "http://192.168.1.20:8888/search?q=wine&format=json", "allow": "public-safety: allow"},
+    {"url": "http://nas.lan:8080/dav/encave/", "addresses": ["fd12:3456::20", "10.0.0.20"], "expect": "http://10.0.0.20:8080/dav/encave/", "allow": "public-safety: allow"},
+    {"url": "http://ollama:11434/api/tags", "addresses": ["172.16.4.2"], "expect": "http://172.16.4.2:11434/api/tags", "allow": "public-safety: allow"},
+    {"url": "http://nas.lan/dav/", "addresses": ["fd12:3456::20"], "expect": "http://[fd12:3456::20]/dav/"},
+    {"url": "http://NAS.Lan:8080/", "addresses": ["127.0.0.1"], "expect": "http://127.0.0.1:8080/"},
+    {"url": "http://searxng.example:8888/search", "addresses": ["203.0.113.7"], "error": "notLocal"},
+    {"url": "http://mixed.home:8888/", "addresses": ["192.168.1.20", "203.0.113.7"], "error": "notLocal", "allow": "public-safety: allow"},
+    {"url": "http://mixed6.home/", "addresses": ["fd12:3456::20", "2001:db8::7"], "error": "notLocal"},
+    {"url": "http://gone.home:8888/", "addresses": [], "error": "notFound"},
+    {"url": "https://searxng.home/search", "addresses": ["203.0.113.7"], "expect": "https://searxng.home/search"},
+    {"url": "http://nas.local:8080/", "addresses": ["203.0.113.7"], "expect": "http://nas.local:8080/"},
+    {"url": "http://nas.home.arpa:8080/", "addresses": ["203.0.113.7"], "expect": "http://nas.home.arpa:8080/"},
+    {"url": "http://localhost:11434/api/tags", "addresses": ["203.0.113.7"], "expect": "http://localhost:11434/api/tags"},
+    {"url": "http://192.168.1.20:8888/search", "addresses": ["203.0.113.7"], "expect": "http://192.168.1.20:8888/search", "allow": "public-safety: allow"},
+    {"url": "http://203.0.113.7:8888/", "addresses": ["192.168.1.20"], "error": "notLocal", "allow": "public-safety: allow"}
+  ],
+  "mayBeLocal": {
+    "accepted": ["localhost", "nas.local", "nas.home.arpa", "searxng.home", "nas.lan", "ollama", "[fd12:3456::20]", "fe80::1"],
+    "refused": ["203.0.113.7", "8.8.8.8", "010.0.0.1", "2001:db8::7", "[2001:db8::7]"]
+  }
+}

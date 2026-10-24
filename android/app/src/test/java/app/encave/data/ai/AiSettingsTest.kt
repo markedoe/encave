@@ -2,6 +2,7 @@ package app.encave.data.ai
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import app.encave.core.sync.LocalNetworkException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,20 +27,25 @@ class AiSettingsTest {
         assertTrue(allowed("http://nas.local:8080/v1/models"))
         assertTrue(allowed("http://ai.home.arpa/v1/models"))
         assertTrue(allowed("http://[fd00::1]:11434/api/tags"))
-        assertEquals(false, allowed("http://api.openai.com/v1/models"))
+        // A name may be on the home network: resolved and checked in send (LocalNameTest).
+        assertTrue(allowed("http://ollama.home:11434/api/tags"))
         assertEquals(false, allowed("http://${ip(203, 0, 113, 7)}:11434/api/chat"))
         assertEquals(false, allowed("ftp://${ip(192, 168, 1, 20)}/v1"))
     }
 
     @Test
     fun aKeyIsNeverSentOverPlainHttpToTheInternet() {
-        val settings = AiSettings(provider = AiProvider.OpenAi, model = "gpt-test", baseUrl = "http://api.example.com/v1")
+        val settings = AiSettings(provider = AiProvider.OpenAi, model = "gpt-test", baseUrl = "http://203.0.113.7/v1")
         val error = runCatching {
             kotlinx.coroutines.runBlocking { AiService.analyzeLabel(ByteArray(4), settings, "sk-test") }
         }.exceptionOrNull()
         assertEquals(AiError.InsecureUrl, error)
         val listing = runCatching { kotlinx.coroutines.runBlocking { AiService.models(settings, "sk-test") } }.exceptionOrNull()
         assertEquals(AiError.InsecureUrl, listing)
+        // A name is resolved first, and only a local one gets the request (".invalid" never resolves).
+        val named = settings.copy(baseUrl = "http://api.invalid/v1")
+        val unresolved = runCatching { kotlinx.coroutines.runBlocking { AiService.models(named, "sk-test") } }.exceptionOrNull()
+        assertTrue(unresolved is LocalNetworkException)
     }
 
     @Test

@@ -224,10 +224,11 @@ final class FakeWebDAVProtocol: URLProtocol {
         // Example private addresses, not real hosts.
         let privateIPs = ["http://192.168.1.20/dav", "http://10.0.0.2/", "http://172.16.4.1/"] // public-safety: allow
         for local in ["http://nas.local:5005/encave", "http://localhost:8080", "http://[fd12::1]/dav", "http://[fe80::1]",
-                      "http://box.home.arpa"] + privateIPs {
+                      "http://box.home.arpa", "http://nas.lan:5005/encave"] + privateIPs {
             #expect(WebDAVMailboxStore.folderURL(local) != nil, "\(local)")
         }
-        for refused in ["http://webdav.example.com/Encave", "http://8.8.8.8", "http://172.32.0.1", "http://[2001:db8::1]",
+        // A name over http is checked before each request (LocalNameTests); an address now.
+        for refused in ["http://8.8.8.8", "http://172.32.0.1", "http://[2001:db8::1]",
                         "ftp://nas.local", "https://jean:secret@nas.example.com/", "", "https://"] {
             #expect(WebDAVMailboxStore.folderURL(refused) == nil, "\(refused)")
         }

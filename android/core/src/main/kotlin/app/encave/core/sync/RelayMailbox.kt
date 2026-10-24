@@ -50,7 +50,8 @@ class RelayMailboxStore(baseUrl: String) : MailboxStore {
     companion object {
         /**
          * A relay address the app accepts: https, or http only for this device or the
-         * local network (localhost, *.local), where there is no certificate.
+         * local network, where there is no certificate: a local name or address, or another
+         * name, checked before each request ([LocalName]).
          */
         fun isAllowed(url: String): Boolean {
             // OkHttp reads hosts that java.net.URI leaves out ("my_nas.example", "café.example"),
@@ -59,7 +60,7 @@ class RelayMailboxStore(baseUrl: String) : MailboxStore {
             val host = parsed.host.lowercase(Locale.ROOT)
             return when (parsed.scheme) {
                 "https" -> true
-                "http" -> host == "localhost" || host.endsWith(".local")
+                "http" -> LocalName.mayBeLocal(host)
                 else -> false
             }
         }
@@ -71,9 +72,12 @@ private data class Page(val files: List<String> = emptyList(), val next: String?
 
 private val lenient = Json { ignoreUnknownKeys = true }
 
-/** Blocking HTTP request; returns the status and the body. */
+/**
+ * Blocking HTTP request; returns the status and the body. A server named on the home network
+ * over http gets it at its local address ([LocalName]; [LocalNetworkException] otherwise).
+ */
 internal fun http(url: String, method: String, token: String, body: ByteArray? = null, timeoutMs: Int = 60_000, headers: Map<String, String> = emptyMap()): Pair<Int, ByteArray> {
-    val connection = Http.open(URL(url))
+    val connection = Http.open(LocalName.resolve(URL(url)))
     try {
         connection.requestMethod = method
         connection.connectTimeout = timeoutMs
@@ -110,6 +114,8 @@ private class RelayMailbox(val base: String, val id: String, val token: String) 
                 http(url, method, token, body, headers = headers)
             } catch (error: IOException) {
                 throw RemoteSyncException(RemoteSyncError.Unavailable(error.message ?: "no connection"))
+            } catch (error: LocalNetworkException) {
+                throw RemoteSyncException(RemoteSyncError.Unavailable("not on the local network"))
             }
             when (val status = result.first) {
                 401, 403 -> throw RemoteSyncException(RemoteSyncError.Unauthorized)

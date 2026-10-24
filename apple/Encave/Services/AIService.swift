@@ -542,18 +542,21 @@ enum AIService {
 
     /// HTTPS, or plain HTTP only for a server on this device or the local network, as for
     /// web search and WebDAV: elsewhere anyone on the way would read the key and the photo.
+    /// A name over http is checked and replaced by its local address in `send` (`LocalName`).
     static func isAllowed(_ url: URL?) -> Bool {
         guard let url, let host = url.host, !host.isEmpty else { return false }
         switch url.scheme?.lowercased() {
         case "https": return true
-        case "http": return LocalAddress.isLocal(host: host)
+        case "http": return LocalName.mayBeLocal(host: host)
         default: return false
         }
     }
 
     /// Every request goes through here.
     private static func send(_ request: URLRequest) async throws -> [String: Any] {
-        guard isAllowed(request.url) else { throw AIServiceError.insecureURL }
+        guard let url = request.url, isAllowed(url) else { throw AIServiceError.insecureURL }
+        var request = request
+        request.url = try await LocalName.resolve(url)
         let (data, response) = try await URLSession.shared.data(for: request, delegate: SameHostRedirects.shared)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]

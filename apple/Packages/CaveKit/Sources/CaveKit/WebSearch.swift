@@ -194,9 +194,10 @@ public struct SearXNGSearch: WebSearchProvider {
         if base.lowercased().hasSuffix("/search") { base.removeLast("/search".count) }
         while base.hasSuffix("/") { base.removeLast() }
         // Plain HTTP only on the local network: elsewhere anyone on the way would read the search terms.
+        // A name is checked when sending (`LocalName.resolve`).
         guard let url = URL(string: base), let scheme = url.scheme?.lowercased(),
               scheme == "http" || scheme == "https", let host = url.host, !host.isEmpty,
-              scheme == "https" || LocalAddress.isLocal(host: host) else {
+              scheme == "https" || LocalName.mayBeLocal(host: host) else {
             throw WebSearchError.invalidServerURL
         }
         self.base = base

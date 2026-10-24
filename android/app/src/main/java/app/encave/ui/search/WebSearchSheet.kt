@@ -35,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,7 @@ import app.encave.core.search.FoundPrice
 import app.encave.core.search.PriceExtractor
 import app.encave.core.search.WebSearchError
 import app.encave.core.search.WebSearchResult
+import app.encave.core.sync.LocalNetworkException
 import app.encave.data.search.WebSearchClient
 import app.encave.data.search.WebSearchPreferences
 import app.encave.ui.components.Formats
@@ -84,11 +86,19 @@ data class PriceOptions(
     val onSave: (BigDecimal, String) -> Unit,
 )
 
+/** Plain http to a server name that is not (only) on the local network ([LocalName]). */
+@StringRes
+fun localNetworkErrorText(error: LocalNetworkException): Int = when (error.reason) {
+    LocalNetworkException.Reason.NotLocal -> R.string.local_name_not_local
+    LocalNetworkException.Reason.NotFound -> R.string.local_name_not_found
+}
+
 /** What went wrong, in words. */
 @Composable
 fun webSearchErrorText(error: Throwable): String = when (error) {
     WebSearchError.MissingKey -> stringResource(R.string.ai_err_missing_key)
     WebSearchError.InvalidServerUrl -> stringResource(R.string.search_err_server_url)
+    is LocalNetworkException -> stringResource(localNetworkErrorText(error))
     WebSearchError.Unauthorized -> stringResource(R.string.search_err_unauthorized)
     WebSearchError.JsonFormatDisabled -> stringResource(R.string.search_err_json)
     WebSearchError.RateLimited -> stringResource(R.string.search_err_rate)

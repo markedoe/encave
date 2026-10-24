@@ -2,6 +2,7 @@ package app.encave.core.search
 
 import app.encave.core.Wine
 import app.encave.core.sync.LocalAddress
+import app.encave.core.sync.LocalName
 import java.net.URI
 import java.net.URLEncoder
 import java.text.Normalizer
@@ -217,7 +218,8 @@ class SearXNGSearch(serverUrl: String) : WebSearchProvider, WebImageSearchProvid
         base = base.trimEnd('/')
         val url = base.toHttpUrlOrNull()
         // Plain HTTP only on the local network: elsewhere anyone on the way would read the search terms.
-        if (url == null || url.host.isEmpty() || (!url.isHttps && !LocalAddress.isLocal(url.host))) throw WebSearchError.InvalidServerUrl
+        // A name is checked when sending (LocalName.resolve).
+        if (url == null || url.host.isEmpty() || (!url.isHttps && !LocalName.mayBeLocal(url.host))) throw WebSearchError.InvalidServerUrl
         base
     }
 

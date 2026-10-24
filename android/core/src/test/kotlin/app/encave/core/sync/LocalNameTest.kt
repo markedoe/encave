@@ -1,0 +1,83 @@
+package app.encave.core.sync
+
+import app.encave.core.search.SearXNGSearch
+import app.encave.core.search.WebSearchError
+import java.io.File
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+
+/**
+ * Plain http to a server named on the home network. CaveKit (LocalNameTests.swift) checks the
+ * same vectors, `fixtures/local-name-vectors.json`, so the two cannot drift.
+ */
+class LocalNameTest {
+    /** Tests run in android/core. */
+    private val root: JsonObject = Json.parseToJsonElement(File("../../fixtures/local-name-vectors.json").readText()).jsonObject
+
+    @Test
+    fun sharedVectors() {
+        for (item in root.getValue("resolve").jsonArray.map { it.jsonObject }) {
+            val url = item.getValue("url").jsonPrimitive.content
+            val addresses = item.getValue("addresses").jsonArray.map { it.jsonPrimitive.content }
+            val expect = item["expect"]?.jsonPrimitive?.content
+            val error = item["error"]?.jsonPrimitive?.content
+            val result = runCatching { LocalName.resolve(url, LocalName.Resolver { addresses }) }
+            if (error == null) {
+                assertEquals(expect, result.getOrThrow(), url)
+            } else {
+                val reason = (result.exceptionOrNull() as? LocalNetworkException)?.reason
+                val expected = if (error == "notLocal") LocalNetworkException.Reason.NotLocal else LocalNetworkException.Reason.NotFound
+                assertEquals(expected, reason, url)
+            }
+        }
+    }
+
+    @Test
+    fun mayBeLocal() {
+        val hosts = root.getValue("mayBeLocal").jsonObject
+        hosts.getValue("accepted").jsonArray.forEach { assertTrue(LocalName.mayBeLocal(it.jsonPrimitive.content), it.toString()) }
+        hosts.getValue("refused").jsonArray.forEach { assertFalse(LocalName.mayBeLocal(it.jsonPrimitive.content), it.toString()) }
+    }
+
+    /** The resolver is not asked for https or a host already known as local. */
+    @Test
+    fun resolvesOnlyOtherNamesOverHttp() {
+        for (url in listOf("https://searxng.home/search", "http://nas.local:8080/", "http://localhost:11434/")) {
+            assertEquals(url, LocalName.resolve(url, LocalName.Resolver { error("resolved $url") }))
+        }
+    }
+
+    /** A link-local address comes after the others. */
+    @Test
+    fun linkLocalLast() {
+        assertEquals("fd12:3456::20", LocalName.choose(listOf("fe80::1%wlan0", "fd12:3456::20")))
+        assertThrows<LocalNetworkException> { LocalName.choose(listOf("fe80::1%wlan0", "2001:db8::7")) }
+    }
+
+    /** The settings fields accept a name of the home network over http. */
+    @Test
+    fun entryAcceptsHomeNames() {
+        assertNotNull(WebDavMailboxStore.folderUrl("http://nas.lan:5005/encave"))
+        assertNull(WebDavMailboxStore.folderUrl("http://203.0.113.7/encave"))
+        assertTrue(RelayMailboxStore.isAllowed("http://relay.home:8787"))
+        assertEquals("http://searxng.home:8888", SearXNGSearch("http://searxng.home:8888").base)
+        assertThrows<WebSearchError> { SearXNGSearch("http://203.0.113.7:8888") }
+    }
+
+    /** A name that cannot exist (RFC 6761) is reported as not found by the system resolver. */
+    @Test
+    fun systemResolverNotFound() {
+        val error = assertThrows<LocalNetworkException> { LocalName.resolve("http://no-such-host.invalid/") }
+        assertEquals(LocalNetworkException.Reason.NotFound, error.reason)
+    }
+}

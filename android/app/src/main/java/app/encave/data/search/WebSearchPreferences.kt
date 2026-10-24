@@ -11,6 +11,7 @@ import app.encave.core.search.WebSearchRequest
 import app.encave.core.search.imageProvider
 import app.encave.core.search.WebSearchResult
 import app.encave.core.search.WebSearchService
+import app.encave.core.sync.LocalName
 import app.encave.data.ai.AiPreferences
 import app.encave.data.ai.SecretStore
 import java.io.IOException
@@ -131,7 +132,8 @@ object WebSearchClient {
         var method = request.method
         var body = request.body
         repeat(SameHostRedirect.MAX + 1) {
-            val connection = Http.open(url)
+            // A SearXNG server named on the home network gets the request at its local address.
+            val connection = Http.open(LocalName.resolve(url))
             try {
                 connection.instanceFollowRedirects = false
                 connection.requestMethod = method

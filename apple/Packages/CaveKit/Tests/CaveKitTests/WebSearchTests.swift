@@ -139,7 +139,9 @@ enum WebSearchFixtures {
         #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "") }
         #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "ftp://nas.local") }
         // Plain HTTP to a server on the internet would show the search terms to anyone on the way.
-        #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "http://search.example.org") }
+        #expect(throws: WebSearchError.invalidServerURL) { try SearXNGSearch(serverURL: "http://203.0.113.7") }
+        // A name may be on the home network: checked when sending (LocalNameTests).
+        #expect(try SearXNGSearch(serverURL: "http://searxng.home:8888").base == "http://searxng.home:8888")
         #expect(try SearXNGSearch(serverURL: "http://localhost:8888").base == "http://localhost:8888")
     }
 

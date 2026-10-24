@@ -45,6 +45,8 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
      * needed, then writes, reads back and deletes a test file.
      */
     suspend fun check() {
+        // A name that is not on the local network says so, rather than "does not answer".
+        withContext(Dispatchers.IO) { LocalName.resolve(baseUrl.toString()) }
         val quick = client.newBuilder().callTimeout(CHECK_TIMEOUT_S, TimeUnit.SECONDS).build()
         // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
         suspend fun propfind() = send("PROPFIND", baseUrl, mapOf("Depth" to "0"), PROPFIND_BODY, XML, quick).second
@@ -76,7 +78,13 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
         contentType: String = OCTET_STREAM,
         client: OkHttpClient = this.client,
     ): Pair<ByteArray, Int> = withContext(Dispatchers.IO) {
-        val request = Request.Builder().url(url)
+        // A server named on the home network over http gets it at its local address.
+        val target = try {
+            LocalName.resolve(url.toString())
+        } catch (error: LocalNetworkException) {
+            throw RemoteSyncException(RemoteSyncError.Unavailable("not on the local network"))
+        }
+        val request = Request.Builder().url(target)
             .method(method, body?.toRequestBody(contentType.toMediaType()))
             .header("Authorization", authorization)
             .apply { headers.forEach { (name, value) -> header(name, value) } }
@@ -134,14 +142,15 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
 
         /**
          * HTTPS, or HTTP only for a server on the local network (no certificate there):
-         * localhost, `.local` and `.home.arpa` names, private and link-local addresses.
+         * localhost, `.local` and `.home.arpa` names, private and link-local addresses, and
+         * other names that point only to such addresses (checked before each request, [LocalName]).
          */
         fun isAllowed(url: String): Boolean {
             val scheme = url.trim().substringBefore("://", "").lowercase()
             if (scheme != "https" && scheme != "http") return false
             val parsed = url.trim().toHttpUrlOrNull() ?: return false
             if (parsed.host.isEmpty() || parsed.username.isNotEmpty() || parsed.password.isNotEmpty()) return false
-            return parsed.isHttps || LocalAddress.isLocal(parsed.host)
+            return parsed.isHttps || LocalName.mayBeLocal(parsed.host)
         }
 
         /** Lowercase scheme and host (OkHttp does it), no query or fragment, a path ending with "/". */

@@ -615,14 +615,12 @@ struct RemoteSyncView: View {
         .foregroundStyle(.secondary)
     }
 
-    /// HTTPS, or HTTP only for a server on the local network.
+    /// HTTPS, or HTTP only for a server on the local network (a name is checked when turning on).
     private var validURL: URL? {
         let text = address.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let url = URL(string: text.contains("://") ? text : "https://" + text), let host = url.host(), !host.isEmpty
+        guard let url = URL(string: text.contains("://") ? text : "https://" + text), RelayMailboxStore.isAllowed(url)
         else { return nil }
-        if url.scheme == "https" { return url }
-        if url.scheme == "http", host == "localhost" || host.hasSuffix(".local") { return url }
-        return nil
+        return url
     }
 
     private var trimmedUsername: String { username.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -651,7 +649,9 @@ struct RemoteSyncView: View {
                 switch storage {
                 case .iCloud: self.error = String(localized: "iCloud is not available. Check that you are signed in to iCloud.")
                 case .webDAV: self.error = Self.webDAVMessage(error)
-                case .relay: self.error = String(localized: "This address does not answer as an Encave relay.")
+                case .relay:
+                    self.error = (error as? LocalNetworkError)?.localizedDescription
+                        ?? String(localized: "This address does not answer as an Encave relay.")
                 }
             }
             checking = false
@@ -675,7 +675,8 @@ struct RemoteSyncView: View {
 
     /// What went wrong when checking a WebDAV folder.
     static func webDAVMessage(_ error: Error) -> String {
-        switch error as? RemoteSyncError {
+        if let error = error as? LocalNetworkError { return error.localizedDescription }
+        return switch error as? RemoteSyncError {
         case .unauthorized:
             String(localized: "The server refused this username or password. With two-step verification, use an app password.")
         case .forbidden:

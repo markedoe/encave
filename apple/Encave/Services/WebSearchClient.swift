@@ -50,7 +50,8 @@ enum WebSearchClient {
                        count: Int = 10) async throws -> [WebSearchResult] {
         let provider = try settings.service.provider(apiKey: apiKey ?? settings.apiKey, serverURL: settings.serverURL)
         let described = try provider.request(for: query, count: count)
-        var request = URLRequest(url: described.url)
+        // A SearXNG server named on the home network gets the request at its local address.
+        var request = URLRequest(url: try await LocalName.resolve(described.url))
         request.httpMethod = described.method
         request.timeoutInterval = 30
         for (field, value) in described.headers {
@@ -66,7 +67,7 @@ enum WebSearchClient {
     static func searchImages(_ query: String, settings: WebSearchSettings = .load(), count: Int = 30) async throws -> [WebImageResult] {
         let provider = try settings.service.imageProvider(apiKey: settings.apiKey, serverURL: settings.serverURL)
         let described = try provider.imageRequest(for: query, count: count)
-        var request = URLRequest(url: described.url)
+        var request = URLRequest(url: try await LocalName.resolve(described.url))
         request.httpMethod = described.method
         request.timeoutInterval = 30
         for (field, value) in described.headers {
@@ -104,6 +105,7 @@ enum WebSearchClient {
 
     /// What went wrong, in words.
     static func message(for error: Error) -> String {
+        if let error = error as? LocalNetworkError { return error.localizedDescription }
         guard let error = error as? WebSearchError else {
             return String(localized: "The search service could not be reached. Check the connection and the address.")
         }
@@ -149,5 +151,17 @@ final class SameHostRedirects: NSObject, URLSessionTaskDelegate, Sendable {
         guard let origin = task.originalRequest?.url, let target = request.url,
               SameHostRedirect.allows(from: origin, to: target) else { return nil }
         return request
+    }
+}
+
+extension LocalNetworkError: @retroactive LocalizedError {
+    /// For a server named on the home network over plain http (`LocalName`).
+    public var errorDescription: String? {
+        switch self {
+        case .notLocal:
+            String(localized: "http:// is only for a server on your local network: use https:// or a local address.")
+        case .notFound:
+            String(localized: "This server name could not be found on this network.")
+        }
     }
 }

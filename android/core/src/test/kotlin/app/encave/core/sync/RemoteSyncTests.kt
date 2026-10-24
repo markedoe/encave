@@ -422,7 +422,9 @@ class RemoteSyncTests {
         assertTrue(RelayMailboxStore.isAllowed("https://relay.example"))
         assertTrue(RelayMailboxStore.isAllowed("http://localhost:8787"))
         assertTrue(RelayMailboxStore.isAllowed("http://cellar.local"))
-        assertFalse(RelayMailboxStore.isAllowed("http://relay.example"))
+        // A name may be on the home network: checked before each request (LocalNameTest).
+        assertTrue(RelayMailboxStore.isAllowed("http://relay.home:8787"))
+        assertFalse(RelayMailboxStore.isAllowed("http://203.0.113.7:8787"))
         assertFalse(RelayMailboxStore.isAllowed("ftp://relay.example"))
         assertFalse(RelayMailboxStore.isAllowed("relay"))
         // Hosts java.net.URI does not read.
@@ -430,7 +432,7 @@ class RemoteSyncTests {
         assertTrue(RelayMailboxStore.isAllowed("https://cave.exemple.fr"))
         assertTrue(RelayMailboxStore.isAllowed("https://relais.café.example"))
         // The store itself refuses one, whoever creates it.
-        assertThrows<IllegalArgumentException> { RelayMailboxStore("http://example.com") }
+        assertThrows<IllegalArgumentException> { RelayMailboxStore("http://203.0.113.7") }
         assertThrows<IllegalArgumentException> { RelayMailboxStore("ftp://relay.example") }
         assertEquals("https://relay.example", RelayMailboxStore("https://relay.example/").baseUrl)
     }

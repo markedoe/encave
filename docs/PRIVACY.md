@@ -84,7 +84,9 @@ not encrypted either: it goes where you choose to save or share it.
    sites that host them, which see the request; the picture becomes the wine's
    cover and never replaces your label photo.
 
-Plain HTTP is used only for a server on your local network; everything else
+Plain HTTP is used only for a server on your local network, including a name
+on your home network that points to a local address (Encave then connects to
+that address, never to a name that also points elsewhere); everything else
 uses HTTPS. Links (the source code, this policy, a search result) open in your
 browser.
 

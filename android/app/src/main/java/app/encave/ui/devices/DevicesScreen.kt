@@ -87,6 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.EncaveApplication
 import app.encave.R
 import app.encave.ui.components.readableWidth
+import app.encave.core.sync.LocalNetworkException
 import app.encave.core.sync.Member
 import app.encave.core.sync.RelayMailboxStore
 import app.encave.core.sync.RemoteSyncError
@@ -104,6 +105,7 @@ import app.encave.ui.help.HelpTopic
 import app.encave.ui.navigation.InviteDeviceRoute
 import app.encave.ui.navigation.JoinDeviceRoute
 import app.encave.ui.navigation.RemoteSyncRoute
+import app.encave.ui.search.localNetworkErrorText
 import app.encave.ui.theme.Dimens
 import java.net.URI
 import java.time.Instant
@@ -573,7 +575,7 @@ private fun RemovableDeviceRow(member: Member, status: String, onRemove: () -> U
 }
 
 /** What went wrong when checking a WebDAV folder or its login, or when giving the key there. */
-private fun webDavError(error: Throwable): Int = when ((error as? RemoteSyncException)?.error) {
+private fun webDavError(error: Throwable): Int = if (error is LocalNetworkException) localNetworkErrorText(error) else when ((error as? RemoteSyncException)?.error) {
     RemoteSyncError.Unauthorized -> R.string.remote_webdav_refused
     RemoteSyncError.Forbidden -> R.string.remote_webdav_forbidden
     RemoteSyncError.QuotaExceeded -> R.string.remote_webdav_full
@@ -582,6 +584,7 @@ private fun webDavError(error: Throwable): Int = when ((error as? RemoteSyncExce
 
 /** What went wrong when turning a relay on: the check (not a relay), or giving the key there. */
 private fun relayError(error: Throwable): Int = when {
+    error.cause is LocalNetworkException -> localNetworkErrorText(error.cause as LocalNetworkException)
     error is SyncManager.NotARelayException -> R.string.remote_not_relay
     (error as? RemoteSyncException)?.error == RemoteSyncError.Unauthorized -> R.string.remote_problem_refused
     (error as? RemoteSyncException)?.error == RemoteSyncError.QuotaExceeded -> R.string.remote_problem_full

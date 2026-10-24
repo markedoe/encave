@@ -91,7 +91,7 @@ Other questions:
 
 | Question | Answer |
 |---|---|
-| Is all of the user data collected by your app encrypted in transit? | Yes (if the conservative reading is used: HTTPS, plain HTTP only to a server on the user's local network) |
+| Is all of the user data collected by your app encrypted in transit? | Yes (if the conservative reading is used: HTTPS, plain HTTP only to a server on the user's local network, including home-network names that point to a local address) |
 | Do you provide a way for users to request that their data is deleted? | Nothing is held by the developer. On the device, **Erase all data** empties the cellar and, unless the user turns that off, the previous versions and the weekly backups Encave made (never files exported elsewhere); removing the app deletes its own storage, but not the weekly backups in Download/Encave, which the user deletes in the Files app |
 | Independent security review | No |
 | Privacy policy URL | The published PRIVACY.md |

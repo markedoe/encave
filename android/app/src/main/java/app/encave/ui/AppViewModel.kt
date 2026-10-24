@@ -49,6 +49,8 @@ import app.encave.core.CellarVersion
 import app.encave.core.RestoreMode
 import app.encave.core.restoring
 import app.encave.core.sync.PhotoId
+import app.encave.core.sync.LocalNetworkException
+import app.encave.ui.search.localNetworkErrorText
 import app.encave.data.BackupManager
 import app.encave.data.CellarRepository
 import app.encave.data.RestoreSource
@@ -829,6 +831,7 @@ class AppViewModel(
         AiError.Refused -> UiText.Res(R.string.ai_err_refused)
         AiError.InvalidResponse -> UiText.Res(R.string.ai_err_invalid)
         AiError.InsecureUrl -> UiText.Res(R.string.search_err_server_url)
+        is LocalNetworkException -> UiText.Res(localNetworkErrorText(error))
         is AiError.Server -> if (error.status == 0) UiText.Res(R.string.ai_err_network) else UiText.Res(R.string.ai_err_server, listOf(error.status))
         else -> UiText.Res(R.string.err_generic)
     }

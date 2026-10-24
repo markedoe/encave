@@ -37,9 +37,22 @@ public struct RelayMailboxStore: MailboxStore {
         RelayMailbox(base: baseURL, id: id, token: token, session: session)
     }
 
+    /// A relay address the app accepts: https, or http only for a server on this device or
+    /// the local network (no certificate there), a name being checked before each request
+    /// (`LocalName`).
+    public static func isAllowed(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased(), !host.isEmpty else { return false }
+        switch url.scheme?.lowercased() {
+        case "https": return true
+        case "http": return LocalName.mayBeLocal(host: host)
+        default: return false
+        }
+    }
+
     /// Checks that a URL points to an Encave relay (`GET /v1/health`).
     public func check() async throws {
-        var request = URLRequest(url: baseURL.appendingPathComponent("v1/health"))
+        // A name that is not on the local network says so, rather than "not a relay".
+        var request = URLRequest(url: try await LocalName.resolve(baseURL.appendingPathComponent("v1/health")))
         request.timeoutInterval = 15
         let (data, response) = try await session.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200,
@@ -74,8 +87,10 @@ struct RelayMailbox: Mailbox {
     }
 
     private func send(_ request: URLRequest, body: Data? = nil) async throws -> (Data, Int) {
+        var request = request
         let (data, response): (Data, URLResponse)
         do {
+            if let url = request.url { request.url = try await LocalName.resolve(url) }
             if let body {
                 (data, response) = try await session.upload(for: request, from: body)
             } else {

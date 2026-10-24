@@ -15,6 +15,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - CSV export adds a readable location column ("Cabinet · Shelf 1, position 6")
   after the slot column; imports ignore it
 - The sample cellar's wine fridges are named Cabinet (Armoire)
+- Plain http also works with a server name of your home network (such as
+  http://searxng.home:8888) for web search, AI, WebDAV and relay, when every
+  address it points to is local; Encave then connects to that address
 
 ### Fixed
 - Replace This Cellar and Erase All keep a previous version first; with

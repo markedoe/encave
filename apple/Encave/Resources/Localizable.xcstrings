@@ -1341,12 +1341,12 @@
         }
       }
     },
-    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": {
+    "**Brave Search** and **Tavily** need an API key, created on their website; both offer a free monthly allowance. **SearXNG** is a search engine you can run yourself, for example on a NAS: enter its address, such as `http://nas.local:8080` (plain `http://` only for a server on your local network, including a name of your home network that points to a local address, which Encave then reaches by that address; `https://` otherwise). Its JSON format must be on: add `json` under `search: formats:` in its `settings.yml`. Tap **Test Search** to check.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
+            "value": "**Brave Search** et **Tavily** demandent une clé d’API, créée sur leur site ; tous deux offrent un quota gratuit chaque mois. **SearXNG** est un moteur de recherche que vous pouvez héberger vous-même, par exemple sur un NAS : saisissez son adresse, comme `http://nas.local:8080` (`http://` seulement pour un serveur de votre réseau local, y compris un nom de votre réseau domestique qui pointe vers une adresse locale, qu’Encave joint alors à cette adresse ; `https://` sinon). Son format JSON doit être activé : ajoutez `json` sous `search: formats:` dans son `settings.yml`. Touchez **Tester la recherche** pour vérifier."
           }
         }
       }
@@ -13941,6 +13941,16 @@
         }
       }
     },
+    "This server name could not be found on this network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce nom de serveur est introuvable sur ce réseau."
+          }
+        }
+      }
+    },
     "This version could not be read.": {
       "localizations": {
         "fr": {
@@ -15879,6 +15889,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "devant"
+          }
+        }
+      }
+    },
+    "http:// is only for a server on your local network: use https:// or a local address.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "http:// est réservé à un serveur de votre réseau local : utilisez https:// ou une adresse locale."
           }
         }
       }

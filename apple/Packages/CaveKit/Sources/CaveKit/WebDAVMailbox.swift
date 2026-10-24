@@ -50,12 +50,13 @@ public struct WebDAVMailboxStore: MailboxStore {
     }
 
     /// HTTPS, or HTTP only for a server on the local network (no certificate there):
-    /// localhost, `.local` and `.home.arpa` names, private and link-local addresses.
+    /// localhost, `.local` and `.home.arpa` names, private and link-local addresses, and
+    /// other names that point only to such addresses (checked before each request, `LocalName`).
     public static func isAllowed(_ url: URL) -> Bool {
         guard let host = url.host?.lowercased(), !host.isEmpty, url.user == nil, url.password == nil else { return false }
         switch url.scheme?.lowercased() {
         case "https": return true
-        case "http": return LocalAddress.isLocal(host: host)
+        case "http": return LocalName.mayBeLocal(host: host)
         default: return false
         }
     }
@@ -76,6 +77,8 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// Checks the folder and the login before turning sync on: creates the folder
     /// if needed, then writes, reads back and deletes a test file.
     public func check() async throws {
+        // A name that is not on the local network says so, rather than "does not answer".
+        _ = try await LocalName.resolve(baseURL)
         // Look first: some servers refuse MKCOL (403) on a folder that exists, such as a share's root.
         let propfind = { try await self.send("PROPFIND", self.baseURL, headers: ["Depth": "0", "Content-Type": "application/xml; charset=utf-8"],
                                              body: Self.propfindBody, timeout: 15).1 }
@@ -108,7 +111,13 @@ public struct WebDAVMailboxStore: MailboxStore {
     /// 401 login refused, 403 folder refused, 413 file too large, 507 full, redirects, 423, 429 and 5xx unavailable.
     func send(_ method: String, _ url: URL, headers: [String: String] = [:], body: Data? = nil,
               timeout: TimeInterval = 60) async throws -> (Data, Int) {
-        var request = URLRequest(url: url)
+        let target: URL
+        do {
+            target = try await LocalName.resolve(url)
+        } catch {
+            throw RemoteSyncError.unavailable("not on the local network")
+        }
+        var request = URLRequest(url: target)
         request.httpMethod = method
         request.timeoutInterval = timeout
         request.setValue(authorization, forHTTPHeaderField: "Authorization")

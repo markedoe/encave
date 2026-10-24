@@ -4,7 +4,7 @@ import android.util.Base64
 import app.encave.core.AiLabelPlacement
 import app.encave.core.Http
 import app.encave.core.WineLabelFrame
-import app.encave.core.sync.LocalAddress
+import app.encave.core.sync.LocalName
 import java.io.IOException
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
@@ -411,14 +411,15 @@ object AiService {
     /**
      * HTTPS, or plain HTTP only for a server on this device or the local network, as for
      * web search and WebDAV: elsewhere anyone on the way would read the key and the photo.
+     * A name over http is checked and replaced by its local address in [send] ([LocalName]).
      */
     internal fun isAllowed(url: URL): Boolean = url.host.isNotEmpty() &&
-        (url.protocol == "https" || (url.protocol == "http" && LocalAddress.isLocal(url.host)))
+        (url.protocol == "https" || (url.protocol == "http" && LocalName.mayBeLocal(url.host)))
 
     /** POST when [body] is set, GET otherwise. Every request goes through here. */
     private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
         if (!isAllowed(url)) throw AiError.InsecureUrl
-        val connection = Http.open(url)
+        val connection = Http.open(LocalName.resolve(url))
         try {
             // A redirect could take the key to another server.
             connection.instanceFollowRedirects = false

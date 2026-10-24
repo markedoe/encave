@@ -20,7 +20,10 @@ release, and whenever the cryptography changes.
 - **Connections** to the relay, WebDAV, iCloud, the AI service and the web
   search provider use the system's HTTPS (TLS), except a server on the local
   network (a relay, a WebDAV folder, an AI or SearXNG server), which the user
-  may reach over plain HTTP. Sync files are encrypted either way.
+  may reach over plain HTTP, by a local address or by a name of the home
+  network that points only to local addresses (the app then connects to that
+  address, so a later DNS answer cannot redirect it). Sync files are
+  encrypted either way.
 
 The encryption protects the user's own data. It is not limited to
 authentication, and it cannot be used as a general encryption tool for other

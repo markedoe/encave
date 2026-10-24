@@ -83,7 +83,8 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           # Home-network names (RFC 8375), which local networking alone does not cover:
-          # a NAS or local AI server reached over plain HTTP, as the app allows.
+          # a NAS or local AI server reached over plain HTTP, as the app allows. Other
+          # names over http are sent to their local IP address (LocalName in CaveKit).
           NSExceptionDomains:
             home.arpa:
               NSIncludesSubdomains: true
@@ -155,7 +156,8 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           # Home-network names (RFC 8375), which local networking alone does not cover:
-          # a NAS or local AI server reached over plain HTTP, as the app allows.
+          # a NAS or local AI server reached over plain HTTP, as the app allows. Other
+          # names over http are sent to their local IP address (LocalName in CaveKit).
           NSExceptionDomains:
             home.arpa:
               NSIncludesSubdomains: true

@@ -229,10 +229,11 @@ class WebDavTests {
         assertEquals("https://webdav.example.com/Encave/", WebDavMailboxStore.folderUrl(" https://webdav.example.com/Encave?x=1 "))
         // Example private addresses, not real hosts.
         val privateIps = listOf("http://192.168.1.20/dav", "http://10.0.0.2/", "http://172.16.4.1/") // public-safety: allow
-        for (local in listOf("http://nas.local:5005/encave", "http://localhost:8080", "http://[fd12::1]/dav", "http://[fe80::1]", "http://box.home.arpa") + privateIps) {
+        for (local in listOf("http://nas.local:5005/encave", "http://localhost:8080", "http://[fd12::1]/dav", "http://[fe80::1]", "http://box.home.arpa", "http://nas.lan:5005/encave") + privateIps) {
             assertNotNull(WebDavMailboxStore.folderUrl(local), local)
         }
-        for (refused in listOf("http://webdav.example.com/Encave", "http://8.8.8.8", "http://172.32.0.1", "http://[2001:db8::1]", "ftp://nas.local", "https://jean:secret@nas.example.com/", "", "https://")) {
+        // A name over http is checked before each request (LocalNameTest); an address now.
+        for (refused in listOf("http://8.8.8.8", "http://172.32.0.1", "http://[2001:db8::1]", "ftp://nas.local", "https://jean:secret@nas.example.com/", "", "https://")) {
             assertNull(WebDavMailboxStore.folderUrl(refused), refused)
         }
     }
