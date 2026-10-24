@@ -41,6 +41,11 @@ object SampleData {
         val merchant: String = "Wine merchant",
         val tagBirthYear: String = "Birth year",
         val occasion2: String = "Christmas dinner",
+        val piedmont: String = "Piedmont",
+        val kakheti: String = "Kakheti",
+        val italy: String = "Italy",
+        val switzerland: String = "Switzerland",
+        val georgia: String = "Georgia",
     )
 
     /** A wine fridge with two zones: layers of each shelf from the top, bottles of each row from the top. Also the editor's preset. */
@@ -80,7 +85,7 @@ object SampleData {
             ),
             Triple(
                 Wine(id = ids.next(Kind.Wine), name = "Cuvée du Lac", producer = "Cave des Coteaux", vintage = year - 2, color = WineColor.White,
-                    region = "Vaud", country = "Switzerland", grapes = listOf("Chasselas"),
+                    region = "Vaud", country = labels.switzerland, grapes = listOf("Chasselas"),
                     drinkFrom = year - 1, drinkUntil = year + 2),
                 4, small,
             ),
@@ -109,7 +114,7 @@ object SampleData {
             ),
             Triple(
                 Wine(id = ids.next(Kind.Wine), name = "Riserva Vigna Alta", producer = "Cascina Ferri", vintage = year - 10, color = WineColor.Red,
-                    region = "Piedmont", country = "Italy", appellation = "Barolo", grapes = listOf("Nebbiolo"),
+                    region = labels.piedmont, country = labels.italy, appellation = "Barolo", grapes = listOf("Nebbiolo"),
                     drinkFrom = year - 2, drinkUntil = year + 12),
                 8, deep,
             ),
@@ -121,7 +126,7 @@ object SampleData {
             ),
             Triple(
                 Wine(id = ids.next(Kind.Wine), name = "Qvevri Amber", producer = "Marani Tsiskari", vintage = year - 3, color = WineColor.Orange,
-                    region = "Kakheti", country = "Georgia", grapes = listOf("Rkatsiteli"),
+                    region = labels.kakheti, country = labels.georgia, grapes = listOf("Rkatsiteli"),
                     drinkFrom = year - 1, drinkUntil = year + 4),
                 3, largeFridge,
             ),

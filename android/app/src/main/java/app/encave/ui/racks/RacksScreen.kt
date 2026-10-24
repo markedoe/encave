@@ -1,5 +1,7 @@
 package app.encave.ui.racks
 
+import app.encave.ui.components.measure
+import app.encave.ui.components.rememberFabSpace
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.platform.testTag
@@ -93,6 +95,7 @@ private fun RacksList(viewModel: AppViewModel, navigator: AppNavigator, onOpen: 
     val resources = LocalResources.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    val fabSpace = rememberFabSpace()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -116,7 +119,7 @@ private fun RacksList(viewModel: AppViewModel, navigator: AppNavigator, onOpen: 
             if (cellar.racks.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = { navigator.open(RackEditorRoute()) },
-                    modifier = Modifier.testTag("racks.add"),
+                    modifier = Modifier.measure(fabSpace).testTag("racks.add"),
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text(stringResource(R.string.action_add_rack)) },
                 )
@@ -138,7 +141,7 @@ private fun RacksList(viewModel: AppViewModel, navigator: AppNavigator, onOpen: 
             }
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().testTag("racks.list"), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 96.dp)) {
+        LazyColumn(Modifier.fillMaxSize().testTag("racks.list"), contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = fabSpace.listBottom)) {
             itemsIndexed(cellar.racks, key = { _, rack -> rack.id.toString() }) { index, rack ->
                 val used = cellar.occupancy(rack)
                 val id = rack.id.toString()

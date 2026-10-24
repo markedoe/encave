@@ -81,6 +81,8 @@ internal fun brandScheme(dark: Boolean): ColorScheme {
     // The other theme's accent, for the inverse roles (snackbar actions).
     val otherAccent = DesignTokens.accent.resolve(!dark)
     val dessert = DesignTokens.wineColors.getValue("wine-dessert").resolve(dark)
+    // Errors and destructive actions in the token's red, not Material's pale default.
+    val error = DesignTokens.error.resolve(dark)
     val scheme = if (dark) {
         darkColorScheme(
             primary = accent, onPrimary = lerp(accent, Color.Black, 0.8f),
@@ -114,6 +116,8 @@ internal fun brandScheme(dark: Boolean): ColorScheme {
     return if (dark) {
         scheme.copy(
             onTertiary = lerp(dessert, Color.Black, 0.8f),
+            error = error, onError = lerp(error, Color.Black, 0.8f),
+            errorContainer = lerp(error, Color.Black, 0.6f), onErrorContainer = lerp(error, Color.White, 0.8f),
             tertiaryContainer = lerp(dessert, Color.Black, 0.6f), onTertiaryContainer = lerp(dessert, Color.White, 0.8f),
             inversePrimary = otherAccent, inverseSurface = lerp(Color.White, accent, 0.06f), inverseOnSurface = tone(0.16f, 0.03f),
             surfaceTint = accent, surfaceBright = tone(0.30f, 0.07f), surfaceDim = tone(0.12f, 0.02f),
@@ -127,6 +131,8 @@ internal fun brandScheme(dark: Boolean): ColorScheme {
     } else {
         scheme.copy(
             onTertiary = Color.White,
+            error = error, onError = Color.White,
+            errorContainer = lerp(paper, error, 0.12f), onErrorContainer = lerp(error, Color.Black, 0.45f),
             tertiaryContainer = lerp(paper, dessert, 0.18f), onTertiaryContainer = lerp(dessert, Color.Black, 0.6f),
             inversePrimary = otherAccent, inverseSurface = lerp(lerp(Color.Black, Color.White, 0.2f), accent, 0.04f),
             inverseOnSurface = lerp(Color.White, accent, 0.06f),

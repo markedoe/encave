@@ -1,5 +1,11 @@
 package app.encave.ui.add
 
+import app.encave.ui.components.openAppSettings
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,26 +57,40 @@ private const val MIN_DIGITS = 8
 fun BarcodeScannerDialog(onScan: (String) -> Unit, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+            // Without the camera, the hint to point it is not shown.
+            var cameraDenied by remember { mutableStateOf(false) }
             CameraCodeReader(
                 formats = setOf(BarcodeReader.Format.EAN_13, BarcodeReader.Format.EAN_8, BarcodeReader.Format.UPC_A, BarcodeReader.Format.UPC_E),
                 accept = { Wine.normalizedBarcode(it).length >= MIN_DIGITS },
                 onScan = { onScan(Wine.normalizedBarcode(it)) },
                 modifier = Modifier.fillMaxSize(),
                 deniedWhileAsking = true,
-                denied = { TypedBarcode(onScan) },
+                denied = {
+                    DisposableEffect(Unit) {
+                        cameraDenied = true
+                        onDispose { cameraDenied = false }
+                    }
+                    TypedBarcode(onScan)
+                },
             )
             Row(
                 Modifier.fillMaxWidth().safeDrawingPadding().padding(Dimens.l),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.s),
             ) {
-                Text(
-                    stringResource(R.string.barcode_hint),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.weight(1f)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(50))
-                        .padding(horizontal = Dimens.l, vertical = Dimens.s),
-                )
+                Box(Modifier.weight(1f)) {
+                    if (!cameraDenied) {
+                        // A pill, not a band across a tablet's whole width.
+                        Text(
+                            stringResource(R.string.barcode_hint),
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.widthIn(max = 480.dp)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(50))
+                                .padding(horizontal = Dimens.l, vertical = Dimens.s)
+                                .testTag("barcode.hint"),
+                        )
+                    }
+                }
                 IconButton(
                     onClick = onDismiss,
                     modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(50)).testTag("sheet.cancel"),
@@ -101,6 +121,11 @@ private fun TypedBarcode(onScan: (String) -> Unit) {
         )
         Button(onClick = { onScan(digits) }, enabled = valid, modifier = Modifier.testTag("barcode.use")) {
             Text(stringResource(R.string.action_ok))
+        }
+        // Where the camera can be allowed again.
+        val context = LocalContext.current
+        TextButton(onClick = { openAppSettings(context) }, modifier = Modifier.testTag("barcode.open_settings")) {
+            Text(stringResource(R.string.action_open_app_settings))
         }
     }
 }

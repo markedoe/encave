@@ -19,7 +19,7 @@
     <string name="action_undo">Annuler</string>
     <string name="action_drink">Boire</string>
     <string name="action_add_bottle">Ajouter une bouteille</string>
-    <string name="action_add_bottles">Ajouter</string>
+    <string name="action_add_bottles">Ajouter des bouteilles</string>
     <string name="action_show_in_rack">Voir dans le rangement</string>
     <string name="action_move">Déplacer</string>
     <string name="action_mark_gone">Plus en cave</string>
@@ -40,6 +40,7 @@
     <string name="action_change">Changer</string>
     <string name="action_put_back">Remettre en cave</string>
     <string name="search_hint">Vin, producteur, région, cépage, millésime</string>
+    <string name="search_hint_short">Rechercher dans la cave</string>
     <string name="search_suggestions">Vins de votre cave</string>
     <string name="cellar_empty_title">Votre cave est vide</string>
     <string name="cellar_empty_body">Ajoutez les bouteilles que vous gardez chez vous pour savoir ce que vous avez, où elles sont et quand les ouvrir.</string>
@@ -277,23 +278,23 @@
     <string name="settings_currency">Devise par défaut</string>
     <string name="settings_appearance">Affichage</string>
     <string name="settings_dynamic_color">Utiliser les couleurs du fond d’écran</string>
-    <string name="settings_dynamic_color_body">Couleurs Material You au lieu du bordeaux d’Encave</string>
+    <string name="settings_dynamic_color_body">Couleurs Material You au lieu du bordeaux d’Encave.</string>
     <string name="settings_studio_look">Aspect studio pour les photos d’étiquette</string>
     <string name="settings_studio_look_body">La photo centrée sur son étiquette et sa lumière corrigée, sur cet appareil. La photo prise est gardée telle quelle.</string>
     <string name="settings_studio_look_ai">Quand la reconnaissance des étiquettes par IA est configurée plus bas, l’IA repère aussi l’étiquette sur la photo pour y cadrer l’image. Sinon, le cadrage est fait sur cet appareil.</string>
     <string name="settings_data">Vos données</string>
     <string name="settings_backup_now">Sauvegarder maintenant</string>
     <string name="settings_backing_up">Sauvegarde…</string>
-    <string name="settings_backup_now_body">Un fichier ZIP avec toute votre cave, ses photos et ses documents. Il n’est pas chiffré : gardez-le en lieu sûr</string>
+    <string name="settings_backup_now_body">Un fichier ZIP avec toute votre cave, ses photos et ses documents. Il n’est pas chiffré : gardez-le en lieu sûr.</string>
     <string name="settings_reading_backup">Lecture de la sauvegarde…</string>
     <string name="versions_title">Versions précédentes</string>
-    <string name="settings_versions_body">Votre cave telle qu’elle était ces derniers jours et semaines, gardée sur cet appareil</string>
+    <string name="settings_versions_body">Votre cave telle qu’elle était ces derniers jours et semaines, gardée sur cet appareil.</string>
     <string name="settings_weekly_backup">Sauvegarde hebdomadaire sur cet appareil</string>
-    <string name="settings_weekly_backup_body">Non chiffrées. Les deux dernières sont gardées dans Download/Encave, que les apps autorisées à accéder à tous les fichiers peuvent lire</string>
+    <string name="settings_weekly_backup_body">Non chiffrées. Les deux dernières sont gardées dans Download/Encave, que les apps autorisées à accéder à tous les fichiers peuvent lire.</string>
     <string name="settings_last_backup">Dernière sauvegarde : %1$s</string>
     <string name="settings_backup_reminder">Aucune sauvegarde depuis plus d’un mois. Sauvegardez maintenant pour garder une copie de votre cave, de ses photos et de ses documents.</string>
     <string name="settings_restore_latest">Restaurer la dernière version précédente</string>
-    <string name="settings_restore_latest_body">Votre cave telle qu’Encave l’a gardée en dernier, avant que le fichier ne puisse plus être lu</string>
+    <string name="settings_restore_latest_body">Votre cave telle qu’Encave l’a gardée en dernier, avant que le fichier ne puisse plus être lu.</string>
     <string name="versions_empty_title">Pas encore de version précédente</string>
     <string name="versions_empty_body">Encave garde une copie de votre cave chaque jour où elle change. La première apparaîtra demain.</string>
     <string name="versions_footer">Une copie de votre cave est gardée chaque jour où elle change : une pour chacun des 7 derniers jours où elle a changé, puis une par semaine pour les 4 semaines d’avant. Elles restent sur cet appareil ; les photos et documents dont elles ont besoin sont gardés avec elles.</string>
@@ -329,9 +330,9 @@
     <string name="err_backup_failed">La sauvegarde n’a pas pu être faite. Vérifiez qu’il reste assez d’espace libre sur cet appareil, puis réessayez.</string>
     <string name="err_version_unreadable">Cette version n’a pas pu être lue.</string>
     <string name="settings_export_csv">Exporter un tableur (CSV)</string>
-    <string name="settings_export_csv_body">Une ligne par bouteille</string>
+    <string name="settings_export_csv_body">Une ligne par bouteille.</string>
     <string name="settings_import">Importer une sauvegarde ou un fichier CSV</string>
-    <string name="settings_import_body">Une sauvegarde (ZIP ou JSON) est d’abord montrée ; un CSV ajoute ses bouteilles à votre cave</string>
+    <string name="settings_import_body">Une sauvegarde (ZIP ou JSON) est d’abord montrée ; un CSV ajoute ses bouteilles à votre cave.</string>
     <string name="settings_try">Essayer Encave</string>
     <string name="settings_reset">Réinitialiser</string>
     <string name="settings_sample_confirm_title">Charger la cave d’exemple ?</string>
@@ -428,6 +429,7 @@
     <string name="photo_description">Photo de l’étiquette de %1$s</string>
     <string name="photo_failed">La photo n’a pas pu être lue.</string>
     <string name="photo_hint_ai">Encave pour Android ne lit pas le texte de l’étiquette sur l’appareil : saisissez le nom, ou scannez le code-barres pour retrouver un vin que vous avez déjà. Avec la reconnaissance par IA activée (Réglages), la photo remplit les informations.</string>
+    <string name="photo_hint_ai_no_barcode">Encave pour Android ne lit pas le texte de l’étiquette sur l’appareil : saisissez le nom. Avec la reconnaissance par IA activée (Réglages), la photo remplit les informations.</string>
     <string name="detail_serving">Service</string>
     <string name="serving_temperature">Température</string>
     <string name="serving_temperature_value">%1$d–%2$d °C</string>
@@ -936,6 +938,11 @@
     <string name="help_devices_privacy_title">Confidentialité</string>
     <string name="help_devices_privacy">Sur le même Wi-Fi, les appareils communiquent directement ; aucun serveur n’intervient. Avec un dossier WebDAV ou un relais, seuls des fichiers chiffrés y sont stockés. Chaque échange est chiffré de bout en bout. Le code à 6 chiffres sert seulement à ce que les appareils se trouvent : c’est la comparaison qui vous protège.</string>
     <string name="sample_main_rack">Casier principal</string>
+    <string name="sample_region_piedmont">Piémont</string>
+    <string name="sample_region_kakheti">Kakhétie</string>
+    <string name="sample_country_italy">Italie</string>
+    <string name="sample_country_switzerland">Suisse</string>
+    <string name="sample_country_georgia">Géorgie</string>
     <string name="sample_wine_fridge">Armoire</string>
     <string name="sample_note">Soyeux, fruits rouges, longue finale.</string>
     <string name="sample_kitchen">Cuisine</string>
@@ -999,7 +1006,7 @@
     <string name="help_tonight_reminders">Activez **Rappels** dans les réglages, ou avec **Activer** quand Ce soir le propose : au début de chaque mois (vers 10 h le 1er), si des bouteilles sont à boire cette année, viennent d’être prêtes ou ont passé leur apogée, une notification indique combien ; une autre arrive le matin du jour où des bouteilles en commande sont attendues. C’est calculé sur cet appareil. Si les notifications sont désactivées pour Encave, **Ouvrir les réglages** mène aux réglages du système pour les activer.</string>
     <string name="shortcut_scan">Scanner une bouteille</string>
     <string name="shortcut_tonight">Que boire ce soir</string>
-    <string name="action_select_wines">Sélectionner des vins</string>
+    <string name="action_select_wines">Sélectionner des bouteilles</string>
     <string name="action_select">Sélectionner</string>
     <string name="selection_count">Sélection : %1$d</string>
     <string name="action_end_selection">Terminer la sélection</string>
@@ -1007,7 +1014,7 @@
     <string name="action_take_out_of_racks">Sortir des rangements</string>
     <string name="confirm_delete_wines_title">Supprimer ces vins ?</string>
     <string name="confirm_delete_wines_body">Leurs bouteilles et dégustations sont aussi supprimées. Vous pouvez annuler juste après.</string>
-    <string name="action_delete_wines">Supprimer les vins</string>
+    <string name="action_delete_wines">Supprimer les bouteilles</string>
     <string name="action_delete_wine">Supprimer le vin</string>
     <string name="confirm_delete_wine_title">Supprimer « %1$s » ?</string>
     <string name="msg_search_deleted">%1$s supprimée</string>
@@ -1017,7 +1024,7 @@
     <string name="msg_bottles_gone">Bouteilles retirées de la cave : %1$d</string>
     <string name="msg_wines_deleted">Vins supprimés : %1$d</string>
     <string name="help_racks_several_title">Plusieurs vins à la fois</string>
-    <string name="help_racks_several">Dans la liste de la Cave, choisissez **Sélectionner des vins** dans le menu de tri (ou maintenez un vin appuyé, puis **Sélectionner**) et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Mettez-les ensuite dans un rangement (les bouteilles déjà rangées restent où elles sont) ou supprimez-les, ou, dans **Plus d’options**, sortez-les de leur position, gardez leurs bouteilles pour une occasion ou indiquez qu’elles ne sont plus en cave. **Annuler** remet tout en place.</string>
+    <string name="help_racks_several">Dans la liste de la Cave, choisissez **Sélectionner des bouteilles** dans le menu de tri (ou maintenez un vin appuyé, puis **Sélectionner**) et cochez les vins, ou **Tout sélectionner** pour ceux que la recherche et les filtres affichent. Mettez-les ensuite dans un rangement (les bouteilles déjà rangées restent où elles sont) ou supprimez-les, ou, dans **Plus d’options**, sortez-les de leur position, gardez leurs bouteilles pour une occasion ou indiquez qu’elles ne sont plus en cave. **Annuler** remet tout en place.</string>
     <string name="action_check_rack">Vérifier ce rangement</string>
     <string name="audit_hint">Touchez chaque bouteille que vous trouvez dans le rangement.</string>
     <string name="audit_found">Trouvées : %1$d sur %2$d</string>
@@ -1032,9 +1039,9 @@
     <string name="help_racks_check_title">Vérifier un rangement</string>
     <string name="help_racks_check">Choisissez **Vérifier ce rangement**, touchez chaque bouteille que vous trouvez, puis **Terminer la vérification**. Toucher une position de plusieurs bouteilles les marque toutes ; pour les cocher une par une, touchez-la longuement (elle affiche **8/10** quand certaines sont trouvées). Pour les bouteilles non trouvées, choisissez **Les sortir du rangement** (elles restent dans la cave sans position) ou **Les marquer comme parties** (elles quittent la cave). **Annuler** remet tout en place.</string>
     <string name="settings_export_pdf">Inventaire à imprimer (PDF)</string>
-    <string name="settings_export_pdf_body">Chaque vin avec ses rangements et sa valeur d’achat, pour l’assurance ou un déménagement</string>
+    <string name="settings_export_pdf_body">Chaque vin avec ses rangements et sa valeur d’achat, pour l’assurance ou un déménagement.</string>
     <string name="settings_import_other">Importer depuis une autre app</string>
-    <string name="settings_import_other_body">Un CSV de CellarTracker, Vivino ou d’un tableur, lu sur cet appareil</string>
+    <string name="settings_import_other_body">Un CSV de CellarTracker, Vivino ou d’un tableur, lu sur cet appareil.</string>
     <string name="pdf_title">Inventaire de la cave</string>
     <string name="pdf_value">Valeur d’achat : %1$s</string>
     <string name="pdf_wine">Vin</string>
@@ -1042,6 +1049,7 @@
     <string name="pdf_purchase_value">Valeur d’achat</string>
     <string name="pdf_made_with">Réalisé avec Encave</string>
     <string name="pdf_page">Page %1$d sur %2$d</string>
+    <string name="pdf_rack_places">%1$s : %2$s</string>
     <string name="msg_imported_elsewhere">Vins goûtés ailleurs importés : %1$d</string>
     <string name="help_data_pdf_title">Inventaire imprimé</string>
     <string name="help_data_pdf">**Inventaire à imprimer (PDF)** liste chaque vin de votre cave avec son nombre de bouteilles, ses rangements et sa valeur d’achat : pour votre assureur, un déménagement ou votre famille. Les valeurs sont ce que vous avez payé ; les prix actuels trouvés en ligne (**Trouver le prix actuel**) apparaissent dans les Statistiques, pas dans l’inventaire.</string>
@@ -1521,6 +1529,11 @@
         <item quantity="one">vin différent</item>
         <item quantity="many">vins différents</item>
         <item quantity="other">vins différents</item>
+    </plurals>
+    <plurals name="confirm_delete_bottles_of_wines">
+        <item quantity="one">Supprimer %1$d bouteille (%2$s) ?</item>
+        <item quantity="many">Supprimer %1$d bouteilles (%2$s) ?</item>
+        <item quantity="other">Supprimer %1$d bouteilles (%2$s) ?</item>
     </plurals>
     <plurals name="confirm_delete_wines_count">
         <item quantity="one">Supprimer %d vin ?</item>

@@ -167,7 +167,10 @@ private fun CodeCard(session: PairingSession) {
             style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum"),
             modifier = Modifier.testTag("devices.code").clearAndSetSemantics { contentDescription = digits.toList().joinToString(" ") },
         )
-        Text(stringResource(R.string.invite_valid), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            stringResource(R.string.invite_valid), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 480.dp),
+        )
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
             // A still icon, not a spinner: the screen stays idle (and screenshots can be taken).
             Icon(Icons.Outlined.HourglassEmpty, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)

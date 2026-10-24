@@ -216,7 +216,13 @@ fun AiSettingsSection(viewModel: AppViewModel) {
             provider == AiProvider.Local -> listOf(R.string.ai_tip_other, R.string.ai_local_sent)
             else -> listOf(R.string.settings_ai_on_body)
         }
-        footer.forEach { Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        // Under the service field's text, past its icon, not at the icon's column.
+        footer.forEach {
+            Text(
+                stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = SettingsFieldInset),
+            )
+        }
     }
     HelpLink(HelpTopic.Ai, R.string.help_link_ai)
 }

@@ -1,5 +1,7 @@
 package app.encave.ui.drink
 
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material.icons.filled.Check
 import app.encave.ui.components.ActionContent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Arrangement
@@ -122,7 +124,7 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         )
         Text(stringResource(R.string.field_occasion), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
             // A note written in another language still shows its chip as chosen.
             val chosen = Occasion.matching(state.occasion)
             Occasion.entries.forEach { occasion ->
@@ -131,6 +133,12 @@ fun TastingFields(state: TastingFormState, modifier: Modifier = Modifier) {
                     selected = chosen == occasion,
                     onClick = { state.occasion = if (chosen == occasion) "" else label },
                     label = { Text(label) },
+                    // Chosen: a check, not only a tint.
+                    leadingIcon = if (chosen == occasion) {
+                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                    } else {
+                        null
+                    },
                 )
             }
         }
@@ -307,7 +315,7 @@ fun DrinkSheet(
             )
             if (choices.size > 1) {
                 Text(stringResource(R.string.drink_which), style = MaterialTheme.typography.titleSmall)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
                     choices.forEach { bottle ->
                         val location = cellar.displayLocation(bottle) ?: stringResource(R.string.location_none)
                         val occasion = bottle.reservedFor
@@ -316,10 +324,15 @@ fun DrinkSheet(
                             onClick = { chosenId = bottle.id.toString() },
                             // A kept bottle says so in words and with a gift, not by color alone.
                             label = { Text(if (occasion != null) stringResource(R.string.drink_choice_kept, location, occasion) else location) },
-                            leadingIcon = if (occasion != null) {
-                                { Icon(Icons.Outlined.CardGiftcard, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                            } else {
-                                null
+                            // The chosen one has a check, not only a tint.
+                            leadingIcon = when {
+                                bottle.id == chosen.id -> {
+                                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                                }
+                                occasion != null -> {
+                                    { Icon(Icons.Outlined.CardGiftcard, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                                }
+                                else -> null
                             },
                             modifier = Modifier.testTag(if (occasion != null) "drink.choice.kept" else "drink.choice"),
                         )

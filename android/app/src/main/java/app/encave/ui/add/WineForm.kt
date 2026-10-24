@@ -1,5 +1,8 @@
 package app.encave.ui.add
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -257,12 +260,14 @@ fun WineEssentials(
                 .semantics { if (nameError) error(nameRequired) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
+        val producer: @Composable (Modifier) -> Unit = { modifier ->
             AutoCompleteField(
                 value = form.producer, onValueChange = { form.producer = it }, label = stringResource(R.string.field_producer),
-                options = known.producers, modifier = Modifier.weight(1.6f),
+                options = known.producers, modifier = modifier,
                 supporting = stringResource(R.string.help_field_producer),
             )
+        }
+        val vintage: @Composable (Modifier) -> Unit = { modifier ->
             OutlinedTextField(
                 value = form.vintageText,
                 onValueChange = { text -> form.vintageText = text.filter { it.isDigit() }.take(4) },
@@ -272,9 +277,24 @@ fun WineEssentials(
                     Text(stringResource(if (form.vintageInvalid) R.string.add_vintage_invalid else R.string.help_field_vintage))
                 },
                 singleLine = true,
-                modifier = Modifier.weight(1f).then(if (vintageFocus != null) Modifier.focusRequester(vintageFocus) else Modifier),
+                modifier = modifier.testTag("field.vintage").then(if (vintageFocus != null) Modifier.focusRequester(vintageFocus) else Modifier),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
             )
+        }
+        // Side by side, or one above the other at large font sizes and in narrow panes, where the
+        // vintage's hint would become a tall, narrow column.
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            if (stacksFormFields(LocalDensity.current.fontScale, maxWidth)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
+                    producer(Modifier.fillMaxWidth())
+                    vintage(Modifier.fillMaxWidth())
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                    producer(Modifier.weight(1.6f))
+                    vintage(Modifier.weight(1f))
+                }
+            }
         }
         // Right under the name: the web often has the details the label lacks.
         val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
@@ -522,3 +542,6 @@ fun AutoCompleteField(
 
 /** Lets the form be laid out before it scrolls to a field. */
 internal const val FIELD_TARGET_DELAY_MS = 250L
+
+/** Producer and vintage go one above the other from this font scale on, or below this width. */
+internal fun stacksFormFields(fontScale: Float, width: Dp): Boolean = fontScale >= 1.3f || width < 360.dp

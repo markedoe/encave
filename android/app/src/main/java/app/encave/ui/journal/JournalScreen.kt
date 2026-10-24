@@ -1,5 +1,7 @@
 package app.encave.ui.journal
 
+import app.encave.ui.components.measure
+import app.encave.ui.components.rememberFabSpace
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -179,11 +181,12 @@ private fun JournalList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
         )
     }
 
+    val fabSpace = rememberFabSpace()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                modifier = Modifier.testTag("action.add_tasting"),
+                modifier = Modifier.measure(fabSpace).testTag("action.add_tasting"),
                 onClick = { choosing = true },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.journal_add)) },
@@ -242,7 +245,7 @@ private fun JournalList(viewModel: AppViewModel, navigator: AppNavigator, onOpen
                     )
                 }
             }
-            LazyColumn(Modifier.fillMaxSize().testTag("journal.list"), contentPadding = PaddingValues(bottom = 96.dp)) {
+            LazyColumn(Modifier.fillMaxSize().testTag("journal.list"), contentPadding = PaddingValues(bottom = fabSpace.listBottom)) {
                 months.forEach { (month, entries) ->
                     item(key = month.toString()) {
                         SectionHeader(monthFormat.format(month).replaceFirstChar { it.titlecase(locale) })
@@ -294,7 +297,7 @@ private fun SearchField(query: String, onChange: (String) -> Unit, hint: String)
     OutlinedTextField(
         value = query,
         onValueChange = onChange,
-        placeholder = { Text(hint) },
+        placeholder = { Text(hint, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {

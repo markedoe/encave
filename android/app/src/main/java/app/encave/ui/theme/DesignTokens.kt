@@ -14,6 +14,8 @@ object DesignTokens {
     val launchBackground = ThemedColor(light = 0xFFFEFCFC, dark = 0xFF120F10)
     /** Text and icons of a warning, always next to an icon or words. */
     val warning = ThemedColor(light = 0xFF8F5300, dark = 0xFFF2B04A)
+    /** Errors and destructive actions, always with words. */
+    val error = ThemedColor(light = 0xFFB3261E, dark = 0xFFFF6B60)
 
     /** Studio backdrop behind label photos and covers: warm cream, or warm near-black in dark theme. */
     val studioBase = ThemedColor(light = 0xFFE8DED2, dark = 0xFF141010)

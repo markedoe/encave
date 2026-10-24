@@ -128,6 +128,6 @@ class LocationLineTest {
         compose.setContent { app.encave.ui.components.LocationLine(cellar, bottles) }
         val text = compose.onNodeWithTag("wine.row.location").fetchSemanticsNode()
             .config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString()
-        assert(text.startsWith("Main rack · ") && text.endsWith(" and 2 more")) { "location line: $text" }
+        assert(text.startsWith("Main rack\u00A0· ") && text.endsWith(" and 2 more")) { "location line: $text" }
     }
 }
