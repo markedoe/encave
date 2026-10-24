@@ -129,11 +129,14 @@ class ScreenTourTest(private val device: String, private val variant: String) {
     private val dark = variant.endsWith("-dark")
     private val largeText = variant == "xl"
 
+    private var defaultLocale: Locale? = null
+
     @Before
     fun launch() {
         val night = if (dark) "night" else "notnight"
         RuntimeEnvironment.setQualifiers("$language-${devices.getValue(device)}-$night-${densities.getValue(device)}")
         if (largeText) RuntimeEnvironment.setFontScale(2f)
+        defaultLocale = Locale.getDefault()
         Locale.setDefault(Locale.forLanguageTag(language))
         val app = ApplicationProvider.getApplicationContext<EncaveApplication>()
         // The Encave colors, not the test device's wallpaper colors.
@@ -152,6 +155,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
     fun close() {
         scenario?.close()
         RuntimeEnvironment.setFontScale(1f)
+        defaultLocale?.let(Locale::setDefault)
     }
 
     // region Helpers
@@ -495,15 +499,11 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         // The move is saved in the background: wait for it.
         val repository = ApplicationProvider.getApplicationContext<EncaveApplication>().repository
         // The save runs on another thread and publishes on the main one: let both run.
-        val deadline = System.currentTimeMillis() + 10_000
         fun dropped(): Boolean {
             val cellar = repository.cellar.value
             return cellar.bottleAt(app.encave.core.Slot(cellar.racks.first().id, 2, 3)) != null
         }
-        while (!dropped() && System.currentTimeMillis() < deadline) {
-            Thread.sleep(50)
-            compose.waitForIdle()
-        }
+        compose.waitUntil(10_000, ::dropped)
         assertTrue("the dragged bottle is in its new place", dropped())
         capture("rack-dropped")
     }
@@ -675,7 +675,10 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         compose.onNodeWithTag("rack.selection").assertDoesNotExist()
         // A wine in the key lights up its bottles.
         tap("rack.key.wine")
-        val chip = if (language == "fr") "Clos des Tilleuls 2017, Rouge, 3 bouteilles" else "Clos des Tilleuls 2017, Red, 3 bottles"
+        // The sample's vintages follow the current year.
+        val vintage = ApplicationProvider.getApplicationContext<EncaveApplication>().repository.cellar.value.wines.values
+            .filter { it.name == "Clos des Tilleuls" }.mapNotNull { it.vintage }.min()
+        val chip = if (language == "fr") "Clos des Tilleuls $vintage, Rouge, 3 bouteilles" else "Clos des Tilleuls $vintage, Red, 3 bottles"
         compose.onNodeWithContentDescription(chip).assertIsSelected()
         capture("rack-key")
         tap("rack.key.wine")

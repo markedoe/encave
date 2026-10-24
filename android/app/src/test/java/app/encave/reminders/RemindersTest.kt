@@ -8,7 +8,9 @@ import app.encave.core.Cellar
 import app.encave.core.PurchaseInfo
 import app.encave.core.Wine
 import app.encave.core.WineColor
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
@@ -37,6 +39,19 @@ class RemindersTest {
             Wine(name = "Later", vintage = 2025, color = WineColor.White), quantity = 1,
             purchase = PurchaseInfo(isOrdered = true, expectedAt = today.plusDays(3).atTime(9, 0).toInstant(ZoneOffset.UTC)),
         )
+    }
+
+    @Test
+    fun theFirstCheckWaitsTheRealTimeAcrossAClockChange() {
+        val paris = ZoneId.of("Europe/Paris")
+        // 29 March 2026: the clocks go from 02:00 to 03:00 in Paris.
+        val now = LocalDate.of(2026, 3, 29).atTime(1, 30).atZone(paris)
+        assertEquals(Duration.ofMinutes(390), Reminders.initialDelay(now, LocalTime.of(9, 0)))
+        // 25 October 2026: from 03:00 back to 02:00.
+        val autumn = LocalDate.of(2026, 10, 25).atTime(1, 30).atZone(paris)
+        assertEquals(Duration.ofMinutes(510), Reminders.initialDelay(autumn, LocalTime.of(9, 0)))
+        // Past the time: tomorrow.
+        assertEquals(Duration.ofHours(23), Reminders.initialDelay(LocalDate.of(2026, 6, 1).atTime(11, 0).atZone(paris)))
     }
 
     @Test

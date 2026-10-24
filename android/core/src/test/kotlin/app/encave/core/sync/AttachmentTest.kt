@@ -22,8 +22,12 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.Timeout
 
 /** Mirrors CaveKit's AttachmentTests, with the same table of names. */
+// Sockets and pipes: a hang fails the test instead of blocking CI.
+@Timeout(120, unit = TimeUnit.SECONDS)
 class AttachmentTest {
     private val date = InstantSerializer.fromReferenceSeconds(782_000_000.5)
 

@@ -1,6 +1,7 @@
 package app.encave.core.search
 
 import app.encave.core.Wine
+import app.encave.core.sync.LocalAddress
 import java.net.URI
 import java.util.Locale
 import kotlinx.serialization.Serializable
@@ -87,7 +88,7 @@ internal object ImageAnswers {
     }
 }
 
-/** Checks for downloading a chosen picture: https only, an image type, at most 8 MB. */
+/** Checks for downloading a chosen picture: https from a public host only, an image type, at most 8 MB. */
 object WebImageDownload {
     const val MAX_BYTES = 8 * 1024 * 1024
     const val TIMEOUT_MS = 20_000
@@ -102,7 +103,39 @@ object WebImageDownload {
         return address
     }
 
-    fun isAllowed(url: String): Boolean = httpsUrl(url) != null
+    /** Redirects followed for one picture, each checked with [isAllowed]. */
+    const val MAX_REDIRECTS = 5
+
+    /**
+     * https, and a public host: search results are not trusted, so a picture never comes from
+     * this device or the local network (a router, a NAS), by name or by address.
+     */
+    fun isAllowed(url: String): Boolean {
+        val address = httpsUrl(url) ?: return false
+        val host = runCatching { URI(address).host }.getOrNull() ?: return false
+        return !isPrivateHost(host)
+    }
+
+    /** localhost, *.local, private, loopback and link-local addresses, and IP addresses written in other forms. */
+    internal fun isPrivateHost(host: String): Boolean {
+        val name = host.lowercase(Locale.ROOT).removePrefix("[").removeSuffix("]").trimEnd('.')
+        if (name.isEmpty() || LocalAddress.isLocal(name) || name.endsWith(".localhost")) return true
+        if (name.contains(':')) {
+            // IPv6: the unspecified address, and IPv4 addresses mapped into it.
+            if (name == "::" || name.startsWith("::ffff:") || name.startsWith("0:0:0:0:0:ffff:")) return true
+            return false
+        }
+        // A name whose last label is a number is an IP address ("2130706433", "0x7f.1", "127.1"):
+        // only the usual four decimal numbers, of a public address, are accepted.
+        if (name.substringAfterLast('.').let { it.isNotEmpty() && (it.all(Char::isDigit) || it.startsWith("0x")) }) {
+            val octets = name.split('.').map { part -> part.takeIf { it.length in 1..3 && it.all(Char::isDigit) && (it == "0" || it[0] != '0') }?.toInt() }
+            if (octets.size != 4 || octets.any { it == null || it > 255 }) return true
+            val (a, b) = octets[0]!! to octets[1]!!
+            // This network, shared address space (carrier-grade NAT), multicast and reserved.
+            return a == 0 || (a == 100 && b in 64..127) || a >= 224
+        }
+        return false
+    }
 
     /** "image/jpeg; charset=…" is an image; text, HTML, SVG and unknown types are not. */
     fun isImage(contentType: String?): Boolean {

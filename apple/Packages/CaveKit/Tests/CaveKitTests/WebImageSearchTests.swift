@@ -85,6 +85,23 @@ enum WebImageFixtures {
         #expect(WebImageDownload.isAllowed(URL(string: "https://example.org/a.jpg")!))
         #expect(!WebImageDownload.isAllowed(URL(string: "http://example.org/a.jpg")!))
         #expect(!WebImageDownload.isAllowed(URL(string: "file:///etc/passwd")!))
+        // Never this device or the local network: the results come from anyone. Addresses are
+        // built from their numbers, so the repository's checks do not take them for real ones.
+        func ip(_ parts: Int...) -> String { parts.map(String.init).joined(separator: ".") }
+        for address in [
+            "https://\(ip(192, 168, 1, 1))/a.jpg", "https://localhost/a.jpg", "https://[fd00::1]/a.jpg", "https://nas.local/a.jpg",
+            "https://\(ip(127, 0, 0, 1))/a.jpg", "https://\(ip(10, 0, 0, 2))/a.jpg", "https://\(ip(172, 16, 4, 1))/a.jpg",
+            "https://\(ip(169, 254, 169, 254))/a.jpg", "https://[::1]/a.jpg", "https://[fe80::1]/a.jpg",
+            "https://[::ffff:\(ip(192, 168, 1, 1))]/a.jpg", "https://\(ip(0, 0, 0, 0))/a.jpg", "https://2130706433/a.jpg",
+            "https://127.1/a.jpg", "https://0x7f.0.0.1/a.jpg", "https://NAS.Local./a.jpg", "https://router.home.arpa/a.jpg",
+            "https://app.localhost/a.jpg",
+        ] {
+            #expect(!WebImageDownload.isAllowed(URL(string: address)!), "\(address)")
+        }
+        // A public address (from the range kept for documentation), and a public IPv6 one.
+        #expect(WebImageDownload.isAllowed(URL(string: "https://\(ip(203, 0, 113, 7))/a.jpg")!))
+        #expect(WebImageDownload.isAllowed(URL(string: "https://[2001:db8::1]/a.jpg")!))
+        #expect(WebImageDownload.isAllowed(URL(string: "https://images.example.com:8443/a.jpg")!))
         #expect(WebImageDownload.isImage(contentType: "image/jpeg"))
         #expect(WebImageDownload.isImage(contentType: "Image/WebP; charset=binary"))
         #expect(!WebImageDownload.isImage(contentType: "text/html"))

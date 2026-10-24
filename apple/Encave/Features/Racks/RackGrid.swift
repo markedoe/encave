@@ -47,6 +47,9 @@ struct RackGrid: View {
     /// Drawn only (the overview of a rack that scrolls): no buttons, identifiers or
     /// accessibility elements, so neither VoiceOver nor UI tests find its places twice.
     var isPicture = false
+    /// The width the fridge's band captions may take, when wider than the shelves (a small
+    /// preview, where they would be cut).
+    var captionWidth: CGFloat?
     /// The smallest size of the fridge's captions (shelf numbers, front and back, zones),
     /// growing with Dynamic Type.
     @ScaledMetric(relativeTo: .caption2) private var captionFloor: CGFloat = 11
@@ -221,7 +224,7 @@ struct RackGrid: View {
             .lineLimit(2)
             .truncationMode(.tail)
             .fixedSize(horizontal: false, vertical: true)
-            .frame(width: bandsWidth, alignment: .leading)
+            .frame(width: max(bandsWidth, captionWidth ?? 0), alignment: .leading)
             .frame(minHeight: max(Self.bandCaptionMinHeight, cellSize * Self.bandCaptionHeight), alignment: .leading)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Shelf \(shelf + 1)") + Text(verbatim: ", ") + caption)
@@ -770,7 +773,8 @@ struct RackCellView: View {
                     .opacity(0.55)
             } else {
                 BottleEnd(color: nil, size: size * 0.72, isEmpty: true, isHighlighted: isHighlighted)
-                if selectedCount == 0 {
+                // A picture (preview, overview) shows the shape only: numbers would crowd it.
+                if selectedCount == 0, !isPicture {
                     Text(verbatim: rack.emptyCaption(for: cell))
                         .font(.system(size: max(9, size * 0.18), weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
@@ -807,7 +811,7 @@ struct RackCellView: View {
                 }
             } else {
                 BottleEnd(color: nil, size: diameter, isEmpty: true, isHighlighted: isHighlighted)
-                if selectedCount == 0 {
+                if selectedCount == 0, !isPicture {
                     // The place number: the shelf is on the side, the band in its caption.
                     Text(verbatim: rack.emptyCaption(for: cell))
                         .font(.system(size: max(9, diameter * 0.25), weight: .medium).monospacedDigit())

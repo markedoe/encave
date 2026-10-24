@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.Timeout
 
 /** An in-memory connection: frames written on one end are read on the other. */
 class Pipe private constructor(private val inbox: Channel<ByteArray>) : FrameTransport {
@@ -78,6 +80,8 @@ internal suspend fun syncErrorOf(block: suspend () -> Unit): SyncError? = try {
     error.error
 }
 
+// Sockets and pipes: a hang fails the test instead of blocking CI.
+@Timeout(120, unit = TimeUnit.SECONDS)
 class SyncProtocolTests {
     @Test
     fun pairingGivesBothDevicesTheSameCodeAndTheCellar() = runBlocking {

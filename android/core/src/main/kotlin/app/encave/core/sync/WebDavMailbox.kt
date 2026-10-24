@@ -1,5 +1,6 @@
 package app.encave.core.sync
 
+import app.encave.core.Http
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.Base64
@@ -116,6 +117,7 @@ class WebDavMailboxStore(baseUrl: String, username: String, password: String, pr
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
+                .addInterceptor(Http.userAgentInterceptor)
                 .build()
         }
 

@@ -153,7 +153,7 @@ extension TavilySearch: WebImageSearchProvider {
     }
 }
 
-/// Checks for downloading a chosen picture: https only, an image type, at most 8 MB.
+/// Checks for downloading a chosen picture: https from a public host only, an image type, at most 8 MB.
 public enum WebImageDownload {
     public static let maxBytes = 8 * 1024 * 1024
     public static let timeout: TimeInterval = 20
@@ -166,7 +166,37 @@ public enum WebImageDownload {
         return url
     }
 
-    public static func isAllowed(_ url: URL) -> Bool { httpsURL(url.absoluteString) != nil }
+    /// https, and a public host: search results are not trusted, so a picture never comes from
+    /// this device or the local network (a router, a NAS), by name or by address.
+    public static func isAllowed(_ url: URL) -> Bool {
+        guard let url = httpsURL(url.absoluteString), let host = url.host else { return false }
+        return !isPrivateHost(host)
+    }
+
+    /// localhost, *.local, private, loopback and link-local addresses, and IP addresses written in other forms.
+    static func isPrivateHost(_ host: String) -> Bool {
+        var name = host.lowercased()
+        if name.hasPrefix("["), name.hasSuffix("]") { name = String(name.dropFirst().dropLast()) }
+        while name.hasSuffix(".") { name.removeLast() }
+        if name.isEmpty || LocalAddress.isLocal(host: name) || name.hasSuffix(".localhost") { return true }
+        if name.contains(":") {
+            // IPv6: the unspecified address, and IPv4 addresses mapped into it.
+            return name == "::" || name.hasPrefix("::ffff:") || name.hasPrefix("0:0:0:0:0:ffff:")
+        }
+        // A name whose last label is a number is an IP address ("2130706433", "0x7f.1", "127.1"):
+        // only the usual four decimal numbers, of a public address, are accepted.
+        let last = name.split(separator: ".").last.map(String.init) ?? ""
+        guard !last.isEmpty, last.allSatisfy({ $0.isASCII && $0.isNumber }) || last.hasPrefix("0x") else { return false }
+        let octets = name.split(separator: ".", omittingEmptySubsequences: false).map { part -> Int? in
+            guard (1...3).contains(part.count), part.allSatisfy({ $0.isASCII && $0.isNumber }),
+                  part == "0" || part.first != "0" else { return nil }
+            return Int(part)
+        }
+        guard octets.count == 4, octets.allSatisfy({ ($0 ?? 256) <= 255 }) else { return true }
+        let a = octets[0]!, b = octets[1]!
+        // This network, shared address space (carrier-grade NAT), multicast and reserved.
+        return a == 0 || (a == 100 && (64...127).contains(b)) || a >= 224
+    }
 
     /// "image/jpeg; charset=…" is an image; text, HTML and unknown types are not.
     public static func isImage(contentType: String?) -> Bool {

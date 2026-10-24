@@ -1,7 +1,7 @@
 package app.encave.core.sync
 
+import app.encave.core.Http
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.util.Locale
 import java.net.URL
 import java.net.URLEncoder
@@ -27,6 +27,11 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 class RelayMailboxStore(baseUrl: String) : MailboxStore {
     /** Without a trailing slash. */
     val baseUrl: String = baseUrl.trim().trimEnd('/')
+
+    init {
+        // Checked here too, not only on the screens: the token must never travel in clear text.
+        require(isAllowed(this.baseUrl)) { "a relay needs https, or http on this device or the local network" }
+    }
 
     override fun mailbox(id: String, token: String): Mailbox = RelayMailbox(baseUrl, id, token)
     override fun inbox(id: String, token: String): Mailbox = RelayMailbox(baseUrl, id, token)
@@ -68,7 +73,7 @@ private val lenient = Json { ignoreUnknownKeys = true }
 
 /** Blocking HTTP request; returns the status and the body. */
 internal fun http(url: String, method: String, token: String, body: ByteArray? = null, timeoutMs: Int = 60_000, headers: Map<String, String> = emptyMap()): Pair<Int, ByteArray> {
-    val connection = URL(url).openConnection() as HttpURLConnection
+    val connection = Http.open(URL(url))
     try {
         connection.requestMethod = method
         connection.connectTimeout = timeoutMs

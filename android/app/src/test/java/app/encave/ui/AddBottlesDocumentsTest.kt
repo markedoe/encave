@@ -1,9 +1,9 @@
 package app.encave.ui
 
-import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
 import app.encave.R
+import app.encave.idleMainLooperUntil
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.core.Slot
@@ -21,7 +21,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -40,11 +39,7 @@ class AddBottlesDocumentsTest {
             .also(app.documents::discard)
         val wine = Wine(name = "With documents")
         viewModel.addBottles(wine, 1, emptyList(), PurchaseInfo(), pendingDocuments = listOf(kept, lost))
-        val deadline = System.currentTimeMillis() + 10_000
-        while (messages.size < 2 && System.currentTimeMillis() < deadline) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(10)
-        }
+        idleMainLooperUntil { messages.size >= 2 }
         collector.cancel()
         assertEquals(1, app.repository.cellar.value.wines.values.single { it.name == wine.name }.attachments?.size)
         assertTrue(messages.any { (it.text as? UiText.Res)?.id == R.string.err_document_unreadable })
@@ -65,11 +60,7 @@ class AddBottlesDocumentsTest {
         var done: Boolean? = null
         // The place is taken: the save fails.
         viewModel.addBottles(Wine(name = "Too late"), 1, listOf(Slot(rack.id, 0, 0)), PurchaseInfo(), photo = photo, pendingDocuments = listOf(pending)) { done = it }
-        val deadline = System.currentTimeMillis() + 10_000
-        while (done == null && System.currentTimeMillis() < deadline) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(10)
-        }
+        idleMainLooperUntil { done != null }
         assertEquals(false, done)
         assertFalse(app.photos.exists(PhotoId.make(photo)))
         assertFalse(app.documents.exists(documentId))

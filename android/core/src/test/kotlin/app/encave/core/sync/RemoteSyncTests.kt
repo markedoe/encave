@@ -384,6 +384,10 @@ class RemoteSyncTests {
         assertTrue(RelayMailboxStore.isAllowed("https://my_relay.example"))
         assertTrue(RelayMailboxStore.isAllowed("https://cave.exemple.fr"))
         assertTrue(RelayMailboxStore.isAllowed("https://relais.café.example"))
+        // The store itself refuses one, whoever creates it.
+        assertThrows<IllegalArgumentException> { RelayMailboxStore("http://example.com") }
+        assertThrows<IllegalArgumentException> { RelayMailboxStore("ftp://relay.example") }
+        assertEquals("https://relay.example", RelayMailboxStore("https://relay.example/").baseUrl)
     }
 
     /** Runs against a real relay when ENCAVE_RELAY_URL is set (the CI starts relay/server.mjs). */

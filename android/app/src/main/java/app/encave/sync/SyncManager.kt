@@ -927,9 +927,8 @@ class SyncManager(
             }
             return
         }
-        val store = RelayMailboxStore(url)
-        try {
-            store.check()
+        val store = try {
+            RelayMailboxStore(url).also { it.check() }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
@@ -1077,7 +1076,8 @@ class SyncManager(
 
     /** The store for a storage string; null for a WebDAV folder without a login on this device. */
     private fun storeFor(storageString: String): MailboxStore? {
-        if (!storageString.startsWith(WEBDAV_PREFIX)) return RelayMailboxStore(storageString)
+        // A relay address that is not allowed (http elsewhere than the local network) is not used.
+        if (!storageString.startsWith(WEBDAV_PREFIX)) return runCatching { RelayMailboxStore(storageString) }.getOrNull()
         val folder = storageString.removePrefix(WEBDAV_PREFIX)
         val login = storage.webDavLogin?.takeIf { it.folder == folder } ?: return null
         return runCatching { WebDavMailboxStore(folder, login.username, login.password) }.getOrNull()
@@ -1102,7 +1102,7 @@ class SyncManager(
         if (url.startsWith(WEBDAV_PREFIX) && !RemoteSync.mayRun(userAsked, storage.webDavLoginRefused)) return
         val store = storeForTests?.invoke(url) ?: storeFor(url)
         if (store == null) {
-            status.update { it.copy(needsWebDavSignIn = true) }
+            if (url.startsWith(WEBDAV_PREFIX)) status.update { it.copy(needsWebDavSignIn = true) }
             return
         }
         if (status.value.wasRemoved || isDemo || !remoteMutex.tryLock()) return

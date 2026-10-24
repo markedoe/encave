@@ -1,6 +1,7 @@
 package app.encave.ui.racks
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -11,7 +12,10 @@ import app.encave.MainActivity
 import app.encave.R
 import app.encave.core.RackKind
 import app.encave.core.SampleData
+import app.encave.core.StorageSettings
+import app.encave.core.StorageType
 import kotlinx.coroutines.runBlocking
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -62,6 +66,53 @@ class RackWizardTest {
         assertEquals(List(5) { 2 }, fridge.shelfLayers)
         assertTrue(fridge.isBackReversed)
         assertTrue(fridge.name, fridge.name.startsWith("Wine fridge"))
+    }
+
+    @Test
+    fun aDoubleTapOnCreateAddsOneStorageAndStaysInStorage() {
+        val before = cellar.racks.size
+        tap("racks.add")
+        tap("wizard.next")
+        tap("wizard.next")
+        // Two taps before the screen can react.
+        compose.onNodeWithTag("wizard.create").performTouchInput {
+            click()
+            advanceEventTime(100)
+            click()
+        }
+        compose.waitUntil(5_000) { cellar.racks.size > before }
+        compose.waitForIdle()
+        assertEquals(before + 1, cellar.racks.size)
+        // Back on the Storage list, not one screen further back.
+        compose.onNodeWithTag("racks.add").assertExists()
+        compose.onNodeWithTag("wizard.create").assertDoesNotExist()
+    }
+
+    @Test
+    fun closeLeavesTheWizardFromTheLastStep() {
+        val before = cellar.racks.size
+        tap("racks.add")
+        tap("wizard.next")
+        tap("wizard.next")
+        compose.onNodeWithTag("wizard.create").assertExists()
+        // The bottom Back goes to the previous step; Close leaves.
+        compose.onNodeWithTag("wizard.back").assertExists()
+        tap("wizard.close")
+        compose.onNodeWithTag("racks.add").assertExists()
+        compose.onNodeWithTag("wizard.create").assertDoesNotExist()
+        assertEquals(before, cellar.racks.size)
+    }
+
+    @Test
+    fun thePreviewFitsTheWholeDefaultFridgeInAPhoneCard() {
+        // Five shelves two deep, head-to-tail: it used to show less than two of them.
+        val fridge = StorageSettings(StorageType.WineFridge).rack(name = "Fridge")
+        // The card of this test's phone (411 × 891 dp).
+        val width = 411.dp - 16.dp * 2 - 12.dp * 2
+        val height = 891.dp * PREVIEW_SHARE
+        val cell = fittingCellSize(fridge, width, height, showHeaders = false, labelHeight = 20.dp)
+        val (w, h) = rackGridSize(fridge, cell, showHeaders = false, labelHeight = 20.dp)
+        assertTrue("$cell: $w × $h", w <= width && h <= height)
     }
 
     @Test
