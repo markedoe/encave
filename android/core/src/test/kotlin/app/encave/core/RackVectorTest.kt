@@ -50,6 +50,17 @@ class RackVectorTest {
     }
 
     @Test
+    fun storageTypeAndCount() {
+        val raw = mapOf("rack" to StorageType.Rack, "wineFridge" to StorageType.WineFridge, "crates" to StorageType.Crates)
+        for (layout in layouts) {
+            val rack = rack(layout)
+            val about = layout.getValue("about").jsonPrimitive.content
+            assertEquals(raw.getValue(layout.getValue("storageType").jsonPrimitive.content), rack.storageType, about)
+            assertEquals(layout.getValue("storageCount").jsonPrimitive.int, rack.storageCount, about)
+        }
+    }
+
+    @Test
     fun placesAreNamedTheSame() {
         var count = 0
         for (layout in layouts) {

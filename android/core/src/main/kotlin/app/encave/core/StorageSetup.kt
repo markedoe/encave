@@ -98,8 +98,13 @@ data class StorageSettings(
             val base = StorageSettings(rack.storageType)
             return when (rack.storageType) {
                 StorageType.Rack -> base.copy(
-                    layout = if (rack.kind == RackKind.Staggered) RackLayout.Honeycomb else RackLayout.Grid,
+                    layout = when (rack.kind) {
+                        RackKind.Staggered -> RackLayout.Honeycomb
+                        RackKind.Bins -> RackLayout.Diamond
+                        else -> RackLayout.Grid
+                    },
                     rows = rack.rows, columns = rack.columns, depth = rack.depth,
+                    bottlesPerBin = if (rack.kind == RackKind.Bins) rack.binCapacity else base.bottlesPerBin,
                 )
                 StorageType.WineFridge -> {
                     val layers = rack.shelfLayers?.takeIf { rack.hasShelfLayers }
@@ -128,20 +133,36 @@ data class StorageSettings(
 
 /**
  * The kind of storage, as the wizard names it: a honeycomb on shelves or shelves are a wine
- * fridge, bins are crates (diamond bins made in a rack read the same once saved).
+ * fridge; bins laid out as the wizard lays out crates are crates, other bins are diamond
+ * bins in a rack (see [isCratesLayout]).
  */
 val Rack.storageType: StorageType
     get() = when (kind) {
         RackKind.Grid -> StorageType.Rack
         RackKind.Staggered -> if (hasShelfLayers) StorageType.WineFridge else StorageType.Rack
         RackKind.Shelves -> StorageType.WineFridge
-        RackKind.Bins -> StorageType.Crates
+        RackKind.Bins -> if (isCratesLayout) StorageType.Crates else StorageType.Rack
     }
 
-/** What the Storage list counts: rows of a rack, shelves of a fridge, bins of crates. */
+/**
+ * Bins laid out as crates are: [StorageSettings.BINS_PER_ROW] to a row, the last row
+ * possibly shorter. Nothing saved tells diamond bins from crates, so the shape does; a
+ * diamond rack of one row, or of rows of exactly that many bins, reads as crates.
+ */
+val Rack.isCratesLayout: Boolean
+    get() {
+        val bins = cellCount
+        if (kind != RackKind.Bins || bins < 1) return false
+        val perRow = minOf(bins, StorageSettings.BINS_PER_ROW)
+        val expectedRows = (bins + perRow - 1) / perRow
+        return rows == expectedRows &&
+            (0 until rows).all { columnsInRow(it) == if (it < rows - 1) perRow else bins - (rows - 1) * perRow }
+    }
+
+/** What the Storage list counts: rows of a rack, shelves of a fridge, bins of crates or diamond bins. */
 val Rack.storageCount: Int
     get() = when (storageType) {
-        StorageType.Rack -> rows
+        StorageType.Rack -> if (kind == RackKind.Bins) cellCount else rows
         StorageType.WineFridge -> if (hasShelfLayers) shelfLayers?.size ?: rows else rows
         StorageType.Crates -> cellCount
     }

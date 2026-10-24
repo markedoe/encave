@@ -232,6 +232,13 @@ labels) is not planned: `CLAUDE.md` allows only the label photo to be sent to
 it. For the same reason, Suggest Details reads web search results only with the
 on-device model.
 
+### Backlog for the next protocol version
+
+Postponed by the owner; each needs a protocol version that every device understands.
+
+- Remote photo and document paths named by an HMAC keyed with the cellar key, instead of the plaintext SHA-256 of the file.
+- Rotating Bonjour identifiers on the local network: no stable device or cellar id advertised.
+
 ## Open questions
 
 - **App store distribution and the AGPL.** Store terms are widely considered

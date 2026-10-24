@@ -86,22 +86,22 @@ struct MacRoot: View {
     private var sidebar: some View {
         List(selection: $destination) {
             Section("Library") {
-                Label("Cellar", systemImage: "wineglass")
+                SidebarLabel(title: Text("Cellar"), systemImage: "wineglass")
                     .badge(model.bottlesInCellar.count)
                     .tag(MacDestination.cellar)
                     .accessibilityIdentifier("section.cellar")
-                Label("Tonight", systemImage: "moon.stars")
+                SidebarLabel(title: Text("Tonight"), systemImage: "moon.stars")
                     .badge(model.overview.statistics.byMaturity[.drinkSoon, default: 0])
                     .tag(MacDestination.tonight)
                     .accessibilityIdentifier("section.tonight")
-                Label("Journal", systemImage: "book.closed")
+                SidebarLabel(title: Text("Journal"), systemImage: "book.closed")
                     .badge(model.cellar.shoppingListCount)
                     .tag(MacDestination.journal)
                     .accessibilityIdentifier("section.journal")
             }
             Section("Storage") {
                 ForEach(Array(model.cellar.racks.enumerated()), id: \.element.id) { index, rack in
-                    Label(rack.name, systemImage: rack.systemImage)
+                    SidebarLabel(title: Text(rack.name), systemImage: rack.systemImage)
                         .help(rack.name)
                         .badge(model.cellar.occupancy(of: rack))
                         .tag(MacDestination.rack(rack.id))
@@ -128,6 +128,9 @@ struct MacRoot: View {
             }
         }
         .listStyle(.sidebar)
+        // The selected row: white on a darker rose in dark mode, where white on the accent
+        // is 3.4:1 (design token "mac-sidebar-selection"); the accent in light mode.
+        .tint(Color.macSidebarSelection)
         .confirmsRackDeletion($deletingRackID)
         .safeAreaInset(edge: .bottom) { SyncAttentionFooter() }
     }
@@ -190,6 +193,20 @@ struct MacRoot: View {
             } else {
                 router.sheet = .editRack(rackID: nil)
             }
+        }
+    }
+}
+
+/// A sidebar row whose symbol keeps the accent: the sidebar's tint is for the selection only.
+private struct SidebarLabel: View {
+    let title: Text
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            title
+        } icon: {
+            Image(systemName: systemImage).tint(Color.accentColor)
         }
     }
 }

@@ -61,7 +61,12 @@ public struct StorageSettings: Equatable, Sendable {
         // Only the settings of its type, so the same storage gives the same settings.
         switch rack.storageType {
         case .rack:
-            layout = rack.kind == .staggered ? .honeycomb : .grid
+            layout = switch rack.kind {
+            case .staggered: .honeycomb
+            case .bins: .diamond
+            default: .grid
+            }
+            if rack.kind == .bins { bottlesPerBin = rack.binCapacity }
             rows = rack.rows
             columns = rack.columns
             depth = rack.depth
@@ -120,20 +125,33 @@ public struct StorageSettings: Equatable, Sendable {
 
 extension Rack {
     /// The kind of storage, as the wizard names it: a honeycomb on shelves or shelves are a
-    /// wine fridge, bins are crates (diamond bins made in a rack read the same once saved).
+    /// wine fridge; bins laid out as the wizard lays out crates are crates, other bins are
+    /// diamond bins in a rack (see `isCratesLayout`).
     public var storageType: StorageType {
         switch kind {
         case .grid: .rack
         case .staggered: hasShelfLayers ? .wineFridge : .rack
         case .shelves: .wineFridge
-        case .bins: .crates
+        case .bins: isCratesLayout ? .crates : .rack
         }
     }
 
-    /// What the Storage list counts: rows of a rack, shelves of a fridge, bins of crates.
+    /// Bins laid out as crates are: `StorageSettings.binsPerRow` to a row, the last row
+    /// possibly shorter. Nothing saved tells diamond bins from crates, so the shape does; a
+    /// diamond rack of one row, or of rows of exactly that many bins, reads as crates.
+    public var isCratesLayout: Bool {
+        let bins = cellCount
+        guard kind == .bins, bins >= 1 else { return false }
+        let perRow = min(bins, StorageSettings.binsPerRow)
+        guard rows == (bins + perRow - 1) / perRow else { return false }
+        return (0..<rows).allSatisfy { columns(inRow: $0) == ($0 < rows - 1 ? perRow : bins - (rows - 1) * perRow) }
+    }
+
+    /// What the Storage list counts: rows of a rack, shelves of a fridge, bins of crates or
+    /// diamond bins.
     public var storageCount: Int {
         switch storageType {
-        case .rack: rows
+        case .rack: kind == .bins ? cellCount : rows
         case .wineFridge: hasShelfLayers ? shelfLayers?.count ?? rows : rows
         case .crates: cellCount
         }

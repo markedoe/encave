@@ -15,6 +15,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - CSV export adds a readable location column ("Cabinet · Shelf 1, position 6")
   after the slot column; imports ignore it
 - The sample cellar's wine fridges are named Cabinet (Armoire)
+- Diamond bins made as a rack stay a Rack: "Rack · 6 bins" in the Storage
+  list, edited as a rack; crates stay Crates
+- Android uses the Encave burgundy by default; "Use wallpaper colors" stays in
+  Settings, off unless you turned it on
+- Tonight suggests the bottles to drink soon first, then the ready ones, each
+  in the day's order
 - Plain http also works with a server name of your home network (such as
   http://searxng.home:8888) for web search, AI, WebDAV and relay, when every
   address it points to is local; Encave then connects to that address

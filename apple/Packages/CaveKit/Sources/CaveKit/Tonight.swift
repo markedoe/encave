@@ -19,6 +19,10 @@ public extension Cellar {
     /// within each, the earliest end of window, then more bottles, then the name.
     /// Bottles kept for an occasion are left out, as in Tonight's list.
     func tonightCandidates(year: Int) -> [WineGroup] {
+        tonightCandidatesWithMaturity(year: year).map(\.1)
+    }
+
+    private func tonightCandidatesWithMaturity(year: Int) -> [(Maturity, WineGroup)] {
         groupsByMaturity(year: year)
             .filter { $0.maturity == .drinkSoon || $0.maturity == .ready }
             .flatMap { section in section.groups.map { (section.maturity, $0) } }
@@ -29,12 +33,11 @@ public extension Cellar {
                 if a.1.count != b.1.count { return a.1.count > b.1.count }
                 return Cellar.nameOrder(a.1.wine, b.1.wine)
             }
-            .map(\.1)
     }
 
-    /// Tonight's suggestions for a day, in the order "Another idea" goes through them: the
-    /// candidates ranked by `tonightRank`, so the first is the same all day and does not
-    /// change when other wines are drunk. `kept` (the first one shown today, remembered by
+    /// Tonight's suggestions for a day, in the order "Another idea" goes through them: those
+    /// to drink soon, then those ready, each in the day's order (`tonightRank`), so the first
+    /// is the same all day and does not change when other wines are drunk. `kept` (the first one shown today, remembered by
     /// the app) stays first while it is a candidate, so a wine added later does not take
     /// its place either.
     func tonightPicks(year: Int, day: String, keeping kept: UUID? = nil) -> [WineGroup] {
@@ -44,15 +47,16 @@ public extension Cellar {
     }
 
     private func rankedTonightCandidates(year: Int, day: String) -> [WineGroup] {
-        let candidates = tonightCandidates(year: year)
-        let ranks = Dictionary(uniqueKeysWithValues: candidates.map { ($0.wine.id, Cellar.tonightRank(wineID: $0.wine.id, day: day)) })
+        let candidates = tonightCandidatesWithMaturity(year: year)
+        let ranks = Dictionary(uniqueKeysWithValues: candidates.map { ($0.1.wine.id, Cellar.tonightRank(wineID: $0.1.wine.id, day: day)) })
         // A stable sort: equal ranks (never in practice) keep the best-first order.
         return candidates.enumerated()
             .sorted { a, b in
-                let rankA = ranks[a.element.wine.id]!, rankB = ranks[b.element.wine.id]!
+                if a.element.0 != b.element.0 { return a.element.0 < b.element.0 }
+                let rankA = ranks[a.element.1.wine.id]!, rankB = ranks[b.element.1.wine.id]!
                 return rankA != rankB ? rankA < rankB : a.offset < b.offset
             }
-            .map(\.element)
+            .map(\.element.1)
     }
 
     /// A wine's place among Tonight's suggestions on a day: the 64-bit FNV-1a hash of the

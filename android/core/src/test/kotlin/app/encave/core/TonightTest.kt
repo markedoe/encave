@@ -108,6 +108,30 @@ class TonightTest {
     }
 
     @Test
+    fun picksPutDrinkSoonFirstThenReadyEachInTheDaysOrder() {
+        val cellar = Cellar()
+        for (index in 1..4) {
+            cellar.addBottles(Wine(name = "Soon $index", drinkFrom = 2020, drinkUntil = 2026), 1)
+            cellar.addBottles(Wine(name = "Ready $index", drinkFrom = 2020, drinkUntil = 2030), 1)
+        }
+        for (day in listOf(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 2), LocalDate.of(2026, 3, 3))) {
+            val picks = cellar.tonightPicks(2026, day)
+            assertTrue(picks.take(4).all { it.wine.name.startsWith("Soon") }, "$day")
+            assertTrue(picks.takeLast(4).all { it.wine.name.startsWith("Ready") }, "$day")
+            for (half in listOf(picks.take(4), picks.takeLast(4))) {
+                val ranks = half.map { tonightRank(it.wine.id, day) }
+                assertEquals(ranks.sorted(), ranks, "$day")
+            }
+            // The pick kept by the app stays first, even a ready one.
+            val ready = picks.last()
+            assertEquals(
+                listOf(ready.wine.id) + picks.dropLast(1).map { it.wine.id },
+                cellar.tonightPicks(2026, day, kept = ready.wine.id).map { it.wine.id },
+            )
+        }
+    }
+
+    @Test
     fun picksEdgeCases() {
         val cellar = Cellar()
         val day = LocalDate.of(2026, 1, 1)

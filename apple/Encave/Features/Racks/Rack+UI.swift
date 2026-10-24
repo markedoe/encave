@@ -76,11 +76,12 @@ extension StorageType {
 }
 
 extension Rack {
-    /// "Wine fridge · 4 shelves", "Rack · 6 rows" or "Crates · 10 bins", as in the Storage list.
+    /// "Wine fridge · 4 shelves", "Rack · 6 rows", "Rack · 6 bins" (diamond bins) or
+    /// "Crates · 10 bins", as in the Storage list.
     var storageSummary: String {
         let count = storageCount
         let detail = switch storageType {
-        case .rack: String(localized: "\(count) rows")
+        case .rack: kind == .bins ? String(localized: "\(count) bins") : String(localized: "\(count) rows")
         case .wineFridge: String(localized: "\(count) shelves")
         case .crates: String(localized: "\(count) bins")
         }

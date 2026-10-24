@@ -27,6 +27,21 @@ import Testing
         settings.layout = .diamond; settings.rows = 2; settings.columns = 3; settings.bottlesPerBin = 10
         let rack = settings.rack(name: "Diamonds")
         #expect(rack.kind == .bins && rack.binCapacity == 10 && rack.capacity == 60)
+        // Diamond bins stay a rack once saved, counted in bins, and edit as they were made.
+        #expect(rack.storageType == .rack && rack.storageCount == 6)
+        #expect(StorageSettings(rack: rack) == settings)
+        var defaults = StorageSettings(type: .rack)
+        defaults.layout = .diamond
+        #expect(defaults.rack(name: "").storageType == .rack)
+    }
+
+    @Test func cratesStayCrates() {
+        for bins in 1...StorageSettings.maxCount {
+            var settings = StorageSettings(type: .crates)
+            settings.bins = bins
+            let rack = settings.rack(name: "Crates")
+            #expect(rack.storageType == .crates && rack.storageCount == bins, "\(bins) bins")
+        }
     }
 
     @Test func fridgeWithOneRowPerShelfIsShelves() {

@@ -26,7 +26,9 @@ val List<Bottle>.drinkChoices: List<Bottle>
  * each, the earliest end of window, then more bottles, then the name. Bottles kept for an
  * occasion are left out, as in Tonight's list.
  */
-fun Cellar.tonightCandidates(year: Int): List<WineGroup> {
+fun Cellar.tonightCandidates(year: Int): List<WineGroup> = tonightCandidatesWithMaturity(year).map { it.second }
+
+private fun Cellar.tonightCandidatesWithMaturity(year: Int): List<Pair<Maturity, WineGroup>> {
     val collator = Cellar.collator()
     return groupsByMaturity(year)
         .filter { it.maturity == Maturity.DrinkSoon || it.maturity == Maturity.Ready }
@@ -40,20 +42,21 @@ fun Cellar.tonightCandidates(year: Int): List<WineGroup> {
                 else -> Cellar.nameOrder(a.second.wine, b.second.wine, collator)
             }
         }
-        .map { it.second }
 }
 
 /**
- * Tonight's suggestions for a day, in the order "Another idea" goes through them: the
- * candidates ranked by [tonightRank], so the first is the same all day and does not change
- * when other wines are drunk. [kept] (the first one shown today, remembered by the app)
+ * Tonight's suggestions for a day, in the order "Another idea" goes through them: those to
+ * drink soon, then those ready, each in the day's order ([tonightRank]), so the first is the
+ * same all day and does not change when other wines are drunk. [kept] (the first one shown today, remembered by the app)
  * stays first while it is a candidate, so a wine added later does not take its place either.
  */
 fun Cellar.tonightPicks(year: Int, day: LocalDate, kept: UUID? = null): List<WineGroup> {
-    val candidates = tonightCandidates(year)
-    val ranks = candidates.associate { it.wine.id to tonightRank(it.wine.id, day) }
+    val candidates = tonightCandidatesWithMaturity(year)
+    val ranks = candidates.associate { it.second.wine.id to tonightRank(it.second.wine.id, day) }
     // A stable sort: equal ranks (never in practice) keep the best-first order.
-    val ranked = candidates.sortedWith { a, b -> ranks.getValue(a.wine.id).compareTo(ranks.getValue(b.wine.id)) }
+    val ranked = candidates
+        .sortedWith(compareBy<Pair<Maturity, WineGroup>> { it.first }.thenBy { ranks.getValue(it.second.wine.id) })
+        .map { it.second }
     val first = ranked.firstOrNull { it.wine.id == kept } ?: return ranked
     return listOf(first) + (ranked - first)
 }

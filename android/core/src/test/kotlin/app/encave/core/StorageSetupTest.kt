@@ -36,6 +36,23 @@ class StorageSetupTest {
         assertEquals(RackKind.Bins, rack.kind)
         assertEquals(10, rack.binCapacity)
         assertEquals(60, rack.capacity)
+        // Diamond bins stay a rack once saved, counted in bins, and edit as they were made.
+        assertEquals(StorageType.Rack, rack.storageType)
+        assertEquals(6, rack.storageCount)
+        assertEquals(
+            StorageSettings(StorageType.Rack, layout = RackLayout.Diamond, rows = 2, columns = 3, bottlesPerBin = 10),
+            StorageSettings.of(rack),
+        )
+        assertEquals(StorageType.Rack, StorageSettings(StorageType.Rack, layout = RackLayout.Diamond).rack(name = "").storageType)
+    }
+
+    @Test
+    fun cratesStayCrates() {
+        for (bins in 1..StorageSettings.MAX_COUNT) {
+            val rack = StorageSettings(StorageType.Crates, bins = bins).rack(name = "Crates")
+            assertEquals(StorageType.Crates, rack.storageType, "$bins bins")
+            assertEquals(bins, rack.storageCount, "$bins bins")
+        }
     }
 
     @Test
