@@ -394,6 +394,16 @@ jobs:
             "${auth[@]}" | xcbeautify --renderer github-actions
           echo "uploaded=true" >> "$GITHUB_OUTPUT"
 
+      - name: No tester e-mail for this build (iPhone, iPad)
+        # Before App Store Connect has processed it; testers still see it in TestFlight.
+        if: steps.ios.outputs.uploaded == 'true'
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          PLATFORMS: IOS
+          WAIT_MINUTES: "10"
+        run: python3 tools/testflight_testers.py --quiet
+
       - name: Archive and upload (Mac)
         id: mac
         if: env.UPLOAD == 'true'
@@ -413,6 +423,15 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export-mac" \
             "${auth[@]}" | xcbeautify --renderer github-actions
           echo "uploaded=true" >> "$GITHUB_OUTPUT"
+
+      - name: No tester e-mail for this build (Mac)
+        if: steps.mac.outputs.uploaded == 'true'
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          PLATFORMS: MAC_OS
+          WAIT_MINUTES: "10"
+        run: python3 tools/testflight_testers.py --quiet
 
       - name: Mac launch test (twice, then each section; reports crashes)
         # Also when the upload failed: the archived app is there.
