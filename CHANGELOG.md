@@ -17,6 +17,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - The sample cellar's wine fridges are named Cabinet (Armoire)
 
 ### Fixed
+- Replace This Cellar and Erase All keep a previous version first; with
+  "also erase backups", photos and documents go once Undo has passed
+- Removing a device changes the cellar key on every device that has it, also
+  when the device that removed it does not sync away from home; mixed app
+  versions no longer rotate keys in turn
+- CSV files from Excel (French) and CellarTracker keep their accents, vintages
+  and quantities; prices such as 8.333 no longer come back as 8333
+- Restoring a recent backup no longer shows every bottle as changed, and
+  Replace no longer sends the whole cellar again
+- Undo after editing a storage or swapping two bottles never moves other
+  bottles; a bottle already opened cannot be moved
+- Scan Again while the AI reads a label no longer mixes two wines (iPhone, iPad)
+- Mac sheets fit the window; Android text on wallpaper colours is readable;
+  large text no longer cuts figures, charts, cards and the Storage tab
+- The relay keeps room for cellars when someone drops anonymous messages, and
+  the Cloudflare relay has a daily upload budget
+- Android no longer sends the phone model to the services it contacts, and
+  camera photos (with their location) are deleted after use
 - Empty positions in shelves and wine fridges show their number only, and
   positions read "Shelf 1, position 6" everywhere (Shortcuts and reports too); layered
   fridges are listed as wine fridges with the fridge icon
