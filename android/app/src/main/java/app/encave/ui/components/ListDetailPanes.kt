@@ -1,9 +1,15 @@
 package app.encave.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
@@ -68,31 +74,53 @@ fun ListDetailPanes(
     val stores: DetailStores = viewModel()
     LaunchedEffect(stores, selected) { if (selected == null) stores.keepOnly(null) }
 
-    NavigableListDetailPaneScaffold(
-        navigator = panes,
-        // Back closes the detail shown, then leaves the section: both panes always show here,
-        // so popping until the layout changes would leave the section at once.
-        defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
-        listPane = {
-            AnimatedPane(Modifier.testTag("panes.list")) {
-                list({ key -> scope.launch { panes.navigateTo(ListDetailPaneScaffoldRole.Detail, key) } }, if (twoPane) selected else null)
-            }
-        },
-        detailPane = {
-            AnimatedPane(Modifier.testTag("panes.detail")) {
-                if (selected != null) {
-                    CompositionLocalProvider(LocalSnackbarHostState provides if (twoPane) detailMessages else LocalSnackbarHostState.current) {
-                        // A new detail starts afresh, not with the state of the one shown before.
-                        key(selected) { DetailStore(selected) { detail(selected, paneNavigator, twoPane) } }
-                    }
-                } else {
-                    Box(Modifier.fillMaxSize().testTag("panes.placeholder"), contentAlignment = Alignment.Center) {
-                        Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(Dimens.xl))
+    TwoPaneMessages(twoPane) {
+        NavigableListDetailPaneScaffold(
+            navigator = panes,
+            // Back closes the detail shown, then leaves the section: both panes always show here,
+            // so popping until the layout changes would leave the section at once.
+            defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
+            listPane = {
+                AnimatedPane(Modifier.testTag("panes.list")) {
+                    list({ key -> scope.launch { panes.navigateTo(ListDetailPaneScaffoldRole.Detail, key) } }, if (twoPane) selected else null)
+                }
+            },
+            detailPane = {
+                AnimatedPane(Modifier.testTag("panes.detail")) {
+                    if (selected != null) {
+                        CompositionLocalProvider(LocalSnackbarHostState provides if (twoPane) detailMessages else LocalSnackbarHostState.current) {
+                            // A new detail starts afresh, not with the state of the one shown before.
+                            key(selected) { DetailStore(selected) { detail(selected, paneNavigator, twoPane) } }
+                        }
+                    } else {
+                        Box(Modifier.fillMaxSize().testTag("panes.placeholder"), contentAlignment = Alignment.Center) {
+                            Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(Dimens.xl))
+                        }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
+}
+
+/**
+ * With two panes, shows the section's messages ("Moved to… / Undo") once, centered across both
+ * panes, rather than inside the list pane under the list. The list's own Scaffold then gets a
+ * host of its own, shown here too, so nothing it shows is lost. One pane: [content] as it is.
+ */
+@Composable
+fun TwoPaneMessages(twoPane: Boolean, content: @Composable () -> Unit) {
+    val messages = LocalSnackbarHostState.current
+    val listMessages = remember { SnackbarHostState() }
+    // The same layout either way: the panes keep their state when the window changes.
+    Box(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalSnackbarHostState provides if (twoPane) listMessages else messages, content = content)
+        if (twoPane) {
+            val bottom = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            SnackbarHost(messages, bottom)
+            SnackbarHost(listMessages, bottom)
+        }
+    }
 }
 
 /** The view model stores of a section's details, one per detail, kept while the activity is recreated. */

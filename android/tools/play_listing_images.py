@@ -4,18 +4,22 @@
 Usage: python3 android/tools/play_listing_images.py <screens folder> <output folder>
 
 <screens folder> is the android-screens artifact of android.yml (ScreenTourTest, sample
-cellar only): phone/<lang>-NN-<screen>.png (411x891 dp at xxhdpi) and tablet/... (1280x800 dp
-landscape), or the older layout phone-<lang>/NN-<screen>.png. The screens and captions come from docs/store/play.json.
+cellar only): phone/<lang>-NN-<screen>.png (411x891 dp at xxhdpi), tablet/... (1280x800 dp
+landscape) and small-tablet/... (960x600 dp, full tour only), or the older layout
+phone-<lang>/NN-<screen>.png. The screens and captions come from docs/store/play.json: a
+screen is a name, a list of names (the first found), or {"phone": ..., "tablet": ...} for a
+screen shown on some devices only (both tablets take "tablet").
 
 Writes, for fr-FR and en-US, <output>/<language>/<imageType>/NN.png, the layout read by
 play_publish.py:
-  icon                  512x512, from design/generate_app_icon.py, no alpha
+  icon                  512x512, from design/generate_app_icon.py, 32-bit (opaque alpha)
   featureGraphic        1024x500, the style of docs/store/make_header.py
   phoneScreenshots      1290x2580 at most 2:1 (the raw phone capture is 2.17:1, which
                         Play refuses): the screen in a frame under its caption
-  sevenInchScreenshots  2560x1600, the tablet captures as they are
-  tenInchScreenshots    the same files
-Play's rules (each side 320 to 3840 px, at most 2:1, 24-bit PNG) are checked at the end.
+  sevenInchScreenshots  1920x1200, the small tablet's screen in a frame under its caption
+                        (left out when the tour has no small-tablet captures)
+  tenInchScreenshots    2560x1600, the same from the 10-inch tablet
+Play's rules (each side 320 to 3840 px, at most 2:1, 24-bit PNG; the icon 32-bit) are checked at the end.
 Output is the same, byte for byte, for the same input: play_publish.py skips unchanged
 images. Needs Pillow and the Inter Display font (Ubuntu: python3-pil fonts-inter).
 """
@@ -128,6 +132,19 @@ def phone_screenshot(shot, caption):
     return img.convert("RGB")
 
 
+def tablet_screenshot(shot, caption):
+    """A landscape tablet screen in a frame under its caption, at the size of the capture."""
+    width, height = shot.size
+    img = background(width, height).convert("RGBA")
+    d = ImageDraw.Draw(img)
+    band = round(height * 0.15)
+    font = ImageFont.truetype(BOLD, round(height * 0.06))
+    d.text((width // 2, band // 2 + round(height * 0.012)), caption, font=font, fill=WHITE, anchor="mm")
+    frame, pad = framed(shot, round(height * 0.75))
+    img.alpha_composite(frame, ((width - frame.width) // 2, band - pad))
+    return img.convert("RGB")
+
+
 def grapes(img, x0, y0, r):
     """A discreet bunch of grapes, as on the App Store header."""
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -143,7 +160,8 @@ def grapes(img, x0, y0, r):
 
 def feature_graphic(shot, headline):
     img = background(FEATURE_W, FEATURE_H).convert("RGBA")
-    grapes(img, 960, 18, 16)
+    # Between the name and the phone, clear of both.
+    grapes(img, 588, 14, 16)
     # A phone on the right, running off the bottom edge.
     frame, pad = framed(shot, 620)
     img.alpha_composite(frame, (FEATURE_W - frame.width - 30 + pad, 70 - pad))
@@ -169,7 +187,9 @@ def save(img, path):
 def check(path, image_type):
     with Image.open(path) as im:
         w, h = im.size
-        if im.mode != "RGB":
+        if image_type == "icon" and im.mode != "RGBA":
+            sys.exit(f"{path}: {im.mode}, Play wants a 32-bit PNG icon")
+        if image_type != "icon" and im.mode != "RGB":
             sys.exit(f"{path}: {im.mode}, Play wants 24-bit PNG without alpha")
     if image_type == "icon" and (w, h) != (512, 512):
         sys.exit(f"{path}: {w}x{h}, the icon must be 512x512")
@@ -181,7 +201,12 @@ def check(path, image_type):
 
 def capture(screens, device, prefix, screen):
     """The tour's file for a screen, whatever its number: phone/en-01-cellar.png, or in the
-    older tour layout phone-en/01-cellar.png. screen may list other names for the same screen."""
+    older tour layout phone-en/01-cellar.png. screen may list other names for the same screen,
+    or name them per device ({"phone": ...}): None when not shown on that device."""
+    if isinstance(screen, dict):
+        screen = screen.get("phone" if device == "phone" else "tablet")
+        if screen is None:
+            return None
     for name in [screen] if isinstance(screen, str) else screen:
         found = sorted((screens / device).glob(f"{prefix}-[0-9][0-9]-{name}.png"))
         found += sorted((screens / f"{device}-{prefix}").glob(f"[0-9][0-9]-{name}.png"))
@@ -195,7 +220,8 @@ def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
     screens, out = Path(sys.argv[1]), Path(sys.argv[2])
-    icon = generate_app_icon.artwork(512).convert("RGB")
+    # Opaque, but 32-bit: the format Play asks for the icon.
+    icon = generate_app_icon.artwork(512).convert("RGBA")
     for language, prefix in LANGUAGES.items():
         base = out / language
         save(icon, base / "icon" / "01.png")
@@ -204,25 +230,30 @@ def main():
             sys.exit(f"No phone screenshot of {LISTING['screenshots'][0]['screen']} in {screens}.")
         with Image.open(cellar) as shot:
             save(feature_graphic(shot, LISTING["featureGraphic"][language]), base / "featureGraphic" / "01.png")
-        count = {"phone": 0, "tablet": 0}
+        kinds = {"phone": "phoneScreenshots", "tablet": "tenInchScreenshots", "small-tablet": "sevenInchScreenshots"}
+        count = dict.fromkeys(kinds, 0)
+        small = (screens / "small-tablet").is_dir() or any(screens.glob("small-tablet-*"))
+        if not small:
+            print(f"::warning::No small-tablet captures ({prefix}, full tour only): no 7-inch screenshots.")
         for item in LISTING["screenshots"]:
-            for device in count:
-                source = capture(screens, device, prefix, item["screen"])
+            for device, image_type in kinds.items():
+                if device == "small-tablet" and not small:
+                    continue
+                wanted = item["screen"]
+                if isinstance(wanted, dict) and wanted.get("phone" if device == "phone" else "tablet") is None:
+                    continue
+                source = capture(screens, device, prefix, wanted)
                 if source is None:
-                    print(f"::warning::No {device} screenshot of {item['screen']} ({prefix}): left out of the listing.")
+                    print(f"::warning::No {device} screenshot of {wanted} ({prefix}): left out of the listing.")
                     continue
                 count[device] += 1
                 name = f"{count[device]:02d}.png"
                 with Image.open(source) as shot:
-                    if device == "phone":
-                        save(phone_screenshot(shot, item[language]), base / "phoneScreenshots" / name)
-                    else:
-                        tablet = shot.convert("RGB")
-                        save(tablet, base / "sevenInchScreenshots" / name)
-                        save(tablet, base / "tenInchScreenshots" / name)
+                    make = phone_screenshot if device == "phone" else tablet_screenshot
+                    save(make(shot, item[language]), base / image_type / name)
         if count["phone"] < 2:
             sys.exit(f"{language}: {count['phone']} phone screenshots, Play needs at least 2.")
-        if count["phone"] > 8 or count["tablet"] > 8:
+        if max(count.values()) > 8:
             sys.exit(f"{language}: more than 8 screenshots of a kind, Play takes 8.")
     for path in sorted(out.glob("*/*/*.png")):
         check(path, path.parent.name)

@@ -175,42 +175,44 @@ fun CellarScreen(viewModel: AppViewModel, navigator: AppNavigator) {
     val twoPane = paneNavigator.scaffoldValue[ListDetailPaneScaffoldRole.List] == PaneAdaptedValue.Expanded &&
         paneNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Expanded
 
-    NavigableListDetailPaneScaffold(
-        navigator = paneNavigator,
-        // Back closes the wine shown, then leaves the section (as Storage, Tonight and Journal):
-        // with both panes shown, popping until the layout changes would leave the Cellar at once.
-        defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
-        listPane = {
-            AnimatedPane {
-                CellarList(
-                    viewModel, navigator,
-                    onShowTable = if (wide) ({ viewModel.preferences.setCellarTable(true) }) else null,
-                    selectedId = if (twoPane) selectedId else null,
-                    onOpen = { id -> scope.launch { paneNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id) } },
-                )
-            }
-        },
-        detailPane = {
-            AnimatedPane {
-                if (selectedId != null) {
-                    WineDetailScreen(
-                        viewModel, navigator, selectedId,
-                        showBack = !twoPane,
-                        onBack = { scope.launch { paneNavigator.navigateBack(BackNavigationBehavior.PopUntilContentChange) } },
-                        showMessages = !twoPane,
+    app.encave.ui.components.TwoPaneMessages(twoPane) {
+        NavigableListDetailPaneScaffold(
+            navigator = paneNavigator,
+            // Back closes the wine shown, then leaves the section (as Storage, Tonight and Journal):
+            // with both panes shown, popping until the layout changes would leave the Cellar at once.
+            defaultBackBehavior = BackNavigationBehavior.PopUntilContentChange,
+            listPane = {
+                AnimatedPane {
+                    CellarList(
+                        viewModel, navigator,
+                        onShowTable = if (wide) ({ viewModel.preferences.setCellarTable(true) }) else null,
+                        selectedId = if (twoPane) selectedId else null,
+                        onOpen = { id -> scope.launch { paneNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id) } },
                     )
-                } else {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            stringResource(R.string.cellar_select_wine),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(Dimens.xl),
+                }
+            },
+            detailPane = {
+                AnimatedPane {
+                    if (selectedId != null) {
+                        WineDetailScreen(
+                            viewModel, navigator, selectedId,
+                            showBack = !twoPane,
+                            onBack = { scope.launch { paneNavigator.navigateBack(BackNavigationBehavior.PopUntilContentChange) } },
+                            showMessages = !twoPane,
                         )
+                    } else {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                stringResource(R.string.cellar_select_wine),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(Dimens.xl),
+                            )
+                        }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 @Composable
@@ -405,7 +407,7 @@ private fun CellarList(
                             contentPadding = PaddingValues(bottom = 88.dp),
                             modifier = Modifier.fillMaxSize().testTag("cellar.list"),
                         ) {
-                            if (showsSampleBanner && !selecting) {
+                            if (showsSampleBanner && !selecting && !storeCapture) {
                                 item(key = "sample") { SampleBanner(onRemove = { viewModel.removeSample() }) }
                             }
                             if (showsSummary) {
@@ -1170,6 +1172,13 @@ internal fun StatTile(
         }
     }
 }
+
+/**
+ * Tests only: the store listing screenshots of the screen tour (ScreenTourTest) show the sample
+ * cellar without its banner. Never set by the app, which always shows the banner.
+ */
+@androidx.annotation.VisibleForTesting
+internal var storeCapture = false
 
 /**
  * Shown while records of the sample cellar remain: removes them, and only them, with Undo.

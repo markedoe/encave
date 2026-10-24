@@ -46,6 +46,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -217,6 +218,14 @@ fun CellarTableScreen(viewModel: AppViewModel, navigator: AppNavigator, onShowLi
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             }
                         }
+                    }
+                    // More columns to the right (the wine beside the table takes room): the last one
+                    // shown fades out, so a cut column reads as "scroll", not as a clipped word.
+                    if (horizontal.canScrollForward) {
+                        Box(
+                            Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(48.dp)
+                                .background(Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.surface.copy(alpha = 0f), MaterialTheme.colorScheme.surface))),
+                        )
                     }
                 }
             }

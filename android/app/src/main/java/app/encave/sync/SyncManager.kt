@@ -140,7 +140,8 @@ class SyncManager(
     internal val appContext: Context get() = context
     internal val photoAccess get() = files
     private val network = LocalNetwork(context)
-    val deviceName: String = SyncStorage.deviceName(context)
+    /** Read each time: a name changed in the system settings shows at once. */
+    val deviceName: String get() = SyncStorage.deviceName(context)
     val platform = "android"
 
     /** Screen tour and tests: shows the screens, never touches the network. */
@@ -577,7 +578,8 @@ class SyncManager(
         setUpIfNeeded()
         val (other, _) = DeviceIdentity.generate()
         addMember(Member(other.id, "iPad", other.publicKey, "ipados"))
-        status.update { it.copy(lastSync = it.lastSync + (other.id to Instant.now().minusSeconds(120))) }
+        // On the same Wi-Fi, as a second device usually is when the list is shown.
+        status.update { it.copy(lastSync = it.lastSync + (other.id to Instant.now().minusSeconds(120)), nearby = it.nearby + other.id) }
     }
 
     // region Recording and applying

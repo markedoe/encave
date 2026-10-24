@@ -195,11 +195,12 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
         d.hasRoute(AddBottleRoute::class) || d.hasRoute(EditWineRoute::class) || d.hasRoute(RackEditorRoute::class) ||
             d.hasRoute(DiscoveryEditorRoute::class)
     } ?: false
-    // Bar on phones, rail on tablets and foldables, drawer on large screens.
+    // Bar on phones, rail on tablets and foldables, drawer on extra-large screens only: on a
+    // tablet, a 360 dp drawer for four sections leaves the list and the detail beside it cramped.
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val layoutType = when {
         fullScreen -> NavigationSuiteType.None
-        adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND) ->
+        adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXTRA_LARGE_LOWER_BOUND) ->
             NavigationSuiteType.NavigationDrawer
         else -> NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
     }

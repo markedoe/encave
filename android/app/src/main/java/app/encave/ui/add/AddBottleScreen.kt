@@ -266,6 +266,8 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
     Scaffold(
         topBar = {
             TopAppBar(
+                // Close and Add at the edges of the form, not of a tablet.
+                modifier = Modifier.fillMaxWidth().readableWidth().fillMaxWidth(),
                 title = {
                     Text(
                         existing?.let { stringResource(R.string.add_title_existing, it.displayName) }
