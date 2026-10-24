@@ -53,6 +53,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -171,11 +175,20 @@ fun WineDetailScreen(
     val webSearch by webSearchPreferences().settings.collectAsStateWithLifecycle()
     val edit: (WineFormField) -> Unit = { field -> navigator.open(EditWineRoute(wineId, field.name)) }
 
+    /** Where the header (name, producer) ends in the list, to know when it is under the top bar. */
+    var heroEnd by remember(wineId) { mutableFloatStateOf(Float.MAX_VALUE) }
+    var listTop by remember { mutableFloatStateOf(0f) }
+    val heroGone = heroEnd < listTop
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(wine?.displayName.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                // The name is the serif title right under the bar: here only once it has scrolled away.
+                title = {
+                    androidx.compose.animation.AnimatedVisibility(heroGone, enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
+                        Text(wine?.displayName.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                },
                 navigationIcon = {
                     if (showBack) {
                         IconButton(onClick = back) {
@@ -221,6 +234,7 @@ fun WineDetailScreen(
         val orders = cellar.bottlesOnOrder.filter { it.wineId == wine.id }
             .sortedWith(compareBy<Bottle>({ it.expectedAt ?: java.time.Instant.MAX }, { it.addedAt }))
         val tastings = cellar.tastingsOf(wine.id)
+        listTop = with(LocalDensity.current) { padding.calculateTopPadding().toPx() }
         LazyColumn(Modifier.fillMaxSize().testTag("wine.detail"), contentPadding = padding) {
             item {
                 if (viewModel.photos.hasPicture(wine)) {
@@ -234,7 +248,7 @@ fun WineDetailScreen(
                         inset = 18.dp,
                     )
                 }
-                Hero(wine)
+                Box(Modifier.onGloballyPositioned { heroEnd = it.positionInParent().y + it.size.height }) { Hero(wine) }
                 if (webSearch.isEnabled || wine.coverPhotoId != null) {
                     TextButton(
                         onClick = { choosingPicture = true },

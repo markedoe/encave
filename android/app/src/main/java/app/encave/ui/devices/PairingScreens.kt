@@ -79,6 +79,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.components.ActionButtonPair
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.ConfirmDialog
+import app.encave.ui.components.readableWidth
 import app.encave.ui.theme.Dimens
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -291,7 +292,8 @@ fun JoinDeviceScreen(viewModel: AppViewModel, navigator: AppNavigator, linkCode:
             }
             return@PairingScaffold
         }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Dimens.m)) {
+        // A code of six digits: no wider than a phone on a tablet.
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).readableWidth(460.dp).padding(vertical = Dimens.m)) {
             ListItem(
                 modifier = Modifier.testTag("devices.scan").selectable(selected = false, role = Role.Button) { scanning = true },
                 leadingContent = { Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },

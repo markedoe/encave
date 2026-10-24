@@ -102,6 +102,7 @@ import app.encave.ui.components.WineGroupRow
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ModalBottomSheet
@@ -461,7 +462,8 @@ private fun TastingRow(
                     )
                 },
             colors = if (selected) ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer) else ListItemDefaults.colors(),
-            leadingContent = { WineColorDot(wine?.color, size = 16.dp) },
+            // The same slot as the wines tasted elsewhere (a picture or a dot): names and stars line up.
+            leadingContent = { Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) { WineColorDot(wine?.color, size = 16.dp) } },
             overlineContent = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
                     Icon(Icons.Outlined.Home, contentDescription = null, modifier = Modifier.size(14.dp))

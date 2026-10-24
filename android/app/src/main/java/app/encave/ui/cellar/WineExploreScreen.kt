@@ -36,6 +36,7 @@ import app.encave.ui.AppViewModel
 import app.encave.ui.add.WineFormField
 import app.encave.ui.components.EmptyState
 import app.encave.ui.components.LocalSnackbarHostState
+import app.encave.ui.components.readableWidth
 import app.encave.ui.components.SectionHeader
 import app.encave.ui.components.WineGroupRow
 import app.encave.ui.components.labelRes
@@ -161,7 +162,8 @@ fun WineExploreScreen(viewModel: AppViewModel, navigator: AppNavigator, route: W
             )
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().testTag("explore.list"), contentPadding = padding) {
+        // A list of wines, not a table: a readable width on a tablet.
+        LazyColumn(Modifier.fillMaxSize().readableWidth().testTag("explore.list"), contentPadding = padding) {
             if (current != null) {
                 item { SectionHeader(stringResource(R.string.explore_this_wine)) }
                 item(key = "current") {

@@ -731,7 +731,17 @@ private fun BandPlace(
         Box(Modifier.size(backdrop).background(scheme.surfaceContainerHighest, CircleShape))
         if (bottle != null) {
             val wine = cellar.wines[bottle.wineId]
-            if (back && rack.isBackReversed) {
+            if (back && rack.isBackReversed && RackLabels.showsVintage(rack, height * 0.75f)) {
+                // Room enough (zoomed in): the vintage under the neck, whose middle shows the style.
+                val font = with(density) { (diameter * 0.2f).toSp() }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    BottleNeck(wine?.color, size = diameter * 0.72f, showsStyle = true)
+                    Text(
+                        wine?.vintage?.toString() ?: stringResource(R.string.rack_non_vintage), color = scheme.onSurface, maxLines = 1,
+                        style = TextStyle(fontSize = font, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum", lineHeight = font),
+                    )
+                }
+            } else if (back && rack.isBackReversed) {
                 BottleNeck(wine?.color, size = diameter, showsStyle = true)
             } else {
                 BottleEnd(wine?.color, size = diameter, showsStyle = true)

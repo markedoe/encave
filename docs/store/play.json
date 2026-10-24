@@ -14,13 +14,13 @@
     }
   },
   "screenshots": [
-    {"screen": "cellar", "fr-FR": "Toute votre cave, d'un coup d'œil", "en-US": "Your whole cellar at a glance"},
-    {"screen": ["wine", "wine-detail"], "fr-FR": "Chaque bouteille, et où elle est", "en-US": "Every bottle, and where it is"},
-    {"screen": "rack-1", "fr-FR": "Vos rangements, tels qu'ils sont", "en-US": "Your storage, as it is"},
-    {"screen": "add-bottle", "fr-FR": "Ajoutez une bouteille en quelques secondes", "en-US": "Add a bottle in seconds"},
-    {"screen": "tonight", "fr-FR": "Quoi ouvrir ce soir", "en-US": "What to open tonight"},
-    {"screen": "journal", "fr-FR": "Vos dégustations et vos notes", "en-US": "Your tastings and notes"},
-    {"screen": "insights", "fr-FR": "Votre cave en chiffres", "en-US": "Your cellar in figures"}
+    {"screen": ["store-cellar", "cellar"], "fr-FR": "Toute votre cave, d’un coup d’œil", "en-US": "Your whole cellar at a glance"},
+    {"screen": {"phone": ["store-wine", "wine", "wine-detail"]}, "fr-FR": "Chaque bouteille, et où elle est", "en-US": "Every bottle, and where it is"},
+    {"screen": ["store-rack", "rack-head-to-tail", "rack-1"], "fr-FR": "Vos rangements, tels qu’ils sont", "en-US": "Your storage, as it is"},
+    {"screen": ["store-add", "barcode-match", "add-bottle"], "fr-FR": "Ajoutez une bouteille en quelques secondes", "en-US": "Add a bottle in seconds"},
+    {"screen": ["store-tonight", "tonight"], "fr-FR": "Quoi ouvrir ce soir", "en-US": "What to open tonight"},
+    {"screen": ["store-journal", "journal"], "fr-FR": "Vos dégustations et vos notes", "en-US": "Your tastings and notes"},
+    {"screen": ["store-insights", "insights"], "fr-FR": "Votre cave en chiffres", "en-US": "Your cellar in figures"}
   ],
   "featureGraphic": {
     "fr-FR": [

@@ -154,6 +154,7 @@ private fun RackWizard(viewModel: AppViewModel, navigator: AppNavigator) {
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.fillMaxWidth().readableWidth().fillMaxWidth(),
                 title = {
                     Column {
                         Text(stringResource(if (step == 1) R.string.wizard_title else if (step == 2) settings.type.labelRes else R.string.wizard_name_title))
@@ -174,7 +175,7 @@ private fun RackWizard(viewModel: AppViewModel, navigator: AppNavigator) {
         bottomBar = {
             BottomAppBar {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = Dimens.l),
+                    Modifier.fillMaxWidth().readableWidth().fillMaxWidth().padding(horizontal = Dimens.l),
                     horizontalArrangement = Arrangement.spacedBy(Dimens.s, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

@@ -288,8 +288,13 @@ fun ZoomableRack(
         val scrolls = RackViewport.scrolls(fitted.value.toDouble(), minimum, nearFit)
         val base = RackViewport.cellSize(fitted.value.toDouble(), minimum, nearFit).toFloat().dp
         state.alignsTop = scrolls
+        // A tall fridge, scaled to the strip's height, is a sliver that shows nothing: no overview.
+        val overviewReadable = remember(rack, base, labelHeight) {
+            val (width, height) = rackGridSize(rack, base, true, labelHeight)
+            height.value <= 0f || width * minOf(1f, OverviewHeight / height) >= OverviewMinWidth
+        }
         Column(Modifier.fillMaxSize()) {
-            if (scrolls) {
+            if (scrolls && overviewReadable) {
                 RackOverview(state) { Box(Modifier.padding(padding)) { content(base * state.level) {} } }
                 HorizontalDivider()
             }
@@ -337,6 +342,9 @@ fun ZoomableRack(
 
 /** Height of the overview above a rack that scrolls. */
 private val OverviewHeight = 56.dp
+
+/** Narrowest overview worth showing: below, its frame and places cannot be made out. */
+private val OverviewMinWidth = 48.dp
 
 /**
  * The whole rack, small, above a rack that scrolls: the part in view is framed. A tap, or a

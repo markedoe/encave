@@ -7,7 +7,8 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
@@ -71,7 +72,9 @@ class LinksTest {
     fun wine() {
         val port = app.repository.cellar.value.wines.values.first { it.name == "Vintage Port" }
         open(MainActivity.wineLink(port.id.toString()))
-        compose.onNodeWithText("Vintage Port 2011").assertExists()
+        // Its page: the header shows the name (the top bar only once it scrolls away).
+        compose.onNodeWithTag("wine.detail").assertExists()
+        compose.onAllNodesWithText("Vintage Port").onFirst().assertExists()
     }
 
     @Test

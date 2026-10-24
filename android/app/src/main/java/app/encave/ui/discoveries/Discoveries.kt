@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -206,7 +207,10 @@ fun DiscoveryRow(
                         wine, modifier = Modifier.size(44.dp, 56.dp), maxPixelSize = 200, inset = 3.dp, corner = 8.dp,
                     )
                 } else {
-                    WineColorDot(wine?.color, size = 30.dp)
+                    // The slot of a picture, so names line up with the Journal's cellar rows.
+                    Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) {
+                        WineColorDot(wine?.color, size = 16.dp)
+                    }
                 }
             }
         } else {

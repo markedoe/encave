@@ -72,8 +72,10 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         private val devices = mapOf(
             "phone" to "w411dp-h891dp-port",
             "tablet" to "w1280dp-h800dp-land",
+            // A 7-inch tablet, for the store listing only (storeListing).
+            "small-tablet" to "w960dp-h600dp-land",
         )
-        private val densities = mapOf("phone" to "xxhdpi", "tablet" to "xhdpi")
+        private val densities = mapOf("phone" to "xxhdpi", "tablet" to "xhdpi", "small-tablet" to "xhdpi")
 
         private val full = System.getProperty("encave.tour") == "full"
 
@@ -81,7 +83,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
         fun configurations(): List<Array<String>> = if (full) {
             listOf("phone", "tablet").flatMap { d -> listOf("en", "fr", "en-dark", "fr-dark").map { arrayOf(d, it) } } +
-                listOf(arrayOf("phone", "xl"))
+                listOf(arrayOf("phone", "xl"), arrayOf("small-tablet", "en"), arrayOf("small-tablet", "fr"))
         } else {
             listOf("phone", "tablet").flatMap { d -> listOf("en", "fr").map { arrayOf(d, it) } } +
                 listOf(arrayOf("phone", "en-dark"))
@@ -107,6 +109,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             "settings", "help", "devices", "devices-invite", "devices-join", "settings-backup",
             "previous-versions", "restore-preview", "restore-actions", "inventory-pdf",
             "cellar-font-200", "tonight-font-200",
+            "store-cellar", "store-wine", "store-rack", "store-add", "store-tonight", "store-journal", "store-insights",
         )
 
         /** The tabs, by position in the navigation (their tags follow the destination's name, which may change). */
@@ -122,6 +125,17 @@ class ScreenTourTest(private val device: String, private val variant: String) {
 
     @get:Rule
     val compose = createEmptyComposeRule()
+
+    /** The smaller tablet only makes the store listing's screens: its other tests are skipped. */
+    @get:Rule(order = -1)
+    val storeOnly = org.junit.rules.TestRule { base, description ->
+        object : org.junit.runners.model.Statement() {
+            override fun evaluate() {
+                org.junit.Assume.assumeTrue(device != "small-tablet" || description.methodName.startsWith("storeListing"))
+                base.evaluate()
+            }
+        }
+    }
 
     private var scenario: ActivityScenario<MainActivity>? = null
     private val outDir = File(System.getProperty("encave.screens") ?: "build/screens", device)
@@ -147,6 +161,8 @@ class ScreenTourTest(private val device: String, private val variant: String) {
             app.sync.awaitStarted()
             app.sync.showDemo()
         }
+        // This device as it would be named ("robolectric" otherwise).
+        android.provider.Settings.Global.putString(app.contentResolver, android.provider.Settings.Global.DEVICE_NAME, "Pixel 9")
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.waitForIdle()
     }
@@ -209,9 +225,26 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         val metrics = RuntimeEnvironment.getApplication().resources.displayMetrics
         val image = Bitmap.createBitmap(metrics.widthPixels, metrics.heightPixels, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(image)
-        views.forEach { view ->
+        views.forEachIndexed { index, view ->
             val location = IntArray(2)
             view.getLocationOnScreen(location)
+            val params = view.layoutParams as? android.view.WindowManager.LayoutParams
+            if (index > 0 && params != null) {
+                // A dialog over the window below: its dim, as the system draws it…
+                if (params.flags and android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0) {
+                    canvas.drawColor(android.graphics.Color.argb((params.dimAmount * 255).toInt(), 0, 0, 0))
+                }
+                // …and where its gravity puts it: Robolectric leaves every window at the top left.
+                if (location[0] == 0 && location[1] == 0) {
+                    val placed = android.graphics.Rect()
+                    android.view.Gravity.apply(
+                        params.gravity, view.width, view.height, android.graphics.Rect(0, 0, image.width, image.height),
+                        params.x, params.y, placed,
+                    )
+                    location[0] = placed.left
+                    location[1] = placed.top
+                }
+            }
             canvas.save()
             canvas.translate(location[0].toFloat(), location[1].toFloat())
             view.draw(canvas)
@@ -562,7 +595,7 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         tap("cellar.sort")
         capture("cellar-menu")
         tap("cellar.save_search")
-        compose.onNodeWithTag("save_search.field").performTextInput("Soon")
+        compose.onNodeWithTag("save_search.field").performTextInput(if (language == "fr") "Bientôt" else "Soon")
         capture("save-search")
         tap("save_search.save")
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("filter.saved").fetchSemanticsNodes().isNotEmpty() }
@@ -574,12 +607,40 @@ class ScreenTourTest(private val device: String, private val variant: String) {
     fun morePhotos() {
         // Two photos of the first wine in the list, drawn here (no real photos in the tour).
         val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
-        fun jpeg(color: Int): ByteArray {
+        // A back label and a receipt, photographed on a table: paper, lines of text, a barcode.
+        fun jpeg(table: Int, paper: Int, ink: Int, lines: Int, barcode: Boolean): ByteArray {
             val image = Bitmap.createBitmap(300, 400, Bitmap.Config.ARGB_8888)
-            android.graphics.Canvas(image).drawColor(color)
+            val canvas = android.graphics.Canvas(image)
+            canvas.drawColor(table)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            canvas.save()
+            canvas.rotate(-4f, 150f, 200f)
+            paint.color = 0x40000000
+            canvas.drawRect(52f, 46f, 256f, 366f, paint)
+            paint.color = paper
+            canvas.drawRect(46f, 40f, 250f, 360f, paint)
+            paint.color = ink
+            val random = java.util.Random(lines.toLong())
+            for (line in 0 until lines) {
+                val y = 70f + line * 240f / lines
+                canvas.drawRect(66f, y, 66f + 80f + random.nextInt(90), y + 5f, paint)
+                if (!barcode) canvas.drawRect(200f, y, 230f, y + 5f, paint)
+            }
+            if (barcode) {
+                var x = 80f
+                while (x < 210f) {
+                    val bar = 1f + random.nextInt(4)
+                    canvas.drawRect(x, 320f, x + bar, 346f, paint)
+                    x += bar + 1f + random.nextInt(3)
+                }
+            }
+            canvas.restore()
             return java.io.ByteArrayOutputStream().also { image.compress(Bitmap.CompressFormat.JPEG, 80, it) }.toByteArray()
         }
-        val ids = listOf(jpeg(0xFFE8DCC8.toInt()), jpeg(0xFF8E1E3A.toInt())).mapNotNull { application.photos.save(it) }
+        val ids = listOf(
+            jpeg(0xFF6B4A35.toInt(), 0xFFF1E6CF.toInt(), 0xFF5A4636.toInt(), lines = 9, barcode = true),
+            jpeg(0xFF3C3A38.toInt(), 0xFFFAFAF7.toInt(), 0xFF404040.toInt(), lines = 14, barcode = false),
+        ).mapNotNull { application.photos.save(it) }
         runBlocking {
             application.repository.update { cellar ->
                 val wine = cellar.groups().first().wine
@@ -807,5 +868,67 @@ class ScreenTourTest(private val device: String, private val variant: String) {
         scrollTo("settings.help")
         tap("settings.help")
         capture("help")
+    }
+
+    /**
+     * The Google Play listing's screens (android/tools/play_listing_images.py, docs/store/play.json):
+     * the sample cellar without its banner (a test-only switch: the app always shows it), on
+     * tablets a bottle open beside each list, the head-to-tail fridge and a recognised barcode.
+     * The only test of the smaller tablet, which makes the 7-inch screenshots.
+     */
+    @Test
+    fun storeListing() {
+        if (dark || largeText) return
+        val phone = device == "phone"
+        // A barcode seen before on a bottle of the Port, as in addBottleBarcode.
+        val application = ApplicationProvider.getApplicationContext<EncaveApplication>()
+        runBlocking {
+            application.repository.update { cellar ->
+                cellar.updateWine(cellar.wines.values.first { it.name == "Vintage Port" }.addingBarcode("5601234567897"))
+            }
+        }
+        app.encave.ui.cellar.storeCapture = true
+        try {
+            scenario?.recreate()
+            compose.waitForIdle()
+            compose.onNodeWithTag("cellar.sample").assertDoesNotExist()
+            if (phone) {
+                capture("store-cellar")
+                tap("wine.row")
+                capture("store-wine")
+                scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+                compose.waitForIdle()
+            } else {
+                tap("wine.row")
+                capture("store-cellar")
+            }
+            tap("cellar.stat.bottles")
+            compose.onNodeWithTag("insights.screen").assertExists()
+            capture("store-insights")
+            scenario?.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            compose.waitForIdle()
+            tab(RACKS)
+            scrollIn("racks.list", "rack.row.7")
+            compose.onAllNodesWithTag("rack.row.7").onFirst().performSemanticsAction(SemanticsActions.OnClick)
+            compose.waitForIdle()
+            compose.onAllNodesWithTag("rack.band.back").onFirst().assertExists()
+            capture("store-rack")
+            tab(TONIGHT)
+            if (!phone) tap("tonight.row")
+            capture("store-tonight")
+            tab(JOURNAL)
+            if (!phone) tap("journal.row.cellar")
+            capture("store-journal")
+            // Last: the form leaves the navigation.
+            tab(0)
+            tap("action.fab_add")
+            tap("action.scan_barcode")
+            compose.onNodeWithTag("barcode.field").performTextInput("5601234567897")
+            tap("barcode.use")
+            compose.onNodeWithTag("barcode.match").assertExists()
+            capture("store-add")
+        } finally {
+            app.encave.ui.cellar.storeCapture = false
+        }
     }
 }

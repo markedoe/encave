@@ -132,10 +132,13 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     adb("install", "-r", apk)
     adb("logcat", "-c", "-b", "all", check=False)
-    # No system dialog over the app when it asks (reminders).
-    shell(f"pm grant {PACKAGE} android.permission.POST_NOTIFICATIONS", check=False)
 
     for language, strings in LANGUAGES.items():
+        # A fresh app in each language: the sample cellar is loaded in that language, not kept
+        # from the run before (its names, places and notes are written when it is loaded).
+        shell(f"pm clear {PACKAGE}")
+        # No system dialog over the app when it asks (reminders); pm clear took the grant back.
+        shell(f"pm grant {PACKAGE} android.permission.POST_NOTIFICATIONS", check=False)
         start(language)
         first = find(strings["tabs"][:1], timeout=60)
         if not first:
