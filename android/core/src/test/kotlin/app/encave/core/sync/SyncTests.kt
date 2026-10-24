@@ -2,12 +2,14 @@ package app.encave.core.sync
 
 import app.encave.core.Bottle
 import app.encave.core.Cellar
+import app.encave.core.Discovery
 import app.encave.core.Rack
 import app.encave.core.Slot
 import app.encave.core.Tasting
 import app.encave.core.Wine
 import app.encave.core.RestoreMode
 import app.encave.core.SampleData
+import app.encave.core.addDiscovery
 import app.encave.core.containsSample
 import app.encave.core.removingSample
 import app.encave.core.restoring
@@ -181,6 +183,13 @@ class SyncTests {
         syncBoth(a, b)
         assertEquals(a.cellar, b.cellar)
         assertTrue(a.cellar.bottles.values.all { a.cellar.wines[it.wineId] != null })
+        // A stamped the wine, then each bottle as deleted (3 changes), B made 1: A's deletion
+        // of that bottle is later in Lamport order, so the wine does not come back.
+        assertTrue(a.cellar.wines.isEmpty() && a.cellar.bottles.isEmpty())
+        val deletion = a.state.stamps.getValue(SyncKey.of(SyncKey.Kind.Bottle, bottle.id))
+        assertTrue(deletion.deleted && deletion.device == a.state.device)
+        assertEquals(true, a.state.stamps[SyncKey.of(SyncKey.Kind.Wine, s.wine.id)]?.deleted)
+        assertEquals(a.state.stamps, b.state.stamps)
     }
 
     @Test
@@ -221,6 +230,23 @@ class SyncTests {
         assertEquals(a.cellar, b.cellar)
         assertTrue(a.cellar.racks.isEmpty())
         assertTrue(a.cellar.bottles.values.all { it.slot == null })
+    }
+
+    @Test
+    fun aBottlePlacedInARowRemovedElsewhereLosesItsPlace() {
+        val s = sample()
+        val (a, b) = pair(s.cellar)
+        a.edit { it.updateRack(s.rack.copy(rows = 1)) }
+        // B puts a bottle in the second row meanwhile.
+        val loose = s.cellar.bottles.values.first { it.slot == null }
+        b.edit { it.move(loose.id, Slot(s.rack.id, 1, 1)) }
+        syncBoth(a, b)
+        assertEquals(a.cellar, b.cellar)
+        assertEquals(a.state.stamps, b.state.stamps)
+        assertEquals(listOf(1), a.cellar.racks.map { it.rows })
+        assertEquals(Bottle.Status.InCellar, a.cellar.bottles[loose.id]?.status)
+        assertNull(a.cellar.bottles.getValue(loose.id).slot)
+        assertEquals(1, a.cellar.bottles.values.count { it.slot != null }, "the bottle in the first row keeps its place")
     }
 
     @Test
@@ -405,8 +431,8 @@ class SyncHardeningTests {
         var stateA = SyncState.starting(cellar, deviceA)
         var stateB = stateA.copy(device = UUID.randomUUID())
         // A deletes the wine; B, later in Lamport order, adds a bottle of it.
-        val cellarA = cellar.copy()
-        val cellarB = cellar.copy()
+        var cellarA = cellar.copy()
+        var cellarB = cellar.copy()
         val beforeA = cellarA.copy()
         cellarA.deleteWine(wine.id)
         stateA = stateA.recording(beforeA, cellarA)
@@ -420,6 +446,51 @@ class SyncHardeningTests {
         assertEquals(onA.stamps, onB.stamps)
         assertTrue(onA.cellar.wines[wine.id] != null)
         assertEquals(1, onA.cellar.bottles.size)
+
+        // Two more rounds both ways change nothing: the same cellars, the same stamps.
+        cellarA = onA.cellar.copy()
+        stateA = stateA.copy(stamps = onA.stamps, clock = onA.clock)
+        cellarB = onB.cellar.copy()
+        stateB = stateB.copy(stamps = onB.stamps, clock = onB.clock)
+        repeat(2) {
+            val nextA = CellarMerge.merge(cellarA, stateA, cellarB, stateB)
+            val nextB = CellarMerge.merge(cellarB, stateB, cellarA, stateA)
+            assertTrue(nextA.cellar == onA.cellar && nextB.cellar == onA.cellar)
+            assertTrue(nextA.stamps == onA.stamps && nextB.stamps == onA.stamps)
+            cellarA = nextA.cellar
+            stateA = stateA.copy(stamps = nextA.stamps, clock = nextA.clock)
+            cellarB = nextB.cellar
+            stateB = stateB.copy(stamps = nextB.stamps, clock = nextB.clock)
+        }
+    }
+
+    @Test
+    fun aDiscoveryAddedAfterItsWineWasDeletedRevivesIt() {
+        val wine = Wine(name = "Shared")
+        val cellar = Cellar().apply { addBottles(wine, 1) }
+        val deviceA = UUID.randomUUID()
+        val deviceB = UUID.randomUUID()
+        var stateA = SyncState.starting(cellar, deviceA)
+        var stateB = stateA.copy(device = deviceB)
+        // A deletes the wine; B, later in Lamport order, notes a discovery of it in the Journal.
+        val cellarA = cellar.copy()
+        val cellarB = cellar.copy()
+        val beforeA = cellarA.copy()
+        cellarA.deleteWine(wine.id)
+        stateA = stateA.recording(beforeA, cellarA)
+        stateB = stateB.copy(clock = stateB.clock + 5)
+        val beforeB = cellarB.copy()
+        val discovery = cellarB.addDiscovery(Discovery(wineId = wine.id, rating = 4), wine)
+        stateB = stateB.recording(beforeB, cellarB)
+        val onA = CellarMerge.merge(cellarA, stateA, cellarB, stateB)
+        val onB = CellarMerge.merge(cellarB, stateB, cellarA, stateA)
+        assertEquals(onA.cellar, onB.cellar)
+        assertEquals(onA.stamps, onB.stamps)
+        assertEquals(wine, onA.cellar.wines[wine.id])
+        assertEquals(discovery, onA.cellar.discoveries[discovery.id])
+        assertTrue(onA.cellar.bottles.isEmpty(), "the bottle deleted with the wine stays deleted")
+        val discoveryStamp = onA.stamps.getValue(SyncKey.of(SyncKey.Kind.Discovery, discovery.id))
+        assertEquals(Stamp(discoveryStamp.counter, deviceB), onA.stamps[SyncKey.of(SyncKey.Kind.Wine, wine.id)])
     }
 
     @Test

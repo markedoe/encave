@@ -1,0 +1,203 @@
+{
+  "about": "Merge conflicts shared by CaveKit (MergeVectorTests.swift) and the Kotlin core (MergeVectorTest.kt), docs/SYNC.md §1. Each case has two devices, 'a' and 'b', each with its cellar (cellar.json encoding: maps keyed by UUID as arrays alternating key and value, dates as seconds since 2001) and its SyncState (sync.json). The merge runs both ways, A taking B in and B taking A in: both must give 'expect'. 'wines' maps lowercase ID to name; 'bottles' maps lowercase ID to status, then rack name and 'row,column' when placed; 'racks' lists 'name rowsxcolumns' in order; 'stamps' and 'clock' are the merged ones (settings never stamped on either side give Stamp.zero).",
+  "cases": [
+    {
+      "name": "equal counters: the greater device (uppercase UUID) wins",
+      "a": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Edited on 1111"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": []},
+        "state": {"version": 1, "device": "11111111-1111-4111-8111-111111111111", "clock": 5, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 5, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "b": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Edited on 2222"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": []},
+        "state": {"version": 1, "device": "22222222-2222-4222-8222-222222222222", "clock": 5, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 5, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "expect": {
+        "wines": {"00000000-0000-4000-8000-000000000101": "Edited on 2222"},
+        "bottles": {"00000000-0000-4000-8000-000000000201": "inCellar"},
+        "racks": [],
+        "stamps": {
+          "settings": {"counter": 0, "device": "00000000-0000-0000-0000-000000000000", "deleted": false},
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 5, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}},
+        "clock": 5
+      }
+    },
+    {
+      "name": "the same stamp as an edit and as a deletion: the deletion wins",
+      "a": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"},
+                               "00000000-0000-4000-8000-000000000202", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000202", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": []},
+        "state": {"version": 1, "device": "11111111-1111-4111-8111-111111111111", "clock": 4, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "b": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000202", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000202", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": []},
+        "state": {"version": 1, "device": "22222222-2222-4222-8222-222222222222", "clock": 4, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": true},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "expect": {
+        "wines": {"00000000-0000-4000-8000-000000000101": "Clos"},
+        "bottles": {"00000000-0000-4000-8000-000000000202": "inCellar"},
+        "racks": [],
+        "stamps": {
+          "settings": {"counter": 0, "device": "00000000-0000-0000-0000-000000000000", "deleted": false},
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": true},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}},
+        "clock": 4
+      }
+    },
+    {
+      "name": "two bottles moved to one place: the one stamped 7 keeps it, the one stamped 5 loses its place",
+      "a": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "slot": {"column": 0, "depth": 0, "rackID": "00000000-0000-4000-8000-000000000301", "row": 0}, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"},
+                               "00000000-0000-4000-8000-000000000202", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000202", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": [{"binCapacity": 12, "columns": 2, "depth": 1, "id": "00000000-0000-4000-8000-000000000301", "kind": "grid", "name": "Main", "rows": 1}]},
+        "state": {"version": 1, "device": "11111111-1111-4111-8111-111111111111", "clock": 5, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 5, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 3, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "b": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"},
+                               "00000000-0000-4000-8000-000000000202", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000202", "sizeML": 750, "slot": {"column": 0, "depth": 0, "rackID": "00000000-0000-4000-8000-000000000301", "row": 0}, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": [{"binCapacity": 12, "columns": 2, "depth": 1, "id": "00000000-0000-4000-8000-000000000301", "kind": "grid", "name": "Main", "rows": 1}]},
+        "state": {"version": 1, "device": "22222222-2222-4222-8222-222222222222", "clock": 7, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 7, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "expect": {
+        "wines": {"00000000-0000-4000-8000-000000000101": "Clos"},
+        "bottles": {"00000000-0000-4000-8000-000000000201": "inCellar", "00000000-0000-4000-8000-000000000202": "inCellar Main 0,0"},
+        "racks": ["Main 1x2"],
+        "stamps": {
+          "settings": {"counter": 0, "device": "00000000-0000-0000-0000-000000000000", "deleted": false},
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 5, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 7, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}},
+        "clock": 7
+      }
+    },
+    {
+      "name": "rack orders with equal stamps: the list that is smaller compared as lowercase IDs",
+      "a": {
+        "cellar": {"wines": [], "bottles": [],
+                   "racks": [{"binCapacity": 12, "columns": 1, "depth": 1, "id": "00000000-0000-4000-8000-000000000302", "kind": "grid", "name": "Two", "rows": 1},
+                             {"binCapacity": 12, "columns": 1, "depth": 1, "id": "00000000-0000-4000-8000-000000000301", "kind": "grid", "name": "One", "rows": 1},
+                             {"binCapacity": 12, "columns": 1, "depth": 1, "id": "00000000-0000-4000-8000-000000000303", "kind": "grid", "name": "Three", "rows": 1}]},
+        "state": {"version": 1, "device": "11111111-1111-4111-8111-111111111111", "clock": 4, "stamps": {
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000302": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000303": {"counter": 3, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack-order": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "b": {
+        "cellar": {"wines": [], "bottles": [],
+                   "racks": [{"binCapacity": 12, "columns": 1, "depth": 1, "id": "00000000-0000-4000-8000-000000000301", "kind": "grid", "name": "One", "rows": 1},
+                             {"binCapacity": 12, "columns": 1, "depth": 1, "id": "00000000-0000-4000-8000-000000000303", "kind": "grid", "name": "Three", "rows": 1},
+                             {"binCapacity": 12, "columns": 1, "depth": 1, "id": "00000000-0000-4000-8000-000000000302", "kind": "grid", "name": "Two", "rows": 1}]},
+        "state": {"version": 1, "device": "22222222-2222-4222-8222-222222222222", "clock": 4, "stamps": {
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000302": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000303": {"counter": 3, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack-order": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "expect": {
+        "wines": {},
+        "bottles": {},
+        "racks": ["One 1x1", "Three 1x1", "Two 1x1"],
+        "stamps": {
+          "settings": {"counter": 0, "device": "00000000-0000-0000-0000-000000000000", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000302": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000303": {"counter": 3, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack-order": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}},
+        "clock": 4
+      }
+    },
+    {
+      "name": "a bottle added after its wine was deleted on the other device: the wine comes back with the bottle's stamp",
+      "a": {
+        "cellar": {"wines": [], "bottles": [], "racks": []},
+        "state": {"version": 1, "device": "11111111-1111-4111-8111-111111111111", "clock": 4, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 3, "device": "11111111-1111-4111-8111-111111111111", "deleted": true},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": true}}}
+      },
+      "b": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"},
+                               "00000000-0000-4000-8000-000000000202", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000202", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": []},
+        "state": {"version": 1, "device": "22222222-2222-4222-8222-222222222222", "clock": 8, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 8, "device": "22222222-2222-4222-8222-222222222222", "deleted": false}}}
+      },
+      "expect": {
+        "wines": {"00000000-0000-4000-8000-000000000101": "Clos"},
+        "bottles": {"00000000-0000-4000-8000-000000000202": "inCellar"},
+        "racks": [],
+        "stamps": {
+          "settings": {"counter": 0, "device": "00000000-0000-0000-0000-000000000000", "deleted": false},
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 8, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": true},
+          "bottle:00000000-0000-4000-8000-000000000202": {"counter": 8, "device": "22222222-2222-4222-8222-222222222222", "deleted": false}},
+        "clock": 8
+      }
+    },
+    {
+      "name": "a bottle placed in a row that the other device removed from the rack: it loses its place",
+      "a": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": [{"binCapacity": 12, "columns": 2, "depth": 1, "id": "00000000-0000-4000-8000-000000000301", "kind": "grid", "name": "Main", "rows": 1}]},
+        "state": {"version": 1, "device": "11111111-1111-4111-8111-111111111111", "clock": 4, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 2, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "b": {
+        "cellar": {"wines": ["00000000-0000-4000-8000-000000000101", {"grapes": [], "id": "00000000-0000-4000-8000-000000000101", "name": "Clos"}],
+                   "bottles": ["00000000-0000-4000-8000-000000000201", {"addedAt": 0, "id": "00000000-0000-4000-8000-000000000201", "sizeML": 750, "slot": {"column": 0, "depth": 0, "rackID": "00000000-0000-4000-8000-000000000301", "row": 1}, "status": "inCellar", "wineID": "00000000-0000-4000-8000-000000000101"}],
+                   "racks": [{"binCapacity": 12, "columns": 2, "depth": 1, "id": "00000000-0000-4000-8000-000000000301", "kind": "grid", "name": "Main", "rows": 2}]},
+        "state": {"version": 1, "device": "22222222-2222-4222-8222-222222222222", "clock": 5, "stamps": {
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 5, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 3, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}}}
+      },
+      "expect": {
+        "wines": {"00000000-0000-4000-8000-000000000101": "Clos"},
+        "bottles": {"00000000-0000-4000-8000-000000000201": "inCellar"},
+        "racks": ["Main 1x2"],
+        "stamps": {
+          "settings": {"counter": 0, "device": "00000000-0000-0000-0000-000000000000", "deleted": false},
+          "wine:00000000-0000-4000-8000-000000000101": {"counter": 1, "device": "11111111-1111-4111-8111-111111111111", "deleted": false},
+          "bottle:00000000-0000-4000-8000-000000000201": {"counter": 5, "device": "22222222-2222-4222-8222-222222222222", "deleted": false},
+          "rack:00000000-0000-4000-8000-000000000301": {"counter": 4, "device": "11111111-1111-4111-8111-111111111111", "deleted": false}},
+        "clock": 5
+      }
+    }
+  ]
+}
