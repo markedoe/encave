@@ -1,9 +1,10 @@
 {
-  "about": "Storage layouts, shared by CaveKit (RackVectorTests.swift), the Kotlin core (RackVectorTest.kt) and the Android app (RackVectorLabelsTest.kt): cells per row, the order bottles are placed in, and for each place its technical label ('B3-2', as files write it), its name for people in English ('en', placeName) and French ('fr', the apps' wording), what the drawing shows on it when empty, and how far its band is drawn shifted (head-to-tail fridges). Rows, columns and depths count from 0; 'fillOrderStart' lists the first places filled, as [row, column, depth].",
+  "about": "Storage layouts, shared by CaveKit (RackVectorTests.swift), the Kotlin core (RackVectorTest.kt) and the Android app (RackVectorLabelsTest.kt): cells per row, the order bottles are placed in, and for each place its technical label ('B3-2', as files write it), its name for people in English ('en', placeName) and French ('fr', the apps' wording), what the drawing shows on it when empty, and how far its band is drawn shifted (head-to-tail fridges). 'storageType' and 'storageCount' are what the Storage list shows: rack, wineFridge or crates, and how many rows, shelves or bins. Rows, columns and depths count from 0; 'fillOrderStart' lists the first places filled, as [row, column, depth].",
   "racks": [
     {
       "about": "A grid one bottle deep with more than 26 rows: rows after Z are lettered AA, AB",
       "kind": "grid", "rows": 28, "columns": 4,
+      "storageType": "rack", "storageCount": 28,
       "columnsInRow": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
       "fillOrderStart": [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [1, 0, 0]],
       "places": [
@@ -16,6 +17,7 @@
     {
       "about": "A grid two deep with rows of their own widths: the front of a row is filled before its back",
       "kind": "grid", "rows": 4, "columns": 6, "depth": 2, "rowColumns": [6, 6, 5, 4],
+      "storageType": "rack", "storageCount": 4,
       "columnsInRow": [6, 6, 5, 4],
       "fillOrderStart": [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 4, 0], [0, 5, 0], [0, 0, 1]],
       "places": [
@@ -27,6 +29,7 @@
     {
       "about": "A wine fridge on shelves three deep: front, middle and back",
       "kind": "shelves", "rows": 3, "columns": 4, "depth": 3,
+      "storageType": "wineFridge", "storageCount": 3,
       "columnsInRow": [4, 4, 4],
       "fillOrderStart": [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 0, 1]],
       "places": [
@@ -38,6 +41,7 @@
     {
       "about": "A wine fridge on shelves one deep: no side",
       "kind": "shelves", "rows": 2, "columns": 5,
+      "storageType": "wineFridge", "storageCount": 2,
       "columnsInRow": [5, 5],
       "fillOrderStart": [[0, 0, 0], [0, 1, 0]],
       "places": [
@@ -46,8 +50,9 @@
       ]
     },
     {
-      "about": "Diamond bins: a bin is filled before the next one, and a place in it has no side",
+      "about": "Diamond bins: a bin is filled before the next one, and a place in it has no side; a rack, counted in bins, as they are not laid out as crates",
       "kind": "bins", "rows": 2, "columns": 3, "binCapacity": 4,
+      "storageType": "rack", "storageCount": 6,
       "columnsInRow": [3, 3],
       "fillOrderStart": [[0, 0, 0], [0, 0, 1], [0, 0, 2], [0, 0, 3], [0, 1, 0]],
       "places": [
@@ -56,8 +61,19 @@
       ]
     },
     {
+      "about": "Crates as the wizard makes them, four to a row, the last row shorter: crates, counted in bins",
+      "kind": "bins", "rows": 2, "columns": 4, "binCapacity": 12, "rowColumns": [4, 2],
+      "storageType": "crates", "storageCount": 6,
+      "columnsInRow": [4, 2],
+      "fillOrderStart": [[0, 0, 0], [0, 0, 1], [0, 0, 2]],
+      "places": [
+        { "row": 1, "column": 1, "depth": 11, "label": "B2-12", "en": "Bin B2", "fr": "Case B2", "emptyCaption": "B2", "bandShift": 0 }
+      ]
+    },
+    {
       "about": "A continuous honeycomb two deep: every other row holds one fewer; head-to-tail is ignored without shelf layers",
       "kind": "staggered", "rows": 3, "columns": 5, "depth": 2, "backReversed": true,
+      "storageType": "rack", "storageCount": 3,
       "columnsInRow": [5, 4, 5],
       "fillOrderStart": [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 4, 0], [0, 0, 1]],
       "places": [
@@ -68,6 +84,7 @@
     {
       "about": "A head-to-tail wine fridge two deep, as in the sample: shelves of 2, 1 and 2 layers, each shelf filled from its bottom layer; the back band is drawn half a place along",
       "kind": "staggered", "rows": 5, "columns": 7, "depth": 2, "rowColumns": [3, 4, 7, 5, 6], "shelfLayers": [2, 1, 2], "backReversed": true,
+      "storageType": "wineFridge", "storageCount": 3,
       "columnsInRow": [3, 4, 7, 5, 6],
       "fillOrderStart": [[1, 0, 0], [1, 1, 0], [1, 2, 0], [1, 3, 0], [1, 0, 1], [1, 1, 1], [1, 2, 1], [1, 3, 1], [0, 0, 0]],
       "places": [
@@ -82,6 +99,7 @@
     {
       "about": "A wine fridge one deep with a shelf of three layers: the middle one rests in the gaps and holds one fewer",
       "kind": "staggered", "rows": 3, "columns": 6, "shelfLayers": [3],
+      "storageType": "wineFridge", "storageCount": 1,
       "columnsInRow": [6, 5, 6],
       "fillOrderStart": [[2, 0, 0], [2, 1, 0], [2, 2, 0], [2, 3, 0], [2, 4, 0], [2, 5, 0], [1, 0, 0]],
       "places": [
@@ -93,6 +111,7 @@
     {
       "about": "A wine fridge two deep with one layer per shelf, back bottles the same way round: no shift",
       "kind": "staggered", "rows": 2, "columns": 4, "depth": 2, "shelfLayers": [1, 1],
+      "storageType": "wineFridge", "storageCount": 2,
       "columnsInRow": [4, 4],
       "fillOrderStart": [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 0, 1]],
       "places": [

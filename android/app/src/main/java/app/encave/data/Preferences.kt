@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.asStateFlow
 /** Device-only display preferences (not part of the cellar, never exported). */
 class Preferences(context: Context) {
     private val prefs = context.getSharedPreferences("preferences", Context.MODE_PRIVATE)
-    private val dynamic = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
+    private val dynamic = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, false))
 
-    /** Material You colors (Android 12+); the Encave burgundy is used when off or unavailable. */
+    /**
+     * Material You colors (Android 12+), off by default: the Encave burgundy is used when off or
+     * unavailable. Only a choice made in Settings is stored, so a person who turned it on keeps it.
+     */
     val dynamicColor: StateFlow<Boolean> = dynamic.asStateFlow()
 
     fun setDynamicColor(enabled: Boolean) {

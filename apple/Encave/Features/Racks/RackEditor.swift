@@ -236,9 +236,9 @@ struct RackEditor: View {
     /// A honeycomb on shelves, edited shelf by shelf.
     private var layered: Bool { kind == .staggered && onShelves }
 
-    /// The kinds this storage can become: a rack stays a rack (grid or honeycomb), a fridge
-    /// and crates keep theirs.
-    private var kinds: [RackKind] { storageType == .rack ? [.grid, .staggered] : [] }
+    /// The kinds this storage can become: a rack stays a rack (grid or honeycomb); diamond
+    /// bins, a fridge and crates keep theirs.
+    private var kinds: [RackKind] { storageType == .rack && initial?.kind != .bins ? [.grid, .staggered] : [] }
 
     /// Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
     private var offersCustomRows: Bool {

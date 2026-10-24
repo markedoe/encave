@@ -141,11 +141,12 @@ val StorageType.bodyRes: Int
         StorageType.Crates -> R.string.storage_type_crates_body
     }
 
-/** "Wine fridge · 4 shelves", "Rack · 6 rows" or "Crates · 10 bins", as in the Storage list. */
+/** "Wine fridge · 4 shelves", "Rack · 6 rows", "Rack · 6 bins" (diamond bins) or "Crates · 10 bins", as in the Storage list. */
 fun Rack.storageSummary(resources: Resources): String {
     val count = storageCount
     val detail = when (storageType) {
-        StorageType.Rack -> resources.getQuantityString(R.plurals.storage_rows, count, count)
+        StorageType.Rack ->
+            resources.getQuantityString(if (kind == RackKind.Bins) R.plurals.storage_bins else R.plurals.storage_rows, count, count)
         StorageType.WineFridge -> resources.getQuantityString(R.plurals.storage_shelves, count, count)
         StorageType.Crates -> resources.getQuantityString(R.plurals.storage_bins, count, count)
     }

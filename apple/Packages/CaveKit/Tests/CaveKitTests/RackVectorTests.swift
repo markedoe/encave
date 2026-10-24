@@ -27,6 +27,8 @@ import Testing
             var rowColumns: [Int]?
             var shelfLayers: [Int]?
             var backReversed: Bool?
+            var storageType: String
+            var storageCount: Int
             var columnsInRow: [Int]
             var fillOrderStart: [[Int]]
             var places: [Place]
@@ -58,6 +60,14 @@ import Testing
             #expect(!layout.fillOrderStart.isEmpty, "\(layout.about)")
             let start = rack.allSlots.prefix(layout.fillOrderStart.count).map { [$0.row, $0.column, $0.depth] }
             #expect(start == layout.fillOrderStart, "\(layout.about)")
+        }
+    }
+
+    @Test func storageTypeAndCount() throws {
+        for layout in try Self.vectors().racks {
+            let rack = try Self.rack(layout)
+            #expect(rack.storageType == StorageType(rawValue: layout.storageType), "\(layout.about)")
+            #expect(rack.storageCount == layout.storageCount, "\(layout.about)")
         }
     }
 

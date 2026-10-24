@@ -103,6 +103,27 @@ import Testing
         #expect(Set(tomorrow.map(\.wine.id)) == Set(cellar.tonightPicks(year: 2026, day: day).map(\.wine.id)))
     }
 
+    @Test func picksPutDrinkSoonFirstThenReadyEachInTheDaysOrder() throws {
+        var cellar = Cellar()
+        for index in 1...4 {
+            try cellar.addBottles(of: Wine(name: "Soon \(index)", drinkFrom: 2020, drinkUntil: 2026))
+            try cellar.addBottles(of: Wine(name: "Ready \(index)", drinkFrom: 2020, drinkUntil: 2030))
+        }
+        for day in ["2026-03-01", "2026-03-02", "2026-03-03"] {
+            let picks = cellar.tonightPicks(year: 2026, day: day)
+            #expect(picks.prefix(4).allSatisfy { $0.wine.name.hasPrefix("Soon") })
+            #expect(picks.suffix(4).allSatisfy { $0.wine.name.hasPrefix("Ready") })
+            for half in [Array(picks.prefix(4)), Array(picks.suffix(4))] {
+                let ranks = half.map { Cellar.tonightRank(wineID: $0.wine.id, day: day) }
+                #expect(ranks == ranks.sorted())
+            }
+            // The pick kept by the app stays first, even a ready one.
+            let ready = try #require(picks.last)
+            #expect(cellar.tonightPicks(year: 2026, day: day, keeping: ready.wine.id).map(\.wine.id)
+                == [ready.wine.id] + picks.dropLast().map(\.wine.id))
+        }
+    }
+
     @Test func picksEdgeCases() throws {
         var cellar = Cellar()
         let day = "2026-01-01"
@@ -143,12 +164,9 @@ import Testing
         try cellar.addBottles(of: Wine(name: "Ready", drinkFrom: 2020, drinkUntil: 2030))
         for day in ["2026-01-01", "2026-01-02", "2026-01-03"] {
             let picks = cellar.tonightPicks(year: 2026, day: day)
-            // The candidate with the smallest rank that day.
-            let best = cellar.tonightCandidates(year: 2026).min {
-                Cellar.tonightRank(wineID: $0.wine.id, day: day) < Cellar.tonightRank(wineID: $1.wine.id, day: day)
-            }
-            #expect(best != nil)
-            #expect(cellar.tonightSuggestion(year: 2026, day: day)?.wine.id == best?.wine.id)
+            // The wine to drink soon comes before the ready one, whatever their rank that day.
+            #expect(picks.map(\.wine.name) == ["Soon", "Ready"])
+            #expect(cellar.tonightSuggestion(year: 2026, day: day)?.wine.name == "Soon")
             // The wine kept for the day stays the suggestion.
             let other = try #require(picks.last)
             #expect(cellar.tonightSuggestion(year: 2026, day: day, keeping: other.wine.id)?.wine.id == other.wine.id)

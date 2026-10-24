@@ -212,8 +212,12 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     val layered = kind == RackKind.Staggered && onShelves
     // The type of the storage being edited: only its settings are shown.
     val storageType = existing.storageType
-    // A rack stays a rack (grid or honeycomb); a fridge and crates keep their kind.
-    val kinds = if (storageType == StorageType.Rack) listOf(RackKind.Grid, RackKind.Staggered) else emptyList()
+    // A rack stays a rack (grid or honeycomb); diamond bins, a fridge and crates keep their kind.
+    val kinds = if (storageType == StorageType.Rack && existing.kind != RackKind.Bins) {
+        listOf(RackKind.Grid, RackKind.Staggered)
+    } else {
+        emptyList()
+    }
     // Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
     val offersCustomRows = kind != RackKind.Staggered && (storageType != StorageType.WineFridge || existing.rowColumns != null)
     var showErrors by remember { mutableStateOf(false) }

@@ -21,6 +21,9 @@ extension Color {
     /// Text on a light wine color ("ink-on-light"), and on a dark one ("ink-on-dark").
     static let inkOnLight = Color("InkOnLight")
     static let inkOnDark = Color("InkOnDark")
+    /// Mac only: the selected sidebar row, under white text ("mac-sidebar-selection"): the
+    /// accent in light mode, a darker rose in dark mode (5.4:1 with white).
+    static let macSidebarSelection = Color("MacSidebarSelection")
 }
 
 extension View {
