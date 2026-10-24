@@ -32,6 +32,11 @@ public enum SampleData {
         public var merchant = "Wine merchant"
         public var tagBirthYear = "Birth year"
         public var occasion2 = "Christmas dinner"
+        public var piedmont = "Piedmont"
+        public var kakheti = "Kakheti"
+        public var italy = "Italy"
+        public var switzerland = "Switzerland"
+        public var georgia = "Georgia"
         public init() {}
     }
 
@@ -68,7 +73,7 @@ public enum SampleData {
                   region: "Bourgogne", country: "France", appellation: "Meursault", grapes: ["Chardonnay"],
                   drinkFrom: year - 1, drinkUntil: year), 2, main),
             (Wine(id: ids.next(.wine), name: "Cuvée du Lac", producer: "Cave des Coteaux", vintage: year - 2, color: .white,
-                  region: "Vaud", country: "Switzerland", grapes: ["Chasselas"],
+                  region: "Vaud", country: labels.switzerland, grapes: ["Chasselas"],
                   drinkFrom: year - 1, drinkUntil: year + 2), 4, small),
             (Wine(id: ids.next(.wine), name: "Terrasses du Sud", producer: "Domaine Ferrand", vintage: year - 3, color: .red,
                   region: "Rhône", country: "France", appellation: "Gigondas", grapes: ["Grenache", "Syrah"],
@@ -82,13 +87,13 @@ public enum SampleData {
                   region: "Alsace", country: "France", grapes: ["Gewurztraminer"],
                   drinkFrom: year - 6, drinkUntil: year + 15), 1, main),
             (Wine(id: ids.next(.wine), name: "Riserva Vigna Alta", producer: "Cascina Ferri", vintage: year - 10, color: .red,
-                  region: "Piedmont", country: "Italy", appellation: "Barolo", grapes: ["Nebbiolo"],
+                  region: labels.piedmont, country: labels.italy, appellation: "Barolo", grapes: ["Nebbiolo"],
                   drinkFrom: year - 2, drinkUntil: year + 12), 8, deep),
             (Wine(id: ids.next(.wine), name: "Savagnin Ouillé", producer: "Domaine des Granges", vintage: year - 5, color: .white,
                   region: "Jura", country: "France", appellation: "Arbois", grapes: ["Savagnin"],
                   drinkFrom: year - 2, drinkUntil: year + 6), 5, honeycomb),
             (Wine(id: ids.next(.wine), name: "Qvevri Amber", producer: "Marani Tsiskari", vintage: year - 3, color: .orange,
-                  region: "Kakheti", country: "Georgia", grapes: ["Rkatsiteli"],
+                  region: labels.kakheti, country: labels.georgia, grapes: ["Rkatsiteli"],
                   drinkFrom: year - 1, drinkUntil: year + 4), 3, largeFridge),
             (Wine(id: ids.next(.wine), name: "Vintage Port", producer: "Quinta da Serra", vintage: year - 15, color: .fortified,
                   region: "Douro", country: "Portugal", appellation: "Porto", grapes: ["Touriga Nacional"],

@@ -4391,6 +4391,16 @@
         }
       }
     },
+    "Delete %@ (%@)?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer %@ (%@) ?"
+          }
+        }
+      }
+    },
     "Delete %lld wines?": {
       "localizations": {
         "en": {
@@ -4437,6 +4447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer la bouteille"
+          }
+        }
+      }
+    },
+    "Delete Bottles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer les bouteilles"
           }
         }
       }
@@ -6101,6 +6121,16 @@
         }
       }
     },
+    "Georgia": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Géorgie"
+          }
+        }
+      }
+    },
     "Get Cellar Contents": {
       "localizations": {
         "fr": {
@@ -6881,6 +6911,16 @@
         }
       }
     },
+    "Italy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Italie"
+          }
+        }
+      }
+    },
     "Its bottles, drinking window and tastings appear here.": {
       "localizations": {
         "fr": {
@@ -6987,6 +7027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Entrées du Journal"
+          }
+        }
+      }
+    },
+    "Kakheti": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kakhétie"
           }
         }
       }
@@ -9721,6 +9771,16 @@
         }
       }
     },
+    "Piedmont": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piémont"
+          }
+        }
+      }
+    },
     "Pinch to zoom in and out. On the Mac, and on the iPad in a wide window, the zoom buttons at the top and ⌘+ and ⌘– work too. On iPhone and iPad, **Bottle List** lists the bottles of the storage position by position; on the Mac, the list is beside the drawing.": {
       "localizations": {
         "fr": {
@@ -12277,6 +12337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Balayez un vin vers la droite, utilisez **Boire** sur sa fiche, ou touchez **+** dans le Journal et choisissez **Une bouteille de ma cave**. Quand le vin est à plusieurs endroits, choisissez la bouteille sous **Quelle bouteille ?** : les bouteilles libres viennent d’abord, et celles réservées pour une occasion le disent. La bouteille quitte la cave et sa position se libère. **Annuler** reste affiché quelques secondes."
+          }
+        }
+      }
+    },
+    "Switzerland": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suisse"
           }
         }
       }
