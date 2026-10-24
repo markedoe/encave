@@ -1,5 +1,5 @@
 {
-  "about": "Tonight's daily suggestion order, shared by CaveKit (TonightTests.swift) and the Android core (TonightTest.kt). rank is the 64-bit FNV-1a hash, in hexadecimal, of the UTF-8 text \"<lowercase wine id>|<yyyy-MM-dd>\"; order lists the wine ids by rank, smallest first.",
+  "about": "Tonight's daily suggestion order, shared by CaveKit (TonightTests.swift) and the Android core (TonightTest.kt). rank is the 64-bit FNV-1a hash, in hexadecimal, of the UTF-8 text \"<lowercase wine id>|<yyyy-MM-dd>\"; order lists the wine ids by rank, smallest first. picks are Tonight's suggestions in a cellar on the given day (year 2026): each wine has 'free' bottles (default 1) and 'reserved' ones kept for an occasion (default 0), drinkable from 'from' (default 2020) until 'until'; order is tonightPicks, with 'kept' first when it is a candidate. Ids compare ignoring case.",
   "ranks": [
     {
       "wineId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -114,6 +114,178 @@
         "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
         "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
         "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "about": "Drink-soon (until 2026) and ready wines are ranked together by the day's rank, not by maturity.",
+      "day": "2026-10-22",
+      "wines": [
+        {
+          "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "until": 2026
+        },
+        {
+          "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+          "until": 2030
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "until": 2026
+        },
+        {
+          "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "until": 2030
+        },
+        {
+          "id": "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+          "until": 2035
+        }
+      ],
+      "order": [
+        "00000000-0000-0000-0000-000000000001",
+        "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+        "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+      ]
+    },
+    {
+      "about": "Wines whose bottles are all kept for an occasion are left out, as are young ones; a wine with a free bottle stays.",
+      "day": "2026-01-01",
+      "wines": [
+        {
+          "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "until": 2030
+        },
+        {
+          "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+          "until": 2030,
+          "free": 0,
+          "reserved": 1
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "until": 2026
+        },
+        {
+          "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "from": 2030,
+          "until": 2040
+        },
+        {
+          "id": "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+          "until": 2030,
+          "reserved": 2
+        }
+      ],
+      "order": [
+        "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "00000000-0000-0000-0000-000000000001",
+        "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10"
+      ]
+    },
+    {
+      "about": "The pick kept by the app stays first; the others keep their rank.",
+      "day": "2026-12-31",
+      "kept": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      "wines": [
+        {
+          "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "until": 2030
+        },
+        {
+          "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+          "until": 2030
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "until": 2030
+        },
+        {
+          "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "until": 2030
+        },
+        {
+          "id": "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+          "until": 2030
+        }
+      ],
+      "order": [
+        "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+        "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "00000000-0000-0000-0000-000000000001"
+      ]
+    },
+    {
+      "about": "A kept wine that is not a candidate (young) changes nothing.",
+      "day": "2026-12-31",
+      "kept": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "wines": [
+        {
+          "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+          "until": 2030
+        },
+        {
+          "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+          "until": 2030
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "until": 2030
+        },
+        {
+          "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "from": 2030,
+          "until": 2040
+        },
+        {
+          "id": "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+          "until": 2030
+        }
+      ],
+      "order": [
+        "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "9b2e1c7a-1d4e-4c5b-8f3a-2b7d6e5f4a10",
+        "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        "00000000-0000-0000-0000-000000000001"
+      ]
+    },
+    {
+      "about": "Ids written in uppercase rank as their lowercase text; the kept id too.",
+      "day": "2028-02-29",
+      "kept": "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+      "wines": [
+        {
+          "id": "3F2504E0-4F89-41D3-9A0C-0305E82C3301",
+          "until": 2030
+        },
+        {
+          "id": "6BA7B810-9DAD-11D1-80B4-00C04FD430C8",
+          "until": 2030
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "until": 2030
+        },
+        {
+          "id": "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+          "until": 2030
+        },
+        {
+          "id": "9B2E1C7A-1D4E-4C5B-8F3A-2B7D6E5F4A10",
+          "until": 2030
+        }
+      ],
+      "order": [
+        "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+        "9B2E1C7A-1D4E-4C5B-8F3A-2B7D6E5F4A10",
+        "00000000-0000-0000-0000-000000000001",
+        "3F2504E0-4F89-41D3-9A0C-0305E82C3301",
+        "6BA7B810-9DAD-11D1-80B4-00C04FD430C8"
       ]
     }
   ]

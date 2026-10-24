@@ -84,10 +84,21 @@ public struct Discovery: Identifiable, Codable, Hashable, Sendable {
     public static func normalized(_ tags: [String]) -> [String] {
         var seen = Set<String>()
         return tags.compactMap { tag in
-            let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = tag.trimmingCharacters(in: .unicodeWhiteSpace)
             guard !trimmed.isEmpty, seen.insert(trimmed.lowercased()).inserted else { return nil }
             return trimmed
         }
+    }
+}
+
+extension CharacterSet {
+    /// The Unicode White_Space characters, spelled out so both platforms use the same set
+    /// (the Kotlin core has `WhiteSpace`): U+0009–000D, 0020, 0085, 00A0, 1680, 2000–200A,
+    /// 2028, 2029, 202F, 205F and 3000.
+    static var unicodeWhiteSpace: CharacterSet {
+        CharacterSet(charactersIn: "\u{9}\u{A}\u{B}\u{C}\u{D}\u{20}\u{85}\u{A0}\u{1680}"
+            + "\u{2000}\u{2001}\u{2002}\u{2003}\u{2004}\u{2005}\u{2006}\u{2007}\u{2008}\u{2009}\u{200A}"
+            + "\u{2028}\u{2029}\u{202F}\u{205F}\u{3000}")
     }
 }
 

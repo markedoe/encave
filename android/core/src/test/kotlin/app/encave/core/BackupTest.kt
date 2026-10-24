@@ -12,17 +12,23 @@ import java.util.UUID
 import java.util.zip.ZipFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 
-/** Runs `unzip -t` on an archive when the tool is there; null otherwise. */
-internal fun unzipTest(file: File): Pair<Int, String>? {
-    val tool = listOf("/usr/bin/unzip", "/bin/unzip").map(::File).firstOrNull { it.canExecute() } ?: return null
-    val process = ProcessBuilder(tool.path, "-t", file.path).redirectErrorStream(true).start()
+/**
+ * Runs `unzip -t` on an archive. Without the tool the rest of the test is skipped, and
+ * reported as such: call it last.
+ */
+internal fun unzipTest(file: File): Pair<Int, String> {
+    val tool = listOf("/usr/bin/unzip", "/bin/unzip").map(::File).firstOrNull { it.canExecute() }
+    assumeTrue(tool != null, "unzip is not installed")
+    val process = ProcessBuilder(tool!!.path, "-t", file.path).redirectErrorStream(true).start()
     val output = process.inputStream.readBytes().decodeToString()
     return process.waitFor() to output
 }
@@ -48,6 +54,26 @@ class CellarArchiveTest {
         assertEquals("Notes" to null, document("Notes", "application/x-unknown"))
         assertEquals("pdf" to "pdf", document(".pdf", "application/pdf"))
         assertEquals("Facture n°12 – Cave" to "PDF", document("Facture n°12 – Cave.PDF", "application/pdf"))
+    }
+
+    @Test
+    fun namesAreComposedSoOneSpellingIsOneName() {
+        // "Château" typed composed and decomposed: the same name once in the archive, as
+        // CaveKit writes and reads it.
+        val composed = "Ch\u00E2teau"
+        val decomposed = "Cha\u0302teau"
+        assertEquals(composed, CellarArchive.cleanStem(decomposed, "Photo"))
+        val photo = PhotoId.make("p".toByteArray())
+        val other = PhotoId.make("o".toByteArray())
+        val a = Wine(id = UUID.fromString("00000000-0000-4000-8000-000000000001"), name = composed, photoId = photo)
+        val b = Wine(id = UUID.fromString("00000000-0000-4000-8000-000000000002"), name = decomposed, photoId = other)
+        assertEquals(
+            listOf(
+                CellarArchive.Item("photos/$composed.jpg", FileRef(photo, FileKind.Photo)),
+                CellarArchive.Item("photos/$composed 2.jpg", FileRef(other, FileKind.Photo)),
+            ),
+            CellarArchive.plan(Cellar(listOf(a, b))),
+        )
     }
 
     @Test
@@ -116,7 +142,6 @@ class CellarArchiveTest {
             assertEquals(CellarExport.json(cellar, exportedAt), archive.getInputStream(archive.getEntry("cellar.json")).readBytes().decodeToString())
             assertTrue(archive.entries().toList().all { it.method == java.util.zip.ZipEntry.STORED })
         }
-        unzipTest(zip)?.let { (status, output) -> assertEquals(0, status, output) }
 
         val contents = zip.inputStream().use { CellarArchive.read(it, work()) }
         // Backups keep whole seconds.
@@ -125,6 +150,8 @@ class CellarArchiveTest {
         assertEquals(files.keys, contents.files.keys)
         for ((ref, file) in contents.files) assertEquals(files.getValue(ref).readText(), file.readText())
         assertEquals(0, contents.skipped)
+        val (status, output) = unzipTest(zip)
+        assertEquals(0, status, output)
     }
 
     @Test
@@ -495,6 +522,37 @@ class RestoreTest {
         assertEquals(1, preview.changed)
         assertFalse(preview.isSame)
         assertTrue(RestorePreview.of(backup, Instant.EPOCH, backup).isSame)
+    }
+
+    /** A cellar whose dates have fractions of a second, as live dates do. */
+    private fun liveCellar(): Cellar {
+        val now = ReferenceDates.now().plusNanos(123_456_000)
+        val cellar = Cellar()
+        val rack = Rack(name = "A", rows = 2, columns = 2)
+        cellar.addRack(rack)
+        val wine = Wine(name = "Clos", currentPriceDate = now)
+        cellar.addBottles(wine, 2, listOf(Slot(rack.id, 0, 0)), PurchaseInfo(date = now), addedAt = now)
+        cellar.addBottles(Wine(name = "Other"), 1, emptyList(), PurchaseInfo(), addedAt = now)
+        cellar.addDiscovery(Discovery(wineId = wine.id, date = now), wine)
+        return cellar
+    }
+
+    @Test
+    fun aBackupJustMadeIsTheSameCellar() {
+        val current = liveCellar()
+        val backup = CellarJson.backupFrom(CellarJson.backup(current)).cellar
+        assertNotEquals(current, backup, "backups keep whole seconds")
+        assertTrue(RestorePreview.of(backup, Instant.EPOCH, current).isSame)
+
+        // Replace keeps the identical records as they are, and still takes what differs.
+        assertEquals(current, current.restoring(backup, RestoreMode.Replace))
+        val bottle = backup.bottles.values.first()
+        backup.updateBottle(bottle.copy(storageNote = "Kitchen"))
+        val replaced = current.restoring(backup, RestoreMode.Replace)
+        assertEquals("Kitchen", replaced.bottles[bottle.id]?.storageNote)
+        replaced.bottles.values.filter { it.id != bottle.id }.forEach { assertEquals(current.bottles[it.id], it) }
+        assertEquals(current.wines, replaced.wines)
+        assertEquals(1, RestorePreview.of(backup, Instant.EPOCH, current).changed)
     }
 
     @Test

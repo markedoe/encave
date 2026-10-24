@@ -93,8 +93,8 @@ cd android
 
 - `android/core` is the Kotlin port of CaveKit. Keep both in step: the JSON
   backup is shared, and the Kotlin tests read fixtures written by CaveKit:
-  `fixtures/interop` and `fixtures/search` (shared by both) and
-  `android/core/src/test/resources`. After a model change, regenerate them with
+  `fixtures/interop` and `fixtures/search` (shared by both; the sample cellar's
+  backup and spreadsheet are `swift-sample-*`). After a model change, regenerate them with
   `ENCAVE_WRITE_FIXTURES=1 swift test --package-path apple/Packages/CaveKit`,
   then run the Kotlin tests.
 - Colors: `ui/theme/DesignTokens.kt` mirrors `design/tokens.json`;

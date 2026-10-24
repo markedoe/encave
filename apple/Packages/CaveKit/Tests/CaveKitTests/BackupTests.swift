@@ -16,10 +16,18 @@ final class TemporaryFolder {
     func file(_ name: String) -> URL { url.appendingPathComponent(name) }
 }
 
-/// Runs `unzip -t` on an archive, when the tool is there (Linux CI, macOS): nil otherwise.
-func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
-    let tool = ["/usr/bin/unzip", "/bin/unzip"].first { FileManager.default.isExecutableFile(atPath: $0) }
-    guard let tool else { return nil }
+/// The `unzip` tool, when it is installed (macOS has it; a Linux container may not).
+let unzipTool: String? = ["/usr/bin/unzip", "/bin/unzip"].first { FileManager.default.isExecutableFile(atPath: $0) }
+
+extension Trait where Self == ConditionTrait {
+    /// Runs the test only where `unzip` is installed: elsewhere it is reported as skipped,
+    /// rather than passing without the check.
+    static var requiresUnzip: Self { .enabled(if: unzipTool != nil, "unzip is not installed") }
+}
+
+/// Runs `unzip -t` on an archive, in a test marked `.requiresUnzip`.
+func unzipTest(_ url: URL) throws -> (status: Int32, output: String) {
+    let tool = try #require(unzipTool, "unzip is not installed")
     let process = Process()
     process.executableURL = URL(fileURLWithPath: tool)
     process.arguments = ["-t", url.path]
@@ -46,8 +54,8 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(crc.value == 0xCBF4_3926)
     }
 
-    @Test func writesAndReadsEntriesFromDataAndFiles() throws {
-        let folder = try TemporaryFolder()
+    /// A ZIP file of three entries, written from data and from a file: the URL and the large entry.
+    static func writeThreeEntries(in folder: TemporaryFolder) throws -> (url: URL, big: Data) {
         let big = Data((0..<700_000).map { UInt8(truncatingIfNeeded: $0 &* 31) })
         try big.write(to: folder.file("big.bin"))
         let zipURL = folder.file("test.zip")
@@ -56,6 +64,12 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         try writer.add(name: "photos/Château été 2015.jpg", contentsOf: folder.file("big.bin"))
         try writer.add(name: "empty", data: Data())
         try writer.finish()
+        return (zipURL, big)
+    }
+
+    @Test func writesAndReadsEntriesFromDataAndFiles() throws {
+        let folder = try TemporaryFolder()
+        let (zipURL, big) = try Self.writeThreeEntries(in: folder)
 
         let reader = try ZipReader(url: zipURL)
         #expect(reader.entries.map(\.name) == ["README.txt", "photos/Château été 2015.jpg", "empty"])
@@ -64,11 +78,13 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(try Data(contentsOf: folder.file("out.bin")) == big)
         #expect(try reader.data(of: reader.entries[2], maxSize: 0).isEmpty)
         #expect(throws: ZipError.tooLarge) { try reader.data(of: reader.entries[1], maxSize: 1000) }
+    }
 
-        if let result = try unzipTest(zipURL) {
-            #expect(result.status == 0, "unzip -t: \(result.output)")
-            #expect(result.output.contains("No errors detected"))
-        }
+    @Test(.requiresUnzip) func unzipAcceptsTheEntries() throws {
+        let folder = try TemporaryFolder()
+        let result = try unzipTest(Self.writeThreeEntries(in: folder).url)
+        #expect(result.status == 0, "unzip -t: \(result.output)")
+        #expect(result.output.contains("No errors detected"))
     }
 
     @Test func aDamagedEntryFailsItsCheck() throws {
@@ -148,6 +164,36 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(document("Facture n°12 – Cave.PDF", "application/pdf") == ("Facture n°12 – Cave", "PDF"))
     }
 
+    @Test func namesAreComposedSoOneSpellingIsOneName() throws {
+        // "Château" typed composed and decomposed: two photos, two entries, both read back.
+        let composed = "Ch\u{E2}teau", decomposed = "Cha\u{302}teau"
+        #expect(Array(CellarArchive.cleanStem(decomposed, fallback: "Photo").unicodeScalars) == Array(composed.unicodeScalars))
+        let folder = try TemporaryFolder()
+        let label = Data("label".utf8), back = Data("back".utf8)
+        var a = Wine(name: composed), b = Wine(name: "Other")
+        a.photoID = PhotoID.make(for: label)
+        b.photoID = PhotoID.make(for: back)
+        let cellar = Cellar(wines: [a, b])
+        // As an Android version without composed names wrote it: one entry of each spelling.
+        let zipURL = folder.file("android.zip")
+        let writer = try ZipWriter(url: zipURL, modified: .now)
+        try writer.add(name: "cellar.json", data: try CellarExport.json(cellar))
+        let manifest = CellarArchive.Manifest(files: [
+            CellarArchive.Item(path: "photos/\(composed).jpg", id: PhotoID.make(for: label), kind: .photo),
+            CellarArchive.Item(path: "photos/\(decomposed).jpg", id: PhotoID.make(for: back), kind: .photo),
+        ])
+        try writer.add(name: "files.json", data: try CellarArchive.manifestData(manifest))
+        try writer.add(name: "photos/\(composed).jpg", data: label)
+        try writer.add(name: "photos/\(decomposed).jpg", data: back)
+        try writer.finish()
+        let work = folder.file("work")
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let contents = try CellarArchive.read(zipURL, workingFolder: work)
+        #expect(Set(contents.files.keys) == [FileRef(id: PhotoID.make(for: label), kind: .photo),
+                                             FileRef(id: PhotoID.make(for: back), kind: .photo)])
+        #expect(contents.skipped == 0)
+    }
+
     @Test func planNamesEachFileOnceAndUniquely() {
         let photo = PhotoID.make(for: Data("p".utf8)), other = PhotoID.make(for: Data("o".utf8))
         let doc = PhotoID.make(for: Data("d".utf8))
@@ -209,7 +255,6 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         // cellar.json is the JSON backup itself.
         #expect(try reader.data(of: reader.entry(named: "cellar.json")!, maxSize: 10_000_000)
                 == CellarExport.json(cellar, exportedAt: exportedAt))
-        if let result = try unzipTest(zipURL) { #expect(result.status == 0, "unzip -t: \(result.output)") }
 
         let work = folder.file("work")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
@@ -241,6 +286,15 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(Set(contents.files.keys) == [photo])
         #expect(try contents.files[photo].map { try Data(contentsOf: $0) } == Data("old label".utf8))
         #expect(contents.skipped == 0)
+    }
+
+    @Test(.requiresUnzip) func unzipAcceptsTheArchive() throws {
+        let folder = try TemporaryFolder()
+        let (cellar, urls) = try sample(in: folder)
+        let zipURL = folder.file("backup.zip")
+        try CellarArchive.write(cellar, exportedAt: Date(timeIntervalSince1970: 1_790_000_000), to: zipURL, fileURL: { urls[$0] })
+        let result = try unzipTest(zipURL)
+        #expect(result.status == 0, "unzip -t: \(result.output)")
     }
 
     @Test func missingFilesAreLeftOut() throws {
@@ -548,6 +602,38 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(preview.changed == 1)
         #expect(!preview.isSame)
         #expect(RestorePreview(of: backup, date: .now, comparedWith: backup).isSame)
+    }
+
+    /// A cellar whose dates have fractions of a second, as live dates do.
+    private func liveCellar() throws -> Cellar {
+        let now = Date.now.addingTimeInterval(0.123)
+        var cellar = Cellar()
+        let rack = Rack(name: "A", rows: 2, columns: 2)
+        cellar.addRack(rack)
+        var wine = Wine(name: "Clos")
+        wine.currentPriceDate = now
+        _ = try cellar.addBottles(of: wine, quantity: 2, slots: [Slot(rackID: rack.id, row: 0, column: 0)],
+                                  purchase: PurchaseInfo(date: now), addedAt: now)
+        _ = try cellar.addBottles(of: Wine(name: "Other"), addedAt: now)
+        _ = cellar.addDiscovery(Discovery(wineID: wine.id, date: now), wine: wine)
+        return cellar
+    }
+
+    @Test func aBackupJustMadeIsTheSameCellar() throws {
+        let current = try liveCellar()
+        var backup = try CellarExport.backup(fromJSON: CellarExport.json(current)).cellar
+        #expect(backup != current, "backups keep whole seconds")
+        #expect(RestorePreview(of: backup, date: .now, comparedWith: current).isSame)
+
+        // Replace keeps the identical records as they are, and still takes what differs.
+        #expect(current.restoring(backup, mode: .replace) == current)
+        let bottle = try #require(backup.bottles.values.first)
+        backup.bottles[bottle.id]?.storageNote = "Kitchen"
+        let replaced = current.restoring(backup, mode: .replace)
+        #expect(replaced.bottles[bottle.id]?.storageNote == "Kitchen")
+        for other in replaced.bottles.values where other.id != bottle.id { #expect(other == current.bottles[other.id]) }
+        #expect(replaced.wines == current.wines)
+        #expect(RestorePreview(of: backup, date: .now, comparedWith: current).changed == 1)
     }
 
     @Test func addMissingKeepsTheCellarAndReplaceTakesTheBackup() throws {

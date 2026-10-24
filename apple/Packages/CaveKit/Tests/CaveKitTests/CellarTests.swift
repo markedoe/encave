@@ -117,6 +117,27 @@ import Testing
         #expect(cellar.bottles[bottle.id]?.slot == nil)
     }
 
+    @Test func undoDrinkLeavesATakenPlaceAndOnlyUndoesAnOpenedBottle() throws {
+        var cellar = cellarWithRack()
+        let slot = Slot(rackID: rack.id, row: 0, column: 0)
+        let x = try #require(try cellar.addBottles(of: Wine(name: "X"), slots: [slot]).first)
+        try cellar.drink(x.id, tasting: Tasting())
+        let y = try #require(try cellar.addBottles(of: Wine(name: "Y"), slots: [slot]).first)
+        cellar.undoDrink(x.id, previousSlot: slot)
+        #expect(cellar.bottles[x.id]?.status == .inCellar)
+        #expect(cellar.bottles[x.id]?.slot == nil)
+        #expect(cellar.bottle(at: slot)?.id == y.id)
+
+        // On order or given away: not a drink to undo, nothing changes.
+        let ordered = try #require(try cellar.addBottles(of: Wine(name: "O"), purchase: PurchaseInfo(isOrdered: true)).first)
+        cellar.undoDrink(ordered.id, previousSlot: nil)
+        #expect(cellar.bottles[ordered.id]?.status == .ordered)
+        try cellar.markGone(y.id)
+        cellar.undoDrink(y.id, previousSlot: slot)
+        #expect(cellar.bottles[y.id]?.status == .gone)
+        #expect(cellar.bottle(at: slot) == nil)
+    }
+
     @Test func moveRejectsOccupiedSlot() throws {
         var cellar = cellarWithRack()
         let a = Slot(rackID: rack.id, row: 0, column: 0)

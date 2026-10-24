@@ -92,17 +92,12 @@ class Cellar(
         }
     }
 
-    /** Occasions bottles in the cellar are reserved for, by name (case-insensitive). */
+    /**
+     * Occasions bottles in the cellar are reserved for, counted case-insensitively, by name
+     * ([chipOrder]), each with its most used spelling, as in CaveKit.
+     */
     val reservations: List<String>
-        get() {
-            val names = LinkedHashMap<String, String>()
-            for (bottle in bottlesInCellar) {
-                val name = bottle.reservedFor ?: continue
-                names.putIfAbsent(name.lowercase(java.util.Locale.ROOT), name)
-            }
-            val collator = collator()
-            return names.values.sortedWith(collator::compare)
-        }
+        get() = spelled(bottlesInCellar.mapNotNull { it.reservedFor }).map { it.first }.sortedWith(chipOrder)
 
     /** Tags of wines with bottles in the cellar, most used first. */
     val wineTags: List<String>
@@ -393,14 +388,16 @@ class Cellar(
         bottleMap[bottleId] = bottle.copy(tasting = tasting.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(bottle.tasting?.unknownKeys)) })
     }
 
-    /** Reverts a drink, putting the bottle back in its previous slot if still free. */
+    /**
+     * Reverts a drink, putting the bottle back in its previous slot if still free. Only a
+     * bottle opened can be: one on order or given away stays as it is.
+     */
     fun undoDrink(bottleId: UUID, previousSlot: Slot?) {
         val bottle = bottleMap[bottleId] ?: return
-        if (bottle.status == Bottle.Status.InCellar) return
+        if (bottle.status != Bottle.Status.Consumed) return
         // Back in its place if it is still free and still exists (the rack may be gone or smaller).
         val free = previousSlot != null && bottleAt(previousSlot) == null && rack(previousSlot.rackId)?.contains(previousSlot) == true
-        val slot = if (free) previousSlot else bottle.slot
-        bottleMap[bottleId] = bottle.copy(status = Bottle.Status.InCellar, tasting = null, slot = slot)
+        bottleMap[bottleId] = bottle.copy(status = Bottle.Status.InCellar, tasting = null, slot = if (free) previousSlot else null)
     }
 
     /** Marks a bottle as given away, sold or broken. */
@@ -638,20 +635,57 @@ class Cellar(
         const val CURRENT_SCHEMA_VERSION = 2
 
         /**
-         * Names counted case-insensitively, the most used first. Each is shown with its most
-         * used spelling (ties: the first in UTF-16 order), so the label does not depend on
-         * the order records are stored in, and is the same on every platform.
+         * Names counted case-insensitively, the most used first, equal counts in [chipOrder].
+         * Each is shown with its most used spelling (ties: the first in UTF-16 order), so the
+         * label does not depend on the order records are stored in, and is the same on every platform.
          */
-        internal fun byUse(names: List<String>): List<String> {
+        internal fun byUse(names: List<String>): List<String> =
+            spelled(names).sortedWith { a, b -> if (a.second != b.second) b.second - a.second else chipOrder.compare(a.first, b.first) }
+                .map { it.first }
+
+        /** Names counted case-insensitively, each with its most used spelling (ties: the first in UTF-16 order). */
+        private fun spelled(names: List<String>): List<Pair<String, Int>> {
             val spellings = HashMap<String, HashMap<String, Int>>()
             for (name in names) spellings.getOrPut(name.lowercase(java.util.Locale.ROOT)) { HashMap() }.merge(name, 1, Int::plus)
-            val entries = spellings.values.map { counts ->
+            return spellings.values.map { counts ->
                 val shown = counts.entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key }).first().key
                 shown to counts.values.sum()
             }
-            val collator = collator()
-            return entries.sortedWith { a, b -> if (a.second != b.second) b.second - a.second else collator.compare(a.first, b.first) }
-                .map { it.first }
+        }
+
+        /**
+         * The order of tags, grapes and occasions, the same in every locale and on Apple
+         * (`Cellar.chipOrder`): ignoring case and accents, with runs of digits compared by
+         * value ("Lot 2" before "Lot 10"), then by UTF-16 code units.
+         */
+        internal val chipOrder: Comparator<String> = Comparator { a, b ->
+            val order = naturalOrder(Wine.fold(a), Wine.fold(b))
+            if (order != 0) order else a.compareTo(b)
+        }
+
+        private fun naturalOrder(a: String, b: String): Int {
+            var i = 0
+            var j = 0
+            while (i < a.length && j < b.length) {
+                if (a[i] in '0'..'9' && b[j] in '0'..'9') {
+                    var endA = i
+                    while (endA < a.length && a[endA] in '0'..'9') endA++
+                    var endB = j
+                    while (endB < b.length && b[endB] in '0'..'9') endB++
+                    val runA = a.substring(i, endA).trimStart('0')
+                    val runB = b.substring(j, endB).trimStart('0')
+                    if (runA.length != runB.length) return runA.length.compareTo(runB.length)
+                    val digits = runA.compareTo(runB)
+                    if (digits != 0) return digits
+                    i = endA
+                    j = endB
+                } else {
+                    if (a[i] != b[j]) return a[i].compareTo(b[j])
+                    i++
+                    j++
+                }
+            }
+            return (a.length - i).compareTo(b.length - j)
         }
 
         /** Case-insensitive, accent-sensitive, like `localizedCaseInsensitiveCompare`. */

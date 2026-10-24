@@ -3,6 +3,23 @@ import Testing
 @testable import CaveKit
 
 @Suite struct DiscoveryTests {
+    /// The vectors shared with the Kotlin core, in `fixtures/tag-vectors.json`.
+    @Test func tagsAreTrimmedOfUnicodeWhiteSpaceOnly() throws {
+        struct Vector: Decodable { var tags: [String]; var normalized: [String] }
+        struct Vectors: Decodable { var vectors: [Vector] }
+        let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent() // CaveKitTests
+            .deletingLastPathComponent().deletingLastPathComponent() // CaveKit
+            .deletingLastPathComponent().deletingLastPathComponent() // apple
+            .deletingLastPathComponent().appendingPathComponent("fixtures/tag-vectors.json")
+        let vectors = try JSONDecoder().decode(Vectors.self, from: Data(contentsOf: file)).vectors
+        #expect(!vectors.isEmpty)
+        for vector in vectors {
+            #expect(Discovery.normalized(vector.tags) == vector.normalized, "\(vector.tags)")
+            let expected: [String]? = vector.normalized.isEmpty ? nil : vector.normalized
+            #expect(Wine(name: "W", tags: vector.tags).tags == expected, "\(vector.tags)")
+        }
+    }
+
     @Test func discoveredWineIsNotABottleInTheCellar() {
         var cellar = Cellar()
         let wine = Wine(name: "Alvarinho", vintage: 2023, color: .white)

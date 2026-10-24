@@ -85,6 +85,24 @@
   "tags": ["Gift", "Cellar door", "Été", "Summer"],
   "grapes": ["Cabernet Sauvignon", "Merlot", "Aligoté", "Clairette", "Riesling", "Syrah"],
   "reservations": ["Anniversaire"],
+  "about chipOrder": "Chips and occasions in their own cellars, the same in every locale: names compare ignoring case and accents with digit runs by value (Lot 2 before Lot 10), then by UTF-16 code units. A name typed with several spellings shows the most used one (ties: the first in UTF-16 order). Each list in tags is one wine with one bottle; each entry of reservedFor is one bottle kept for that occasion.",
+  "chipOrder": [
+    { "about": "Equal counts: digit runs by value, leading zeros only break ties.",
+      "tags": [["Lot 10", "Lot 2"], ["lot 10", "Lot 2", "lot 1"], ["Lot 02"]],
+      "reservedFor": ["Lot 10", "Lot 2", "lot 1", "Lot 02"],
+      "expectedTags": ["Lot 2", "Lot 10", "lot 1", "Lot 02"],
+      "expectedReservations": ["lot 1", "Lot 02", "Lot 2", "Lot 10"] },
+    { "about": "Accents and case do not change the order; two spellings used as often show the first in UTF-16 order.",
+      "tags": [["Dîner 10"], ["Diner 9"], ["dîner 2"], ["paul's 40th"], ["Paul's 40th"]],
+      "reservedFor": ["paul's 40th", "Paul's 40th", "Dîner 10", "Dîner 2", "dîner 2", "dîner 2"],
+      "expectedTags": ["Paul's 40th", "dîner 2", "Diner 9", "Dîner 10"],
+      "expectedReservations": ["dîner 2", "Dîner 10", "Paul's 40th"] },
+    { "about": "The most used spelling wins, whichever came first.",
+      "tags": [["Paul's 40th"], ["paul's 40th"], ["paul's 40th"]],
+      "reservedFor": ["Paul's 40th", "paul's 40th", "paul's 40th"],
+      "expectedTags": ["paul's 40th"],
+      "expectedReservations": ["paul's 40th"] }
+  ],
   "savedSearches": [
     { "about": "Names are trimmed; saving under a name already used (ignoring case) replaces it.",
       "steps": [

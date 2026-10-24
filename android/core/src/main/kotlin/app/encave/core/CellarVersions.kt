@@ -223,6 +223,8 @@ data class RestorePreview(
 
     companion object {
         fun of(backup: Cellar, date: Instant, current: Cellar): RestorePreview {
+            // A record that only differs by what a backup does not keep is the same.
+            val compared = current.matching(backup)
             var added = 0
             var removed = 0
             var changed = 0
@@ -233,10 +235,10 @@ data class RestorePreview(
                 }
                 removed += b.keys.count { it !in a }
             }
-            compare(backup.wines, current.wines)
-            compare(backup.bottles, current.bottles)
-            compare(backup.racks.associateBy { it.id }, current.racks.associateBy { it.id })
-            compare(backup.discoveries, current.discoveries)
+            compare(compared.wines, current.wines)
+            compare(compared.bottles, current.bottles)
+            compare(compared.racks.associateBy { it.id }, current.racks.associateBy { it.id })
+            compare(compared.discoveries, current.discoveries)
             return RestorePreview(
                 date = date,
                 wines = backup.winesWithBottlesCount,
@@ -256,5 +258,36 @@ data class RestorePreview(
 /** The cellar after restoring [backup] (a new instance; this one is not changed). */
 fun Cellar.restoring(backup: Cellar, mode: RestoreMode): Cellar = when (mode) {
     RestoreMode.AddMissing -> copy().also { it.merge(backup) }
-    RestoreMode.Replace -> backup.copy()
+    RestoreMode.Replace -> matching(backup)
+}
+
+/**
+ * [backup] (a new instance), with each record that differs from this cellar's only by what a
+ * JSON backup does not keep (fractions of a second in dates) taken from this cellar instead,
+ * as CaveKit's `Cellar.matching` does. A backup made a minute ago then reads as the same
+ * cellar, and Replace leaves those records as they are: not stamped, not sent again.
+ */
+fun Cellar.matching(backup: Cellar): Cellar {
+    // Only the records that differ are written out and read back, as a backup would be.
+    fun <T> differing(own: Map<UUID, T>, other: Map<UUID, T>): List<T> =
+        own.filter { (id, value) -> other[id].let { it != null && it != value } }.values.toList()
+    val backupRacks = backup.racks.associateBy { it.id }
+    val written = Cellar(
+        differing(wines, backup.wines), differing(bottles, backup.bottles),
+        racks.filter { rack -> backupRacks[rack.id].let { it != null && it != rack } },
+        settings, differing(discoveries, backup.discoveries),
+    )
+    val read = runCatching { CellarJson.backupFrom(CellarJson.backup(written)).cellar }.getOrNull()
+        ?: return backup.copy()
+    fun <T> pick(other: Map<UUID, T>, readBack: Map<UUID, T>, own: Map<UUID, T>): List<T> =
+        other.map { (id, value) -> if (readBack[id] == value) own.getValue(id) else value }
+    val readRacks = read.racks.associateBy { it.id }
+    val ownRacks = racks.associateBy { it.id }
+    return Cellar(
+        pick(backup.wines, read.wines, wines),
+        pick(backup.bottles, read.bottles, bottles),
+        backup.racks.map { rack -> if (readRacks[rack.id] == rack) ownRacks.getValue(rack.id) else rack },
+        if (read.settings == backup.settings) settings else backup.settings,
+        pick(backup.discoveries, read.discoveries, discoveries),
+    ).also { it.schemaVersion = backup.schemaVersion }
 }

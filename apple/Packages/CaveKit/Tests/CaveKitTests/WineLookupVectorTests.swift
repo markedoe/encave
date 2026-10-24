@@ -56,6 +56,7 @@ import Testing
     @Test func byBarcode() throws {
         let vectors = try Self.vectors()
         let cellar = try Self.cellar(vectors)
+        #expect(!vectors.wines.isEmpty && !vectors.barcodes.isEmpty)
         for lookup in vectors.barcodes {
             let found = cellar.wines(barcode: lookup.code)
             #expect(found.map(\.displayName) == lookup.wines, "\(lookup.about ?? lookup.code)")
@@ -66,6 +67,7 @@ import Testing
     @Test func byNameProducerAndVintage() throws {
         let vectors = try Self.vectors()
         let cellar = try Self.cellar(vectors)
+        #expect(!vectors.wines.isEmpty && !vectors.duplicates.isEmpty)
         for draft in vectors.duplicates {
             let wine = Wine(id: draft.id ?? UUID(), name: draft.name, producer: draft.producer, vintage: draft.vintage)
             #expect(cellar.wine(matching: wine)?.id == draft.match, "\(draft.about ?? draft.name)")

@@ -86,6 +86,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
+import app.encave.core.CellarExport
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.core.Slot
@@ -233,7 +234,8 @@ private fun AddBottleForm(viewModel: AppViewModel, navigator: AppNavigator, rout
         val wine = barcode?.let { chosen.addingBarcode(it) } ?: chosen
         val purchase = PurchaseInfo(
             date = purchaseDate,
-            price = price.replace(",", ".").trim().toBigDecimalOrNull(),
+            // To the cent, as the CSV export writes it.
+            price = price.replace(",", ".").trim().toBigDecimalOrNull()?.let(CellarExport::roundedPrice),
             currency = currency,
             place = place.trim().ifEmpty { null },
             receivedFrom = receivedFrom.trim().ifEmpty { null },

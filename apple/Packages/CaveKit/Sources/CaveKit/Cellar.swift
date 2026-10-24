@@ -117,13 +117,10 @@ public struct CellarFilter: Equatable, Sendable {
 public extension Cellar {
     var bottlesInCellar: [Bottle] { bottles.values.filter { $0.status == .inCellar } }
 
-    /// Occasions bottles in the cellar are reserved for, by name.
+    /// Occasions bottles in the cellar are reserved for, counted case-insensitively, by name
+    /// (`chipOrder`), each with its most used spelling, as in Kotlin.
     var reservations: [String] {
-        var names: [String: String] = [:]
-        for bottle in bottlesInCellar {
-            if let name = bottle.reservedFor { names[name.lowercased()] = names[name.lowercased()] ?? name }
-        }
-        return names.values.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+        Cellar.spelled(bottlesInCellar.compactMap(\.reservedFor)).map(\.name).sorted(by: Cellar.chipOrder)
     }
 
     /// Reserves bottles in the cellar for an occasion, or frees them (nil or blank).
@@ -169,21 +166,60 @@ public extension Cellar {
         return Cellar.byUse(grapes)
     }
 
-    /// Names counted case-insensitively, the most used first. Each is shown with its most
-    /// used spelling (ties: the first in UTF-16 order, as in Kotlin), so the label does not depend on
-    /// the order records are stored in, and is the same on every platform.
+    /// Names counted case-insensitively, the most used first, equal counts in `chipOrder`. Each
+    /// is shown with its most used spelling (ties: the first in UTF-16 order, as in Kotlin), so the
+    /// label does not depend on the order records are stored in, and is the same on every platform.
     static func byUse(_ names: [String]) -> [String] {
+        spelled(names)
+            .sorted { $0.count == $1.count ? chipOrder($0.name, $1.name) : $0.count > $1.count }
+            .map(\.name)
+    }
+
+    /// Names counted case-insensitively, each with its most used spelling (ties: the first in UTF-16 order).
+    static func spelled(_ names: [String]) -> [(name: String, count: Int)] {
         var spellings: [String: [String: Int]] = [:]
         for name in names { spellings[name.lowercased(), default: [:]][name, default: 0] += 1 }
-        let entries = spellings.values.compactMap { counts -> (name: String, count: Int)? in
+        return spellings.values.compactMap { counts -> (name: String, count: Int)? in
             let shown = counts.sorted { a, b in
                 a.value != b.value ? a.value > b.value : a.key.utf16.lexicographicallyPrecedes(b.key.utf16)
             }.first
             return shown.map { ($0.key, counts.values.reduce(0, +)) }
         }
-        return entries
-            .sorted { $0.count == $1.count ? $0.name.localizedStandardCompare($1.name) == .orderedAscending : $0.count > $1.count }
-            .map(\.name)
+    }
+
+    /// The order of tags, grapes and occasions, the same in every locale and on Android
+    /// (`Cellar.chipOrder`): ignoring case and accents, with runs of digits compared by value
+    /// ("Lot 2" before "Lot 10"), then by UTF-16 code units. Spelled out rather than
+    /// `localizedStandardCompare`, which depends on the locale and on the Foundation in use.
+    static func chipOrder(_ a: String, _ b: String) -> Bool {
+        let folded = { (text: String) in Array(text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil).utf16) }
+        let order = naturalOrder(folded(a), folded(b))
+        return order != 0 ? order < 0 : a.utf16.lexicographicallyPrecedes(b.utf16)
+    }
+
+    /// Below zero when `a` comes first: UTF-16 code units, runs of ASCII digits by value.
+    private static func naturalOrder(_ a: [UInt16], _ b: [UInt16]) -> Int {
+        func isDigit(_ unit: UInt16) -> Bool { unit >= 0x30 && unit <= 0x39 }
+        var i = 0, j = 0
+        while i < a.count, j < b.count {
+            if isDigit(a[i]), isDigit(b[j]) {
+                var endA = i
+                while endA < a.count, isDigit(a[endA]) { endA += 1 }
+                var endB = j
+                while endB < b.count, isDigit(b[endB]) { endB += 1 }
+                let runA = a[i..<endA].drop(while: { $0 == 0x30 }), runB = b[j..<endB].drop(while: { $0 == 0x30 })
+                if runA.count != runB.count { return runA.count < runB.count ? -1 : 1 }
+                if !runA.elementsEqual(runB) { return runA.lexicographicallyPrecedes(runB) ? -1 : 1 }
+                i = endA
+                j = endB
+            } else {
+                if a[i] != b[j] { return a[i] < b[j] ? -1 : 1 }
+                i += 1
+                j += 1
+            }
+        }
+        let restA = a.count - i, restB = b.count - j
+        return restA == restB ? 0 : (restA < restB ? -1 : 1)
     }
 
     /// Bottles bought but not delivered yet.
@@ -510,9 +546,10 @@ public extension Cellar {
         bottles[bottleID] = bottle
     }
 
-    /// Reverts a drink, putting the bottle back in its previous slot if still free.
+    /// Reverts a drink, putting the bottle back in its previous slot if still free. Only a
+    /// bottle opened can be: one on order or given away stays as it is.
     mutating func undoDrink(_ bottleID: UUID, previousSlot: Slot?) {
-        guard var bottle = bottles[bottleID], bottle.status != .inCellar else { return }
+        guard var bottle = bottles[bottleID], bottle.status == .consumed else { return }
         bottle.status = .inCellar
         bottle.tasting = nil
         // Back in its place if it is still free and still exists (the rack may be gone or smaller).

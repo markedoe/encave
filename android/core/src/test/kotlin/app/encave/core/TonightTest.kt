@@ -53,6 +53,35 @@ class TonightTest {
         }
     }
 
+    /** Tonight's whole order in a cellar, from `picks` in the shared vectors (CaveKit reads them too). */
+    @Test
+    fun picksMatchTheSharedVectors() {
+        val root = Json.parseToJsonElement(File("../../fixtures/tonight-vectors.json").readText()).jsonObject
+        val picks = root.getValue("picks").jsonArray.map { it.jsonObject }
+        assertTrue(picks.isNotEmpty())
+        for (vector in picks) {
+            val cellar = Cellar()
+            val wines = vector.getValue("wines").jsonArray.map { it.jsonObject }
+            assertTrue(wines.isNotEmpty())
+            for (item in wines) {
+                val wine = Wine(
+                    id = UUID.fromString(item.string("id")), name = item.string("id"),
+                    drinkFrom = item.int("from") ?: 2020, drinkUntil = item.int("until"),
+                )
+                val free = item.int("free") ?: 1
+                val reserved = item.int("reserved") ?: 0
+                val added = cellar.addBottles(wine, free + reserved)
+                if (reserved > 0) cellar.reserve(added.takeLast(reserved).map { it.id }, "Birthday")
+            }
+            val kept = vector["kept"]?.jsonPrimitive?.content?.let(UUID::fromString)
+            val expected = vector.getValue("order").jsonArray.map { it.jsonPrimitive.content.lowercase() }
+            val day = LocalDate.parse(vector.string("day"))
+            assertEquals(expected, cellar.tonightPicks(2026, day, kept).map { it.wine.id.toString() }, vector.string("about"))
+        }
+    }
+
+    private fun JsonObject.int(key: String) = this[key]?.jsonPrimitive?.content?.toInt()
+
     @Test
     fun todaysPickStaysWhenOtherWinesComeAndGo() {
         val cellar = Cellar()

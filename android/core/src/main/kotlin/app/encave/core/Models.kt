@@ -642,12 +642,30 @@ data class SavedSearch(
 }
 
 /**
+ * The Unicode White_Space characters, spelled out so both platforms use the same set
+ * (Kotlin's `trim()` also strips U+001C–U+001F; CaveKit has `CharacterSet.unicodeWhiteSpace`).
+ */
+object WhiteSpace {
+    /** As a regex character class body. */
+    internal const val CHARACTERS = "\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000"
+
+    fun contains(char: Char): Boolean = when (char) {
+        in '\u0009'..'\u000D', ' ', '\u0085', ' ', ' ', in ' '..' ',
+        ' ', ' ', ' ', ' ', '　' -> true
+        else -> false
+    }
+
+    fun trim(text: String): String = text.trim(::contains)
+}
+
+/**
  * Searches by words: each word of the query must appear, ignoring case and accents, in
  * one of the fields (not necessarily the same one). CaveKit does the same.
  */
 object SearchText {
-    private val spaces = Regex("\\s+")
+    private val spaces = Regex("[${WhiteSpace.CHARACTERS}]+")
 
+    /** Split on Unicode White_Space, no-break spaces included, as CaveKit's `isWhitespace`. */
     fun words(query: String): List<String> = query.split(spaces).filter { it.isNotEmpty() }
 
     /** True for a blank query. */

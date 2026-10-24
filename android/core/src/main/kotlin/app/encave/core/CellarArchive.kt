@@ -5,6 +5,7 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.MessageDigest
+import java.text.Normalizer
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -446,7 +447,7 @@ object CellarArchive {
      * code points are kept (CaveKit counts the same, in Unicode scalars).
      */
     internal fun cleanStem(text: String, fallback: String): String {
-        var points = text.codePoints().map { cp ->
+        var points = Normalizer.normalize(text, Normalizer.Form.NFC).codePoints().map { cp ->
             when {
                 Character.getType(cp) == Character.CONTROL.toInt() -> ' '.code
                 cp in forbidden -> '-'.code

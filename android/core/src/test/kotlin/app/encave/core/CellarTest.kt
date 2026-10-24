@@ -94,6 +94,28 @@ class CellarTest {
     }
 
     @Test
+    fun undoDrinkLeavesATakenPlaceAndOnlyUndoesAnOpenedBottle() {
+        val cellar = cellarWithRack()
+        val slot = Slot(rack.id, 0, 0)
+        val x = cellar.addBottles(Wine(name = "X"), slots = listOf(slot)).first()
+        cellar.drink(x.id, Tasting())
+        val y = cellar.addBottles(Wine(name = "Y"), slots = listOf(slot)).first()
+        cellar.undoDrink(x.id, previousSlot = slot)
+        assertEquals(Bottle.Status.InCellar, cellar.bottles[x.id]?.status)
+        assertNull(cellar.bottles[x.id]?.slot)
+        assertEquals(y.id, cellar.bottleAt(slot)?.id)
+
+        // On order or given away: not a drink to undo, nothing changes.
+        val ordered = cellar.addBottles(Wine(name = "O"), purchase = PurchaseInfo(isOrdered = true)).first()
+        cellar.undoDrink(ordered.id, previousSlot = null)
+        assertEquals(Bottle.Status.Ordered, cellar.bottles[ordered.id]?.status)
+        cellar.markGone(y.id)
+        cellar.undoDrink(y.id, previousSlot = slot)
+        assertEquals(Bottle.Status.Gone, cellar.bottles[y.id]?.status)
+        assertNull(cellar.bottleAt(slot))
+    }
+
+    @Test
     fun moveRejectsOccupiedSlot() {
         val cellar = cellarWithRack()
         val a = Slot(rack.id, 0, 0)

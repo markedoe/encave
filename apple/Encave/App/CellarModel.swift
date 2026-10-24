@@ -667,7 +667,7 @@ final class CellarModel {
 
     /// A bottle logged as opened by mistake goes back to the cellar, without its tasting, with Undo.
     func putBack(_ bottleID: UUID) {
-        guard let bottle = cellar.bottles[bottleID], bottle.status != .inCellar,
+        guard let bottle = cellar.bottles[bottleID], bottle.status == .consumed,
               update({ $0.undoDrink(bottleID, previousSlot: nil) }) else { return }
         showToast(String(localized: "Bottle put back in the cellar")) { [weak self] in
             self?.update { cellar in
