@@ -2,6 +2,8 @@ name: TestFlight external build
 
 # Run by hand: gives a build already in TestFlight to the external testers
 # (every external group: today Friends-ext) and submits it to Beta App Review. Nothing is built.
+# Only a build whose run of apple.yml passed the screen tour (or skipped it because the
+# same files had passed it, tour-check), unless "force" is ticked.
 on:
   workflow_dispatch:
     inputs:
@@ -13,6 +15,10 @@ on:
         description: "What to Test (optional)"
         type: string
         default: ""
+      force:
+        description: "Give it even if its screen tour did not pass"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -22,8 +28,44 @@ jobs:
     name: Give the build to the external testers
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Screen tour of this build
+        if: ${{ !inputs.force }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_NUMBER: ${{ inputs.build }}
+        run: |
+          case "$BUILD_NUMBER" in ''|*[!0-9]*) echo "::error::The build number must be digits."; exit 1;; esac
+          # apple.yml numbers its builds 1000 + run number * 10 + attempt.
+          run_number=$(( (BUILD_NUMBER - 1000) / 10 ))
+          run=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/workflows/apple.yml/runs?branch=main&per_page=100" \
+            --jq ".workflow_runs[] | select(.run_number == $run_number) | .id" | head -n 1)
+          if [ -z "$run" ]; then
+            echo "::error::No run $run_number of apple.yml on main made build $BUILD_NUMBER: tick \"force\" to give it anyway."
+            exit 1
+          fi
+          echo "Build $BUILD_NUMBER: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run"
+          # Every attempt of a run builds the same commit: the latest try of each tour job counts.
+          jobs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?filter=latest&per_page=100" --jq '.jobs[]')
+          tours=$(jq -r 'select(.name | startswith("Screen tour")) | "\(.conclusion) \(.name)"' <<< "$jobs")
+          echo "$tours"
+          if [ -n "$tours" ] && ! grep -qv '^success ' <<< "$tours"; then
+            echo "The screen tour of run $run passed."
+            exit 0
+          fi
+          # Tour skipped because the same files had passed it in an earlier run (tour-check).
+          check=$(jq -r 'select(.name == "Tour already passed on this commit?" and .conclusion == "success") | .id' <<< "$jobs" | head -n 1)
+          if [ -n "$check" ] && ! grep -qv '^skipped ' <<< "$tours" \
+            && gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$check/logs" | grep -o 'The screen tour passed on .*'; then
+            exit 0
+          fi
+          echo "::error::The screen tour of run $run did not pass: build $BUILD_NUMBER stays with the internal testers. Tick \"force\" to give it anyway."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Give the build to the external testers
         env:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}

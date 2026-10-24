@@ -23,38 +23,52 @@ python3 design/generate_app_icon.py
 
 `.github/workflows/apple.yml` builds both apps on every change under
 `apple/`, and uploads them to TestFlight from `main`, for the internal testers.
-Once the full screen tour of that run has passed, the build also goes to every
+Once the full screen tour of that run (or of an earlier run of the same files)
+and the Mac launch test have passed, the `testers` job gives the build to every
 external TestFlight group of the app, with the latest commits as "What to
-Test", and is submitted to Beta App Review (`tools/testflight_testers.py`).
+Test", and submits it to Beta App Review (`tools/testflight_testers.py`).
 A manual run on `main` with "external testers" ticked does the same. To give a
 build already in TestFlight to the external testers, run "TestFlight external
-build" with its number. Apple reviews one build per version at a time: a build
+build" with its number: it checks that the tour of the run that made the build
+passed, unless "force" is ticked. Apple reviews one build per version at a time: a build
 added while another is in review waits in the group until it is submitted
 again. It needs these repository secrets:
 `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` (App
 Store Connect API key with the Admin role).
 
-The workflow uses two macOS jobs per run on main, pull requests and manual
-runs, and one on pushes to other branches:
+Jobs of the workflow:
 
-- **Build, Mac launch test, TestFlight upload**: on main (pushes and manual
-  runs), archives and uploads both apps, then launches the archived Mac app
-  (twice empty, then each section with the sample cellar) and reports crashes.
-  On other branches (manual runs included: they never upload) and pull
-  requests, builds the Mac app in Release for the same launch test, and the
-  iPhone and iPad app for the simulator while the Mac app runs. Every build
-  checks the privacy manifest. On main, pull requests and manual runs, the same
-  Mac app then makes the Mac screenshots for the App Store
-  (`tools/mac-screenshots.sh`, artifact `mac-screens`).
-- **Screen tour (iPhone, iPad, Mac)** (main, pull requests and manual runs):
-  builds the UI tests once, runs the model tests on macOS, starts the newest
-  iPhone and iPad simulators and runs the tour on both side by side, English
-  then French (with the large text checks on the iPhone), then the Mac tour
-  (artifact `screens`, one folder per device). On GitHub's runners an iPhone
-  and an iPad run together as fast as one; two iPads, two iPhones or three
-  simulators time out, and each extra job would spend about 20 minutes starting
-  its simulators. The external testers get a build of main once the tour has
-  passed. Runs on main are never cancelled by a later push.
+- **CaveKit tests (Linux)** and **French translations**: every run, first.
+- **Build, Mac launch test, TestFlight upload** (`apps`, macOS): on main
+  (pushes and manual runs), archives and uploads both apps, then launches the
+  archived Mac app (twice empty, then each section with the sample cellar) and
+  reports crashes. On other branches (manual runs included: they never upload)
+  and pull requests, builds the Mac app in Release for the same launch test,
+  and the iPhone and iPad app for the simulator while the Mac app runs. Every
+  build checks the privacy manifest. On main, pull requests and manual runs,
+  the same Mac app then makes the Mac screenshots for the App Store
+  (`tools/mac-screenshots.sh`, artifact `mac-screens`). Pushes to other
+  branches run only this macOS job.
+- **Tour already passed on this commit?** (`tour-check`): on main, looks for
+  an earlier run whose head commit has the same git tree (a pull request
+  merged as it was toured) and whose tour passed; the tour is then skipped and
+  the log names that run.
+- **Screen tour** (main, pull requests and manual runs), four parts, one
+  simulator each: iPad English (with the model tests on macOS), iPad French,
+  iPhone English (with the large text checks) and iPhone French (with the
+  studio pictures). Three run at a time, so that the `apps` job always finds a
+  macOS runner; the shortest part runs last. Each part builds the UI tests,
+  boots the newest iPhone or iPad simulator and runs its tests; a failed build
+  stops the part at once. On GitHub's runners two simulators on one runner slow
+  each other and three fail to launch the app. Measured: 28 to 43 minutes a
+  part. "Re-run failed jobs" re-runs only the parts that failed, and
+  **Screenshots in one artifact** merges the four into `screens` (one folder
+  per device). The Mac UI tests do not run in CI (GitHub's Mac runners show
+  no windows to them): the launch test and the Mac screenshots cover the Mac.
+- **TestFlight external testers** (`testers`): see above. Also when one upload
+  failed: the other platform's build still goes, and the run stays red.
+
+Runs on main are never cancelled by a later push.
 
 The same split runs locally, for example the French iPhone tour only:
 

@@ -4,8 +4,8 @@ A private wine cellar for iPhone, iPad, Mac and Android: know what you own,
 where each bottle sits in your storage, and when it is ready to drink.
 
 > **Status:** early development. The apps are built in the open and tested
-> through TestFlight (Apple) and CI builds (Android). See
-> [docs/ROADMAP.md](docs/ROADMAP.md).
+> through TestFlight (Apple) and Google Play internal and closed testing
+> (Android). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it does
 

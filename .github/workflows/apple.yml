@@ -31,7 +31,7 @@ jobs:
     # swift:6.2 as of October 2026, pinned by digest (the multi-architecture index).
     container: swift:6.2@sha256:d6f8f6112e9a63da0a4a151d6b93acd16699d35c0b82531ac1a245f5af210197
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: swift test --package-path apple/Packages/CaveKit
 
   l10n:
@@ -39,15 +39,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 apple/tools/l10n.py --check
       # The licences shown in Settings › About › Licences match Package.resolved.
       - run: python3 apple/tools/licences.py --check
 
   tour-check:
     name: Tour already passed on this commit?
-    # On main, a commit whose tour already passed (a branch fast-forwarded to main after
-    # its own tour) is not toured again: its build goes to the testers once uploaded.
+    # On main, a commit whose files were already toured (a pull request merged without
+    # other changes: the merge commit has the tree of the pull request's head) is not
+    # toured again: its build goes to the testers once uploaded.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -61,18 +62,22 @@ jobs:
         run: |
           passed=false
           if [ "$GITHUB_REF" = refs/heads/main ]; then
-            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/apple.yml/runs?head_sha=$GITHUB_SHA&status=completed&per_page=20" \
-              --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID) | .id")
+            # Main tips are merge commits: earlier runs are matched by the tree of their
+            # head commit (the same files, so the same app, tests and workflow).
+            tree=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq .commit.tree.sha)
+            echo "Tree of $GITHUB_SHA: $tree"
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/apple.yml/runs?status=completed&per_page=100" \
+              --jq ".workflow_runs[] | select(.id != $GITHUB_RUN_ID and .head_commit.tree_id == \"$tree\") | .id")
             for run in $runs; do
-              # Every tour job of that run's latest attempt passed (the same commit has the
-              # same workflow, so the same tour jobs).
+              # Every tour job of that run's latest attempt passed.
               ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?filter=latest&per_page=100" \
                 --jq '[.jobs[] | select(.name | startswith("Screen tour"))] | length > 0 and all(.conclusion == "success")')
               if [ "$ok" = true ]; then
-                echo "The screen tour passed on this commit in run $run: not run again."
+                echo "The screen tour passed on the same tree in run $run: not run again."
                 passed=true
                 break
               fi
+              echo "Run $run has the same tree, but its tour did not pass."
             done
           fi
           echo "passed=$passed" >> "$GITHUB_OUTPUT"
@@ -107,7 +112,6 @@ jobs:
           - device: iPhone
             language: English
             tests: testTourInEnglish testLargeText testLargestText
-            mac: true
           - device: iPhone
             language: French
             tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
@@ -115,7 +119,7 @@ jobs:
       run:
         working-directory: apple
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Select newest Xcode
         working-directory: .
@@ -129,6 +133,7 @@ jobs:
           xcodegen generate
 
       - name: Build for testing
+        id: build
         run: |
           set -o pipefail
           xcodebuild build-for-testing -project Encave.xcodeproj -scheme Encave \
@@ -140,7 +145,7 @@ jobs:
         run: swift test --package-path Packages/CaveKit
 
       - name: Start the simulator
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
           DEVICE: ${{ matrix.device }}
         run: |
@@ -171,7 +176,7 @@ jobs:
           echo "Booted at $(date -u +%T)"
 
       - name: Tour
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
           DEVICE: ${{ matrix.device }}
           TESTS: ${{ matrix.tests }}
@@ -190,7 +195,7 @@ jobs:
           echo "Finished at $(date -u +%T)"
 
       - name: Slowest steps of the tour
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         continue-on-error: true
         run: |
           for result in "$RUNNER_TEMP"/iP*.xcresult; do
@@ -221,21 +226,8 @@ jobs:
             done
           done
 
-      - name: Mac
-        if: ${{ !cancelled() && matrix.mac }}
-        # GitHub's Mac runners have not shown windows to UI tests ("The main window opens"
-        # failed); the Mac screenshots of the build job show each section.
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          xcodebuild test -project Encave.xcodeproj -scheme EncaveMac -destination 'platform=macOS' \
-            -resultBundlePath "$RUNNER_TEMP/Mac.xcresult" \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
-            | xcbeautify --renderer github-actions \
-            || echo "::warning::The Mac UI tour could not run on this runner; see the Mac screenshots."
-
       - name: Export screenshots
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           mkdir -p "$RUNNER_TEMP/screens"
           for result in "$RUNNER_TEMP"/*.xcresult; do
@@ -271,7 +263,7 @@ jobs:
 
       - name: Upload screenshots
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: screens-${{ matrix.device }}-${{ matrix.language }}
           path: ${{ runner.temp }}/screens
@@ -296,8 +288,8 @@ jobs:
             gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
           done
 
-      # The four parts as one "screens" artifact, a folder per device (iPhone, iPad, Mac).
-      - uses: actions/upload-artifact/merge@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      # The four parts as one "screens" artifact, a folder per device (iPhone, iPad).
+      - uses: actions/upload-artifact/merge@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: screens
           pattern: screens-*
@@ -314,6 +306,8 @@ jobs:
       build: ${{ steps.key.outputs.build }}
       ios: ${{ steps.ios.outputs.uploaded }}
       mac: ${{ steps.mac.outputs.uploaded }}
+      # success, failure or skipped (no Mac app: its build or archive failed).
+      launch: ${{ steps.launch.outcome }}
     defaults:
       run:
         working-directory: apple
@@ -326,7 +320,7 @@ jobs:
       # build: their builds never reach the testers.
       UPLOAD: ${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && secrets.ASC_KEY_ID != '' }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Select newest Xcode
         working-directory: .
@@ -419,6 +413,7 @@ jobs:
 
       - name: Mac launch test (twice, then each section; reports crashes)
         # Also when the upload failed: the archived app is there.
+        id: launch
         if: ${{ !cancelled() && env.MAC_APP != '' }}
         run: |
           app="$MAC_APP"
@@ -486,7 +481,7 @@ jobs:
 
       - name: Upload Mac screenshots
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: mac-screens
           path: ${{ runner.temp }}/mac-screens
@@ -515,13 +510,14 @@ jobs:
     # run from main does too when "external testers" is ticked. Also
     # when one upload failed (the Mac one runs after the iPhone one): the uploaded build
     # still reaches the testers, and the apps job and the run stay failed, with a warning
-    # below.
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.screens.result == 'success' || needs.tour-check.outputs.passed == 'true') && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.external_testers)) && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') }}
+    # below. Never when the Mac launch test failed; when it did not run (the Mac archive
+    # failed, so no Mac build), the iPhone and iPad build alone goes.
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.screens.result == 'success' || needs.tour-check.outputs.passed == 'true') && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.external_testers)) && needs.apps.outputs.build != '' && (needs.apps.outputs.ios == 'true' || needs.apps.outputs.mac == 'true') && (needs.apps.outputs.launch == 'success' || (needs.apps.outputs.launch == 'skipped' && needs.apps.outputs.mac != 'true')) }}
     runs-on: ubuntu-latest
     # App Store Connect takes 5 to 30 minutes to process a build.
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 30
 

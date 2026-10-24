@@ -10,7 +10,10 @@ yet (see "Work in progress").
 ## Principles
 
 - **`main` is always releasable.** A change is checked on a branch (fast checks,
-  and the full screen tour for app changes), then `main` is fast-forwarded to it.
+  and the full screen tour for app changes), then merged into `main`. Every
+  commit is checked: `scripts/check-commit-message.sh` refuses the markers that
+  make GitHub skip the workflows (`[skip ci]`, `[ci skip]`, `[no ci]`,
+  `[skip actions]`, `[actions skip]`).
 - **Trunk-based, with feature switches.** Unfinished features land on `main`
   behind a switch: on in beta builds, off in store builds. Turning a feature on
   for everyone is a one-line commit that rides the next release. *(planned)*
@@ -26,9 +29,25 @@ yet (see "Work in progress").
 
 | Stage | Apple | Google | When |
 |---|---|---|---|
-| Internal testers | TestFlight group "Internal", gets every build (**done**) | Play internal testing, gets every signed build (**done**, once the one-time setup below is finished) | Every push to `main`, about 20 to 30 minutes after it (upload and processing) |
-| Beta testers | TestFlight group "Friends-ext", after the screen tour and Beta App Review (**done**) | Play closed testing (track Alpha, testers list "Friends"), after the screen tour and the emulator smoke test, with the store listing, then Google's review (**done**, once the testers list below is set) | Every push to `main` whose tour passed |
+| Internal testers | TestFlight group "Internal", gets every build (**done**) | Play internal testing, gets every signed build whose tests passed (**done**, once the one-time setup below is finished) | Every push to `main`, about 20 to 30 minutes after it (upload and processing) |
+| Beta testers | TestFlight group "Friends-ext", after the screen tour, the Mac launch test and Beta App Review (**done**) | Play closed testing (track Alpha, testers list "Friends"), after the tests, the screen tour and the emulator smoke test, with the store listing, then Google's review (**done**, once the testers list below is set) | Every push to `main` whose tour passed |
 | Everyone | App Store, phased release over 7 days (*planned*) | Play production, staged rollout 10%, 50%, 100% (*planned*; `play_publish.py` can set a rollout share, no job uses it) | Release train, or the urgent lane |
+
+### Apple: what gates the external testers
+
+The `testers` job of `apple.yml` gives a build of `main` to the external
+TestFlight groups only when:
+
+- the screen tour of the same run passed, or `tour-check` found an earlier run
+  of the same files (same git tree) whose tour passed;
+- the Mac launch test passed. When it did not run because the Mac archive
+  failed, the iPhone and iPad build goes alone (and the run stays red); one
+  failed upload likewise leaves the other platform's build going.
+
+**`testflight-external.yml`** (by hand) gives an older build: it finds the
+`apple.yml` run that made it (build number `1000 + run number * 10 +
+attempt`) and refuses unless that run's tour passed, or was skipped by
+`tour-check` after a pass. Tick **force** to give it anyway.
 
 ## Release train *(planned)*
 
@@ -80,20 +99,20 @@ Apple's expedited review is a web form (no API): optional, by hand.
 ## Speed of the checks
 
 Measured on 2026-10-23 for one change: about 15 minutes to upload the build,
-80 to 85 minutes for the screen tour in one job (iPhone and iPad side by side,
-English then French), then Beta App Review.
+28 to 43 minutes per screen tour job, then Beta App Review.
 
-- On `main`, a commit whose tour already passed in another run (a branch
-  fast-forwarded to `main`) is not toured again: the `tour-check` job of
-  `apple.yml` finds that run and the `testers` job goes ahead once the build is
-  uploaded.
-- The tour runs as four jobs (iPhone and iPad, English and French), one
-  simulator each, and merges the screenshots into the `screens` artifact.
-  "Re-run failed jobs" re-runs only the part that failed. Measured on
-  2026-10-23: 28 to 43 minutes per job (build, simulator and tour), against
-  80 to 85 minutes for the single job (about 40 minutes for the whole tour).
-  Three parts run at a time, so that the TestFlight upload starts at once and
-  the internal testers get the build about 20 to 30 minutes after the push.
+- `apple.yml` runs the tour as four jobs (iPad and iPhone, English and
+  French), one simulator each, three at a time, so that the `apps` job (build,
+  Mac launch test, TestFlight upload) never waits for a macOS runner: the
+  internal testers get the build about 20 to 30 minutes after the push. The
+  screenshots are merged into the `screens` artifact; "Re-run failed jobs"
+  re-runs only the part that failed. A part whose build fails stops at once.
+  The Mac is covered by the launch test and the Mac screenshots of the `apps`
+  job (GitHub's runners cannot run the Mac UI tests).
+- On `main`, a merge commit whose tree is the same as an earlier run's head
+  commit whose tour passed (a pull request merged as it was toured) is not
+  toured again: `tour-check` logs the matching run and the `testers` job goes
+  ahead once the build is uploaded.
 
 ## One-time setup by hand (no API)
 
@@ -111,15 +130,18 @@ Google: see "Google Play: one-time setup" below.
 
 `android.yml`, on every push to `main` (and a manual run on `main`):
 
-1. `release` builds the release bundle (`versionCode` = build number), signed
+1. `build` runs the core tests (sync test vectors and a sync through a local
+   relay included), the app unit tests, lint and the licences check; nothing
+   goes to Google Play unless it passed.
+2. `release` builds the release bundle (`versionCode` = build number), signed
    with the upload key.
-2. `play-internal` uploads that bundle and its R8 mapping and releases it to
+3. `play-internal` uploads that bundle and its R8 mapping and releases it to
    **internal testing** at once (`android/tools/play_publish.py upload`).
-3. `smoke` turns the same bundle into an APK (bundletool) and runs it on an
+4. `smoke` turns the same bundle into an APK (bundletool) and runs it on an
    Android 15 emulator: sample cellar, then the four tabs in English and French
    (`android/tools/emulator_smoke.py`; screenshots in the `android-smoke`
    artifact).
-4. `play-closed` releases the **same version code** to **closed testing**
+5. `play-closed` releases the **same version code** to **closed testing**
    (the built-in track `alpha`; `play_publish.py promote`) once `tour` and
    `smoke` of the same run passed. Nothing is rebuilt. In the same edit it
    updates the **store listing** (below), so Google reviews the release and
@@ -130,6 +152,12 @@ Release notes, in English and French: the build number and the latest commit
 subjects. Before the setup is finished (and on forks) `play-internal` ends with
 a notice and sends nothing; `play-closed` is skipped. Production is not
 automated: the apps stay in testing (see "Release train").
+
+Runs on `main` run side by side and can finish out of order: `play_publish.py`
+reads the track first and, when it already has a newer version code, sends
+nothing and ends with a notice (the newer run has released, or will release,
+its own build). `play-release.yml`, run by hand, may release an older version
+code on purpose.
 
 Every release to closed testing goes through Google's review: the first one
 takes hours to a few days, later ones are usually faster. A release waiting
@@ -215,8 +243,10 @@ app need no declaration form.
 Authentication: Workload Identity Federation. GitHub gives the job a
 short-lived OpenID Connect token; Google exchanges it for a one-hour token of
 the service account, only for this repository and `refs/heads/main`. No key is
-stored. Only `play-internal` and `play-closed` may request the token
-(`id-token: write`).
+stored. Only the jobs that talk to Google Play may request the token
+(`id-token: write`): `play-internal` and `play-closed` in `android.yml`, and
+the hand-run `play-release.yml`, `play-status.yml` and `play-listing.yml`
+(its `publish` job).
 
 Repository settings (Settings › Secrets and variables › Actions):
 
@@ -345,8 +375,10 @@ the Console (Publishing overview, Inbox).
 - Google keeps the app signing key (Play App Signing); the upload key is a
   repository secret, used only by the `release` job; the Play API is reached
   through Workload Identity Federation, without a stored key, only from `main`.
+- Dependabot keeps the pinned actions (one grouped pull request a month) and
+  the Gradle dependencies up to date (**done**, `.github/dependabot.yml`).
 - *(planned)* Release secrets only for runs on `main`; build provenance
-  attestations for the uploaded bundles; Dependabot for the pinned actions.
+  attestations for the uploaded bundles.
 
 ## Work in progress
 

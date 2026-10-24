@@ -1651,7 +1651,7 @@ FORMAT = re.compile(r"%(?:\d+\$)?(?:lld|ld|d|@|lf|f)")
 def help_words_missing():
     """The bold words of the help bodies (each step of "Settings › Your data") that the rest
     of the app never shows, in English and in French: a button, setting or screen that was
-    renamed or removed. Place names such as "Shelf 2, place 3" match their pattern."""
+    renamed or removed. Position names such as "Shelf 2, position 3" match their pattern."""
     literals = set()
     for path in glob.glob(str(ROOT / "Encave" / "**" / "*.swift"), recursive=True):
         if Path(path) != HELP:

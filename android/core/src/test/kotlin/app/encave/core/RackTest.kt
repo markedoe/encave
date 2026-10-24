@@ -191,7 +191,7 @@ class RackTest {
         val cellar = Cellar()
         val fridge = Rack(name = "F", kind = RackKind.Staggered, rows = 10, columns = 6, depth = 2, shelfLayers = List(5) { 2 }).normalized()
         cellar.addRack(fridge)
-        // Shelf 3, bottom layer (its last row), place 3, back.
+        // Shelf 3, bottom layer (its last row), position 3, back.
         val bottle = cellar.addBottles(Wine(name = "W"), slots = listOf(Slot(fridge.id, 5, 2, 1)))[0]
         // Shelf 1 duplicated: a new shelf 2, the old shelves 2 to 5 one lower.
         val edited = fridge.copy(rows = 12, shelfLayers = List(6) { 2 }).normalized()

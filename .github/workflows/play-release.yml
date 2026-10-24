@@ -41,7 +41,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Google Play access
         id: auth
@@ -86,4 +86,5 @@ jobs:
           export RELEASE_NOTES_EN="${NOTES_EN:-Beta build $VERSION_CODE.}"
           export RELEASE_NOTES_FR="${NOTES_FR:-Version bêta $VERSION_CODE.}"
           echo "Releasing version code $VERSION_CODE to $TRACK"
-          python3 android/tools/play_publish.py promote
+          # Chosen by hand: an older version code than the track's goes too (going back).
+          ALLOW_OLDER=true python3 android/tools/play_publish.py promote

@@ -169,10 +169,10 @@ Siri Shortcuts ("What should I open tonight in Encave?"), Spotlight.
 | 1. Design in the app | The six journeys built in SwiftUI and Compose, reviewed on device through TestFlight; design tokens | Done, refined continuously |
 | 2. Sync | Pairing, local network sync, relay, protocol spec and test vectors | Apple and Android done; first test between an iPhone and an Android phone next |
 | 3. Apple apps MVP | iPhone, iPad, Mac with sync | External TestFlight beta |
-| 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple, sync included (not yet tried on a phone); Play internal testing next |
+| 4. Android MVP | Phones, tablets, foldables | Feature parity with Apple, sync included (not yet tried on a phone); Google Play internal and closed testing |
 | 5. Remote sync without servers | CloudKit (Apple), Google Drive (cross-platform) | CloudKit built (needs the iCloud container); Google Drive planned ([REMOTE_SYNC.md](REMOTE_SYNC.md)) |
 | 6. Household sharing | Roles, signed files, remote pairing | Planned |
-| 7. Launch | Store listings, documentation, privacy policy | In progress: privacy policy published ([PRIVACY.md](PRIVACY.md)); App Store listing, age rating and header image written in French and English, with hand-run workflows that apply them; store forms answered in [STORE.md](STORE.md); Google Play listing next |
+| 7. Launch | Store listings, documentation, privacy policy | In progress: privacy policy published ([PRIVACY.md](PRIVACY.md)); App Store listing, age rating and header image written in French and English, with hand-run workflows that apply them; store forms answered in [STORE.md](STORE.md); Google Play listing published by the CI with each closed testing release |
 
 ### Features beyond the core journeys
 

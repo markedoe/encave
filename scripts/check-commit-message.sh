@@ -18,6 +18,10 @@ BANNED="${L}(my|your|this|the user.s|mon|ton|le) prompt|the user (asked|wants|sa
 # Links to AI chat sessions expose private conversations, even as trailers.
 SESSION_LINK='(claude\.ai/(code/)?(session|chat)|chatgpt\.com/(c|share)/|Claude-Session:)'
 
+# Markers that make GitHub skip every push workflow, ci.yml included: a later push
+# checks only its own range, so such a commit would never be checked.
+SKIP_CI='\[(skip ci|ci skip|no ci|skip actions|actions skip)\]'
+
 # Trailers left out of the line count: only those git finds in the last
 # paragraph, and only the usual kinds.
 TRAILER='^([A-Za-z-]+-by|Fixes|Closes|Refs|See-also|Change-Id|Bug): '
@@ -29,6 +33,9 @@ check_message() {
   fi
   local nocomment subject clean trailers body_lines
   nocomment=$(printf '%s\n' "$msg" | grep -v '^#' || true)
+  if printf '%s\n' "$nocomment" | grep -qiE "$SKIP_CI"; then
+    echo "$label: contains a marker that skips CI ($(printf '%s\n' "$nocomment" | grep -oiE "$SKIP_CI" | head -1)); remove it"; errors=1
+  fi
   subject=$(printf '%s\n' "$nocomment" | sed -n '1p')
   # The phrases are looked for in the whole message, trailers included.
   clean="$nocomment"

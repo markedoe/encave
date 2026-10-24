@@ -14,6 +14,11 @@ Steps, run by android.yml on main:
   data-safety  the Data safety form, from the CSV of DATA_SAFETY_CSV
            (docs/store/play-data-safety.csv; applications.dataSafety, no edit).
 
+Runs on main are not cancelled and can finish out of order: upload and promote read
+the track first and leave it alone (nothing uploaded, nothing changed) when it already
+has a release with a higher version code, unless ALLOW_OLDER is "true" (play-release.yml,
+run by hand).
+
 Play Console permissions of the service account (Users and permissions), per step:
 upload and promote need "Release apps to testing tracks", listing "Manage store
 presence", data-safety "Manage policy declarations".
@@ -38,6 +43,7 @@ Environment:
                      "What to Test" of apple.yml; in French with the same subjects)
   RELEASE_STATUS     "draft": the release is prepared, and rolled out from the Play
                      Console (needed while the app itself is still a draft)
+  ALLOW_OLDER        "true": release even when the track has a higher version code
   USER_FRACTION      staged rollout share, for example 0.1 (production only; not
                      used by the CI: public release stays off)
   LISTING_JSON       promote, listing: the listing texts (docs/store/play.json)
@@ -190,6 +196,25 @@ def set_track(base, edit, track, version_code, draft=False):
             sys.exit(f"Google Play refused the track \"{track}\" ({error}). Tracks of the app: {names}. "
                      "Set the PLAY_CLOSED_TRACK repository variable to one of them (or to none: no closed "
                      "testing).")
+        raise
+
+
+def newer_release(track, version_code):
+    """The highest version code above version_code released on the track (completed, in
+    progress or draft), or None. track: the answer of edits.tracks.get."""
+    codes = [int(code) for entry in track.get("releases", [])
+             if entry.get("status") in ("completed", "inProgress", "draft")
+             for code in entry.get("versionCodes", [])]
+    newest = max(codes, default=None)
+    return newest if newest is not None and newest > version_code else None
+
+
+def read_track(base, edit, track):
+    try:
+        return call("GET", f"{base}/edits/{edit}/tracks/{track}")
+    except APIError as error:
+        if error.status == 404:
+            return {}  # a track with no release yet
         raise
 
 
@@ -364,6 +389,13 @@ def main():
     try:
         edit = call("POST", f"{base}/edits", {})["id"]
         listing_changed = drafted = False
+        if track and os.environ.get("ALLOW_OLDER", "").strip() != "true":
+            newer = newer_release(read_track(base, edit, track), version_code)
+            if newer:
+                call("DELETE", f"{base}/edits/{edit}")
+                notice(f"The Google Play track \"{track}\" already has version code {newer}, newer than "
+                       f"{version_code} (a later run finished first): nothing sent.")
+                return
         if step == "upload":
             upload(base, edit, package, version_code)
         if step != "upload" and os.environ.get("LISTING_JSON"):

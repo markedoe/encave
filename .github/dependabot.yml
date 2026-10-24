@@ -3,6 +3,10 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    # Every action in one pull request, so the workflows move together.
+    groups:
+      github-actions:
+        patterns: ["*"]
   - package-ecosystem: gradle
     directory: /android
     schedule: { interval: monthly }
