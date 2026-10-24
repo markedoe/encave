@@ -54,7 +54,10 @@ class RackVectorLabelsTest {
         val places = places()
         assertTrue(places.isNotEmpty())
         for ((rack, slot, place) in places) {
-            assertEquals(place.toString(), place.getValue(language).jsonPrimitive.content, rack.displayLabel(slot, resources))
+            val label = rack.displayLabel(slot, resources)
+            // On screen a no-break space keeps each number with its word; the vectors use plain spaces.
+            assertEquals(place.toString(), place.getValue(language).jsonPrimitive.content, label.replace('\u00A0', ' '))
+            assertTrue(label, Regex("[a-zé] \\d").find(label) == null)
         }
     }
 
