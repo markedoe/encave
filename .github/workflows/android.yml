@@ -52,10 +52,13 @@ jobs:
           up=""
           for i in $(seq 1 50); do curl -fs http://localhost:8787/v1/health && { up=1; break; }; sleep 0.2; done
           [ -n "$up" ] || { echo "::error::The local relay did not start in 10 s."; cat "$RUNNER_TEMP/relay.log"; exit 1; }
-          ENCAVE_RELAY_URL=http://localhost:8787 ./gradlew :core:test --stacktrace
+          # --rerun: a relay-only change leaves the Gradle inputs alike, and the cached result
+          # would skip the sync test against this relay.
+          ENCAVE_RELAY_URL=http://localhost:8787 ./gradlew :core:test --rerun --stacktrace
 
       - name: App unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
+        # --rerun: the quick tour's screenshots (app/build/screens, used below) are not cached outputs.
+        run: ./gradlew :app:testDebugUnitTest --rerun --stacktrace
 
       - name: Google Play listing images
         # From the quick tour of the unit tests: checks play_listing_images.py and docs/store/play.json
