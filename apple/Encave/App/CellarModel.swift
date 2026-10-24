@@ -860,7 +860,13 @@ final class CellarModel {
         let snapshot = cellar
         guard update({ $0 = Cellar(settings: snapshot.settings) }) else { return }
         if alsoBackups { eraseBackups() }
-        let removeFiles: (@MainActor () -> Void)? = alsoBackups ? { [weak self] in self?.removeUnreferencedFiles(priority: .utility) } : nil
+        var removeFiles: (@MainActor () -> Void)?
+        if alsoBackups {
+            removeFiles = { [weak self] in
+                guard let self else { return }
+                removeUnreferencedFiles(priority: .utility)
+            }
+        }
         showToast(String(localized: "All data erased"), undoGone: removeFiles) { [weak self] in
             self?.update { $0 = snapshot }
             // Their files are referred to again: no longer due.
