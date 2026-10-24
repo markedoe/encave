@@ -393,14 +393,16 @@ class Cellar(
         bottleMap[bottleId] = bottle.copy(tasting = tasting.normalized().let { it.copy(unknownKeys = it.unknownKeys.orKept(bottle.tasting?.unknownKeys)) })
     }
 
-    /** Reverts a drink, putting the bottle back in its previous slot if still free. */
+    /**
+     * Reverts a drink, putting the bottle back in its previous slot if still free. Only a
+     * bottle opened can be: one on order or given away stays as it is.
+     */
     fun undoDrink(bottleId: UUID, previousSlot: Slot?) {
         val bottle = bottleMap[bottleId] ?: return
-        if (bottle.status == Bottle.Status.InCellar) return
+        if (bottle.status != Bottle.Status.Consumed) return
         // Back in its place if it is still free and still exists (the rack may be gone or smaller).
         val free = previousSlot != null && bottleAt(previousSlot) == null && rack(previousSlot.rackId)?.contains(previousSlot) == true
-        val slot = if (free) previousSlot else bottle.slot
-        bottleMap[bottleId] = bottle.copy(status = Bottle.Status.InCellar, tasting = null, slot = slot)
+        bottleMap[bottleId] = bottle.copy(status = Bottle.Status.InCellar, tasting = null, slot = if (free) previousSlot else null)
     }
 
     /** Marks a bottle as given away, sold or broken. */

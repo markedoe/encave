@@ -370,9 +370,10 @@ class AppViewModel(
         }
     }
 
+    /** Given away, sold or broken. Undo puts the record back as it was, in its place if still free. */
     fun markGone(bottleId: UUID) {
-        val previous = cellar.value.bottles[bottleId]?.slot
-        change<String>({ name -> post(UiText.Res(R.string.msg_gone, listOf(name))) { undoDrink(bottleId, previous) } }) {
+        val before = listOfNotNull(cellar.value.bottles[bottleId])
+        change<String>({ name -> post(UiText.Res(R.string.msg_gone, listOf(name))) { restore(before) } }) {
             it.markGone(bottleId)
             nameOf(it, bottleId)
         }

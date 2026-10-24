@@ -502,9 +502,10 @@ public extension Cellar {
         bottles[bottleID] = bottle
     }
 
-    /// Reverts a drink, putting the bottle back in its previous slot if still free.
+    /// Reverts a drink, putting the bottle back in its previous slot if still free. Only a
+    /// bottle opened can be: one on order or given away stays as it is.
     mutating func undoDrink(_ bottleID: UUID, previousSlot: Slot?) {
-        guard var bottle = bottles[bottleID], bottle.status != .inCellar else { return }
+        guard var bottle = bottles[bottleID], bottle.status == .consumed else { return }
         bottle.status = .inCellar
         bottle.tasting = nil
         // Back in its place if it is still free and still exists (the rack may be gone or smaller).
