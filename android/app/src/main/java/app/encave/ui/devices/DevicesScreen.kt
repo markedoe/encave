@@ -142,6 +142,7 @@ private val SyncManager.RemoteProblem.text: Int
         SyncManager.RemoteProblem.Unreachable -> R.string.remote_problem_unreachable
         SyncManager.RemoteProblem.RemovalPending -> R.string.remote_problem_removal
         SyncManager.RemoteProblem.Unreadable -> R.string.remote_problem_unreadable
+        SyncManager.RemoteProblem.KeyNotGiven -> R.string.remote_problem_key_not_given
     }
 
 /** "2 minutes ago", lowercase to go inside "Synced …" (French writes "Il y a…"). */

@@ -59,6 +59,11 @@ public struct CellarKey: Codable, Equatable, Sendable {
 
     private enum CodingKeys: String, CodingKey { case cellarID, epoch, key, removed }
 
+    /// The same key: `removed` says what is known about it, not which key it is.
+    public static func == (a: CellarKey, b: CellarKey) -> Bool {
+        a.cellarID == b.cellarID && a.epoch == b.epoch && a.key == b.key
+    }
+
     /// A key received from another device must be 32 bytes, like the ones devices make.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -253,24 +258,34 @@ public struct PendingRotation: Codable, Equatable, Sendable {
     /// Devices whose grant failed: the rotation went on without them, and they are
     /// tried again in later rounds (`RemoteSync.grantMissing`).
     public var failed: Set<UUID>
+    /// Rounds in a row in which `grantMissing` left devices without the key.
+    public var retries: Int
 
-    public init(key: CellarKey, granted: Set<UUID> = [], failed: Set<UUID> = []) {
-        self.key = key; self.granted = granted; self.failed = failed
+    /// After this many rounds, the app says that a device could not be given the key.
+    public static let retriesBeforeProblem = 5
+
+    /// Some devices still lack the key after several rounds: worth telling the user.
+    public var isStuck: Bool { !failed.isEmpty && retries >= Self.retriesBeforeProblem }
+
+    public init(key: CellarKey, granted: Set<UUID> = [], failed: Set<UUID> = [], retries: Int = 0) {
+        self.key = key; self.granted = granted; self.failed = failed; self.retries = retries
     }
 
     /// The device moved to another storage: grants left on the old one do not count there.
     public mutating func storageChanged() {
         granted = []
         failed = []
+        retries = 0
     }
 
-    private enum CodingKeys: String, CodingKey { case key, granted, failed }
+    private enum CodingKeys: String, CodingKey { case key, granted, failed, retries }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         key = try c.decode(CellarKey.self, forKey: .key)
         granted = try c.decode(Set<UUID>.self, forKey: .granted)
         failed = try c.decodeIfPresent(Set<UUID>.self, forKey: .failed) ?? []
+        retries = try c.decodeIfPresent(Int.self, forKey: .retries) ?? 0
     }
 }
 
@@ -325,6 +340,7 @@ public enum RemoteSync {
         var progress = currentProgress
         var storage: String?
         var newKey: CellarKey?
+        var granter: UUID?
 
         var unreadable: [UUID] = []
 
@@ -334,13 +350,15 @@ public enum RemoteSync {
             key = grant.cellarKey
             newKey = key
             storage = grant.storage
+            granter = grant.from
         }
         if progress.epoch != key.epoch || newKey != nil {
             progress = RemoteProgress()
             progress.epoch = key.epoch
         }
         if newKey != nil, let storage, let currentStorage, storage != currentStorage {
-            return Result(snapshot: nil, progress: progress, newKey: newKey, storage: storage, clock: local.state.clock)
+            let settledKey = newKey.map { settled($0, previous: currentKey, membership: local.membership, from: granter) }
+            return Result(snapshot: nil, progress: progress, newKey: settledKey, storage: storage, clock: local.state.clock)
         }
 
         // 2. Other devices' newest snapshots.
@@ -433,7 +451,9 @@ public enum RemoteSync {
         progress.refusedFiles.formIntersection(refs.map(\.id))
         let refused: RemoteSyncError? = progress.refusedFiles.isEmpty ? nil
             : progress.storageFull ? .quotaExceeded : .fileTooLarge
-        return Result(snapshot: received ? merged : nil, progress: progress, newKey: newKey, storage: storage,
+        // A key without a list of removals (from an earlier build) leaves out its sender's.
+        let settledKey = newKey.map { settled($0, previous: currentKey, membership: merged.membership, from: granter) }
+        return Result(snapshot: received ? merged : nil, progress: progress, newKey: settledKey, storage: storage,
                       unreadable: unreadable, clock: merged.state.clock, refusedFiles: refused)
     }
 
@@ -491,33 +511,53 @@ public enum RemoteSync {
     /// At most this many removals are listed in a key, so a grant stays well under 4 KiB.
     public static let maxRemoved = 64
 
-    /// Devices a key must not have been given to: those removed by another device, the
-    /// newest `maxRemoved` of them (older ones were left out by earlier rotations). A
+    /// Devices a key must not have been given to: those removed by another device. A
     /// device that left removed itself and forgot the key (docs/SYNC.md §2).
     public static func shutOut(_ membership: Membership) -> Set<UUID> {
-        let removals = membership.stamps.filter { $0.value.deleted && $0.value.device != $0.key }
-            .sorted { ($0.value.counter, $0.key.lowercased) > ($1.value.counter, $1.key.lowercased) }
-        return Set(removals.prefix(maxRemoved).map(\.key))
+        Set(membership.stamps.filter { $0.value.deleted && $0.value.device != $0.key }.keys)
     }
 
-    /// The `removed` list of a key made now: `shutOut` first, then the others, at most `maxRemoved`.
-    static func removedList(_ shut: Set<UUID>, _ others: [UUID]?) -> [UUID] {
-        let rest = (others ?? []).filter { !shut.contains($0) }
-        return Array((Array(shut) + Set(rest)).prefix(maxRemoved)).sorted { $0.uuidString < $1.uuidString }
+    /// Devices removed by `sender`: a build before keys listed removals rotates after
+    /// its own removals only.
+    static func removed(by sender: UUID, in membership: Membership) -> Set<UUID> {
+        Set(membership.stamps.filter { $0.value.deleted && $0.value.device == sender && $0.key != sender }.keys)
     }
 
-    /// The key to keep when `key` arrives (a grant, the local network) or is loaded:
-    /// with the same key bytes as `previous`, the union of both `removed` lists (a build
-    /// before the list drops it). A key without a list (from such a build) is taken to
-    /// leave out the removals known now: those builds rotate after their own removals.
-    public static func settled(_ key: CellarKey, previous: CellarKey?, membership: Membership?) -> CellarKey {
+    /// The `removed` list of a key: `shut` first, newest removal first, then the others
+    /// by ID; at most `maxRemoved`, sorted.
+    static func removedList(_ shut: Set<UUID>, _ others: [UUID]?, membership: Membership?) -> [UUID] {
+        let counter = { (id: UUID) in membership?.stamps[id]?.counter ?? 0 }
+        let first = shut.sorted { (counter($0), $1.lowercased) > (counter($1), $0.lowercased) }
+        let rest = Set((others ?? []).filter { !shut.contains($0) }).sorted { $0.lowercased < $1.lowercased }
+        return Array((first + rest).prefix(maxRemoved)).sorted { $0.uuidString < $1.uuidString }
+    }
+
+    /// Removals in `membership` that `key` may have been given to. A full list (`maxRemoved`)
+    /// also leaves out the removals older than its oldest entry.
+    public static func uncovered(_ key: CellarKey, membership: Membership) -> Set<UUID> {
+        let listed = Set(key.removed ?? [])
+        let missing = shutOut(membership).subtracting(listed)
+        guard listed.count >= maxRemoved,
+              let oldest = listed.compactMap({ membership.stamps[$0]?.counter }).min() else { return missing }
+        return missing.filter { (membership.stamps[$0]?.counter ?? 0) >= oldest }
+    }
+
+    /// The key to keep when `key` arrives or is loaded. With the same key bytes as
+    /// `previous`, the union of both `removed` lists (a build before the list drops it).
+    /// A key without a list was made by such a build: received from `sender` (the grant's
+    /// sender, the peer on the local network), it leaves out the removals made by the
+    /// sender, since those builds rotate after their own removals only; this device's
+    /// own key (no sender, settled once when loaded) leaves out the removals known now.
+    public static func settled(_ key: CellarKey, previous: CellarKey?, membership: Membership?,
+                               from sender: UUID? = nil) -> CellarKey {
         var key = key
         if let previous, previous.cellarID == key.cellarID, previous.key == key.key,
            let listed = previous.removed {
-            key.removed = removedList([], listed + (key.removed ?? []))
+            key.removed = removedList(Set(listed + (key.removed ?? [])), nil, membership: membership)
         }
         if key.removed == nil, let membership, membership.cellarID == key.cellarID {
-            key.removed = removedList(shutOut(membership), nil)
+            let left = sender.map { removed(by: $0, in: membership) } ?? shutOut(membership)
+            key.removed = removedList(left, nil, membership: membership)
         }
         return key
     }
@@ -534,14 +574,13 @@ public enum RemoteSync {
     /// epoch or later and it was given to nobody. It gets a new key above every epoch
     /// seen when, given to some devices, it could win against `key` on the same epoch,
     /// or when it was given to a device removed since. `device` is this device: once
-    /// removed itself, it never rotates. A key without a `removed` list leaves out the
-    /// removals known now.
+    /// removed itself, it never rotates. Keys are `settled` before they get here.
     public static func nextRotation(key: CellarKey, pending: PendingRotation?, membership: Membership,
                                     device: UUID) throws -> PendingRotation? {
         guard membership.members[device] != nil else { return nil }
         var pending = pending.flatMap { $0.key.cellarID == key.cellarID && $0.key.key != key.key ? $0 : nil }
         let removed = shutOut(membership)
-        let listed = key.removed.map { Set($0) } ?? removed
+        let listed = Set(key.removed ?? [])
         let excluded = removed.union(listed)
         let top = max(key.epoch, pending?.key.epoch ?? 0)
         var force = false
@@ -555,7 +594,7 @@ public enum RemoteSync {
                 force = true
             }
         }
-        guard pending != nil || force || !removed.isSubset(of: listed) else { return nil }
+        guard pending != nil || force || !uncovered(key, membership: membership).isEmpty else { return nil }
         var next: PendingRotation
         if let pending {
             next = pending
@@ -564,7 +603,7 @@ public enum RemoteSync {
             guard top < UInt32.max else { throw RemoteSyncError.corrupted("epoch") }
             next = PendingRotation(key: CellarKey.random(cellarID: key.cellarID, epoch: top + 1))
         }
-        next.key.removed = removedList(removed, Array(listed) + (next.key.removed ?? []))
+        next.key.removed = removedList(removed, Array(listed) + (next.key.removed ?? []), membership: membership)
         return next
     }
 
@@ -600,9 +639,9 @@ public enum RemoteSync {
                 try await grant(newKey, to: [member], store: store, identity: identity, storage: storage)
                 pending.granted.insert(member.id)
                 pending.failed.remove(member.id)
-            } catch is CancellationError {
-                throw CancellationError()
             } catch {
+                // A round cut short (the app went to the background) is not a failed grant.
+                if error is CancellationError || Task.isCancelled { throw error }
                 pending.failed.insert(member.id)
             }
             await progress(pending)
@@ -629,6 +668,7 @@ public enum RemoteSync {
                 pending.granted.insert(id)
             }
         }
+        pending.retries = pending.failed.isEmpty ? 0 : pending.retries + 1
     }
 
     /// Gives the current key to devices that may not have it (a device that joined

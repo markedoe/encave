@@ -104,11 +104,11 @@ data class CellarKey(
 
     internal val dataKey: ByteArray get() = derive("encave/v1/data")
 
+    /** The same key: `removed` says what is known about it, not which key it is. */
     override fun equals(other: Any?): Boolean =
-        other is CellarKey && cellarId == other.cellarId && epoch == other.epoch && key.contentEquals(other.key) &&
-            removed == other.removed
+        other is CellarKey && cellarId == other.cellarId && epoch == other.epoch && key.contentEquals(other.key)
 
-    override fun hashCode(): Int = listOf(cellarId, epoch, key.contentHashCode(), removed).hashCode()
+    override fun hashCode(): Int = listOf(cellarId, epoch, key.contentHashCode()).hashCode()
 
     companion object {
         /** The last epoch (UInt32 max): no rotation goes past it. */
@@ -252,9 +252,19 @@ data class PendingRotation(
     val granted: Set<@Serializable(with = UuidSerializer::class) UUID> = emptySet(),
     /** Devices whose grant failed: the rotation went on without them, tried again later ([RemoteSync.grantMissing]). */
     val failed: Set<@Serializable(with = UuidSerializer::class) UUID> = emptySet(),
+    /** Rounds in a row in which [RemoteSync.grantMissing] left devices without the key. */
+    val retries: Int = 0,
 ) {
     /** The device moved to another storage: grants left on the old one do not count there. */
-    fun storageChanged(): PendingRotation = copy(granted = emptySet(), failed = emptySet())
+    fun storageChanged(): PendingRotation = copy(granted = emptySet(), failed = emptySet(), retries = 0)
+
+    /** Some devices still lack the key after several rounds: worth telling the user. */
+    val isStuck: Boolean get() = failed.isNotEmpty() && retries >= RETRIES_BEFORE_PROBLEM
+
+    companion object {
+        /** After this many rounds, the app says that a device could not be given the key. */
+        const val RETRIES_BEFORE_PROBLEM = 5
+    }
 }
 
 object RemoteSync {
@@ -311,15 +321,18 @@ object RemoteSync {
         val unreadable = mutableListOf<UUID>()
 
         // 1. Key grants: a key that supersedes this one (a device was removed, or two turned it on).
+        var granter: UUID? = null
         receiveGrant(store, identity, local.membership, current = currentKey)?.let { grant ->
             currentKey = grant.cellarKey
             newKey = currentKey
             storage = grant.storage
+            granter = grant.from
         }
         if (current.epoch != currentKey.epoch || newKey != null) current = RemoteProgress(epoch = currentKey.epoch)
         val granted = storage
         if (newKey != null && granted != null && currentStorage != null && granted != currentStorage) {
-            return Result(null, current, newKey, granted, emptyList(), local.state.clock)
+            val settledKey = newKey?.let { settled(it, key, local.membership, granter) }
+            return Result(null, current, settledKey, granted, emptyList(), local.state.clock)
         }
 
         // 2. Other devices' newest snapshots.
@@ -433,7 +446,8 @@ object RemoteSync {
                 seen = seen, uploadedClock = uploadedClock, uploadedDigest = uploadedDigest, uploadedPhotos = uploaded,
                 refusedFiles = refused, storageFull = storageFull,
             ),
-            newKey,
+            // A key without a list of removals (from an earlier build) leaves out its sender's.
+            newKey?.let { settled(it, key, merged.membership, granter) },
             storage,
             unreadable,
             merged.state.clock,
@@ -535,34 +549,50 @@ object RemoteSync {
     const val MAX_REMOVED = 64
 
     /**
-     * Devices a key must not have been given to: those removed by another device, the newest
-     * [MAX_REMOVED] of them (older ones were left out by earlier rotations). A device that left
-     * removed itself and forgot the key (docs/SYNC.md §2).
+     * Devices a key must not have been given to: those removed by another device. A device
+     * that left removed itself and forgot the key (docs/SYNC.md §2).
      */
     fun shutOut(membership: Membership): Set<UUID> =
-        membership.stamps.entries.filter { (id, stamp) -> stamp.deleted && stamp.device != id }
-            .sortedWith(compareByDescending<Map.Entry<UUID, Stamp>> { it.value.counter.toULong() }.thenByDescending { it.key.lower })
-            .take(MAX_REMOVED).map { it.key }.toSet()
+        membership.stamps.filter { (id, stamp) -> stamp.deleted && stamp.device != id }.keys
 
-    /** The `removed` list of a key made now: [shut] first, then the others, at most [MAX_REMOVED]. */
-    internal fun removedList(shut: Set<UUID>, others: List<UUID>?): List<UUID> =
-        (shut.toList() + others.orEmpty().filter { it !in shut }.distinct()).take(MAX_REMOVED)
-            .sortedBy { it.toString().uppercase(Locale.ROOT) }
+    /** Devices removed by [sender]: a build before keys listed removals rotates after its own removals only. */
+    internal fun removedBy(sender: UUID, membership: Membership): Set<UUID> =
+        membership.stamps.filter { (id, stamp) -> stamp.deleted && stamp.device == sender && id != sender }.keys
+
+    /** The `removed` list of a key: [shut] first, newest removal first, then the others by ID; at most [MAX_REMOVED], sorted. */
+    internal fun removedList(shut: Set<UUID>, others: List<UUID>?, membership: Membership?): List<UUID> {
+        val counter = { id: UUID -> membership?.stamps?.get(id)?.counter?.toULong() ?: 0UL }
+        val first = shut.sortedWith(compareByDescending<UUID> { counter(it) }.thenBy { it.lower })
+        val rest = others.orEmpty().filter { it !in shut }.distinct().sortedBy { it.lower }
+        return (first + rest).take(MAX_REMOVED).sortedBy { it.toString().uppercase(Locale.ROOT) }
+    }
+
+    /** Removals in [membership] that [key] may have been given to. A full list ([MAX_REMOVED]) also leaves out those older than its oldest entry. */
+    fun uncovered(key: CellarKey, membership: Membership): Set<UUID> {
+        val listed = key.removed.orEmpty().toSet()
+        val missing = shutOut(membership) - listed
+        if (listed.size < MAX_REMOVED) return missing
+        val oldest = listed.mapNotNull { membership.stamps[it]?.counter?.toULong() }.minOrNull() ?: return missing
+        return missing.filter { (membership.stamps[it]?.counter?.toULong() ?: 0UL) >= oldest }.toSet()
+    }
 
     /**
-     * The key to keep when [key] arrives (a grant, the local network) or is loaded: with the
-     * same key bytes as [previous], the union of both `removed` lists (a build before the list
-     * drops it). A key without a list (from such a build) is taken to leave out the removals
-     * known now: those builds rotate after their own removals.
+     * The key to keep when [key] arrives or is loaded. With the same key bytes as [previous],
+     * the union of both `removed` lists (a build before the list drops it). A key without a
+     * list was made by such a build: received from [sender] (the grant's sender, the peer on
+     * the local network), it leaves out the removals made by the sender, since those builds
+     * rotate after their own removals only; this device's own key (no sender, settled once
+     * when loaded) leaves out the removals known now.
      */
-    fun settled(key: CellarKey, previous: CellarKey?, membership: Membership?): CellarKey {
+    fun settled(key: CellarKey, previous: CellarKey?, membership: Membership?, sender: UUID? = null): CellarKey {
         var result = key
         val listed = previous?.removed
         if (previous != null && previous.cellarId == key.cellarId && previous.key.contentEquals(key.key) && listed != null) {
-            result = result.copy(removed = removedList(emptySet(), listed + key.removed.orEmpty()))
+            result = result.copy(removed = removedList((listed + key.removed.orEmpty()).toSet(), null, membership))
         }
         if (result.removed == null && membership != null && membership.cellarId == key.cellarId) {
-            result = result.copy(removed = removedList(shutOut(membership), null))
+            val left = sender?.let { removedBy(it, membership) } ?: shutOut(membership)
+            result = result.copy(removed = removedList(left, null, membership))
         }
         return result
     }
@@ -578,14 +608,14 @@ object RemoteSync {
      * A started rotation is dropped when [key] supersedes it, or when [key] is on its epoch or
      * later and it was given to nobody. It gets a new key above every epoch seen when, given
      * to some devices, it could win against [key] on the same epoch, or when it was given to a
-     * device removed since. [device] is this device: once removed itself, it never rotates. A
-     * key without a `removed` list leaves out the removals known now.
+     * device removed since. [device] is this device: once removed itself, it never rotates. Keys
+     * are [settled] before they get here.
      */
     fun nextRotation(key: CellarKey, pending: PendingRotation?, membership: Membership, device: UUID): PendingRotation? {
         if (membership.members[device] == null) return null
         var started = pending?.takeIf { it.key.cellarId == key.cellarId && !it.key.key.contentEquals(key.key) }
         val removed = shutOut(membership)
-        val listed = key.removed?.toSet() ?: removed
+        val listed = key.removed.orEmpty().toSet()
         val excluded = removed + listed
         val top = maxOf(key.epoch, started?.key?.epoch ?: 0)
         var force = false
@@ -599,13 +629,13 @@ object RemoteSync {
                 force = true
             }
         }
-        if (started == null && !force && listed.containsAll(removed)) return null
+        if (started == null && !force && uncovered(key, membership).isEmpty()) return null
         val next = started ?: run {
             // Only a misbehaving device sends a key at the last epoch: refuse rather than go past it.
             if (top >= CellarKey.MAX_EPOCH) throw RemoteSyncException(RemoteSyncError.Corrupted("epoch"))
             PendingRotation(CellarKey.random(key.cellarId, top + 1))
         }
-        return next.copy(key = next.key.copy(removed = removedList(removed, listed.toList() + next.key.removed.orEmpty())))
+        return next.copy(key = next.key.copy(removed = removedList(removed, listed.toList() + next.key.removed.orEmpty(), membership)))
     }
 
     /**
@@ -673,7 +703,7 @@ object RemoteSync {
             } catch (_: Exception) {
             }
         }
-        return done
+        return done.copy(retries = if (done.failed.isEmpty()) 0 else done.retries + 1)
     }
 
     /**

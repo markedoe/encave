@@ -547,6 +547,7 @@ FR = {
     'How to Run a Relay': 'Héberger un relais',
     'This address does not answer as an Encave relay.': 'Cette adresse ne répond pas comme un relais Encave.',
     'The removed device could not be shut out of syncing away from home yet. It will be tried again.': 'L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.',
+    'Another device could not be given the new key yet, so it does not sync away from home. Check that it is up to date and that the storage has room.': 'Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place.',
     'The relay refused this device. Check the relay address.': 'Le relais a refusé cet appareil. Vérifiez l’adresse du relais.',
     'The relay is full. Remove old photos or use another relay.': 'Le relais est plein. Supprimez d’anciennes photos ou utilisez un autre relais.',
     'The relay cannot be reached. Syncing will resume when it can.': 'Le relais est injoignable. La synchronisation reprendra dès que possible.',

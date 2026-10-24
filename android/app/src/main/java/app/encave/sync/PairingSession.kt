@@ -111,7 +111,7 @@ class PairingSession private constructor(
                 val local = sync.snapshot() ?: throw SyncException(SyncError.Closed)
                 val (result, remote) = SyncExchange.exchange(channel, true, local, syncPhotos(), sync.remoteInfo())
                 sync.apply(result, member.id)
-                sync.adoptRemote(remote)
+                sync.adoptRemote(remote, member.id)
                 sync.resume()
                 phaseFlow.value = Phase.Done(member.name)
             } catch (error: CancellationException) {
@@ -181,7 +181,7 @@ class PairingSession private constructor(
                     val local = sync.snapshot() ?: throw SyncException(SyncError.Closed)
                     val (result, remote) = SyncExchange.exchange(channel, false, local, syncPhotos(), sync.remoteInfo())
                     sync.apply(result, keys.peer.device)
-                    sync.adoptRemote(remote)
+                    sync.adoptRemote(remote, keys.peer.device)
                     sync.resume()
                     phaseFlow.value = Phase.Done(keys.peer.name)
                 } catch (error: CancellationException) {

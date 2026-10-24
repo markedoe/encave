@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 /** Keeps a key as the apps do (`storeRemoteKey`): settled against the current one, afresh only when the key bytes change. */
-internal fun RemoteDevice.keep(new: CellarKey) {
-    val settled = RemoteSync.settled(new, key, snapshot.membership)
+internal fun RemoteDevice.keep(new: CellarKey, sender: UUID? = null) {
+    val settled = RemoteSync.settled(new, key, snapshot.membership, sender)
     if (key?.key?.contentEquals(settled.key) != true) progress = RemoteProgress()
     key = settled
 }
@@ -25,10 +25,6 @@ internal fun RemoteDevice.keep(new: CellarKey) {
 internal suspend fun RemoteDevice.round(store: MailboxStore): RemoteSync.Result? {
     var current = key
     if (current != null) {
-        if (current.removed == null) {
-            keep(current)
-            current = key!!
-        }
         val owed = pending
         if (owed != null && owed.key.key.contentEquals(current.key)) {
             val done = RemoteSync.grantMissing(owed, store, identity, snapshot, null)
@@ -38,7 +34,7 @@ internal suspend fun RemoteDevice.round(store: MailboxStore): RemoteSync.Result?
         if (next != null) {
             val grant = RemoteSync.receiveGrant(store, identity, snapshot.membership, current)
             if (grant != null) {
-                keep(grant.cellarKey)
+                keep(grant.cellarKey, grant.from)
                 current = key!!
                 next = RemoteSync.nextRotation(current, pending, snapshot.membership, identity.id)
             }
@@ -116,6 +112,7 @@ class KeyRotationTests {
     /** All devices on the first key, through [store]. */
     private suspend fun start(count: Int, store: MailboxStore): List<RemoteDevice> {
         val devices = household(count)
+        devices[0].keep(devices[0].key!!)
         grantAll(devices, store, null)
         for (device in devices) device.round(store)
         return devices
@@ -277,8 +274,10 @@ class KeyRotationTests {
         b.meet(a)
         c.meet(a)
         grantAll(devices, store, null)
+        assertNull(a.key!!.removed)
+        // A, updated, settles its own key when the app starts.
+        a.keep(a.key!!)
         val first = a.key!!
-        assertNull(first.removed)
         repeat(3) { for (device in listOf(a, b, c)) device.round(store) }
         for (device in listOf(a, b, c)) {
             assertTrue(device.key!!.key.contentEquals(first.key))
@@ -331,6 +330,9 @@ class KeyRotationTests {
         b.round(store)
         assertEquals(newKey, b.key)
         assertTrue(b.snapshot.cellar.wines.values.any { it.name == "After removal" })
+        // A device left without the key for several rounds is worth telling the user.
+        repeat(PendingRotation.RETRIES_BEFORE_PROBLEM) { a.round(store) }
+        assertTrue(a.pending?.isStuck == true)
         store.refused = emptySet()
         a.round(store)
         assertNull(a.pending)
@@ -361,20 +363,80 @@ class KeyRotationTests {
     }
 
     @Test
-    fun theRemovedListHasAtMost64Devices() {
-        var membership = Membership()
-        var clock = 0L
-        val me = UUID.randomUUID()
-        repeat(70) {
-            val (m, c) = membership.removing(UUID.randomUUID(), clock, me)
-            membership = m
-            clock = c
+    fun moreThan64RemovalsListTheNewestAndDoNotBounce() {
+        val (a, b) = household(2)
+        val me = a.identity.id
+        val removed = List(70) { UUID.randomUUID() }
+        for (id in removed) {
+            val (membership, clock) = a.snapshot.membership.removing(id, a.snapshot.state.clock, me)
+            a.snapshot = a.snapshot.copy(membership = membership, state = a.snapshot.state.copy(clock = clock))
         }
-        val shut = RemoteSync.shutOut(membership)
-        assertEquals(RemoteSync.MAX_REMOVED, shut.size)
-        val list = RemoteSync.removedList(shut, List(20) { UUID.randomUUID() })
-        assertEquals(RemoteSync.MAX_REMOVED, list.size)
-        assertTrue(list.containsAll(shut))
+        val membership = a.snapshot.membership
+        assertEquals(70, RemoteSync.shutOut(membership).size)
+        val start = CellarKey(membership.cellarId, 1, ByteArray(32) { 1 }, emptyList())
+        val next = RemoteSync.nextRotation(start, null, membership, me)!!
+        // The newest 64 are listed, in the same order on every device.
+        assertEquals(RemoteSync.MAX_REMOVED, next.key.removed?.size)
+        assertEquals(removed.takeLast(RemoteSync.MAX_REMOVED).toSet(), next.key.removed?.toSet())
+        assertEquals(next.key.removed, RemoteSync.removedList(removed.toSet(), null, membership))
+        // That key calls for no other rotation; a new removal does.
+        assertNull(RemoteSync.nextRotation(next.key, null, membership, me))
+        a.remove(b)
+        assertNotNull(RemoteSync.nextRotation(next.key, null, a.snapshot.membership, me))
+    }
+
+    @Test
+    fun aRemovalLearnedLateWithAnOldCounterStillRotates() {
+        val (a, b, c) = household(3)
+        val key = CellarKey(a.snapshot.membership.cellarId, 1, ByteArray(32) { 1 }, emptyList())
+        // B removed C long ago (a low counter); A learns it only now, after many changes.
+        val (membership, _) = b.snapshot.membership.removing(c.identity.id, 1, b.identity.id)
+        b.snapshot = b.snapshot.copy(membership = membership)
+        a.snapshot = a.snapshot.copy(state = a.snapshot.state.copy(clock = 1000))
+        a.meet(b)
+        assertNotNull(RemoteSync.nextRotation(key, null, a.snapshot.membership, a.identity.id))
+    }
+
+    @Test
+    fun anOldDevicesKeyAdoptedAfterAnUnknownRemovalIsRotated() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = start(5, store)
+        val (n1, o, n2, x, y) = devices
+        val start = n1.key!!
+        // N1 (no storage) removes X; at the same time O, an earlier build, removes Y and
+        // rotates the earlier way, giving its key to X too (it has not heard of that removal).
+        n1.remove(x)
+        val (membership, clock) = o.snapshot.membership.removing(y.identity.id, o.snapshot.state.clock, o.identity.id)
+        o.snapshot = o.snapshot.copy(membership = membership, state = o.snapshot.state.copy(clock = clock))
+        val old = CellarKey.random(start.cellarId, 2)
+        RemoteSync.rotate(store, o.identity, start, old, o.snapshot, null)
+        val xMembership = x.snapshot.membership
+        assertTrue(x.grantedKeys(store, xMembership).any { it.key.contentEquals(old.key) })
+        // N2 knows both removals: O's key leaves out only Y, so N2 rotates.
+        n2.meet(n1)
+        n2.meet(o)
+        n2.round(store)
+        val final = n2.key!!
+        assertEquals(3L, final.epoch)
+        assertTrue(final.removed.orEmpty().containsAll(listOf(x.identity.id, y.identity.id)))
+        assertFalse(x.grantedKeys(store, xMembership).any { it.key.contentEquals(final.key) })
+    }
+
+    @Test
+    fun aKeyFromAnEarlierBuildIsSettledBeforeALocalNetworkRemoval() = runBlocking {
+        val store = MemoryMailboxStore()
+        val devices = household(3)
+        val (a, b, d) = devices
+        // A was updated: its stored key, without a list, is settled when the app starts.
+        a.keep(a.key!!)
+        assertEquals(emptyList<UUID>(), a.key?.removed)
+        grantAll(devices, store, null)
+        // B removes D; A hears of it on the local network before its first round.
+        b.remove(d)
+        a.meet(b)
+        a.round(store)
+        assertEquals(2L, a.key?.epoch)
+        assertEquals(listOf(d.identity.id), a.key?.removed)
     }
 
     @Test

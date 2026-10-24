@@ -2421,6 +2421,16 @@
         }
       }
     },
+    "Another device could not be given the new key yet, so it does not sync away from home. Check that it is up to date and that the storage has room.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place."
+          }
+        }
+      }
+    },
     "Another device refused to sync and says this device was removed from the cellar. If that is right, stop syncing on this device.": {
       "localizations": {
         "fr": {

@@ -163,7 +163,7 @@ final class PairingSession {
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
                                                                        files: SyncService.files, remote: service.remoteInfo)
                 service.apply(result, from: member.id)
-                service.adoptRemote(remote)
+                service.adoptRemote(remote, from: member.id)
                 service.resume()
                 phase = .done(device: member.name)
             } catch {
@@ -243,7 +243,7 @@ final class PairingSession {
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
                                                                        files: SyncService.files, remote: service.remoteInfo)
                 service.apply(result, from: keys.peer.device)
-                service.adoptRemote(remote)
+                service.adoptRemote(remote, from: keys.peer.device)
                 service.resume()
                 phase = .done(device: keys.peer.name)
             } catch {

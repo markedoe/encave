@@ -850,6 +850,7 @@
     <string name="remote_problem_unreachable">The storage cannot be reached. Syncing will resume when it can.</string>
     <string name="remote_problem_unreadable">Changes from another device could not be read. Update Encave on all your devices.</string>
     <string name="remote_problem_removal">The removed device could not be shut out of syncing away from home yet. It will be tried again.</string>
+    <string name="remote_problem_key_not_given">Another device could not be given the new key yet, so it does not sync away from home. Check that it is up to date and that the storage has room.</string>
     <string name="invite_title">Add a device</string>
     <string name="invite_instructions">Scan this code with the other device’s camera, or type the numbers in Settings › Devices › Join another device’s cellar.</string>
     <string name="invite_qr">QR code to scan with the other device</string>

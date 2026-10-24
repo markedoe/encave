@@ -897,6 +897,7 @@ S = [
  ("remote_problem_unreachable", "The storage cannot be reached. Syncing will resume when it can.", "Le stockage est injoignable. La synchronisation reprendra dès que possible."),
  ("remote_problem_unreadable", "Changes from another device could not be read. Update Encave on all your devices.", "Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils."),
  ("remote_problem_removal", "The removed device could not be shut out of syncing away from home yet. It will be tried again.", "L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté."),
+ ("remote_problem_key_not_given", "Another device could not be given the new key yet, so it does not sync away from home. Check that it is up to date and that the storage has room.", "Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place."),
  ("invite_title", "Add a device", "Ajouter un appareil"),
  ("invite_instructions", "Scan this code with the other device’s camera, or type the numbers in Settings › Devices › Join another device’s cellar.", "Scannez ce code avec l’appareil photo de l’autre appareil, ou saisissez les chiffres dans Réglages › Appareils › Rejoindre la cave d’un autre appareil."),
  ("invite_qr", "QR code to scan with the other device", "Code QR à scanner avec l’autre appareil"),

@@ -135,7 +135,7 @@ class SyncManager(
     }
 
     enum class Problem { Removed, SaysRemoved, NotVerified, OtherVersion, Unfinished, CannotListen, LocalNetworkUnavailable }
-    enum class RemoteProblem { Refused, Forbidden, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable }
+    enum class RemoteProblem { Refused, Forbidden, Full, FileTooLarge, Unreachable, RemovalPending, Unreadable, KeyNotGiven }
 
     val storage = SyncStorage(context)
     internal val appContext: Context get() = context
@@ -226,6 +226,10 @@ class SyncManager(
             if (membership != null && loaded == null) loaded = repository.read { SyncState.starting(it, identity.id) }
             // A key of another cellar (left from before joining this one) is never used.
             if (storage.remoteKey?.let { it.cellarId != membership?.cellarId } == true) storage.resetRemote()
+            // A key kept by a build before keys listed removals: settled once, before any sync
+            // merges a removal it may not leave out (docs/SYNC.md §8).
+            val kept = storage.remoteKey
+            if (kept != null && kept.removed == null && membership != null) storage.remoteKey = RemoteSync.settled(kept, null, membership)
             synchronized(this@SyncManager) {
                 syncState = if (membership != null) loaded else null
                 progress = storage.loadRemoteProgress()
@@ -772,7 +776,7 @@ class SyncManager(
         val local = snapshot() ?: return
         val (result, remote) = SyncExchange.exchange(channel, isInitiator, local, files, remoteInfo())
         apply(result, peer)
-        adoptRemote(remote)
+        adoptRemote(remote, peer)
     }
 
     private fun respond(socket: Socket) {
@@ -971,12 +975,16 @@ class SyncManager(
         setUpIfNeeded()
         val membership = status.value.membership
         var key: CellarKey? = null
+        var sender: UUID? = null
         if (storage.remoteKey == null && membership != null) {
             // Maybe another device already turned it on and left a key for this one.
             val grant = runCatching { RemoteSync.receiveGrant(store, identity, membership, null) }.getOrNull()
+            sender = grant?.from
             key = grant?.cellarKey ?: run {
-                // Kept until every device has it: a retry after a failure gives the same key.
-                val first = firstKey?.takeIf { it.cellarId == membership.cellarId } ?: CellarKey.random(membership.cellarId)
+                // Kept until every device has it: a retry after a failure gives the same key. It
+                // lists the removals known now: it is given to none of them.
+                val first = firstKey?.takeIf { it.cellarId == membership.cellarId }
+                    ?: RemoteSync.settled(CellarKey.random(membership.cellarId), null, membership)
                 firstKey = first
                 RemoteSync.grant(first, membership.active, store, identity, storageString)
                 first
@@ -988,7 +996,7 @@ class SyncManager(
         storage.remoteStorage = storageString
         storage.peerUsesICloud = false
         // A key received meanwhile from a device on the network may supersede this one.
-        if (key != null && key.cellarId == status.value.membership?.cellarId && key.supersedes(storage.remoteKey)) storeRemoteKey(key)
+        if (key != null && key.cellarId == status.value.membership?.cellarId && key.supersedes(storage.remoteKey)) storeRemoteKey(key, sender)
         status.update {
             it.copy(
                 remoteStorage = storageString, needsWebDavSignIn = needsSignIn(storageString), remoteProblem = null,
@@ -1001,10 +1009,11 @@ class SyncManager(
     }
 
     /** A key and storage received from a device on the network. */
-    fun adoptRemote(info: RemoteInfo?) {
+    /** [peer]: the device it came from, for a key without a list of removals (docs/SYNC.md §8). */
+    fun adoptRemote(info: RemoteInfo?, peer: UUID? = null) {
         val membership = status.value.membership ?: return
         if (info == null || info.key.cellarId != membership.cellarId) return
-        if (info.key.supersedes(storage.remoteKey) || storage.remoteKey?.key?.contentEquals(info.key.key) == true) storeRemoteKey(info.key)
+        if (info.key.supersedes(storage.remoteKey) || storage.remoteKey?.key?.contentEquals(info.key.key) == true) storeRemoteKey(info.key, peer)
         // iCloud is Apple-only: Devices explains it rather than just saying "Off".
         val iCloud = info.storage == "icloud"
         if (iCloud != status.value.peerUsesICloud) {
@@ -1112,9 +1121,10 @@ class SyncManager(
             val local = snapshot() ?: return
             var key = storage.remoteKey
             if (key == null) {
-                key = RemoteSync.receiveGrant(store, identity, local.membership, null)?.cellarKey
+                val grant = RemoteSync.receiveGrant(store, identity, local.membership, null)
                 if (round != generation) return
-                key?.let(::storeRemoteKey)
+                grant?.let { storeRemoteKey(it.cellarKey, it.from) }
+                key = storage.remoteKey
             }
             if (key == null || key.cellarId != local.membership.cellarId) return
             key = try {
@@ -1175,6 +1185,8 @@ class SyncManager(
                     result.unreadable.isNotEmpty() -> RemoteProblem.Unreadable
                     result.refusedFiles == RemoteSyncError.QuotaExceeded -> RemoteProblem.Full
                     result.refusedFiles == RemoteSyncError.FileTooLarge -> RemoteProblem.FileTooLarge
+                    // A device has not been given the new key after a removal: it keeps trying.
+                    storage.pendingRotation?.isStuck == true -> RemoteProblem.KeyNotGiven
                     else -> null
                 }
                 it.copy(
@@ -1229,11 +1241,6 @@ class SyncManager(
                 storage.pendingRotation = PendingRotation(CellarKey.random(key.cellarId, key.epoch + 1))
             }
         }
-        // A key from a build before keys listed removals: it leaves out the removals known now.
-        if (key.removed == null) {
-            storeRemoteKey(key)
-            key = storage.remoteKey ?: key
-        }
         // A finished rotation whose grant failed for some devices: try them again.
         val owed = storage.pendingRotation
         if (owed != null && owed.key.key.contentEquals(key.key)) {
@@ -1248,7 +1255,7 @@ class SyncManager(
         if (grant != null) {
             if (round != generation) return key
             if (grant.storage.let { it != null && it != url }) return key
-            storeRemoteKey(grant.cellarKey)
+            storeRemoteKey(grant.cellarKey, grant.from)
             key = storage.remoteKey ?: grant.cellarKey
             next = RemoteSync.nextRotation(key, storage.pendingRotation, local.membership, identity.id) ?: return doneWithRotation(key)
         }
@@ -1267,11 +1274,12 @@ class SyncManager(
         return key
     }
 
-    private fun storeRemoteKey(new: CellarKey?) {
+    /** [sender]: the device a received key came from (null: this device's own key). */
+    private fun storeRemoteKey(new: CellarKey?, sender: UUID? = null) {
         // The same key bytes keep both lists of removals; a key without one leaves out the
-        // removals known now (docs/SYNC.md §8).
+        // removals of its sender, or for this device's own key those known now (docs/SYNC.md §8).
         val previous = storage.remoteKey
-        val key = new?.let { RemoteSync.settled(it, previous, status.value.membership) }
+        val key = new?.let { RemoteSync.settled(it, previous, status.value.membership, sender) }
         // Progress belongs to a mailbox: a different key starts afresh.
         if (key?.cellarId != previous?.cellarId || key?.key?.contentEquals(previous?.key) != true) {
             synchronized(this) { progress = RemoteProgress() }
