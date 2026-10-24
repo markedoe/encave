@@ -964,7 +964,7 @@ struct JoinDeviceView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .controlSize(.large)
                 .disabled(!code.isValid || leaving)
                 .listRowBackground(Color.clear)
@@ -1051,7 +1051,7 @@ private struct PairingProgress<Waiting: View>: View {
                 } label: {
                     Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .accessibilityIdentifier("devices.pairSyncNow")
             }
             .accessibilityIdentifier("devices.addedNotSynced")
@@ -1063,14 +1063,14 @@ private struct PairingProgress<Waiting: View>: View {
                     Button("Try Again", action: retry)
                         .buttonStyle(.bordered)
                     Button("Open Settings") { SystemSettings.openForLocalNetwork() }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                 }
             }
         case .failed(let message):
             VStack(spacing: 18) {
                 StatusView(systemImage: "xmark.octagon", title: Text("Not added"), message: Text(message), showsProgress: false)
                 Button("Try Again", action: retry)
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
             }
         }
     }
@@ -1111,7 +1111,7 @@ private struct ConfirmCodeView: View {
                     ActionLabel("They Match", systemImage: "checkmark")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .accessibilityIdentifier("action.pair.accept")
             }
             .controlSize(.large)

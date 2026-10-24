@@ -34,7 +34,7 @@ struct WineDetailView: View {
                         } label: {
                             ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                         .accessibilityIdentifier("action.wine.drink")
                         .disabled(bottles.isEmpty)
                         Button {

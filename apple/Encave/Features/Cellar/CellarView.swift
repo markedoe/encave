@@ -787,7 +787,7 @@ struct EmptyCellarView: View {
                 } label: {
                     Text("Add a Bottle").frame(minWidth: 200)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .controlSize(.large)
                 .accessibilityIdentifier("empty.add")
                 // Already using Encave on another device: bring its cellar here.

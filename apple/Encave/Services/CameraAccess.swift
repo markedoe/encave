@@ -43,7 +43,7 @@ struct CameraAccessOffView<Actions: View>: View {
         } actions: {
             if let url = CameraAccess.settingsURL {
                 Button("Open Settings") { openURL(url) }
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
                     .accessibilityIdentifier("camera.settings")
             }
             actions

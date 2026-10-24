@@ -413,7 +413,7 @@ private struct SelectedBottleCard: View {
             HStack(spacing: 10) {
                 ActionButtonRow(spacing: 10) {
                     Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                         .accessibilityIdentifier("action.rack.drink")
                     Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
                         .buttonStyle(.bordered)
@@ -655,7 +655,7 @@ private struct BottleInCellRow: View {
             HStack(spacing: 10) {
                 ActionButtonRow(spacing: 10) {
                     Button { onAction(.drink(bottle)) } label: { ActionLabel("Drink", systemImage: "wineglass") }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                     Button { onAction(.move(bottle)) } label: { ActionLabel("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
                         .buttonStyle(.bordered)
                 }
@@ -700,7 +700,7 @@ private struct AuditBar: View {
                 Button("Cancel", action: cancel)
                     .accessibilityIdentifier("sheet.cancel")
                 Button(action: finish) { ActionLabel("End Check", systemImage: "checkmark") }
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
                     .accessibilityIdentifier("action.audit.finish")
             }
         }

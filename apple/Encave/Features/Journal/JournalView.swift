@@ -57,7 +57,7 @@ struct JournalView: View {
                         Text("Add a Tasting").frame(minWidth: 200)
                     }
                     .menuStyle(.button)
-                    .buttonStyle(.borderedProminent)
+                    .prominentButtonStyle()
                     .controlSize(.large)
                     .accessibilityIdentifier("journal.empty.add")
                 }

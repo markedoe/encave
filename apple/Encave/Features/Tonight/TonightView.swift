@@ -171,7 +171,7 @@ private struct EmptyTonightView: View {
                 } label: {
                     Text("Add a Bottle").frame(minWidth: 200)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .controlSize(.large)
                 .accessibilityIdentifier("tonight.empty.add")
                 if model.canLoadSample {
@@ -237,10 +237,10 @@ private struct ReminderOffer: View {
                     HStack(spacing: 12) {
                         if refused {
                             NotificationSettingsButton()
-                                .buttonStyle(.borderedProminent)
+                                .prominentButtonStyle()
                         } else {
                             Button("Turn On", action: turnOn)
-                                .buttonStyle(.borderedProminent)
+                                .prominentButtonStyle()
                                 .accessibilityIdentifier("tonight.reminders.on")
                         }
                         Button("Not Now") {
@@ -318,7 +318,7 @@ private struct TonightPick: View {
                 } label: {
                     ActionLabel("Drink", systemImage: "wineglass").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButtonStyle()
                 .accessibilityIdentifier("action.tonight.drink")
                 if let next {
                     Button(action: next) {

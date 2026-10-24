@@ -22,3 +22,13 @@ extension Color {
     static let inkOnLight = Color("InkOnLight")
     static let inkOnDark = Color("InkOnDark")
 }
+
+extension View {
+    /// The filled button of a screen's main action. Its label uses "on-tint": white on the
+    /// accent in light mode, dark on the lighter dark-mode accent, where white text was
+    /// below 4.5:1.
+    func prominentButtonStyle() -> some View {
+        buttonStyle(.borderedProminent)
+            .foregroundStyle(Color.onTint)
+    }
+}

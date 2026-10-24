@@ -182,7 +182,7 @@ struct LabelScanner: View {
             PhotosPicker(selection: $photo, matching: .images) {
                 Text("Choose a Photo").frame(minWidth: 200)
             }
-            .buttonStyle(.borderedProminent)
+            .prominentButtonStyle()
             .controlSize(.large)
             if isReading { ProgressView() }
             if let lastResult, lastResult.isEmpty, !acceptsPhotoWithoutText {
@@ -434,6 +434,6 @@ private extension View {
     /// The main action of a group is filled; the others are bordered.
     @ViewBuilder
     func prominent(_ isProminent: Bool) -> some View {
-        if isProminent { buttonStyle(.borderedProminent) } else { buttonStyle(.bordered) }
+        if isProminent { prominentButtonStyle() } else { buttonStyle(.bordered) }
     }
 }

@@ -21,7 +21,7 @@ struct RacksView: View {
                         } label: {
                             Text("Add Storage").frame(minWidth: 200)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .prominentButtonStyle()
                         .controlSize(.large)
                     }
                 } else {
