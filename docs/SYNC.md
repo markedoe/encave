@@ -10,7 +10,9 @@ writes `/` as `\/`, Kotlin does not): readers accept both, and no JSON text is
 hashed or authenticated as such. The test vectors at the end are checked by
 `ProtocolVectorTests` on both platforms, and the JSON and ZIP files in
 `fixtures/interop` are written by each platform and read by the other
-(`InteropFixtureTests.swift`, `InteropFixtureTest.kt`).
+(`InteropFixtureTests.swift`, `InteropFixtureTest.kt`). Merge conflicts (equal
+stamps, a revived wine, places lost) are pinned by `fixtures/sync/merge-vectors.json`,
+run both ways on both platforms (`MergeVectorTests.swift`, `MergeVectorTest.kt`).
 
 - **Local network (this document, sections 1–7):** devices on the same network
   find each other with Bonjour/mDNS and talk directly over TCP. No server.
