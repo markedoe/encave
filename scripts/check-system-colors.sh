@@ -16,7 +16,9 @@ pattern="(Color\.($names)([^A-Za-z0-9_]|$))|((foregroundStyle|foregroundColor|ti
 
 fail=0
 while IFS= read -r file; do
-  awk -v pat="$pattern" -v file="$file" '
+  # Through the environment: awk -v would turn the regex's backslashes into escapes.
+  PAT="$pattern" awk -v file="$file" '
+    BEGIN { pat = ENVIRON["PAT"] }
     { line = $0; code = line; sub(/\/\/.*/, "", code) }
     code ~ pat && line !~ /fixed color:/ && prev !~ /fixed color:/ {
       printf "%s:%d: system color, use a design token: %s\n", file, NR, line; bad = 1
