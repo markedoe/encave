@@ -169,7 +169,7 @@ public enum WebImageDownload {
     /// https, and a public host: search results are not trusted, so a picture never comes from
     /// this device or the local network (a router, a NAS), by name or by address.
     public static func isAllowed(_ url: URL) -> Bool {
-        guard let url = httpsURL(url.absoluteString), let host = url.host else { return false }
+        guard let url = httpsURL(url.absoluteString), let host = url.host, url.port == nil || url.port == 443 else { return false }
         // A name without a dot ("nas") is completed with the local network's domain.
         let name = PublicHost.bare(host)
         if !PublicHost.isAddress(name), !name.contains(".") { return false }

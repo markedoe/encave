@@ -131,8 +131,31 @@ enum WebSearchClient {
     /// the page cannot be read or the task is cancelled; neither the address nor the page is logged.
     static func pagePrices(of result: WebSearchResult, session: URLSession, sizeML: Int, wineName: String?) async -> [FoundPrice] {
         let deadline = Date().addingTimeInterval(PagePrices.timeout)
-        guard PagePrices.isAllowed(result.url), await PagePrices.resolvesPublicly(result.url), !Task.isCancelled else { return [] }
-        var request = URLRequest(url: result.url)
+        // The name lookup, the redirects and the reading all fit in `PagePrices.timeout`:
+        // whichever finishes first, the page or the clock, ends the other.
+        let page = await withTaskGroup(of: (Data, String?)?.self) { group in
+            group.addTask { await readPage(result.url, session: session, deadline: deadline) }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(PagePrices.timeout * 1_000_000_000))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+        guard let page, !Task.isCancelled else { return [] }
+        let (data, contentType) = page
+        // Read here, in this task (not on the main thread): cancelling the search stops it.
+        let stop = deadline.addingTimeInterval(2)
+        return PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
+                                 sizeML: sizeML, wineName: wineName,
+                                 shouldStop: { Task.isCancelled || Date() > stop })
+    }
+
+    /// The page's bytes and type, or nil; see `pagePrices`.
+    private static func readPage(_ url: URL, session: URLSession, deadline: Date) async -> (Data, String?)? {
+        guard PagePrices.isAllowed(url), await PagePrices.resolvesPublicly(url), !Task.isCancelled else { return nil }
+        var request = URLRequest(url: url)
         request.httpShouldHandleCookies = false
         request.timeoutInterval = max(1, deadline.timeIntervalSinceNow)
         request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
@@ -143,7 +166,7 @@ enum WebSearchClient {
                   PagePrices.isHTML(contentType: http.value(forHTTPHeaderField: "Content-Type")),
                   PagePrices.acceptsLength(response.expectedContentLength) else {
                 bytes.task.cancel()
-                return []
+                return nil
             }
             var data = Data()
             for try await byte in bytes {
@@ -153,14 +176,9 @@ enum WebSearchClient {
             // Nothing more is wanted from the site.
             bytes.task.cancel()
             try Task.checkCancellation()
-            let contentType = http.value(forHTTPHeaderField: "Content-Type")
-            // Read here, in this task (not on the main thread): cancelling the search stops it.
-            let stop = deadline.addingTimeInterval(2)
-            return PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
-                                     sizeML: sizeML, wineName: wineName,
-                                     shouldStop: { Task.isCancelled || Date() > stop })
+            return (data, http.value(forHTTPHeaderField: "Content-Type"))
         } catch {
-            return []
+            return nil
         }
     }
 

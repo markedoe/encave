@@ -113,7 +113,8 @@ class WebImageSearchTest {
         // A public address (from the range kept for documentation), and a public IPv6 one.
         assertTrue(WebImageDownload.isAllowed("https://${ip(203, 0, 113, 7)}/a.jpg"))
         assertTrue(WebImageDownload.isAllowed("https://[2001:db8::1]/a.jpg"))
-        assertTrue(WebImageDownload.isAllowed("https://images.example.com:8443/a.jpg"))
+        assertFalse(WebImageDownload.isAllowed("https://images.example.com:8443/a.jpg"))
+        assertTrue(WebImageDownload.isAllowed("https://images.example.com:443/a.jpg"))
         assertTrue(WebImageDownload.isImage("image/jpeg"))
         assertTrue(WebImageDownload.isImage("Image/WebP; charset=binary"))
         assertFalse(WebImageDownload.isImage("text/html"))

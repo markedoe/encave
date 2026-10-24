@@ -50,7 +50,8 @@ extension WebSearchQuery {
 
 public enum PriceExtractor {
     // The same patterns are used by the Android app (PriceExtractor.kt).
-    static let number = #"(?:\d{1,3}(?:[ \u00A0\u202F.,'’]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)"#
+    // At most four groups of thousands: a long run of digit groups is read in linear time.
+    static let number = #"(?:\d{1,3}(?:[ \u00A0\u202F.,'’]\d{3}){1,4}(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)"#
     /// Swiss whole francs: "13.–", "13.-".
     static let noCents = #"(?:[.,][–—-]{1,2})?"#
     /// "€45", "CHF 45.90", "US$ 1,234.50", "CHF 13.–", "Fr. 13.50", "SFr. 13.50".
@@ -117,7 +118,7 @@ public enum PriceExtractor {
         struct Match { var range: NSRange; var amount: String; var symbol: String; var isSuffix: Bool }
         var matches: [Match] = []
         for (pattern, isSuffix) in [(prefixPattern, false), (suffixPattern, true)] {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { continue }
+            guard let regex = regex(pattern) else { continue }
             var count = 0
             regex.enumerateMatches(in: text, range: whole) { match, _, stop in
                 guard let match else { return }
@@ -219,8 +220,31 @@ public enum PriceExtractor {
         return piece
     }
 
+    /// The patterns above, compiled once (compiling is slow, matching is not). Read only, so
+    /// shared between tasks.
+    nonisolated(unsafe) static let compiled: [String: NSRegularExpression] = {
+        var all: [String: NSRegularExpression] = [:]
+        for pattern in [prefixPattern, suffixPattern, notOneBottleBefore, notOneBottleAfter] + sizePatterns.map(\.1) {
+            all[pattern] = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+        }
+        return all
+    }()
+
+    static func regex(_ pattern: String) -> NSRegularExpression? {
+        compiled[pattern] ?? (try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]))
+    }
+
+    /// The first text matching `pattern`, ignoring case.
+    static func firstMatch(of pattern: String, in text: String) -> String? {
+        let nsText = text as NSString
+        guard let regex = regex(pattern),
+              let match = regex.firstMatch(in: text, range: NSRange(location: 0, length: nsText.length)) else { return nil }
+        return nsText.substring(with: match.range)
+    }
+
     static func contains(_ text: String, _ pattern: String) -> Bool {
-        text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+        guard let regex = regex(pattern) else { return false }
+        return regex.firstMatch(in: text, range: NSRange(location: 0, length: (text as NSString).length)) != nil
     }
 
     static func namedSize(_ text: String) -> Int? {
@@ -230,9 +254,7 @@ public enum PriceExtractor {
     /// The size named in a text and its words as written ("70 cl"), the first pattern that matches.
     static func sizeWords(in text: String) -> (sizeML: Int, words: String)? {
         for (size, pattern) in sizePatterns {
-            if let range = text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
-                return (size, String(text[range]))
-            }
+            if let words = firstMatch(of: pattern, in: text) { return (size, words) }
         }
         return nil
     }

@@ -23,7 +23,8 @@ import kotlinx.serialization.json.contentOrNull
  * on the device. Both apps are checked with fixtures/prices.
  *
  * Pages come from anyone: the reading is linear in the page's size (no regular expression
- * runs on the HTML), stops at [MAX_PARSED_CHARS], and checks shouldStop between steps.
+ * runs on the HTML), stops at [MAX_PARSED_CHARS], and checks shouldStop between steps. Any
+ * text, cut anywhere, is read without failing (fixtures and fuzz tests on both platforms).
  */
 object PagePrices {
     /** The first results opened, in their order. */
@@ -35,8 +36,8 @@ object PagePrices {
     /** Reading stops after this many bytes; the price is near the top of a product page. */
     const val MAX_BYTES = 1_500_000
 
-    /** Only the start of the page is parsed (UTF-16 units). */
-    internal const val MAX_PARSED_CHARS = 512 * 1024
+    /** At most this much of the page is parsed (UTF-16 units): all that was read, since product data often comes after a lot of inline styles. */
+    internal const val MAX_PARSED_CHARS = MAX_BYTES
 
     /** For the whole page: name lookup, redirects and reading. */
     const val TIMEOUT_MS = 8_000
@@ -175,13 +176,17 @@ object PagePrices {
             val haystack = Fold.units(text)
             val found = mutableListOf<IntRange>()
             var index = haystack.indexOf(needle)
-            while (index >= 0 && found.size < MAX_AREAS) {
+            // At most MAX_AREAS × NEAR_NAME units in all, however often the name appears.
+            var covered = 0
+            while (index >= 0 && found.size < MAX_AREAS && covered < MAX_AREAS * NEAR_NAME) {
                 val end = minOf(text.length, index + NEAR_NAME)
                 val last = found.lastOrNull()
                 // Places close together make one area.
                 if (last != null && index <= last.last + 1) {
+                    covered += end - (last.last + 1)
                     found[found.size - 1] = last.first until end
                 } else {
+                    covered += end - index
                     found += index until end
                 }
                 index = haystack.indexOf(needle, index + needle.length)
@@ -248,7 +253,7 @@ object PagePrices {
             val items = mutableListOf<Item>()
             for (script in document.jsonLd) {
                 if (shouldStop()) return emptyList()
-                val root = runCatching { Json.parseToJsonElement(script) }.getOrNull() ?: continue
+                val root = runCatching { Json.parseToJsonElement(JsonLd.withoutExponents(script)) }.getOrNull() ?: continue
                 for (product in JsonLd.products(root)) {
                     val name = JsonLd.string(product["name"])
                     for (offer in JsonLd.offers(product)) {
@@ -388,9 +393,11 @@ object PublicHost {
     private val lookups = Executors.newCachedThreadPool { runnable -> Thread(runnable, "encave-public-dns").apply { isDaemon = true } }
 
     /** The system's addresses for [host], within [timeoutMs]; a lookup that takes longer counts as none. */
-    fun lookUp(host: String, timeoutMs: Long): List<InetAddress> {
+    fun lookUp(host: String, timeoutMs: Long): List<InetAddress> = lookUp(host, timeoutMs) { InetAddress.getAllByName(it).toList() }
+
+    internal fun lookUp(host: String, timeoutMs: Long, resolve: (String) -> List<InetAddress>): List<InetAddress> {
         if (timeoutMs <= 0) return emptyList()
-        val future = lookups.submit<List<InetAddress>> { InetAddress.getAllByName(host).toList() }
+        val future = lookups.submit<List<InetAddress>> { resolve(host) }
         return runCatching { future.get(timeoutMs, TimeUnit.MILLISECONDS) }.getOrElse {
             future.cancel(true)
             emptyList()
@@ -438,6 +445,9 @@ internal object HtmlScanner {
         var headingDone = false
         var index = 0
         var tags = 0
+
+        // Raw elements found not to end: later ones cannot end either, so they are not looked for again.
+        val unclosed = HashSet<String>()
 
         fun heading(start: Int) = Html.cleanLine(out.substring(start, minOf(out.length, start + 1000)))
 
@@ -491,12 +501,20 @@ internal object HtmlScanner {
 
             val attributes = parseAttributes(s, nameEnd, end)
             if (name in raw) {
-                // The content runs to "</name"; a page where it does not end is read no further.
+                // The content runs to "</name".
                 if (end > nameStart && s[end - 1] == '/') continue
-                val close = findClose(s, name, end + 1)
-                if (close < 0) break@scanning
+                // A script or style that does not end runs to the end of the page; another
+                // element that does not end is only a tag, and the rest is read.
+                val close = if (name in unclosed) -1 else findClose(s, name, end + 1)
+                if (close < 0) {
+                    if (name == "script" || name == "style") break@scanning
+                    unclosed += name
+                    out.append(' ')
+                    continue
+                }
                 val content = s.substring(end + 1, close)
-                if (name == "script" && attributes["type"]?.trim()?.lowercase(Locale.ROOT) == "application/ld+json") {
+                val type = attributes["type"]?.substringBefore(';')?.trim()?.lowercase(Locale.ROOT)
+                if (name == "script" && type == "application/ld+json") {
                     document.jsonLd += content
                 } else if (name == "title" && document.title == null) {
                     document.title = Html.cleanLine(content)
@@ -540,9 +558,11 @@ internal object HtmlScanner {
     /** The start of the first "</name" (any case, followed by a non-name character) after [start]; -1 if none. */
     private fun findClose(s: String, name: String, start: Int): Int {
         var k = start
-        while (k + 1 + name.length < s.length) {
+        // "</" and the name must fit; the end of the text counts as a non-name character.
+        while (k + 2 + name.length <= s.length) {
+            val after = k + 2 + name.length
             if (s[k] == '<' && s[k + 1] == '/' && s.regionMatches(k + 2, name, 0, name.length, ignoreCase = true) &&
-                !isNameChar(s[k + 2 + name.length])
+                (after == s.length || !isNameChar(s[after]))
             ) {
                 return k
             }
@@ -639,6 +659,37 @@ internal object Html {
 }
 
 internal object JsonLd {
+    /**
+     * The JSON with each number written with an exponent ("1e3") replaced by null: such a
+     * number is never read as a price, on either platform. One pass; strings are kept as they are.
+     */
+    fun withoutExponents(json: String): String {
+        val out = StringBuilder(json.length)
+        var k = 0
+        while (k < json.length) {
+            val c = json[k]
+            if (c == '"') {
+                val start = k
+                k += 1
+                while (k < json.length && json[k] != '"') k += if (json[k] == '\\') 2 else 1
+                k = minOf(k + 1, json.length)
+                out.append(json, start, k)
+            } else if (c == '-' || c in '0'..'9') {
+                val start = k
+                var exponent = false
+                while (k < json.length && (json[k] in '0'..'9' || json[k] in "-+.eE")) {
+                    if (json[k] == 'e' || json[k] == 'E') exponent = true
+                    k += 1
+                }
+                if (exponent) out.append("null") else out.append(json, start, k)
+            } else {
+                out.append(c)
+                k += 1
+            }
+        }
+        return out.toString()
+    }
+
     data class Offer(val amount: String, val currency: String?, val name: String?, val quantity: Double?)
 
     private val productTypes = setOf("product", "productgroup", "individualproduct", "productmodel", "wine")

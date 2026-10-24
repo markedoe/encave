@@ -73,6 +73,7 @@ import app.encave.data.search.WebSearchPreferences
 import app.encave.ui.components.Formats
 import app.encave.ui.theme.Dimens
 import java.math.BigDecimal
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
@@ -163,12 +164,23 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
         readingPages = true
         pageJob = scope.launch {
             // A reader of its own for each search: no connection is kept for the next one.
-            val reader = PageReader()
+            val reader = runCatching { PageReader() }.getOrNull()
+            if (reader == null) {
+                readingPages = false
+                return@launch
+            }
             try {
                 val gate = Semaphore(PagePrices.PARALLEL_PAGES)
                 pages.map { page ->
                     launch {
-                        val read = gate.withPermit { reader.prices(page, options.sizeML, options.wineName) }
+                        // A page that fails, however, only gives no price: nothing may end the sheet's scope.
+                        val read = try {
+                            gate.withPermit { reader.prices(page, options.sizeML, options.wineName) }
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (error: Exception) {
+                            emptyList()
+                        }
                         if (read.isNotEmpty()) {
                             prices = PagePrices.merging(read, prices)
                             suggestMiddlePrice()

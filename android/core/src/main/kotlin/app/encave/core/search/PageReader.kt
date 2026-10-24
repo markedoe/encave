@@ -3,6 +3,7 @@ package app.encave.core.search
 import app.encave.core.Http
 import java.io.IOException
 import java.net.InetAddress
+import java.net.Proxy
 import java.net.UnknownHostException
 import java.security.KeyStore
 import javax.net.ssl.SSLContext
@@ -35,6 +36,7 @@ import okhttp3.Response
  * checked ([PublicHost.isPublic]), so a name cannot lead to the local network. At most
  * [PagePrices.MAX_REDIRECTS] redirects, each checked the same way; [PagePrices.TIMEOUT_MS]
  * for the whole page, name lookups included; HTML only, at most [PagePrices.MAX_BYTES].
+ * Pages are read without the device's proxy, so the name checked is the one connected to.
  * Cancelling the coroutine stops the connection. Neither the address nor the page is logged.
  */
 class PageReader(
@@ -54,6 +56,8 @@ class PageReader(
         .cookieJar(CookieJar.NO_COOKIES)
         .cache(null)
         .retryOnConnectionFailure(false)
+        // Straight to the site: a proxy set on the device would resolve the name itself, past the check.
+        .proxy(Proxy.NO_PROXY)
         .connectionPool(ConnectionPool(PagePrices.PARALLEL_PAGES, 30, TimeUnit.SECONDS))
         .addInterceptor(Http.userAgentInterceptor)
         .build()
@@ -75,67 +79,77 @@ class PageReader(
             null
         } ?: return@withContext emptyList()
         ensureActive()
-        // Reading the page takes a moment more, never long (PagePrices reads in one pass).
+        // Reading the page takes a moment more, never long (PagePrices reads in one pass). A page
+        // that could not be read, for whatever reason, only gives no price.
         val stop = deadline + 2_000_000_000L
-        PagePrices.prices(html, result, sizeML, wineName) { job.isCancelled || System.nanoTime() > stop }
+        runCatching { PagePrices.prices(html, result, sizeML, wineName) { job.isCancelled || System.nanoTime() > stop } }
+            .getOrElse { error -> if (error is CancellationException) throw error else emptyList() }
     }
 
-    private suspend fun read(url: String, deadline: Long): String? {
+    /** For tests: replaces the network for one address (the time left in ms) with an answer. */
+    internal var fetchForTests: (suspend (String, Long) -> Outcome)? = null
+
+    /** The page's text after the redirects, each address checked; null when it cannot be read in time. */
+    internal suspend fun read(url: String, deadline: Long): String? {
         var address = url
         repeat(PagePrices.MAX_REDIRECTS + 1) {
             if (!PagePrices.isAllowed(address)) return null
             val remaining = (deadline - System.nanoTime()) / 1_000_000
             if (remaining <= 0) return null
-            val call = client.newBuilder()
-                .callTimeout(remaining, TimeUnit.MILLISECONDS)
-                .dns(object : Dns {
-                    override fun lookup(hostname: String): List<InetAddress> = vettedAddresses(hostname, deadline)
-                })
-                .build()
-                .newCall(Request.Builder().url(address).header("Accept", "text/html,application/xhtml+xml").build())
-            val outcome = coroutineScope {
-                // Cancelling the search cancels the call, which stops a blocked connection or read.
-                val watchdog = launch {
-                    try {
-                        awaitCancellation()
-                    } finally {
-                        call.cancel()
-                    }
-                }
-                try {
-                    call.execute().use<Response, Outcome> { response ->
-                        if (response.isRedirect) {
-                            val next = response.header("Location")?.let { response.request.url.resolve(it) }?.toString()
-                            return@use Redirect(next)
-                        }
-                        val body = response.body
-                        val type = response.header("Content-Type")
-                        if (!response.isSuccessful || !PagePrices.isHtml(type) || !PagePrices.acceptsLength(body.contentLength())) {
-                            return@use Body(null)
-                        }
-                        val source = body.source()
-                        val bytes = java.io.ByteArrayOutputStream()
-                        val buffer = ByteArray(16 * 1024)
-                        while (bytes.size() < PagePrices.MAX_BYTES) {
-                            coroutineContext.ensureActive()
-                            val read = source.read(buffer, 0, minOf(buffer.size, PagePrices.MAX_BYTES - bytes.size()))
-                            if (read < 0) break
-                            bytes.write(buffer, 0, read)
-                        }
-                        Body(PagePrices.text(bytes.toByteArray(), type))
-                    }
-                } catch (error: IOException) {
-                    Body(null)
-                } finally {
-                    watchdog.cancel()
-                }
-            }
-            when (outcome) {
+            when (val outcome = (fetchForTests ?: ::fetch)(address, remaining)) {
                 is Redirect -> address = outcome.next ?: return null
                 is Body -> return outcome.html
             }
         }
         return null
+    }
+
+    private suspend fun fetch(address: String, remaining: Long): Outcome {
+        val deadline = System.nanoTime() + remaining * 1_000_000
+        val call = client.newBuilder()
+            .callTimeout(remaining, TimeUnit.MILLISECONDS)
+            .dns(object : Dns {
+                override fun lookup(hostname: String): List<InetAddress> = vettedAddresses(hostname, deadline)
+            })
+            .build()
+            .newCall(Request.Builder().url(address).header("Accept", "text/html,application/xhtml+xml").build())
+        return coroutineScope {
+            // Cancelling the search cancels the call, which stops a blocked connection or read.
+            val watchdog = launch {
+                try {
+                    awaitCancellation()
+                } finally {
+                    call.cancel()
+                }
+            }
+            try {
+                call.execute().use<Response, Outcome> { response ->
+                    if (response.isRedirect) {
+                        val next = response.header("Location")?.let { response.request.url.resolve(it) }?.toString()
+                        return@use Redirect(next)
+                    }
+                    val body = response.body
+                    val type = response.header("Content-Type")
+                    if (!response.isSuccessful || !PagePrices.isHtml(type) || !PagePrices.acceptsLength(body.contentLength())) {
+                        return@use Body(null)
+                    }
+                    val source = body.source()
+                    val bytes = java.io.ByteArrayOutputStream()
+                    val buffer = ByteArray(16 * 1024)
+                    while (bytes.size() < PagePrices.MAX_BYTES) {
+                        coroutineContext.ensureActive()
+                        val read = source.read(buffer, 0, minOf(buffer.size, PagePrices.MAX_BYTES - bytes.size()))
+                        if (read < 0) break
+                        bytes.write(buffer, 0, read)
+                    }
+                    Body(PagePrices.text(bytes.toByteArray(), type))
+                }
+            } catch (error: IOException) {
+                Body(null)
+            } finally {
+                watchdog.cancel()
+            }
+        }
     }
 
     /** Lets the connections go: call once the search is done or stopped. */
@@ -144,7 +158,7 @@ class PageReader(
         client.dispatcher.executorService.shutdown()
     }
 
-    private sealed interface Outcome
-    private class Redirect(val next: String?) : Outcome
-    private class Body(val html: String?) : Outcome
+    internal sealed interface Outcome
+    internal class Redirect(val next: String?) : Outcome
+    internal class Body(val html: String?) : Outcome
 }

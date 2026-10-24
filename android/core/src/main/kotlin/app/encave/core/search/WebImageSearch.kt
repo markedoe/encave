@@ -112,7 +112,9 @@ object WebImageDownload {
      */
     fun isAllowed(url: String): Boolean {
         val address = httpsUrl(url) ?: return false
-        val host = runCatching { URI(address).host }.getOrNull() ?: return false
+        val uri = runCatching { URI(address) }.getOrNull() ?: return false
+        if (uri.port != -1 && uri.port != 443) return false
+        val host = uri.host ?: return false
         // A name without a dot ("nas") is completed with the local network's domain.
         val name = PublicHost.bare(host)
         if (!PublicHost.isAddress(name) && !name.contains('.')) return false

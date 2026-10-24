@@ -39,6 +39,15 @@ import Testing
 
     static func label(_ amount: Decimal, _ currency: String) -> String { "\(amount) \(currency)" }
 
+    /// Seconds for reading a 1.5 MB page. About 0.2 s in a release build; debug
+    /// builds (as in CI) are several times slower. A reading that grew faster than the page
+    /// (as regular expressions on HTML did: minutes for such a page) would not fit.
+    #if DEBUG
+    static let budget: TimeInterval = 3
+    #else
+    static let budget: TimeInterval = 1
+    #endif
+
     @Test func sizeWords() throws {
         for vector in try Self.vectors().sizeWords {
             #expect(WebSearchQuery.sizeWords(vector.sizeML) == vector.words, "\(vector.sizeML)")
@@ -121,14 +130,101 @@ import Testing
         let size = PagePrices.maxBytes
         for piece in ["<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>"] {
             let html = String(repeating: piece, count: size / piece.utf16.count)
-            let start = Date()
-            _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { false })
-            _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: nil, shouldStop: { false })
-            #expect(Date().timeIntervalSince(start) < 1, "\(piece)")
+            for name in ["Les Lacustres", nil] {
+                let start = Date()
+                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, shouldStop: { false })
+                #expect(Date().timeIntervalSince(start) < Self.budget, "\(piece)")
+            }
         }
         let html = String(repeating: "<p>Les Lacustres CHF 13.00</p>", count: 20_000)
         #expect(PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { true }).isEmpty)
         #expect(!PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: "Les Lacustres", shouldStop: { false }).isEmpty)
+    }
+
+    /// A page cut anywhere, inside any tag, comment or raw element, is read without failing.
+    @Test func everyPrefixOfAPageIsRead() throws {
+        let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
+        let small = #"<!DOCTYPE html><html><head><title>Les Lacustres</title><style>p{}</style>"#
+            + #"<script type="application/ld+json">{"@type":"Product","name":"Les Lacustres","offers":{"price":"13.00","priceCurrency":"CHF"}}</script>"#
+            + #"</head><body><!-- c --><svg><text>x</text></svg><noscript>n</noscript><template>t</template><textarea>a</textarea>"#
+            + #"<select><option>70 cl</option></select><iframe src=x></iframe><h1 class="t">Les Lacustres</h1>"#
+            + #"<p itemprop="price" content="13.00">CHF 13.– 70 cl</p><meta itemprop="priceCurrency" content="CHF"></body></html>"#
+        let units = Array(small.utf16)
+        for end in 0...units.count {
+            let html = String(decoding: units[0..<end], as: UTF16.self)
+            _ = PagePrices.prices(inPage: html, of: result, sizeML: 700, wineName: "Les Lacustres", shouldStop: { false })
+        }
+        for name in ["script", "style", "title", "svg", "textarea", "select", "noscript", "template", "iframe"] {
+            for tail in ["<\(name)>x</\(name)", "<\(name)>x</\(name.prefix(2))", "<\(name)>x</", "<\(name)>x<", "<\(name)"] {
+                _ = HTMLScanner.scan("<p>a</p>" + tail, shouldStop: { false })
+            }
+        }
+        for file in try FileManager.default.contentsOfDirectory(atPath: Self.folder.path) where file.hasSuffix(".html") {
+            let page = Array(try String(contentsOf: Self.folder.appendingPathComponent(file), encoding: .utf8).utf16)
+            for end in stride(from: 0, through: page.count, by: 3) {
+                _ = PagePrices.prices(inPage: String(decoding: page[0..<end], as: UTF16.self), of: result, sizeML: 750,
+                                      wineName: "Les Lacustres", shouldStop: { false })
+            }
+        }
+    }
+
+    /// Pages with random damage (the same pseudo-random sequence each run) are read without failing.
+    @Test func damagedPagesAreRead() throws {
+        let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
+        var seed: UInt64 = 0x2545F4914F6CDD1D
+        func next(_ bound: Int) -> Int {
+            seed ^= seed << 13; seed ^= seed >> 7; seed ^= seed << 17
+            return Int(seed % UInt64(bound))
+        }
+        let pieces = Array("<>/\"'-=!&;#{}[]:, \n".utf16)
+        for file in try FileManager.default.contentsOfDirectory(atPath: Self.folder.path) where file.hasSuffix(".html") {
+            let page = Array(try String(contentsOf: Self.folder.appendingPathComponent(file), encoding: .utf8).utf16)
+            for _ in 0..<60 {
+                var damaged = page
+                for _ in 0..<(1 + next(20)) {
+                    let at = next(damaged.count)
+                    switch next(3) {
+                    case 0: damaged.remove(at: at)
+                    case 1: damaged.insert(pieces[next(pieces.count)], at: at)
+                    default: damaged[at] = pieces[next(pieces.count)]
+                    }
+                }
+                _ = PagePrices.prices(inPage: String(decoding: damaged, as: UTF16.self), of: result, sizeML: 750,
+                                      wineName: "Les Lacustres", shouldStop: { false })
+            }
+        }
+    }
+
+    /// Long runs of digit groups, with or without the wine's name, are read quickly.
+    @Test func digitGroupsAreReadQuickly() {
+        let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
+        for piece in ["111 ", "1,111", "Les Lacustres 111 111 111 111 111 111 111 111 ", "1 111 111.11 "] {
+            let html = "<p>" + String(repeating: piece, count: PagePrices.maxBytes / piece.utf16.count) + "</p>"
+            for name in ["Les Lacustres", nil] {
+                let start = Date()
+                _ = PagePrices.prices(inPage: html, of: result, sizeML: 750, wineName: name, shouldStop: { false })
+                #expect(Date().timeIntervalSince(start) < Self.budget, "\(piece)")
+            }
+        }
+        let start = Date()
+        _ = PriceExtractor.prices(in: String(repeating: "111 ", count: 50_000), sizeML: 750)
+        #expect(Date().timeIntervalSince(start) < Self.budget)
+    }
+
+    /// Product data after a lot of inline styles (as in some shop themes) is still read.
+    @Test func productDataAfterLongStylesIsRead() {
+        let result = WebSearchResult(title: "R", url: URL(string: "https://shop.example.org/vin")!, snippet: "")
+        let html = "<html><head><style>" + String(repeating: ".a{color:red}", count: 55_000) + "</style></head><body>"
+            + #"<h1>Les Lacustres 70 cl</h1><script type="application/ld+json">{"@type":"Product","name":"Les Lacustres","#
+            + #""offers":{"price":"13.00","priceCurrency":"CHF"}}</script></body></html>"#
+        #expect(html.utf16.count > 700_000)
+        let found = PagePrices.prices(inPage: html, of: result, sizeML: 700, wineName: "Les Lacustres", shouldStop: { false })
+        #expect(found.map { Self.label($0.amount, $0.currency) } == ["13 CHF"])
+    }
+
+    @Test func numbersWithAnExponentAreNull() {
+        #expect(JSONLD.withoutExponents(#"{"a":1e3,"b":"1e3","c":-2.5E+1,"d":13.90,"e":"x\"1e3"}"#)
+            == #"{"a":null,"b":"1e3","c":null,"d":13.90,"e":"x\"1e3"}"#)
     }
 
     @Test func scannerReadsTagsAndText() {

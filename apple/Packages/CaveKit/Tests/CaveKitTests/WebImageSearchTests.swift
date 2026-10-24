@@ -101,7 +101,8 @@ enum WebImageFixtures {
         // A public address (from the range kept for documentation), and a public IPv6 one.
         #expect(WebImageDownload.isAllowed(URL(string: "https://\(ip(203, 0, 113, 7))/a.jpg")!))
         #expect(WebImageDownload.isAllowed(URL(string: "https://[2001:db8::1]/a.jpg")!))
-        #expect(WebImageDownload.isAllowed(URL(string: "https://images.example.com:8443/a.jpg")!))
+        #expect(!WebImageDownload.isAllowed(URL(string: "https://images.example.com:8443/a.jpg")!))
+        #expect(WebImageDownload.isAllowed(URL(string: "https://images.example.com:443/a.jpg")!))
         #expect(WebImageDownload.isImage(contentType: "image/jpeg"))
         #expect(WebImageDownload.isImage(contentType: "Image/WebP; charset=binary"))
         #expect(!WebImageDownload.isImage(contentType: "text/html"))

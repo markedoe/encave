@@ -1,5 +1,5 @@
 {
-  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers.",
+  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers. A number written with an exponent in JSON-LD (1e3) is never a price.",
   "sizeWords": [
     {
       "sizeML": 750,
@@ -315,6 +315,32 @@
       "excerptContains": [
         "14.50 Fr."
       ]
+    },
+    {
+      "file": "jsonld-type-params.html",
+      "url": "https://cave.example.org/dezaley-2021",
+      "wineName": "Dézaley",
+      "sizeML": 750,
+      "prices": [
+        "29.5 CHF"
+      ],
+      "excerptContains": [
+        "Dézaley Grand Cru 2021",
+        "29.50 CHF"
+      ]
+    },
+    {
+      "file": "unclosed-svg.html",
+      "url": "https://cave.example.org/saint-joseph-2020",
+      "wineName": "Saint-Joseph",
+      "sizeML": 750,
+      "prices": [
+        "23 EUR"
+      ],
+      "excerptContains": [
+        "Saint-Joseph 2020",
+        "23,00 €"
+      ]
     }
   ],
   "addresses": [
@@ -537,8 +563,12 @@
       "allowed": true
     },
     {
-      "url": "https://images.example.com:8443/a.jpg",
+      "url": "https://images.example.com:443/a.jpg",
       "allowed": true
+    },
+    {
+      "url": "https://images.example.com:8443/a.jpg",
+      "allowed": false
     },
     {
       "url": "https://203.0.113.7/a.jpg",

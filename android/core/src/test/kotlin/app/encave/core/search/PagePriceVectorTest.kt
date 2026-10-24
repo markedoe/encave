@@ -128,14 +128,138 @@ class PagePriceVectorTest {
         val result = WebSearchResult("R", "https://shop.example.org/vin", "")
         for (piece in listOf("<", "<!--", "<h1", "<script", "<a", "<a b='", "<!x", "&amp;", "é", "<p>CHF 13.00 ", "<h1>")) {
             val html = piece.repeat(PagePrices.MAX_BYTES / piece.length)
-            val start = System.nanoTime()
-            PagePrices.prices(html, result, 750, "Les Lacustres")
-            PagePrices.prices(html, result, 750, null)
-            assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000, piece)
+            for (name in listOf("Les Lacustres", null)) {
+                val start = System.nanoTime()
+                PagePrices.prices(html, result, 750, name)
+                assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000, piece)
+            }
         }
         val html = "<p>Les Lacustres CHF 13.00</p>".repeat(20_000)
         assertTrue(PagePrices.prices(html, result, 750, "Les Lacustres") { true }.isEmpty())
         assertFalse(PagePrices.prices(html, result, 750, "Les Lacustres") { false }.isEmpty())
+    }
+
+    /** A page cut anywhere, inside any tag, comment or raw element, is read without failing. */
+    @Test
+    fun everyPrefixOfAPageIsRead() {
+        val result = WebSearchResult("R", "https://shop.example.org/vin", "")
+        val small = """<!DOCTYPE html><html><head><title>Les Lacustres</title><style>p{}</style>""" +
+            """<script type="application/ld+json">{"@type":"Product","name":"Les Lacustres","offers":{"price":"13.00","priceCurrency":"CHF"}}</script>""" +
+            """</head><body><!-- c --><svg><text>x</text></svg><noscript>n</noscript><template>t</template><textarea>a</textarea>""" +
+            """<select><option>70 cl</option></select><iframe src=x></iframe><h1 class="t">Les Lacustres</h1>""" +
+            """<p itemprop="price" content="13.00">CHF 13.– 70 cl</p><meta itemprop="priceCurrency" content="CHF"></body></html>"""
+        for (end in 0..small.length) PagePrices.prices(small.substring(0, end), result, 700, "Les Lacustres")
+        for (name in listOf("script", "style", "title", "svg", "textarea", "select", "noscript", "template", "iframe")) {
+            for (tail in listOf("<$name>x</$name", "<$name>x</${name.take(2)}", "<$name>x</", "<$name>x<", "<$name")) {
+                HtmlScanner.scan("<p>a</p>$tail") { false }
+            }
+        }
+        for (file in folder.listFiles { f -> f.name.endsWith(".html") }!!) {
+            val page = file.readText()
+            for (end in 0..page.length step 3) PagePrices.prices(page.substring(0, end), result, 750, "Les Lacustres")
+        }
+    }
+
+    /** Pages with random damage (the same pseudo-random sequence each run) are read without failing. */
+    @Test
+    fun damagedPagesAreRead() {
+        val result = WebSearchResult("R", "https://shop.example.org/vin", "")
+        val random = java.util.Random(0x2545F4914F6CDD1DL)
+        val pieces = "<>/\"'-=!&;#{}[]:, \n"
+        for (file in folder.listFiles { f -> f.name.endsWith(".html") }!!) {
+            val page = file.readText()
+            repeat(60) {
+                val damaged = StringBuilder(page)
+                repeat(1 + random.nextInt(20)) {
+                    val at = random.nextInt(damaged.length)
+                    when (random.nextInt(3)) {
+                        0 -> damaged.deleteCharAt(at)
+                        1 -> damaged.insert(at, pieces[random.nextInt(pieces.length)])
+                        else -> damaged.setCharAt(at, pieces[random.nextInt(pieces.length)])
+                    }
+                }
+                PagePrices.prices(damaged.toString(), result, 750, "Les Lacustres")
+            }
+        }
+    }
+
+    /** Long runs of digit groups, with or without the wine's name, are read quickly. */
+    @Test
+    fun digitGroupsAreReadQuickly() {
+        val result = WebSearchResult("R", "https://shop.example.org/vin", "")
+        for (piece in listOf("111 ", "1,111", "Les Lacustres 111 111 111 111 111 111 111 111 ", "1 111 111.11 ")) {
+            val html = "<p>" + piece.repeat(PagePrices.MAX_BYTES / piece.length) + "</p>"
+            for (name in listOf("Les Lacustres", null)) {
+                val start = System.nanoTime()
+                PagePrices.prices(html, result, 750, name)
+                assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000, piece)
+            }
+        }
+        val start = System.nanoTime()
+        PriceExtractor.prices("111 ".repeat(50_000), 750)
+        assertTrue((System.nanoTime() - start) / 1_000_000 < 1_000)
+    }
+
+    /** Product data after a lot of inline styles (as in some shop themes) is still read. */
+    @Test
+    fun productDataAfterLongStylesIsRead() {
+        val result = WebSearchResult("R", "https://shop.example.org/vin", "")
+        val html = "<html><head><style>" + ".a{color:red}".repeat(55_000) + "</style></head><body>" +
+            """<h1>Les Lacustres 70 cl</h1><script type="application/ld+json">{"@type":"Product","name":"Les Lacustres",""" +
+            """"offers":{"price":"13.00","priceCurrency":"CHF"}}</script></body></html>"""
+        assertTrue(html.length > 700_000)
+        assertEquals(listOf("13 CHF"), PagePrices.prices(html, result, 700, "Les Lacustres").map { label(it.amount, it.currency) })
+    }
+
+    @Test
+    fun numbersWithAnExponentAreNull() {
+        assertEquals(
+            """{"a":null,"b":"1e3","c":null,"d":13.90,"e":"x\"1e3"}""",
+            JsonLd.withoutExponents("""{"a":1e3,"b":"1e3","c":-2.5E+1,"d":13.90,"e":"x\"1e3"}"""),
+        )
+    }
+
+    @Test
+    fun readerChecksEveryRedirectAndTheDeadline() = kotlinx.coroutines.runBlocking {
+        val reader = PageReader()
+        val asked = mutableListOf<String>()
+        fun answer(vararg hops: PageReader.Outcome) {
+            val queue = ArrayDeque(hops.toList())
+            asked.clear()
+            reader.fetchForTests = { address, _ -> asked += address; queue.removeFirst() }
+        }
+        val soon = { System.nanoTime() + 5_000_000_000L }
+        answer(PageReader.Body("<p>ok</p>"))
+        assertEquals("<p>ok</p>", reader.read("https://shop.example.org/vin", soon()))
+        // A redirect to plain http, to the local network, to another port or to an address is not followed.
+        for (target in listOf("http://shop.example.org/vin", "https://nas.local/vin", "https://shop.example.org:8443/vin", "https://203.0.113.10/vin")) {
+            answer(PageReader.Redirect(target), PageReader.Body("<p>no</p>"))
+            assertEquals(null, reader.read("https://shop.example.org/vin", soon()), target)
+            assertEquals(listOf("https://shop.example.org/vin"), asked, target)
+        }
+        // At most three redirects.
+        answer(*Array(4) { PageReader.Redirect("https://shop.example.org/$it") }, PageReader.Body("<p>no</p>"))
+        assertEquals(null, reader.read("https://shop.example.org/vin", soon()))
+        assertEquals(4, asked.size)
+        answer(*Array(3) { PageReader.Redirect("https://shop.example.org/$it") }, PageReader.Body("<p>yes</p>"))
+        assertEquals("<p>yes</p>", reader.read("https://shop.example.org/vin", soon()))
+        // Past the deadline, nothing is asked.
+        answer(PageReader.Body("<p>late</p>"))
+        assertEquals(null, reader.read("https://shop.example.org/vin", System.nanoTime() - 1))
+        assertTrue(asked.isEmpty())
+        reader.close()
+    }
+
+    @Test
+    fun nameLookupsStopAtTheirTime() {
+        val start = System.nanoTime()
+        val found = PublicHost.lookUp("shop.example.org", 200) {
+            Thread.sleep(5_000)
+            listOf(java.net.InetAddress.getByAddress(byteArrayOf(203.toByte(), 0, 113, 10)))
+        }
+        assertTrue(found.isEmpty())
+        assertTrue((System.nanoTime() - start) / 1_000_000 < 2_000)
+        assertTrue(PublicHost.lookUp("shop.example.org", 0) { error("not asked") }.isEmpty())
     }
 
     @Test

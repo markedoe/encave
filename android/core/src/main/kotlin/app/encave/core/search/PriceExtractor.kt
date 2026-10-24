@@ -25,7 +25,8 @@ data class FoundPrice(
 
 object PriceExtractor {
     // The same patterns as the Apple app (WinePrice.swift).
-    private const val NUMBER = """(?:\d{1,3}(?:[ \u00A0\u202F.,'’]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)"""
+    // At most four groups of thousands: a long run of digit groups is read in linear time.
+    private const val NUMBER = """(?:\d{1,3}(?:[ \u00A0\u202F.,'’]\d{3}){1,4}(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)"""
 
     /** Swiss whole francs: "13.–", "13.-". */
     private const val NO_CENTS = """(?:[.,][–—-]{1,2})?"""

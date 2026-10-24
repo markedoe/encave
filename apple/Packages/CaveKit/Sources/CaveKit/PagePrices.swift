@@ -6,7 +6,8 @@ import Foundation
 // (PagePrices.kt); both are checked with fixtures/prices.
 //
 // Pages come from anyone: the reading is linear in the page's size (no regular expression
-// runs on the HTML), stops at `maxParsedUnits`, and checks `shouldStop` between steps.
+// runs on the HTML), stops at `maxParsedUnits`, and checks `shouldStop` between steps. Any
+// text, cut anywhere, is read without failing (fixtures and fuzz tests on both platforms).
 
 public enum PagePrices {
     /// The first results opened, in their order.
@@ -15,8 +16,9 @@ public enum PagePrices {
     public static let parallelPages = 3
     /// Reading stops after this many bytes; the price is near the top of a product page.
     public static let maxBytes = 1_500_000
-    /// Only the start of the page is parsed (UTF-16 units).
-    static let maxParsedUnits = 512 * 1024
+    /// At most this much of the page is parsed (UTF-16 units): all that was read, since
+    /// product data often comes after a lot of inline styles.
+    static let maxParsedUnits = maxBytes
     /// For the whole page: name lookup, redirects and reading.
     public static let timeout: TimeInterval = 8
     public static let maxRedirects = 3
@@ -146,6 +148,8 @@ public enum PagePrices {
     struct Page {
         let document: HTMLDocument
         let text: String
+        /// The text's UTF-16 units, for pieces of it (offsets as in `areas`).
+        let units: [UInt16]
         let heading: String?
         let title: String?
         /// Where to look in the text: after the places the wine's name is, or the start of it.
@@ -156,15 +160,18 @@ public enum PagePrices {
         init(document: HTMLDocument, wineName: String?) {
             self.document = document
             text = document.text
+            units = Array(text.utf16)
             heading = document.heading
             let ogTitle = document.meta.first { $0.key == "og:title" }?.value
             title = ogTitle.flatMap(HTML.cleanLine) ?? document.title
-            areas = Page.areas(in: text, name: wineName)
-            areaSize = Page.size(in: text, areas: areas)
+            areas = Page.areas(in: units, name: wineName)
+            areaSize = Page.size(in: units, areas: areas)
         }
 
-        static func areas(in text: String, name: String?) -> [NSRange] {
-            let length = (text as NSString).length
+        static func areas(in text: String, name: String?) -> [NSRange] { areas(in: Array(text.utf16), name: name) }
+
+        static func areas(in text: [UInt16], name: String?) -> [NSRange] {
+            let length = text.count
             let start = [NSRange(location: 0, length: min(length, maxTextWithoutName))]
             let cleanName = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines).precomposedStringWithCanonicalMapping
             let needle = Fold.units(String(cleanName.prefix(100)))
@@ -172,13 +179,17 @@ public enum PagePrices {
             let haystack = Fold.units(text)
             var areas: [NSRange] = []
             var index = 0
-            while index + needle.count <= haystack.count, areas.count < maxAreas {
+            // At most `maxAreas` × `nearName` units in all, however often the name appears.
+            var covered = 0
+            while index + needle.count <= haystack.count, areas.count < maxAreas, covered < maxAreas * nearName {
                 if haystack[index] == needle[0], haystack[index..<(index + needle.count)].elementsEqual(needle) {
                     let end = min(length, index + nearName)
                     // Places close together make one area.
                     if let last = areas.last, index <= NSMaxRange(last) {
+                        covered += end - NSMaxRange(last)
                         areas[areas.count - 1] = NSRange(location: last.location, length: end - last.location)
                     } else {
+                        covered += end - index
                         areas.append(NSRange(location: index, length: end - index))
                     }
                     index += needle.count
@@ -190,14 +201,15 @@ public enum PagePrices {
         }
 
         static func size(in text: String, areas: [NSRange]) -> (sizeML: Int, words: String)? {
-            let nsText = text as NSString
+            size(in: Array(text.utf16), areas: areas)
+        }
+
+        static func size(in text: [UInt16], areas: [NSRange]) -> (sizeML: Int, words: String)? {
             var sizes: [Int: String] = [:]
             for area in areas {
-                let piece = nsText.substring(with: area)
+                let piece = String(decoding: text[area.location..<NSMaxRange(area)], as: UTF16.self)
                 for (size, pattern) in PriceExtractor.sizePatterns where sizes[size] == nil {
-                    if let range = piece.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
-                        sizes[size] = String(piece[range])
-                    }
+                    if let words = PriceExtractor.firstMatch(of: pattern, in: piece) { sizes[size] = words }
                 }
             }
             return sizes.count == 1 ? sizes.first.map { ($0.key, $0.value) } : nil
@@ -258,7 +270,7 @@ public enum PagePrices {
             var items: [Item] = []
             for script in document.jsonLD {
                 if shouldStop() { return [] }
-                guard let data = script.data(using: .utf8),
+                guard let data = JSONLD.withoutExponents(script).data(using: .utf8),
                       let root = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) else { continue }
                 for product in JSONLD.products(in: root) {
                     let name = JSONLD.string(product["name"])
@@ -297,13 +309,12 @@ public enum PagePrices {
 
         func textPrices(sizeML: Int) -> [Item] {
             let size = size(named: [])
-            let nsText = text as NSString
             var prices: [PriceExtractor.TextPrice] = []
             for area in areas {
                 // A little text around the area, for the words next to a price.
                 let start = max(0, area.location - 40)
-                let end = min(nsText.length, NSMaxRange(area) + 30)
-                let piece = nsText.substring(with: NSRange(location: start, length: end - start))
+                let end = min(units.count, NSMaxRange(area) + 30)
+                let piece = String(decoding: units[start..<end], as: UTF16.self)
                 for price in PriceExtractor.textPrices(in: piece, sizeML: sizeML, defaultSize: size?.sizeML ?? 750)
                 where NSLocationInRange(start + price.location, area) {
                     prices.append(price)
@@ -454,6 +465,8 @@ enum HTMLScanner {
         var headingDone = false
         var index = 0
         var tags = 0
+        /// Raw elements found not to end: later ones cannot end either, so they are not looked for again.
+        var unclosed = Set<String>()
 
         func find(_ unit: UInt16, from start: Int) -> Int? {
             var k = start
@@ -487,9 +500,15 @@ enum HTMLScanner {
             let closing = next == slash
             let nameStart = closing ? open + 2 : open + 1
             guard nameStart < n, isLetter(units[nameStart]) else {
-                // "a < b": text.
-                out.append(lt)
-                index = open + 1
+                // "a < b": text, up to the next "<" that starts a tag.
+                var k = open + 1
+                while let next = find(lt, from: k), next + 1 < n, !isLetter(units[next + 1]),
+                      units[next + 1] != slash, units[next + 1] != bang, units[next + 1] != question {
+                    k = next + 1
+                }
+                let stop = find(lt, from: k) ?? n
+                out.append(contentsOf: units[open..<stop])
+                index = stop
                 continue
             }
             guard let end = find(gt, from: nameStart) else { break scanning }
@@ -510,12 +529,20 @@ enum HTMLScanner {
 
             let attributes = parseAttributes(units, from: nameEnd, to: end)
             if raw.contains(name) {
-                // The content runs to "</name"; a page where it does not end is read no further.
+                // The content runs to "</name".
                 let selfClosing = end > nameStart && units[end - 1] == slash
                 if selfClosing { continue }
-                guard let close = findClose(units, name: name, from: end + 1) else { break scanning }
+                // A script or style that does not end runs to the end of the page; another
+                // element that does not end is only a tag, and the rest is read.
+                guard !unclosed.contains(name), let close = findClose(units, name: name, from: end + 1) else {
+                    if name == "script" || name == "style" { break scanning }
+                    unclosed.insert(name)
+                    out.append(0x20)
+                    continue
+                }
                 let content = string((end + 1)..<close)
-                if name == "script", attributes["type"]?.trimmingCharacters(in: .whitespaces).lowercased() == "application/ld+json" {
+                let type = attributes["type"]?.split(separator: ";").first?.trimmingCharacters(in: .whitespaces).lowercased()
+                if name == "script", type == "application/ld+json" {
                     document.jsonLD.append(content)
                 } else if name == "title", document.title == nil {
                     document.title = HTML.cleanLine(content)
@@ -545,7 +572,7 @@ enum HTMLScanner {
             document.heading = HTML.cleanLine(String(decoding: out[start..<min(out.count, start + 1000)], as: UTF16.self))
         }
         if shouldStop() { return nil }
-        document.text = HTML.lines(String(decoding: out, as: UTF16.self))
+        document.text = HTML.lines(units: out)
         return document
     }
 
@@ -562,7 +589,8 @@ enum HTMLScanner {
         let wanted = Array(name.utf16)
         let n = units.count
         var k = start
-        while k + 1 + wanted.count < n {
+        // "</" and the name must fit; the end of the text counts as a non-name character.
+        while k + 2 + wanted.count <= n {
             if units[k] == lt, units[k + 1] == slash {
                 var match = true
                 for (offset, unit) in wanted.enumerated() {
@@ -570,7 +598,8 @@ enum HTMLScanner {
                     if (0x41...0x5A).contains(have) { have += 0x20 }
                     if have != unit { match = false; break }
                 }
-                if match, !isNameUnit(units[k + 2 + wanted.count]) { return k }
+                let after = k + 2 + wanted.count
+                if match, after == n || !isNameUnit(units[after]) { return k }
             }
             k += 1
         }
@@ -622,12 +651,16 @@ enum HTML {
     }
 
     /// Entities decoded, spaces collapsed, one line per block, no empty line.
-    static func lines(_ raw: String) -> String {
-        let text = WebSearchText.decodeEntities(raw).precomposedStringWithCanonicalMapping
+    static func lines(_ raw: String) -> String { lines(units: Array(raw.utf16)) }
+
+    /// The same on UTF-16 units, in one pass each: a whole page's text.
+    static func lines(units raw: [UInt16]) -> String {
+        let decoded = decodeEntities(raw)
         var out: [UInt16] = []
+        out.reserveCapacity(decoded.count)
         var pendingSpace = false
         var lineHasText = false
-        for unit in text.utf16 {
+        for unit in decoded {
             if unit == 0x0A {
                 if lineHasText { out.append(0x0A) }
                 lineHasText = false
@@ -642,7 +675,42 @@ enum HTML {
             }
         }
         if out.last == 0x0A { out.removeLast() }
-        return String(decoding: out, as: UTF16.self)
+        let text = String(decoding: out, as: UTF16.self)
+        // Only combining marks change in NFC: most pages have none.
+        return out.contains(where: isCombining) ? text.precomposedStringWithCanonicalMapping : text
+    }
+
+    static func isCombining(_ unit: UInt16) -> Bool {
+        (0x0300...0x036F).contains(unit) || (0x1AB0...0x1AFF).contains(unit) || (0x1DC0...0x1DFF).contains(unit)
+            || (0x20D0...0x20FF).contains(unit) || (0xFE20...0xFE2F).contains(unit) || (0x3099...0x309A).contains(unit)
+            || (0x1100...0x11FF).contains(unit)
+    }
+
+    /// `WebSearchText.decodeEntities` on UTF-16 units: "&amp;", "&#8364;", "&#x20AC;" (a name or
+    /// number of up to 10 characters before ";").
+    static func decodeEntities(_ units: [UInt16]) -> [UInt16] {
+        guard units.contains(0x26) else { return units }
+        var out: [UInt16] = []
+        out.reserveCapacity(units.count)
+        var k = 0
+        while k < units.count {
+            let unit = units[k]
+            if unit == 0x26 {
+                var end = k + 1
+                while end < min(units.count, k + 12), units[end] != 0x3B { end += 1 }
+                if end < units.count, units[end] == 0x3B, end > k + 1 {
+                    let entity = String(decoding: units[(k + 1)..<end], as: UTF16.self)
+                    if let value = WebSearchText.named[entity.lowercased()] ?? WebSearchText.numeric(entity) {
+                        out.append(contentsOf: value.utf16)
+                        k = end + 1
+                        continue
+                    }
+                }
+            }
+            out.append(unit)
+            k += 1
+        }
+        return out
     }
 
     /// One line of plain text, or nil if empty.
@@ -671,6 +739,37 @@ enum HTML {
 // MARK: JSON-LD
 
 enum JSONLD {
+    /// The JSON with each number written with an exponent ("1e3") replaced by null: such a
+    /// number is never read as a price, on either platform. One pass; strings are kept as they are.
+    static func withoutExponents(_ json: String) -> String {
+        let units = Array(json.utf16)
+        var out: [UInt16] = []
+        out.reserveCapacity(units.count)
+        var k = 0
+        while k < units.count {
+            let unit = units[k]
+            if unit == 0x22 { // a string, with its escapes
+                let start = k
+                k += 1
+                while k < units.count, units[k] != 0x22 { k += units[k] == 0x5C ? 2 : 1 }
+                k = min(k + 1, units.count)
+                out.append(contentsOf: units[start..<k])
+            } else if unit == 0x2D || (0x30...0x39).contains(unit) { // a number
+                let start = k
+                var exponent = false
+                while k < units.count, (0x30...0x39).contains(units[k]) || [0x2D, 0x2B, 0x2E, 0x65, 0x45].contains(units[k]) {
+                    if units[k] == 0x65 || units[k] == 0x45 { exponent = true }
+                    k += 1
+                }
+                if exponent { out.append(contentsOf: Array("null".utf16)) } else { out.append(contentsOf: units[start..<k]) }
+            } else {
+                out.append(unit)
+                k += 1
+            }
+        }
+        return String(decoding: out, as: UTF16.self)
+    }
+
     struct Offer {
         var amount: String
         var currency: String?
@@ -760,9 +859,11 @@ enum JSONLD {
 
 /// Lowercase without accents, one UTF-16 unit for each, so offsets match the text's.
 enum Fold {
-    static func units(_ text: String) -> [UInt16] {
+    static func units(_ text: String) -> [UInt16] { units(Array(text.utf16)) }
+
+    static func units(_ text: [UInt16]) -> [UInt16] {
         var cache: [UInt16: UInt16] = [:]
-        return text.utf16.map { unit in
+        return text.map { unit in
             if unit < 0x80 { return (0x41...0x5A).contains(unit) ? unit + 0x20 : unit }
             if unit == 0x2019 || unit == 0x2018 { return 0x27 }
             if let known = cache[unit] { return known }

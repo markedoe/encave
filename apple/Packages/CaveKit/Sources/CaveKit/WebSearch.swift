@@ -279,7 +279,7 @@ enum WebSearchText {
         return decodeEntities(text).split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 
-    private static let named: [String: String] = [
+    static let named: [String: String] = [
         "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": " ",
         "ndash": "–", "mdash": "—", "hellip": "…", "rsquo": "’", "lsquo": "‘", "ldquo": "“", "rdquo": "”",
         "euro": "€", "pound": "£", "laquo": "«", "raquo": "»", "middot": "·", "thinsp": " ",
@@ -305,7 +305,7 @@ enum WebSearchText {
         return result
     }
 
-    private static func numeric(_ entity: String) -> String? {
+    static func numeric(_ entity: String) -> String? {
         guard entity.hasPrefix("#") else { return nil }
         let digits = entity.dropFirst()
         let code = digits.first == "x" || digits.first == "X" ? UInt32(digits.dropFirst(), radix: 16) : UInt32(digits)
