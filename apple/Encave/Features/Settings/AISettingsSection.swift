@@ -144,11 +144,11 @@ struct AISettingsSection: View {
             ProgressView().controlSize(.small)
         case .valid(let count):
             Label("\(count) models", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.success)
                 .font(.footnote)
         case .failed:
             Label("Not valid", systemImage: "xmark.octagon.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.error)
                 .font(.footnote)
         }
     }
@@ -157,7 +157,7 @@ struct AISettingsSection: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 6) {
             if case .failed(let message) = check {
-                Text(verbatim: message).foregroundStyle(.red)
+                Text(verbatim: message).foregroundStyle(Color.error)
             }
             if !settings.isEnabled {
                 Text("Optional. Reads labels from a photo with the AI service you choose, using your own API key.")

@@ -115,6 +115,11 @@ struct CellarList: View {
             }
         }
             // Short, so it fits beside the buttons of an iPad in portrait.
+            // Wines hidden by the search or a filter leave the selection.
+            .onChange(of: groups.map(\.wine.id)) {
+                let visible = groups.visible(picked)
+                if visible != picked { picked = visible }
+            }
             .navigationTitle(isSelecting ? Text("\(picked.count) selected") : Text("Cellar"))
             .searchable(text: filterBinding.query, prompt: Text("Wine, producer, region, grape, vintage"))
             .toolbar {
@@ -222,7 +227,7 @@ struct CellarList: View {
                                 } label: {
                                     Label("Add", systemImage: "plus")
                                 }
-                                .tint(.blue)
+                                .tint(Color.action)
                             }
                             .contextMenu { WineContextMenu(group: group, onSelect: { startSelection(with: group.wine.id) }) }
                             // Onto a storage in the sidebar: one bottle to its first free position.
@@ -240,6 +245,13 @@ struct CellarList: View {
             // The Delete key, like in Finder; Undo puts it back.
             .onDeleteCommand {
                 if let selection { model.deleteFollowingRule(wines: [selection], router: router) }
+            }
+            #else
+            // iPad with a keyboard: the same Delete key and rules (Undo, or a confirmation).
+            .onKeyPress(keys: [.delete, .deleteForward]) { _ in
+                guard let selection else { return .ignored }
+                model.deleteFollowingRule(wines: [selection], router: router)
+                return .handled
             }
             #endif
             .modifier(SyncRefresh())

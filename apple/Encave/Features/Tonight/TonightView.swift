@@ -332,7 +332,7 @@ private struct TonightPick: View {
         }
         .padding(20)
         .background(
-            LinearGradient(colors: [(wine.color?.tint ?? .gray).opacity(0.25), Color.secondary.opacity(0.06)],
+            LinearGradient(colors: [(wine.color?.tint ?? Color.neutral).opacity(0.25), Color.secondary.opacity(0.06)],
                            startPoint: .topLeading, endPoint: .bottomTrailing),
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)
         )

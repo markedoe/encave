@@ -278,7 +278,7 @@ struct OpenedBottleActions: ViewModifier {
                     .tint(.accentColor)
                 }
             }
-            .swipeActions(edge: .trailing) {
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button(role: .destructive) {
                     model.putBack(bottle.id)
                 } label: {

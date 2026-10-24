@@ -838,7 +838,7 @@ struct RackCellView: View {
         .minimumScaleFactor(0.5)
         .lineLimit(1)
         .frame(width: diameter * 0.82)
-        .foregroundStyle(dark ? Color.black.opacity(0.78) : Color.white)
+        .foregroundStyle(dark ? Color.inkOnLight : Color.inkOnDark)
         .accessibilityHidden(true)
     }
 
@@ -848,7 +848,7 @@ struct RackCellView: View {
             ForEach(0..<rack.positionsPerCell, id: \.self) { depth in
                 let bottle = bottles.first { $0.slot?.depth == depth }
                 Circle()
-                    .fill(bottle.map { color($0)?.tint ?? .gray } ?? Color.clear)
+                    .fill(bottle.map { color($0)?.tint ?? Color.neutral } ?? Color.clear)
                     .overlay(Circle().strokeBorder(Color.secondary.opacity(0.6), lineWidth: 0.75))
                     .frame(width: max(4, size * 0.1), height: max(4, size * 0.1))
             }
@@ -910,7 +910,7 @@ struct RackCellView: View {
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: "checkmark")
                         .font(.system(size: badge * 0.55, weight: .heavy))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.onTint)
                         .frame(width: badge, height: badge)
                         .background(Color.accentColor, in: Circle())
                         .overlay(Circle().strokeBorder(.background, lineWidth: max(1.5, badge * 0.12)))
@@ -1140,12 +1140,12 @@ struct RackThumbnail: View {
                 Group {
                     if rack.kind == .bins {
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
+                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? Color.neutral))
                             .rotationEffect(.degrees(45))
                             .scaleEffect(0.75)
                     } else {
                         Circle()
-                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? .gray))
+                            .fill(bottles.isEmpty ? Color.secondary.opacity(0.15) : (color?.tint ?? Color.neutral))
                     }
                 }
                 .frame(width: 9, height: 9)

@@ -343,7 +343,7 @@ private struct TitleHighlights: View {
                 path.closeSubpath()
                 // The accent color on a light halo, readable on any label.
                 context.fill(path, with: .color(Color.accentColor.opacity(0.15)))
-                context.stroke(path, with: .color(.white.opacity(0.85)), style: StrokeStyle(lineWidth: 5, lineJoin: .round))
+                context.stroke(path, with: .color(.white.opacity(0.85)), style: StrokeStyle(lineWidth: 5, lineJoin: .round)) // fixed color: halo over the camera image
                 context.stroke(path, with: .color(.accentColor), style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
             }
         }

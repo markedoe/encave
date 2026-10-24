@@ -99,11 +99,11 @@ struct WebSearchSettingsSection: View {
             ProgressView().controlSize(.small)
         case .worked(let count):
             Label("\(count) results", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.success)
                 .font(.footnote)
         case .failed:
             Label("Not working", systemImage: "xmark.octagon.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.error)
                 .font(.footnote)
         }
     }
@@ -112,7 +112,7 @@ struct WebSearchSettingsSection: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 6) {
             if case .failed(let message) = test {
-                Text(verbatim: message).foregroundStyle(.red)
+                Text(verbatim: message).foregroundStyle(Color.error)
             }
             if !settings.isEnabled {
                 Text("Optional. Looks up a wine on the web to complete its details or find its current price, with the search service you choose.")
