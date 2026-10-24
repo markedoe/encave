@@ -1,0 +1,10 @@
+{
+  "about": "Tags as stored on a wine or a discovery, shared by CaveKit (DiscoveryTests.swift) and the Kotlin core (DiscoveryTest.kt): trimmed of Unicode White_Space (U+0009-000D, 0020, 0085, 00A0, 1680, 2000-200A, 2028, 2029, 202F, 205F, 3000) and nothing else, without empty or duplicate tags (ignoring case), in the order given.",
+  "vectors": [
+    { "tags": [" Gift ", "gift", "", "To buy"], "normalized": ["Gift", "To buy"] },
+    { "tags": ["\u0085a", "\u001fb"], "normalized": ["a", "\u001fb"] },
+    { "tags": [" Été ", "　été ", "  "], "normalized": ["Été"] },
+    { "tags": ["\t\n\u000b\u000c\r", " x ", "​x"], "normalized": ["x", "​x"] },
+    { "tags": ["\u001c\u001d\u001e\u001f"], "normalized": ["\u001c\u001d\u001e\u001f"] }
+  ]
+}
