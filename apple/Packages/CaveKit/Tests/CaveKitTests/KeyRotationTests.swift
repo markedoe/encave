@@ -5,8 +5,8 @@ import Testing
 extension RemoteDevice {
     /// Keeps a key as the apps do (`storeRemoteKey`): settled against the current one,
     /// starting afresh only when the key bytes change.
-    mutating func keep(_ new: CellarKey) {
-        let settled = RemoteSync.settled(new, previous: key, membership: snapshot.membership)
+    mutating func keep(_ new: CellarKey, from sender: UUID? = nil) {
+        let settled = RemoteSync.settled(new, previous: key, membership: snapshot.membership, from: sender)
         if settled.key != key?.key { progress = RemoteProgress() }
         key = settled
     }
@@ -16,10 +16,6 @@ extension RemoteDevice {
     @discardableResult
     mutating func round(_ store: MailboxStore) async throws -> RemoteSync.Result? {
         if var current = key {
-            if current.removed == nil {
-                keep(current)
-                current = key!
-            }
             if var owed = pending, owed.key.key == current.key {
                 await RemoteSync.grantMissing(&owed, store: store, identity: identity, local: snapshot, storage: nil)
                 pending = owed.failed.isEmpty ? nil : owed
@@ -29,7 +25,7 @@ extension RemoteDevice {
             if next != nil, let grant = try await RemoteSync.receiveGrant(store: store, identity: identity,
                                                                           membership: snapshot.membership,
                                                                           current: current) {
-                keep(grant.cellarKey)
+                keep(grant.cellarKey, from: grant.from)
                 current = key!
                 next = try RemoteSync.nextRotation(key: current, pending: pending, membership: snapshot.membership,
                                                    device: identity.id)
@@ -139,6 +135,7 @@ actor RotationLog {
     /// All devices on the first key, through `store`.
     static func start(_ count: Int, store: MailboxStore) async throws -> [RemoteDevice] {
         var devices = household(count)
+        devices[0].keep(devices[0].key!)
         try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
                                    identity: devices[0].identity, storage: nil)
         for index in devices.indices { try await devices[index].round(store) }
@@ -310,8 +307,11 @@ actor RotationLog {
         for index in 1..<3 { devices[index].meet(devices[0]) }
         try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
                                    identity: devices[0].identity, storage: nil)
-        let first = try #require(devices[0].key)
+        var first = try #require(devices[0].key)
         #expect(first.removed == nil)
+        // A, updated, settles its own key when the app starts.
+        devices[0].keep(first)
+        first = try #require(devices[0].key)
         for _ in 0..<3 {
             for index in 0..<3 { try await devices[index].round(store) }
         }
@@ -373,6 +373,9 @@ actor RotationLog {
         try await devices[1].round(store)
         #expect(devices[1].key == newKey)
         #expect(devices[1].snapshot.cellar.wines.values.contains { $0.name == "After removal" })
+        // A device left without the key for several rounds is worth telling the user.
+        for _ in 0..<PendingRotation.retriesBeforeProblem { try await devices[0].round(store) }
+        #expect(devices[0].pending?.isStuck == true)
         store.refused = []
         try await devices[0].round(store)
         #expect(devices[0].pending == nil)
@@ -408,15 +411,84 @@ actor RotationLog {
         #expect(try JSONDecoder().decode(PendingRotation.self, from: older).key == pending.key)
     }
 
-    @Test func theRemovedListHasAtMost64Devices() {
-        var membership = Membership()
-        var clock: UInt64 = 0
-        let me = UUID()
-        for _ in 0..<70 { membership.remove(UUID(), clock: &clock, by: me) }
-        #expect(RemoteSync.shutOut(membership).count == RemoteSync.maxRemoved)
-        let list = RemoteSync.removedList(RemoteSync.shutOut(membership), (0..<20).map { _ in UUID() })
-        #expect(list.count == RemoteSync.maxRemoved)
-        #expect(Set(list).isSuperset(of: RemoteSync.shutOut(membership)))
+    @Test func moreThan64RemovalsListTheNewestAndDoNotBounce() throws {
+        var devices = household(2)
+        let me = devices[0].identity.id
+        var clock = devices[0].snapshot.state.clock
+        var removed: [UUID] = []
+        for _ in 0..<70 {
+            let id = UUID()
+            removed.append(id)
+            devices[0].snapshot.membership.remove(id, clock: &clock, by: me)
+        }
+        devices[0].snapshot.state.clock = clock
+        let membership = devices[0].snapshot.membership
+        #expect(RemoteSync.shutOut(membership).count == 70)
+        let start = CellarKey(cellarID: membership.cellarID, epoch: 1, key: Data(repeating: 1, count: 32), removed: [])
+        let next = try #require(try RemoteSync.nextRotation(key: start, pending: nil, membership: membership, device: me))
+        // The newest 64 are listed, in the same order on every device.
+        #expect(next.key.removed?.count == RemoteSync.maxRemoved)
+        #expect(Set(next.key.removed ?? []) == Set(removed.suffix(RemoteSync.maxRemoved)))
+        #expect(RemoteSync.removedList(Set(removed), nil, membership: membership) == next.key.removed)
+        // That key calls for no other rotation; a new removal does.
+        #expect(try RemoteSync.nextRotation(key: next.key, pending: nil, membership: membership, device: me) == nil)
+        devices[0].remove(devices[1])
+        #expect(try RemoteSync.nextRotation(key: next.key, pending: nil, membership: devices[0].snapshot.membership,
+                                            device: me) != nil)
+    }
+
+    @Test func aRemovalLearnedLateWithAnOldCounterStillRotates() throws {
+        var devices = household(3)
+        let key = CellarKey(cellarID: devices[0].snapshot.membership.cellarID, epoch: 1,
+                            key: Data(repeating: 1, count: 32), removed: [])
+        // B removed C long ago (a low counter); A learns it only now, after many changes.
+        var early: UInt64 = 1
+        devices[1].snapshot.membership.remove(devices[2].identity.id, clock: &early, by: devices[1].identity.id)
+        devices[0].snapshot.state.clock = 1000
+        devices[0].meet(devices[1])
+        #expect(try RemoteSync.nextRotation(key: key, pending: nil, membership: devices[0].snapshot.membership,
+                                            device: devices[0].identity.id) != nil)
+    }
+
+    @Test func anOldDevicesKeyAdoptedAfterAnUnknownRemovalIsRotated() async throws {
+        let store = MemoryMailboxStore()
+        var devices = try await Self.start(5, store: store)
+        let start = try #require(devices[0].key)
+        // N1 (no storage) removes X; at the same time O, an earlier build, removes Y and
+        // rotates the earlier way, giving its key to X too (it has not heard of that removal).
+        devices[0].remove(devices[3])
+        var clock = devices[1].snapshot.state.clock
+        devices[1].snapshot.membership.remove(devices[4].identity.id, clock: &clock, by: devices[1].identity.id)
+        devices[1].snapshot.state.clock = clock
+        let old = CellarKey.random(cellarID: start.cellarID, epoch: 2)
+        try await RemoteSync.rotate(store: store, identity: devices[1].identity, from: start, to: old,
+                                    local: devices[1].snapshot, storage: nil)
+        let x = devices[3], membership = x.snapshot.membership
+        #expect(x.grantedKeys(store, membership: membership).contains { $0.key == old.key })
+        // N2 knows both removals: O's key leaves out only Y, so N2 rotates.
+        devices[2].meet(devices[0])
+        devices[2].meet(devices[1])
+        try await devices[2].round(store)
+        let final = try #require(devices[2].key)
+        #expect(final.epoch == 3)
+        #expect(Set(final.removed ?? []).isSuperset(of: [devices[3].identity.id, devices[4].identity.id]))
+        #expect(!x.grantedKeys(store, membership: membership).contains { $0.key == final.key })
+    }
+
+    @Test func aKeyFromAnEarlierBuildIsSettledBeforeALocalNetworkRemoval() async throws {
+        let store = MemoryMailboxStore()
+        var devices = household(3)
+        // A was updated: its stored key, without a list, is settled when the app starts.
+        devices[0].keep(devices[0].key!)
+        #expect(devices[0].key?.removed == [])
+        try await RemoteSync.grant(devices[0].key!, to: devices[0].snapshot.membership.active, store: store,
+                                   identity: devices[0].identity, storage: nil)
+        // B removes D; A hears of it on the local network before its first round.
+        devices[1].remove(devices[2])
+        devices[0].meet(devices[1])
+        try await devices[0].round(store)
+        #expect(devices[0].key?.epoch == 2)
+        #expect(devices[0].key?.removed == [devices[2].identity.id])
     }
 
     @Test func aRemovedDeviceNeverRotates() throws {

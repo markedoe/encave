@@ -519,11 +519,15 @@ A **cellar key** `{cellarID, epoch (UInt32), key (32 random bytes), removed?}`
 is shared by the devices of a cellar. A received key whose `key` is not 32 bytes,
 or whose epoch is not a UInt32, fails decoding. `removed` lists (uppercase UUIDs,
 sorted) the devices removed by another device before the key was made: it was
-given to none of them; at most the 64 most recent removals (by stamp counter),
-so a grant stays well under 4 KiB. Earlier versions ignore `removed` and drop it
-when they pass a key on. A key without it (from an earlier version) is taken to
-leave out the removals the device knows when it first keeps the key, which it
-then lists: earlier versions rotate after their own removals. A device that
+given to none of them. It holds at most 64 entries, so a grant stays well under
+4 KiB: the newest removals first (greatest stamp counter, then lowercase ID),
+then others by ID. Two keys are the same key when their cellar, epoch and bytes
+are; `removed` is what is known about it. Earlier versions ignore `removed` and
+drop it when they pass a key on, and rotate only after their own removals. So a
+key without it, received from another device (the grant's sender, or the peer
+of a network sync), is taken to leave out only the removals made by that
+device; a device's own stored key without it is settled once when the app
+starts, before any sync, to leave out the removals known then. A device that
 receives the key bytes it already has keeps the union of both lists. JSON:
 `{"cellarID":UUID,"epoch":number,"key":Base64 of 32 bytes,"removed":[UUID]?}`.
 From the key (HKDF-SHA256, empty salt):
@@ -681,8 +685,9 @@ refresh task, no sooner than 15 minutes, when iOS decides.
 Any device that holds the key and runs rounds, not only the one that removed a
 device (it may have no storage, and the removal may reach the others over the
 local network), rotates the key before a round when its membership has a
-device removed by another device (the 64 most recent) that the key's
-`removed` does not list. A device that left removed itself and forgot the key (section 2): it calls for no
+device removed by another device that the key's `removed` does not list (with
+64 entries listed, removals older than the oldest listed one count as left
+out). A device that left removed itself and forgot the key (section 2): it calls for no
 rotation. A device that finds itself removed never rotates.
 
 Before rotating, the device reads its inbox and adopts a superseding key (unless
@@ -695,8 +700,9 @@ The device keeps the new key, and the devices it has given it to, until the
 rotation is done, so a retry after a failure reuses the same key and leaves no
 second grant for them. A device whose grant fails (its inbox is full, its record
 is damaged) does not stop the rotation: the device notes it and tries again in
-each later round until the grant is left. Moving to another storage forgets
-which devices were given the kept key.
+each later round until the grant is left; after 5 rounds it tells the user. A
+round cut short by the system is not a failed grant. Moving to another storage
+forgets which devices were given the kept key.
 It leaves a grant in each remaining member's inbox, writes to the **old**
 mailbox a snapshot with an empty cellar, no object stamps, its clock and the
 updated membership (so devices that have not switched yet learn about the
@@ -718,9 +724,10 @@ the key does not list and rotates again, so the cellar settles on a key that
 neither removed device has.
 
 A device on an earlier version rotates only after its own removals and leaves
-keys without `removed`; a device on this version takes such a key as leaving out
-the removals it knows, so devices updating at different times do not rotate
-again for removals made before.
+keys without `removed`. Taking such a key as leaving out its sender's removals
+means devices updating at different times do not rotate again for removals
+the sender made, while a removal the sender had not heard of still calls for a
+rotation.
 
 ### Turning it on
 

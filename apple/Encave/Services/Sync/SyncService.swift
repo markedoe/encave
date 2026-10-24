@@ -175,6 +175,9 @@ final class SyncService {
         }
         // A key of another cellar (left from before joining this one) is never used.
         if let key = remoteKey, key.cellarID != membership?.cellarID { resetRemote() }
+        // A key kept by a build before keys listed removals: settled once, before any sync
+        // merges a removal it may not leave out (docs/SYNC.md §8).
+        if let key = remoteKey, key.removed == nil, membership != nil { storeRemoteKey(key) }
         if !identityUnavailable { publishInbox() }
     }
 
@@ -336,11 +339,6 @@ final class SyncService {
                 pendingRotation = PendingRotation(key: CellarKey.random(cellarID: key.cellarID, epoch: key.epoch + 1))
             }
         }
-        // A key from a build before keys listed removals: it leaves out the removals known now.
-        if key.removed == nil {
-            storeRemoteKey(key)
-            key = remoteKey ?? key
-        }
         // A finished rotation whose grant failed for some devices: try them again.
         if var owed = pendingRotation, owed.key.key == key.key {
             await RemoteSync.grantMissing(&owed, store: store, identity: identity, local: local,
@@ -357,7 +355,7 @@ final class SyncService {
                                                          membership: local.membership, current: key) {
             guard round == generation else { return key }
             if let moved = grant.storage, let here = remoteStorage?.string, moved != here { return key }
-            storeRemoteKey(grant.cellarKey)
+            storeRemoteKey(grant.cellarKey, from: grant.from)
             key = remoteKey ?? grant.cellarKey
             guard let again = try RemoteSync.nextRotation(key: key, pending: pendingRotation,
                                                           membership: local.membership, device: identity.id)
@@ -634,7 +632,7 @@ final class SyncService {
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: true, local: local,
                                                                        files: Self.files, remote: remoteInfo)
                 apply(result, from: peer.id)
-                adoptRemote(remote)
+                adoptRemote(remote, from: peer.id)
                 failures[device] = nil
             } catch {
                 report(error)
@@ -683,7 +681,7 @@ final class SyncService {
                 let (result, remote) = try await SyncExchange.exchange(over: channel, isInitiator: false, local: local,
                                                                        files: Self.files, remote: remoteInfo)
                 apply(result, from: peer.id)
-                adoptRemote(remote)
+                adoptRemote(remote, from: peer.id)
             } catch {
                 // Someone else's connection failing is not this device's problem to show.
                 if case SyncError.unknownDevice = error { return }
@@ -832,14 +830,18 @@ final class SyncService {
         setUpIfNeeded()
         // The key is settled before anything is kept, so a failure leaves remote sync off.
         var key = remoteKey
+        var sender: UUID?
         if key == nil, let membership {
             // Maybe another device already turned it on and left a key for this one.
             if let grant = try? await RemoteSync.receiveGrant(store: store, identity: identity, membership: membership,
                                                              current: nil) {
                 key = grant.cellarKey
+                sender = grant.from
             } else {
+                // The first key lists the removals known now: it is given to none of them.
                 let new = firstKey.flatMap { $0.cellarID == membership.cellarID ? $0 : nil }
-                    ?? CellarKey.random(cellarID: membership.cellarID)
+                    ?? RemoteSync.settled(CellarKey.random(cellarID: membership.cellarID), previous: nil,
+                                          membership: membership)
                 firstKey = new
                 try await RemoteSync.grant(new, to: membership.active, store: store, identity: identity,
                                            storage: storage.string)
@@ -851,7 +853,7 @@ final class SyncService {
         UserDefaults.standard.removeObject(forKey: Self.remoteOffKey)
         useStorage(storage)
         // A key received meanwhile from a device on the network may supersede this one.
-        if let key, key.cellarID == membership?.cellarID, key.supersedes(remoteKey) { storeRemoteKey(key) }
+        if let key, key.cellarID == membership?.cellarID, key.supersedes(remoteKey) { storeRemoteKey(key, from: sender) }
         startRemoteLoop()
         await remoteRound()
     }
@@ -901,9 +903,10 @@ final class SyncService {
     }
 
     /// A key and storage received from a device on the network.
-    func adoptRemote(_ info: RemoteInfo?) {
+    /// `peer`: the device it came from, for a key without a list of removals (docs/SYNC.md §8).
+    func adoptRemote(_ info: RemoteInfo?, from peer: UUID? = nil) {
         guard let info, let membership, info.key.cellarID == membership.cellarID else { return }
-        if info.key.supersedes(remoteKey) || info.key.key == remoteKey?.key { storeRemoteKey(info.key) }
+        if info.key.supersedes(remoteKey) || info.key.key == remoteKey?.key { storeRemoteKey(info.key, from: peer) }
         // Only a storage this device can use: an HTTPS relay or WebDAV folder, or iCloud in a
         // build that has it. A WebDAV folder then asks for this device's own login.
         // Not after the user turned it off here.
@@ -1008,10 +1011,11 @@ final class SyncService {
         do {
             var key = remoteKey
             if key == nil {
-                key = try await RemoteSync.receiveGrant(store: store, identity: identity, membership: local.membership,
-                                                        current: nil)?.cellarKey
+                let grant = try await RemoteSync.receiveGrant(store: store, identity: identity,
+                                                              membership: local.membership, current: nil)
                 guard round == generation else { return }
-                if let key { storeRemoteKey(key) }
+                if let grant { storeRemoteKey(grant.cellarKey, from: grant.from) }
+                key = remoteKey
             }
             guard var key, key.cellarID == local.membership.cellarID else { return }
             do {
@@ -1060,6 +1064,9 @@ final class SyncService {
             } else if let refused = result.refusedFiles {
                 // The cellar synced; some photos or documents stay on this device for now.
                 remoteProblem = refusalMessage(refused)
+            } else if pendingRotation?.isStuck == true {
+                // A device has not been given the new key after a removal: it keeps trying.
+                remoteProblem = String(localized: "Another device could not be given the new key yet, so it does not sync away from home. Check that it is up to date and that the storage has room.")
             } else if remoteStorage == .iCloud, remoteProgress.seen.isEmpty, !otherDevices.isEmpty {
                 if otherDevices.contains(where: \.isApple) {
                     // Each Apple Account has its own iCloud: devices on different accounts never meet there.
@@ -1125,10 +1132,11 @@ final class SyncService {
         }
     }
 
-    private func storeRemoteKey(_ key: CellarKey?) {
-        // The same key bytes keep both lists of removals; a key without one leaves out
-        // the removals known now (docs/SYNC.md §8).
-        let key = key.map { RemoteSync.settled($0, previous: remoteKey, membership: membership) }
+    /// `sender`: the device a received key came from (nil: this device's own key).
+    private func storeRemoteKey(_ key: CellarKey?, from sender: UUID? = nil) {
+        // The same key bytes keep both lists of removals; a key without one leaves out the
+        // removals of its sender, or for this device's own key those known now (docs/SYNC.md §8).
+        let key = key.map { RemoteSync.settled($0, previous: remoteKey, membership: membership, from: sender) }
         // Progress belongs to a mailbox: a different key starts afresh.
         if key?.key != remoteKey?.key || key?.cellarID != remoteKey?.cellarID {
             remoteProgress = RemoteProgress()
