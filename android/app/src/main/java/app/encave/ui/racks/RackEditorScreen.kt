@@ -314,7 +314,8 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
                     }
                 }
 
-                Hint(stringResource(R.string.help_kind_footer))
+                // What the chosen layout is, as in the wizard.
+                Hint(stringResource(if (kind == RackKind.Staggered) R.string.layout_honeycomb_body else R.string.layout_grid_body))
             }
 
             Header(R.string.rack_size_title)

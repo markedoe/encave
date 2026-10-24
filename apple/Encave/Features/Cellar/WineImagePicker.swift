@@ -172,16 +172,7 @@ struct WebImageSection: View {
                 Color.clear
                     .frame(height: 120)
                     .overlay {
-                        AsyncImage(url: image.thumbnailURL) { phase in
-                            switch phase {
-                            case .success(let picture):
-                                picture.resizable().scaledToFill()
-                            case .failure:
-                                Image(systemName: "photo").foregroundStyle(.secondary)
-                            default:
-                                ProgressView()
-                            }
-                        }
+                        RemoteThumbnail(url: image.thumbnailURL)
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay {
@@ -306,5 +297,38 @@ private struct IllustrationSheet: ViewModifier {
         guard let data = PhotoStore.data(for: wine.photoID),
               let image = PhotoStore.cgImage(from: data, maxPixelSize: 1024) else { return nil }
         return Image(decorative: image, scale: 1)
+    }
+}
+
+/// A search result's thumbnail, downloaded like the chosen picture (public https host only,
+/// each redirect checked, no cookies or cache) and capped at 2 MB, rather than by AsyncImage.
+private struct RemoteThumbnail: View {
+    let url: URL
+    @State private var picture: CGImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let picture {
+                Image(decorative: picture, scale: 1).resizable().scaledToFill()
+            } else if failed {
+                Image(systemName: "photo").foregroundStyle(.secondary)
+            } else {
+                ProgressView()
+            }
+        }
+        .task(id: url) {
+            picture = nil
+            failed = false
+            let data = try? await WebSearchClient.downloadImage(url, maxBytes: 2 * 1024 * 1024)
+            guard !Task.isCancelled else { return }
+            // Read off the main thread, as WinePhoto does.
+            let image = await Task.detached(priority: .userInitiated) {
+                data.flatMap { PhotoStore.cgImage(from: $0, maxPixelSize: 320) }
+            }.value
+            guard !Task.isCancelled else { return }
+            picture = image
+            failed = image == nil
+        }
     }
 }

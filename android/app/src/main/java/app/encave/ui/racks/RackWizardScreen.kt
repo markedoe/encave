@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -41,15 +41,19 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -123,15 +127,29 @@ private fun RackWizard(viewModel: AppViewModel, navigator: AppNavigator) {
         settings = StorageSettings(type)
     }
 
-    fun create() {
-        showErrors = true
-        if (name.isBlank()) return
-        viewModel.addRack(rack)
-        navigator.back()
+    // The storage being saved: Create (button or keyboard) counts once, and the wizard closes
+    // once it is in the cellar (also after a rotation meanwhile), not on a second tap.
+    var creatingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val creating = creatingId != null
+    var left by remember { mutableStateOf(false) }
+    LaunchedEffect(creatingId, cellar) {
+        if (!left && creatingId != null && cellar.racks.any { it.id.toString() == creatingId }) {
+            left = true
+            navigator.back()
+        }
     }
 
-    // Back goes to the previous step; from the first one it leaves.
-    BackHandler(enabled = step > 1) { step-- }
+    fun create() {
+        showErrors = true
+        // The state itself, not [creating]: a second tap can come before the screen is drawn again.
+        if (name.isBlank() || creatingId != null) return
+        val new = rack
+        creatingId = new.id.toString()
+        viewModel.addRack(new) { saved -> if (!saved) creatingId = null }
+    }
+
+    // Back goes to the previous step; from the first one it leaves. Not while saving.
+    BackHandler(enabled = step > 1 || creating) { if (!creating) step-- }
 
     Scaffold(
         topBar = {
@@ -145,15 +163,10 @@ private fun RackWizard(viewModel: AppViewModel, navigator: AppNavigator) {
                         )
                     }
                 },
+                // Close leaves the wizard from every step, as Cancel on Apple; Back below goes to the previous step.
                 navigationIcon = {
-                    if (step == 1) {
-                        IconButton(onClick = { navigator.back() }) {
-                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
-                        }
-                    } else {
-                        IconButton(onClick = { step-- }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                        }
+                    IconButton(onClick = { navigator.back() }, enabled = !creating, modifier = Modifier.testTag("wizard.close")) {
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
             )
@@ -166,7 +179,7 @@ private fun RackWizard(viewModel: AppViewModel, navigator: AppNavigator) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (step > 1) {
-                        OutlinedButton(onClick = { step-- }, modifier = Modifier.testTag("wizard.back")) {
+                        OutlinedButton(onClick = { step-- }, enabled = !creating, modifier = Modifier.testTag("wizard.back")) {
                             Text(stringResource(R.string.action_back))
                         }
                     }
@@ -175,7 +188,7 @@ private fun RackWizard(viewModel: AppViewModel, navigator: AppNavigator) {
                             Text(stringResource(R.string.action_next))
                         }
                     } else {
-                        Button(onClick = ::create, modifier = Modifier.testTag("wizard.create")) {
+                        Button(onClick = ::create, enabled = !creating, modifier = Modifier.testTag("wizard.create")) {
                             Text(stringResource(R.string.action_create))
                         }
                     }
@@ -353,7 +366,7 @@ private fun Choice(label: Int, value: Int, count: Int, footer: Int, tag: String,
     }
 }
 
-/** The drawing of the storage being set up, small, and what it holds. */
+/** The drawing of the whole storage being set up, as large as the card allows, and what it holds. */
 @Composable
 private fun Preview(rack: Rack) {
     Text(
@@ -364,12 +377,27 @@ private fun Preview(rack: Rack) {
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Box(
-            Modifier.fillMaxWidth().heightIn(max = 220.dp).verticalScroll(rememberScrollState())
-                .horizontalScroll(rememberScrollState()).padding(Dimens.m).clearAndSetSemantics { },
-        ) {
-            RackGrid(rack, Cellar(racks = listOf(rack)), cellSize = 18.dp, showHeaders = false)
+        val density = LocalDensity.current
+        // At most 60 % of the screen's height (a fridge two deep is tall), so the settings
+        // follow; a small storage takes less. A very large one scrolls.
+        val maxHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() } * PREVIEW_SHARE
+        val labelHeight = with(density) { (MaterialTheme.typography.labelSmall.lineHeight * 1.25f).toDp() }
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(Dimens.m).clearAndSetSemantics { }) {
+            val cell = fittingCellSize(rack, maxWidth, maxHeight, showHeaders = false, labelHeight = labelHeight)
+            Box(
+                Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(rememberScrollState())
+                    .horizontalScroll(rememberScrollState()),
+                contentAlignment = Alignment.Center,
+            ) {
+                RackGrid(
+                    rack, Cellar(racks = listOf(rack)), cellSize = cell, showHeaders = false, isPicture = true,
+                    captionWidth = this@BoxWithConstraints.maxWidth,
+                )
+            }
         }
     }
     Text(pluralStringResource(R.plurals.rack_holds, rack.capacity, rack.capacity), style = MaterialTheme.typography.bodyMedium)
 }
+
+/** The preview's largest height, as a share of the screen's. */
+internal const val PREVIEW_SHARE = 0.6f

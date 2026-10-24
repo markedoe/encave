@@ -25,9 +25,9 @@ import app.encave.core.DrinkingDigest
 import app.encave.core.drinkingDigest
 import java.time.Duration
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
+import java.time.ZonedDateTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
@@ -79,14 +79,21 @@ object Reminders {
     fun schedule(context: Context) {
         runCatching {
             createChannels(context)
-            val now = LocalDateTime.now()
-            var next = now.toLocalDate().atTime(LocalTime.of(10, 0))
-            if (!next.isAfter(now)) next = next.plusDays(1)
             val request = PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)
-                .setInitialDelay(Duration.between(now, next).toMinutes(), TimeUnit.MINUTES)
+                .setInitialDelay(initialDelay(ZonedDateTime.now()).toMinutes(), TimeUnit.MINUTES)
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP, request)
         }
+    }
+
+    /**
+     * The time from [now] to the next [at] in [now]'s zone, as the clock really runs: an hour
+     * less or more when the clocks change in between.
+     */
+    internal fun initialDelay(now: ZonedDateTime, at: LocalTime = LocalTime.of(10, 0)): Duration {
+        var next = now.toLocalDate().atTime(at).atZone(now.zone)
+        if (!next.isAfter(now)) next = now.toLocalDate().plusDays(1).atTime(at).atZone(now.zone)
+        return Duration.between(now, next)
     }
 
     private fun cancel(context: Context) {

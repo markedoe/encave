@@ -581,7 +581,7 @@ S = [
  ("action_wine_page", "Wine page", "Fiche du vin"),
  ("rack_list_empty_title", "Empty", "Vide"),
  ("rack_list_empty", "Tap a position in the storage to add a bottle there.", "Touchez une position du rangement pour y ajouter une bouteille."),
- ("sample_bins", "Diamond bins", "Casiers en losange"),
+ ("sample_bins", "Diamond bins", "Cases en losange"),
  ("sample_deep_rack", "Double-depth rack", "Casier double profondeur"),
  ("sample_honeycomb", "Honeycomb rack", "Casier nid d’abeille"),
  ("sample_stairs", "Under the stairs", "Sous l’escalier"),
@@ -620,7 +620,6 @@ S = [
  ("help_field_food", "What you ate with it, to remember good pairings.", "Ce que vous avez mangé avec, pour retenir les bons accords."),
  ("help_full_note_footer", "A structured note: appearance, nose, palate, finish and the food you had with it.", "Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait."),
  ("help_field_rack_name", "A name you will recognize: cellar left wall, kitchen wine fridge…", "Un nom que vous reconnaîtrez : mur gauche du sous-sol, cave à vin réfrigérée de la cuisine…"),
- ("help_kind_footer", "Describe everywhere you keep bottles: a rack, a wine fridge, a set of bins.", "Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin réfrigérée, des cases en losange."),
  ("help_field_rows", "Counted from the top. Rows are lettered A, B, C…", "Comptées depuis le haut. Les rangées sont nommées A, B, C…"),
  ('help_field_columns', 'Counted from the left. Positions are numbered 1, 2, 3…', 'Comptées depuis la gauche. Les positions sont numérotées 1, 2, 3…'),
  ("help_field_grid_depth", "Deep racks hold a second bottle behind the first one.", "Les casiers profonds accueillent une deuxième bouteille derrière la première."),
@@ -1155,7 +1154,7 @@ S = [
  ("camera_unavailable", "No camera app could take the photo.", "Aucune app d’appareil photo n’a pu prendre la photo."),
  ("action_open_app_settings", "Open settings", "Ouvrir les réglages"),
  ("help_scanning_barcodes_title", "Barcodes", "Codes-barres"),
- ('help_scanning_barcodes', "When adding bottles, tap **Scan the barcode**: the camera reads the bottle's barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Without the camera, type the digits under the barcode. Barcodes are matched on this device only; Encave looks nothing up online.", 'En ajoutant des bouteilles, touchez **Scanner le code-barres** : l’appareil photo lit le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les producteurs gardent souvent un code-barres pour tous les millésimes : chaque millésime que vous avez est listé, et **Autre millésime** reprend les mêmes informations pour que vous saisissiez le nouveau millésime. Sans appareil photo, tapez les chiffres sous le code-barres. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne.'),
+ ('help_scanning_barcodes', "When adding bottles, tap **Scan the barcode**: the camera reads the bottle’s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Without the camera, type the digits under the barcode. Barcodes are matched on this device only; Encave looks nothing up online.", 'En ajoutant des bouteilles, touchez **Scanner le code-barres** : l’appareil photo lit le code-barres de la bouteille et le garde avec le vin. La prochaine fois que vous scannez une bouteille de ce vin, **Déjà dans votre cave** apparaît : touchez **Utiliser ce vin** pour ajouter des bouteilles sans rien remplir. Les producteurs gardent souvent un code-barres pour tous les millésimes : chaque millésime que vous avez est listé, et **Autre millésime** reprend les mêmes informations pour que vous saisissiez le nouveau millésime. Sans appareil photo, tapez les chiffres sous le code-barres. Les codes-barres sont reconnus sur cet appareil uniquement ; Encave ne cherche rien en ligne.'),
 
  # Cellar table (wide screens) and drag and drop
  ("action_show_table", "Show as a table", "Afficher en tableau"),
@@ -1169,7 +1168,7 @@ S = [
  ("help_start_table", "On wide screens (tablets in landscape, unfolded foldables), the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.",
   "Sur grand écran (tablette à l’horizontale, pliable déplié), le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté."),
  ("help_racks_editing_title", "Changing storage", "Modifier un rangement"),
- ('help_racks_editing', 'Tap **Edit storage** to change its name, kind or size. On a fridge with bottles in layers, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first and takes them out of storage (they stay in the cellar without a position), and **Undo** puts everything back. **Delete storage** asks first, saying how many bottles it holds; they stay in the cellar without a position, and it can be undone too. To change the order of your storage, tap **Reorder storage** in the Storage list, then move each one up or down.', 'Touchez **Modifier le rangement** pour changer son nom, son type ou sa taille. Sur une cave à vin réfrigérée avec bouteilles en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du rangement (elles restent dans la cave sans position), et **Annuler** remet tout en place. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans position, et cela peut aussi être annulé. Pour changer l’ordre de vos rangements, touchez **Réorganiser les rangements** dans la liste des rangements, puis montez ou descendez chaque rangement.'),
+ ('help_racks_editing', 'Tap **Edit storage** to change its name, layout or size. On a fridge with bottles in layers, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first and takes them out of storage (they stay in the cellar without a position), and **Undo** puts everything back. **Delete storage** asks first, saying how many bottles it holds; they stay in the cellar without a position, and it can be undone too. To change the order of your storage, tap **Reorder storage** in the Storage list, then move each one up or down.', 'Touchez **Modifier le rangement** pour changer son nom, sa disposition ou sa taille. Sur une cave à vin réfrigérée avec bouteilles en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du rangement (elles restent dans la cave sans position), et **Annuler** remet tout en place. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans position, et cela peut aussi être annulé. Pour changer l’ordre de vos rangements, touchez **Réorganiser les rangements** dans la liste des rangements, puis montez ou descendez chaque rangement.'),
  # Rack fixes: moving, undo, checking one by one, accessibility
  ("msg_taken_out_one", "Bottle taken out of storage", "Bouteille sortie du rangement"),
  ("msg_swapped", "Bottles swapped", "Bouteilles échangées"),
@@ -1418,7 +1417,7 @@ S = [
  ("insights_year_share_title", "Your year in wine %1$s", "Votre année en vin %1$s"),
  ("insights_year_made_with", "Made with Encave", "Réalisé avec Encave"),
  ("help_journal_opened_title", "A bottle from your cellar", "Une bouteille de votre cave"),
- ("help_journal_opened", "Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine's name to open it.",
+ ("help_journal_opened", "Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine’s name to open it.",
   "Maintenez appuyée une bouteille ouverte de votre cave pour afficher son vin, modifier la note, en ajouter des bouteilles, ou la remettre en cave si elle a été notée par erreur (avec Annuler). Dans la note, touchez le nom du vin pour l’ouvrir."),
  ("rack_field_shelves", "Counted from the top. Shelves are numbered 1, 2, 3…", "Comptées depuis le haut. Les étagères sont numérotées 1, 2, 3…"),
  ("kind_fridge_layers", "Wine fridge, shelves in layers", "Cave à vin réfrigérée, étagères en couches"),
@@ -1625,6 +1624,15 @@ def check(res):
             problems.append(f"plain space before a mark in French: {found!r} ({name})")
         for found in loose_guillemets(value):
             problems.append(f"« » without a narrow no-break space inside: {found!r} ({name})")
+    # Typographic apostrophes only: a straight one is written \' in strings.xml.
+    for row in S:
+        for lang, value in (("English", row[1]), ("French", row[2])):
+            if "'" in value:
+                problems.append(f"straight apostrophe in {lang} (use ’): {row[0]}")
+    for name, en, fr in P:
+        for value in list(en) + list(fr):
+            if "'" in value:
+                problems.append(f"straight apostrophe (use ’): {name}")
     for name, value in french_texts:
         if name not in OLD_FRENCH_ALLOWED:
             for why in old_french_words(value):

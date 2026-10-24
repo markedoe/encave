@@ -2,6 +2,7 @@ package app.encave.data.search
 
 import android.content.Context
 import androidx.core.content.edit
+import app.encave.core.Http
 import app.encave.core.search.WebImageDownload
 import app.encave.core.search.WebImageResult
 import app.encave.core.search.SameHostRedirect
@@ -13,7 +14,6 @@ import app.encave.core.search.WebSearchService
 import app.encave.data.ai.AiPreferences
 import app.encave.data.ai.SecretStore
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,37 +76,49 @@ object WebSearchClient {
             provider.imageResults(text, status)
         }
 
-    /** Downloads a picture from its host: https only, an image type, at most [maxBytes]. */
+    /**
+     * Downloads a picture from its host: https only, never to this device or the local network
+     * (each redirect is checked too), an image type, at most [maxBytes].
+     */
     suspend fun downloadImage(url: String, maxBytes: Int = WebImageDownload.MAX_BYTES): ByteArray = withContext(Dispatchers.IO) {
-        if (!WebImageDownload.isAllowed(url)) throw WebSearchError.InvalidResponse
-        val connection = URL(url).openConnection() as HttpURLConnection
-        try {
-            connection.connectTimeout = WebImageDownload.TIMEOUT_MS
-            connection.readTimeout = WebImageDownload.TIMEOUT_MS
-            connection.useCaches = false
-            val status = connection.responseCode
-            if (status !in 200..299 || !WebImageDownload.isAllowed(connection.url.toString()) ||
-                !WebImageDownload.isImage(connection.contentType) ||
-                !WebImageDownload.acceptsLength(connection.contentLengthLong) || connection.contentLengthLong > maxBytes
-            ) {
-                throw WebSearchError.InvalidResponse
-            }
-            connection.inputStream.use { input ->
-                val output = java.io.ByteArrayOutputStream()
-                val buffer = ByteArray(16 * 1024)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    output.write(buffer, 0, read)
-                    if (output.size() > maxBytes) throw WebSearchError.InvalidResponse
+        var address = url
+        repeat(WebImageDownload.MAX_REDIRECTS + 1) {
+            if (!WebImageDownload.isAllowed(address)) throw WebSearchError.InvalidResponse
+            val connection = Http.open(URL(address))
+            try {
+                connection.instanceFollowRedirects = false
+                connection.connectTimeout = WebImageDownload.TIMEOUT_MS
+                connection.readTimeout = WebImageDownload.TIMEOUT_MS
+                connection.useCaches = false
+                val status = connection.responseCode
+                if (status in REDIRECTS) {
+                    address = connection.getHeaderField("Location")?.let { runCatching { URL(URL(address), it).toString() }.getOrNull() }
+                        ?: throw WebSearchError.InvalidResponse
+                    return@repeat
                 }
-                output.toByteArray()
+                if (status !in 200..299 || !WebImageDownload.isImage(connection.contentType) ||
+                    !WebImageDownload.acceptsLength(connection.contentLengthLong) || connection.contentLengthLong > maxBytes
+                ) {
+                    throw WebSearchError.InvalidResponse
+                }
+                return@withContext connection.inputStream.use { input ->
+                    val output = java.io.ByteArrayOutputStream()
+                    val buffer = ByteArray(16 * 1024)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        output.write(buffer, 0, read)
+                        if (output.size() > maxBytes) throw WebSearchError.InvalidResponse
+                    }
+                    output.toByteArray()
+                }
+            } catch (error: IOException) {
+                throw WebSearchError.Server(0)
+            } finally {
+                connection.disconnect()
             }
-        } catch (error: IOException) {
-            throw WebSearchError.Server(0)
-        } finally {
-            connection.disconnect()
         }
+        throw WebSearchError.InvalidResponse
     }
 
     /**
@@ -119,7 +131,7 @@ object WebSearchClient {
         var method = request.method
         var body = request.body
         repeat(SameHostRedirect.MAX + 1) {
-            val connection = url.openConnection() as HttpURLConnection
+            val connection = Http.open(url)
             try {
                 connection.instanceFollowRedirects = false
                 connection.requestMethod = method

@@ -10,6 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.encave.ui.AppViewModel
 import app.encave.ui.EncaveApp
+import app.encave.ui.components.CameraFiles
 import app.encave.ui.theme.EncaveTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -24,7 +25,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) links.value = intent?.dataString
+        if (savedInstanceState == null) {
+            links.value = intent?.dataString
+            // Camera photos an earlier launch did not get to delete. Not when the activity comes
+            // back after the system closed it: the camera app may be about to deliver one.
+            CameraFiles.clear(this)
+        }
         val app = application as EncaveApplication
         setContent {
             val viewModel: AppViewModel = viewModel(factory = AppViewModel.factory(app))

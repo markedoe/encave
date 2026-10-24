@@ -2,10 +2,10 @@ package app.encave.data.ai
 
 import android.util.Base64
 import app.encave.core.AiLabelPlacement
+import app.encave.core.Http
 import app.encave.core.WineLabelFrame
 import app.encave.core.sync.LocalAddress
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -418,7 +418,7 @@ object AiService {
     /** POST when [body] is set, GET otherwise. Every request goes through here. */
     private suspend fun send(url: URL, headers: Map<String, String>, body: JsonObject?, timeout: Int): JsonObject = withContext(Dispatchers.IO) {
         if (!isAllowed(url)) throw AiError.InsecureUrl
-        val connection = url.openConnection() as HttpURLConnection
+        val connection = Http.open(url)
         try {
             // A redirect could take the key to another server.
             connection.instanceFollowRedirects = false

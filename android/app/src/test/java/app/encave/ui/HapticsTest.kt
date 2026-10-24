@@ -3,6 +3,7 @@ package app.encave.ui
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
+import app.encave.idleMainLooperUntil
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.core.Slot
@@ -26,13 +27,7 @@ class HapticsTest {
     private val viewModel = AppViewModel(app.repository, app.preferences, app.photos, app.documents, app.ai, app.backups)
     private val haptics = mutableListOf<Haptic>()
 
-    private fun waitFor(count: Int) {
-        val deadline = System.currentTimeMillis() + 10_000
-        while (haptics.size < count && System.currentTimeMillis() < deadline) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(10)
-        }
-    }
+    private fun waitFor(count: Int) = idleMainLooperUntil { haptics.size >= count }
 
     @Test
     fun confirmsWhatIsDoneAndRejectsATakenPlace() {

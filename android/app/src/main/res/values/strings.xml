@@ -588,7 +588,6 @@
     <string name="help_field_food">What you ate with it, to remember good pairings.</string>
     <string name="help_full_note_footer">A structured note: appearance, nose, palate, finish and the food you had with it.</string>
     <string name="help_field_rack_name">A name you will recognize: cellar left wall, kitchen wine fridge…</string>
-    <string name="help_kind_footer">Describe everywhere you keep bottles: a rack, a wine fridge, a set of bins.</string>
     <string name="help_field_rows">Counted from the top. Rows are lettered A, B, C…</string>
     <string name="help_field_columns">Counted from the left. Positions are numbered 1, 2, 3…</string>
     <string name="help_field_grid_depth">Deep racks hold a second bottle behind the first one.</string>
@@ -1079,7 +1078,7 @@
     <string name="camera_unavailable">No camera app could take the photo.</string>
     <string name="action_open_app_settings">Open settings</string>
     <string name="help_scanning_barcodes_title">Barcodes</string>
-    <string name="help_scanning_barcodes">When adding bottles, tap **Scan the barcode**: the camera reads the bottle\'s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Without the camera, type the digits under the barcode. Barcodes are matched on this device only; Encave looks nothing up online.</string>
+    <string name="help_scanning_barcodes">When adding bottles, tap **Scan the barcode**: the camera reads the bottle’s barcode and keeps it with the wine. The next time you scan a bottle of that wine, **Already in your cellar** appears: tap **Use this wine** to add bottles without filling anything in. Producers often keep one barcode for every vintage: each vintage you have is listed, and **Another vintage** fills in the same details for you to enter the new vintage. Without the camera, type the digits under the barcode. Barcodes are matched on this device only; Encave looks nothing up online.</string>
     <string name="action_show_table">Show as a table</string>
     <string name="action_show_list">Show as a list</string>
     <string name="table_wine">Wine</string>
@@ -1090,7 +1089,7 @@
     <string name="help_start_table_title">List or table</string>
     <string name="help_start_table">On wide screens (tablets in landscape, unfolded foldables), the button at the top of the Cellar shows it as a list or as a table that sorts by any column, with the selected wine beside it.</string>
     <string name="help_racks_editing_title">Changing storage</string>
-    <string name="help_racks_editing">Tap **Edit storage** to change its name, kind or size. On a fridge with bottles in layers, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first and takes them out of storage (they stay in the cellar without a position), and **Undo** puts everything back. **Delete storage** asks first, saying how many bottles it holds; they stay in the cellar without a position, and it can be undone too. To change the order of your storage, tap **Reorder storage** in the Storage list, then move each one up or down.</string>
+    <string name="help_racks_editing">Tap **Edit storage** to change its name, layout or size. On a fridge with bottles in layers, adding, duplicating or removing a shelf keeps each bottle on its shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first and takes them out of storage (they stay in the cellar without a position), and **Undo** puts everything back. **Delete storage** asks first, saying how many bottles it holds; they stay in the cellar without a position, and it can be undone too. To change the order of your storage, tap **Reorder storage** in the Storage list, then move each one up or down.</string>
     <string name="msg_taken_out_one">Bottle taken out of storage</string>
     <string name="msg_swapped">Bottles swapped</string>
     <string name="msg_rack_deleted">Deleted %1$s</string>
@@ -1320,7 +1319,7 @@
     <string name="insights_year_share_title">Your year in wine %1$s</string>
     <string name="insights_year_made_with">Made with Encave</string>
     <string name="help_journal_opened_title">A bottle from your cellar</string>
-    <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine\'s name to open it.</string>
+    <string name="help_journal_opened">Touch and hold a bottle opened from your cellar to show its wine, edit the note, add bottles of it, or put it back in the cellar if it was logged by mistake (with Undo). In the note, touch the wine’s name to open it.</string>
     <string name="rack_field_shelves">Counted from the top. Shelves are numbered 1, 2, 3…</string>
     <string name="kind_fridge_layers">Wine fridge, shelves in layers</string>
     <string name="kind_fridge_layers_reversed">Wine fridge, shelves in layers · two deep, head-to-tail</string>

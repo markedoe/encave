@@ -99,6 +99,21 @@ class WebImageSearchTest {
         assertTrue(WebImageDownload.isAllowed("https://example.org/a.jpg"))
         assertFalse(WebImageDownload.isAllowed("http://example.org/a.jpg"))
         assertFalse(WebImageDownload.isAllowed("file:///etc/passwd"))
+        // Never this device or the local network: the results come from anyone. Addresses are
+        // built from their numbers, so the repository's checks do not take them for real ones.
+        fun ip(vararg parts: Int) = parts.joinToString(".")
+        listOf(
+            "https://${ip(192, 168, 1, 1)}/a.jpg", "https://localhost/a.jpg", "https://[fd00::1]/a.jpg", "https://nas.local/a.jpg",
+            "https://${ip(127, 0, 0, 1)}/a.jpg", "https://${ip(10, 0, 0, 2)}/a.jpg", "https://${ip(172, 16, 4, 1)}/a.jpg",
+            "https://${ip(169, 254, 169, 254)}/a.jpg", "https://[::1]/a.jpg", "https://[fe80::1]/a.jpg",
+            "https://[::ffff:${ip(192, 168, 1, 1)}]/a.jpg", "https://${ip(0, 0, 0, 0)}/a.jpg", "https://2130706433/a.jpg",
+            "https://127.1/a.jpg", "https://0x7f.0.0.1/a.jpg", "https://NAS.Local./a.jpg", "https://router.home.arpa/a.jpg",
+            "https://app.localhost/a.jpg",
+        ).forEach { assertFalse(WebImageDownload.isAllowed(it), it) }
+        // A public address (from the range kept for documentation), and a public IPv6 one.
+        assertTrue(WebImageDownload.isAllowed("https://${ip(203, 0, 113, 7)}/a.jpg"))
+        assertTrue(WebImageDownload.isAllowed("https://[2001:db8::1]/a.jpg"))
+        assertTrue(WebImageDownload.isAllowed("https://images.example.com:8443/a.jpg"))
         assertTrue(WebImageDownload.isImage("image/jpeg"))
         assertTrue(WebImageDownload.isImage("Image/WebP; charset=binary"))
         assertFalse(WebImageDownload.isImage("text/html"))

@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -21,25 +22,52 @@ import app.encave.R
 import app.encave.ui.AppViewModel
 import app.encave.ui.UiText
 import java.io.File
+import kotlinx.coroutines.launch
 
 /**
- * Takes a photo with the camera app into [fileName] in the cache, then calls [onPhoto].
- * Encave declares the camera permission (for the barcode and QR scanners), and Android
- * then lets the camera app take a photo for it only once the camera is allowed: it is
- * asked for first. A refusal says so, with a way to the app's settings.
+ * Where the camera app writes its photos: full size, with the place where they were taken.
+ * Each is deleted once used, and what an earlier launch left is removed at launch.
+ */
+object CameraFiles {
+    fun folder(context: Context) = File(context.cacheDir, "camera")
+
+    fun clear(context: Context) {
+        folder(context).listFiles()?.forEach { it.delete() }
+    }
+
+    /** Runs [use] on the photo in [file], then deletes the file, whatever happens. */
+    internal suspend fun useOnce(file: File, uri: Uri, use: suspend (Uri) -> Unit) {
+        try {
+            use(uri)
+        } finally {
+            file.delete()
+        }
+    }
+}
+
+/**
+ * Takes a photo with the camera app into [fileName] in the cache, then calls [onPhoto], after
+ * which the photo is deleted. Encave declares the camera permission (for the barcode and QR
+ * scanners), and Android then lets the camera app take a photo for it only once the camera
+ * is allowed: it is asked for first. A refusal says so, with a way to the app's settings.
  */
 @Composable
-fun rememberCameraCapture(viewModel: AppViewModel, fileName: String, onPhoto: (Uri) -> Unit): () -> Unit {
+fun rememberCameraCapture(viewModel: AppViewModel, fileName: String, onPhoto: suspend (Uri) -> Unit): () -> Unit {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val deliver by rememberUpdatedState(onPhoto)
+    val file = File(CameraFiles.folder(context), fileName)
     // Created when needed: the camera app writes the photo to this file in our cache.
     var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-    val take = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) cameraUri?.let(deliver) }
+    val take = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        val uri = cameraUri
+        if (ok && uri != null) scope.launch { CameraFiles.useOnce(file, uri) { deliver(it) } } else file.delete()
+    }
 
     fun launch() {
-        val target = cameraUri ?: runCatching {
-            val file = File(context.cacheDir, "camera/$fileName").apply { parentFile?.mkdirs() }
-            FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+        val target = runCatching {
+            file.parentFile?.mkdirs()
+            cameraUri ?: FileProvider.getUriForFile(context, "${context.packageName}.files", file)
         }.getOrNull()?.also { cameraUri = it }
         if (target == null) {
             viewModel.showMessage(UiText.Res(R.string.photo_failed))

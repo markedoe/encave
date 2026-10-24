@@ -310,6 +310,10 @@ fun RackGrid(
      * Called with the bottle and the place it was dropped on (its own place when not moved).
      */
     onDrop: ((Bottle, RackPlace) -> Unit)? = null,
+    /** A picture of the shape only (the wizard's preview): no place numbers on empty places. */
+    isPicture: Boolean = false,
+    /** The width a fridge's band captions may take, when wider than the shelves (a small preview). */
+    captionWidth: Dp? = null,
 ) {
     // Only worked out again when the cellar or the rack changes, not at each redraw.
     val byCell = remember(cellar, rack) { cellar.bottlesByCell(rack) }
@@ -364,6 +368,7 @@ fun RackGrid(
             onLongClick = onCellLongClick?.takeIf { longClickLabel(bottles) != null }?.let { { it(place, bottles) } },
             customActions = customActions(place, bottles),
             countsFound = countsFound,
+            isPicture = isPicture,
             onDoubleClick = onCellDoubleClick?.let { { it(place) } },
             onPositioned = if (onDrop != null) ({ bounds -> placeBounds[place] = bounds }) else null,
         )
@@ -444,7 +449,7 @@ fun RackGrid(
                 val backHeight = size * BACK_HEIGHT
                 val backOverlap = (backHeight + spacing) * 0.134f
                 val inset = if (showHeaders) headerWidth else 0.dp
-                val bandWidth = (cellWidth + spacing) * (rack.maxColumns + 0.5f + rack.bandShift(1))
+                val bandWidth = maxOf((cellWidth + spacing) * (rack.maxColumns + 0.5f + rack.bandShift(1)), captionWidth ?: 0.dp)
                 rack.shelfRows.forEachIndexed { shelf, rows ->
                     if (shelf > 0) Spacer(Modifier.height(cellSize * SHELF_GAP))
                     if (rack.zoneCount > 1 && (shelf == 0 || rack.zoneOfShelf(shelf) != rack.zoneOfShelf(shelf - 1))) {
@@ -628,6 +633,7 @@ private fun RackCellView(
     onLongClick: (() -> Unit)?,
     customActions: List<CustomAccessibilityAction>,
     countsFound: Boolean,
+    isPicture: Boolean,
     onDoubleClick: (() -> Unit)?,
     onPositioned: ((Rect) -> Unit)? = null,
 ) {
@@ -665,9 +671,9 @@ private fun RackCellView(
             rack.kind == RackKind.Bins -> Bin(rack, bottles, cellar, size, selectedCount, isHighlighted || isFocused, countsFound)
             place.depth != null -> BandPlace(
                 rack, cell, bottles.firstOrNull(), cellar, size, height, back = place.depth > 0,
-                selectedCount, isHighlighted, isFocused,
+                selectedCount, isHighlighted, isFocused, showsNumber = !isPicture,
             )
-            else -> Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused, countsFound)
+            else -> Position(rack, cell, bottles, cellar, size, height, selectedCount, isHighlighted, isFocused, countsFound, showsNumber = !isPicture)
         }
         if (onClick != null) {
             // Touches reach the drawn shape only: honeycomb and fridge holes, diamond bins (their
@@ -715,6 +721,7 @@ private fun BandPlace(
     selectedCount: Int,
     isHighlighted: Boolean,
     isFocused: Boolean,
+    showsNumber: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
@@ -732,7 +739,7 @@ private fun BandPlace(
             }
         } else {
             Box(Modifier.size(diameter).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
-            if (selectedCount == 0) {
+            if (selectedCount == 0 && showsNumber) {
                 // The place number: the shelf is on the side, the band in its caption.
                 Text(
                     rack.emptyCaption(cell), color = scheme.onSurfaceVariant,
@@ -761,6 +768,7 @@ private fun Position(
     isHighlighted: Boolean,
     isFocused: Boolean,
     countsFound: Boolean,
+    showsNumber: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
@@ -795,7 +803,7 @@ private fun Position(
                 behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f, showsStyle = true)
                 else -> {
                     Box(Modifier.size(bottle).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
-                    if (selectedCount == 0) {
+                    if (selectedCount == 0 && showsNumber) {
                         Text(
                             rack.emptyCaption(cell), color = scheme.onSurfaceVariant,
                             fontSize = with(density) { (size * 0.18f).toSp().value.coerceAtLeast(9f).sp },

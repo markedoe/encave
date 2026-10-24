@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.Timeout
 
 /**
  * A WebDAV server in memory on localhost. Behaves like Nextcloud: PUT needs the parent
@@ -158,6 +160,8 @@ class FakeWebDav : AutoCloseable {
     }
 }
 
+// Sockets and pipes: a hang fails the test instead of blocking CI.
+@Timeout(120, unit = TimeUnit.SECONDS)
 class WebDavTests {
     private val servers = mutableListOf<FakeWebDav>()
 

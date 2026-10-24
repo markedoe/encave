@@ -133,21 +133,20 @@ fun PhotoSection(
         viewModel.startLabelAnalysis(form.id, jpeg)
     }
 
-    fun use(uri: Uri) {
-        scope.launch {
-            val jpeg = viewModel.preparePhoto(uri)
-            if (jpeg == null) {
-                viewModel.showMessage(UiText.Res(R.string.photo_failed))
-                return@launch
-            }
-            form.newPhoto = jpeg
-            form.photoRemoved = false
-            if (ai.isEnabled) analyze(jpeg)
+    suspend fun prepare(uri: Uri) {
+        val jpeg = viewModel.preparePhoto(uri)
+        if (jpeg == null) {
+            viewModel.showMessage(UiText.Res(R.string.photo_failed))
+            return
         }
+        form.newPhoto = jpeg
+        form.photoRemoved = false
+        if (ai.isEnabled) analyze(jpeg)
     }
 
-    val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(::use) }
-    val takePhoto = rememberCameraCapture(viewModel, "label.jpg", ::use)
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { scope.launch { prepare(it) } } }
+    // The camera's original is deleted once prepared.
+    val takePhoto = rememberCameraCapture(viewModel, "label.jpg") { prepare(it) }
     val isReading = reading is LabelReading.Reading
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.s)) {

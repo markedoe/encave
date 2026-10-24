@@ -912,7 +912,15 @@ class AppViewModel(
 
     // region Racks
 
-    fun addRack(rack: Rack) = change<Unit> { it.addRack(rack) }
+    /** Adds a storage; [onDone] says whether it was saved (on failure the error is shown). */
+    fun addRack(rack: Rack, onDone: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.update { it.addRack(rack) }.onSuccess { onDone(true) }.onFailure {
+                fail(it)
+                onDone(false)
+            }
+        }
+    }
 
     /**
      * Saves a rack, moving its bottles by [rowMap] (see Cellar.updateRack). With [takingOut]

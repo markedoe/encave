@@ -550,7 +550,7 @@
     <string name="action_wine_page">Fiche du vin</string>
     <string name="rack_list_empty_title">Vide</string>
     <string name="rack_list_empty">Touchez une position du rangement pour y ajouter une bouteille.</string>
-    <string name="sample_bins">Casiers en losange</string>
+    <string name="sample_bins">Cases en losange</string>
     <string name="sample_deep_rack">Casier double profondeur</string>
     <string name="sample_honeycomb">Casier nid d’abeille</string>
     <string name="sample_stairs">Sous l’escalier</string>
@@ -587,7 +587,6 @@
     <string name="help_field_food">Ce que vous avez mangé avec, pour retenir les bons accords.</string>
     <string name="help_full_note_footer">Une note structurée : robe, nez, bouche, finale et le plat qui l’accompagnait.</string>
     <string name="help_field_rack_name">Un nom que vous reconnaîtrez : mur gauche du sous-sol, cave à vin réfrigérée de la cuisine…</string>
-    <string name="help_kind_footer">Décrivez chaque endroit où vous rangez des bouteilles : un casier, une cave à vin réfrigérée, des cases en losange.</string>
     <string name="help_field_rows">Comptées depuis le haut. Les rangées sont nommées A, B, C…</string>
     <string name="help_field_columns">Comptées depuis la gauche. Les positions sont numérotées 1, 2, 3…</string>
     <string name="help_field_grid_depth">Les casiers profonds accueillent une deuxième bouteille derrière la première.</string>
@@ -1089,7 +1088,7 @@
     <string name="help_start_table_title">Liste ou tableau</string>
     <string name="help_start_table">Sur grand écran (tablette à l’horizontale, pliable déplié), le bouton en haut de la Cave l’affiche en liste ou en tableau triable par n’importe quelle colonne, avec le vin sélectionné à côté.</string>
     <string name="help_racks_editing_title">Modifier un rangement</string>
-    <string name="help_racks_editing">Touchez **Modifier le rangement** pour changer son nom, son type ou sa taille. Sur une cave à vin réfrigérée avec bouteilles en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du rangement (elles restent dans la cave sans position), et **Annuler** remet tout en place. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans position, et cela peut aussi être annulé. Pour changer l’ordre de vos rangements, touchez **Réorganiser les rangements** dans la liste des rangements, puis montez ou descendez chaque rangement.</string>
+    <string name="help_racks_editing">Touchez **Modifier le rangement** pour changer son nom, sa disposition ou sa taille. Sur une cave à vin réfrigérée avec bouteilles en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions qui ont des bouteilles, l’éditeur indique combien ; l’enregistrement demande alors confirmation et les sort du rangement (elles restent dans la cave sans position), et **Annuler** remet tout en place. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans la cave sans position, et cela peut aussi être annulé. Pour changer l’ordre de vos rangements, touchez **Réorganiser les rangements** dans la liste des rangements, puis montez ou descendez chaque rangement.</string>
     <string name="msg_taken_out_one">Bouteille sortie du rangement</string>
     <string name="msg_swapped">Bouteilles échangées</string>
     <string name="msg_rack_deleted">%1$s supprimé</string>

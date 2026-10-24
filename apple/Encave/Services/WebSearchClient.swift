@@ -78,23 +78,26 @@ enum WebSearchClient {
         return try provider.imageResults(from: data, status: status)
     }
 
-    /// Downloads a chosen picture from its host: https only, an image type, at most 8 MB.
-    static func downloadImage(_ url: URL) async throws -> Data {
+    /// Downloads a picture (a thumbnail, or the one chosen) from its host: https only, never
+    /// from this device or the local network (each redirect is checked too), an image type,
+    /// at most `maxBytes`. No cookies or cache, as for the searches.
+    static func downloadImage(_ url: URL, maxBytes: Int = WebImageDownload.maxBytes) async throws -> Data {
         guard WebImageDownload.isAllowed(url) else { throw WebSearchError.invalidResponse }
         var request = URLRequest(url: url)
         request.timeoutInterval = WebImageDownload.timeout
-        let (bytes, response) = try await session.bytes(for: request)
+        let (bytes, response) = try await session.bytes(for: request, delegate: PublicImageRedirects.shared)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
               http.url.map(WebImageDownload.isAllowed) ?? true,
               WebImageDownload.isImage(contentType: http.value(forHTTPHeaderField: "Content-Type")),
-              WebImageDownload.acceptsLength(response.expectedContentLength) else {
+              WebImageDownload.acceptsLength(response.expectedContentLength),
+              response.expectedContentLength <= Int64(maxBytes) else {
             throw WebSearchError.invalidResponse
         }
         var data = Data()
-        data.reserveCapacity(Int(min(max(response.expectedContentLength, 0), Int64(WebImageDownload.maxBytes))))
+        data.reserveCapacity(Int(min(max(response.expectedContentLength, 0), Int64(maxBytes))))
         for try await byte in bytes {
             data.append(byte)
-            if data.count > WebImageDownload.maxBytes { throw WebSearchError.invalidResponse }
+            if data.count > maxBytes { throw WebSearchError.invalidResponse }
         }
         return data
     }
@@ -120,6 +123,18 @@ enum WebSearchClient {
         case .invalidResponse:
             return String(localized: "The answer from the search service could not be read.")
         }
+    }
+}
+
+/// A picture's redirects go only to public https hosts (`WebImageDownload.isAllowed`); a
+/// refused one ends the download.
+final class PublicImageRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    static let shared = PublicImageRedirects()
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest) async -> URLRequest? {
+        guard let target = request.url, WebImageDownload.isAllowed(target) else { return nil }
+        return request
     }
 }
 

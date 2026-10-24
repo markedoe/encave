@@ -147,11 +147,12 @@ fun rememberDocumentAdder(viewModel: AppViewModel, onStaged: (List<PendingDocume
     // Asks for the camera first: see rememberCameraCapture.
     val photograph = app.encave.ui.components.rememberCameraCapture(viewModel, "paper.jpg") { uri ->
         busy = true
-        scope.launch {
-            val staged = viewModel.stagePhotoOfPaper(uri)
+        val staged = try {
+            viewModel.stagePhotoOfPaper(uri)
+        } finally {
             busy = false
-            if (staged != null) deliver(listOf(staged))
         }
+        if (staged != null) deliver(listOf(staged))
     }
     return DocumentAdder(
         pick = { runCatching { picker.launch(documentTypes) }.onFailure { viewModel.showMessage(UiText.Res(R.string.err_document_unreadable)) } },

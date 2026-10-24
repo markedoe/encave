@@ -1,9 +1,9 @@
 package app.encave.ui
 
-import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import app.encave.EncaveApplication
 import app.encave.R
+import app.encave.idleMainLooperUntil
 import app.encave.core.PurchaseInfo
 import app.encave.core.Rack
 import app.encave.core.Slot
@@ -22,19 +22,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class AddBottlesUndoTest {
-    private fun waitFor(condition: () -> Boolean) {
-        val deadline = System.currentTimeMillis() + 10_000
-        while (!condition() && System.currentTimeMillis() < deadline) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(10)
-        }
-    }
+    private fun waitFor(condition: () -> Boolean) = idleMainLooperUntil(condition = condition)
 
     @Test
     fun addingOffersUndoAndTellsTheScreenWhetherItWorked() {

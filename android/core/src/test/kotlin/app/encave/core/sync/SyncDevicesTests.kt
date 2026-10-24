@@ -17,8 +17,12 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.Timeout
 
 /** Leaving a cellar, joining with Replace, sync health and retries. Mirrors CaveKit's SyncDevicesTests. */
+// Sockets and pipes: a hang fails the test instead of blocking CI.
+@Timeout(120, unit = TimeUnit.SECONDS)
 class SyncDevicesTests {
     private fun members(): Triple<DeviceIdentity, DeviceIdentity, Membership> {
         val a = identity()

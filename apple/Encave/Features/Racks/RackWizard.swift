@@ -10,6 +10,10 @@ struct RackWizard: View {
     @State private var path: [Step] = []
     @State private var name = ""
     @State private var loaded = false
+    /// The preview's largest height (a fridge two deep is tall), growing with Dynamic Type like
+    /// its captions, and the width of its row.
+    @ScaledMetric(relativeTo: .body) private var previewHeight: CGFloat = 380
+    @State private var previewWidth: CGFloat = 0
 
     enum Step: Hashable { case settings, name }
 
@@ -61,13 +65,16 @@ struct RackWizard: View {
     private var settingsStep: some View {
         Form {
             Section {
-                ScrollView([.horizontal, .vertical]) {
-                    RackGrid(rack: preview, cellSize: 18, showsHeaders: false, isPicture: true)
-                        .allowsHitTesting(false)
-                        .padding(8)
-                }
-                .frame(minHeight: 120, maxHeight: 220)
-                .accessibilityHidden(true)
+                // The whole storage, as large as the row's width and the preview's height allow
+                // (a small storage takes less height).
+                let space = CGSize(width: max(previewWidth, 200) - 16, height: previewHeight - 16)
+                RackGrid(rack: preview, cellSize: RackGrid.fittingCellSize(for: preview, in: space, showsHeaders: false, floor: 0),
+                         showsHeaders: false, isPicture: true, captionWidth: space.width)
+                    .allowsHitTesting(false)
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { previewWidth = $0 }
+                    .accessibilityHidden(true)
             } header: {
                 Text("Preview")
             } footer: {

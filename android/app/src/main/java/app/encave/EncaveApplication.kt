@@ -3,6 +3,7 @@ package app.encave
 import android.app.Application
 import app.encave.core.CellarVersionFolder
 import app.encave.core.FileKind
+import app.encave.core.Http
 import app.encave.core.JsonFileCellarStore
 import app.encave.data.BackupManager
 import app.encave.data.BackupWorker
@@ -69,6 +70,8 @@ class EncaveApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Before any request: they say "Encave/<version>", not the device model.
+        Http.setVersion(BuildConfig.VERSION_NAME)
         sync.start()
         // Widgets follow every change, made here or synced from another device.
         WidgetPublisher(

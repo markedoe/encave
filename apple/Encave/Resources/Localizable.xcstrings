@@ -3731,12 +3731,12 @@
         }
       }
     },
-    "Choose **Edit Storage** to change its name, kind or size. On a wine fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a position, and **Undo** puts them back. **Delete Storage** asks first, saying how many bottles it holds; they stay in your cellar without a position, and **Undo** brings the storage back.": {
+    "Choose **Edit Storage** to change its name, layout or size. On a wine fridge with shelves in layers, adding, duplicating or removing a shelf keeps each bottle on its own shelf and layer. When a change removes positions that hold bottles, the editor says how many; saving then asks first, those bottles stay in your cellar without a position, and **Undo** puts them back. **Delete Storage** asks first, saying how many bottles it holds; they stay in your cellar without a position, and **Undo** brings the storage back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez **Modifier le rangement** pour changer son nom, son type ou sa taille. Sur une cave à vin réfrigérée aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans position, et **Annuler** les remet. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans position, et **Annuler** rétablit le rangement."
+            "value": "Choisissez **Modifier le rangement** pour changer son nom, sa disposition ou sa taille. Sur une cave à vin réfrigérée aux étagères en couches, ajouter, dupliquer ou supprimer une étagère garde chaque bouteille sur son étagère et sa couche. Quand une modification supprime des positions occupées, l’éditeur indique combien de bouteilles y sont ; l’enregistrement demande alors confirmation, ces bouteilles restent dans votre cave sans position, et **Annuler** les remet. **Supprimer le rangement** demande d’abord, en indiquant combien de bouteilles il contient ; elles restent dans votre cave sans position, et **Annuler** rétablit le rangement."
           }
         }
       }
