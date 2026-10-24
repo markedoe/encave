@@ -23,16 +23,23 @@ import Testing
     struct Vectors: Decodable {
         struct Rank: Decodable { var wineId: String; var day: String; var rank: String }
         struct Order: Decodable { var day: String; var wineIds: [String]; var order: [String] }
+        struct PickWine: Decodable { var id: String; var from: Int?; var until: Int?; var free: Int?; var reserved: Int? }
+        struct Pick: Decodable { var about: String; var day: String; var kept: String?; var wines: [PickWine]; var order: [String] }
         var ranks: [Rank]
         var orders: [Order]
+        var picks: [Pick]
     }
 
-    @Test func ranksAndOrdersMatchTheSharedVectors() throws {
+    static func vectors() throws -> Vectors {
         let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent() // CaveKitTests
             .deletingLastPathComponent().deletingLastPathComponent() // CaveKit
             .deletingLastPathComponent().deletingLastPathComponent() // apple
             .deletingLastPathComponent().appendingPathComponent("fixtures/tonight-vectors.json")
-        let vectors = try JSONDecoder().decode(Vectors.self, from: Data(contentsOf: file))
+        return try JSONDecoder().decode(Vectors.self, from: Data(contentsOf: file))
+    }
+
+    @Test func ranksAndOrdersMatchTheSharedVectors() throws {
+        let vectors = try Self.vectors()
         #expect(!vectors.ranks.isEmpty && !vectors.orders.isEmpty)
         for vector in vectors.ranks {
             let id = try #require(UUID(uuidString: vector.wineId))
@@ -44,6 +51,27 @@ import Testing
                     < Cellar.tonightRank(wineID: UUID(uuidString: $1)!, day: vector.day)
             }
             #expect(sorted == vector.order)
+        }
+    }
+
+    /// Tonight's whole order in a cellar, from `picks` in the shared vectors (the Android core reads them too).
+    @Test func picksMatchTheSharedVectors() throws {
+        let vectors = try Self.vectors()
+        #expect(!vectors.picks.isEmpty)
+        for vector in vectors.picks {
+            var cellar = Cellar()
+            #expect(!vector.wines.isEmpty)
+            for item in vector.wines {
+                let id = try #require(UUID(uuidString: item.id))
+                let wine = Wine(id: id, name: item.id, drinkFrom: item.from ?? 2020, drinkUntil: item.until)
+                let reserved = item.reserved ?? 0
+                let added = try cellar.addBottles(of: wine, quantity: (item.free ?? 1) + reserved)
+                if reserved > 0 { try cellar.reserve(added.suffix(reserved).map(\.id), for: "Birthday") }
+            }
+            var kept: UUID?
+            if let text = vector.kept { kept = try #require(UUID(uuidString: text)) }
+            let picks = cellar.tonightPicks(year: 2026, day: vector.day, keeping: kept)
+            #expect(picks.map { $0.wine.id.uuidString.lowercased() } == vector.order.map { $0.lowercased() }, "\(vector.about)")
         }
     }
 
@@ -115,7 +143,12 @@ import Testing
         try cellar.addBottles(of: Wine(name: "Ready", drinkFrom: 2020, drinkUntil: 2030))
         for day in ["2026-01-01", "2026-01-02", "2026-01-03"] {
             let picks = cellar.tonightPicks(year: 2026, day: day)
-            #expect(cellar.tonightSuggestion(year: 2026, day: day)?.wine.id == picks.first?.wine.id)
+            // The candidate with the smallest rank that day.
+            let best = cellar.tonightCandidates(year: 2026).min {
+                Cellar.tonightRank(wineID: $0.wine.id, day: day) < Cellar.tonightRank(wineID: $1.wine.id, day: day)
+            }
+            #expect(best != nil)
+            #expect(cellar.tonightSuggestion(year: 2026, day: day)?.wine.id == best?.wine.id)
             // The wine kept for the day stays the suggestion.
             let other = try #require(picks.last)
             #expect(cellar.tonightSuggestion(year: 2026, day: day, keeping: other.wine.id)?.wine.id == other.wine.id)
