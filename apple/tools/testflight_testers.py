@@ -18,6 +18,10 @@ Environment:
 
 Without an external group it warns and stops: create one in App Store Connect
 (TestFlight > External Testing) and the next build goes to it.
+
+With --quiet (run by the CI right after each upload, before App Store Connect has
+processed the build): only turns off the automatic tester notification of the build,
+so no e-mail is sent for it. Testers still see it in the TestFlight app.
 """
 
 import base64
@@ -122,6 +126,25 @@ def wait_for_build(app_id, number, platform, minutes):
         time.sleep(30)
 
 
+def quiet(app_id, number, platform, minutes):
+    """Turns off "Automatically notify testers" for the build, as soon as it is listed."""
+    deadline = time.time() + minutes * 60
+    while True:
+        builds = call("GET", "/builds", query={
+            "filter[app]": app_id, "filter[version]": number,
+            "filter[preReleaseVersion.platform]": platform, "limit": 1})["data"]
+        if builds:
+            break
+        if time.time() > deadline:
+            warn(f"The {platform} build {number} was not listed after {minutes} minutes: testers may get an e-mail.")
+            return
+        time.sleep(15)
+    detail = call("GET", f"/builds/{builds[0]['id']}/buildBetaDetail")["data"]
+    call("PATCH", f"/buildBetaDetails/{detail['id']}", {"data": {
+        "type": "buildBetaDetails", "id": detail["id"], "attributes": {"autoNotifyEnabled": False}}})
+    print(f"{platform} build {number}: testers are not notified by e-mail.")
+
+
 def set_whats_new(build_id, text):
     existing = call("GET", f"/builds/{build_id}/betaBuildLocalizations")["data"]
     if not existing:
@@ -152,6 +175,11 @@ def main():
     if not apps:
         sys.exit(f"No app with the bundle ID {bundle} in App Store Connect.")
     app_id = apps[0]["id"]
+
+    if "--quiet" in sys.argv[1:]:
+        for platform in platforms:
+            quiet(app_id, number, platform, minutes)
+        return
 
     groups = call("GET", "/betaGroups", query={"filter[app]": app_id, "filter[isInternalGroup]": "false", "limit": 50})["data"]
     if not groups:
