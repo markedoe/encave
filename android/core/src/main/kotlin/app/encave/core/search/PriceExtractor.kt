@@ -64,6 +64,9 @@ object PriceExtractor {
         500 to Regex("""\b50 ?cl|\b500 ?ml|\b0[.,]5 ?l\b""", RegexOption.IGNORE_CASE),
     )
 
+    /** Matches of each pattern read in one text, at most. */
+    private const val MAX_MATCHES = 50
+
     private val min = BigDecimal(3)
     private val max = BigDecimal(20_000)
 
@@ -96,18 +99,19 @@ object PriceExtractor {
     /** As [prices]; a price without a size next to it is for [defaultSize]. */
     internal fun textPrices(text: String, sizeML: Int, defaultSize: Int = 750): List<TextPrice> {
         val matches = mutableListOf<Match>()
-        for (match in prefix.findAll(text)) {
+        for (match in prefix.findAll(text).take(MAX_MATCHES)) {
             matches += Match(match.range.first, match.range.last + 1, match.groupValues[2], match.groupValues[1], false)
         }
-        for (match in suffix.findAll(text)) {
+        for (match in suffix.findAll(text).take(MAX_MATCHES)) {
             matches += Match(match.range.first, match.range.last + 1, match.groupValues[1], match.groupValues[2], true)
         }
         // "2019 €45": the vintage followed by a price is not "2019 €". Otherwise the
         // amount before its symbol ("45,00 € 39,90 €") wins.
         fun isYear(amount: String) = amount.length == 4 && amount.all { it.isDigit() } && amount.toInt() in 1900..2100
         val kept = mutableListOf<Match>()
+        // Sorted, so only the last kept match can overlap the next one.
         for (match in matches.sortedBy { it.start }) {
-            val index = kept.indexOfFirst { it.start < match.end && match.start < it.end }
+            val index = kept.lastIndex.takeIf { it >= 0 && kept[it].start < match.end && match.start < kept[it].end } ?: -1
             if (index >= 0) {
                 val other = kept[index]
                 val suffixMatch = if (match.isSuffix) match else other

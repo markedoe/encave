@@ -113,7 +113,17 @@ object WebImageDownload {
     fun isAllowed(url: String): Boolean {
         val address = httpsUrl(url) ?: return false
         val host = runCatching { URI(address).host }.getOrNull() ?: return false
+        // A name without a dot ("nas") is completed with the local network's domain.
+        val name = PublicHost.bare(host)
+        if (!PublicHost.isAddress(name) && !name.contains('.')) return false
         return !isPrivateHost(host)
+    }
+
+    /** [isAllowed], and the name resolves only to public addresses ("fritz.box" or a name pointing to the local network does not). An address is checked as it is. */
+    fun resolvesPublicly(url: String, resolver: (String) -> List<String> = PublicHost::systemAddresses): Boolean {
+        if (!isAllowed(url)) return false
+        val host = runCatching { URI(url).host }.getOrNull() ?: return false
+        return PublicHost.resolvesPublicly(host, resolver)
     }
 
     /** localhost, *.local, private, loopback and link-local addresses, and IP addresses written in other forms. */

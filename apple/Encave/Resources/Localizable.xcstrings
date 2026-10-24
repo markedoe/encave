@@ -2501,12 +2501,12 @@
         }
       }
     },
-    "Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or ask the AI to complete a wine; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request. For a price, the first pages found are opened from this device to read the price on them; those sites see the request too.": {
+    "Apart from sync, only two features can send anything, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or ask the AI to complete a wine; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request. For a price, the first pages found are opened from this device to read the price on them; those sites see the request too.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En dehors de la synchronisation, seules deux choses peuvent quitter l’appareil, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou demandez à l’IA de compléter un vin ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande. Pour un prix, les premières pages trouvées sont ouvertes depuis cet appareil pour y lire le prix ; ces sites voient aussi la demande."
+            "value": "En dehors de la synchronisation, seules deux fonctions peuvent envoyer quelque chose, et seulement si vous les configurez vous-même : la photo de l’étiquette, envoyée au service d’IA que vous avez choisi, avec votre propre clé, quand vous scannez une étiquette ou demandez à l’IA de compléter un vin ; et les termes de recherche d’un vin (producteur, nom, appellation et millésime, et pour un prix la contenance), affichés avant tout envoi et envoyés à votre service de recherche web quand vous touchez Chercher. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent, qui voient la demande. Pour un prix, les premières pages trouvées sont ouvertes depuis cet appareil pour y lire le prix ; ces sites voient aussi la demande."
           }
         }
       }
@@ -9221,22 +9221,22 @@
         }
       }
     },
-    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. For a price, the first pages found are then opened from this device to read the price on them: those sites see the request and your IP address. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.": {
+    "Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. For a price, the first pages found are then opened from this device to read the price on them: those sites see the page asked for, your IP address, the app's name and version, the system version and your preferred languages. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés. Pour un prix, les premières pages trouvées sont ensuite ouvertes depuis cet appareil pour y lire le prix : ces sites voient la demande et votre adresse IP. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent."
+            "value": "Seuls les termes de recherche sont envoyés, directement à ce service, quand vous touchez Chercher : le producteur, le nom, l’appellation et le millésime du vin, et le format de la bouteille pour un prix. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes et vos prix ne sont jamais envoyés. Pour un prix, les premières pages trouvées sont ensuite ouvertes depuis cet appareil pour y lire le prix : ces sites voient la page demandée, votre adresse IP, le nom et la version de l’app, la version du système et vos langues préférées. Quand vous cherchez des images, les miniatures et l’image choisie sont téléchargées depuis les sites qui les hébergent."
           }
         }
       }
     },
-    "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, with the word “wine” (“bottle” for pictures); for a price, the word “price” and the bottle size when it is not 75 cl. You see them and can change them first. Your cellar, notes, prices and places are never sent. For a price, the first five pages found are then opened from this device, without cookies: those sites see the page asked for and your IP address, nothing else. The key is stored in the Keychain on this device.": {
+    "Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, with the word “wine” (“bottle” for pictures); for a price, the word “price” and the bottle size when it is not 75 cl. You see them and can change them first. Your cellar, notes, prices and places are never sent. For a price, the first five pages found are then opened from this device, without cookies: those sites see the page asked for, your IP address, the app's name and version, the system version and your preferred languages. The key is stored in the Keychain on this device.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos lieux ne sont jamais envoyés. Pour un prix, les cinq premières pages trouvées sont ensuite ouvertes depuis cet appareil, sans cookies : ces sites voient la page demandée et votre adresse IP, rien d’autre. La clé est conservée dans le trousseau de cet appareil."
+            "value": "Seulement les termes de recherche, au service que vous avez choisi : par défaut le producteur, le nom, l’appellation et le millésime, avec le mot « vin » (« bouteille » pour les images) ; pour un prix, le mot « prix » et le format s’il n’est pas de 75 cl. Vous les voyez et pouvez les modifier avant. Votre cave, vos notes, vos prix et vos lieux ne sont jamais envoyés. Pour un prix, les cinq premières pages trouvées sont ensuite ouvertes depuis cet appareil, sans cookies : ces sites voient la page demandée, votre adresse IP, le nom et la version de l’app, la version du système et vos langues préférées. La clé est conservée dans le trousseau de cet appareil."
           }
         }
       }
@@ -9251,12 +9251,12 @@
         }
       }
     },
-    "Only these words are sent, to %@, when you tap Search. Change them if you like. The first pages found are then opened from this device to read their price: those sites see the page asked for and your IP address. Nothing else about this wine or your cellar is sent.": {
+    "Only these words are sent, to %@, when you tap Search. Change them if you like. The first pages found are then opened from this device to read their price: those sites see the page asked for, your IP address, the app's name and version, the system version and your preferred languages. Nothing else about this wine or your cellar is sent.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seuls ces mots sont envoyés, à %@, quand vous touchez Chercher. Modifiez-les si vous le souhaitez. Les premières pages trouvées sont ensuite ouvertes depuis cet appareil pour y lire le prix : ces sites voient la page demandée et votre adresse IP. Rien d’autre sur ce vin ou votre cave n’est envoyé."
+            "value": "Seuls ces mots sont envoyés, à %@, quand vous touchez Chercher. Modifiez-les si vous le souhaitez. Les premières pages trouvées sont ensuite ouvertes depuis cet appareil pour y lire le prix : ces sites voient la page demandée, votre adresse IP, le nom et la version de l’app, la version du système et vos langues préférées. Rien d’autre sur ce vin ou votre cave n’est envoyé."
           }
         }
       }

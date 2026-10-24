@@ -1,105 +1,603 @@
 {
-  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. The pages and names are made up.",
+  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. The pages and names are made up. Amounts in structured data are digits with an optional decimal point, rounded to the cent. Addresses of the private IPv4 ranges are tested in code, built from their numbers.",
   "sizeWords": [
-    { "sizeML": 750, "words": null },
-    { "sizeML": 375, "words": "37.5 cl" },
-    { "sizeML": 500, "words": "50 cl" },
-    { "sizeML": 620, "words": "clavelin" },
-    { "sizeML": 700, "words": "70 cl" },
-    { "sizeML": 1000, "words": "1 l" },
-    { "sizeML": 1500, "words": "magnum" }
+    {
+      "sizeML": 750,
+      "words": null
+    },
+    {
+      "sizeML": 375,
+      "words": "37.5 cl"
+    },
+    {
+      "sizeML": 500,
+      "words": "50 cl"
+    },
+    {
+      "sizeML": 620,
+      "words": "clavelin"
+    },
+    {
+      "sizeML": 700,
+      "words": "70 cl"
+    },
+    {
+      "sizeML": 1000,
+      "words": "1 l"
+    },
+    {
+      "sizeML": 1500,
+      "words": "magnum"
+    }
   ],
   "snippets": [
-    { "text": "Les Lacustres CHF 13.– 70 cl", "sizeML": 700, "prices": ["13 CHF"] },
-    { "text": "Les Lacustres, CHF 13.- (70 cl)", "sizeML": 700, "prices": ["13 CHF"] },
-    { "text": "Les Lacustres 0,7 l CHF 13.00", "sizeML": 700, "prices": ["13 CHF"] },
-    { "text": "Les Lacustres 0.7 l, CHF 13", "sizeML": 700, "prices": ["13 CHF"] },
-    { "text": "Chasselas 700 ml : 13.– CHF", "sizeML": 700, "prices": ["13 CHF"] },
-    { "text": "Les Lacustres 70 cl CHF 13.00", "sizeML": 750, "prices": [] },
-    { "text": "Prix Fr. 13.50 la bouteille", "sizeML": 750, "prices": ["13.5 CHF"] },
-    { "text": "Prix 13.50 Fr. la bouteille", "sizeML": 750, "prices": ["13.5 CHF"] },
-    { "text": "Prix SFr. 13.50", "sizeML": 750, "prices": ["13.5 CHF"] },
-    { "text": "Prix 13.– CHF", "sizeML": 750, "prices": ["13 CHF"] },
-    { "text": "Prix CHF 13", "sizeML": 750, "prices": ["13 CHF"] },
-    { "text": "Bonfr. 13.50 ou 12 francs, frais 14 fraises", "sizeML": 750, "prices": [] },
-    { "text": "Demi-bouteille 37,5 cl : 18,00 €", "sizeML": 375, "prices": ["18 EUR"] },
-    { "text": "Bouteille 50 cl : 22,00 €", "sizeML": 500, "prices": ["22 EUR"] },
-    { "text": "Bouteille 0,5 l : 22,00 €", "sizeML": 500, "prices": ["22 EUR"] },
-    { "text": "Vin jaune, clavelin 62 cl : 35,00 €", "sizeML": 620, "prices": ["35 EUR"] },
-    { "text": "Vin de table 1 litre : 12,00 €", "sizeML": 1000, "prices": ["12 EUR"] },
-    { "text": "Vin de table 1 l : 12,00 €", "sizeML": 1000, "prices": ["12 EUR"] },
-    { "text": "Vin de table 100 cl : 12,00 €", "sizeML": 1000, "prices": ["12 EUR"] },
-    { "text": "Bouteille 0,75 l : 15,00 €", "sizeML": 700, "prices": [] },
-    { "text": "Bouteille 0,75 l : 15,00 €", "sizeML": 750, "prices": ["15 EUR"] }
+    {
+      "text": "Les Lacustres CHF 13.– 70 cl",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Les Lacustres, CHF 13.- (70 cl)",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Les Lacustres 0,7 l CHF 13.00",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Les Lacustres 0.7 l, CHF 13",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Chasselas 700 ml : 13.– CHF",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Les Lacustres 70 cl CHF 13.00",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Prix Fr. 13.50 la bouteille",
+      "sizeML": 750,
+      "prices": [
+        "13.5 CHF"
+      ]
+    },
+    {
+      "text": "Prix 13.50 Fr. la bouteille",
+      "sizeML": 750,
+      "prices": [
+        "13.5 CHF"
+      ]
+    },
+    {
+      "text": "Prix SFr. 13.50",
+      "sizeML": 750,
+      "prices": [
+        "13.5 CHF"
+      ]
+    },
+    {
+      "text": "Prix 13.– CHF",
+      "sizeML": 750,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Prix CHF 13",
+      "sizeML": 750,
+      "prices": [
+        "13 CHF"
+      ]
+    },
+    {
+      "text": "Bonfr. 13.50 ou 12 francs, frais 14 fraises",
+      "sizeML": 750,
+      "prices": []
+    },
+    {
+      "text": "Demi-bouteille 37,5 cl : 18,00 €",
+      "sizeML": 375,
+      "prices": [
+        "18 EUR"
+      ]
+    },
+    {
+      "text": "Bouteille 50 cl : 22,00 €",
+      "sizeML": 500,
+      "prices": [
+        "22 EUR"
+      ]
+    },
+    {
+      "text": "Bouteille 0,5 l : 22,00 €",
+      "sizeML": 500,
+      "prices": [
+        "22 EUR"
+      ]
+    },
+    {
+      "text": "Vin jaune, clavelin 62 cl : 35,00 €",
+      "sizeML": 620,
+      "prices": [
+        "35 EUR"
+      ]
+    },
+    {
+      "text": "Vin de table 1 litre : 12,00 €",
+      "sizeML": 1000,
+      "prices": [
+        "12 EUR"
+      ]
+    },
+    {
+      "text": "Vin de table 1 l : 12,00 €",
+      "sizeML": 1000,
+      "prices": [
+        "12 EUR"
+      ]
+    },
+    {
+      "text": "Vin de table 100 cl : 12,00 €",
+      "sizeML": 1000,
+      "prices": [
+        "12 EUR"
+      ]
+    },
+    {
+      "text": "Bouteille 0,75 l : 15,00 €",
+      "sizeML": 700,
+      "prices": []
+    },
+    {
+      "text": "Bouteille 0,75 l : 15,00 €",
+      "sizeML": 750,
+      "prices": [
+        "15 EUR"
+      ]
+    }
   ],
   "pages": [
     {
-      "file": "woocommerce.html", "url": "https://shop.example.org/produit/les-lacustres/",
-      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["13 CHF"], "excerptContains": ["Les Lacustres", "CHF 13.00", "70 cl"]
+      "file": "woocommerce.html",
+      "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ],
+      "excerptContains": [
+        "Les Lacustres",
+        "CHF 13.00",
+        "70 cl"
+      ]
     },
     {
-      "file": "woocommerce.html", "url": "https://shop.example.org/produit/les-lacustres/",
-      "wineName": "Les Lacustres", "sizeML": 750, "prices": []
+      "file": "woocommerce.html",
+      "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres",
+      "sizeML": 750,
+      "prices": []
     },
     {
-      "file": "jsonld-graph.html", "url": "https://shop.example.org/produit/les-lacustres/",
-      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["13 CHF"], "excerptContains": ["Les Lacustres", "13.00 CHF", "70 cl"]
+      "file": "jsonld-graph.html",
+      "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres",
+      "sizeML": 700,
+      "prices": [
+        "13 CHF"
+      ],
+      "excerptContains": [
+        "Les Lacustres",
+        "13.00 CHF",
+        "70 cl"
+      ]
     },
     {
-      "file": "jsonld-product.html", "url": "https://wines.example.com/chablis-1er-cru-2019",
-      "wineName": "Chablis Premier Cru", "sizeML": 750, "prices": ["36.5 EUR"], "excerptContains": ["Domaine Example Chablis Premier Cru 2019"]
+      "file": "jsonld-product.html",
+      "url": "https://wines.example.com/chablis-1er-cru-2019",
+      "wineName": "Chablis Premier Cru",
+      "sizeML": 750,
+      "prices": [
+        "36.5 EUR"
+      ],
+      "excerptContains": [
+        "Domaine Example Chablis Premier Cru 2019"
+      ]
     },
     {
-      "file": "case-and-bottle.html", "url": "https://www.example.com/chablis-2019",
-      "wineName": "Chablis", "sizeML": 750, "prices": ["32 EUR"], "excerptContains": ["Chablis 2019", "32,00 €"]
+      "file": "aggregate-range.html",
+      "url": "https://compare.example.com/morgon-2020",
+      "wineName": "Côte du Py",
+      "sizeML": 750,
+      "prices": [
+        "24.5 EUR"
+      ],
+      "excerptContains": [
+        "Morgon Côte du Py 2020",
+        "24,50 €"
+      ]
     },
     {
-      "file": "magnum-only.html", "url": "https://cave.example.org/chateau-exemple-2018-magnum",
-      "wineName": "Château Exemple", "sizeML": 750, "prices": []
+      "file": "jsonld-strict.html",
+      "url": "https://shop.example.com/riesling-2022",
+      "wineName": "Riesling",
+      "sizeML": 750,
+      "prices": [
+        "12.5 EUR",
+        "14 EUR",
+        "17.9 EUR"
+      ],
+      "excerptContains": [
+        "Example Riesling 2022",
+        "12.50 EUR"
+      ]
     },
     {
-      "file": "magnum-only.html", "url": "https://cave.example.org/chateau-exemple-2018-magnum",
-      "wineName": "Château Exemple", "sizeML": 1500, "prices": ["89 EUR"]
+      "file": "case-and-bottle.html",
+      "url": "https://www.example.com/chablis-2019",
+      "wineName": "Chablis",
+      "sizeML": 750,
+      "prices": [
+        "32 EUR"
+      ],
+      "excerptContains": [
+        "Chablis 2019",
+        "32,00 €"
+      ]
     },
     {
-      "file": "meta-tags.html", "url": "https://shop.example.com/pinot-noir-2021",
-      "wineName": "Pinot Noir", "sizeML": 750, "prices": ["28.5 GBP"], "excerptContains": ["Example Estate Pinot Noir 2021", "28.50 GBP"]
+      "file": "magnum-only.html",
+      "url": "https://cave.example.org/chateau-exemple-2018-magnum",
+      "wineName": "Château Exemple",
+      "sizeML": 750,
+      "prices": []
     },
     {
-      "file": "microdata.html", "url": "https://wein.example.org/les-lacustres",
-      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["13.9 CHF"], "excerptContains": ["Les Lacustres Chasselas 70cl"]
+      "file": "magnum-only.html",
+      "url": "https://cave.example.org/chateau-exemple-2018-magnum",
+      "wineName": "Château Exemple",
+      "sizeML": 1500,
+      "prices": [
+        "89 EUR"
+      ]
     },
     {
-      "file": "swiss-text.html", "url": "https://boutique.example.com/selection",
-      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["14.5 CHF"], "excerptContains": ["14.50 Fr."]
+      "file": "meta-tags.html",
+      "url": "https://shop.example.com/pinot-noir-2021",
+      "wineName": "Pinot Noir",
+      "sizeML": 750,
+      "prices": [
+        "28.5 GBP"
+      ],
+      "excerptContains": [
+        "Example Estate Pinot Noir 2021",
+        "28.50 GBP"
+      ]
+    },
+    {
+      "file": "microdata.html",
+      "url": "https://wein.example.org/les-lacustres",
+      "wineName": "Les Lacustres",
+      "sizeML": 700,
+      "prices": [
+        "13.9 CHF"
+      ],
+      "excerptContains": [
+        "Les Lacustres Chasselas 70cl",
+        "13.90 CHF"
+      ]
+    },
+    {
+      "file": "swiss-text.html",
+      "url": "https://boutique.example.com/selection",
+      "wineName": "Les Lacustres",
+      "sizeML": 700,
+      "prices": [
+        "14.5 CHF"
+      ],
+      "excerptContains": [
+        "14.50 Fr."
+      ]
     }
   ],
   "addresses": [
-    { "url": "https://shop.example.org/produit/les-lacustres/", "allowed": true },
-    { "url": "https://shop.example.org:8443/vin", "allowed": true },
-    { "url": "http://shop.example.org/produit/les-lacustres/", "allowed": false },
-    { "url": "ftp://shop.example.org/vin", "allowed": false },
-    { "url": "https://user:secret@shop.example.org/vin", "allowed": false },
-    { "url": "https://203.0.113.10/vin", "allowed": false },
-    { "url": "https://[2001:db8::1]/vin", "allowed": false },
-    { "url": "https://127.0.0.1/vin", "allowed": false },
-    { "url": "https://2130706433/vin", "allowed": false },
-    { "url": "https://localhost/vin", "allowed": false },
-    { "url": "https://shop.localhost/vin", "allowed": false },
-    { "url": "https://nas.local/vin", "allowed": false },
-    { "url": "https://router.home.arpa/vin", "allowed": false },
-    { "url": "https://intranet/vin", "allowed": false }
+    {
+      "url": "https://shop.example.org/produit/les-lacustres/",
+      "allowed": true
+    },
+    {
+      "url": "https://shop.example.org:443/vin",
+      "allowed": true
+    },
+    {
+      "url": "https://shop.example.org:8443/vin",
+      "allowed": false
+    },
+    {
+      "url": "http://shop.example.org/produit/les-lacustres/",
+      "allowed": false
+    },
+    {
+      "url": "ftp://shop.example.org/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://user:secret@shop.example.org/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://203.0.113.10/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://[2001:db8::1]/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://127.0.0.1/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://2130706433/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://localhost/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://shop.localhost/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://nas.local/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://router.home.arpa/vin",
+      "allowed": false
+    },
+    {
+      "url": "https://intranet/vin",
+      "allowed": false
+    }
   ],
   "resolved": [
-    { "addresses": ["203.0.113.10"], "public": true },
-    { "addresses": ["2001:db8::1", "203.0.113.10"], "public": true },
-    { "addresses": [], "public": false },
-    { "addresses": ["127.0.0.1"], "public": false },
-    { "addresses": ["203.0.113.10", "169.254.169.254"], "public": false },
-    { "addresses": ["fe80::1%en0"], "public": false },
-    { "addresses": ["fd12:3456::1"], "public": false },
-    { "addresses": ["::1"], "public": false },
-    { "addresses": ["::ffff:127.0.0.1"], "public": false },
-    { "addresses": ["0.0.0.0"], "public": false }
+    {
+      "addresses": [
+        "203.0.113.10"
+      ],
+      "public": true
+    },
+    {
+      "addresses": [
+        "2001:db8::1",
+        "203.0.113.10"
+      ],
+      "public": true
+    },
+    {
+      "addresses": [],
+      "public": false
+    },
+    {
+      "addresses": [
+        "127.0.0.1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "203.0.113.10",
+        "169.254.169.254"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "fe80::1%en0"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "fd12:3456::1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "::1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "::ffff:127.0.0.1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "0.0.0.0"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "::127.0.0.1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "::"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "64:ff9b::7f00:1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "64:ff9b::cb00:710a"
+      ],
+      "public": true
+    },
+    {
+      "addresses": [
+        "64:ff9b:1::cb00:710a"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "2002:7f00:1::1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "2002:cb00:710a::1"
+      ],
+      "public": true
+    },
+    {
+      "addresses": [
+        "2001:0:4136:e378:8000:63bf:3fff:fdd2"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "fec0::1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "ff02::1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "224.0.0.251"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "198.18.0.1"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "255.255.255.255"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "nas.example.org"
+      ],
+      "public": false
+    },
+    {
+      "addresses": [
+        "2606:4700::1"
+      ],
+      "public": true
+    }
+  ],
+  "imageAddresses": [
+    {
+      "url": "https://images.example.com/a.jpg",
+      "allowed": true
+    },
+    {
+      "url": "https://images.example.com:8443/a.jpg",
+      "allowed": true
+    },
+    {
+      "url": "https://203.0.113.7/a.jpg",
+      "allowed": true
+    },
+    {
+      "url": "https://nas/a.jpg",
+      "allowed": false
+    },
+    {
+      "url": "https://fritz/a.jpg",
+      "allowed": false
+    },
+    {
+      "url": "http://images.example.com/a.jpg",
+      "allowed": false
+    },
+    {
+      "url": "https://nas.local/a.jpg",
+      "allowed": false
+    }
+  ],
+  "imageResolved": [
+    {
+      "url": "https://images.example.com/a.jpg",
+      "addresses": [
+        "203.0.113.7"
+      ],
+      "public": true
+    },
+    {
+      "url": "https://fritz.box/a.jpg",
+      "addresses": [
+        "fd00::1"
+      ],
+      "public": false
+    },
+    {
+      "url": "https://images.example.com/a.jpg",
+      "addresses": [
+        "203.0.113.7",
+        "127.0.0.1"
+      ],
+      "public": false
+    },
+    {
+      "url": "https://images.example.com/a.jpg",
+      "addresses": [],
+      "public": false
+    },
+    {
+      "url": "https://203.0.113.7/a.jpg",
+      "addresses": [],
+      "public": true
+    },
+    {
+      "url": "https://[64:ff9b::7f00:1]/a.jpg",
+      "addresses": [],
+      "public": false
+    }
   ]
 }

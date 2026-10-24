@@ -71,7 +71,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 - Find Current Price also opens the first five result pages from the device
   and reads the bottle's price on them (product data, then the page text near
   the wine's name), for shops whose search result shows no price; pages are
-  read without cookies, and never from the local network
+  read without cookies, and pages on the local network are refused
 - Privacy policy (docs/PRIVACY.md, linked from the apps) and store paperwork
   (docs/STORE.md); App Store listing in French and English (name, subtitle,
   texts, age rating, privacy policy URL, the build to attach) applied from

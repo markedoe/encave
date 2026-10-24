@@ -27,8 +27,11 @@ struct PriceSearchView: View {
     @State private var currency: String
     @State private var estimating = false
     @State private var estimateNote: String?
-    /// The result pages being read for their price; cancelled by a new search or on Close.
+    /// The search, then the result pages being read for their price; cancelled by a new
+    /// search or on Close.
+    @State private var searchTask: Task<Void, Never>?
     @State private var pageTask: Task<Void, Never>?
+    @FocusState private var priceFocused: Bool
     @State private var readingPages = false
     /// The middle price last put in the field; new prices move it until the user sets one.
     @State private var suggestedPrice: Decimal?
@@ -69,7 +72,7 @@ struct PriceSearchView: View {
                         Text("Search terms")
                     } footer: {
                         let serviceName = settings.service.name
-                        Text("Only these words are sent, to \(serviceName), when you tap Search. Change them if you like. The first pages found are then opened from this device to read their price: those sites see the page asked for and your IP address. Nothing else about this wine or your cellar is sent.")
+                        Text("Only these words are sent, to \(serviceName), when you tap Search. Change them if you like. The first pages found are then opened from this device to read their price: those sites see the page asked for, your IP address, the app's name and version, the system version and your preferred languages. Nothing else about this wine or your cellar is sent.")
                     }
 
                     if let problem {
@@ -82,6 +85,8 @@ struct PriceSearchView: View {
 
                 Section {
                     TextField("Price per bottle", value: $price, format: .currency(code: currency))
+                        // While the user is in the field, prices still arriving do not replace it.
+                        .focused($priceFocused)
                         .numericKeyboard()
                         .font(.title3.monospacedDigit())
                         .accessibilityIdentifier("price.value")
@@ -187,7 +192,14 @@ struct PriceSearchView: View {
         .onChange(of: price) { _, new in
             if new != suggestedPrice { userSetPrice = true }
         }
-        .onDisappear { stopReadingPages() }
+        .onChange(of: priceFocused) { _, focused in
+            if focused { userSetPrice = true }
+        }
+        .onDisappear {
+            searchTask?.cancel()
+            searchTask = nil
+            stopReadingPages()
+        }
     }
 
     /// "euros (EUR)" in the user's language.
@@ -198,16 +210,19 @@ struct PriceSearchView: View {
     private func search() {
         let terms = trimmedQuery
         guard !terms.isEmpty, !searching, settings.isEnabled else { return }
+        searchTask?.cancel()
         stopReadingPages()
         searching = true
         problem = nil
         estimateNote = nil
         let settings = settings
         let sizeML = sizeML
-        Task {
+        searchTask = Task {
             defer { searching = false }
             do {
                 let found = try await WebSearchClient.search(terms, settings: settings, count: 20)
+                // Closed, or another search started: no page is opened.
+                guard !Task.isCancelled else { return }
                 results = found
                 prices = PriceExtractor.prices(in: found, sizeML: sizeML)
                 userSetPrice = false
@@ -224,7 +239,7 @@ struct PriceSearchView: View {
 
     /// Puts the middle price in the field, unless the user has set one since the search.
     private func suggestMiddlePrice() {
-        guard !userSetPrice, let median = PriceExtractor.suggested(prices, currency: currency) else { return }
+        guard !userSetPrice, !priceFocused, let median = PriceExtractor.suggested(prices, currency: currency) else { return }
         suggestedPrice = median
         price = median
     }
@@ -238,11 +253,14 @@ struct PriceSearchView: View {
         let sizeML = sizeML
         let wineName = wineName
         pageTask = Task {
+            // A session of its own for each search: no connection is kept for the next one.
+            let session = WebSearchClient.makePageSession()
+            defer { session.invalidateAndCancel() }
             await withTaskGroup(of: [FoundPrice].self) { group in
                 var next = 0
                 while next < pages.count, next < PagePrices.parallelPages {
                     let page = pages[next]
-                    group.addTask { await WebSearchClient.pagePrices(of: page, sizeML: sizeML, wineName: wineName) }
+                    group.addTask { await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName) }
                     next += 1
                 }
                 while let found = await group.next() {
@@ -253,7 +271,9 @@ struct PriceSearchView: View {
                     }
                     if next < pages.count {
                         let page = pages[next]
-                        group.addTask { await WebSearchClient.pagePrices(of: page, sizeML: sizeML, wineName: wineName) }
+                        group.addTask {
+                            await WebSearchClient.pagePrices(of: page, session: session, sizeML: sizeML, wineName: wineName)
+                        }
                         next += 1
                     }
                 }

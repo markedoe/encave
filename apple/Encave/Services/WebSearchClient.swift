@@ -84,7 +84,7 @@ enum WebSearchClient {
     /// from this device or the local network (each redirect is checked too), an image type,
     /// at most `maxBytes`. No cookies or cache, as for the searches.
     static func downloadImage(_ url: URL, maxBytes: Int = WebImageDownload.maxBytes) async throws -> Data {
-        guard WebImageDownload.isAllowed(url) else { throw WebSearchError.invalidResponse }
+        guard await WebImageDownload.resolvesPublicly(url) else { throw WebSearchError.invalidResponse }
         var request = URLRequest(url: url)
         request.timeoutInterval = WebImageDownload.timeout
         let (bytes, response) = try await session.bytes(for: request, delegate: PublicImageRedirects.shared)
@@ -106,9 +106,10 @@ enum WebSearchClient {
 
     // MARK: Prices on the result pages
 
-    /// For the result pages: no cookies, cache or saved passwords, short timeouts. The
-    /// User-Agent is the same as for the searches.
-    private static let pageSession: URLSession = {
+    /// A session for the result pages of one price search, invalidated after it: no cookies,
+    /// cache, saved passwords, or connection reused by a later search. The User-Agent is the
+    /// system's for this app (its name and version, the network library's and the system's).
+    static func makePageSession() -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpCookieAcceptPolicy = .never
         configuration.httpShouldSetCookies = false
@@ -118,37 +119,46 @@ enum WebSearchClient {
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         configuration.timeoutIntervalForRequest = PagePrices.timeout
         configuration.timeoutIntervalForResource = PagePrices.timeout
+        configuration.httpMaximumConnectionsPerHost = PagePrices.parallelPages
         return URLSession(configuration: configuration)
-    }()
+    }
 
     /// Opens a result's page from this device and reads the price of a bottle on it
-    /// (`PagePrices`). The site sees this device's address and the page asked for, nothing
-    /// else: no cookies, no Referer, no credentials. https only, never a local or private
-    /// address (each redirect is checked too), HTML only, at most `PagePrices.maxBytes`.
-    /// Empty when the page cannot be read; neither the address nor the page is logged.
-    static func pagePrices(of result: WebSearchResult, sizeML: Int, wineName: String?) async -> [FoundPrice] {
-        guard PagePrices.isAllowed(result.url), await PagePrices.resolvesPublicly(result.url) else { return [] }
+    /// (`PagePrices`). The site sees this device's address, the page asked for and the
+    /// User-Agent and languages the system sends; no cookies, no Referer, no credentials.
+    /// https on port 443 to a public name only (its addresses checked first, each redirect
+    /// too), HTML only, at most `PagePrices.maxBytes`, `PagePrices.timeout` in all. Empty when
+    /// the page cannot be read or the task is cancelled; neither the address nor the page is logged.
+    static func pagePrices(of result: WebSearchResult, session: URLSession, sizeML: Int, wineName: String?) async -> [FoundPrice] {
+        let deadline = Date().addingTimeInterval(PagePrices.timeout)
+        guard PagePrices.isAllowed(result.url), await PagePrices.resolvesPublicly(result.url), !Task.isCancelled else { return [] }
         var request = URLRequest(url: result.url)
         request.httpShouldHandleCookies = false
-        request.timeoutInterval = PagePrices.timeout
+        request.timeoutInterval = max(1, deadline.timeIntervalSinceNow)
         request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
         do {
-            let (bytes, response) = try await pageSession.bytes(for: request, delegate: PageRedirects())
+            let (bytes, response) = try await session.bytes(for: request, delegate: PageRedirects())
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
                   http.url.map(PagePrices.isAllowed) ?? false,
-                  PagePrices.isHTML(contentType: http.value(forHTTPHeaderField: "Content-Type")) else { return [] }
+                  PagePrices.isHTML(contentType: http.value(forHTTPHeaderField: "Content-Type")),
+                  PagePrices.acceptsLength(response.expectedContentLength) else {
+                bytes.task.cancel()
+                return []
+            }
             var data = Data()
             for try await byte in bytes {
                 data.append(byte)
                 if data.count >= PagePrices.maxBytes { break }
             }
+            // Nothing more is wanted from the site.
+            bytes.task.cancel()
             try Task.checkCancellation()
             let contentType = http.value(forHTTPHeaderField: "Content-Type")
-            // Reading the page takes a moment: not on the main thread.
-            return await Task.detached(priority: .utility) {
-                PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
-                                  sizeML: sizeML, wineName: wineName)
-            }.value
+            // Read here, in this task (not on the main thread): cancelling the search stops it.
+            let stop = deadline.addingTimeInterval(2)
+            return PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
+                                     sizeML: sizeML, wineName: wineName,
+                                     shouldStop: { Task.isCancelled || Date() > stop })
         } catch {
             return []
         }
@@ -179,14 +189,14 @@ enum WebSearchClient {
     }
 }
 
-/// A picture's redirects go only to public https hosts (`WebImageDownload.isAllowed`); a
-/// refused one ends the download.
+/// A picture's redirects go only to public https hosts (`WebImageDownload.resolvesPublicly`:
+/// the name's addresses are checked too); a refused one ends the download.
 final class PublicImageRedirects: NSObject, URLSessionTaskDelegate, Sendable {
     static let shared = PublicImageRedirects()
 
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest) async -> URLRequest? {
-        guard let target = request.url, WebImageDownload.isAllowed(target) else { return nil }
+        guard let target = request.url, await WebImageDownload.resolvesPublicly(target) else { return nil }
         return request
     }
 }

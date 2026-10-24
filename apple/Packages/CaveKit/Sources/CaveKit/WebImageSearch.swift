@@ -170,7 +170,17 @@ public enum WebImageDownload {
     /// this device or the local network (a router, a NAS), by name or by address.
     public static func isAllowed(_ url: URL) -> Bool {
         guard let url = httpsURL(url.absoluteString), let host = url.host else { return false }
+        // A name without a dot ("nas") is completed with the local network's domain.
+        let name = PublicHost.bare(host)
+        if !PublicHost.isAddress(name), !name.contains(".") { return false }
         return !isPrivateHost(host)
+    }
+
+    /// `isAllowed`, and the name resolves only to public addresses ("fritz.box" or a name
+    /// pointing to the local network does not). An address is checked as it is.
+    public static func resolvesPublicly(_ url: URL, resolver: LocalName.Resolver? = nil) async -> Bool {
+        guard isAllowed(url), let host = url.host else { return false }
+        return await PublicHost.resolvesPublicly(host, resolver: resolver)
     }
 
     /// localhost, *.local, private, loopback and link-local addresses, and IP addresses written in other forms.

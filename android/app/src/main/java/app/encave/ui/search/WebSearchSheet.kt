@@ -44,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -62,6 +63,7 @@ import app.encave.EncaveApplication
 import app.encave.R
 import app.encave.core.search.FoundPrice
 import app.encave.core.search.PagePrices
+import app.encave.core.search.PageReader
 import app.encave.core.search.PriceExtractor
 import app.encave.core.search.WebSearchError
 import app.encave.core.search.WebSearchResult
@@ -160,17 +162,23 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
         if (pages.isEmpty()) return
         readingPages = true
         pageJob = scope.launch {
-            val gate = Semaphore(PagePrices.PARALLEL_PAGES)
-            pages.map { page ->
-                launch {
-                    val read = gate.withPermit { WebSearchClient.pagePrices(page, options.sizeML, options.wineName) }
-                    if (read.isNotEmpty()) {
-                        prices = PagePrices.merging(read, prices)
-                        suggestMiddlePrice()
+            // A reader of its own for each search: no connection is kept for the next one.
+            val reader = PageReader()
+            try {
+                val gate = Semaphore(PagePrices.PARALLEL_PAGES)
+                pages.map { page ->
+                    launch {
+                        val read = gate.withPermit { reader.prices(page, options.sizeML, options.wineName) }
+                        if (read.isNotEmpty()) {
+                            prices = PagePrices.merging(read, prices)
+                            suggestMiddlePrice()
+                        }
                     }
-                }
-            }.joinAll()
-            readingPages = false
+                }.joinAll()
+                readingPages = false
+            } finally {
+                reader.close()
+            }
         }
     }
 
@@ -282,6 +290,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                             priceValue?.let { price.onSave(it, currency) }
                             onDismiss()
                         },
+                        onFocus = { userSetPrice = true },
                     )
                 }
                 if (searched && error == null && !searching) {
@@ -362,6 +371,7 @@ private fun PriceField(
     hint: String?,
     canSave: Boolean,
     onSave: () -> Unit,
+    onFocus: () -> Unit,
 ) {
     Column(Modifier.padding(horizontal = Dimens.l).padding(top = Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.s)) {
         SheetTitle(stringResource(R.string.price_today))
@@ -371,7 +381,8 @@ private fun PriceField(
             label = { Text(stringResource(R.string.price_per_bottle, currency)) },
             supportingText = { Text(hint ?: stringResource(R.string.price_footer)) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().testTag("price.value"),
+            // Typing or just entering the field keeps the price: prices still arriving do not replace it.
+            modifier = Modifier.fillMaxWidth().testTag("price.value").onFocusChanged { if (it.isFocused) onFocus() },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         )
         OutlinedButton(onClick = onSave, enabled = canSave, modifier = Modifier.testTag("price.save")) {

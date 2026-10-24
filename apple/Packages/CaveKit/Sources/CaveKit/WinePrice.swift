@@ -76,6 +76,8 @@ public enum PriceExtractor {
     ]
 
     static let range: ClosedRange<Decimal> = 3...20_000
+    /// Matches of each pattern read in one text, at most.
+    static let maxMatches = 50
 
     /// Prices of one bottle of `sizeML` in the titles and snippets of the results.
     public static func prices(in results: [WebSearchResult], sizeML: Int = 750) -> [FoundPrice] {
@@ -116,10 +118,14 @@ public enum PriceExtractor {
         var matches: [Match] = []
         for (pattern, isSuffix) in [(prefixPattern, false), (suffixPattern, true)] {
             guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { continue }
-            for match in regex.matches(in: text, range: whole) {
+            var count = 0
+            regex.enumerateMatches(in: text, range: whole) { match, _, stop in
+                guard let match else { return }
                 let first = nsText.substring(with: match.range(at: 1)), second = nsText.substring(with: match.range(at: 2))
                 matches.append(Match(range: match.range, amount: isSuffix ? first : second,
                                      symbol: isSuffix ? second : first, isSuffix: isSuffix))
+                count += 1
+                if count >= maxMatches { stop.pointee = true }
             }
         }
         // "2019 €45": the vintage followed by a price is not "2019 €". Otherwise the
@@ -128,8 +134,10 @@ public enum PriceExtractor {
             amount.count == 4 && amount.allSatisfy(\.isNumber) && (1900...2100).contains(Int(amount) ?? 0)
         }
         var kept: [Match] = []
+        // Sorted, so only the last kept match can overlap the next one.
         for match in matches.sorted(by: { $0.range.location < $1.range.location }) {
-            if let index = kept.firstIndex(where: { NSIntersectionRange($0.range, match.range).length > 0 }) {
+            if let last = kept.last, NSIntersectionRange(last.range, match.range).length > 0 {
+                let index = kept.count - 1
                 let other = kept[index]
                 let suffix = match.isSuffix ? match : other, prefix = match.isSuffix ? other : match
                 if suffix.isSuffix != prefix.isSuffix {

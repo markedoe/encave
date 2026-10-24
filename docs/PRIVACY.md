@@ -81,13 +81,15 @@ not encrypted either: it goes where you choose to save or share it.
    be changed, before anything is sent. Your cellar, notes, prices and places
    are never sent. The results are read on the device. When you look for a
    price, Encave then opens the first five result pages from your device and
-   reads the bottle's price on them, on the device: those sites see your IP
-   address and the page asked for, nothing else (no cookies, no stored
-   passwords, no referring page, and never an address of your device or your
-   local network). When you search pictures, the thumbnails and the picture
-   you pick are downloaded from the sites that host them, which see the
-   request; the picture becomes the wine's cover and never replaces your label
-   photo.
+   reads the bottle's price on them, on the device. Those sites see your IP
+   address, the page asked for and the app's name and version (on Apple
+   devices, also the system version and your preferred languages, which the
+   system sends); no cookies, stored passwords or referring page are sent.
+   Each search opens its own connections, closed after it. Encave refuses pages whose name leads to your device or
+   your local network. When you search pictures, the thumbnails and the
+   picture you pick are downloaded from the sites that host them, which see
+   the request (pictures from your device or local network are refused too);
+   the picture becomes the wine's cover and never replaces your label photo.
 
 Plain HTTP is used only for a server on your local network, including a name
 on your home network that points to a local address (Encave then connects to
