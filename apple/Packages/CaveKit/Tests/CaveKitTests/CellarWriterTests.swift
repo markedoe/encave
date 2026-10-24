@@ -25,6 +25,45 @@ private final class SlowStore: CellarStore, @unchecked Sendable {
     }
 }
 
+/// A store whose first write waits until `release()`, so the test decides what comes in
+/// during it.
+private final class GatedStore: CellarStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var saved: [Cellar] = []
+    private let started = DispatchSemaphore(value: 0)
+    private let gate = DispatchSemaphore(value: 0)
+    private var first = true
+
+    var writes: [Cellar] { lock.withLock { saved } }
+
+    func load() throws -> Cellar { lock.withLock { saved.last ?? Cellar() } }
+
+    func save(_ cellar: Cellar) throws {
+        let waits = lock.withLock { () -> Bool in
+            defer { first = false }
+            return first
+        }
+        if waits {
+            started.signal()
+            // Bounded, so a broken test fails instead of hanging.
+            _ = gate.wait(timeout: .now() + 30)
+        }
+        lock.withLock { saved.append(cellar) }
+    }
+
+    /// Returns once the first write has started.
+    func waitForTheFirstWrite() async {
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            DispatchQueue.global().async {
+                _ = self.started.wait(timeout: .now() + 30)
+                done.resume()
+            }
+        }
+    }
+
+    func release() { gate.signal() }
+}
+
 /// What the failure handler was told.
 private actor Failures {
     var lastSaved: [Cellar] = []
@@ -39,17 +78,18 @@ private func cellar(named name: String) throws -> Cellar {
 
 struct CellarWriterTests {
     @Test func coalescesChangesMadeDuringAWrite() async throws {
-        let store = SlowStore()
+        let store = GatedStore()
         let writer = CellarWriter(store: store, saved: Cellar()) { _, _ in 0 }
         let versions = try (1...20).map { try cellar(named: "Wine \($0)") }
-        for (index, version) in versions.enumerated() {
+        await writer.submit(versions[0], generation: 1)
+        await store.waitForTheFirstWrite()
+        for (index, version) in versions.enumerated().dropFirst() {
             await writer.submit(version, generation: index + 1)
         }
+        store.release()
         await writer.flush()
-        // Changes made during a write are coalesced: fewer writes than changes. The exact
-        // count depends on the machine's timing, so it is not checked.
-        #expect(store.writes.count < versions.count)
-        #expect(store.writes.last == versions.last)
+        // The 19 changes made during the first write are coalesced into one write of the newest.
+        #expect(store.writes == [versions[0], versions[19]])
         #expect(await writer.lastSaved == versions.last)
         #expect(await writer.savedGeneration == 20)
     }
@@ -106,7 +146,9 @@ struct CellarWriterTests {
     }
 
     /// A large cellar is encoded on every save: it must stay quick, even in a debug build.
-    @Test func encodesFiveThousandBottlesWithinBudget() throws {
+    /// Timing depends on the machine, so it runs only when asked (`ENCAVE_PERF=1`).
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["ENCAVE_PERF"] != nil))
+    func encodesFiveThousandBottlesWithinBudget() throws {
         var cellar = Cellar()
         for index in 0..<500 {
             let wine = Wine(name: "Château \(index)", producer: "Producer \(index % 50)", vintage: 1990 + index % 35,

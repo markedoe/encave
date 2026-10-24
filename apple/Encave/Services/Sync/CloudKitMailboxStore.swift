@@ -144,14 +144,8 @@ struct CloudKitMailboxStore: MailboxStore {
             error.code == .zoneNotFound || error.code == .userDeletedZone
         }
 
-        static func map(_ error: Error) -> RemoteSyncError {
-            guard let error = error as? CKError else { return .unavailable(error.localizedDescription) }
-            switch error.code {
-            case .notAuthenticated, .permissionFailure: return .unauthorized
-            case .quotaExceeded: return .quotaExceeded
-            default: return .unavailable(error.localizedDescription)
-            }
-        }
+        /// In CaveKit, where it is tested.
+        static func map(_ error: Error) -> RemoteSyncError { CloudKitErrors.map(error) }
     }
 }
 

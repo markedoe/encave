@@ -62,6 +62,25 @@ internal class RefusingStore(@Volatile var limit: Int, private val error: Remote
     }
 }
 
+/** Storage whose [failAt]th photo upload fails (the network dropped), keeping the size of each one sent. */
+internal class DroppingStore(private val failAt: Int) : MailboxStore {
+    private val base = MemoryMailboxStore()
+    val sent = java.util.Collections.synchronizedList(mutableListOf<Pair<String, Int>>())
+    override fun inbox(id: String, token: String): Mailbox = base.inbox(id, token)
+    override fun mailbox(id: String, token: String): Mailbox {
+        val mailbox = base.mailbox(id, token)
+        return object : Mailbox by mailbox {
+            override suspend fun create(path: String, data: ByteArray): Boolean {
+                if (path.startsWith("photo/")) {
+                    sent += path to data.size
+                    if (sent.size == failAt) throw RemoteSyncException(RemoteSyncError.Unavailable("dropped"))
+                }
+                return mailbox.create(path, data)
+            }
+        }
+    }
+}
+
 /** Devices of one cellar, the first holding the key. */
 internal fun household(count: Int = 3): List<RemoteDevice> {
     val identities = List(count) { identity() }
@@ -126,6 +145,29 @@ class RemoteSyncTests {
         devices[1].sync(store)
         assertArrayEquals(invoice, devices[1].photos.storedDocuments[document])
         assertArrayEquals(label, devices[1].photos.stored[photo])
+    }
+
+    @Test
+    fun photosSentBeforeAFailedRoundAreNotSentAgain() = runBlocking {
+        val store = DroppingStore(failAt = 4)
+        val devices = household(2)
+        grantAll(devices, store, null)
+        val labels = List(5) { index -> ByteArray(10_000) { index.toByte() } }
+        for ((index, label) in labels.withIndex()) {
+            val id = PhotoId.make(label)
+            devices[0].photos.save(id, label)
+            devices[0].edit { it.addBottles(Wine(name = "Wine $index", photoId = id), 1) }
+        }
+        // The fourth photo fails: the round fails, the next one sends only what is left.
+        assertThrows<RemoteSyncException> { runBlocking { devices[0].sync(store) } }
+        devices[0].sync(store)
+        // Each photo sent once, and the one that failed once more.
+        assertEquals(labels.size + 1, store.sent.size)
+        val once = store.sent.toMap().values.sum()
+        assertEquals(once + store.sent[3].second, store.sent.sumOf { it.second })
+        assertTrue(store.sent.sumOf { it.second } < labels.sumOf { it.size } * 3 / 2)
+        devices[1].sync(store)
+        for (label in labels) assertArrayEquals(label, devices[1].photos.stored[PhotoId.make(label)])
     }
 
     @Test

@@ -20,10 +20,14 @@ public struct RelayMailboxStore: MailboxStore {
     public let baseURL: URL
     let session: URLSession
 
-    public init(baseURL: URL, session: URLSession = .shared) {
+    public init(baseURL: URL, session: URLSession = RelayMailboxStore.session) {
         self.baseURL = baseURL
         self.session = session
     }
+
+    /// Requests never follow redirects: one to another host would carry the token
+    /// there. No cookies or cache either.
+    public static let session = NoRedirects.session()
 
     public func mailbox(id: String, token: String) -> Mailbox {
         RelayMailbox(base: baseURL, id: id, token: token, session: session)
@@ -85,6 +89,7 @@ struct RelayMailbox: Mailbox {
         case 401, 403: throw RemoteSyncError.unauthorized
         case 413: throw RemoteSyncError.fileTooLarge
         case 507: throw RemoteSyncError.quotaExceeded
+        case 300..<400: throw RemoteSyncError.unavailable("redirected (\(status)): use the final address")
         case 429, 500...: throw RemoteSyncError.unavailable("relay status \(status)")
         default: return (data, status)
         }

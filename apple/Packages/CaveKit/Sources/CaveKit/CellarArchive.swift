@@ -232,11 +232,13 @@ public enum CellarArchive {
                 skipped += 1
                 continue
             }
-            let id = "sha256-" + hash.finalize().map { String(format: "%02x", $0) }.joined()
+            let hashed = "sha256-" + hash.finalize().map { String(format: "%02x", $0) }.joined()
+            let expected = kinds[entry.name]?.id ?? hashed
+            // A photo taken before sync existed has an ID that is not its hash: kept under it.
+            let id = !expected.hasPrefix("sha256-") && PhotoID.isValid(expected) ? expected : hashed
             let ref = FileRef(id: id, kind: kind)
             // A file whose content is not the one the manifest names, that the cellar does not
             // refer to, or that is there twice is not kept.
-            let expected = kinds[entry.name]?.id ?? id
             guard expected == id, referenced.contains(ref), files[ref] == nil else {
                 try? FileManager.default.removeItem(at: target)
                 skipped += 1

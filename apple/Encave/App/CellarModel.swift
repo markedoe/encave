@@ -51,6 +51,10 @@ final class CellarModel {
     @ObservationIgnored var onLocalChange: ((Cellar, Cellar) -> Void)?
     /// Told when a failed write took the cellar back (shown, then saved), to record it again.
     @ObservationIgnored var onSaveReverted: ((Cellar, Cellar) -> Void)?
+    /// Told the number of each change saved to the file (see `applySynced`).
+    @ObservationIgnored var onSaved: ((Int) -> Void)?
+    /// Writes that failed, so a wait for a save knows one failed meanwhile.
+    @ObservationIgnored private var saveFailures = 0
 
     /// The cellar file could not be read at launch: where it was kept (see `unreadableFiles`).
     @ObservationIgnored private(set) var unreadableFile: URL?
@@ -348,12 +352,25 @@ final class CellarModel {
     }
 
     /// Replaces the cellar with the result of a sync. Not recorded as a local change.
-    func applySynced(_ synced: Cellar) {
-        guard synced != cellar else { return }
+    /// Returns the number of the change sent to be saved (see `onSaved`), nil if nothing changed.
+    @discardableResult
+    func applySynced(_ synced: Cellar) -> Int? {
+        guard synced != cellar else { return nil }
         save(synced)
         cellar = synced
         dropStaleUndo()
         indexInSpotlight()
+        return generation
+    }
+
+    /// Waits until the cellar shown now is in the file. False if a write failed meanwhile
+    /// (the cellar then went back to what the file holds).
+    func waitUntilSaved() async -> Bool {
+        guard let writer else { return true }
+        let latest = cellar, number = generation, failures = saveFailures
+        await writer.submit(latest, generation: number)
+        await writer.flush()
+        return await writer.savedGeneration >= number && saveFailures == failures
     }
 
     // MARK: Saving
@@ -361,7 +378,8 @@ final class CellarModel {
     /// A writer for the store, starting from the cellar just loaded.
     private func startWriter() {
         generation += 1
-        writer = CellarWriter(store: store, saved: cellar, generation: generation) { [weak self] lastSaved, _ in
+        writer = CellarWriter(store: store, saved: cellar, generation: generation,
+                              onSaved: { [weak self] number in await self?.didSave(number) }) { [weak self] lastSaved, _ in
             await self?.saveFailed(lastSaved: lastSaved) ?? .max
         }
     }
@@ -374,9 +392,14 @@ final class CellarModel {
         Task { await writer.submit(cellar, generation: number) }
     }
 
+    private func didSave(_ number: Int) {
+        onSaved?(number)
+    }
+
     /// A write failed: the cellar goes back to what the file holds, and the error is shown.
     /// Returns the newest change number, so changes sent before this are not written.
     private func saveFailed(lastSaved: Cellar) -> Int {
+        saveFailures += 1
         errorMessage = String(localized: "Your last changes could not be saved, so your cellar is shown as it was last saved. Check the free space on this device.")
         if cellar != lastSaved {
             let shown = cellar
