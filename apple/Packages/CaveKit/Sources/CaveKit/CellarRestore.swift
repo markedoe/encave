@@ -49,10 +49,12 @@ public struct RestorePreview: Equatable, Sendable {
             }
             removed += b.keys.filter { a[$0] == nil }.count
         }
-        compare(backup.wines, current.wines)
-        compare(backup.bottles, current.bottles)
-        compare(CellarMerge.byID(backup.racks), CellarMerge.byID(current.racks))
-        compare(backup.discoveries, current.discoveries)
+        // A record that only differs by what a backup does not keep is the same.
+        let compared = current.matching(backup)
+        compare(compared.wines, current.wines)
+        compare(compared.bottles, current.bottles)
+        compare(CellarMerge.byID(compared.racks), CellarMerge.byID(current.racks))
+        compare(compared.discoveries, current.discoveries)
         self.added = added
         self.removed = removed
         self.changed = changed
@@ -71,7 +73,39 @@ public extension Cellar {
             copy.merge(backup)
             return copy
         case .replace:
-            return backup
+            return matching(backup)
         }
+    }
+
+    /// `backup`, with each record that differs from this cellar's only by what a JSON backup
+    /// does not keep (fractions of a second in dates) taken from this cellar instead. A
+    /// backup made a minute ago then reads as the same cellar, and Replace leaves those
+    /// records as they are: not stamped, not sent again. The Android app does the same.
+    func matching(_ backup: Cellar) -> Cellar {
+        // Only the records that differ are written out and read back, as a backup would be.
+        func differing<T: Equatable>(_ own: [UUID: T], _ other: [UUID: T]) -> [UUID: T] {
+            own.filter { id, value in other[id].map { $0 != value } ?? false }
+        }
+        let backupRacks = CellarMerge.byID(backup.racks)
+        var written = Cellar(settings: settings)
+        written.wines = differing(wines, backup.wines)
+        written.bottles = differing(bottles, backup.bottles)
+        written.racks = racks.filter { rack in backupRacks[rack.id].map { $0 != rack } ?? false }
+        written.discoveries = differing(discoveries, backup.discoveries)
+        guard let data = try? CellarExport.json(written),
+              let read = try? CellarExport.backup(fromJSON: data).cellar else { return backup }
+        func pick<T: Equatable>(_ other: [UUID: T], _ readBack: [UUID: T], _ own: [UUID: T]) -> [UUID: T] {
+            var result = other
+            for (id, value) in other where readBack[id] == value { result[id] = own[id] }
+            return result
+        }
+        let readRacks = CellarMerge.byID(read.racks), ownRacks = CellarMerge.byID(racks)
+        var result = backup
+        result.wines = pick(backup.wines, read.wines, wines)
+        result.bottles = pick(backup.bottles, read.bottles, bottles)
+        result.racks = backup.racks.map { rack in readRacks[rack.id] == rack ? ownRacks[rack.id] ?? rack : rack }
+        if read.settings == backup.settings { result.settings = settings }
+        result.discoveries = pick(backup.discoveries, read.discoveries, discoveries)
+        return result
     }
 }

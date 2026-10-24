@@ -148,6 +148,36 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(document("Facture n°12 – Cave.PDF", "application/pdf") == ("Facture n°12 – Cave", "PDF"))
     }
 
+    @Test func namesAreComposedSoOneSpellingIsOneName() throws {
+        // "Château" typed composed and decomposed: two photos, two entries, both read back.
+        let composed = "Ch\u{E2}teau", decomposed = "Cha\u{302}teau"
+        #expect(Array(CellarArchive.cleanStem(decomposed, fallback: "Photo").unicodeScalars) == Array(composed.unicodeScalars))
+        let folder = try TemporaryFolder()
+        let label = Data("label".utf8), back = Data("back".utf8)
+        var a = Wine(name: composed), b = Wine(name: "Other")
+        a.photoID = PhotoID.make(for: label)
+        b.photoID = PhotoID.make(for: back)
+        let cellar = Cellar(wines: [a, b])
+        // As an Android version without composed names wrote it: one entry of each spelling.
+        let zipURL = folder.file("android.zip")
+        let writer = try ZipWriter(url: zipURL, modified: .now)
+        try writer.add(name: "cellar.json", data: try CellarExport.json(cellar))
+        let manifest = CellarArchive.Manifest(files: [
+            CellarArchive.Item(path: "photos/\(composed).jpg", id: PhotoID.make(for: label), kind: .photo),
+            CellarArchive.Item(path: "photos/\(decomposed).jpg", id: PhotoID.make(for: back), kind: .photo),
+        ])
+        try writer.add(name: "files.json", data: try CellarArchive.manifestData(manifest))
+        try writer.add(name: "photos/\(composed).jpg", data: label)
+        try writer.add(name: "photos/\(decomposed).jpg", data: back)
+        try writer.finish()
+        let work = folder.file("work")
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let contents = try CellarArchive.read(zipURL, workingFolder: work)
+        #expect(Set(contents.files.keys) == [FileRef(id: PhotoID.make(for: label), kind: .photo),
+                                             FileRef(id: PhotoID.make(for: back), kind: .photo)])
+        #expect(contents.skipped == 0)
+    }
+
     @Test func planNamesEachFileOnceAndUniquely() {
         let photo = PhotoID.make(for: Data("p".utf8)), other = PhotoID.make(for: Data("o".utf8))
         let doc = PhotoID.make(for: Data("d".utf8))
@@ -527,6 +557,38 @@ func unzipTest(_ url: URL) throws -> (status: Int32, output: String)? {
         #expect(preview.changed == 1)
         #expect(!preview.isSame)
         #expect(RestorePreview(of: backup, date: .now, comparedWith: backup).isSame)
+    }
+
+    /// A cellar whose dates have fractions of a second, as live dates do.
+    private func liveCellar() throws -> Cellar {
+        let now = Date.now.addingTimeInterval(0.123)
+        var cellar = Cellar()
+        let rack = Rack(name: "A", rows: 2, columns: 2)
+        cellar.addRack(rack)
+        var wine = Wine(name: "Clos")
+        wine.currentPriceDate = now
+        _ = try cellar.addBottles(of: wine, quantity: 2, slots: [Slot(rackID: rack.id, row: 0, column: 0)],
+                                  purchase: PurchaseInfo(date: now), addedAt: now)
+        _ = try cellar.addBottles(of: Wine(name: "Other"), addedAt: now)
+        _ = cellar.addDiscovery(Discovery(wineID: wine.id, date: now), wine: wine)
+        return cellar
+    }
+
+    @Test func aBackupJustMadeIsTheSameCellar() throws {
+        let current = try liveCellar()
+        var backup = try CellarExport.backup(fromJSON: CellarExport.json(current)).cellar
+        #expect(backup != current, "backups keep whole seconds")
+        #expect(RestorePreview(of: backup, date: .now, comparedWith: current).isSame)
+
+        // Replace keeps the identical records as they are, and still takes what differs.
+        #expect(current.restoring(backup, mode: .replace) == current)
+        let bottle = try #require(backup.bottles.values.first)
+        backup.bottles[bottle.id]?.storageNote = "Kitchen"
+        let replaced = current.restoring(backup, mode: .replace)
+        #expect(replaced.bottles[bottle.id]?.storageNote == "Kitchen")
+        for other in replaced.bottles.values where other.id != bottle.id { #expect(other == current.bottles[other.id]) }
+        #expect(replaced.wines == current.wines)
+        #expect(RestorePreview(of: backup, date: .now, comparedWith: current).changed == 1)
     }
 
     @Test func addMissingKeepsTheCellarAndReplaceTakesTheBackup() throws {

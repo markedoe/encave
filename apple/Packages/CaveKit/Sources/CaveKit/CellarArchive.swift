@@ -198,14 +198,16 @@ public enum CellarArchive {
             backup = try CellarExport.backup(fromJSON: try zip.data(of: cellarEntry, maxSize: maxCellarByteCount))
         } catch let error as ZipError { throw ImportError(error) }
 
-        var kinds: [String: Item] = [:]
+        // Keyed by the bytes of each path: Swift compares strings by canonical equivalence,
+        // so two entries whose names differ only by composition must not share one.
+        var kinds: [Data: Item] = [:]
         if let entry = zip.entry(named: manifestPath), let data = try? zip.data(of: entry, maxSize: maxCellarByteCount) {
             if let envelope = try? JSONDecoder().decode(CellarExport.Envelope.self, from: data),
                envelope.format == format, let version = envelope.version, version > Self.version {
                 throw ImportError.newerVersion
             }
             if let manifest = try? JSONDecoder().decode(Manifest.self, from: data), manifest.format == format {
-                for item in manifest.files { kinds[item.path] = item }
+                for item in manifest.files { kinds[Data(item.path.utf8)] = item }
             }
         }
 
@@ -215,11 +217,12 @@ public enum CellarArchive {
         for (index, entry) in zip.entries.enumerated() where !entry.isDirectory {
             let folderKind: FileKind? = entry.name.hasPrefix(photoFolder) ? .photo
                 : entry.name.hasPrefix(documentFolder) ? .document : nil
-            guard let kind = kinds[entry.name]?.ref?.kind ?? folderKind else { continue }
+            let named = kinds[Data(entry.name.utf8)]
+            guard let kind = named?.ref?.kind ?? folderKind else { continue }
             guard entry.size <= maxFileByteCount else { skipped += 1; continue }
             // Named by the manifest as a file the cellar does not refer to, or one already read:
             // not copied at all.
-            if let named = kinds[entry.name]?.ref, !referenced.contains(named) || files[named] != nil {
+            if let listed = named?.ref, !referenced.contains(listed) || files[listed] != nil {
                 skipped += 1
                 continue
             }
@@ -236,7 +239,7 @@ public enum CellarArchive {
             let ref = FileRef(id: id, kind: kind)
             // A file whose content is not the one the manifest names, that the cellar does not
             // refer to, or that is there twice is not kept.
-            let expected = kinds[entry.name]?.id ?? id
+            let expected = named?.id ?? id
             guard expected == id, referenced.contains(ref), files[ref] == nil else {
                 try? FileManager.default.removeItem(at: target)
                 skipped += 1
@@ -259,7 +262,8 @@ public enum CellarArchive {
     /// some systems refuse become "-", spaces and dots are trimmed at both ends, and at
     /// most 80 Unicode scalars are kept.
     static func cleanStem(_ text: String, fallback: String) -> String {
-        var scalars: [Unicode.Scalar] = text.unicodeScalars.map { scalar in
+        // Composed (NFC), as the Android app writes it: one spelling of "Château", one name.
+        var scalars: [Unicode.Scalar] = text.precomposedStringWithCanonicalMapping.unicodeScalars.map { scalar in
             if scalar.properties.generalCategory == .control { return " " }
             return forbidden.contains(scalar) ? "-" : scalar
         }
