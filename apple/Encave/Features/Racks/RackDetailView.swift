@@ -132,7 +132,11 @@ struct RackDetailView: View {
             onTap: { place, bottles in tap(rack, place, bottles) },
             onDrop: { bottleID, place in drop(bottleID, on: place, rack) },
             zoomStep: zoomStep,
-            interaction: interaction
+            interaction: interaction,
+            onMinimumZoom: { value in
+                minimumZoom = value
+                zoom = RackZoom.clamped(zoom, minimum: value)
+            }
         )
         #if os(macOS)
         grid
@@ -142,10 +146,6 @@ struct RackDetailView: View {
                     .updating($pinch) { value, state, _ in state = value.magnification }
                     .onEnded { value in zoom = RackZoom.clamped(zoom * value.magnification, minimum: minimumZoom) }
             )
-            .onPreferenceChange(RackMinimumZoomKey.self) { value in
-                minimumZoom = value
-                zoom = RackZoom.clamped(zoom, minimum: value)
-            }
             .background { zoomInEqualsShortcut }
         #else
         grid

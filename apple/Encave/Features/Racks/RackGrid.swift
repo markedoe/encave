@@ -350,12 +350,6 @@ extension RackGrid {
     }
 }
 
-/// Mac: the smallest zoom that still changes the drawing (`RackZoom.minimum`), for Zoom Out.
-struct RackMinimumZoomKey: PreferenceKey {
-    static let defaultValue: CGFloat = RackZoom.lowest
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
 /// A rack drawn as large as the space allows, but never with places under 44 pt: a larger
 /// rack is drawn at that size, scrolls both ways under an overview of the whole rack, and
 /// zooms in from there. Pinch to zoom; on the Mac, trackpad pinch and the zoom buttons set `zoom`.
@@ -372,6 +366,8 @@ struct FittedRackGrid: View {
     /// iPhone and iPad: a zoom step asked by a button.
     var zoomStep = RackZoomStep()
     var interaction = RackInteraction()
+    /// Mac: told the smallest zoom that still changes the drawing (`RackZoom.minimum`), for Zoom Out.
+    var onMinimumZoom: ((CGFloat) -> Void)?
 
     @State private var tracker = RackViewportTracker()
     #if os(macOS)
@@ -403,7 +399,9 @@ struct FittedRackGrid: View {
                 drawing(base: base, scrolls: scrolls)
             }
             #if os(macOS)
-            .preference(key: RackMinimumZoomKey.self, value: RackZoom.minimum(base: base, minimum: minimum))
+            .onChange(of: RackZoom.minimum(base: base, minimum: minimum), initial: true) { _, value in
+                onMinimumZoom?(value)
+            }
             #endif
         }
     }
