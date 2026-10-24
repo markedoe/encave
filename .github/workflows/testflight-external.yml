@@ -56,10 +56,12 @@ jobs:
             echo "The screen tour of run $run passed."
             exit 0
           fi
-          # Tour skipped because the same files had passed it in an earlier run (tour-check).
+          # Tour skipped because the same files had passed it in an earlier run (tour-check): its
+          # log names that run (a number; the script itself, also in the log, has "$run").
           check=$(jq -r 'select(.name == "Tour already passed on this commit?" and .conclusion == "success") | .id' <<< "$jobs" | head -n 1)
           if [ -n "$check" ] && ! grep -qv '^skipped ' <<< "$tours" \
-            && gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$check/logs" | grep -o 'The screen tour passed on .*'; then
+            && gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$check/logs" \
+              | grep -oE 'The screen tour passed on (the same tree|this commit) in run [0-9]+'; then
             exit 0
           fi
           echo "::error::The screen tour of run $run did not pass: build $BUILD_NUMBER stays with the internal testers. Tick \"force\" to give it anyway."
