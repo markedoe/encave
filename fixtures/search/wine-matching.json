@@ -1,5 +1,5 @@
 {
-  "about": "Search by words, shared by CaveKit (SearchTests.swift) and the Kotlin core (SearchTest.kt): each word of the query must be in one of the wine's fields, ignoring case and accents.",
+  "about": "Search by words, shared by CaveKit (SearchTests.swift) and the Kotlin core (SearchTest.kt): each word of the query must be in one of the wine's fields, ignoring case and accents. Words are split on Unicode White_Space, no-break spaces included; apostrophes are compared as typed. matches are in name order; suggestions are wineSuggestions, in order, with one bottle of each wine in the cellar.",
   "wines": [
     {
       "name": "Château Palmer", "producer": "Château Palmer", "vintage": 2015,
@@ -23,6 +23,11 @@
     {
       "name": "Weißburgunder", "producer": "Schloss Gobelsburg", "vintage": 2022,
       "region": "Kamptal", "country": "Austria", "grapes": ["Pinot Blanc"]
+    },
+    {
+      "name": "Château d'Yquem", "producer": "Château d'Yquem", "vintage": 2001,
+      "appellation": "Sauternes", "region": "Bordeaux", "country": "France",
+      "grapes": ["Sémillon", "Sauvignon Blanc"]
     }
   ],
   "searches": [
@@ -35,13 +40,29 @@
     { "query": "saint emilion", "matches": ["Château Figeac"] },
     { "query": "bordeaux merlot", "matches": ["Château Figeac", "Château Palmer"] },
     { "query": "bordeaux syrah", "matches": [] },
-    { "query": "chateau", "matches": ["Château Figeac", "Château Palmer"] },
+    { "query": "chateau", "matches": ["Château d'Yquem", "Château Figeac", "Château Palmer"] },
     { "query": "gift figeac", "matches": ["Château Figeac"] },
     { "query": "3760123456789", "matches": ["La Landonne"] },
     { "query": "bourgogne chardonnay 2020 jacqueson", "matches": ["Rully"] },
     { "query": "weissburgunder", "matches": ["Weißburgunder"] },
     { "query": "WEISSBURGUNDER kamptal", "matches": ["Weißburgunder"] },
     { "query": "weißburgunder", "matches": ["Weißburgunder"] },
-    { "query": "   ", "matches": ["Château Figeac", "Château Palmer", "La Landonne", "Rully", "Weißburgunder"] }
+    { "query": "château\u00a0palmer", "matches": ["Château Palmer"] },
+    { "query": "margaux\u202f2015", "matches": ["Château Palmer"] },
+    { "query": "\u3000rully\u2003chardonnay\u0085", "matches": ["Rully"] },
+    { "query": "d'yquem", "matches": ["Château d'Yquem"] },
+    { "query": "D'YQUEM sauternes", "matches": ["Château d'Yquem"] },
+    { "query": "d\u2019yquem", "matches": [] },
+    { "query": "   ", "matches": ["Château d'Yquem", "Château Figeac", "Château Palmer", "La Landonne", "Rully", "Weißburgunder"] },
+    { "query": "\u00a0\u202f", "matches": ["Château d'Yquem", "Château Figeac", "Château Palmer", "La Landonne", "Rully", "Weißburgunder"] }
+  ],
+  "suggestions": [
+    { "query": "chateau", "names": ["Château d'Yquem", "Château Figeac", "Château Palmer"] },
+    { "query": "bordeaux", "names": ["Château d'Yquem", "Château Figeac", "Château Palmer"] },
+    { "query": "2015\u00a0bordeaux", "names": ["Château Figeac", "Château Palmer"] },
+    { "query": "merlot", "names": ["Château Figeac", "Château Palmer"] },
+    { "query": "france", "names": ["Château d'Yquem", "Château Figeac", "Château Palmer", "La Landonne", "Rully"] },
+    { "query": "château\u202fpalmer", "names": ["Château Palmer"] },
+    { "query": "   ", "names": [] }
   ]
 }

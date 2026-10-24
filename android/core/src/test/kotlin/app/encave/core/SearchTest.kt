@@ -19,7 +19,7 @@ class SearchTest {
     private class Search(val query: String, val matches: List<String>)
 
     /** Tests run in android/core. */
-    private fun vectors(): Pair<List<Wine>, List<Search>> {
+    private fun vectors(): Triple<List<Wine>, List<Search>, List<Search>> {
         val root = Json.parseToJsonElement(File("../../fixtures/search/wine-matching.json").readText()).jsonObject
         fun strings(element: kotlinx.serialization.json.JsonElement?) = element?.jsonArray?.map { it.jsonPrimitive.content }
         val wines = root.getValue("wines").jsonArray.map { item ->
@@ -35,7 +35,11 @@ class SearchTest {
             val o = item.jsonObject
             Search(o.getValue("query").jsonPrimitive.content, strings(o["matches"]).orEmpty())
         }
-        return wines to searches
+        val suggestions = root.getValue("suggestions").jsonArray.map { item ->
+            val o = item.jsonObject
+            Search(o.getValue("query").jsonPrimitive.content, strings(o["names"]).orEmpty())
+        }
+        return Triple(wines, searches, suggestions)
     }
 
     @Test
@@ -43,7 +47,19 @@ class SearchTest {
         val (wines, searches) = vectors()
         assertTrue(searches.isNotEmpty())
         searches.forEach { search ->
-            assertEquals(search.matches.sorted(), wines.filter { it.matches(search.query) }.map { it.name }.sorted(), search.query)
+            val found = wines.filter { it.matches(search.query) }.sortedWith { a, b -> Cellar.nameOrder(a, b) }.map { it.name }
+            assertEquals(search.matches, found, search.query)
+        }
+    }
+
+    @Test
+    fun suggestionsComeInNameOrder() {
+        val (wines, _, suggestions) = vectors()
+        val cellar = Cellar()
+        wines.forEach { cellar.addBottles(it) }
+        assertTrue(suggestions.isNotEmpty())
+        suggestions.forEach { search ->
+            assertEquals(search.matches, cellar.wineSuggestions(search.query).map { it.name }, search.query)
         }
     }
 
