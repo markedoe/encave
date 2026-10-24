@@ -78,11 +78,31 @@ def check_running():
         sys.exit(f"The app is no longer running.\n{crash[-6000:]}")
 
 
+def dismiss_other_anr(found):
+    """On a slow CI emulator another app (often the launcher) can stop responding, and its
+    system dialog then covers Encave. Tap "Wait" on it; Encave not responding still fails."""
+    titles = [n[0] for n in found if n[0].endswith("isn't responding")]
+    if not titles:
+        return False
+    if any(t.startswith("Encave") for t in titles):
+        sys.exit(f"Encave is not responding: {titles}")
+    wait = [n for n in found if n[0] == "Wait"]
+    if not wait:
+        return False
+    print(f"Dismissed a system dialog: {titles[0]}")
+    tap(wait[0])
+    time.sleep(1)
+    return True
+
+
 def find(labels, timeout=30):
     """The bottom-most node whose text or description is one of the labels (tab bar first)."""
     deadline = time.time() + timeout
     while True:
-        matches = [n for n in nodes() if n[0] in labels or n[1] in labels]
+        found = nodes()
+        if dismiss_other_anr(found):
+            found = nodes()
+        matches = [n for n in found if n[0] in labels or n[1] in labels]
         if matches:
             return max(matches, key=lambda n: n[2][1])
         check_running()
