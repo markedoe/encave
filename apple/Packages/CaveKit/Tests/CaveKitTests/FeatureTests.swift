@@ -103,6 +103,19 @@ import Testing
         #expect(stats.consumptionByMonth.count == 12)
         #expect(stats.byColor.map(\.count).reduce(0, +) == stats.bottleCount)
     }
+
+    /// Equal counts in the styles' order, unknown last, whatever order the bottles came in (as on Android).
+    @Test func stylesWithEqualCountsKeepTheStylesOrder() throws {
+        var cellar = Cellar()
+        try cellar.addBottles(of: Wine(name: "Two reds A", color: .red))
+        let colors: [WineColor?] = [.orange, nil, .sparkling, .white, .red]
+        for color in colors {
+            try cellar.addBottles(of: Wine(name: "One \(color?.rawValue ?? "unknown")", color: color))
+        }
+        let slices = cellar.statistics(year: 2026).byColor
+        #expect(slices.map(\.color) == [.red, .white, .sparkling, .orange, nil])
+        #expect(slices.map(\.count) == [2, 1, 1, 1, 1])
+    }
 }
 
 @Suite struct PairingTests {

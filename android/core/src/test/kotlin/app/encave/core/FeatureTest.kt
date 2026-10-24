@@ -169,6 +169,20 @@ class StatisticsTest {
         assertEquals(stats.bottleCount, stats.byColor.sumOf { it.count })
     }
 
+    /** Equal counts in the styles' order, unknown last, whatever order the bottles came in (as in CaveKit). */
+    @Test
+    fun stylesWithEqualCountsKeepTheStylesOrder() {
+        val cellar = Cellar()
+        cellar.addBottles(Wine(name = "Two reds A", color = WineColor.Red), 1)
+        for (color in listOf(WineColor.Orange, null, WineColor.Sparkling, WineColor.White, WineColor.Red)) {
+            cellar.addBottles(Wine(name = "One ${color?.raw}", color = color), 1)
+        }
+        assertEquals(
+            listOf(WineColor.Red to 2, WineColor.White to 1, WineColor.Sparkling to 1, WineColor.Orange to 1, null to 1),
+            cellar.statistics(2026).byColor.map { it.color to it.count },
+        )
+    }
+
     @Test
     fun decadesAreOldestFirstWithNonVintageLast() {
         val stats = SampleData.cellar(year = 2026).statistics(2026)
