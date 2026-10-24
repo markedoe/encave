@@ -81,7 +81,15 @@ class SyncStorage(private val context: Context) {
     /** The relay URL, "webdav:" and the folder URL, or null when syncing away from home is off. */
     var remoteStorage: String?
         get() = prefs.getString(KEY_STORAGE, null)
-        set(value) = prefs.edit { if (value == null) remove(KEY_STORAGE) else putString(KEY_STORAGE, value) }
+        set(value) {
+            if (value != remoteStorage) {
+                // Grants left on the old storage are not on this one.
+                pendingRotation?.let { kept ->
+                    pendingRotation = kept.storageChanged().takeIf { !it.key.key.contentEquals(remoteKey?.key) }
+                }
+            }
+            prefs.edit { if (value == null) remove(KEY_STORAGE) else putString(KEY_STORAGE, value) }
+        }
 
     /** The user turned syncing away from home off on this device: a storage another device tells is not taken. */
     var remoteTurnedOff: Boolean

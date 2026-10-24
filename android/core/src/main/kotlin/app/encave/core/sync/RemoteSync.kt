@@ -250,7 +250,12 @@ data class PendingRotation(
     val key: CellarKey,
     /** Devices already given [key]. */
     val granted: Set<@Serializable(with = UuidSerializer::class) UUID> = emptySet(),
-)
+    /** Devices whose grant failed: the rotation went on without them, tried again later ([RemoteSync.grantMissing]). */
+    val failed: Set<@Serializable(with = UuidSerializer::class) UUID> = emptySet(),
+) {
+    /** The device moved to another storage: grants left on the old one do not count there. */
+    fun storageChanged(): PendingRotation = copy(granted = emptySet(), failed = emptySet())
+}
 
 object RemoteSync {
     /** Snapshots kept per device: the newest two (a reader may be fetching the previous one). */
@@ -526,39 +531,81 @@ object RemoteSync {
         }
     }
 
+    /** At most this many removals are listed in a key, so a grant stays well under 4 KiB. */
+    const val MAX_REMOVED = 64
+
     /**
-     * Devices a key must not have been given to: those removed by another device. A device
-     * that left removed itself and forgot the key (docs/SYNC.md §2).
+     * Devices a key must not have been given to: those removed by another device, the newest
+     * [MAX_REMOVED] of them (older ones were left out by earlier rotations). A device that left
+     * removed itself and forgot the key (docs/SYNC.md §2).
      */
     fun shutOut(membership: Membership): Set<UUID> =
-        membership.stamps.filter { (id, stamp) -> stamp.deleted && stamp.device != id }.keys
+        membership.stamps.entries.filter { (id, stamp) -> stamp.deleted && stamp.device != id }
+            .sortedWith(compareByDescending<Map.Entry<UUID, Stamp>> { it.value.counter.toULong() }.thenByDescending { it.key.lower })
+            .take(MAX_REMOVED).map { it.key }.toSet()
+
+    /** The `removed` list of a key made now: [shut] first, then the others, at most [MAX_REMOVED]. */
+    internal fun removedList(shut: Set<UUID>, others: List<UUID>?): List<UUID> =
+        (shut.toList() + others.orEmpty().filter { it !in shut }.distinct()).take(MAX_REMOVED)
+            .sortedBy { it.toString().uppercase(Locale.ROOT) }
+
+    /**
+     * The key to keep when [key] arrives (a grant, the local network) or is loaded: with the
+     * same key bytes as [previous], the union of both `removed` lists (a build before the list
+     * drops it). A key without a list (from such a build) is taken to leave out the removals
+     * known now: those builds rotate after their own removals.
+     */
+    fun settled(key: CellarKey, previous: CellarKey?, membership: Membership?): CellarKey {
+        var result = key
+        val listed = previous?.removed
+        if (previous != null && previous.cellarId == key.cellarId && previous.key.contentEquals(key.key) && listed != null) {
+            result = result.copy(removed = removedList(emptySet(), listed + key.removed.orEmpty()))
+        }
+        if (result.removed == null && membership != null && membership.cellarId == key.cellarId) {
+            result = result.copy(removed = removedList(shutOut(membership), null))
+        }
+        return result
+    }
 
     /**
      * The rotation to run before this round, if any (docs/SYNC.md §8, Removing a device): one
      * already started, or a new one when the membership has a removal the key does not list,
      * so it may have been given to that device. Every key holder that runs rounds checks this,
      * not only the device that removed another. Keep the result before rotating, so a retry
-     * uses the same key.
+     * uses the same key. Null: nothing to do, and a kept rotation other than one of [key]
+     * itself (grants still owed, [grantMissing]) is done with.
      *
-     * A started rotation gets a new key above every epoch seen when the cellar moved on
-     * meanwhile, or when it was given to a device removed since. [device] is this device: once
-     * removed itself, it never rotates.
+     * A started rotation is dropped when [key] supersedes it, or when [key] is on its epoch or
+     * later and it was given to nobody. It gets a new key above every epoch seen when, given
+     * to some devices, it could win against [key] on the same epoch, or when it was given to a
+     * device removed since. [device] is this device: once removed itself, it never rotates. A
+     * key without a `removed` list leaves out the removals known now.
      */
     fun nextRotation(key: CellarKey, pending: PendingRotation?, membership: Membership, device: UUID): PendingRotation? {
         if (membership.members[device] == null) return null
-        var started = pending?.takeIf { it.key.cellarId == key.cellarId }
+        var started = pending?.takeIf { it.key.cellarId == key.cellarId && !it.key.key.contentEquals(key.key) }
         val removed = shutOut(membership)
-        val excluded = removed + key.removed.orEmpty()
-        if (started == null && key.removed.orEmpty().containsAll(removed)) return null
+        val listed = key.removed?.toSet() ?: removed
+        val excluded = removed + listed
         val top = maxOf(key.epoch, started?.key?.epoch ?: 0)
-        if (started != null && (started.key.epoch <= key.epoch || started.granted.any { it in excluded })) started = null
+        var force = false
+        if (started != null) {
+            if (key.supersedes(started.key) || (started.key.epoch <= key.epoch && started.granted.isEmpty())) {
+                // Nobody keeps the started key: those given it move to [key] too.
+                started = null
+            } else if (started.key.epoch <= key.epoch || started.granted.any { it in excluded }) {
+                // Devices given the started key could stay on it, or a removed device has it.
+                started = null
+                force = true
+            }
+        }
+        if (started == null && !force && listed.containsAll(removed)) return null
         val next = started ?: run {
             // Only a misbehaving device sends a key at the last epoch: refuse rather than go past it.
             if (top >= CellarKey.MAX_EPOCH) throw RemoteSyncException(RemoteSyncError.Corrupted("epoch"))
             PendingRotation(CellarKey.random(key.cellarId, top + 1))
         }
-        val list = (excluded + next.key.removed.orEmpty()).sortedBy { it.toString().uppercase(Locale.ROOT) }
-        return next.copy(key = next.key.copy(removed = list))
+        return next.copy(key = next.key.copy(removed = removedList(removed, listed.toList() + next.key.removed.orEmpty())))
     }
 
     /**
@@ -577,7 +624,9 @@ object RemoteSync {
     /**
      * The same, calling [granted] with [pending] updated after each device given the key, so
      * a retry after a failure leaves no second grant for it. Devices in the key's `removed`
-     * get nothing. Returns the rotation as it ends.
+     * get nothing. A device whose grant fails (its inbox is full, its record is damaged) does
+     * not stop the rotation: it is noted in `failed`, and [grantMissing] tries again in later
+     * rounds. Returns the rotation as it ends.
      */
     suspend fun rotate(
         store: MailboxStore, identity: DeviceIdentity, oldKey: CellarKey, pending: PendingRotation, local: SyncSnapshot,
@@ -589,14 +638,41 @@ object RemoteSync {
         for (member in local.membership.active) {
             if (member.id == identity.id || member.id in removed || member.id in done.granted) continue
             if (member.inbox?.let { RelayPath.isValidMailbox(it) && it.startsWith("i") } != true) continue
-            grant(newKey, listOf(member), store, identity, storage)
-            done = done.copy(granted = done.granted + member.id)
+            done = try {
+                grant(newKey, listOf(member), store, identity, storage)
+                done.copy(granted = done.granted + member.id, failed = done.failed - member.id)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                done.copy(failed = done.failed + member.id)
+            }
             granted(done)
         }
         // The removed device can still read the old mailbox: only the devices and the clock go there.
         val notice = local.copy(cellar = app.encave.core.Cellar(), state = local.state.copy(stamps = emptyMap()))
         write(notice, store.mailbox(oldKey.mailboxId, oldKey.token), oldKey, identity.id)
         write(local, store.mailbox(newKey.mailboxId, newKey.token), newKey, identity.id)
+        return done
+    }
+
+    /** After a rotation: tries again to give its key to the devices whose grant failed. Non-members are dropped. */
+    suspend fun grantMissing(pending: PendingRotation, store: MailboxStore, identity: DeviceIdentity, local: SyncSnapshot, storage: String?): PendingRotation {
+        val removed = pending.key.removed.orEmpty().toSet()
+        var done = pending
+        for (id in pending.failed.sortedBy { it.toString() }) {
+            val member = local.membership.members[id]
+            if (member == null || id in removed) {
+                done = done.copy(failed = done.failed - id)
+                continue
+            }
+            try {
+                grant(pending.key, listOf(member), store, identity, storage)
+                done = done.copy(failed = done.failed - id, granted = done.granted + id)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+            }
+        }
         return done
     }
 
