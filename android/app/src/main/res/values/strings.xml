@@ -41,6 +41,7 @@
     <string name="action_change">Change</string>
     <string name="action_put_back">Put back in the cellar</string>
     <string name="search_hint">Wine, producer, region, grape, vintage</string>
+    <string name="search_hint_short">Search the cellar</string>
     <string name="search_suggestions">Wines in your cellar</string>
     <string name="cellar_empty_title">Your cellar is empty</string>
     <string name="cellar_empty_body">Add the bottles you keep at home to know what you have, where it is and when to open it.</string>
@@ -127,7 +128,7 @@
     <string name="field_size">Bottle size</string>
     <string name="field_storage">Where is it?</string>
     <string name="field_storage_hint">Kitchen, box in the garage…</string>
-    <string name="field_location">Location</string>
+    <string name="field_location">Storage</string>
     <string name="field_appearance">Appearance</string>
     <string name="field_nose">Nose</string>
     <string name="field_palate">Palate</string>
@@ -278,23 +279,23 @@
     <string name="settings_currency">Default currency</string>
     <string name="settings_appearance">Display</string>
     <string name="settings_dynamic_color">Use wallpaper colors</string>
-    <string name="settings_dynamic_color_body">Material You colors instead of the Encave burgundy</string>
+    <string name="settings_dynamic_color_body">Material You colors instead of the Encave burgundy.</string>
     <string name="settings_studio_look">Studio look for label photos</string>
     <string name="settings_studio_look_body">The photo centred on its label and its light evened out, made on this device. The photo you took is kept as is.</string>
     <string name="settings_studio_look_ai">When AI label recognition is set up below, the AI also finds the label in the photo, so the picture is framed on it. Otherwise it is framed on this device.</string>
     <string name="settings_data">Your data</string>
     <string name="settings_backup_now">Back up now</string>
     <string name="settings_backing_up">Backing up…</string>
-    <string name="settings_backup_now_body">A ZIP file with your whole cellar, its photos and documents. It is not encrypted: keep it somewhere safe</string>
+    <string name="settings_backup_now_body">A ZIP file with your whole cellar, its photos and documents. It is not encrypted: keep it somewhere safe.</string>
     <string name="settings_reading_backup">Reading the backup…</string>
     <string name="versions_title">Previous versions</string>
-    <string name="settings_versions_body">Your cellar as it was in the last days and weeks, kept on this device</string>
+    <string name="settings_versions_body">Your cellar as it was in the last days and weeks, kept on this device.</string>
     <string name="settings_weekly_backup">Weekly backup on this device</string>
-    <string name="settings_weekly_backup_body">Not encrypted. The last two are kept in Download/Encave, which apps allowed to access all files can read</string>
+    <string name="settings_weekly_backup_body">Not encrypted. The last two are kept in Download/Encave, which apps allowed to access all files can read.</string>
     <string name="settings_last_backup">Last backup: %1$s</string>
     <string name="settings_backup_reminder">No backup for more than a month. Back up now to keep a copy of your cellar, its photos and documents.</string>
     <string name="settings_restore_latest">Restore the latest previous version</string>
-    <string name="settings_restore_latest_body">Your cellar as Encave last kept it, before the file could not be read</string>
+    <string name="settings_restore_latest_body">Your cellar as Encave last kept it, before the file could not be read.</string>
     <string name="versions_empty_title">No previous versions yet</string>
     <string name="versions_empty_body">Encave keeps a copy of your cellar on each day it changes. The first one appears tomorrow.</string>
     <string name="versions_footer">A copy of your cellar is kept on each day it changes: one for each of the last 7 days it changed, then one a week for the 4 weeks before. They stay on this device; the photos and documents they need are kept with them.</string>
@@ -330,9 +331,9 @@
     <string name="err_backup_failed">The backup could not be made. Check that this device has enough free space, then try again.</string>
     <string name="err_version_unreadable">This version could not be read.</string>
     <string name="settings_export_csv">Export a spreadsheet (CSV)</string>
-    <string name="settings_export_csv_body">One row per bottle</string>
+    <string name="settings_export_csv_body">One row per bottle.</string>
     <string name="settings_import">Import a backup or a CSV file</string>
-    <string name="settings_import_body">A backup (ZIP or JSON) is shown first; a CSV adds its bottles to your cellar</string>
+    <string name="settings_import_body">A backup (ZIP or JSON) is shown first; a CSV adds its bottles to your cellar.</string>
     <string name="settings_try">Try Encave</string>
     <string name="settings_reset">Reset</string>
     <string name="settings_sample_confirm_title">Load the sample cellar?</string>
@@ -429,6 +430,7 @@
     <string name="photo_description">Label photo of %1$s</string>
     <string name="photo_failed">The photo could not be read.</string>
     <string name="photo_hint_ai">Encave for Android does not read the label text on the device: type the name, or scan the barcode to find a wine you already have. With AI label recognition on (Settings), the photo fills in the details.</string>
+    <string name="photo_hint_ai_no_barcode">Encave for Android does not read the label text on the device: type the name. With AI label recognition on (Settings), the photo fills in the details.</string>
     <string name="detail_serving">Serving</string>
     <string name="serving_temperature">Temperature</string>
     <string name="serving_temperature_value">%1$d–%2$d °C</string>
@@ -936,6 +938,11 @@
     <string name="help_devices_privacy_title">Privacy</string>
     <string name="help_devices_privacy">On the same Wi-Fi, devices talk directly; no server is involved. Through a WebDAV folder or a relay, only encrypted files are stored there. Every exchange is encrypted from end to end. The 6-digit code only helps the devices find each other: the comparison is what protects you.</string>
     <string name="sample_main_rack">Main rack</string>
+    <string name="sample_region_piedmont">Piedmont</string>
+    <string name="sample_region_kakheti">Kakheti</string>
+    <string name="sample_country_italy">Italy</string>
+    <string name="sample_country_switzerland">Switzerland</string>
+    <string name="sample_country_georgia">Georgia</string>
     <string name="sample_wine_fridge">Cabinet</string>
     <string name="sample_note">Silky, red fruit, long finish.</string>
     <string name="sample_kitchen">Kitchen</string>
@@ -999,7 +1006,7 @@
     <string name="help_tonight_reminders">Turn on **Reminders** in Settings, or with **Turn on** when Tonight offers it: at the start of each month (around 10:00 on the 1st), if bottles should be drunk this year, have just become ready or are past their peak, a notification says how many; another comes on the morning bottles on order are expected. It is worked out on this device. If notifications are off for Encave, **Open settings** takes you to the system settings to turn them on.</string>
     <string name="shortcut_scan">Scan a bottle</string>
     <string name="shortcut_tonight">What to open tonight</string>
-    <string name="action_select_wines">Select wines</string>
+    <string name="action_select_wines">Select bottles</string>
     <string name="action_select">Select</string>
     <string name="selection_count">Selected: %1$d</string>
     <string name="action_end_selection">End selection</string>
@@ -1007,7 +1014,7 @@
     <string name="action_take_out_of_racks">Take out of storage</string>
     <string name="confirm_delete_wines_title">Delete these wines?</string>
     <string name="confirm_delete_wines_body">Their bottles and tastings are deleted too. You can undo right after.</string>
-    <string name="action_delete_wines">Delete wines</string>
+    <string name="action_delete_wines">Delete bottles</string>
     <string name="action_delete_wine">Delete wine</string>
     <string name="confirm_delete_wine_title">Delete “%1$s”?</string>
     <string name="msg_search_deleted">Deleted %1$s</string>
@@ -1017,7 +1024,7 @@
     <string name="msg_bottles_gone">Bottles removed from the cellar: %1$d</string>
     <string name="msg_wines_deleted">Wines deleted: %1$d</string>
     <string name="help_racks_several_title">Several wines at once</string>
-    <string name="help_racks_several">In the Cellar list, choose **Select wines** in the sort menu (or touch and hold a wine, then **Select**) and tick the wines, or **Select all** for those the search and filters show. Then put them in storage (bottles already in storage stay where they are) or delete them, or, under **More options**, take them out of their positions, keep their bottles for an occasion or mark them as no longer in the cellar. **Undo** puts everything back.</string>
+    <string name="help_racks_several">In the Cellar list, choose **Select bottles** in the sort menu (or touch and hold a wine, then **Select**) and tick the wines, or **Select all** for those the search and filters show. Then put them in storage (bottles already in storage stay where they are) or delete them, or, under **More options**, take them out of their positions, keep their bottles for an occasion or mark them as no longer in the cellar. **Undo** puts everything back.</string>
     <string name="action_check_rack">Check this storage</string>
     <string name="audit_hint">Tap each bottle you find in the storage.</string>
     <string name="audit_found">Found: %1$d of %2$d</string>
@@ -1032,9 +1039,9 @@
     <string name="help_racks_check_title">Checking storage</string>
     <string name="help_racks_check">Choose **Check this storage**, tap each bottle you find, then **End check**. Tapping a position with several bottles marks them all; to tick them one by one, touch and hold it (it shows **8/10** when some are found). For the bottles not found, choose **Take them out of storage** (they stay in the cellar without a position) or **Mark them as gone** (they leave the cellar). **Undo** puts everything back.</string>
     <string name="settings_export_pdf">Inventory for printing (PDF)</string>
-    <string name="settings_export_pdf_body">Every wine with its locations and purchase value, for insurance or a move</string>
+    <string name="settings_export_pdf_body">Every wine with its locations and purchase value, for insurance or a move.</string>
     <string name="settings_import_other">Import from another app</string>
-    <string name="settings_import_other_body">A CSV from CellarTracker, Vivino or a spreadsheet, read on this device</string>
+    <string name="settings_import_other_body">A CSV from CellarTracker, Vivino or a spreadsheet, read on this device.</string>
     <string name="pdf_title">Cellar inventory</string>
     <string name="pdf_value">Purchase value: %1$s</string>
     <string name="pdf_wine">Wine</string>
@@ -1042,6 +1049,7 @@
     <string name="pdf_purchase_value">Purchase value</string>
     <string name="pdf_made_with">Made with Encave</string>
     <string name="pdf_page">Page %1$d of %2$d</string>
+    <string name="pdf_rack_places">%1$s: %2$s</string>
     <string name="msg_imported_elsewhere">Wines tasted elsewhere imported: %1$d</string>
     <string name="help_data_pdf_title">Printed inventory</string>
     <string name="help_data_pdf">**Inventory for printing (PDF)** lists every wine in your cellar with its number of bottles, locations and purchase value: for your insurer, a move, or your family. The values are what you paid; current prices found online (**Find current price**) appear in Insights, not in the inventory.</string>
@@ -1487,6 +1495,10 @@
     <plurals name="stat_different_wines" tools:ignore="ImpliedQuantity">
         <item quantity="one">different wine</item>
         <item quantity="other">different wines</item>
+    </plurals>
+    <plurals name="confirm_delete_bottles_of_wines">
+        <item quantity="one">Delete %1$d bottle (%2$s)?</item>
+        <item quantity="other">Delete %1$d bottles (%2$s)?</item>
     </plurals>
     <plurals name="confirm_delete_wines_count">
         <item quantity="one">Delete %d wine?</item>

@@ -184,7 +184,13 @@ fun WebSearchSettingsSection() {
             service.requiresServerUrl -> listOf(R.string.web_search_searxng_json, R.string.settings_web_search_on_body)
             else -> listOf(R.string.settings_web_search_on_body)
         }
-        footer.forEach { Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        // Under the service field's text, past its icon, not at the icon's column.
+        footer.forEach {
+            Text(
+                stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = SettingsFieldInset),
+            )
+        }
     }
     if (settings.isEnabled) HelpLink(HelpTopic.WebSearch, R.string.help_link_web_search)
 }
@@ -217,3 +223,6 @@ private fun ServiceField(selected: WebSearchService, onSelect: (WebSearchService
         },
     )
 }
+
+/** Where the text of a settings field with a leading icon starts, inside a section's 16 dp padding: the icon and its gap. */
+internal val SettingsFieldInset = 24.dp + Dimens.l

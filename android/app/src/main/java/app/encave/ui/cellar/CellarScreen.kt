@@ -1,5 +1,8 @@
 package app.encave.ui.cellar
 
+import app.encave.ui.components.measure
+import app.encave.ui.components.rememberFabSpace
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.ui.semantics.heading
 import app.encave.core.containsSample
@@ -234,6 +237,7 @@ private fun CellarList(
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
     var drinking by rememberDrinking()
     val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
+    val fabSpace = rememberFabSpace()
     val isEmpty = cellar.bottlesInCellar.isEmpty() && cellar.bottlesOnOrder.isEmpty()
     val orders = remember(cellar) { cellar.orderGroups() }
     val showOrders = orders.isNotEmpty() && !filter.isActive && filter.query.isEmpty()
@@ -301,7 +305,7 @@ private fun CellarList(
         },
         floatingActionButton = {
             if (!isEmpty && !selecting) {
-                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                Column(Modifier.measure(fabSpace), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
                     SmallFloatingActionButton(onClick = { navigator.open(DiscoveryEditorRoute()) }) {
                         Icon(Icons.Outlined.AutoAwesome, contentDescription = stringResource(R.string.discovery_new_long))
                     }
@@ -404,7 +408,8 @@ private fun CellarList(
                     SyncRefreshBox(enabled = shared) {
                         LazyColumn(
                             state = listState,
-                            contentPadding = PaddingValues(bottom = 88.dp),
+                            // The last rows scroll out from under the two floating buttons.
+                            contentPadding = PaddingValues(bottom = fabSpace.listBottom),
                             modifier = Modifier.fillMaxSize().testTag("cellar.list"),
                         ) {
                             if (showsSampleBanner && !selecting && !storeCapture) {
@@ -611,7 +616,8 @@ private fun CollapsedSearch(query: String, onOpen: () -> Unit, onClear: () -> Un
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = Dimens.l)) {
             Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                query.ifEmpty { stringResource(R.string.search_hint) },
+                // Collapsed, a short hint; the open field lists what is searched.
+                query.ifEmpty { stringResource(R.string.search_hint_short) },
                 modifier = Modifier.weight(1f).padding(horizontal = Dimens.l),
                 color = if (query.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -897,7 +903,14 @@ private fun SelectionTopBar(
     var rackMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
     androidx.compose.material3.TopAppBar(
-        title = { Text(stringResource(R.string.selection_count, count), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) },
+        // The count alone, on one line beside the actions; TalkBack reads "Selected: 2".
+        title = {
+            val description = stringResource(R.string.selection_count, count)
+            Text(
+                Formats.integer(count), maxLines = 1,
+                modifier = Modifier.testTag("cellar.select.count").semantics { contentDescription = description; liveRegion = LiveRegionMode.Polite },
+            )
+        },
         navigationIcon = {
             IconButton(onClick = onClose, modifier = Modifier.testTag("cellar.select.done")) {
                 Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_end_selection))
@@ -1204,7 +1217,11 @@ internal fun SampleBanner(onRemove: () -> Unit) {
             }
         }
         val button: @Composable () -> Unit = {
-            TextButton(onClick = onRemove, modifier = Modifier.testTag("action.remove_sample")) {
+            TextButton(
+                onClick = onRemove,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
+                modifier = Modifier.testTag("action.remove_sample"),
+            ) {
                 Text(stringResource(R.string.action_remove_sample))
             }
         }

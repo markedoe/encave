@@ -37,6 +37,11 @@ class DesignTokensTest {
     }
 
     @Test
+    fun errorMatches() {
+        assertEquals(themed("error"), DesignTokens.error)
+    }
+
+    @Test
     fun studioBackdropMatches() {
         assertEquals(themed("studio-base"), DesignTokens.studioBase)
         assertEquals(themed("studio-candle"), DesignTokens.studioCandle)

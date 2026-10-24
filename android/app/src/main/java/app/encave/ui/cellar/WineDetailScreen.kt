@@ -453,7 +453,7 @@ private fun Hero(wine: Wine) {
         Text(wine.name, style = SerifDisplay, modifier = Modifier.semantics { heading() })
         val origin = listOfNotNull(wine.producer, wine.appellation, wine.region, wine.country).filter { it.isNotBlank() }
         if (origin.isNotEmpty()) {
-            Text(origin.joinToString(" · "), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(origin.joinToString(app.encave.ui.components.SEPARATOR), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

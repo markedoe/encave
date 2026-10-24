@@ -34,10 +34,17 @@ internal fun rememberWineDeletion(cellar: Cellar, viewModel: AppViewModel, onDel
     if (ids.isNotEmpty()) {
         val single = ids.singleOrNull()?.let { cellar.wines[it] }
         val bottles = cellar.bottleRecordCount(ids)
+        // Several wines: counted in bottles first ("Delete 15 bottles (2 wines)?").
         ConfirmDialog(
-            title = if (single != null) stringResource(R.string.confirm_delete_wine_title, single.displayName)
-            else pluralStringResource(R.plurals.confirm_delete_wines_count, ids.size, ids.size),
-            body = pluralStringResource(R.plurals.confirm_delete_wines_bottles, bottles, bottles),
+            title = when {
+                single != null -> stringResource(R.string.confirm_delete_wine_title, single.displayName)
+                bottles > 0 -> pluralStringResource(
+                    R.plurals.confirm_delete_bottles_of_wines, bottles, bottles, pluralStringResource(R.plurals.wine_count, ids.size, ids.size),
+                )
+                else -> pluralStringResource(R.plurals.confirm_delete_wines_count, ids.size, ids.size)
+            },
+            body = if (single == null && bottles > 0) stringResource(R.string.confirm_delete_wines_body)
+            else pluralStringResource(R.plurals.confirm_delete_wines_bottles, bottles, bottles),
             confirm = stringResource(if (single != null) R.string.action_delete_wine else R.string.action_delete_wines),
             onConfirm = {
                 if (single != null) viewModel.deleteWine(single.id) else viewModel.deleteWines(ids)

@@ -1,5 +1,6 @@
 package app.encave.ui.racks
 
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.selection.toggleable
@@ -103,6 +104,10 @@ import app.encave.ui.UiText
 import app.encave.ui.cellar.BottleDocumentsSheet
 import app.encave.ui.cellar.DocumentCount
 import app.encave.ui.components.ActionButtonPair
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.platform.LocalDensity
+import app.encave.ui.components.STACKED_ACTIONS_FONT_SCALE
 import app.encave.ui.components.ActionContent
 import app.encave.ui.components.BottleEnd
 import app.encave.ui.components.icon
@@ -196,7 +201,11 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
             TopAppBar(
                 title = {
                     Column {
-                        Text(rack?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        // A long name gets smaller before it is cut, beside the three buttons.
+                        Text(
+                            rack?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            autoSize = TextAutoSize.StepBased(minFontSize = 15.sp, maxFontSize = MaterialTheme.typography.titleLarge.fontSize),
+                        )
                         if (rack != null) {
                             Text(
                                 stringResource(R.string.rack_occupancy, cellar.occupancy(rack), rack.capacity),
@@ -256,7 +265,10 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
                             Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        TextButton(onClick = { movingId = null }) { Text(stringResource(R.string.action_cancel)) }
+                        TextButton(
+                            onClick = { movingId = null },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
+                        ) { Text(stringResource(R.string.action_cancel)) }
                     }
                 }
             }
@@ -530,86 +542,114 @@ private fun SelectedBottleCard(
     var menu by remember { mutableStateOf(false) }
     val scheme = MaterialTheme.colorScheme
     val resources = LocalResources.current
+    // From this font scale on, the card uses full-width rows so no title is squeezed.
+    val large = LocalDensity.current.fontScale >= STACKED_ACTIONS_FONT_SCALE
+    val details: @Composable (Modifier) -> Unit = { textModifier ->
+        Column(textModifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                wine?.displayName ?: stringResource(R.string.unknown_wine),
+                style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis,
+            )
+            wine?.producer?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                bottle.slot?.let { slot ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
+                        Icon(Icons.Outlined.Place, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                        Text(rack.displayLabel(slot, resources), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+                    }
+                }
+                wine?.let { MaturityLabel(Maturity.of(it, year)) }
+            }
+        }
+    }
+    val headerButtons: @Composable () -> Unit = {
+        Box {
+            IconButton(onClick = { menu = true }, modifier = Modifier.testTag("rack.selection.more")) {
+                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+            }
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_move_other_rack)) },
+                    leadingIcon = { Icon(Icons.Outlined.OpenWith, contentDescription = null) },
+                    onClick = { menu = false; onMoveElsewhere() },
+                    modifier = Modifier.testTag("rack.selection.move_elsewhere"),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_take_out_of_rack)) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null) },
+                    onClick = { menu = false; onTakeOut() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_mark_gone)) },
+                    leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
+                    onClick = { menu = false; onGone() },
+                )
+            }
+        }
+        IconButton(onClick = onClose, modifier = Modifier.testTag("rack.selection.close")) {
+            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
+        }
+    }
+    val actions: @Composable () -> Unit = {
+        ActionButtonPair(
+            equalWidths = large,
+            first = { width ->
+                Button(onClick = onDrink, modifier = width.testTag("action.rack_drink")) {
+                    ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar)
+                }
+            },
+            second = { width ->
+                OutlinedButton(onClick = onMove, modifier = width.testTag("action.rack_move")) {
+                    ActionContent(stringResource(R.string.action_move), Icons.Outlined.OpenWith)
+                }
+            },
+        )
+    }
+    val icons: @Composable () -> Unit = {
+        val documents = bottle.attachments?.size
+        if (documents != null) {
+            TextButton(onClick = { onDocuments(false) }, modifier = Modifier.testTag("rack.selection.documents")) {
+                DocumentCount(documents)
+            }
+        } else {
+            IconButton(onClick = { onDocuments(true) }, modifier = Modifier.testTag("rack.selection.documents")) {
+                Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.action_attach_document))
+            }
+        }
+        FilledTonalIconButton(onClick = onWinePage, modifier = Modifier.testTag("rack.selection.wine")) {
+            Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.action_wine_page))
+        }
+    }
     Surface(
         modifier.widthIn(max = 640.dp).fillMaxWidth().testTag("rack.selection"),
         shape = RoundedCornerShape(Dimens.radiusCard),
         color = scheme.surfaceContainerHigh,
     ) {
         Column(Modifier.padding(Dimens.l), verticalArrangement = Arrangement.spacedBy(Dimens.m)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
-                BottleEnd(wine?.color, size = 40.dp)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        wine?.displayName ?: stringResource(R.string.unknown_wine),
-                        style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                    )
-                    wine?.producer?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.m), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        bottle.slot?.let { slot ->
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.xs)) {
-                                Icon(Icons.Outlined.Place, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                                Text(rack.displayLabel(slot, resources), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
-                            }
-                        }
-                        wine?.let { MaturityLabel(Maturity.of(it, year)) }
-                    }
+            if (large) {
+                // Large font sizes: the bottle and its buttons on a row, the text and the actions full width below.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BottleEnd(wine?.color, size = 40.dp)
+                    Spacer(Modifier.weight(1f))
+                    headerButtons()
                 }
-                Box {
-                    IconButton(onClick = { menu = true }, modifier = Modifier.testTag("rack.selection.more")) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
-                    }
-                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_move_other_rack)) },
-                            leadingIcon = { Icon(Icons.Outlined.OpenWith, contentDescription = null) },
-                            onClick = { menu = false; onMoveElsewhere() },
-                            modifier = Modifier.testTag("rack.selection.move_elsewhere"),
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_take_out_of_rack)) },
-                            leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null) },
-                            onClick = { menu = false; onTakeOut() },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_mark_gone)) },
-                            leadingIcon = { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null) },
-                            onClick = { menu = false; onGone() },
-                        )
-                    }
+                details(Modifier.fillMaxWidth())
+                actions()
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    icons()
                 }
-                IconButton(onClick = onClose, modifier = Modifier.testTag("rack.selection.close")) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.m)) {
+                    BottleEnd(wine?.color, size = 40.dp)
+                    details(Modifier.weight(1f))
+                    headerButtons()
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalAlignment = Alignment.CenterVertically) {
-                ActionButtonPair(
-                    equalWidths = false,
-                    first = { width ->
-                        Button(onClick = onDrink, modifier = width.testTag("action.rack_drink")) {
-                            ActionContent(stringResource(R.string.action_drink), Icons.Outlined.LocalBar)
-                        }
-                    },
-                    second = { width ->
-                        OutlinedButton(onClick = onMove, modifier = width.testTag("action.rack_move")) {
-                            ActionContent(stringResource(R.string.action_move), Icons.Outlined.OpenWith)
-                        }
-                    },
-                )
-                Spacer(Modifier.weight(1f))
-                val documents = bottle.attachments?.size
-                if (documents != null) {
-                    TextButton(onClick = { onDocuments(false) }, modifier = Modifier.testTag("rack.selection.documents")) {
-                        DocumentCount(documents)
-                    }
-                } else {
-                    IconButton(onClick = { onDocuments(true) }, modifier = Modifier.testTag("rack.selection.documents")) {
-                        Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.action_attach_document))
-                    }
-                }
-                FilledTonalIconButton(onClick = onWinePage, modifier = Modifier.testTag("rack.selection.wine")) {
-                    Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.action_wine_page))
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.s), verticalAlignment = Alignment.CenterVertically) {
+                    actions()
+                    Spacer(Modifier.weight(1f))
+                    icons()
                 }
             }
         }

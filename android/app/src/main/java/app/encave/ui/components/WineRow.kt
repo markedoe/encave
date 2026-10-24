@@ -41,6 +41,7 @@ import app.encave.core.FirstPlace
 import app.encave.core.RackKind
 import app.encave.ui.racks.icon
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 
 /** "Main rack · A1, A3" for bottles in racks (people's labels), storage notes as they are. */
 @Composable
@@ -49,14 +50,14 @@ fun locationsText(cellar: Cellar, bottles: List<Bottle>): String {
     val parts = mutableListOf<String>()
     bottles.filter { it.slot != null }.groupBy { it.slot!!.rackId }.forEach { (rackId, inRack) ->
         val rack = cellar.rack(rackId) ?: return@forEach
-        parts += "${rack.name} · " + inRack.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
+        parts += "${rack.name}$SEPARATOR" + inRack.sortedWith(compareBy({ it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
             .joinToString(", ") { rack.displayLabel(it.slot!!, resources) }
     }
     bottles.filter { it.slot == null }.mapNotNull { it.storageNote?.takeIf(String::isNotBlank) }.distinct().forEach { parts += it }
     if (bottles.any { it.slot == null && it.storageNote.isNullOrBlank() } || parts.isEmpty()) {
         parts += stringResource(R.string.location_none)
     }
-    return parts.joinToString(" · ")
+    return parts.joinToString(SEPARATOR)
 }
 
 /**
@@ -69,7 +70,7 @@ fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
     val placed = bottles.filter { it.slot != null }
         .sortedWith(compareBy({ it.slot!!.rackId.toString() }, { it.slot!!.row }, { it.slot!!.column }, { it.slot!!.depth }))
     val labels = placed.mapNotNull { bottle ->
-        cellar.rack(bottle.slot!!.rackId)?.let { "${it.name} · ${it.displayLabel(bottle.slot!!, resources)}" }
+        cellar.rack(bottle.slot!!.rackId)?.let { "${it.name}$SEPARATOR${it.displayLabel(bottle.slot!!, resources)}" }
     } + bottles.filter { it.slot == null }.map { it.storageNote?.takeIf(String::isNotBlank) ?: stringResource(R.string.location_none) }
     val place = FirstPlace.of(labels) ?: return
     val text = if (place.others == 0) place.first
@@ -80,8 +81,9 @@ fun LocationLine(cellar: Cellar, bottles: List<Bottle>) {
             rack?.icon ?: RackKind.Grid.icon, contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp),
         )
+        // Two lines at large font sizes, where one line would cut the place short.
         Text(
-            text, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            text, maxLines = if (LocalDensity.current.fontScale > 1.15f) 2 else 1, overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.testTag("wine.row.location"),
         )
@@ -137,7 +139,7 @@ fun WineGroupRow(
         headlineContent = { Text(wine.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(listOf(style, origin).filter { it.isNotEmpty() }.joinToString(" · "), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(listOf(style, origin).filter { it.isNotEmpty() }.joinToString(SEPARATOR), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (showMaturity && !isOrder && maturity != Maturity.Unknown) {
                     // The symbol in the maturity color, the words in the text color.
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -171,8 +173,9 @@ fun ArrivalLabel(date: Instant?, modifier: Modifier = Modifier, style: TextStyle
     val late = date != null && date.atZone(zone).toLocalDate().isBefore(LocalDate.now(zone))
     val text = when {
         date == null -> stringResource(R.string.arrival_unknown)
-        late -> stringResource(R.string.arrival_late, Formats.dayMonth(date))
-        else -> stringResource(R.string.arrival_expected, Formats.dayMonth(date))
+        late -> stringResource(R.string.arrival_late, Formats.recentDay(date))
+        // With the year when it is not this one, as on Apple.
+        else -> stringResource(R.string.arrival_expected, Formats.recentDay(date))
     }
     val color = if (late) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {

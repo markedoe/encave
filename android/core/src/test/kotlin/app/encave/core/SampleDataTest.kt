@@ -22,6 +22,16 @@ class SampleDataTest {
     }
 
     @Test
+    fun regionsAndCountriesOutsideFranceAreTranslatedWithTheLabels() {
+        val labels = SampleData.Labels(piedmont = "Piémont", kakheti = "Kakhétie", italy = "Italie", switzerland = "Suisse", georgia = "Géorgie")
+        val wines = SampleData.cellar(year = 2026, labels = labels).wines.values
+        assertTrue(wines.any { it.region == "Piémont" && it.country == "Italie" })
+        assertTrue(wines.any { it.region == "Kakhétie" && it.country == "Géorgie" })
+        assertTrue(wines.any { it.region == "Vaud" && it.country == "Suisse" })
+        assertFalse(wines.any { it.country in setOf("Italy", "Switzerland", "Georgia") })
+    }
+
+    @Test
     fun everySampleRecordHasAFixedId() {
         val sample = SampleData.cellar(year = 2026)
         assertTrue(sample.isOnlySample)

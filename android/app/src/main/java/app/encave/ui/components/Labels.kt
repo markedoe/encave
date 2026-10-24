@@ -282,14 +282,18 @@ fun sizeLabel(sizeML: Int): String {
 @Composable
 fun bottleCount(count: Int): String = pluralStringResource(R.plurals.bottle_count, count, count)
 
+/** Between the parts of a line: the no-break space keeps "·" at the end of a line, never at the start of the next. */
+const val SEPARATOR = "\u00A0· "
+
 /** "Red · Domaine X · Pauillac": the style in words, then producer and appellation or region, as on Apple. */
 @Composable
 fun Wine.styleLine(): String =
     listOfNotNull(color?.let { stringResource(it.labelRes) }, producer, appellation ?: region)
-        .filter { it.isNotBlank() }.joinToString(" · ")
+        .filter { it.isNotBlank() }.joinToString(SEPARATOR)
 
-/** "producer · region · country", skipping empty parts. */
-fun Wine.origin(): String = listOfNotNull(producer, region ?: country).filter { it.isNotBlank() }.joinToString(" · ")
+/** "producer · appellation", else region or country, skipping empty parts, as on Apple. */
+fun Wine.origin(): String =
+    listOfNotNull(producer, appellation ?: region ?: country).filter { it.isNotBlank() }.joinToString(SEPARATOR)
 
 fun UiText.resolve(resources: Resources): String = when (this) {
     is UiText.Res -> resources.getString(id, *args.toTypedArray())
@@ -302,6 +306,11 @@ fun UiText.resolve(): String = resolve(LocalResources.current)
 
 fun sampleLabels(resources: Resources) = SampleData.Labels(
     mainRack = resources.getString(R.string.sample_main_rack),
+    piedmont = resources.getString(R.string.sample_region_piedmont),
+    kakheti = resources.getString(R.string.sample_region_kakheti),
+    italy = resources.getString(R.string.sample_country_italy),
+    switzerland = resources.getString(R.string.sample_country_switzerland),
+    georgia = resources.getString(R.string.sample_country_georgia),
     wineFridge = resources.getString(R.string.sample_wine_fridge),
     tastingNote = resources.getString(R.string.sample_note),
     kitchen = resources.getString(R.string.sample_kitchen),

@@ -38,12 +38,14 @@ private val bubbles = listOf(
 /**
  * A bottle seen from its end, filled with the wine's token color, with a glass
  * reflection and the punt. Used in lists and racks so a bottle always looks the
- * same. Decorative: the style is always also given as text.
+ * same. Decorative: the style is always also given as text. With [showsVintage] (a vintage
+ * written in the middle), sparkling wine shows its bubbles mark in the top slot instead of
+ * bubbles all over, which would cover the vintage.
  */
 @Composable
-fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp, showsStyle: Boolean = false) {
+fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp, showsStyle: Boolean = false, showsVintage: Boolean = false) {
     val fill = LocalWinePalette.current[color]
-    val mark = styleMarkPainter(color, size, showsStyle)
+    val mark = styleMarkPainter(color, size, showsStyle, sparklingMark = showsVintage)
     Canvas(modifier.size(size)) {
         val width = this.size.minDimension
         val radius = width / 2
@@ -61,7 +63,7 @@ fun BottleEnd(color: WineColor?, modifier: Modifier = Modifier, size: Dp = 28.dp
         // Punt: the dimple at the bottom of the bottle.
         val punt = maxOf(0.5.dp.toPx(), width * 0.03f)
         drawCircle(Color.White.copy(alpha = 0.18f), radius - width * 0.3f - punt / 2, style = Stroke(punt))
-        if (color == WineColor.Sparkling) {
+        if (color == WineColor.Sparkling && mark == null) {
             val line = maxOf(0.75.dp.toPx(), width * 0.035f)
             bubbles.forEach { (x, y, r) ->
                 val center = Offset(width * x, width * y)
@@ -130,10 +132,13 @@ val StyleMarkMinimum = 28.dp
 val WineColor?.prefersDarkLabel: Boolean
     get() = this != WineColor.Red && this != WineColor.Fortified
 
-/** The style's symbol for a bottle this large, or null (sparkling wine keeps its drawn bubbles or cage). */
+/**
+ * The style's symbol for a bottle this large, or null (sparkling wine keeps its drawn bubbles or
+ * cage, unless [sparklingMark]).
+ */
 @Composable
-private fun styleMarkPainter(color: WineColor?, size: Dp, showsStyle: Boolean): Painter? =
-    if (showsStyle && color != null && color != WineColor.Sparkling && size >= StyleMarkMinimum) {
+private fun styleMarkPainter(color: WineColor?, size: Dp, showsStyle: Boolean, sparklingMark: Boolean = false): Painter? =
+    if (showsStyle && color != null && (color != WineColor.Sparkling || sparklingMark) && size >= StyleMarkMinimum) {
         rememberVectorPainter(color.styleMark.icon)
     } else {
         null

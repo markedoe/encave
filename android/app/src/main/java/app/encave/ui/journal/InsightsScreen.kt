@@ -1,5 +1,6 @@
 package app.encave.ui.journal
 
+import androidx.compose.material3.ButtonDefaults
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -28,6 +29,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -415,35 +419,54 @@ private fun YearColumns(years: List<DrinkDownPlan.Year>) {
     val description = years.joinToString(", ") {
         resources.getQuantityString(R.plurals.chart_item_bottles, it.leaving, it.year.toString(), it.leaving)
     }
-    Row(
-        Modifier.fillMaxWidth().testTag("insights.drinkdown.chart").clearAndSetSemantics { contentDescription = description },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        years.forEach { item ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                Text(if (item.leaving > 0) item.leaving.toString() else "", style = MaterialTheme.typography.labelSmall)
-                Box(Modifier.height(120.dp).width(16.dp), contentAlignment = Alignment.BottomCenter) {
-                    Canvas(Modifier.fillMaxSize()) {
-                        val height = size.height * item.leaving / max
-                        if (height > 0f) {
-                            drawRoundRect(
-                                bar, topLeft = Offset(0f, size.height - height), size = Size(size.width, height),
-                                cornerRadius = CornerRadius(3.dp.toPx()),
-                            )
-                        } else {
-                            drawLine(baseline, Offset(0f, size.height), Offset(size.width, size.height), 2.dp.toPx())
+    val labelStyle = MaterialTheme.typography.labelSmall
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("insights.drinkdown.chart").clearAndSetSemantics { contentDescription = description }) {
+        // Every 2nd or 5th year is labelled when the labels would not fit side by side.
+        val sample = if (short) "’00" else "0000"
+        val labelWidth = remember(measurer, labelStyle, sample) { measurer.measure(sample, labelStyle).size.width }
+        val gap = with(LocalDensity.current) { Dimens.xs.roundToPx() }
+        val stride = yearLabelStride(labelWidth + gap, constraints.maxWidth / years.size.coerceAtLeast(1))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            years.forEachIndexed { index, item ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    Text(if (item.leaving > 0) item.leaving.toString() else "", style = MaterialTheme.typography.labelSmall)
+                    Box(Modifier.height(120.dp).width(16.dp), contentAlignment = Alignment.BottomCenter) {
+                        Canvas(Modifier.fillMaxSize()) {
+                            val height = size.height * item.leaving / max
+                            if (height > 0f) {
+                                drawRoundRect(
+                                    bar, topLeft = Offset(0f, size.height - height), size = Size(size.width, height),
+                                    cornerRadius = CornerRadius(3.dp.toPx()),
+                                )
+                            } else {
+                                drawLine(baseline, Offset(0f, size.height), Offset(size.width, size.height), 2.dp.toPx())
+                            }
                         }
                     }
+                    Text(
+                        when {
+                            index % stride != 0 -> ""
+                            short -> "’" + (item.year % 100).toString().padStart(2, '0')
+                            else -> item.year.toString()
+                        },
+                        style = labelStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false,
+                        // Wider than its column when every other year is labelled: spreads over the empty neighbours.
+                        modifier = Modifier.wrapContentWidth(unbounded = true),
+                    )
                 }
-                Text(
-                    if (short) "’" + (item.year % 100).toString().padStart(2, '0') else item.year.toString(),
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
-                )
             }
         }
     }
 }
+
+/** Label every year, or every 2nd, 5th or 10th one, so that labels of [labelWidth] fit in columns of [columnWidth]. */
+internal fun yearLabelStride(labelWidth: Int, columnWidth: Int): Int =
+    listOf(1, 2, 5, 10).firstOrNull { it * columnWidth >= labelWidth } ?: 10
 
 /** "Your year in wine": what was opened in a year, with a choice of year. */
 @Composable
@@ -482,7 +505,11 @@ private fun YearInWineCard(cellar: Cellar) {
                 if (years.size > 1) {
                     Box {
                         val chooseLabel = stringResource(R.string.insights_year_choose)
-                        TextButton(onClick = { menu = true }, modifier = Modifier.semantics { contentDescription = "$chooseLabel, $shown" }) {
+                        TextButton(
+                            onClick = { menu = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
+                            modifier = Modifier.semantics { contentDescription = "$chooseLabel, $shown" },
+                        ) {
                             Text(shown.toString())
                             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
                         }
@@ -521,7 +548,12 @@ private fun YearInWineCard(cellar: Cellar) {
                 },
                 verticalArrangement = Arrangement.spacedBy(Dimens.m),
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.xl)) {
+                // Wraps at large font sizes rather than squeezing a figure into a narrow column.
+                FlowRow(
+                    Modifier.testTag("insights.year.figures"),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.xl),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.s),
+                ) {
                     YearFigure(recap.bottlesOpened, pluralStringResource(R.plurals.stat_bottles_opened, recap.bottlesOpened))
                     YearFigure(recap.differentWines, pluralStringResource(R.plurals.stat_different_wines, recap.differentWines))
                     if (recap.discoveries > 0) YearFigure(recap.discoveries, pluralStringResource(R.plurals.stat_tasted_elsewhere, recap.discoveries))

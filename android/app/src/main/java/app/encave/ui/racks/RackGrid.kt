@@ -744,8 +744,9 @@ private fun BandPlace(
             } else if (back && rack.isBackReversed) {
                 BottleNeck(wine?.color, size = diameter, showsStyle = true)
             } else {
-                BottleEnd(wine?.color, size = diameter, showsStyle = true)
-                if (!back && RackLabels.showsVintage(rack, width)) VintageLabel(wine, diameter)
+                val vintage = !back && RackLabels.showsVintage(rack, width)
+                BottleEnd(wine?.color, size = diameter, showsStyle = true, showsVintage = vintage)
+                if (vintage) VintageLabel(wine, diameter)
             }
         } else {
             Box(Modifier.size(diameter).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
@@ -753,7 +754,8 @@ private fun BandPlace(
                 // The place number: the shelf is on the side, the band in its caption.
                 Text(
                     rack.emptyCaption(cell), color = scheme.onSurfaceVariant,
-                    fontSize = with(density) { (diameter * 0.25f).toSp().value.coerceAtLeast(9f).sp },
+                    // In dp, like the place itself: a caption scaled with the font would overflow small places.
+                    fontSize = with(density) { maxOf(diameter * 0.25f, 9.dp).toSp() },
                     maxLines = 1,
                 )
             }
@@ -807,16 +809,19 @@ private fun Position(
             when {
                 front != null -> {
                     val wine = cellar.wines[front.wineId]
-                    BottleEnd(wine?.color, size = bottle, showsStyle = true)
-                    if (RackLabels.showsVintage(rack, size)) VintageLabel(wine, bottle)
+                    val vintage = RackLabels.showsVintage(rack, size)
+                    BottleEnd(wine?.color, size = bottle, showsStyle = true, showsVintage = vintage)
+                    if (vintage) VintageLabel(wine, bottle)
                 }
                 behind != null -> BottleEnd(cellar.wines[behind.wineId]?.color, Modifier.alpha(0.55f), size = size * 0.52f, showsStyle = true)
                 else -> {
                     Box(Modifier.size(bottle).border(1.dp, scheme.outline.copy(alpha = 0.5f), CircleShape))
                     if (selectedCount == 0 && showsNumber) {
+                        // In dp, like the place itself: a caption scaled with the font would overflow small places.
                         Text(
                             rack.emptyCaption(cell), color = scheme.onSurfaceVariant,
-                            fontSize = with(density) { (size * 0.18f).toSp().value.coerceAtLeast(9f).sp },
+                            fontSize = with(density) { maxOf(size * 0.18f, 9.dp).toSp() },
+                            maxLines = 1, softWrap = false,
                         )
                     }
                 }
@@ -826,7 +831,8 @@ private fun Position(
             }
             if (selectedCount > 0) SelectionBadge(rack.positionsPerCell, selectedCount, if (countsFound) bottles.size else null, size)
             if (rack.positionsPerCell > 1) {
-                val y = if (rack.kind == RackKind.Shelves && !showsName) size * 0.12f else -size * 0.02f
+                // On a shelf, just under the bottle and above the shelf bar, which would hide them lower.
+                val y = if (rack.kind == RackKind.Shelves && !showsName) 0.dp else -size * 0.02f
                 DepthDots(rack, bottles, cellar, size, Modifier.align(Alignment.BottomCenter).offset(y = y))
             }
         }

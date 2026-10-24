@@ -1,5 +1,10 @@
 package app.encave.ui
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Icon
@@ -220,7 +225,17 @@ fun EncaveApp(viewModel: AppViewModel, links: MutableStateFlow<String?> = Mutabl
                         selected = isSelected,
                         onClick = { navigator.openTopLevel(destination) },
                         icon = { Icon(if (isSelected) destination.selectedIcon else destination.icon, contentDescription = null) },
-                        label = { Text(stringResource(destination.label)) },
+                        // One line: a long label at a large font size gets smaller rather than broken mid-word.
+                        label = {
+                            Text(
+                                stringResource(destination.label), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
+                                autoSize = TextAutoSize.StepBased(
+                                    minFontSize = with(LocalDensity.current) { 10.dp.toSp() },
+                                    maxFontSize = MaterialTheme.typography.labelMedium.fontSize,
+                                ),
+                                modifier = Modifier.testTag("nav.label"),
+                            )
+                        },
                         modifier = Modifier.testTag("nav.${destination.name}"),
                     )
                 }

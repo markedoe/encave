@@ -220,7 +220,8 @@ fun PhotoSection(
             )
         } else if (!ai.isEnabled) {
             // No reading of the label text on Android itself (no third-party OCR): say so, and what helps.
-            Text(stringResource(R.string.photo_hint_ai), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // The barcode is mentioned only where it can be scanned.
+            Text(stringResource(if (onScanBarcode != null) R.string.photo_hint_ai else R.string.photo_hint_ai_no_barcode), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

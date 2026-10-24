@@ -1,5 +1,6 @@
 package app.encave.ui.tonight
 
+import androidx.compose.material3.ButtonDefaults
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -491,6 +492,8 @@ private fun SurpriseCard(
                 TextButton(
                     onClick = { onShowInRack(bottle) },
                     contentPadding = PaddingValues(horizontal = 0.dp),
+                    // The card's text color: the primary color is too faint on its container.
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
                     modifier = Modifier.semantics { onClick(label = rackLabel) { onShowInRack(bottle); true } }.testTag("action.surprise_rack"),
                 ) {
                     Icon(Icons.Outlined.GridView, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -515,7 +518,11 @@ private fun SurpriseCard(
                 ActionButtonPair(
                     first = drink,
                     second = { width ->
-                        OutlinedButton(onClick = onShuffle, modifier = width.testTag("action.surprise_next")) {
+                        OutlinedButton(
+                            onClick = onShuffle,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer),
+                            modifier = width.testTag("action.surprise_next"),
+                        ) {
                             ActionContent(stringResource(R.string.action_surprise), Icons.Outlined.Casino)
                         }
                     },

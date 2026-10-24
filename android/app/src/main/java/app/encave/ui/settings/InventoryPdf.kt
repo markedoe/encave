@@ -10,6 +10,7 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.TextUtils
 import app.encave.R
+import app.encave.core.Bottle
 import app.encave.core.Cellar
 import app.encave.core.statistics
 import app.encave.ui.components.displayLabel
@@ -38,10 +39,45 @@ object InventoryPdf {
     const val ROWS_ON_FIRST_PAGE = 24
     private const val ROW_HEIGHT = 26f
 
-    /** Rows split into pages: [ROWS_ON_FIRST_PAGE] on the first, [ROWS_PER_PAGE] on the others. */
-    fun <T> paged(rows: List<T>): List<List<T>> =
-        (listOf(rows.take(ROWS_ON_FIRST_PAGE)) + rows.drop(ROWS_ON_FIRST_PAGE).chunked(ROWS_PER_PAGE)).filter { it.isNotEmpty() }
-            .ifEmpty { listOf(emptyList()) }
+    /**
+     * Rows split into pages by their [height]: room for [ROWS_ON_FIRST_PAGE] rows of the usual
+     * height on the first, [ROWS_PER_PAGE] on the others. A taller row (many places) takes more.
+     */
+    fun <T> paged(rows: List<T>, height: (T) -> Float = { ROW_HEIGHT }): List<List<T>> {
+        val pages = mutableListOf(mutableListOf<T>())
+        var used = 0f
+        for (row in rows) {
+            val available = (if (pages.size == 1) ROWS_ON_FIRST_PAGE else ROWS_PER_PAGE) * ROW_HEIGHT
+            val needed = height(row)
+            if (used + needed > available + 0.5f && pages.last().isNotEmpty()) {
+                pages += mutableListOf<T>()
+                used = 0f
+            }
+            pages.last() += row
+            used += needed
+        }
+        return pages
+    }
+
+    /**
+     * The bottles' places, one line per storage in the order of the storages ("Main rack: A1, A2, A3"),
+     * the same place once with its count ("Bin A1 ×2"); then places noted by hand, with their count.
+     */
+    fun places(cellar: Cellar, bottles: List<Bottle>, resources: Resources): List<String> {
+        fun counted(labels: List<String>) = labels.groupingBy { it }.eachCount().map { (label, count) -> if (count > 1) "$label ×$count" else label }
+        val lines = cellar.racks.mapNotNull { rack ->
+            val slots = bottles.mapNotNull { it.slot }.filter { it.rackId == rack.id }
+                .sortedWith(compareBy({ it.row }, { it.column }, { it.depth }))
+            if (slots.isEmpty()) return@mapNotNull null
+            val labels = counted(slots.map { rack.displayLabel(it, resources) })
+            // A fridge's places have commas of their own.
+            val separator = if (labels.any { ',' in it }) "; " else ", "
+            resources.getString(R.string.pdf_rack_places, rack.name, labels.joinToString(separator))
+        }
+        val elsewhere = bottles.filter { bottle -> bottle.slot?.let { cellar.rack(it.rackId) } == null }
+            .mapNotNull { it.storageNote?.trim()?.takeIf(String::isNotEmpty) }
+        return lines + counted(elsewhere).sorted()
+    }
 
     data class Row(
         val id: UUID,
@@ -66,11 +102,7 @@ object InventoryPdf {
     fun rows(cellar: Cellar, resources: Resources, locale: Locale = Locale.getDefault()): List<Row> =
         cellar.groups().map { group ->
             val wine = group.wine
-            val places = group.bottles.mapNotNull { bottle ->
-                val slot = bottle.slot
-                val rack = slot?.let { cellar.rack(it.rackId) }
-                if (slot != null && rack != null) "${rack.name} · ${rack.displayLabel(slot, resources)}" else cellar.locationLabel(bottle)
-            }
+            val places = places(cellar, group.bottles, resources)
             val totals = mutableMapOf<String, BigDecimal>()
             group.bottles.forEach { bottle ->
                 val price = bottle.purchasePrice ?: return@forEach
@@ -80,7 +112,7 @@ object InventoryPdf {
             Row(
                 id = wine.id, wine = wine.displayName, producer = wine.producer.orEmpty(),
                 region = listOfNotNull(wine.appellation ?: wine.region, wine.country).joinToString(", "),
-                bottles = group.count, places = places.joinToString(", "), value = total(totals, locale),
+                bottles = group.count, places = places.joinToString("\n"), value = total(totals, locale),
             )
         }
 
@@ -110,8 +142,6 @@ object InventoryPdf {
         private val rows = rows(cellar, resources, locale)
         private val stats = cellar.statistics(year)
         private val value = total(stats.valueByCurrency, locale)
-        private val pages = paged(rows)
-        val count: Int get() = pages.size
 
         // Printed: black text on the white page, whatever the app's theme.
         private val text = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 8.5f }
@@ -128,6 +158,11 @@ object InventoryPdf {
         private val placesX = bottlesX + 40 + 8
         private val valueRight = WIDTH - MARGIN
         private val placesWidth = valueRight - 70 - 8 - placesX
+
+        // A row grows with its places, one line per storage.
+        private fun height(row: Row) = maxOf(ROW_HEIGHT, layout(row.places, text, placesWidth, PLACES_MAX_LINES).height + 6f)
+        private val pages = paged(rows, ::height)
+        val count: Int get() = pages.size
 
         fun draw(canvas: android.graphics.Canvas, index: Int) {
             canvas.drawColor(Color.WHITE)
@@ -159,9 +194,9 @@ object InventoryPdf {
                 if (row.producer.isNotEmpty()) canvas.drawText(ellipsize(row.producer, secondary, 170f), wineX, top + 19, secondary)
                 drawBlock(canvas, row.region, text, regionX, top, 110f)
                 drawRight(canvas, row.bottles.toString(), bottlesX + 40, top + 9, text)
-                drawBlock(canvas, row.places, text, placesX, top, placesWidth)
+                drawBlock(canvas, row.places, text, placesX, top, placesWidth, PLACES_MAX_LINES)
                 drawRight(canvas, row.value, valueRight, top + 9, text)
-                y += ROW_HEIGHT
+                y += height(row)
                 canvas.drawLine(MARGIN, y, valueRight, y, line)
             }
             val footer = HEIGHT - MARGIN
@@ -179,15 +214,21 @@ object InventoryPdf {
         canvas.drawText(value, right - paint.measureText(value), baseline, paint)
     }
 
-    /** Up to two lines, ellipsized. */
-    private fun drawBlock(canvas: android.graphics.Canvas, value: String, paint: TextPaint, x: Float, top: Float, width: Float) {
-        if (value.isEmpty()) return
-        val layout = StaticLayout.Builder.obtain(value, 0, value.length, paint, width.toInt())
+    /** A row's places take at most this many lines, so a row always fits on a page. */
+    private const val PLACES_MAX_LINES = 20
+
+    private fun layout(value: String, paint: TextPaint, width: Float, maxLines: Int): StaticLayout =
+        StaticLayout.Builder.obtain(value, 0, value.length, paint, width.toInt())
             .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-            .setMaxLines(2)
+            .setMaxLines(maxLines)
             .setEllipsize(TextUtils.TruncateAt.END)
             .setIncludePad(false)
             .build()
+
+    /** Up to [maxLines] lines, ellipsized. */
+    private fun drawBlock(canvas: android.graphics.Canvas, value: String, paint: TextPaint, x: Float, top: Float, width: Float, maxLines: Int = 2) {
+        if (value.isEmpty()) return
+        val layout = layout(value, paint, width, maxLines)
         canvas.save()
         canvas.translate(x, top)
         layout.draw(canvas)

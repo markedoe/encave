@@ -1,5 +1,6 @@
 package app.encave.ui.components
 
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -285,6 +286,27 @@ fun ActionButtonPair(
             second(if (equalWidths) Modifier.weight(1f) else Modifier)
         }
     }
+}
+
+/**
+ * The height of the floating buttons over a list, measured, so the list's last rows can scroll
+ * out from under them at any font size: put [measure] on the buttons and [listBottom] under the list.
+ */
+class FabSpace {
+    var height by mutableStateOf(0.dp)
+        internal set
+
+    /** The buttons, their 16 dp margin and a gap. */
+    val listBottom: Dp get() = height + 32.dp
+}
+
+@Composable
+fun rememberFabSpace(): FabSpace = remember { FabSpace() }
+
+@Composable
+fun Modifier.measure(space: FabSpace): Modifier {
+    val density = LocalDensity.current
+    return onSizeChanged { space.height = with(density) { it.height.toDp() } }
 }
 
 /** A short explanation under a control or at the end of a group of fields. */

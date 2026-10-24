@@ -1,5 +1,6 @@
 package app.encave.ui.add
 
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.material3.OutlinedButton
@@ -667,7 +668,11 @@ private fun BarcodeMatchCard(
                 }
             }
             if (onAnotherVintage != null) {
-                OutlinedButton(onClick = { onAnotherVintage(first) }, modifier = Modifier.testTag("action.another_vintage")) {
+                OutlinedButton(
+                    onClick = { onAnotherVintage(first) },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
+                    modifier = Modifier.testTag("action.another_vintage"),
+                ) {
                     ActionContent(stringResource(R.string.action_another_vintage), Icons.Filled.Add)
                 }
             }
@@ -699,7 +704,11 @@ private fun SameWineCard(wine: Wine, bottles: Int, onUse: () -> Unit, onDifferen
                 Button(onClick = onUse, modifier = Modifier.testTag("add.same_wine.use")) {
                     ActionContent(stringResource(R.string.action_add_to_this_wine), Icons.Filled.Add)
                 }
-                TextButton(onClick = onDifferent, modifier = Modifier.testTag("add.same_wine.different")) {
+                TextButton(
+                    onClick = onDifferent,
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
+                    modifier = Modifier.testTag("add.same_wine.different"),
+                ) {
                     Text(stringResource(R.string.action_different_wine))
                 }
             }
@@ -714,8 +723,14 @@ private fun ExistingWineCard(wine: Wine, onChange: (() -> Unit)?) {
             colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
             leadingContent = { WineColorDot(wine.color, size = 20.dp) },
             headlineContent = { Text(wine.displayName, style = MaterialTheme.typography.titleMedium) },
-            supportingContent = { Text(listOf(stringResource(wine.color.labelRes), wine.origin()).filter { it.isNotEmpty() }.joinToString(" · ")) },
-            trailingContent = onChange?.let { { TextButton(onClick = it) { Text(stringResource(R.string.action_change)) } } },
+            supportingContent = { Text(listOf(stringResource(wine.color.labelRes), wine.origin()).filter { it.isNotEmpty() }.joinToString(app.encave.ui.components.SEPARATOR)) },
+            trailingContent = onChange?.let {
+                {
+                    TextButton(onClick = it, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) {
+                        Text(stringResource(R.string.action_change))
+                    }
+                }
+            },
         )
     }
 }
