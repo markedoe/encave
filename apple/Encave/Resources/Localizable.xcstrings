@@ -2376,7 +2376,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place."
+            "value": "Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place."
           }
         }
       }

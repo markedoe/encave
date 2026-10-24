@@ -848,7 +848,7 @@
     <string name="remote_problem_unreachable">Le stockage est injoignable. La synchronisation reprendra dès que possible.</string>
     <string name="remote_problem_unreadable">Les modifications d’un autre appareil n’ont pas pu être lues. Mettez Encave à jour sur tous vos appareils.</string>
     <string name="remote_problem_removal">L’appareil retiré n’a pas encore pu être exclu de la synchronisation à distance. Ce sera retenté.</string>
-    <string name="remote_problem_key_not_given">Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place.</string>
+    <string name="remote_problem_key_not_given">Un autre appareil n’a pas encore pu recevoir la nouvelle clé : il ne se synchronise pas à distance. Vérifiez qu’il est à jour et que le stockage a de la place.</string>
     <string name="invite_title">Ajouter un appareil</string>
     <string name="invite_instructions">Scannez ce code avec l’appareil photo de l’autre appareil, ou saisissez les chiffres dans Réglages › Appareils › Rejoindre la cave d’un autre appareil.</string>
     <string name="invite_qr">Code QR à scanner avec l’autre appareil</string>
