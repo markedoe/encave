@@ -646,9 +646,8 @@ Each storage keeps the files of a mailbox or inbox under its ID:
    the greater of them, so readers see a newer snapshot. A file the storage
    refuses as too large (413, or CloudKit's `limitExceeded`) is left out; when
    the storage is full (507, or `quotaExceeded`), the remaining files are left
-   out for this
-   round too. The snapshot is still written; the device says so and tries the
-   files again with its next snapshot.
+   out for this round too. The snapshot is still written; the device says so
+   and tries the files again with its next snapshot.
 
 After a local change, a device waits 2 seconds without further changes, syncs
 with the devices on the network, then runs a round 3 seconds later. Rounds also
