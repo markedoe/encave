@@ -9,6 +9,7 @@ import app.encave.core.SampleData
 import app.encave.core.Wine
 import app.encave.core.containsSample
 import app.encave.core.sync.CellarKey
+import app.encave.core.sync.CellarMerge
 import app.encave.core.sync.DeviceIdentity
 import app.encave.core.sync.FileAccess
 import app.encave.core.sync.KeyGrant
@@ -21,6 +22,7 @@ import app.encave.core.sync.RemoteInfo
 import app.encave.core.sync.RemoteSyncError
 import app.encave.core.sync.RemoteSyncException
 import app.encave.core.sync.SyncHealth
+import app.encave.core.sync.SyncKey
 import app.encave.core.sync.SyncSnapshot
 import app.encave.core.sync.SyncState
 import app.encave.data.CellarRepository
@@ -30,8 +32,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -43,7 +47,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** What SyncManager keeps when turning sync on, joining with Replace and leaving. */
+/** What SyncManager keeps when turning sync on, taking in a session, joining with Replace and leaving. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = android.app.Application::class)
 class SyncManagerTest {
@@ -225,6 +229,74 @@ class SyncManagerTest {
         assertFalse(sync.isReplacePending)
         assertEquals(setOf("Theirs"), repository.cellar.value.wines.values.map { it.name }.toSet())
         assertEquals(2, repository.cellar.value.bottles.size)
+    }
+
+    @Test
+    fun aLocalEditDuringASessionIsKept() = runBlocking {
+        sync.setUpIfNeeded()
+        val host = addOther()
+        // A session starts from this copy.
+        val session = sync.snapshot()!!
+        // The host's cellar, its clock well ahead of this device's.
+        val theirs = Cellar().apply { addBottles(Wine(name = "Remote"), 1) }
+        val theirState = SyncState(device = host.id, clock = 100).recording(Cellar(), theirs)
+
+        // Meanwhile, the user adds a bottle here: it is stamped by this device.
+        val local = Wine(name = "Local")
+        val localBottle = repository.update { it.addBottles(local, 1).single() }.getOrThrow()
+        val wineKey = SyncKey.of(SyncKey.Kind.Wine, local.id)
+        val bottleKey = SyncKey.of(SyncKey.Kind.Bottle, localBottle.id)
+        val stamped = sync.snapshot()!!.state.stamps
+        val localStamps = listOf(stamped[wineKey]!!, stamped[bottleKey]!!)
+        assertTrue(localStamps.all { it.device == sync.identity.id && !it.deleted })
+        // Older than the host's clock: it is kept for being unknown there, not for being newer.
+        assertTrue(localStamps.all { it.counter < theirState.clock })
+
+        // The session's result, merged from the copy it started with (without "Local").
+        val merge = CellarMerge.merge(session.cellar, session.state, theirs, theirState)
+        val result = SyncSnapshot(merge.cellar, session.state.copy(stamps = merge.stamps, clock = merge.clock), session.membership)
+        assertTrue(sync.apply(result, host.id))
+
+        assertEquals(setOf("Local", "Remote"), repository.cellar.value.wines.values.map { it.name }.toSet())
+        assertEquals(2, repository.cellar.value.bottles.size)
+        val after = sync.snapshot()!!.state
+        // The local edit keeps its stamps, and the clock is past everything seen.
+        assertEquals(localStamps, listOf(after.stamps[wineKey], after.stamps[bottleKey]))
+        assertTrue(after.clock >= theirState.clock)
+        assertTrue(after.stamps.values.all { it.counter <= after.clock })
+        // So the next edit here is newer than anything from the host.
+        val next = Wine(name = "Next")
+        repository.update { it.addBottles(next, 1) }.getOrThrow()
+        assertTrue(sync.snapshot()!!.state.stamps[SyncKey.of(SyncKey.Kind.Wine, next.id)]!!.counter > theirState.clock)
+    }
+
+    @Test
+    fun aMembershipWithoutMeMarksRemoved() = runBlocking {
+        sync.setUpIfNeeded()
+        val host = addOther()
+        // Syncing away from home, its loop waiting for the next round.
+        val memory = MemoryMailboxStore()
+        sync.storeForTests = { memory }
+        sync.turnOn(memory, "https://relay.example")
+        withTimeout(10_000) { sync.state.first { it.nextRemoteSync != null } }
+
+        // The host removed this device.
+        val members = sync.state.value.membership!!
+        val clock = members.stamps.values.maxOf { it.counter }
+        val (without, _) = members.removing(sync.identity.id, clock, host.id)
+        val session = sync.snapshot()!!
+        assertTrue(sync.apply(SyncSnapshot(session.cellar, session.state, without), host.id))
+
+        val status = sync.state.value
+        assertTrue(status.wasRemoved)
+        assertEquals(SyncManager.Problem.Removed, status.problem)
+        assertFalse(status.membership!!.members.containsKey(sync.identity.id))
+        assertEquals(SyncHealth.NeedsAction(SyncHealth.Reason.Removed), status.health(sync.identity.id))
+        // The network is stopped: no round away from home is waiting, none starts again.
+        assertNull(status.nextRemoteSync)
+        assertTrue(status.nearby.isEmpty())
+        delay(200)
+        assertNull(sync.state.value.nextRemoteSync)
     }
 
     @Test
