@@ -5,11 +5,14 @@ import FoundationModels
 #endif
 
 /// "Find Current Price": searches the web with the wine's price terms (shown and editable,
-/// sent only on Search), lists every price found with its site, suggests the median in the
-/// cellar currency and keeps the price only when the user saves it.
+/// sent only on Search), then opens the first result pages from this device to read the
+/// price on them (`PagePrices`), lists every price found with its site, suggests the median
+/// in the cellar currency and keeps the price only when the user saves it.
 struct PriceSearchView: View {
     @Environment(\.dismiss) private var dismiss
     let sizeML: Int
+    /// The wine's name, to find its price on a page that lists several.
+    let wineName: String?
     /// Saves the accepted price per bottle and its currency.
     let onSave: (Decimal, String) -> Void
 
@@ -24,12 +27,20 @@ struct PriceSearchView: View {
     @State private var currency: String
     @State private var estimating = false
     @State private var estimateNote: String?
+    /// The result pages being read for their price; cancelled by a new search or on Close.
+    @State private var pageTask: Task<Void, Never>?
+    @State private var readingPages = false
+    /// The middle price last put in the field; new prices move it until the user sets one.
+    @State private var suggestedPrice: Decimal?
+    @State private var userSetPrice = false
 
-    init(terms: String, sizeML: Int, currentPrice: Decimal?, currency: String, onSave: @escaping (Decimal, String) -> Void) {
+    init(terms: String, sizeML: Int, wineName: String? = nil, currentPrice: Decimal?, currency: String,
+         onSave: @escaping (Decimal, String) -> Void) {
         _query = State(initialValue: terms)
         _price = State(initialValue: currentPrice)
         _currency = State(initialValue: currency)
         self.sizeML = sizeML
+        self.wineName = wineName
         self.onSave = onSave
     }
 
@@ -58,7 +69,7 @@ struct PriceSearchView: View {
                         Text("Search terms")
                     } footer: {
                         let serviceName = settings.service.name
-                        Text("Only these words are sent, to \(serviceName), when you tap Search. Change them if you like. Nothing else about this wine or your cellar is sent.")
+                        Text("Only these words are sent, to \(serviceName), when you tap Search. Change them if you like. The first pages found are then opened from this device to read their price: those sites see the page asked for and your IP address. Nothing else about this wine or your cellar is sent.")
                     }
 
                     if let problem {
@@ -125,7 +136,15 @@ struct PriceSearchView: View {
 
                 if settings.isEnabled, searchedTerms != nil, !searching, problem == nil {
                     Section {
-                        if prices.isEmpty {
+                        if readingPages {
+                            HStack(spacing: 12) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text("Reading prices on the pages…")
+                            }
+                            .foregroundStyle(.secondary)
+                            .accessibilityElement(children: .combine)
+                        } else if prices.isEmpty {
                             Text("No prices in these results. Try other words, or open a result below.")
                                 .foregroundStyle(.secondary)
                         }
@@ -138,7 +157,7 @@ struct PriceSearchView: View {
                     } header: {
                         Text("Prices found")
                     } footer: {
-                        Text("Prices for several bottles, delivery or another bottle size are left out. Tap a price to use it.")
+                        Text("Prices for several bottles, delivery or another bottle size are left out. The first pages found are read on this device. Tap a price to use it.")
                     }
                 }
 
@@ -165,6 +184,10 @@ struct PriceSearchView: View {
             }
         }
         .macSheetFrame(width: 520, height: 680)
+        .onChange(of: price) { _, new in
+            if new != suggestedPrice { userSetPrice = true }
+        }
+        .onDisappear { stopReadingPages() }
     }
 
     /// "euros (EUR)" in the user's language.
@@ -175,6 +198,7 @@ struct PriceSearchView: View {
     private func search() {
         let terms = trimmedQuery
         guard !terms.isEmpty, !searching, settings.isEnabled else { return }
+        stopReadingPages()
         searching = true
         problem = nil
         estimateNote = nil
@@ -186,7 +210,9 @@ struct PriceSearchView: View {
                 let found = try await WebSearchClient.search(terms, settings: settings, count: 20)
                 results = found
                 prices = PriceExtractor.prices(in: found, sizeML: sizeML)
-                if let median = PriceExtractor.suggested(prices, currency: currency) { price = median }
+                userSetPrice = false
+                suggestMiddlePrice()
+                readPages(of: found)
             } catch {
                 results = []
                 prices = []
@@ -194,6 +220,53 @@ struct PriceSearchView: View {
             }
             searchedTerms = terms
         }
+    }
+
+    /// Puts the middle price in the field, unless the user has set one since the search.
+    private func suggestMiddlePrice() {
+        guard !userSetPrice, let median = PriceExtractor.suggested(prices, currency: currency) else { return }
+        suggestedPrice = median
+        price = median
+    }
+
+    /// Opens the first result pages from this device, a few at a time, and adds the prices
+    /// read on each as soon as it is read.
+    private func readPages(of results: [WebSearchResult]) {
+        let pages = PagePrices.pages(of: results)
+        guard !pages.isEmpty else { return }
+        readingPages = true
+        let sizeML = sizeML
+        let wineName = wineName
+        pageTask = Task {
+            await withTaskGroup(of: [FoundPrice].self) { group in
+                var next = 0
+                while next < pages.count, next < PagePrices.parallelPages {
+                    let page = pages[next]
+                    group.addTask { await WebSearchClient.pagePrices(of: page, sizeML: sizeML, wineName: wineName) }
+                    next += 1
+                }
+                while let found = await group.next() {
+                    if Task.isCancelled { break }
+                    if !found.isEmpty {
+                        prices = PagePrices.merging(found, into: prices)
+                        suggestMiddlePrice()
+                    }
+                    if next < pages.count {
+                        let page = pages[next]
+                        group.addTask { await WebSearchClient.pagePrices(of: page, sizeML: sizeML, wineName: wineName) }
+                        next += 1
+                    }
+                }
+                group.cancelAll()
+            }
+            if !Task.isCancelled { readingPages = false }
+        }
+    }
+
+    private func stopReadingPages() {
+        pageTask?.cancel()
+        pageTask = nil
+        readingPages = false
     }
 
     private func estimate() {

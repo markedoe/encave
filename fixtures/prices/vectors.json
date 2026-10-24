@@ -1,0 +1,105 @@
+{
+  "about": "Prices on web pages and in search snippets, shared by CaveKit (PagePriceVectorTests.swift) and the Kotlin core (PagePriceVectorTest.kt). prices are \"amount currency\" in the order found, the amount without trailing zeros. A page is one of the HTML files next to this one, read as if it were the search result at url. excerptContains: words the excerpt shows. The pages and names are made up.",
+  "sizeWords": [
+    { "sizeML": 750, "words": null },
+    { "sizeML": 375, "words": "37.5 cl" },
+    { "sizeML": 500, "words": "50 cl" },
+    { "sizeML": 620, "words": "clavelin" },
+    { "sizeML": 700, "words": "70 cl" },
+    { "sizeML": 1000, "words": "1 l" },
+    { "sizeML": 1500, "words": "magnum" }
+  ],
+  "snippets": [
+    { "text": "Les Lacustres CHF 13.– 70 cl", "sizeML": 700, "prices": ["13 CHF"] },
+    { "text": "Les Lacustres, CHF 13.- (70 cl)", "sizeML": 700, "prices": ["13 CHF"] },
+    { "text": "Les Lacustres 0,7 l CHF 13.00", "sizeML": 700, "prices": ["13 CHF"] },
+    { "text": "Les Lacustres 0.7 l, CHF 13", "sizeML": 700, "prices": ["13 CHF"] },
+    { "text": "Chasselas 700 ml : 13.– CHF", "sizeML": 700, "prices": ["13 CHF"] },
+    { "text": "Les Lacustres 70 cl CHF 13.00", "sizeML": 750, "prices": [] },
+    { "text": "Prix Fr. 13.50 la bouteille", "sizeML": 750, "prices": ["13.5 CHF"] },
+    { "text": "Prix 13.50 Fr. la bouteille", "sizeML": 750, "prices": ["13.5 CHF"] },
+    { "text": "Prix SFr. 13.50", "sizeML": 750, "prices": ["13.5 CHF"] },
+    { "text": "Prix 13.– CHF", "sizeML": 750, "prices": ["13 CHF"] },
+    { "text": "Prix CHF 13", "sizeML": 750, "prices": ["13 CHF"] },
+    { "text": "Bonfr. 13.50 ou 12 francs, frais 14 fraises", "sizeML": 750, "prices": [] },
+    { "text": "Demi-bouteille 37,5 cl : 18,00 €", "sizeML": 375, "prices": ["18 EUR"] },
+    { "text": "Bouteille 50 cl : 22,00 €", "sizeML": 500, "prices": ["22 EUR"] },
+    { "text": "Bouteille 0,5 l : 22,00 €", "sizeML": 500, "prices": ["22 EUR"] },
+    { "text": "Vin jaune, clavelin 62 cl : 35,00 €", "sizeML": 620, "prices": ["35 EUR"] },
+    { "text": "Vin de table 1 litre : 12,00 €", "sizeML": 1000, "prices": ["12 EUR"] },
+    { "text": "Vin de table 1 l : 12,00 €", "sizeML": 1000, "prices": ["12 EUR"] },
+    { "text": "Vin de table 100 cl : 12,00 €", "sizeML": 1000, "prices": ["12 EUR"] },
+    { "text": "Bouteille 0,75 l : 15,00 €", "sizeML": 700, "prices": [] },
+    { "text": "Bouteille 0,75 l : 15,00 €", "sizeML": 750, "prices": ["15 EUR"] }
+  ],
+  "pages": [
+    {
+      "file": "woocommerce.html", "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["13 CHF"], "excerptContains": ["Les Lacustres", "CHF 13.00", "70 cl"]
+    },
+    {
+      "file": "woocommerce.html", "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres", "sizeML": 750, "prices": []
+    },
+    {
+      "file": "jsonld-graph.html", "url": "https://shop.example.org/produit/les-lacustres/",
+      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["13 CHF"], "excerptContains": ["Les Lacustres", "13.00 CHF", "70 cl"]
+    },
+    {
+      "file": "jsonld-product.html", "url": "https://wines.example.com/chablis-1er-cru-2019",
+      "wineName": "Chablis Premier Cru", "sizeML": 750, "prices": ["36.5 EUR"], "excerptContains": ["Domaine Example Chablis Premier Cru 2019"]
+    },
+    {
+      "file": "case-and-bottle.html", "url": "https://www.example.com/chablis-2019",
+      "wineName": "Chablis", "sizeML": 750, "prices": ["32 EUR"], "excerptContains": ["Chablis 2019", "32,00 €"]
+    },
+    {
+      "file": "magnum-only.html", "url": "https://cave.example.org/chateau-exemple-2018-magnum",
+      "wineName": "Château Exemple", "sizeML": 750, "prices": []
+    },
+    {
+      "file": "magnum-only.html", "url": "https://cave.example.org/chateau-exemple-2018-magnum",
+      "wineName": "Château Exemple", "sizeML": 1500, "prices": ["89 EUR"]
+    },
+    {
+      "file": "meta-tags.html", "url": "https://shop.example.com/pinot-noir-2021",
+      "wineName": "Pinot Noir", "sizeML": 750, "prices": ["28.5 GBP"], "excerptContains": ["Example Estate Pinot Noir 2021", "28.50 GBP"]
+    },
+    {
+      "file": "microdata.html", "url": "https://wein.example.org/les-lacustres",
+      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["13.9 CHF"], "excerptContains": ["Les Lacustres Chasselas 70cl"]
+    },
+    {
+      "file": "swiss-text.html", "url": "https://boutique.example.com/selection",
+      "wineName": "Les Lacustres", "sizeML": 700, "prices": ["14.5 CHF"], "excerptContains": ["14.50 Fr."]
+    }
+  ],
+  "addresses": [
+    { "url": "https://shop.example.org/produit/les-lacustres/", "allowed": true },
+    { "url": "https://shop.example.org:8443/vin", "allowed": true },
+    { "url": "http://shop.example.org/produit/les-lacustres/", "allowed": false },
+    { "url": "ftp://shop.example.org/vin", "allowed": false },
+    { "url": "https://user:secret@shop.example.org/vin", "allowed": false },
+    { "url": "https://203.0.113.10/vin", "allowed": false },
+    { "url": "https://[2001:db8::1]/vin", "allowed": false },
+    { "url": "https://127.0.0.1/vin", "allowed": false },
+    { "url": "https://2130706433/vin", "allowed": false },
+    { "url": "https://localhost/vin", "allowed": false },
+    { "url": "https://shop.localhost/vin", "allowed": false },
+    { "url": "https://nas.local/vin", "allowed": false },
+    { "url": "https://router.home.arpa/vin", "allowed": false },
+    { "url": "https://intranet/vin", "allowed": false }
+  ],
+  "resolved": [
+    { "addresses": ["203.0.113.10"], "public": true },
+    { "addresses": ["2001:db8::1", "203.0.113.10"], "public": true },
+    { "addresses": [], "public": false },
+    { "addresses": ["127.0.0.1"], "public": false },
+    { "addresses": ["203.0.113.10", "169.254.169.254"], "public": false },
+    { "addresses": ["fe80::1%en0"], "public": false },
+    { "addresses": ["fd12:3456::1"], "public": false },
+    { "addresses": ["::1"], "public": false },
+    { "addresses": ["::ffff:127.0.0.1"], "public": false },
+    { "addresses": ["0.0.0.0"], "public": false }
+  ]
+}

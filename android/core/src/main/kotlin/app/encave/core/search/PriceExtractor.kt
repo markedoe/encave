@@ -27,14 +27,23 @@ object PriceExtractor {
     // The same patterns as the Apple app (WinePrice.swift).
     private const val NUMBER = """(?:\d{1,3}(?:[ \u00A0\u202F.,'’]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)"""
 
-    /** "€45", "CHF 45.90", "US$ 1,234.50". */
-    private val prefix = Regex("""(?<![\p{L}\d])(US\$|€|\$|£|EUR|USD|GBP|CHF)[ \u00A0\u202F]?($NUMBER)(?!\d)""", RegexOption.IGNORE_CASE)
+    /** Swiss whole francs: "13.–", "13.-". */
+    private const val NO_CENTS = """(?:[.,][–—-]{1,2})?"""
 
-    /** "45 €", "1 234,50 €", "45 EUR", "45 euros". */
-    private val suffix = Regex("""(?<![\d.,'’])($NUMBER)[ \u00A0\u202F]?(€|\$|£|EUR|USD|GBP|CHF|euros?)(?!\p{L})""", RegexOption.IGNORE_CASE)
+    /** "€45", "CHF 45.90", "US$ 1,234.50", "CHF 13.–", "Fr. 13.50", "SFr. 13.50". */
+    private val prefix = Regex(
+        """(?<![\p{L}\d])(US\$|€|\$|£|EUR|USD|GBP|CHF|SFr\.?|Fr\.)[ \u00A0\u202F]?($NUMBER)$NO_CENTS(?!\d)""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /** "45 €", "1 234,50 €", "45 EUR", "45 euros", "13.– CHF", "13.50 Fr.". */
+    private val suffix = Regex(
+        """(?<![\d.,'’])($NUMBER)$NO_CENTS[ \u00A0\u202F]?(€|\$|£|EUR|USD|GBP|CHF|euros?|S?Fr\.?)(?!\p{L})""",
+        RegexOption.IGNORE_CASE,
+    )
 
     /** Several bottles, a case or delivery: not the price of one bottle. */
-    private val notOneBottleBefore = Regex(
+    internal val notOneBottleBefore = Regex(
         """(?:\b\d+ ?x\b|\bx ?\d+\b|\bcase\b|\bcases\b|\bcarton|\bcaisse|\blot\b|\bpack\b|\bcoffret|\bbox\b|\bshipping|\bdelivery|\blivraison|\bfrais de port|\bdozen|\bdouzaine)""",
         RegexOption.IGNORE_CASE,
     )
@@ -44,15 +53,21 @@ object PriceExtractor {
     )
 
     /** Bottle sizes named near a price, larger sizes first ("double magnum" before "magnum"). */
-    private val sizePatterns = listOf(
+    internal val sizePatterns = listOf(
         3000 to Regex("""\bdouble[- ]magnum|\bjeroboam|\b3 ?l\b|\b300 ?cl""", RegexOption.IGNORE_CASE),
         1500 to Regex("""\bmagnum|\b1[.,]5 ?l\b|\b150 ?cl|\b1500 ?ml""", RegexOption.IGNORE_CASE),
-        375 to Regex("""\bhalf[- ]bottle|\bdemi[- ]bouteille|\bfillette|\b37[.,]5 ?cl|\b375 ?ml""", RegexOption.IGNORE_CASE),
+        1000 to Regex("""\b1 ?l\b|\b1 ?lit(?:re|er)\b|\b1[.,]0 ?l\b|\b100 ?cl|\b1000 ?ml""", RegexOption.IGNORE_CASE),
+        375 to Regex("""\bhalf[- ]bottle|\bdemi[- ]bouteille|\bfillette|\b37[.,]5 ?cl|\b375 ?ml|\b0[.,]375 ?l\b""", RegexOption.IGNORE_CASE),
         750 to Regex("""\b75 ?cl|\b750 ?ml|\b0[.,]75 ?l\b""", RegexOption.IGNORE_CASE),
+        700 to Regex("""\b70 ?cl|\b700 ?ml|\b0[.,]7 ?l\b""", RegexOption.IGNORE_CASE),
+        620 to Regex("""\bclavelin|\b62 ?cl|\b620 ?ml|\b0[.,]62 ?l\b""", RegexOption.IGNORE_CASE),
+        500 to Regex("""\b50 ?cl|\b500 ?ml|\b0[.,]5 ?l\b""", RegexOption.IGNORE_CASE),
     )
 
     private val min = BigDecimal(3)
     private val max = BigDecimal(20_000)
+
+    internal fun inRange(amount: BigDecimal) = amount >= min && amount <= max
 
     /** Prices of one bottle of [sizeML] in the titles and snippets of the results. */
     fun prices(results: List<WebSearchResult>, sizeML: Int = 750): List<FoundPrice> {
@@ -72,7 +87,14 @@ object PriceExtractor {
     private data class Match(val start: Int, val end: Int, val amount: String, val symbol: String, val isSuffix: Boolean)
 
     /** Amounts with a currency in a text, without those that are not for one bottle. */
-    internal fun prices(text: String, sizeML: Int): List<Triple<BigDecimal, String, String>> {
+    internal fun prices(text: String, sizeML: Int): List<Triple<BigDecimal, String, String>> =
+        textPrices(text, sizeML).map { Triple(it.amount, it.currency, it.excerpt) }
+
+    /** A price in a text: where it is (UTF-16 offset), and the size named next to it, if any. */
+    internal data class TextPrice(val amount: BigDecimal, val currency: String, val excerpt: String, val location: Int, val namedSize: Int?)
+
+    /** As [prices]; a price without a size next to it is for [defaultSize]. */
+    internal fun textPrices(text: String, sizeML: Int, defaultSize: Int = 750): List<TextPrice> {
         val matches = mutableListOf<Match>()
         for (match in prefix.findAll(text)) {
             matches += Match(match.range.first, match.range.last + 1, match.groupValues[2], match.groupValues[1], false)
@@ -103,11 +125,12 @@ object PriceExtractor {
             val before = contextBefore(text, match.start)
             val after = contextAfter(text, match.end)
             if (notOneBottleBefore.containsMatchIn(before) || notOneBottleAfter.containsMatchIn(after)) return@mapNotNull null
-            // A price without a size is for 75 cl; another size must be named.
-            if ((namedSize("$before $after") ?: 750) != sizeML) return@mapNotNull null
+            // A price without a size is for 75 cl (or the page's size); another size must be named.
+            val size = namedSize("$before $after")
+            if ((size ?: defaultSize) != sizeML) return@mapNotNull null
             val excerpt = (before + text.substring(match.start, match.end) + after)
                 .split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
-            Triple(amount, currencyCode(match.symbol), excerpt)
+            TextPrice(amount, currencyCode(match.symbol), excerpt, match.start, size)
         }
     }
 
@@ -149,15 +172,17 @@ object PriceExtractor {
         else -> "CHF"
     }
 
-    /** Up to 30 characters before the price, in the same sentence, lowercased. */
+    /** Up to 30 characters before the price, in the same sentence ("0.7 l" does not end one). */
     private fun contextBefore(text: String, location: Int): String {
         var piece = text.substring(maxOf(0, location - 30), location)
-        val cut = piece.indexOfLast { it in ".;|•·\n!?" }
+        val cut = piece.indexOfLast { it in ";|•·\n!?" }
         if (cut >= 0) piece = piece.substring(cut + 1)
-        return piece.lowercase(Locale.ROOT)
+        val stop = piece.lastIndexOf(". ")
+        if (stop >= 0) piece = piece.substring(stop + 2)
+        return piece
     }
 
-    /** Up to 25 characters after the price, in the same sentence, lowercased. */
+    /** Up to 25 characters after the price, in the same sentence. */
     private fun contextAfter(text: String, location: Int): String {
         if (location >= text.length) return ""
         var piece = text.substring(location, minOf(text.length, location + 25))
@@ -165,8 +190,16 @@ object PriceExtractor {
         if (cut >= 0) piece = piece.substring(0, cut)
         val stop = piece.indexOf(". ")
         if (stop >= 0) piece = piece.substring(0, stop)
-        return piece.lowercase(Locale.ROOT)
+        return piece
     }
 
-    private fun namedSize(text: String): Int? = sizePatterns.firstOrNull { it.second.containsMatchIn(text) }?.first
+    internal fun namedSize(text: String): Int? = sizePatterns.firstOrNull { it.second.containsMatchIn(text) }?.first
+
+    /** The size named in a text and its words as written ("70 cl"), the first pattern that matches. */
+    internal fun sizeWords(text: String): Pair<Int, String>? {
+        for ((size, pattern) in sizePatterns) {
+            pattern.find(text)?.let { return size to it.value }
+        }
+        return null
+    }
 }

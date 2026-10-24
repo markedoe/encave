@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.EncaveApplication
 import app.encave.R
 import app.encave.core.search.FoundPrice
+import app.encave.core.search.PagePrices
 import app.encave.core.search.PriceExtractor
 import app.encave.core.search.WebSearchError
 import app.encave.core.search.WebSearchResult
@@ -71,18 +72,26 @@ import app.encave.ui.components.Formats
 import app.encave.ui.theme.Dimens
 import java.math.BigDecimal
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
 /** The web search settings of the app. */
 @Composable
 fun webSearchPreferences(): WebSearchPreferences = (LocalContext.current.applicationContext as EncaveApplication).webSearch
 
-/** For "Find current price": the bottle size, the cellar currency, the price kept now and how to save one. */
+/**
+ * For "Find current price": the bottle size, the cellar currency, the price kept now, the
+ * wine's name (to find its price on a page that lists several) and how to save one.
+ */
 data class PriceOptions(
     val sizeML: Int,
     val currency: String,
     val current: BigDecimal?,
+    val wineName: String? = null,
     val onSave: (BigDecimal, String) -> Unit,
 )
 
@@ -115,8 +124,10 @@ internal fun openLink(context: Context, url: String) {
 /**
  * "Search online" and "Find current price": shows the search terms, sends them only when
  * the user taps Search, and lists the pages found with links to the browser. With [price],
- * also lists every price found with its site, suggests the middle one in the cellar
- * currency and keeps a price only when the user saves it.
+ * also opens the first result pages from this device to read the price on them
+ * ([PagePrices]), lists every price found with its site, suggests the middle one in the
+ * cellar currency and keeps a price only when the user saves it. Closing the sheet or a new
+ * search stops the pages being read.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,11 +144,42 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
     var prices by remember { mutableStateOf<List<FoundPrice>>(emptyList()) }
     var currency by remember { mutableStateOf(price?.currency.orEmpty()) }
     var priceText by remember { mutableStateOf(price?.current?.toPlainString().orEmpty()) }
+    var readingPages by remember { mutableStateOf(false) }
+    var pageJob by remember { mutableStateOf<Job?>(null) }
+    // New prices move the suggested one until the user sets a price.
+    var userSetPrice by remember { mutableStateOf(false) }
     val priceValue = priceText.trim().replace(",", ".").toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
+
+    fun suggestMiddlePrice() {
+        if (!userSetPrice) PriceExtractor.suggested(prices, currency)?.let { priceText = it.toPlainString() }
+    }
+
+    /** Opens the first result pages from this device, a few at a time, and adds each one's prices as soon as it is read. */
+    fun readPages(found: List<WebSearchResult>, options: PriceOptions) {
+        val pages = PagePrices.pages(found)
+        if (pages.isEmpty()) return
+        readingPages = true
+        pageJob = scope.launch {
+            val gate = Semaphore(PagePrices.PARALLEL_PAGES)
+            pages.map { page ->
+                launch {
+                    val read = gate.withPermit { WebSearchClient.pagePrices(page, options.sizeML, options.wineName) }
+                    if (read.isNotEmpty()) {
+                        prices = PagePrices.merging(read, prices)
+                        suggestMiddlePrice()
+                    }
+                }
+            }.joinAll()
+            readingPages = false
+        }
+    }
 
     fun search() {
         val terms = query.trim()
         if (terms.isEmpty() || searching || !settings.isEnabled) return
+        pageJob?.cancel()
+        pageJob = null
+        readingPages = false
         searching = true
         error = null
         val current = settings
@@ -150,7 +192,9 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                     results = found
                     if (price != null) {
                         prices = PriceExtractor.prices(found, price.sizeML).distinctBy { it.id }
-                        PriceExtractor.suggested(prices, currency)?.let { priceText = it.toPlainString() }
+                        userSetPrice = false
+                        suggestMiddlePrice()
+                        readPages(found, price)
                     }
                 }
                 .onFailure {
@@ -176,7 +220,14 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                         value = query,
                         onValueChange = { query = it },
                         label = { Text(stringResource(R.string.search_terms)) },
-                        supportingText = { Text(stringResource(R.string.search_terms_footer, settings.service.brand.orEmpty())) },
+                        supportingText = {
+                            Text(
+                                stringResource(
+                                    if (price != null) R.string.search_terms_footer_price else R.string.search_terms_footer,
+                                    settings.service.brand.orEmpty(),
+                                ),
+                            )
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().testTag("webSearch.query"),
                         keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Search),
@@ -212,7 +263,12 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
             if (price != null) {
                 item {
                     PriceField(
-                        priceText = priceText, onPriceText = { priceText = it }, currency = currency,
+                        priceText = priceText,
+                        onPriceText = {
+                            priceText = it
+                            userSetPrice = true
+                        },
+                        currency = currency,
                         hint = when {
                             !searched -> null
                             prices.count { it.currency == currency } == 1 -> stringResource(R.string.price_only_one, currency)
@@ -230,7 +286,17 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                 }
                 if (searched && error == null && !searching) {
                     item { SheetHeader(stringResource(R.string.price_found)) }
-                    if (prices.isEmpty()) {
+                    if (readingPages) {
+                        item {
+                            ListItem(
+                                modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                                leadingContent = { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) },
+                                headlineContent = {
+                                    Text(stringResource(R.string.price_reading_pages), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                },
+                            )
+                        }
+                    } else if (prices.isEmpty()) {
                         item {
                             Text(
                                 stringResource(R.string.price_none_found),
@@ -245,6 +311,7 @@ fun WebSearchSheet(initialQuery: String, onDismiss: () -> Unit, price: PriceOpti
                             onUse = {
                                 priceText = found.amount.toPlainString()
                                 currency = found.currency
+                                userSetPrice = true
                             },
                             onOpen = { openLink(context, found.url) },
                         )

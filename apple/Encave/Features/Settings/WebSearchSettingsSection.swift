@@ -120,7 +120,7 @@ struct WebSearchSettingsSection: View {
                 if settings.service.requiresServerURL {
                     Text("SearXNG must answer in JSON: add json under search: formats: in its settings.yml.")
                 }
-                Text("Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.")
+                Text("Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. For a price, the first pages found are then opened from this device to read the price on them: those sites see the request and your IP address. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.")
             }
         }
     }

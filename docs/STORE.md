@@ -32,8 +32,10 @@
   device straight to the provider the user set up with their own key.
 - Web search (off by default): only the search terms (producer, name,
   appellation, vintage, and for a price the bottle size), shown and editable
-  before sending, to the provider the user set up. Picture thumbnails and the
-  chosen picture are downloaded from their hosts.
+  before sending, to the provider the user set up. For a price, the first five
+  result pages are then opened from the device (no cookies or credentials) and
+  read there. Picture thumbnails and the chosen picture are downloaded from
+  their hosts.
 - The app has no web view: links and search results open in the browser.
 - The privacy manifest (`apple/Encave/Resources/PrivacyInfo.xcprivacy`)
   declares no tracking and no collected data.

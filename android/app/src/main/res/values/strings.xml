@@ -732,7 +732,7 @@
     <string name="help_privacy_summary">Your cellar stays yours.</string>
     <string name="help_privacy_1">Your cellar, its photos and documents are kept on your devices, in Encave’s private storage, which Android encrypts. They are left out of Google cloud backups and move to a new phone only with a direct transfer from the old one. The backups Encave makes are ZIP files that are not encrypted: the weekly backup, on at first, goes to the shared Download/Encave folder, and **Back up now** where you choose. There is no account, no analytics, no tracking and no advertising: the developer of Encave receives nothing.</string>
     <string name="help_privacy_2">Sync between your devices is encrypted from end to end. On the same Wi-Fi, devices talk directly. Away from home, if you turn it on, a relay or WebDAV folder stores the changes as encrypted files it can never read; it sees when devices sync, how much they send and their IP addresses.</string>
-    <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or tap Complete with AI; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request.</string>
+    <string name="help_privacy_3">Apart from sync, only two things can leave the device, and only if you set them up yourself: the label photo, sent to the AI service you chose, with your own key, when you scan a label or tap Complete with AI; and the search terms of a wine (producer, name, appellation and vintage, and for a price the bottle size), shown before anything is sent and sent to your web search service when you tap Search. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them, which see the request. For a price, the first pages found are opened from this device to read the price on them; those sites see the request too.</string>
     <string name="help_privacy_4">Encave is open source: anyone can check what the app does.</string>
     <string name="settings_devices">Devices</string>
     <string name="settings_devices_summary">Sync your cellar with your other devices (iPhone, iPad, Mac or Android), encrypted from end to end.</string>
@@ -1146,13 +1146,14 @@
     <string name="web_search_install_searxng">Install SearXNG</string>
     <string name="web_search_searxng_json">SearXNG must answer in JSON: add json under search: formats: in its settings.yml.</string>
     <string name="settings_web_search_off_body">Optional. Looks up a wine on the web to complete its details or find its current price, with the search service you choose.</string>
-    <string name="settings_web_search_on_body">Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.</string>
+    <string name="settings_web_search_on_body">Only the search terms are sent, directly to this service, when you tap Search: the producer, name, appellation and vintage of the wine, and the bottle size for a price. You see them and can change them first. Your cellar, notes and prices are never sent. For a price, the first pages found are then opened from this device to read the price on them: those sites see the request and your IP address. When you search pictures, the thumbnails and the picture you choose are downloaded from the sites that host them.</string>
     <string name="help_link_web_search">How to set up web search</string>
     <string name="search_online">Search online</string>
     <string name="search_online_footer">Finds this wine on the web with %1$s. You see the search terms before they are sent.</string>
     <string name="search_find_price">Find current price</string>
     <string name="search_terms">Search terms</string>
     <string name="search_terms_footer">Only these words are sent, to %1$s, when you tap Search. Change them if you like. Nothing else about this wine or your cellar is sent.</string>
+    <string name="search_terms_footer_price">Only these words are sent, to %1$s, when you tap Search. Change them if you like. The first pages found are then opened from this device to read their price: those sites see the page asked for and your IP address. Nothing else about this wine or your cellar is sent.</string>
     <string name="search_action">Search</string>
     <string name="search_searching">Searching…</string>
     <string name="search_results">Results</string>
@@ -1180,7 +1181,8 @@
     <string name="price_remove">Remove price</string>
     <string name="price_found">Prices found</string>
     <string name="price_none_found">No prices in these results. Try other words, or open a result below.</string>
-    <string name="price_found_footer">Prices for several bottles, delivery or another bottle size are left out. Tap a price to use it.</string>
+    <string name="price_found_footer">Prices for several bottles, delivery or another bottle size are left out. The first pages found are read on this device. Tap a price to use it.</string>
+    <string name="price_reading_pages">Reading prices on the pages…</string>
     <string name="price_set_on">Set on %1$s, for one bottle.</string>
     <string name="detail_value">Value</string>
     <string name="detail_value_footer">What a bottle sells for today. Counted in the estimated value of your cellar in Insights.</string>
@@ -1195,9 +1197,9 @@
     <string name="help_web_search_title">Search online</string>
     <string name="help_web_search">On a wine’s page, or while adding or editing a wine, tap **Search online**. The search terms are shown first and you can change them; nothing is sent until you tap **Search**. Each result shows its title, a snippet and the site, and opens in your browser. Touch and hold the producer or the appellation on a wine’s page to search the web for it alone.</string>
     <string name="help_web_price_title">Current price</string>
-    <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size when it is not 75 cl, and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
+    <string name="help_web_price">On a wine’s page, **Find current price** searches for the wine, its bottle size when it is not 75 cl, and the word “price”. Every price found is listed with its site; prices for several bottles, delivery or another size are left out. Encave also opens the first five pages found, from this device, and reads the price of the bottle on them, for shops whose result shows no price. The middle value in your currency is suggested: change it or tap another price, then **Save price**. Insights adds up these prices for the bottles in your cellar as the **estimated value today**.</string>
     <string name="help_web_sent_title">What is sent</string>
-    <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, with the word “wine” (“bottle” for pictures); for a price, the word “price” and the bottle size when it is not 75 cl. You see them and can change them first. Your cellar, notes, prices and places are never sent. The key is encrypted with the Android Keystore on this device.</string>
+    <string name="help_web_sent">Only the search terms, to the service you chose: by default the producer, the name, the appellation and the vintage, with the word “wine” (“bottle” for pictures); for a price, the word “price” and the bottle size when it is not 75 cl. You see them and can change them first. Your cellar, notes, prices and places are never sent. For a price, the first five pages found are then opened from this device, without cookies: those sites see the page asked for and your IP address, nothing else. The key is encrypted with the Android Keystore on this device.</string>
     <string name="action_save_search">Save this search…</string>
     <string name="save_search_title">Save this search</string>
     <string name="save_search_body">It appears first among the filters, one tap away.</string>

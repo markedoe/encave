@@ -1,5 +1,6 @@
 import CaveKit
 import Foundation
+import Synchronization
 
 /// Optional web search to complete a wine's details, with a service the user chooses.
 /// Off by default. Only the search terms are sent, never the cellar.
@@ -103,6 +104,56 @@ enum WebSearchClient {
         return data
     }
 
+    // MARK: Prices on the result pages
+
+    /// For the result pages: no cookies, cache or saved passwords, short timeouts. The
+    /// User-Agent is the same as for the searches.
+    private static let pageSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieStorage = nil
+        configuration.urlCache = nil
+        configuration.urlCredentialStorage = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        configuration.timeoutIntervalForRequest = PagePrices.timeout
+        configuration.timeoutIntervalForResource = PagePrices.timeout
+        return URLSession(configuration: configuration)
+    }()
+
+    /// Opens a result's page from this device and reads the price of a bottle on it
+    /// (`PagePrices`). The site sees this device's address and the page asked for, nothing
+    /// else: no cookies, no Referer, no credentials. https only, never a local or private
+    /// address (each redirect is checked too), HTML only, at most `PagePrices.maxBytes`.
+    /// Empty when the page cannot be read; neither the address nor the page is logged.
+    static func pagePrices(of result: WebSearchResult, sizeML: Int, wineName: String?) async -> [FoundPrice] {
+        guard PagePrices.isAllowed(result.url), await PagePrices.resolvesPublicly(result.url) else { return [] }
+        var request = URLRequest(url: result.url)
+        request.httpShouldHandleCookies = false
+        request.timeoutInterval = PagePrices.timeout
+        request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
+        do {
+            let (bytes, response) = try await pageSession.bytes(for: request, delegate: PageRedirects())
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
+                  http.url.map(PagePrices.isAllowed) ?? false,
+                  PagePrices.isHTML(contentType: http.value(forHTTPHeaderField: "Content-Type")) else { return [] }
+            var data = Data()
+            for try await byte in bytes {
+                data.append(byte)
+                if data.count >= PagePrices.maxBytes { break }
+            }
+            try Task.checkCancellation()
+            let contentType = http.value(forHTTPHeaderField: "Content-Type")
+            // Reading the page takes a moment: not on the main thread.
+            return await Task.detached(priority: .utility) {
+                PagePrices.prices(inPage: PagePrices.text(of: data, contentType: contentType), of: result,
+                                  sizeML: sizeML, wineName: wineName)
+            }.value
+        } catch {
+            return []
+        }
+    }
+
     /// What went wrong, in words.
     static func message(for error: Error) -> String {
         if let error = error as? LocalNetworkError { return error.localizedDescription }
@@ -137,6 +188,34 @@ final class PublicImageRedirects: NSObject, URLSessionTaskDelegate, Sendable {
                     newRequest request: URLRequest) async -> URLRequest? {
         guard let target = request.url, WebImageDownload.isAllowed(target) else { return nil }
         return request
+    }
+}
+
+/// A result page's redirects: at most `PagePrices.maxRedirects`, each to a public https name
+/// (`PagePrices.isAllowed`, its addresses checked too), without Referer or cookies. Asked for
+/// a password, the page is not read. One per page.
+final class PageRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    private let count = Mutex(0)
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest) async -> URLRequest? {
+        let allowed = count.withLock { count in
+            count += 1
+            return count <= PagePrices.maxRedirects
+        }
+        guard allowed, let target = request.url, PagePrices.isAllowed(target),
+              await PagePrices.resolvesPublicly(target) else { return nil }
+        var next = request
+        for field in ["Referer", "Cookie", "Authorization"] {
+            next.setValue(nil, forHTTPHeaderField: field)
+        }
+        return next
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask,
+                    didReceive challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+        challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust
+            ? (.performDefaultHandling, nil) : (.cancelAuthenticationChallenge, nil)
     }
 }
 

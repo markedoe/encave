@@ -79,10 +79,15 @@ not encrypted either: it goes where you choose to save or share it.
    sends **only the search terms**: the producer, name, appellation and
    vintage of a wine, and for a price the bottle size. They are shown, and can
    be changed, before anything is sent. Your cellar, notes, prices and places
-   are never sent. The results are read on the device. When you search
-   pictures, the thumbnails and the picture you pick are downloaded from the
-   sites that host them, which see the request; the picture becomes the wine's
-   cover and never replaces your label photo.
+   are never sent. The results are read on the device. When you look for a
+   price, Encave then opens the first five result pages from your device and
+   reads the bottle's price on them, on the device: those sites see your IP
+   address and the page asked for, nothing else (no cookies, no stored
+   passwords, no referring page, and never an address of your device or your
+   local network). When you search pictures, the thumbnails and the picture
+   you pick are downloaded from the sites that host them, which see the
+   request; the picture becomes the wine's cover and never replaces your label
+   photo.
 
 Plain HTTP is used only for a server on your local network, including a name
 on your home network that points to a local address (Encave then connects to

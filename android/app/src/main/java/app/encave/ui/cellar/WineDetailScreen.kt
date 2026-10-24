@@ -398,7 +398,7 @@ fun WineDetailScreen(
         WebSearchSheet(
             initialQuery = WebSearchQuery.priceTerms(wine, sizeML, stringResource(R.string.search_price_word)),
             onDismiss = { findingPrice = false },
-            price = PriceOptions(sizeML, wine.currentPriceCurrency ?: cellar.settings.currency, wine.currentPrice) { amount, code ->
+            price = PriceOptions(sizeML, wine.currentPriceCurrency ?: cellar.settings.currency, wine.currentPrice, wine.name) { amount, code ->
                 cellar.wines[wine.id]?.let { latest ->
                     viewModel.updateWine(
                         latest.copy(currentPrice = amount, currentPriceCurrency = code, currentPriceDate = app.encave.core.ReferenceDates.now()),

@@ -231,7 +231,7 @@ struct WineDetailView: View {
                 PriceSearchView(
                     terms: WebSearchQuery.priceTerms(for: wine, sizeML: sizeML,
                                                      priceWord: String(localized: "price", comment: "Added to price search terms")),
-                    sizeML: sizeML, currentPrice: wine.currentPrice,
+                    sizeML: sizeML, wineName: wine.name, currentPrice: wine.currentPrice,
                     currency: wine.currentPriceCurrency ?? model.cellar.settings.currency
                 ) { price, currency in
                     setPrice(price, currency: currency)

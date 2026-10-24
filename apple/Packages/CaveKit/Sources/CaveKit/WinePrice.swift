@@ -39,6 +39,8 @@ extension WebSearchQuery {
         switch sizeML {
         case 750: nil
         case 375: "37.5 cl"
+        case 620: "clavelin"
+        case 1000: "1 l"
         case 1500: "magnum"
         case 3000: "double magnum"
         default: sizeML % 10 == 0 ? "\(sizeML / 10) cl" : "\(sizeML) ml"
@@ -49,10 +51,14 @@ extension WebSearchQuery {
 public enum PriceExtractor {
     // The same patterns are used by the Android app (PriceExtractor.kt).
     static let number = #"(?:\d{1,3}(?:[ \u00A0\u202F.,'’]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)"#
-    /// "€45", "CHF 45.90", "US$ 1,234.50".
-    static let prefixPattern = #"(?<![\p{L}\d])(US\$|€|\$|£|EUR|USD|GBP|CHF)[ \u00A0\u202F]?("# + number + #")(?!\d)"#
-    /// "45 €", "1 234,50 €", "45 EUR", "45 euros".
-    static let suffixPattern = #"(?<![\d.,'’])("# + number + #")[ \u00A0\u202F]?(€|\$|£|EUR|USD|GBP|CHF|euros?)(?!\p{L})"#
+    /// Swiss whole francs: "13.–", "13.-".
+    static let noCents = #"(?:[.,][–—-]{1,2})?"#
+    /// "€45", "CHF 45.90", "US$ 1,234.50", "CHF 13.–", "Fr. 13.50", "SFr. 13.50".
+    static let prefixPattern = #"(?<![\p{L}\d])(US\$|€|\$|£|EUR|USD|GBP|CHF|SFr\.?|Fr\.)[ \u00A0\u202F]?("# + number + #")"#
+        + noCents + #"(?!\d)"#
+    /// "45 €", "1 234,50 €", "45 EUR", "45 euros", "13.– CHF", "13.50 Fr.".
+    static let suffixPattern = #"(?<![\d.,'’])("# + number + #")"# + noCents
+        + #"[ \u00A0\u202F]?(€|\$|£|EUR|USD|GBP|CHF|euros?|S?Fr\.?)(?!\p{L})"#
 
     /// Several bottles, a case or delivery: not the price of one bottle.
     static let notOneBottleBefore = #"(?:\b\d+ ?x\b|\bx ?\d+\b|\bcase\b|\bcases\b|\bcarton|\bcaisse|\blot\b|\bpack\b|\bcoffret|\bbox\b|\bshipping|\bdelivery|\blivraison|\bfrais de port|\bdozen|\bdouzaine)"#
@@ -61,8 +67,12 @@ public enum PriceExtractor {
     static let sizePatterns: [(Int, String)] = [
         (3000, #"\bdouble[- ]magnum|\bjeroboam|\b3 ?l\b|\b300 ?cl"#),
         (1500, #"\bmagnum|\b1[.,]5 ?l\b|\b150 ?cl|\b1500 ?ml"#),
-        (375, #"\bhalf[- ]bottle|\bdemi[- ]bouteille|\bfillette|\b37[.,]5 ?cl|\b375 ?ml"#),
+        (1000, #"\b1 ?l\b|\b1 ?lit(?:re|er)\b|\b1[.,]0 ?l\b|\b100 ?cl|\b1000 ?ml"#),
+        (375, #"\bhalf[- ]bottle|\bdemi[- ]bouteille|\bfillette|\b37[.,]5 ?cl|\b375 ?ml|\b0[.,]375 ?l\b"#),
         (750, #"\b75 ?cl|\b750 ?ml|\b0[.,]75 ?l\b"#),
+        (700, #"\b70 ?cl|\b700 ?ml|\b0[.,]7 ?l\b"#),
+        (620, #"\bclavelin|\b62 ?cl|\b620 ?ml|\b0[.,]62 ?l\b"#),
+        (500, #"\b50 ?cl|\b500 ?ml|\b0[.,]5 ?l\b"#),
     ]
 
     static let range: ClosedRange<Decimal> = 3...20_000
@@ -85,6 +95,21 @@ public enum PriceExtractor {
 
     /// Amounts with a currency in a text, without those that are not for one bottle.
     static func prices(in text: String, sizeML: Int) -> [(Decimal, String, String)] {
+        textPrices(in: text, sizeML: sizeML).map { ($0.amount, $0.currency, $0.excerpt) }
+    }
+
+    /// A price in a text: where it is, and the size named next to it, if any.
+    struct TextPrice {
+        var amount: Decimal
+        var currency: String
+        var excerpt: String
+        /// UTF-16 offset of the price in the text.
+        var location: Int
+        var namedSize: Int?
+    }
+
+    /// As `prices(in:sizeML:)`; a price without a size next to it is for `defaultSize`.
+    static func textPrices(in text: String, sizeML: Int, defaultSize: Int = 750) -> [TextPrice] {
         let nsText = text as NSString
         let whole = NSRange(location: 0, length: nsText.length)
         struct Match { var range: NSRange; var amount: String; var symbol: String; var isSuffix: Bool }
@@ -120,11 +145,13 @@ public enum PriceExtractor {
             let before = context(nsText, before: match.range.location)
             let after = context(nsText, after: match.range.location + match.range.length)
             if contains(before, notOneBottleBefore) || contains(after, notOneBottleAfter) { return nil }
-            // A price without a size is for 75 cl; another size must be named.
-            if (namedSize(before + " " + after) ?? 750) != sizeML { return nil }
+            // A price without a size is for 75 cl (or the page's size); another size must be named.
+            let size = namedSize(before + " " + after)
+            if (size ?? defaultSize) != sizeML { return nil }
             let excerpt = (before + nsText.substring(with: match.range) + after)
                 .split(whereSeparator: \.isWhitespace).joined(separator: " ")
-            return (amount, currencyCode(match.symbol), excerpt)
+            return TextPrice(amount: amount, currency: currencyCode(match.symbol), excerpt: excerpt,
+                             location: match.range.location, namedSize: size)
         }
     }
 
@@ -163,24 +190,25 @@ public enum PriceExtractor {
         }
     }
 
-    /// Up to 30 characters before the price, in the same sentence, lowercased.
+    /// Up to 30 characters before the price, in the same sentence ("0.7 l" does not end one).
     static func context(_ text: NSString, before location: Int) -> String {
         let start = max(0, location - 30)
         var piece = text.substring(with: NSRange(location: start, length: location - start))
-        if let cut = piece.lastIndex(where: { ".;|•·\n!?".contains($0) }) {
+        if let cut = piece.lastIndex(where: { ";|•·\n!?".contains($0) }) {
             piece = String(piece[piece.index(after: cut)...])
         }
-        return piece.lowercased()
+        if let stop = piece.range(of: ". ", options: .backwards) { piece = String(piece[stop.upperBound...]) }
+        return piece
     }
 
-    /// Up to 25 characters after the price, in the same sentence, lowercased.
+    /// Up to 25 characters after the price, in the same sentence.
     static func context(_ text: NSString, after location: Int) -> String {
         let length = min(25, text.length - location)
         guard length > 0 else { return "" }
         var piece = text.substring(with: NSRange(location: location, length: length))
         if let cut = piece.firstIndex(where: { ";|•·\n!?".contains($0) }) { piece = String(piece[..<cut]) }
         if let stop = piece.range(of: ". ") { piece = String(piece[..<stop.lowerBound]) }
-        return piece.lowercased()
+        return piece
     }
 
     static func contains(_ text: String, _ pattern: String) -> Bool {
@@ -189,6 +217,16 @@ public enum PriceExtractor {
 
     static func namedSize(_ text: String) -> Int? {
         sizePatterns.first { contains(text, $0.1) }?.0
+    }
+
+    /// The size named in a text and its words as written ("70 cl"), the first pattern that matches.
+    static func sizeWords(in text: String) -> (sizeML: Int, words: String)? {
+        for (size, pattern) in sizePatterns {
+            if let range = text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
+                return (size, String(text[range]))
+            }
+        }
+        return nil
     }
 }
 

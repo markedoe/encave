@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Changed
+- Prices read 70 cl, 50 cl, 1 litre and clavelin (62 cl) bottles, and Swiss
+  formats such as "CHF 13.–", "Fr. 13.50" and "13.50 Fr."
 - Racks are now Storage (Rangements in French): a storage is a rack, a wine
   fridge (Cave à vin réfrigérée) or bins and crates (a bin is a Case); "Cave"
   now means only your whole cellar
@@ -66,6 +68,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
   it is found from its paper, and a photo without a label is shown whole
 
 ### Added
+- Find Current Price also opens the first five result pages from the device
+  and reads the bottle's price on them (product data, then the page text near
+  the wine's name), for shops whose search result shows no price; pages are
+  read without cookies, and never from the local network
 - Privacy policy (docs/PRIVACY.md, linked from the apps) and store paperwork
   (docs/STORE.md); App Store listing in French and English (name, subtitle,
   texts, age rating, privacy policy URL, the build to attach) applied from

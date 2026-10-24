@@ -37,9 +37,11 @@ sync between devices and users (see `docs/ROADMAP.md`):
   search terms (producer, name, appellation, vintage, and for a price the
   bottle size; shown and editable before sending) to the search provider the
   user sets up. Never send the cellar, notes, prices or places. Results are
-  read on the device only. Picture thumbnails and the picture the user picks
-  are downloaded from their hosts, which see the request; the picture is
-  kept as the wine's cover and never replaces the label photo.
+  read on the device only. For a price, the first result pages are opened
+  from the device (no cookies or credentials) and read there. Picture
+  thumbnails and the picture the user picks are downloaded from their hosts,
+  which see the request; the picture is kept as the wine's cover and never
+  replaces the label photo.
 - No analytics or third-party SDKs that receive user data.
 - No integrations with commercial wine platforms.
 

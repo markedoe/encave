@@ -28,7 +28,8 @@ where each bottle sits in your storage, and when it is ready to drink.
     are listed with their sites, the middle one is suggested, and the price you
     save counts in the estimated value of the cellar. Only the search terms
     (producer, name, appellation, vintage, bottle size) are sent, after you see
-    and can edit them. On Apple Intelligence devices, **Suggest Details** reads
+    and can edit them; for a price, the first five result pages are then opened
+    from the device and read there. On Apple Intelligence devices, **Suggest Details** reads
     the results on the device and proposes details you accept one by one.
   - **Search Pictures** finds a picture of the bottle with the same service;
     the one you choose is downloaded from its site and shown as the wine's

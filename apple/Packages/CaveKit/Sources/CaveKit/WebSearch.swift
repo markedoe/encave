@@ -282,6 +282,7 @@ enum WebSearchText {
     private static let named: [String: String] = [
         "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": " ",
         "ndash": "–", "mdash": "—", "hellip": "…", "rsquo": "’", "lsquo": "‘", "ldquo": "“", "rdquo": "”",
+        "euro": "€", "pound": "£", "laquo": "«", "raquo": "»", "middot": "·", "thinsp": " ",
     ]
 
     static func decodeEntities(_ text: String) -> String {

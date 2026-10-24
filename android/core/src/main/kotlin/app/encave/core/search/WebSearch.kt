@@ -139,6 +139,8 @@ object WebSearchQuery {
     internal fun sizeWords(sizeML: Int): String? = when (sizeML) {
         750 -> null
         375 -> "37.5 cl"
+        620 -> "clavelin"
+        1000 -> "1 l"
         1500 -> "magnum"
         3000 -> "double magnum"
         else -> if (sizeML % 10 == 0) "${sizeML / 10} cl" else "$sizeML ml"
@@ -310,6 +312,7 @@ internal object WebSearchText {
     private val named = mapOf(
         "amp" to "&", "lt" to "<", "gt" to ">", "quot" to "\"", "apos" to "'", "nbsp" to " ",
         "ndash" to "–", "mdash" to "—", "hellip" to "…", "rsquo" to "’", "lsquo" to "‘", "ldquo" to "“", "rdquo" to "”",
+        "euro" to "€", "pound" to "£", "laquo" to "«", "raquo" to "»", "middot" to "·", "thinsp" to " ",
     )
 
     fun decodeEntities(text: String): String {
