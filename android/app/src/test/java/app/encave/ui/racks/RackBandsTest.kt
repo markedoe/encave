@@ -106,6 +106,53 @@ class RackBandsTest {
     @Test
     fun eachBackBaseSitsUnderItsFrontOneWhenNotHeadToTail() = backPlacesAreDrawn(fridge.copy(backReversed = null), shift = 0f)
 
+    /**
+     * Shelves that differ in depth: two deep head-to-tail on top, one deep in the middle, two deep
+     * bases facing you at the bottom.
+     */
+    private val mixed = Rack(
+        name = "M", kind = RackKind.Staggered, rows = 5, columns = 6, depth = 2, shelfLayers = listOf(2, 1, 2),
+        rowDepths = listOf(2, 2, 1, 2, 2), rowBackReversed = listOf(true, true, false, false, false), backReversed = true,
+    ).normalized()
+
+    @Test
+    fun aShelfOneDeepIsDrawnOnceAndOnlyHeadToTailShelvesShift() {
+        assertTrue(mixed.hasDepthBandsOnShelf(0) && !mixed.hasDepthBandsOnShelf(1) && mixed.hasDepthBandsOnShelf(2))
+        assertTrue(mixed.drawsBandsInRow(0) && !mixed.drawsBandsInRow(2) && mixed.drawsBandsInRow(4))
+        // The single shelf's places are whole cells of one bottle.
+        val single = RackPlace.of(Slot(mixed.id, 2, 1, 0), mixed)
+        assertNull(single.depth)
+        assertTrue(single.holdsOne(mixed))
+        assertEquals(single, RackPlace.of(single.key(), mixed))
+        assertNull(RackPlace.of("2:1:1", mixed)?.depth)
+        assertEquals(1, RackPlace.of(Slot(mixed.id, 3, 0, 1), mixed).depth)
+        val cell = 40.dp
+        val label = 20.dp
+        val cellar = Cellar(racks = listOf(mixed))
+        compose.setContent {
+            EncaveTheme { RackGrid(mixed, cellar, cellSize = cell, onCellClick = { _, _ -> }) }
+        }
+        compose.waitForIdle()
+        // Captions over the two shelves two deep only.
+        assertEquals(2, compose.onAllNodesWithTag("rack.band.front").fetchSemanticsNodes().size)
+        assertEquals(2, compose.onAllNodesWithTag("rack.band.back").fetchSemanticsNodes().size)
+        assertTrue(compose.onAllNodesWithTag("cell.2.0.back", useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag("cell.2.0", useUnmergedTree = true).assertExists()
+        // Head-to-tail on the top shelf: its back places half a place right; the bottom shelf's right under.
+        for ((row, shift) in listOf(1 to 0.5f, 4 to 0f)) {
+            val front = compose.onNodeWithTag("cell.$row.0", useUnmergedTree = true).getBoundsInRoot()
+            val back = compose.onNodeWithTag("cell.$row.0.back", useUnmergedTree = true).getBoundsInRoot()
+            assertEquals("row $row", front.left.value + cell.value * 1.04f * shift, back.left.value, 0.5f)
+        }
+        // Its height counts the bands of the shelves two deep only.
+        val (_, height) = rackGridSize(mixed, cell, showHeaders = true, labelHeight = label)
+        val (_, flat) = rackGridSize(mixed.copy(depth = 1, rowDepths = null).normalized(), cell, showHeaders = true, labelHeight = label)
+        val back = cell * 0.78f
+        val nest = (back + cell * 0.04f) * 0.134f
+        val bands = (label * 2 + cell * 0.06f + back * 2 - nest + cell * 0.08f) * 2
+        assertEquals((flat + bands).value, height.value, 0.01f)
+    }
+
     /** Each back place of [rack] is drawn [shift] places right of its front one, below it, and within the drawing's size. */
     private fun backPlacesAreDrawn(rack: Rack, shift: Float) {
         val cellar = Cellar(racks = listOf(rack))

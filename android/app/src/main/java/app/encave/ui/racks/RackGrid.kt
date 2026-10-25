@@ -133,7 +133,7 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
     // Head-to-tail, the back band is drawn half a place right of the front one.
     val width = (0 until rack.rows).maxOf { row ->
         val n = rack.columnsInRow(row)
-        val offset = (size + spacing) * ((if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(1))
+        val offset = (size + spacing) * ((if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(row, 1))
         header + offset + size * n + spacing * (n - 1)
     } + pad * 2
     val overlap = when (rack.kind) {
@@ -151,10 +151,10 @@ fun rackGridSize(rack: Rack, cell: Dp, showHeaders: Boolean, labelHeight: Dp): P
         val shelves = rack.shelfRows
         val backHeight = size * BACK_HEIGHT
         val backOverlap = (backHeight + spacing) * 0.134f
-        val height = shelves.fold(0.dp) { total, rows ->
+        val height = shelves.withIndex().fold(0.dp) { total, (shelf, rows) ->
             val n = rows.count()
-            // Two deep: the captions, then the back places on their tray.
-            val bands = if (rack.hasDepthBands) {
+            // A shelf two deep: the captions, then the back places on their tray.
+            val bands = if (rack.hasDepthBandsOnShelf(shelf)) {
                 labelHeight * 2 + cell * BAND_GAP + backHeight * n - backOverlap * (n - 1) + cell * BACK_PADDING * 2
             } else {
                 0.dp
@@ -229,8 +229,14 @@ private fun Modifier.overlapUp(overlap: Dp) = layout { measurable, constraints -
 }
 
 /**
- * What a tap or a drop on a rack reaches: a whole cell, or, on a fridge drawn front and back
- * ([Rack.hasDepthBands]), one place of it, in front (0) or behind (1).
+ * This row is drawn in bands, a front and a back place for each cell: a layer of a fridge shelf
+ * two deep ([Rack.hasDepthBandsOnShelf]). A shelf one deep of the same fridge is drawn once.
+ */
+internal fun Rack.drawsBandsInRow(row: Int): Boolean = shelfPlace(row)?.let { hasDepthBandsOnShelf(it.shelf) } ?: false
+
+/**
+ * What a tap or a drop on a rack reaches: a whole cell, or, on a shelf of a fridge drawn front
+ * and back ([drawsBandsInRow]), one place of it, in front (0) or behind (1).
  */
 data class RackPlace(val cell: RackCell, val depth: Int? = null) {
     /** The place of a fridge drawn front and back; null for a whole cell. */
@@ -239,8 +245,8 @@ data class RackPlace(val cell: RackCell, val depth: Int? = null) {
     /** The place's own slot, or the front of the cell. */
     val firstSlot: Slot get() = slot ?: Slot(cell.rackId, cell.row, cell.column)
 
-    /** Holds one bottle at most: a place of a fridge drawn front and back, or a cell of one. */
-    fun holdsOne(rack: Rack): Boolean = depth != null || rack.positionsPerCell == 1
+    /** Holds one bottle at most: a place of a fridge drawn front and back, or a cell of a row one bottle deep. */
+    fun holdsOne(rack: Rack): Boolean = depth != null || rack.positionsInRow(cell.row) == 1
 
     operator fun contains(slot: Slot): Boolean = slot.cell == cell && (depth == null || slot.depth == depth)
 
@@ -249,14 +255,14 @@ data class RackPlace(val cell: RackCell, val depth: Int? = null) {
 
     companion object {
         /** What a tap on this slot reaches in [rack]: the slot itself on a fridge drawn front and back, else its cell. */
-        fun of(slot: Slot, rack: Rack) = RackPlace(slot.cell, if (rack.hasDepthBands) slot.depth else null)
+        fun of(slot: Slot, rack: Rack) = RackPlace(slot.cell, if (rack.drawsBandsInRow(slot.row)) slot.depth else null)
 
         /** The place a [key] names in [rack], if it is still there. */
         fun of(key: String?, rack: Rack): RackPlace? {
             val parts = key?.split(":")?.mapNotNull { it.toIntOrNull() } ?: return null
             if (parts.size !in 2..3) return null
-            val place = RackPlace(RackCell(rack.id, parts[0], parts[1]), parts.getOrNull(2)?.takeIf { rack.hasDepthBands })
-            return place.takeIf { rack.contains(it.cell) && (it.depth == null || it.depth in 0 until rack.positionsPerCell) }
+            val place = RackPlace(RackCell(rack.id, parts[0], parts[1]), parts.getOrNull(2)?.takeIf { rack.drawsBandsInRow(parts[0]) })
+            return place.takeIf { rack.contains(it.cell) && (it.depth == null || it.depth in 0 until rack.positionsInRow(it.cell.row)) }
         }
     }
 }
@@ -379,7 +385,7 @@ fun RackGrid(
     fun ShelfUnder(shelf: Int) {
         val shelfWidth = rack.shelfRows[shelf].maxOf { layer ->
             val n = rack.columnsInRow(layer)
-            (cellWidth + spacing) * ((if (rack.isOffset(layer)) 0.5f else 0f) + rack.bandShift(1)) + cellWidth * n + spacing * (n - 1)
+            (cellWidth + spacing) * ((if (rack.isOffset(layer)) 0.5f else 0f) + rack.bandShift(layer, 1)) + cellWidth * n + spacing * (n - 1)
         }
         Spacer(Modifier.height(cellSize * SHELF_BAR_GAP))
         Row {
@@ -449,15 +455,17 @@ fun RackGrid(
                 val backHeight = size * BACK_HEIGHT
                 val backOverlap = (backHeight + spacing) * 0.134f
                 val inset = if (showHeaders) headerWidth else 0.dp
-                val bandWidth = maxOf((cellWidth + spacing) * (rack.maxColumns + 0.5f + rack.bandShift(1)), captionWidth ?: 0.dp)
+                val bandWidth = maxOf((cellWidth + spacing) * (rack.maxColumns + 0.5f + rack.maxBandShift), captionWidth ?: 0.dp)
                 rack.shelfRows.forEachIndexed { shelf, rows ->
                     if (shelf > 0) Spacer(Modifier.height(cellSize * SHELF_GAP))
                     if (rack.zoneCount > 1 && (shelf == 0 || rack.zoneOfShelf(shelf) != rack.zoneOfShelf(shelf - 1))) {
                         ZoneDivider(rack, rack.zoneOfShelf(shelf), cellSize, inset)
                         Spacer(Modifier.height(cellSize * SHELF_GAP))
                     }
-                    // In front: the bottles' bases, as large as a honeycomb place.
-                    BandCaption(rack, shelf, back = false, inset, bandWidth)
+                    // A shelf two deep: in front, the bottles' bases, as large as a honeycomb place. A shelf
+                    // one deep (other shelves are two deep) is drawn once, without captions.
+                    val banded = rack.hasDepthBandsOnShelf(shelf)
+                    if (banded) BandCaption(rack, shelf, back = false, inset, bandWidth)
                     for (row in rows) {
                         Row(
                             if (row > rows.first) Modifier.overlapUp(overlap) else Modifier,
@@ -472,28 +480,32 @@ fun RackGrid(
                             }
                             if (rack.isOffset(row)) Spacer(Modifier.width((cellWidth + spacing) / 2))
                             Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                                for (column in 0 until rack.columnsInRow(row)) Place(RackPlace(RackCell(rack.id, row, column), 0), cellHeight)
+                                for (column in 0 until rack.columnsInRow(row)) {
+                                    Place(RackPlace(RackCell(rack.id, row, column), if (banded) 0 else null), cellHeight)
+                                }
                             }
                         }
                     }
                     // Behind: the same quincunx, smaller, on a tray; each place under its front one, or
                     // head-to-tail half a place right, each neck between two bases.
-                    Spacer(Modifier.height(cellSize * BAND_GAP))
-                    BandCaption(rack, shelf, back = true, inset, bandWidth)
-                    Row {
-                        if (showHeaders) Spacer(Modifier.width(headerWidth))
-                        Column(
-                            Modifier
-                                .background(scheme.surfaceContainerHigh, RoundedCornerShape(cellSize * 0.14f))
-                                .padding(vertical = cellSize * BACK_PADDING),
-                        ) {
-                            for (row in rows) {
-                                Row(if (row > rows.first) Modifier.overlapUp(backOverlap) else Modifier) {
-                                    val shift = (if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(1)
-                                    if (shift > 0f) Spacer(Modifier.width((cellWidth + spacing) * shift))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                                        for (column in 0 until rack.columnsInRow(row)) {
-                                            Place(RackPlace(RackCell(rack.id, row, column), 1), backHeight)
+                    if (banded) {
+                        Spacer(Modifier.height(cellSize * BAND_GAP))
+                        BandCaption(rack, shelf, back = true, inset, bandWidth)
+                        Row {
+                            if (showHeaders) Spacer(Modifier.width(headerWidth))
+                            Column(
+                                Modifier
+                                    .background(scheme.surfaceContainerHigh, RoundedCornerShape(cellSize * 0.14f))
+                                    .padding(vertical = cellSize * BACK_PADDING),
+                            ) {
+                                for (row in rows) {
+                                    Row(if (row > rows.first) Modifier.overlapUp(backOverlap) else Modifier) {
+                                        val shift = (if (rack.isOffset(row)) 0.5f else 0f) + rack.bandShift(row, 1)
+                                        if (shift > 0f) Spacer(Modifier.width((cellWidth + spacing) * shift))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                                            for (column in 0 until rack.columnsInRow(row)) {
+                                                Place(RackPlace(RackCell(rack.id, row, column), 1), backHeight)
+                                            }
                                         }
                                     }
                                 }
@@ -571,7 +583,7 @@ fun RackGrid(
 private fun BandCaption(rack: Rack, shelf: Int, back: Boolean, inset: Dp, width: Dp) {
     val scheme = MaterialTheme.colorScheme
     val title = stringResource(if (back) R.string.rack_band_back else R.string.rack_band_front)
-    val facing = stringResource(if (back && rack.isBackReversed) R.string.rack_band_necks else R.string.rack_band_bases)
+    val facing = stringResource(if (back && rack.isBackReversedShelf(shelf)) R.string.rack_band_necks else R.string.rack_band_bases)
     val heading = stringResource(R.string.rack_band_heading, shelf + 1, title, facing)
     val text = buildAnnotatedString {
         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = scheme.onSurface)) { append(title) }
@@ -728,11 +740,13 @@ private fun BandPlace(
     val density = LocalDensity.current
     val backdrop = if (back) height * 0.96f else width
     val diameter = if (back) height * 0.74f else width * 0.72f
+    // Head-to-tail on this shelf only: the back bottles show their necks.
+    val reversed = rack.isBackReversedRow(cell.row)
     Box(Modifier.size(width, height), contentAlignment = Alignment.Center) {
         Box(Modifier.size(backdrop).background(scheme.surfaceContainerHighest, CircleShape))
         if (bottle != null) {
             val wine = cellar.wines[bottle.wineId]
-            if (back && rack.isBackReversed && RackLabels.showsVintage(rack, height * 0.75f)) {
+            if (back && reversed && RackLabels.showsVintage(rack, height * 0.75f)) {
                 // Room enough (zoomed in): the vintage under the neck, whose middle shows the style.
                 val font = with(density) { (diameter * 0.2f).toSp() }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -742,7 +756,7 @@ private fun BandPlace(
                         style = TextStyle(fontSize = font, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum", lineHeight = font),
                     )
                 }
-            } else if (back && rack.isBackReversed) {
+            } else if (back && reversed) {
                 BottleNeck(wine?.color, size = diameter, showsStyle = true)
             } else {
                 val vintage = !back && RackLabels.showsVintage(rack, width)
@@ -830,11 +844,12 @@ private fun Position(
             if (isHighlighted || isFocused) {
                 Box(Modifier.size(size * 0.86f).border(if (isHighlighted) 3.dp else 2.dp, scheme.primary, CircleShape))
             }
-            if (selectedCount > 0) SelectionBadge(rack.positionsPerCell, selectedCount, if (countsFound) bottles.size else null, size)
-            if (rack.positionsPerCell > 1) {
+            val positions = rack.positionsInRow(cell.row)
+            if (selectedCount > 0) SelectionBadge(positions, selectedCount, if (countsFound) bottles.size else null, size)
+            if (positions > 1) {
                 // On a shelf, just under the bottle and above the shelf bar, which would hide them lower.
                 val y = if (rack.kind == RackKind.Shelves && !showsName) 0.dp else -size * 0.02f
-                DepthDots(rack, bottles, cellar, size, Modifier.align(Alignment.BottomCenter).offset(y = y))
+                DepthDots(positions, bottles, cellar, size, Modifier.align(Alignment.BottomCenter).offset(y = y))
             }
         }
         if (showsName) {
@@ -878,17 +893,19 @@ internal fun cellDescription(
         val maturity = Maturity.of(wine, year).takeIf { it != Maturity.Unknown }?.let { resources.getString(it.shortLabelRes) }
         listOfNotNull(wine.displayName, wine.color?.let { resources.getString(it.labelRes) }, maturity).joinToString(", ")
     }
+    // Rows can differ in depth: this row's positions.
+    val positions = rack.positionsInRow(cell.row)
     val base = when {
         rack.kind == RackKind.Bins -> {
-            val count = resources.getString(R.string.cell_bin, place, bottles.size, rack.positionsPerCell)
+            val count = resources.getString(R.string.cell_bin, place, bottles.size, positions)
             binContents(bottles, cellar, resources)?.let { resources.getString(R.string.cell_depths, count, it) } ?: count
         }
-        rack.positionsPerCell == 1 || depth != null -> bottles.firstOrNull()?.let(::wine)?.let { resources.getString(R.string.cell_filled, place, it) }
+        positions == 1 || depth != null -> bottles.firstOrNull()?.let(::wine)?.let { resources.getString(R.string.cell_filled, place, it) }
             ?: resources.getString(R.string.cell_empty, place)
         bottles.isEmpty() -> resources.getString(R.string.cell_empty, place)
         else -> {
-            val parts = (0 until rack.positionsPerCell).map { depth ->
-                val name = rack.depthName(depth, resources)
+            val parts = (0 until positions).map { depth ->
+                val name = rack.depthName(cell.row, depth, resources)
                 bottles.firstOrNull { it.slot?.depth == depth }?.let(::wine)
                     ?.let { resources.getString(R.string.cell_depth_filled, name, it) }
                     ?: resources.getString(R.string.cell_depth_empty, name)
@@ -938,13 +955,13 @@ private fun VintageLabel(wine: Wine?, diameter: Dp) {
     )
 }
 
-/** One dot per place in the cell, front first: filled when a bottle is there. */
+/** One dot per place in the cell ([positions], its row's depth), front first: filled when a bottle is there. */
 @Composable
-private fun DepthDots(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, modifier: Modifier) {
+private fun DepthDots(positions: Int, bottles: List<Bottle>, cellar: Cellar, size: Dp, modifier: Modifier) {
     val palette = LocalWinePalette.current
     val outline = MaterialTheme.colorScheme.outline
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(maxOf(2.dp, size * 0.05f))) {
-        for (depth in 0 until rack.positionsPerCell) {
+        for (depth in 0 until positions) {
             val bottle = bottles.firstOrNull { it.slot?.depth == depth }
             val dot = maxOf(5.dp, size * 0.1f)
             Box(
@@ -978,7 +995,7 @@ private fun SelectionBadge(capacity: Int, count: Int, total: Int?, size: Dp) {
 @Composable
 private fun Bin(rack: Rack, bottles: List<Bottle>, cellar: Cellar, size: Dp, selectedCount: Int, isHighlighted: Boolean, countsFound: Boolean) {
     val scheme = MaterialTheme.colorScheme
-    val capacity = rack.positionsPerCell
+    val capacity = rack.binCapacity
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             Modifier.size(size * 0.98f).background(scheme.surfaceContainerHigh, DiamondShape)

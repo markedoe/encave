@@ -191,7 +191,8 @@ fun RackDetailScreen(viewModel: AppViewModel, navigator: AppNavigator, route: Ra
     LaunchedEffect(highlighted, rack?.id) {
         if (highlighted == null || rack == null) return@LaunchedEffect
         RackPlace.of(highlighted, rack).takeIf { it.holdsOne(rack) }?.let { selectedKey = it.key() }
-        zoom?.show(rack, highlighted.cell, highlighted.depth)
+        // A back place only on a shelf drawn front and back.
+        zoom?.show(rack, highlighted.cell, RackPlace.of(highlighted, rack).depth)
         delay(4000)
         highlightId = null
     }
@@ -923,7 +924,7 @@ private fun CheckOneByOneSheet(
                     headlineContent = { Text(wine?.displayName ?: stringResource(R.string.unknown_wine)) },
                     supportingContent = {
                         Text(
-                            if (rack.kind == RackKind.Bins) stringResource(R.string.rack_check_bottle, index + 1) else rack.depthName(slot.depth, resources),
+                            if (rack.kind == RackKind.Bins) stringResource(R.string.rack_check_bottle, index + 1) else rack.depthName(slot.row, slot.depth, resources),
                         )
                     },
                     trailingContent = { Switch(checked = found, onCheckedChange = null) },

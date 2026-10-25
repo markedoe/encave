@@ -179,8 +179,9 @@ internal fun keepNumbersAttached(label: String): String = label.replace(Regex(" 
 fun Rack.displayLabel(slot: Slot, resources: Resources): String = keepNumbersAttached(slotLabel(slot, resources))
 
 private fun Rack.slotLabel(slot: Slot, resources: Resources): String {
-    if (kind == RackKind.Bins || positionsPerCell <= 1) return displayLabel(slot.cell, resources)
-    val side = depthName(slot.depth, resources)
+    // No side on a row one bottle deep, even when other rows are deeper.
+    if (kind == RackKind.Bins || positionsInRow(slot.row) <= 1) return displayLabel(slot.cell, resources)
+    val side = depthName(slot.row, slot.depth, resources)
     // A fridge with bottles in layers names the side before the layer: "Shelf 3, front, bottom layer, position 2".
     shelfPlace(slot.row)?.let { place ->
         val res = when {
@@ -196,11 +197,11 @@ private fun Rack.slotLabel(slot: Slot, resources: Resources): String {
     return resources.getString(R.string.place_with_depth, displayLabel(slot.cell, resources), side)
 }
 
-/** Front, middle or back of a position. */
-fun Rack.depthName(depth: Int, resources: Resources): String = resources.getString(
+/** Front, middle or back of a position in this row (rows can differ in depth). */
+fun Rack.depthName(row: Int, depth: Int, resources: Resources): String = resources.getString(
     when (depth) {
         0 -> R.string.depth_front
-        positionsPerCell - 1 -> R.string.depth_back
+        positionsInRow(row) - 1 -> R.string.depth_back
         else -> R.string.depth_middle
     },
 )
