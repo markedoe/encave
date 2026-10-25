@@ -139,6 +139,7 @@ object SampleData {
         )
 
         val prices = listOf(38, 54, 16, 24, 14, 36, 29, 62, 27, 22, 48).map { BigDecimal(it) }
+        var barolo: List<Bottle> = emptyList()
         entries.forEachIndexed { index, (wine, quantity, rack) ->
             val slots = rack?.let { cellar.freeSlots(it).take(quantity) } ?: emptyList()
             val date = now - Duration.ofDays(30L * (index + 1))
@@ -146,13 +147,14 @@ object SampleData {
                 date = date, price = prices[index % prices.size],
                 currency = cellar.settings.currency, storageNote = if (rack == null) labels.kitchen else null,
             )
-            runCatching { cellar.addBottles(wine, quantity, slots, purchase, addedAt = date) }.onSuccess { ids.rekey(it, cellar) }
+            runCatching { cellar.addBottles(wine, quantity, slots, purchase, addedAt = date) }.onSuccess { added ->
+                val stored = ids.rekey(added, cellar)
+                if (wine.name == "Riserva Vigna Alta") barolo = stored
+            }
         }
 
-        // Two bottles kept for an occasion.
-        cellar.wines.values.firstOrNull { it.name == "Riserva Vigna Alta" }?.let { barolo ->
-            runCatching { cellar.reserve(cellar.bottlesOf(barolo.id).take(2).map { it.id }, labels.occasion2) }
-        }
+        // Two bottles kept for an occasion: the first two placed (they were all added at once), as on Apple.
+        if (barolo.isNotEmpty()) runCatching { cellar.reserve(barolo.take(2).map { it.id }, labels.occasion2) }
 
         // Last year's vintage bought en primeur, not delivered yet.
         val primeur = Wine(id = ids.next(Kind.Wine), name = "Clos des Tilleuls", producer = "Domaine Arnaud", vintage = year - 1, color = WineColor.Red,
