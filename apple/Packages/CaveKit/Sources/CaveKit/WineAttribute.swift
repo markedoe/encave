@@ -59,10 +59,10 @@ public extension Cellar {
             .filter { $0.has(attribute) }
             .compactMap { wine -> WineGroup? in
                 if let kept = inCellar[wine.id] {
-                    return WineGroup(wine: wine, bottles: kept.sorted { $0.addedAt < $1.addedAt })
+                    return WineGroup(wine: wine, bottles: kept.sorted(by: Bottle.addedOrder))
                 }
                 if let ordered = onOrder[wine.id] {
-                    let sorted = ordered.sorted { ($0.expectedAt ?? .distantFuture, $0.addedAt) < ($1.expectedAt ?? .distantFuture, $1.addedAt) }
+                    let sorted = ordered.sorted(by: Bottle.expectedOrder)
                     return WineGroup(wine: wine, bottles: sorted)
                 }
                 return nil

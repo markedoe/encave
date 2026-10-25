@@ -979,6 +979,7 @@
     <string name="help_tonight_why">Sous la jauge, chaque vin indique d’où vient sa fenêtre : estimée d’après le style et le millésime, ou saisie par vous. **Boire plus tôt** et **Garder plus longtemps** déplacent sa fin d’un an.</string>
     <string name="insights_drink_down">Rythme de dégustation</string>
     <string name="insights_pace">Environ %1$s bouteilles par mois</string>
+    <string name="insights_pace_under_two">Environ %1$s bouteille par mois</string>
     <string name="insights_pace_one">Environ une bouteille par mois</string>
     <string name="insights_pace_less">Moins d’une bouteille par mois</string>
     <string name="insights_pace_detail">pour ouvrir chaque bouteille avant la fin de sa fenêtre de dégustation.</string>

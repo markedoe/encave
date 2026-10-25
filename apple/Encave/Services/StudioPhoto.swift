@@ -606,6 +606,10 @@ struct LabelPhoto: View {
 
     @AppStorage(StudioPhoto.settingKey) private var studio = true
     @State private var picture: StudioPhoto.Picture?
+    /// The picture last asked for, once it is ready (or could not be made).
+    @State private var readyKey: String?
+
+    private var key: String { studio ? StudioPhoto.cacheKey(photoID, labelFrame) : "" }
 
     var body: some View {
         Group {
@@ -644,12 +648,23 @@ struct LabelPhoto: View {
                     }
                 }
                 .clipped()
+            } else if studio, readyKey != key {
+                // While the studio picture is made: the photo whole on the backdrop, so the
+                // thumbnail does not jump from a cropped photo to the picture.
+                ZStack {
+                    StudioBackdrop(color: color, seed: seed)
+                    WinePhoto(photoID: photoID, maxPixelSize: maxPixelSize, fits: true)
+                        .padding(inset)
+                }
+                .clipped()
             } else {
                 WinePhoto(photoID: photoID, maxPixelSize: maxPixelSize)
             }
         }
-        .task(id: studio ? StudioPhoto.cacheKey(photoID, labelFrame) : "") {
+        .task(id: key) {
+            let asked = key
             picture = studio ? await StudioPhoto.picture(for: photoID, labelFrame: labelFrame, maxPixelSize: maxPixelSize) : nil
+            if !Task.isCancelled { readyKey = asked }
         }
     }
 }

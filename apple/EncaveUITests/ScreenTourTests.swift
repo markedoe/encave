@@ -88,15 +88,55 @@ final class ScreenTourTests: XCTestCase {
         try studioPictures(dark: true)
     }
 
-    /// The first wines of the sample cellar, whose label photos are drawn by the app
-    /// (a tilted bottle on a busy counter, a close-up of a label, a bottle lying in a
-    /// fridge, a bottle on a table): the list and each wine's page.
-    private func studioPictures(dark: Bool) throws {
-        language = dark ? "studio-dark" : "studio"
+    /// The studio pictures with the French interface: the wine page's text around them.
+    func testStudioPicturesInFrench() throws {
+        try studioPictures(dark: false, french: true)
+    }
+
+    /// The main screens in dark mode, on iPhone.
+    func testDarkInEnglish() throws {
+        try darkScreens(french: false)
+    }
+
+    func testDarkInFrench() throws {
+        try darkScreens(french: true)
+    }
+
+    /// Cellar, a wine, Storage and Tonight in dark mode (`--dark`), on iPhone only: a short
+    /// pass, the full tour runs in light mode.
+    private func darkScreens(french: Bool) throws {
+        language = french ? "dark-fr" : "dark-en"
         step = 0
         continueAfterFailure = true
         app = XCUIApplication()
-        app.launchArguments = ["--sample-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + (dark ? ["--dark"] : [])
+        app.launchArguments = ["-AppleLanguages", french ? "(fr)" : "(en)", "-AppleLocale", french ? "fr_FR" : "en_US",
+                               "--dark", "--sample-data"]
+        app.launch()
+        guard app.horizontalSizeClassIsCompact else { return }
+        openSection(0, "cellar")
+        snapshot("cellar")
+        if let row = require("wine.row", "dark: no wine in the cellar list", timeout: 10) {
+            row.press()
+            XCTAssertTrue(wineAnchor.waitForExistence(timeout: 5), "dark: the wine page did not open")
+            snapshot("wine")
+            goBack()
+        }
+        openSection(1, "racks")
+        snapshot("racks")
+        openSection(2, "tonight")
+        snapshot("tonight")
+    }
+
+    /// The first wines of the sample cellar, whose label photos are drawn by the app
+    /// (a tilted bottle on a busy counter, a close-up of a label, a bottle lying in a
+    /// fridge, a bottle on a table): the list and each wine's page.
+    private func studioPictures(dark: Bool, french: Bool = false) throws {
+        language = french ? "studio-fr" : dark ? "studio-dark" : "studio"
+        step = 0
+        continueAfterFailure = true
+        app = XCUIApplication()
+        app.launchArguments = ["--sample-data", "-AppleLanguages", french ? "(fr)" : "(en)",
+                               "-AppleLocale", french ? "fr_FR" : "en_US"] + (dark ? ["--dark"] : [])
         app.launch()
         openSection(0, "cellar")
         // Time for the studio pictures to be made the first time.

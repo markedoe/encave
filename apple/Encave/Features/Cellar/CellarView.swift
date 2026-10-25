@@ -27,8 +27,13 @@ struct CellarView: View {
             } else {
                 NavigationSplitView(columnVisibility: $columns) {
                     CellarList(selection: $selection)
-                        // Wide enough on iPad for names, producers and the figures.
+                        // Wide enough for names, producers and the figures; wider on the Mac,
+                        // whose subtitles are cut at the iPad width.
+                        #if os(macOS)
+                        .navigationSplitViewColumnWidth(min: 320, ideal: 420, max: 520)
+                        #else
                         .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
+                        #endif
                 } detail: {
                     // A new stack for each wine: what was opened from the last one's details goes.
                     NavigationStack { WinePane(wineID: selection) }

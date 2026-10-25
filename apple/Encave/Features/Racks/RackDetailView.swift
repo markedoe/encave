@@ -74,7 +74,7 @@ struct RackDetailView: View {
                         afterCell = action
                         openCell = nil
                     }
-                    .presentationDetents([.medium, .large])
+                    .halfSheetDetents()
                     .solidSheetBackground()
                 }
                 .sheet(isPresented: $showsList, onDismiss: {
@@ -94,12 +94,12 @@ struct RackDetailView: View {
                             }
                         }
                     }
-                    .presentationDetents([.medium, .large])
+                    .halfSheetDetents()
                     .solidSheetBackground()
                 }
                 .sheet(item: $checkingCell) { open in
                     CheckPlaceSheet(rack: rack, cell: open.cell, checked: $checked)
-                        .presentationDetents([.medium, .large])
+                        .halfSheetDetents()
                         .solidSheetBackground()
                 }
                 .onChange(of: listSelection) { _, id in
@@ -405,14 +405,11 @@ private struct SelectedBottleCard: View {
                     if !line.isEmpty {
                         Text(line).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                     }
-                    HStack(spacing: 8) {
-                        if let slot = bottle.slot {
-                            Label(rack.displayLabel(for: slot), systemImage: "mappin.and.ellipse")
-                        }
-                        if let wine {
-                            MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
-                                .labelStyle(CompactLabelStyle())
-                        }
+                    // Position and maturity side by side if both fit, else one above the other,
+                    // never as two narrow wrapped columns.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) { placeAndMaturity(wine).lineLimit(1) }
+                        VStack(alignment: .leading, spacing: 2) { placeAndMaturity(wine) }
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -472,12 +469,28 @@ private struct SelectedBottleCard: View {
     }
 }
 
+extension SelectedBottleCard {
+    @ViewBuilder
+    fileprivate func placeAndMaturity(_ wine: Wine?) -> some View {
+        if let slot = bottle.slot {
+            Label(rack.displayLabel(for: slot), systemImage: "mappin.and.ellipse")
+        }
+        if let wine {
+            MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
+                .labelStyle(CompactLabelStyle())
+        }
+    }
+}
+
 /// The wines of the rack, most bottles first. Tap one to see where its bottles are:
 /// they stand out and the others fade. Tap it again to show all.
 private struct RackKey: View {
     @Environment(CellarModel.self) private var model
     let rack: Rack
     @Binding var focusWine: UUID?
+
+    private static let countID = "rack.key.count"
+    private static let fade: CGFloat = 24
 
     private struct Entry: Identifiable {
         let wine: Wine
@@ -488,21 +501,37 @@ private struct RackKey: View {
     var body: some View {
         let bottles: [Bottle] = model.bottlesInCellar.filter { $0.slot?.rackID == rack.id }
         let wines = entries(for: bottles)
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                Label {
-                    Text("\(bottles.count) of \(rack.capacity) bottles")
-                } icon: {
-                    Image(systemName: rack.systemImage)
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    Label {
+                        Text("\(bottles.count) of \(rack.capacity) bottles")
+                    } icon: {
+                        Image(systemName: rack.systemImage)
+                    }
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    .padding(.trailing, 6)
+                    .id(Self.countID)
+                    ForEach(wines) { entry in
+                        chip(entry)
+                    }
                 }
-                .font(.subheadline.weight(.semibold).monospacedDigit())
-                .padding(.trailing, 6)
-                ForEach(wines) { entry in
-                    chip(entry)
+                .padding(.leading, 16)
+                .padding(.trailing, Self.fade)
+                .padding(.vertical, 10)
+            }
+            // The chosen chip comes first and in view, with its count and its close mark.
+            .onChange(of: focusWine) {
+                withAnimation(.snappy) { proxy.scrollTo(Self.countID, anchor: .leading) }
+            }
+            // Fades out on the trailing edge: a cue that more chips follow.
+            .mask {
+                HStack(spacing: 0) {
+                    Rectangle()
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: Self.fade)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
         }
         .background(.bar)
         .accessibilityIdentifier("rack.key")
@@ -517,7 +546,8 @@ private struct RackKey: View {
             if let wine = model.cellar.wines[id] { result.append(Entry(wine: wine, count: count)) }
         }
         return result.sorted { a, b in
-            a.count != b.count ? a.count > b.count : a.wine.displayName < b.wine.displayName
+            if (a.wine.id == focusWine) != (b.wine.id == focusWine) { return a.wine.id == focusWine }
+            return a.count != b.count ? a.count > b.count : a.wine.displayName < b.wine.displayName
         }
     }
 
@@ -656,14 +686,14 @@ private struct BottleInCellRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(wine?.displayName ?? String(localized: "Unknown wine"))
                         .font(.headline)
-                    HStack(spacing: 6) {
-                        if let producer = wine?.producer { Text(producer) }
-                        if rack.kind != .bins, rack.positionsPerCell > 1, let slot = bottle.slot {
-                            Text(verbatim: "· \(rack.depthName(slot.depth))")
-                        }
+                    // One text, so the gap is the same on both sides of the dot.
+                    let depth = rack.kind != .bins && rack.positionsPerCell > 1 ? bottle.slot.map { rack.depthName($0.depth) } : nil
+                    let subtitle = [wine?.producer, depth].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+                    if !subtitle.isEmpty {
+                        Text(verbatim: subtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
                     if let wine {
                         MaturityLabel(maturity: Maturity.of(wine, year: model.currentYear))
                             .font(.caption)

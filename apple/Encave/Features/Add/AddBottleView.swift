@@ -310,7 +310,7 @@ struct AddBottleView: View {
                     Text("Optional. Helps you remember where to buy a wine again and what your cellar is worth.")
                 }
                 Section {
-                    HelpLink(topic: .adding, title: "Help with adding bottles")
+                    HelpLink(topic: .adding, title: "Help with Adding Bottles")
                 }
             }
             .formStyle(.grouped)

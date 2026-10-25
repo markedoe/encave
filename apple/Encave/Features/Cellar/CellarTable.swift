@@ -92,7 +92,7 @@ struct CellarTable: View {
                     Text("Non-vintage").foregroundStyle(.secondary)
                 }
             }
-            .width(min: 60, ideal: 80)
+            .width(min: 60, ideal: 100)
             .customizationID("vintage")
             if !isNarrow {
                 TableColumn("Producer", value: \.producer)
@@ -112,7 +112,7 @@ struct CellarTable: View {
             TableColumn("When to drink", value: \.maturity) { row in
                 if row.maturity != .unknown { MaturityLabel(maturity: row.maturity) }
             }
-            .width(min: 110, ideal: 130)
+            .width(min: 140, ideal: 160)
             .customizationID("maturity")
             TableColumn("Bottles", value: \.count) { row in
                 Text(verbatim: "\(row.count)").monospacedDigit()
@@ -183,14 +183,20 @@ struct CellarTable: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        // The picker keeps its full width in its own item, and Add Bottle always stays:
+        // Show Wine goes to the overflow menu when the iPad toolbar is full.
+        ToolbarItem(placement: .primaryAction) {
+            CellarLayoutPicker().fixedSize()
+        }
         ToolbarItemGroup(placement: .primaryAction) {
-            CellarLayoutPicker()
             CellarFilterMenu(filter: filter)
             Button {
                 router?.sheet = .addBottle(AddBottleContext())
             } label: {
                 Label("Add Bottle", systemImage: "plus")
             }
+        }
+        ToolbarItem(placement: .secondaryAction) {
             Button {
                 showsInspector.toggle()
             } label: {

@@ -4,6 +4,7 @@ import SwiftUI
 /// List row for a wine with bottles in the cellar: "Clos des Tilleuls 2017 ×3".
 struct WineRow: View {
     @Environment(CellarModel.self) private var model
+    @Environment(\.dynamicTypeSize) private var typeSize
     let group: WineGroup
 
     private var subtitle: String { group.wine.styleLine }
@@ -37,26 +38,31 @@ struct WineRow: View {
 
     var body: some View {
         let maturity: Maturity = isOrder ? .unknown : Maturity.of(group.wine, year: model.currentYear)
+        // At accessibility sizes the text gets the whole width: no thumbnail, the count under it.
+        let large = typeSize.isAccessibilitySize
         HStack(spacing: 14) {
-            if group.wine.hasShownPhoto {
-                WineImage(wine: group.wine, maxPixelSize: 200, inset: 2)
-                    .frame(width: 34, height: 46)
-                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    .accessibilityHidden(true)
-            } else {
-                BottleEnd(color: group.wine.color, size: 34)
+            if !large {
+                if group.wine.hasShownPhoto {
+                    WineImage(wine: group.wine, maxPixelSize: 200, inset: 2)
+                        .frame(width: 34, height: 46)
+                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        .accessibilityHidden(true)
+                } else {
+                    BottleEnd(color: group.wine.color, size: 34)
+                }
             }
             VStack(alignment: .leading, spacing: 3) {
                 (Text(group.wine.name).font(.body.weight(.semibold))
                     + Text(verbatim: group.wine.vintage.map { " \($0)" } ?? "").foregroundStyle(.secondary))
-                    .lineLimit(2)
+                    .lineLimit(large ? nil : 2)
                 if !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(large ? nil : 2)
                 }
-                HStack(spacing: 10) {
+                let meta = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2)) : AnyLayout(HStackLayout(spacing: 10))
+                meta {
                     if isOrder {
                         ArrivalLabel(date: group.bottles.first?.expectedAt)
                     }
@@ -76,9 +82,14 @@ struct WineRow: View {
                 }
                 .font(.caption)
                 .labelStyle(CompactLabelStyle())
+                if large {
+                    CountBadge(count: group.count)
+                }
             }
-            Spacer(minLength: 8)
-            CountBadge(count: group.count)
+            if !large {
+                Spacer(minLength: 8)
+                CountBadge(count: group.count)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())

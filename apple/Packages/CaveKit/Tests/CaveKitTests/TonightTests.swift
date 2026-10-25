@@ -28,6 +28,9 @@ import Testing
         var ranks: [Rank]
         var orders: [Order]
         var picks: [Pick]
+        struct OpenBottle: Decodable { var id: String; var addedAt: String; var reservedFor: String? }
+        struct Open: Decodable { var about: String; var bottles: [OpenBottle]; var open: String }
+        var bottleToOpen: [Open]
     }
 
     static func vectors() throws -> Vectors {
@@ -72,6 +75,29 @@ import Testing
             if let text = vector.kept { kept = try #require(UUID(uuidString: text)) }
             let picks = cellar.tonightPicks(year: 2026, day: vector.day, keeping: kept)
             #expect(picks.map { $0.wine.id.uuidString.lowercased() } == vector.order.map { $0.lowercased() }, "\(vector.about)")
+        }
+    }
+
+    /// The bottle Drink and Tonight open, from `bottleToOpen` in the shared vectors: the same
+    /// whatever the order the cellar's dictionary gives the bottles.
+    @Test func bottleToOpenMatchesTheSharedVectors() throws {
+        let vectors = try Self.vectors()
+        #expect(!vectors.bottleToOpen.isEmpty)
+        let dates = ISO8601DateFormatter()
+        for vector in vectors.bottleToOpen {
+            let wine = Wine(name: "Wine", drinkFrom: 2020, drinkUntil: 2030)
+            let bottles = try vector.bottles.map { item in
+                var bottle = Bottle(id: try #require(UUID(uuidString: item.id)), wineID: wine.id,
+                                    addedAt: try #require(dates.date(from: item.addedAt)))
+                bottle.reservedFor = item.reservedFor
+                return bottle
+            }
+            for order in [bottles, bottles.reversed()] {
+                let cellar = Cellar(wines: [wine], bottles: order)
+                let group = try #require(cellar.groups().first)
+                #expect(group.bottles.bottleToOpen?.id.uuidString.lowercased() == vector.open.lowercased(), "\(vector.about)")
+                #expect(cellar.bottles(of: wine.id).bottleToOpen?.id.uuidString.lowercased() == vector.open.lowercased(), "\(vector.about)")
+            }
         }
     }
 

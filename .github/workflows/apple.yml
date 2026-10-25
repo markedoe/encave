@@ -108,13 +108,13 @@ jobs:
             model: true
           - device: iPad
             language: French
-            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
+            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark testStudioPicturesInFrench
           - device: iPhone
             language: English
-            tests: testTourInEnglish testLargeText testLargestText
+            tests: testTourInEnglish testLargeText testLargestText testDarkInEnglish
           - device: iPhone
             language: French
-            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark
+            tests: testTourInFrench testStudioPicturesInLight testStudioPicturesInDark testStudioPicturesInFrench testDarkInFrench
     defaults:
       run:
         working-directory: apple

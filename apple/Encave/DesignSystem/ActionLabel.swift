@@ -66,13 +66,60 @@ struct ActionButtonRow<Content: View>: View {
     var body: some View {
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: spacing))
-            : AnyLayout(HStackLayout(spacing: spacing))
+            : AnyLayout(SharedWidthRow(spacing: spacing))
         // Every button with its icon if they all fit on one line, else none of them, so
         // two buttons side by side never differ.
         ViewThatFits(in: .horizontal) {
             layout { content }.environment(\.actionLabelIcon, .shown)
             layout { content }.environment(\.actionLabelIcon, .hidden)
             layout { content }
+        }
+    }
+}
+
+/// Buttons side by side. When every button stretches (`maxWidth: .infinity`), each gets an
+/// equal share and the row's ideal width is the widest button times their count, so
+/// `ViewThatFits` keeps the icons only if the longest title fits in its own half.
+/// Otherwise the buttons keep their own width, as in an HStack.
+struct SharedWidthRow: Layout {
+    var spacing: CGFloat
+
+    private func stretches(_ subviews: Subviews) -> Bool {
+        subviews.count > 1 && subviews.allSatisfy {
+            $0.sizeThatFits(ProposedViewSize(width: .infinity, height: nil)).width == .infinity
+        }
+    }
+
+    private var stack: HStackLayout { HStackLayout(spacing: spacing) }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard stretches(subviews) else {
+            var stackCache = stack.makeCache(subviews: subviews)
+            return stack.sizeThatFits(proposal: proposal, subviews: subviews, cache: &stackCache)
+        }
+        let gaps = spacing * CGFloat(subviews.count - 1)
+        let widest = subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+        let width = proposal.width.map { $0 == .infinity ? widest * CGFloat(subviews.count) + gaps : $0 }
+            ?? widest * CGFloat(subviews.count) + gaps
+        let share = max(0, (width - gaps) / CGFloat(subviews.count))
+        let height = subviews.map {
+            $0.sizeThatFits(ProposedViewSize(width: share, height: proposal.height)).height
+        }.max() ?? 0
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard stretches(subviews) else {
+            var stackCache = stack.makeCache(subviews: subviews)
+            stack.placeSubviews(in: bounds, proposal: proposal, subviews: subviews, cache: &stackCache)
+            return
+        }
+        let share = max(0, (bounds.width - spacing * CGFloat(subviews.count - 1)) / CGFloat(subviews.count))
+        var x = bounds.minX
+        for subview in subviews {
+            subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading,
+                          proposal: ProposedViewSize(width: share, height: bounds.height))
+            x += share + spacing
         }
     }
 }

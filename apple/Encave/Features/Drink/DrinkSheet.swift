@@ -19,11 +19,25 @@ struct DrinkSheet: View {
                     }
             }
         }
-        .presentationDetents(bottleID == nil ? [.large] : [.medium, .large])
+        .modifier(DrinkSheetDetents(choosing: bottleID == nil))
         // Choosing the bottle: full height, with the standard background, so the search
         // field's placeholder keeps its usual contrast.
         .solidSheetBackground(bottleID != nil)
         .macSheetFrame(width: 480, height: 600)
+    }
+}
+
+/// Choosing the bottle: full height. A known bottle: half height on iPhone.
+private struct DrinkSheetDetents: ViewModifier {
+    let choosing: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if choosing {
+            content.presentationDetents([.large])
+        } else {
+            content.halfSheetDetents()
+        }
     }
 }
 
@@ -60,7 +74,7 @@ private struct BottleToOpenPicker: View {
                 }
             }
         }
-        .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage"))
+        .searchable(text: $query, prompt: Text("Wine, producer, region, grape, vintage [drink]"))
         .navigationTitle("Which Bottle?")
         .inlineTitle()
         .toolbar {
@@ -138,7 +152,7 @@ private struct DrinkForm: View {
                         }
                         TastingFormSections(draft: $draft)
                         Section {
-                            HelpLink(topic: .drinking, title: "Help with tasting notes")
+                            HelpLink(topic: .drinking, title: "Help with Tasting Notes")
                         }
                     }
                     .formStyle(.grouped)

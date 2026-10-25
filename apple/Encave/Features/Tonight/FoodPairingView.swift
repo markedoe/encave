@@ -84,7 +84,7 @@ struct FoodPairingView: View {
                 Text("From your cellar")
             }
         }
-        .navigationTitle("Food pairing")
+        .navigationTitle("Food Pairing")
         .sensoryFeedback(.selection, trigger: dish)
     }
 

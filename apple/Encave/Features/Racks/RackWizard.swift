@@ -208,7 +208,7 @@ struct RackWizard: View {
                 LabeledContent {
                     Text(preview.storageSummary)
                 } label: {
-                    Label { Text("Holds \(preview.capacity) bottles.") } icon: { Image(systemName: preview.systemImage) }
+                    Label { Text("Holds \(preview.capacity) bottles") } icon: { Image(systemName: preview.systemImage) }
                 }
             }
         }

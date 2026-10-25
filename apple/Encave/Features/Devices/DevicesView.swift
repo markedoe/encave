@@ -157,7 +157,7 @@ struct DevicesView: View {
                 } icon: {
                     Image(systemName: "lock.shield")
                 }
-                HelpLink(topic: .devices, title: "Help with devices")
+                HelpLink(topic: .devices, title: "Help with Devices")
             }
 
             if sync.isSetUp, !sync.otherDevices.isEmpty {
@@ -562,7 +562,7 @@ struct RemoteSyncView: View {
                 Link(destination: URL(string: "https://github.com/markedoe/encave/blob/main/relay/README.md")!) {
                     Label("How to Run a Relay", systemImage: "server.rack")
                 }
-                HelpLink(topic: .devices, title: "Help with devices")
+                HelpLink(topic: .devices, title: "Help with Devices")
             }
         }
         .formStyle(.grouped)
