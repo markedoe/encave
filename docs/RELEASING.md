@@ -441,7 +441,12 @@ the Console (Publishing overview, Inbox).
 - CI tools are pinned: actions by commit SHA (Dependabot, one grouped pull
   request a month), XcodeGen and xcbeautify by version and SHA-256
   (`apple/tools/install-build-tools.sh`), the Gradle distribution by its
-  SHA-256 (`distributionSha256Sum`). Release bundles and R8 mappings are kept
+  SHA-256 (`distributionSha256Sum`), every Gradle dependency and plugin by its
+  SHA-256 (`android/gradle/verification-metadata.xml`). A dependency change,
+  a Dependabot pull request included, must also update that file: run, in
+  `android/`, `./gradlew --write-verification-metadata sha256 help :core:test
+  :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:lintRelease
+  :app:bundleRelease`, check the new entries, and commit the file. Release bundles and R8 mappings are kept
   7 days as artifacts (Google Play keeps both).
 - Google keeps the app signing key (Play App Signing); the upload key is a
   repository secret, used only by the `release` job; the Play API is reached
