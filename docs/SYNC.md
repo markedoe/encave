@@ -144,6 +144,29 @@ implementations:
     left out (and dropped when read) when false, when `shelfLayers` is left out
     and when `depth` is not 2. Apps that do not know it keep it as an unknown
     field (below);
+  - `rack.rowDepths` (optional array of integers) gives each row its own depth
+    when rows differ (one row single, the next two deep): one value per row, from
+    the top, like `rowColumns` (on a fridge with `shelfLayers`, one per layer, every
+    layer of a shelf taking the value of the shelf's bottom layer, its last row).
+    Readers keep one value per row (more are dropped, a row without one takes
+    `depth`), bring each into 1…`depth`, and leave it out when every row is `depth`
+    deep, when none is (an older version made the rack deeper: every row is then
+    that deep) and for `bins`. Writers set `depth` to the deepest row, so a
+    version that does not know `rowDepths` keeps it as an unknown field and still
+    shows every position; it also shows back positions on the single rows, where
+    the newer apps show none. A position exists only within its row's depth
+    (`slot.depth` below it), and a row one deep names its positions without a side
+    (`B3`, not `B3-1` or `B3, front`);
+  - `rack.rowBackReversed` (optional array of booleans) says, on a fridge with
+    `shelfLayers` whose shelves two deep differ, which ones lie head-to-tail: one
+    value per row, from the top, read like `rowDepths` (a missing value is
+    `true`); a row lies head-to-tail when `backReversed` is kept, its depth is 2
+    and its value is true. It is kept only while `backReversed` is: writers set
+    `backReversed` to true when any shelf lies head-to-tail, so older versions
+    show every shelf two deep head-to-tail. Readers write `false` for rows not two
+    deep, and leave it out when every row two deep lies head-to-tail, or none does
+    (`backReversed` then says it for all). Shared vectors for both fields:
+    `fixtures/storage-row-vectors.json`;
   - `rack.binStyle` (optional string) says what a `bins` rack was made as:
     `"diamond"` (diamond bins, shown under Rack) or `"crates"` (shown as Crates).
     Apps write it when a storage of bins is created, and when its type is picked

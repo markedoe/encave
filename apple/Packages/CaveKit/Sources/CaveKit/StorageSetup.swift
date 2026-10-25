@@ -146,9 +146,10 @@ public struct StorageSettings: Equatable, Sendable {
     /// Deepest a row can be in the wizard.
     public static let maxRowDepth = 2
 
-    /// A row set on its own lies head-to-tail only on a fridge, in layers, two deep.
+    /// A shelf set on its own lies head-to-tail only on a fridge in layers (a shelf at least
+    /// has several), two deep.
     public func offersHeadToTail(_ row: StorageRowSettings) -> Bool {
-        type == .wineFridge && row.layers > 1 && row.depth == 2
+        type == .wineFridge && row.depth == 2 && (rowSettings ?? [row]).contains { $0.layers > 1 }
     }
 
     /// The rows of a rack, or the shelves of a fridge.

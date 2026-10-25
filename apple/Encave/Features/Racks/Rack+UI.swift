@@ -105,7 +105,7 @@ extension Rack {
     }
 
     private func slotLabel(for slot: Slot) -> String {
-        let sideName: String? = kind == .bins || positionsPerCell == 1 ? nil : depthName(slot.depth)
+        let sideName: String? = kind == .bins || positions(inRow: slot.row) == 1 ? nil : depthName(slot.depth, row: slot.row)
         if let place = shelfPlace(ofRow: slot.row) {
             return shelfLabel(shelf: place.shelf + 1, sideName: sideName, layer: place.layer, layers: place.layers,
                               number: slot.column + 1)
@@ -160,10 +160,10 @@ extension Rack {
         return String(localized: "Shelf \(shelf), position \(number)")
     }
 
-    /// Front, middle or back of a position.
-    func depthName(_ depth: Int) -> String {
+    /// Front, middle or back of a position in this row.
+    func depthName(_ depth: Int, row: Int) -> String {
         if depth == 0 { return String(localized: "front") }
-        if depth == positionsPerCell - 1 { return String(localized: "back") }
+        if depth == positions(inRow: row) - 1 { return String(localized: "back") }
         return String(localized: "middle")
     }
 
@@ -184,8 +184,9 @@ struct RackPlace: Hashable {
     /// The place of a fridge drawn front and back; nil for a whole cell.
     var slot: Slot? { depth.map { Slot(rackID: cell.rackID, row: cell.row, column: cell.column, depth: $0) } }
 
-    /// Holds one bottle at most: a place of a fridge drawn front and back, or a cell of one.
-    func holdsOne(in rack: Rack) -> Bool { depth != nil || rack.positionsPerCell == 1 }
+    /// Holds one bottle at most: a place of a fridge drawn front and back, or a cell of a row
+    /// one bottle deep.
+    func holdsOne(in rack: Rack) -> Bool { depth != nil || rack.positions(inRow: cell.row) == 1 }
 
     /// The place's own slot, or the front of the cell.
     var firstSlot: Slot { slot ?? Slot(rackID: cell.rackID, row: cell.row, column: cell.column) }
@@ -196,7 +197,7 @@ struct RackPlace: Hashable {
     /// back, else its cell.
     init(_ slot: Slot, in rack: Rack) {
         cell = slot.cell
-        depth = rack.hasDepthBands ? slot.depth : nil
+        depth = rack.hasDepthBands(shelf: rack.shelfPlace(ofRow: slot.row)?.shelf ?? -1) ? slot.depth : nil
     }
 
     init(cell: RackCell, depth: Int? = nil) {

@@ -87,6 +87,12 @@ struct RackWizard: View {
             }
         }
         .formStyle(.grouped)
+        // Another layout starts its rows again from the uniform settings.
+        .onChange(of: settings.layout) {
+            guard rowsDiffer else { return }
+            settings.setRowsDiffer(false)
+            settings.setRowsDiffer(true)
+        }
         .navigationTitle(settings.type.name)
         .inlineTitle()
         .toolbar {
@@ -120,21 +126,31 @@ struct RackWizard: View {
             case .diamond: Text("Each bin holds several bottles in a pile.")
             }
         }
-        countSection("Rows", value: $settings.rows, footer: "Counted from the top. Rows are lettered A, B, C…")
-        countSection(settings.layout == .diamond ? "Bins per row" : settings.layout == .honeycomb ? "Bottles in the widest row" : "Bottles per row",
-                     value: $settings.columns, footer: "Counted from the left. Positions are numbered 1, 2, 3…")
+        countSection("Rows", value: $settings.rowCount, footer: "Counted from the top. Rows are lettered A, B, C…")
+        if !rowsDiffer {
+            countSection(settings.layout == .diamond ? "Bins per row" : settings.layout == .honeycomb ? "Bottles in the widest row" : "Bottles per row",
+                         value: $settings.columns, footer: "Counted from the left. Positions are numbered 1, 2, 3…")
+        }
         if settings.layout == .diamond {
             countSection("Bottles per bin", value: $settings.bottlesPerBin, range: 2...StorageSettings.maxCount,
                          footer: "A diamond bin of about 30 cm holds around 10 standard bottles.")
-        } else {
+        } else if !rowsDiffer {
             depthSection(footer: "How many bottles fit one behind the other in each position.")
         }
+        rowsSection
     }
 
     @ViewBuilder
     private var fridgeSettings: some View {
-        countSection("Shelves", value: $settings.shelves, range: 1...StorageSettings.maxShelves,
+        countSection("Shelves", value: $settings.rowCount, range: 1...StorageSettings.maxShelves,
                      footer: "Counted from the top. Shelves are numbered 1, 2, 3…")
+        if !rowsDiffer { uniformFridgeSettings }
+        rowsSection
+    }
+
+    /// Every shelf alike: bottles, layers, depth and head-to-tail for all.
+    @ViewBuilder
+    private var uniformFridgeSettings: some View {
         countSection("Bottles per shelf", value: $settings.bottlesPerShelf,
                      footer: "Bottles side by side on the bottom layer of a shelf.")
         Section {
@@ -157,6 +173,75 @@ struct RackWizard: View {
                 Text("The back bottles lie the other way round: their necks face you between the bases of the front ones.")
             }
         }
+    }
+
+    // MARK: Rows set one by one
+
+    /// The rows (a fridge's shelves) are set one by one.
+    private var rowsDiffer: Bool { settings.rowSettings != nil }
+
+    private var rowsDifferBinding: Binding<Bool> {
+        Binding(get: { rowsDiffer }, set: { on in withAnimation(.snappy) { settings.setRowsDiffer(on) } })
+    }
+
+    /// Off by default: the switch, then, once on, each row with its own settings.
+    @ViewBuilder
+    private var rowsSection: some View {
+        let fridge = settings.type == .wineFridge
+        Section {
+            Group {
+                if fridge {
+                    Toggle("Shelves are not all the same", isOn: rowsDifferBinding)
+                } else {
+                    Toggle("Rows are not all the same", isOn: rowsDifferBinding)
+                }
+            }
+            .accessibilityIdentifier("wizard.rowsDiffer")
+        } footer: {
+            if fridge {
+                Text("For a fridge whose shelves differ: one two deep head-to-tail, another single, a shelf of fewer bottles.")
+            } else {
+                Text("For a rack whose rows differ: a shorter top row, a single row between rows two deep.")
+            }
+        }
+        if let rows = settings.rowSettings {
+            Section {
+                ForEach(rows.indices, id: \.self) { index in
+                    RowSettingsRow(settings: settings, index: index, row: rowBinding(index))
+                        .contextMenu {
+                            if fridge {
+                                Button("Apply to All Shelves", systemImage: "square.stack.3d.down.right") { applyToAll(index) }
+                            } else {
+                                Button("Apply to All Rows", systemImage: "square.stack.3d.down.right") { applyToAll(index) }
+                            }
+                        }
+                }
+            } header: {
+                if fridge { Text("Shelves, from the top") } else { Text("Rows, from the top") }
+            } footer: {
+                if fridge {
+                    Text("Touch and hold a shelf to apply it to all shelves.")
+                } else {
+                    Text("Touch and hold a row to apply it to all rows.")
+                }
+            }
+        }
+    }
+
+    private func rowBinding(_ index: Int) -> Binding<StorageRowSettings> {
+        Binding(
+            get: { settings.rowSettings.flatMap { $0.indices.contains(index) ? $0[index] : nil } ?? StorageRowSettings(positions: 1) },
+            set: { row in
+                guard settings.rowSettings?.indices.contains(index) == true else { return }
+                withAnimation(.snappy) { settings.rowSettings?[index] = row }
+            }
+        )
+    }
+
+    /// Every row takes the settings of this one.
+    private func applyToAll(_ index: Int) {
+        guard let rows = settings.rowSettings, rows.indices.contains(index) else { return }
+        withAnimation(.snappy) { settings.rowSettings = Array(repeating: rows[index], count: rows.count) }
     }
 
     @ViewBuilder
@@ -258,6 +343,68 @@ struct RackWizard: View {
     private func create() {
         guard !trimmedName.isEmpty else { return }
         if model.update({ $0.addRack(settings.rack(name: trimmedName)) }) { dismiss() }
+    }
+}
+
+/// One row (a fridge's shelf) of a storage being created, set on its own: its positions,
+/// its depth, its layers and whether its back bottles lie head-to-tail, as they apply.
+private struct RowSettingsRow: View {
+    let settings: StorageSettings
+    let index: Int
+    @Binding var row: StorageRowSettings
+
+    private var isFridge: Bool { settings.type == .wineFridge }
+
+    /// "Row B" or "Shelf 2", also said before each control by VoiceOver.
+    private var title: String {
+        isFridge ? String(localized: "Shelf \(index + 1)") : String(localized: "Row \(Rack.rowLetters(index))")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(verbatim: title)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+            if isFridge {
+                Picker("Layers per shelf", selection: $row.layers) {
+                    ForEach(1...Rack.maxLayers, id: \.self) { Text(verbatim: "\($0)").tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityLabel(spoken("Layers per shelf"))
+            }
+            Stepper(value: $row.positions, in: 1...StorageSettings.maxCount) {
+                LabeledContent { Text(verbatim: "\(row.positions)").monospacedDigit() } label: { Text(positionsTitle) }
+            }
+            .accessibilityLabel(spoken(positionsTitle))
+            .accessibilityValue(Text(verbatim: "\(row.positions)"))
+            if settings.offersRowDepth {
+                LabeledContent("Rows deep") {
+                    Picker("Rows deep", selection: $row.depth) {
+                        ForEach(1...StorageSettings.maxRowDepth, id: \.self) { Text(verbatim: "\($0)").tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+                    .accessibilityLabel(spoken("Rows deep"))
+                }
+            }
+            if settings.offersHeadToTail(row) {
+                Toggle("Back bottles head-to-tail", isOn: $row.headToTail)
+                    .accessibilityLabel(spoken("Back bottles head-to-tail"))
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var positionsTitle: LocalizedStringKey {
+        if settings.type == .rack, settings.layout == .diamond { return "Bins" }
+        if isFridge { return row.layers > 1 ? "Bottom layer" : "Bottles" }
+        return "Positions"
+    }
+
+    /// "Row B, Rows deep": the row first, so each control says which row it sets.
+    private func spoken(_ key: LocalizedStringKey) -> Text {
+        Text(verbatim: "\(title), ") + Text(key)
     }
 }
 

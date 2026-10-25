@@ -79,8 +79,9 @@ data class StorageSettings(
             StorageType.Crates -> false
         }
 
-    /** A row set on its own lies head-to-tail only on a fridge, in layers, two deep. */
-    fun offersHeadToTail(row: StorageRowSettings): Boolean = type == StorageType.WineFridge && row.layers > 1 && row.depth == 2
+    /** A shelf set on its own lies head-to-tail only on a fridge in layers (a shelf at least has several), two deep. */
+    fun offersHeadToTail(row: StorageRowSettings): Boolean =
+        type == StorageType.WineFridge && row.depth == 2 && (rowSettings ?: listOf(row)).any { it.layers > 1 }
 
     /** The rows of a rack, or the shelves of a fridge. */
     val rowCount: Int get() = if (type == StorageType.WineFridge) shelves else rows

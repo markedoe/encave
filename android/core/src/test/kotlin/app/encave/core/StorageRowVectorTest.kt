@@ -29,7 +29,7 @@ class StorageRowVectorTest {
 
     private fun cases(key: String) = root.getValue(key).jsonArray.map { it.jsonObject }
 
-    private fun rack(element: JsonElement?): Rack =
+    private fun readRack(element: JsonElement?): Rack =
         CellarJson.json.decodeFromJsonElement(Rack.serializer(), element!!).normalized()
 
     private fun JsonElement?.ints(): List<Int>? = (this as? JsonArray)?.map { it.jsonPrimitive.int }
@@ -47,7 +47,7 @@ class StorageRowVectorTest {
         assertTrue(cases.isNotEmpty())
         for (vector in cases) {
             val about = vector.getValue("about").jsonPrimitive.content
-            val rack = rack(vector["rack"])
+            val rack = readRack(vector["rack"])
             assertEquals(vector.getValue("depth").jsonPrimitive.int, rack.depth, about)
             assertEquals(vector["rowDepths"].ints(), rack.rowDepths, about)
             assertEquals(vector["rowBackReversed"].booleans(), rack.rowBackReversed, about)
@@ -62,7 +62,7 @@ class StorageRowVectorTest {
             val written = CellarJson.json.encodeToJsonElement(Rack.serializer(), rack).jsonObject
             assertEquals(rack.rowDepths != null, "rowDepths" in written, about)
             assertEquals(rack.rowBackReversed != null, "rowBackReversed" in written, about)
-            assertEquals(rack, rack(written), about)
+            assertEquals(rack, readRack(written), about)
         }
     }
 
@@ -74,9 +74,9 @@ class StorageRowVectorTest {
     fun olderVersionsStillShowEveryPlace() {
         for (vector in cases("wire")) {
             val about = vector.getValue("about").jsonPrimitive.content
-            val rack = rack(vector["rack"])
+            val rack = readRack(vector["rack"])
             val written = CellarJson.json.encodeToJsonElement(Rack.serializer(), rack).jsonObject
-            val older = rack(JsonObject(written - "rowDepths" - "rowBackReversed"))
+            val older = readRack(JsonObject(written - "rowDepths" - "rowBackReversed"))
             assertTrue(rack.allSlots.all { older.contains(it) }, about)
             assertEquals((0 until rack.rows).any { rack.isBackReversedRow(it) }, older.isBackReversed, about)
         }
@@ -84,7 +84,7 @@ class StorageRowVectorTest {
         val future = Json.parseToJsonElement(
             """{"id":"7a0f1c2e-5b3d-4e6f-8a9b-0c1d2e3f4a5b","name":"R","kind":"grid","rows":2,"columns":2,"depth":2,"rowDepths":[2,1],"rowFuture":[1,2]}""",
         )
-        val again = CellarJson.json.encodeToJsonElement(Rack.serializer(), rack(future)).jsonObject
+        val again = CellarJson.json.encodeToJsonElement(Rack.serializer(), readRack(future)).jsonObject
         assertEquals(listOf(1, 2), again["rowFuture"].ints())
         assertEquals(listOf(2, 1), again["rowDepths"].ints())
     }
@@ -93,8 +93,8 @@ class StorageRowVectorTest {
     fun bottlesLeftWithoutAPlaceWhenARowShrinks() {
         for (vector in cases("displaced")) {
             val about = vector.getValue("about").jsonPrimitive.content
-            val before = rack(vector["before"])
-            val after = rack(vector["after"])
+            val before = readRack(vector["before"])
+            val after = readRack(vector["after"])
             val cellar = Cellar()
             cellar.addRack(before)
             val slots = slots(vector["slots"], before)

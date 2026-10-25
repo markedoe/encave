@@ -640,8 +640,9 @@ private struct CellSheet: View {
                         BottleInCellRow(rack: rack, bottle: bottle, onAction: onAction)
                     }
                 } header: {
-                    if rack.positionsPerCell > 1 {
-                        Text("\(bottles.count) of \(rack.positionsPerCell) bottles")
+                    let positions = rack.positions(inRow: cell.row)
+                    if positions > 1 {
+                        Text("\(bottles.count) of \(positions) bottles")
                     }
                 }
                 if let free {
@@ -687,7 +688,9 @@ private struct BottleInCellRow: View {
                     Text(wine?.displayName ?? String(localized: "Unknown wine"))
                         .font(.headline)
                     // One text, so the gap is the same on both sides of the dot.
-                    let depth = rack.kind != .bins && rack.positionsPerCell > 1 ? bottle.slot.map { rack.depthName($0.depth) } : nil
+                    let depth = bottle.slot.flatMap { slot in
+                        rack.kind != .bins && rack.positions(inRow: slot.row) > 1 ? rack.depthName(slot.depth, row: slot.row) : nil
+                    }
                     let subtitle = [wine?.producer, depth].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                     if !subtitle.isEmpty {
                         Text(verbatim: subtitle)
@@ -837,7 +840,7 @@ private struct CheckPlaceSheet: View {
     private func row(_ bottle: Bottle, _ slot: Slot) -> some View {
         let wine = model.cellar.wines[bottle.wineID]
         let number = slot.depth + 1
-        let position = rack.kind == .bins ? String(localized: "Bottle \(number)") : rack.depthName(slot.depth)
+        let position = rack.kind == .bins ? String(localized: "Bottle \(number)") : rack.depthName(slot.depth, row: slot.row)
         return HStack(spacing: 12) {
             BottleEnd(color: wine?.color, size: 28)
             VStack(alignment: .leading, spacing: 2) {
