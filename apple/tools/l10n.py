@@ -16,7 +16,7 @@ RES = ROOT / "Encave" / "Resources"
 
 FR = {
     'Ask My Cellar': 'Demander à ma cave',
-    'Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device by Apple Intelligence: nothing is sent anywhere.': 'Répond à une question comme « dîner pour 6 avec un tajine » avec des bouteilles de votre cave et leur position. La réponse est préparée sur cet appareil par Apple Intelligence : rien n’est envoyé.',
+    'Answers a question such as “dinner for 6 with a tagine” with bottles from your cellar and where they are. Answered on this device: nothing is sent anywhere.': 'Répond à une question comme « dîner pour 6 avec un tajine » avec des bouteilles de votre cave et leur position. La réponse est préparée sur cet appareil : rien n’est envoyé.',
     'Question': 'Question',
     'What would you like to ask your cellar?': 'Que voulez-vous demander à votre cave ?',
     'Where they are: %@.': 'Où elles sont : %@.',
@@ -1836,9 +1836,29 @@ def old_french_words(text):
     return [why for pattern, why in OLD_FRENCH if pattern.search(text)]
 
 
+# App Store processing refuses an App Intent whose title, description or parameter names
+# Apple's own brands (ITMS-90626, "cannot contain apple"): checked here, before an upload.
+INTENT_TEXT = re.compile(
+    r'(?:IntentDescription\(|LocalizedStringResource = |title: |requestValueDialog: |description: )"([^"]*)"')
+INTENT_FORBIDDEN = re.compile(r"\b(?:apple|siri)\b", re.I)
+
+
+def intent_metadata_problems():
+    problems = []
+    for path in sorted(ROOT.rglob("*.swift")):
+        text = path.read_text(encoding="utf-8")
+        if "AppIntent" not in text and "AppEntity" not in text and "AppShortcut" not in text:
+            continue
+        for match in INTENT_TEXT.finditer(text):
+            value = match.group(1)
+            for found in INTENT_FORBIDDEN.findall(value) + INTENT_FORBIDDEN.findall(FR.get(value, "")):
+                problems.append(f"{path.name}: App Intent text names {found!r} (refused by App Store processing): {value[:60]!r}")
+    return problems
+
+
 def check():
     known = set(FR) | set(PLURALS) | set(VARIANTS)
-    problems = []
+    problems = intent_metadata_problems()
     for key in sorted(k for k in extract() if to_key(k) not in known and k not in known):
         problems.append(f"missing French: {key!r} (key {to_key(key)!r})")
     # A translation must use the same placeholders as its key, or it shows the wrong value or crashes.
