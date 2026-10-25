@@ -66,6 +66,7 @@ import Testing
         var decoded: [Decoded]
         var ownPrices: [String: String?]
         var otherPrices: [String: String?]
+        var prices: [String: String?]
         var exportedPrices: [String: String]
         var dates: Dates
         var parsed: [Parsed]
@@ -244,6 +245,12 @@ import Testing
         }
         for (text, value) in vectors.otherPrices {
             #expect(CSVColumns.price(text, plain: false).map(CellarExport.price) == value, "other \(text)")
+        }
+        #expect(!vectors.prices.isEmpty)
+        for (text, value) in vectors.prices {
+            for plain in [true, false] {
+                #expect(CSVColumns.price(text, plain: plain).map(CellarExport.price) == value, "price \(text) (\(plain))")
+            }
         }
         for (text, value) in vectors.exportedPrices {
             let decimal = try #require(Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")))

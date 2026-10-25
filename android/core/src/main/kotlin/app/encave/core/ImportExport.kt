@@ -1,6 +1,5 @@
 package app.encave.core
 
-import app.encave.core.search.PriceExtractor
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.ByteBuffer
@@ -376,13 +375,61 @@ internal object CsvColumns {
 
     private val plainNumber = Regex("[0-9]+(\\.[0-9]+)?")
 
+    /** The prices read in an import: more than 0, at most this. */
+    private val maxPrice = BigDecimal(100_000)
+
     /**
-     * A price rounded to the cent. In Encave's own columns ([plain]), "8.333" is 8.33; elsewhere
-     * a three-digit tail is thousands ("1.234" is 1234), as on a web page.
+     * A price rounded to the cent, null outside 0 (excluded) to [maxPrice]. In Encave's own
+     * columns ([plain]), "8.333" is 8.33; otherwise [amount] reads it.
      */
     fun price(text: String, plain: Boolean): BigDecimal? {
-        val value = if (plain && plainNumber.matches(text)) BigDecimal(text) else PriceExtractor.decimal(text)
-        return value?.let(CellarExport::roundedPrice)
+        val value = (if (plain && plainNumber.matches(text)) BigDecimal(text) else amount(text)) ?: return null
+        if (value.signum() <= 0 || value > maxPrice) return null
+        return CellarExport.roundedPrice(value)
+    }
+
+    /**
+     * The number from the first digit to the last, a currency or words around it ("12,50 €",
+     * "CHF 13.–"). Spaces and apostrophes group thousands. One separator before exactly three
+     * digits groups thousands ("1.234", "8,333"); before 1, 2 or 4 or more digits it starts the
+     * decimals ("45.0000"). With "." and ",", the last one starts the decimals ("1,234.50").
+     * Null for a negative number or text between the digits ("12 to 15").
+     */
+    internal fun amount(text: String): BigDecimal? {
+        val first = text.indexOfFirst { it in '0'..'9' }
+        val last = text.indexOfLast { it in '0'..'9' }
+        if (first < 0) return null
+        if (first > 0 && text[first - 1] in "-−") return null
+        val digits = StringBuilder()
+        // Each separator, with the count of digits before it.
+        val marks = mutableListOf<Pair<Int, Char>>()
+        for (character in text.substring(first, last + 1)) {
+            when {
+                character in '0'..'9' -> digits.append(character)
+                character == '.' || character == ',' -> {
+                    if (marks.lastOrNull()?.first == digits.length) return null
+                    marks += digits.length to character
+                }
+                character !in " \u00A0\u202F'’" -> return null
+            }
+        }
+        var decimals = 0
+        val lastMark = marks.lastOrNull()
+        if (lastMark != null) {
+            val tail = digits.length - lastMark.first
+            when {
+                marks.any { it.second != lastMark.second } -> decimals = tail
+                marks.size == 1 -> decimals = if (tail == 3) 0 else tail
+                // "1.234.567": every group has three digits.
+                else -> {
+                    val ends = marks.drop(1).map { it.first } + digits.length
+                    if (marks.zip(ends).any { (mark, end) -> end - mark.first != 3 }) return null
+                }
+            }
+        }
+        val integer = digits.substring(0, digits.length - decimals)
+        val fraction = digits.substring(digits.length - decimals)
+        return BigDecimal(if (fraction.isEmpty()) integer else "${integer.ifEmpty { "0" }}.$fraction")
     }
 
     /** "2015", "2015.0"; not "NV" or "1001" (CellarTracker writes 1001 for non-vintage). */
@@ -390,8 +437,14 @@ internal object CsvColumns {
 
     fun number(text: String): Double? = text.replace(",", ".").filter { it in '0'..'9' || it == '.' || it == '-' }.toDoubleOrNull()
 
-    /** 1 to 5 (decimals rounded); 100-point scores are converted. */
+    /** 1 to 5 (decimals rounded); 100-point scores are converted. "4/5", "16/20", "8/10" are that share of 5 stars. */
     fun rating(text: String): Int? {
+        val parts = text.split('/')
+        if (parts.size == 2) {
+            val value = number(parts[0])?.takeIf { it > 0 } ?: return null
+            val scale = number(parts[1])?.takeIf { it > 0 } ?: return null
+            return Math.round(value / scale * 5).toInt().coerceIn(1, 5)
+        }
         val value = number(text)?.takeIf { it > 0 } ?: return null
         val five = minOf(5.0, if (value > 5) value / 20 else value)
         return Math.round(five).toInt().coerceIn(1, 5)
