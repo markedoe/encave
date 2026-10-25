@@ -72,8 +72,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.encave.R
 import app.encave.ui.components.readableWidth
 import app.encave.core.Cellar
+import app.encave.core.BinStyle
 import app.encave.core.Rack
 import app.encave.core.RackKind
+import app.encave.core.StorageSettings
 import app.encave.core.StorageType
 import app.encave.core.storageType
 import app.encave.ui.AppNavigator
@@ -218,8 +220,12 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
     } else {
         emptyList()
     }
-    // Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
-    val offersCustomRows = kind != RackKind.Staggered && (storageType != StorageType.WineFridge || existing.rowColumns != null)
+    // Crates are edited as a number of bins, laid out as the wizard lays them out.
+    val isCrates = storageType == StorageType.Crates
+    var bins by rememberSaveable { mutableIntStateOf(existing.cellCount) }
+    // Rows of different lengths fit a rack; a fridge only keeps the ones it has, crates have none.
+    val offersCustomRows = kind != RackKind.Staggered && !isCrates &&
+        (storageType != StorageType.WineFridge || existing.rowColumns != null)
     var showErrors by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDisplaced by remember { mutableStateOf(false) }
@@ -232,12 +238,16 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
 
     fun preview() = if (layered) {
         ShelfDraft.rack(id, name.trim(), depth, shelves, backReversed)
+    } else if (isCrates) {
+        StorageSettings.crates(id, name.trim(), bins, binCapacity)
     } else {
+        // Bins that are not crates are diamond bins in a rack: saved as such, whatever their shape.
         Rack(
             id = id, name = name.trim(), kind = kind, rows = rows,
             columns = if (customRows && kind != RackKind.Staggered) rowColumns.maxOrNull() ?: columns else columns,
             depth = depth, binCapacity = binCapacity,
             rowColumns = if (customRows && kind != RackKind.Staggered) rowColumns.toList() else null,
+            binStyleValue = if (kind == RackKind.Bins) BinStyle.Diamond.raw else null,
         ).normalized()
     }
 
@@ -323,11 +333,15 @@ private fun RackEditorForm(viewModel: AppViewModel, navigator: AppNavigator, rac
             }
 
             Header(R.string.rack_size_title)
-            if (!layered) {
+            if (isCrates) {
+                SizeRow(stringResource(R.string.wizard_bins), bins, { bins = it }, 1..StorageSettings.MAX_COUNT)
+                Hint(stringResource(R.string.wizard_bins_body))
+            }
+            if (!layered && !isCrates) {
                 SizeRow(stringResource(kind.rowsRes), rows, { rows = it; if (customRows) resizeRows(it) }, 1..MAX_SIZE)
                 Hint(stringResource(if (kind == RackKind.Shelves) R.string.rack_field_shelves else R.string.help_field_rows))
             }
-            if (!customRows && !layered) {
+            if (!customRows && !layered && !isCrates) {
                 SizeRow(stringResource(kind.columnsRes), columns, { columns = it }, 1..MAX_SIZE)
                 Hint(stringResource(R.string.help_field_columns))
             }

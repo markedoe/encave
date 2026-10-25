@@ -1,0 +1,41 @@
+{
+  "about": "Storage type of bins, shared by CaveKit (StorageTypeVectorTests.swift) and the Kotlin core (StorageTypeVectorTest.kt). A storage is made by the wizard ('wizard': the type, the rack layout and the counts) or read from a record ('record', as files and sync write it), then optionally edited ('edit': fields set on the rack, as an editor of an older version would). 'storageType' and 'storageCount' are what the Storage list shows; 'binStyle' is the value written back when the rack is encoded again, null when left out. Racks saved without binStyle, or with a value the app does not know, are typed by their shape: four bins to a row, the last row possibly shorter, are crates.",
+  "cases": [
+    {
+      "about": "Diamond bins 6 by 4 made by the Rack wizard stay a rack, although four to a row",
+      "wizard": { "type": "rack", "layout": "diamond", "rows": 6, "columns": 4, "bottlesPerBin": 10 },
+      "storageType": "rack", "storageCount": 24, "binStyle": "diamond"
+    },
+    {
+      "about": "One row of 3 diamond bins made by the Rack wizard stays a rack",
+      "wizard": { "type": "rack", "layout": "diamond", "rows": 1, "columns": 3, "bottlesPerBin": 10 },
+      "storageType": "rack", "storageCount": 3, "binStyle": "diamond"
+    },
+    {
+      "about": "Crates of 8 (2 rows of 4) edited to 5 to a row stay crates",
+      "wizard": { "type": "crates", "bins": 8, "bottlesPerBin": 12 },
+      "edit": { "columns": 5 },
+      "storageType": "crates", "storageCount": 10, "binStyle": "crates"
+    },
+    {
+      "about": "A record from an older version without binStyle is typed by its shape, as before: 2 rows of 4 are crates",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000001", "name": "Bins", "kind": "bins", "rows": 2, "columns": 4, "depth": 1, "binCapacity": 12 },
+      "storageType": "crates", "storageCount": 8, "binStyle": null
+    },
+    {
+      "about": "A record from an older version without binStyle is typed by its shape, as before: 2 rows of 3 are diamond bins in a rack",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000002", "name": "Bins", "kind": "bins", "rows": 2, "columns": 3, "depth": 1, "binCapacity": 10 },
+      "storageType": "rack", "storageCount": 6, "binStyle": null
+    },
+    {
+      "about": "A binStyle value from a newer version is typed by the shape and written back unchanged",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000003", "name": "Bins", "kind": "bins", "rows": 6, "columns": 4, "depth": 1, "binCapacity": 10, "binStyle": "pyramid" },
+      "storageType": "crates", "storageCount": 24, "binStyle": "pyramid"
+    },
+    {
+      "about": "binStyle saved as crates wins over a diamond shape",
+      "record": { "id": "6F1C2D3E-0000-4000-8000-000000000004", "name": "Bins", "kind": "bins", "rows": 3, "columns": 5, "depth": 1, "binCapacity": 12, "binStyle": "crates" },
+      "storageType": "crates", "storageCount": 15, "binStyle": "crates"
+    }
+  ]
+}

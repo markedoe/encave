@@ -3,8 +3,9 @@ package app.encave.core
 import java.util.UUID
 
 /**
- * The kind of storage a person chooses when creating one. Each maps onto [Rack], with no
- * field of its own: see [StorageSettings.rack] and [Rack.storageType]. Mirrors CaveKit.
+ * The kind of storage a person chooses when creating one. Each maps onto [Rack]; bins also
+ * save which type they were made as ([Rack.binStyle]): see [StorageSettings.rack] and
+ * [Rack.storageType]. Mirrors CaveKit.
  */
 enum class StorageType {
     /** A rack on a wall: a grid, a honeycomb or diamond bins ([RackLayout]). */
@@ -54,7 +55,7 @@ data class StorageSettings(
                 RackLayout.Honeycomb -> Rack(id = id, name = name, kind = RackKind.Staggered, rows = count(rows),
                     columns = count(columns), depth = depth)
                 RackLayout.Diamond -> Rack(id = id, name = name, kind = RackKind.Bins, rows = count(rows), columns = count(columns),
-                    binCapacity = count(bottlesPerBin))
+                    binCapacity = count(bottlesPerBin), binStyleValue = BinStyle.Diamond.raw)
             }
             StorageType.WineFridge -> {
                 val shelves = shelves.coerceIn(1, MAX_SHELVES)
@@ -70,16 +71,7 @@ data class StorageSettings(
                     )
                 }
             }
-            StorageType.Crates -> {
-                val bins = count(bins)
-                val perRow = minOf(bins, BINS_PER_ROW)
-                val rows = (bins + perRow - 1) / perRow
-                val last = bins - (rows - 1) * perRow
-                Rack(
-                    id = id, name = name, kind = RackKind.Bins, rows = rows, columns = perRow, binCapacity = count(bottlesPerBin),
-                    rowColumns = if (last == perRow) null else List(rows - 1) { perRow } + last,
-                )
-            }
+            StorageType.Crates -> crates(id, name, count(bins), count(bottlesPerBin))
         }.normalized()
     }
 
@@ -92,6 +84,19 @@ data class StorageSettings(
 
         /** Most shelves a fridge can have, so three layers each stay within [Rack.MAX_SIZE] rows. */
         const val MAX_SHELVES = 30
+
+        /** Crates laid out [BINS_PER_ROW] to a row, the last row possibly shorter. */
+        fun crates(id: UUID = UUID.randomUUID(), name: String, bins: Int, bottlesPerBin: Int): Rack {
+            val count = bins.coerceAtLeast(1)
+            val perRow = minOf(count, BINS_PER_ROW)
+            val rows = (count + perRow - 1) / perRow
+            val last = count - (rows - 1) * perRow
+            return Rack(
+                id = id, name = name, kind = RackKind.Bins, rows = rows, columns = perRow, binCapacity = bottlesPerBin,
+                rowColumns = if (last == perRow) null else List(rows - 1) { perRow } + last,
+                binStyleValue = BinStyle.Crates.raw,
+            ).normalized()
+        }
 
         /** Settings that make this rack again, for editing and for describing it: only those of its type. */
         fun of(rack: Rack): StorageSettings {
@@ -133,21 +138,27 @@ data class StorageSettings(
 
 /**
  * The kind of storage, as the wizard names it: a honeycomb on shelves or shelves are a wine
- * fridge; bins laid out as the wizard lays out crates are crates, other bins are diamond
- * bins in a rack (see [isCratesLayout]).
+ * fridge; bins are what they were made as ([Rack.binStyle]), or when that is not saved or
+ * unknown, crates if laid out as the wizard lays out crates, diamond bins in a rack
+ * otherwise (see [isCratesLayout]).
  */
 val Rack.storageType: StorageType
     get() = when (kind) {
         RackKind.Grid -> StorageType.Rack
         RackKind.Staggered -> if (hasShelfLayers) StorageType.WineFridge else StorageType.Rack
         RackKind.Shelves -> StorageType.WineFridge
-        RackKind.Bins -> if (isCratesLayout) StorageType.Crates else StorageType.Rack
+        RackKind.Bins -> when (binStyle) {
+            BinStyle.Crates -> StorageType.Crates
+            BinStyle.Diamond -> StorageType.Rack
+            null -> if (isCratesLayout) StorageType.Crates else StorageType.Rack
+        }
     }
 
 /**
  * Bins laid out as crates are: [StorageSettings.BINS_PER_ROW] to a row, the last row
- * possibly shorter. Nothing saved tells diamond bins from crates, so the shape does; a
- * diamond rack of one row, or of rows of exactly that many bins, reads as crates.
+ * possibly shorter. Decides the type of bins saved without [Rack.binStyle] (older
+ * versions): for those, a diamond rack of one row, or of rows of exactly that many bins,
+ * reads as crates.
  */
 val Rack.isCratesLayout: Boolean
     get() {

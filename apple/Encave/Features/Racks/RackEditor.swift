@@ -15,6 +15,8 @@ struct RackEditor: View {
     /// A fridge on shelves two deep: the back bottles lie head-to-tail.
     @State private var backReversed = false
     @State private var binCapacity = 10
+    /// Crates: how many bins, laid out as the wizard lays them out.
+    @State private var bins = 6
     @State private var customRows = false
     @State private var rowColumns: [Int] = []
     /// Honeycomb: on shelves (a wine fridge with bottles in layers) rather than continuous.
@@ -53,14 +55,20 @@ struct RackEditor: View {
                 }
 
                 Section {
-                    if !layered {
+                    if isCrates {
+                        Stepper(value: $bins, in: 1...StorageSettings.maxCount) {
+                            LabeledContent("Bins") { Text(verbatim: "\(bins)").monospacedDigit() }
+                        }
+                        .fieldHelp("Each crate or box is a bin, named like B3.")
+                    }
+                    if !layered && !isCrates {
                         Stepper(value: $rows, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(rows)").monospacedDigit() } label: { Text(kind.rowTitle) }
                         }
                         .fieldHelp(kind == .shelves ? "Counted from the top. Shelves are numbered 1, 2, 3…"
                                                     : "Counted from the top. Rows are lettered A, B, C…")
                     }
-                    if !customRows && !layered {
+                    if !customRows && !layered && !isCrates {
                         Stepper(value: $columns, in: 1...40) {
                             LabeledContent { Text(verbatim: "\(columns)").monospacedDigit() } label: { Text(kind.columnTitle) }
                         }
@@ -236,18 +244,22 @@ struct RackEditor: View {
     /// A honeycomb on shelves, edited shelf by shelf.
     private var layered: Bool { kind == .staggered && onShelves }
 
+    /// Crates are edited as a number of bins, laid out as the wizard lays them out.
+    private var isCrates: Bool { storageType == .crates }
+
     /// The kinds this storage can become: a rack stays a rack (grid or honeycomb); diamond
     /// bins, a fridge and crates keep theirs.
     private var kinds: [RackKind] { storageType == .rack && initial?.kind != .bins ? [.grid, .staggered] : [] }
 
-    /// Rows of different lengths fit a rack or crates; a fridge only keeps the ones it has.
+    /// Rows of different lengths fit a rack; a fridge only keeps the ones it has, crates
+    /// have none.
     private var offersCustomRows: Bool {
-        kind != .staggered && (storageType != .wineFridge || initial?.customRows == true)
+        kind != .staggered && !isCrates && (storageType != .wineFridge || initial?.customRows == true)
     }
 
     private var current: EditorState {
         EditorState(name: name, kind: kind, rows: rows, columns: columns, depth: depth, binCapacity: binCapacity,
-                    customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves,
+                    bins: bins, customRows: customRows, rowColumns: rowColumns, onShelves: onShelves, shelves: shelves,
                     backReversed: backReversed)
     }
 
@@ -294,9 +306,14 @@ struct RackEditor: View {
                         zoneBreaks: shelves.indices.filter { $0 > 0 && shelves[$0].startsZone },
                         backReversed: backReversed)
         }
+        if isCrates {
+            return StorageSettings.crates(id: rackID, name: name, bins: bins, bottlesPerBin: binCapacity)
+        }
+        // Bins that are not crates are diamond bins in a rack: saved as such, whatever their shape.
         return Rack(id: rackID, name: name, kind: kind, rows: rows,
                     columns: customRows ? (rowColumns.max() ?? columns) : columns,
-                    depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil)
+                    depth: depth, binCapacity: binCapacity, rowColumns: customRows ? rowColumns : nil,
+                    binStyle: kind == .bins ? .diamond : nil)
     }
 
     @ViewBuilder
@@ -369,10 +386,11 @@ struct RackEditor: View {
             name = rack.name; kind = rack.kind; rows = rack.rows; columns = rack.columns
             depth = rack.depth; binCapacity = rack.binCapacity
             backReversed = rack.isBackReversed
+            bins = rack.cellCount
             if rack.hasShelfLayers {
                 onShelves = true
                 shelves = ShelfDraft.shelves(of: rack, keepingOrigins: true)
-            } else if let custom = rack.rowColumns {
+            } else if let custom = rack.rowColumns, storageType != .crates {
                 rowColumns = custom
                 customRows = true
             }
@@ -405,6 +423,7 @@ private struct EditorState: Equatable {
     var columns: Int
     var depth: Int
     var binCapacity: Int
+    var bins: Int
     var customRows: Bool
     var rowColumns: [Int]
     var onShelves: Bool
